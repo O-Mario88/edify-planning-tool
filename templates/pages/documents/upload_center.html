@@ -2,6 +2,41 @@
 
 {% block title %}Upload Center — Edify{% endblock %}
 
+{% block feature_css %}
+<style>
+  #admin-upload-drawer {
+    inset: 0 0 0 auto;
+    width: min(30rem, 100vw);
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--edify-surface);
+    color: var(--edify-text);
+    box-shadow: -18px 0 50px rgba(15, 23, 42, 0.18);
+  }
+  #admin-upload-drawer::backdrop {
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(2px);
+  }
+  #admin-upload-drawer[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    #admin-upload-drawer[open] {
+      animation: upload-drawer-enter 160ms ease-out;
+    }
+    @keyframes upload-drawer-enter {
+      from { transform: translateX(1.5rem); opacity: 0.75; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  }
+</style>
+{% endblock %}
+
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
 
@@ -9,13 +44,66 @@
     <div class="min-w-0">
       <p class="edify-page-eyebrow">Files</p>
       <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Upload Center</h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1">Manage structured imports, Policies, Manuals, Training Resources, Activity Evidence and Professional Development documents.</p>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1 max-w-3xl">Start every authorised upload here, then track its processing, review and publication status in one place.</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
-      {% if can_create_document %}<a href="/uploads/new" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold inline-flex items-center">New Policy or Manual</a>{% endif %}
-      {% if can_create_training %}<a href="/uploads/new?kind=training" class="h-9 px-4 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">New Training Resource</a>{% endif %}
-    </div>
+    {% if show_admin_upload_menu %}
+    <button
+      type="button"
+      id="admin-upload-drawer-open"
+      aria-haspopup="dialog"
+      aria-controls="admin-upload-drawer"
+      class="upload-primary-action btn btn-primary min-h-11 shrink-0 text-[13px] font-bold"
+    >
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0-12 4 4m-4-4L8 8M5 15v4h14v-4"/></svg>
+      Upload
+    </button>
+    {% endif %}
   </div>
+
+  <section aria-labelledby="start-upload-title" class="space-y-3">
+    <div>
+      <p class="edify-page-eyebrow">Quick actions</p>
+      <h2 id="start-upload-title" class="text-[16px] font-extrabold tracking-tight text-slate-800">Start an upload</h2>
+      <p class="mt-1 text-[12px] font-medium text-slate-500">Only upload types available to your role are shown.</p>
+    </div>
+    <ul role="list" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {% for action in upload_actions %}
+      <li class="min-w-0">
+        <article class="flex h-full flex-col bg-white border border-[var(--border-card)] rounded-overlay shadow-sm p-4 transition-all hover:-translate-y-[1.5px] hover:shadow-md">
+          <div class="flex items-start gap-3">
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-control {% if action.tone == 'primary' %}edify-primary-soft edify-primary-text{% elif action.tone == 'document' %}bg-violet-50 text-violet-700{% else %}bg-amber-50 text-amber-700{% endif %}" aria-hidden="true">
+              {% if action.key == "schools" %}
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 10h6M9 14h6M9 18h6"/></svg>
+              {% elif action.key == "ssa" %}
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg>
+              {% elif action.key == "policies" or action.key == "training" %}
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/></svg>
+              {% else %}
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4L8 8M5 14v5h14v-5"/></svg>
+              {% endif %}
+            </span>
+            <div class="min-w-0">
+              <p class="edify-text-caption font-bold uppercase tracking-[0.12em] text-slate-400">{{ action.category }}</p>
+              <h3 class="mt-1 text-[14px] font-extrabold text-slate-800">{{ action.title }}</h3>
+              <p class="mt-1 text-[12px] leading-5 font-medium text-slate-500">{{ action.description }}</p>
+            </div>
+          </div>
+          <div class="upload-card-actions mt-auto flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 pt-4">
+            <a href="{{ action.href }}" class="upload-primary-action btn btn-primary h-10 text-[12px] font-bold">{{ action.action_label }}</a>
+            {% if action.template_href %}
+            <a href="{{ action.template_href }}" class="upload-secondary-action btn btn-secondary h-10 text-[12px] font-bold">{{ action.template_label }}</a>
+            {% endif %}
+          </div>
+        </article>
+      </li>
+      {% empty %}
+      <li class="sm:col-span-2 xl:col-span-3 rounded-surface border border-dashed border-slate-200 bg-slate-50 p-5">
+        <p class="text-[13px] font-bold text-slate-700">No uploads are available for your role.</p>
+        <p class="mt-1 text-[12px] text-slate-500">You can still review files already shared with you below.</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
 
   {% comment %}
     The canonical KPI strip. These tiles are built through
@@ -39,4 +127,70 @@
 
   {% include "partials/documents/upload_table.html" %}
 </div>
+
+{% if show_admin_upload_menu %}
+<dialog
+  id="admin-upload-drawer"
+  closedby="any"
+  aria-labelledby="admin-upload-drawer-title"
+  aria-describedby="admin-upload-drawer-description"
+>
+  <header class="flex items-start justify-between gap-4 border-b border-[var(--border-card)] px-5 py-5">
+    <div>
+      <p class="edify-page-eyebrow">Admin uploads</p>
+      <h2 id="admin-upload-drawer-title" class="mt-1 text-[18px] font-extrabold tracking-tight text-slate-800">Choose an upload type</h2>
+      <p id="admin-upload-drawer-description" class="mt-1 max-w-sm text-[12px] leading-5 font-medium text-slate-500">Every upload available to Admin is listed below. Structured files also include their approved templates.</p>
+    </div>
+    <form method="dialog">
+      <button type="submit" class="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control border border-[var(--border-strong)] bg-white text-slate-500 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-edify-primary)]">
+        <span class="sr-only">Close upload drawer</span>
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </form>
+  </header>
+
+  <nav aria-label="Admin upload buttons" class="min-h-0 flex-1 overflow-y-auto p-4">
+    <ul role="list" class="space-y-3">
+      {% for action in upload_actions %}
+      <li class="rounded-surface border border-[var(--border-card)] bg-white p-4 shadow-sm">
+        <p class="edify-text-caption font-bold uppercase tracking-[0.12em] text-slate-400">{{ action.category }}</p>
+        <h3 class="mt-1 text-[14px] font-extrabold text-slate-800">{{ action.title }}</h3>
+        <p class="mt-1 text-[12px] leading-5 font-medium text-slate-500">{{ action.description }}</p>
+        <div class="upload-card-actions mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-slate-100 pt-4">
+          <a href="{{ action.href }}" class="upload-primary-action btn btn-primary min-h-11 text-[12px] font-bold">{{ action.action_label }}</a>
+          {% if action.template_href %}
+          <a href="{{ action.template_href }}" class="upload-secondary-action btn btn-secondary min-h-11 text-[12px] font-bold">{{ action.template_label }}</a>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </nav>
+</dialog>
+
+<script>
+  (() => {
+    const trigger = document.getElementById('admin-upload-drawer-open');
+    const drawer = document.getElementById('admin-upload-drawer');
+    if (!trigger || !drawer) return;
+
+    trigger.addEventListener('click', () => drawer.showModal());
+    drawer.addEventListener('close', () => trigger.focus());
+
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      drawer.addEventListener('click', (event) => {
+        if (event.target !== drawer) return;
+        const rect = drawer.getBoundingClientRect();
+        const inside = (
+          rect.top <= event.clientY &&
+          event.clientY <= rect.bottom &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.right
+        );
+        if (!inside) drawer.close();
+      });
+    }
+  })();
+</script>
+{% endif %}
 {% endblock %}

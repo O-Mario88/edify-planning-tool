@@ -211,7 +211,7 @@
   --border-strong: var(--edify-border-strong);
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
-     Inter — the enterprise standard for data-dense premium dashboards.
+     Geist Sans — the platform typeface for data-dense premium dashboards.
      Tighter sizes, bolder weights, compact leading.
        display → page titles (fluid 24–30px)
        heading → section titles (16px)
@@ -219,7 +219,7 @@
        body    → default text, table cells (14px)
        label   → captions, secondary (12px)
        micro   → overlines, badges (11px) */
-  --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --edify-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
@@ -410,9 +410,12 @@
   --edify-notification-text: var(--edify-navy-950);
   --edify-notification-glow: rgba(255, 157, 66, 0.38);
 
+  /* The filter controls establish Blue's single translucent content plane.
+     Reusing it at every elevation keeps the classroom image present without
+     building a stack of progressively heavier glass rectangles. */
   --edify-surface: rgba(5, 54, 96, 0.58);
-  --edify-surface-muted: rgba(8, 58, 102, 0.38);
-  --edify-surface-raised: rgba(18, 83, 131, 0.68);
+  --edify-surface-muted: rgba(5, 54, 96, 0.58);
+  --edify-surface-raised: rgba(5, 54, 96, 0.58);
   --edify-border: rgba(123, 189, 232, 0.32);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
   --edify-text: #f5fbff;
@@ -424,38 +427,42 @@
     radial-gradient(circle at 88% 0%, rgba(123,189,232,.24), transparent 36rem),
     linear-gradient(180deg, rgba(0,29,57,.06) 0%, rgba(0,18,38,.48) 100%),
     url("../images/login-classroom-portrait.jpg");
-  --edify-surface-treatment:
-    radial-gradient(circle at 94% -8%, rgba(123,189,232,.22), transparent 20rem),
-    linear-gradient(145deg, rgba(73,118,159,.20), rgba(0,29,57,.16));
-  --edify-glass-tile-treatment:
-    linear-gradient(145deg, rgba(73,118,159,.20), rgba(0,29,57,.24));
-  --edify-glass-kpi-treatment:
-    radial-gradient(circle at 92% 0%, rgba(123,189,232,.20), transparent 22rem),
-    linear-gradient(135deg, rgba(10,65,116,.62), rgba(0,38,75,.48));
-  --edify-button-primary-treatment:
-    linear-gradient(135deg, var(--edify-sky-100) 0%, var(--edify-sky-400) 56%, var(--edify-teal-400) 100%);
-  --edify-button-secondary-treatment:
-    linear-gradient(145deg, rgba(73,118,159,.28), rgba(0,29,57,.24));
-  --edify-glass-blur: 18px;
-  --edify-glass-saturation: 150%;
-  --edify-glass-highlight: rgba(220, 240, 252, 0.24);
+  --edify-surface-treatment: none;
+  --edify-glass-tile-treatment: none;
+  --edify-glass-kpi-treatment: none;
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
+  --edify-glass-blur: 0px;
+  --edify-glass-saturation: 100%;
+  --edify-glass-highlight: transparent;
 
-  --edify-card-surface: rgb(5 54 96 / 0.93);
-  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
-  --edify-card-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
-  --edify-card-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
+  /* Exact blue filter-control treatment: translucent navy, one thin sky
+     hairline, compact corners supplied by components, and no elevation. */
+  --edify-card-surface: var(--edify-surface);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-backdrop-filter: none;
+
+  /* Blue-theme tables need their own surface ladder. Reusing the transparent
+     card tokens made header, body and hover states merge into one glass pane. */
+  --edify-table-canvas: var(--edify-surface);
+  --edify-table-header: rgba(0, 29, 57, 0.72);
+  --edify-table-row-alt: rgba(123, 189, 232, 0.08);
+  --edify-table-row-hover: rgba(24, 114, 189, 0.28);
+  --edify-table-row-selected: rgba(123, 189, 232, 0.18);
+  --edify-table-divider: rgba(123, 189, 232, 0.30);
 
   --color-edify-divider: rgba(189, 216, 233, 0.12);
   --bg-page: var(--edify-bg);
 
-  --edify-shadow-sm: 0 1px 2px rgba(0, 9, 24, .20), 0 12px 30px -22px rgba(123, 189, 232, .48);
-  --edify-shadow-md: 0 20px 46px -26px rgba(0, 8, 20, .78), 0 6px 18px -12px rgba(123, 189, 232, .28);
-  --edify-shadow-lg: 0 34px 80px -36px rgba(0, 5, 16, .92), 0 12px 30px -16px rgba(78, 142, 162, .34);
-  --edify-shadow-drawer: -20px 0 54px -24px rgba(0, 5, 16, .86);
+  --edify-shadow-sm: none;
+  --edify-shadow-md: none;
+  --edify-shadow-lg: none;
+  --edify-shadow-drawer: none;
 
-  --edify-topbar-bg: rgba(0, 29, 57, 0.62);
-  --edify-topbar-border: rgba(123, 189, 232, 0.22);
-  --edify-topbar-shadow: 0 1px 0 rgba(123,189,232,.08), 0 20px 42px -32px rgba(0,0,0,.8);
+  --edify-topbar-bg: var(--edify-surface);
+  --edify-topbar-border: var(--edify-border);
+  --edify-topbar-shadow: none;
   --edify-scrim: rgba(0, 12, 28, 0.76);
   --edify-focus-ring: 0 0 0 3px var(--brand-primary-focus);
   --edify-sidebar-bg:
@@ -486,12 +493,12 @@ html.theme-blue body {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   NIGHT BLACK — true-black canvas with restrained charcoal depth.
+   NIGHT BLACK — true-black canvas with near-invisible content chrome.
 
    The page canvas is pure black so OLED displays can switch those pixels off.
-   Cards remain slightly lifted from the canvas for long-session readability,
-   with hairline borders, white body type and blue decision accents. It is not
-   a dimmed Light theme and it is not the translucent, image-backed Blue theme.
+   Resting cards inherit that canvas; typography, spacing and interaction states
+   carry the hierarchy instead of opaque charcoal slabs, shadows or gradients.
+   It is not a dimmed Light theme or the translucent, image-backed Blue theme.
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-dark {
   color-scheme: dark;
@@ -546,14 +553,15 @@ html.theme-blue body {
   --edify-notification-text: #ffffff;
   --edify-notification-glow: rgba(240, 138, 62, 0.32);
 
-  /* Five-step low-light surface ladder. True black is reserved for the page
-     and shell; content planes use neutral charcoal so hierarchy stays clear. */
+  /* Night uses the filter-control plane as its single content surface. The
+     page stays true black; cards, fields, tiles and overlays share one barely
+     lifted charcoal so nesting never creates a stack of grey rectangles. */
   --edify-bg: #000000;
-  --edify-section-bg: #050505;
-  --edify-surface-muted: #080809;
+  --edify-section-bg: #000000;
+  --edify-surface-muted: #0d0d0f;
   --edify-surface: #0d0d0f;
-  --edify-surface-raised: #151518;
-  --edify-surface-hover: #1c1c20;
+  --edify-surface-raised: #0d0d0f;
+  --edify-surface-hover: #151518;
   --edify-surface-selected: #172237;
   --edify-border: rgba(255, 255, 255, 0.10);
   --edify-border-strong: rgba(255, 255, 255, 0.18);
@@ -566,31 +574,29 @@ html.theme-blue body {
   --edify-text-disabled: #7f8b9a;
 
   --edify-canvas-treatment: none;
-  --edify-surface-treatment:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 34%),
-    linear-gradient(145deg, #0f0f11 0%, #0b0b0d 100%);
-  --edify-button-primary-treatment:
-    linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-primary-hover) 62%, var(--brand-primary-active) 100%);
-  --edify-button-secondary-treatment:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  --edify-surface-treatment: none;
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
   --edify-glass-highlight: rgba(255, 255, 255, 0.055);
 
-  --edify-card-surface: #101012;
-  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
-  --edify-card-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-sm);
+  /* This is the exact filter-control treatment: near-black surface, one quiet
+     hairline, no gradient, blur, glow or elevation. */
+  --edify-card-surface: var(--edify-surface);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
   --edify-card-backdrop-filter: none;
   --edify-font-display-family: var(--edify-font-sans);
   --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);
 
-  --edify-shadow-sm: 0 1px 1px rgba(0,0,0,.38), 0 12px 28px -22px rgba(0,0,0,.92);
-  --edify-shadow-md: 0 22px 48px -30px rgba(0,0,0,.96), 0 4px 12px -8px rgba(0,0,0,.52);
-  --edify-shadow-lg: 0 38px 82px -40px rgba(0,0,0,.98), 0 12px 28px -18px rgba(0,0,0,.72);
-  --edify-shadow-drawer: -24px 0 64px -28px rgba(0,0,0,.96);
+  --edify-shadow-sm: none;
+  --edify-shadow-md: none;
+  --edify-shadow-lg: none;
+  --edify-shadow-drawer: none;
 
   --edify-topbar-bg: rgba(0, 0, 0, 0.94);
   --edify-topbar-border: var(--edify-border);
-  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.025), 0 20px 46px -32px rgba(0,0,0,.96);
+  --edify-topbar-shadow: none;
   --edify-scrim: rgba(0, 2, 6, 0.82);
   --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 32%, transparent);
   --edify-sidebar-bg:

@@ -22,7 +22,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                  { name: 'Action Required', data: {{ trend.action_required|escape }} },
                  { name: 'Critical', data: {{ trend.critical|escape }} }
                ],
-               chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+               chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
                stroke: { width: [2.5, 2, 2, 2], curve: 'smooth' },
                colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
                markers: { size: 0 },
@@ -49,7 +49,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              this.chart = new ApexCharts(el, {
                series: {{ activity_donut.counts|escape }},
                labels: [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 260, fontFamily: 'Inter, sans-serif' },
+               chart: { type: 'donut', height: 260, fontFamily: 'Geist, sans-serif' },
                colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
                legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
@@ -164,7 +164,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              this.chart = new ApexCharts(el, {
                series: {{ risk_donut.counts|escape }},
                labels: [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 220, fontFamily: 'Inter, sans-serif' },
+               chart: { type: 'donut', height: 220, fontFamily: 'Geist, sans-serif' },
                colors: ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
                legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },

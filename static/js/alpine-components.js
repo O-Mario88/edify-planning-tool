@@ -280,7 +280,7 @@ document.addEventListener('alpine:init', () => {
     },
     options(data) {
       const shared = {
-        chart: { toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+        chart: { toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
         grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
         tooltip: { theme: 'dark' },
       };

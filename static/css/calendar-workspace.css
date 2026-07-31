@@ -111,6 +111,65 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Primary server-side filters (My Plan filter design): compact labelled
+   selects above the grid, applied through the querystring. */
+.calendar-workspace__filter-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.9rem;
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.calendar-workspace__filter-field {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 11rem;
+}
+
+.calendar-workspace__filter-field select {
+  min-height: 2.25rem;
+  padding-inline: 0.65rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  color: var(--edify-text);
+  background: var(--edify-surface-muted);
+  font: var(--edify-font-label);
+  font-weight: 600;
+}
+
+.calendar-workspace__filter-field select:focus-visible {
+  border-color: var(--brand-primary);
+  outline: var(--edify-focus-outline);
+  outline-offset: 1px;
+}
+
+.calendar-workspace__clear-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  color: var(--brand-primary-text);
+  font: var(--edify-font-label);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.calendar-workspace__clear-filters:hover,
+.calendar-workspace__clear-filters:focus-visible {
+  text-decoration: underline;
+}
+
+.calendar-workspace__clear-filters svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
 .calendar-month {
   overflow: hidden;
   border: 1px solid var(--edify-card-border);
@@ -191,7 +250,7 @@
 }
 
 .calendar-month__icon-control svg,
-.calendar-month__view-label svg {
+.calendar-month__view-control svg {
   width: 1rem;
   height: 1rem;
 }
@@ -200,20 +259,14 @@
   padding-inline: 0.85rem !important;
 }
 
-.calendar-month__view-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: var(--edify-action-button-block-size);
+/* Month/Agenda switch: the selected view is the one blue primary, the
+   alternative stays secondary (shared calendar-control contract). */
+.calendar-month__view-control {
   margin-left: 0.15rem;
-  padding-inline: 0.85rem;
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-action-button-radius);
-  color: var(--edify-text-muted);
-  background: var(--edify-surface-muted);
-  font: var(--edify-font-label);
-  font-weight: 600;
-  white-space: nowrap;
+}
+
+.calendar-month__grid-region {
+  overflow-x: auto;
 }
 
 .calendar-month__grid {
@@ -326,6 +379,58 @@ a.calendar-event:focus-visible {
   background: color-mix(in oklab, var(--brand-primary-soft) 72%, transparent);
 }
 
+/* Type-family colours — one colour per programme family, every value drawn
+   from the token layer. Family classes sit after --activity so they win. */
+.calendar-event--visit {
+  color: color-mix(in oklab, var(--brand-primary-text) 82%, var(--edify-text));
+  background: color-mix(in oklab, var(--brand-primary-soft) 72%, transparent);
+}
+
+.calendar-event--training {
+  color: var(--edify-success-text);
+  background: var(--edify-success-light);
+}
+
+.calendar-event--training .calendar-event__dot {
+  background: var(--edify-success);
+}
+
+.calendar-event--cluster {
+  color: var(--edify-purple-text);
+  background: var(--edify-purple-light);
+}
+
+.calendar-event--cluster .calendar-event__dot {
+  background: var(--edify-purple);
+}
+
+.calendar-event--core {
+  color: color-mix(in oklab, var(--edify-chart-orange) 55%, var(--edify-text));
+  background: color-mix(in oklab, var(--edify-chart-orange) 10%, transparent);
+}
+
+.calendar-event--core .calendar-event__dot {
+  background: var(--edify-chart-orange);
+}
+
+.calendar-event--project {
+  color: color-mix(in oklab, var(--edify-teal) 45%, var(--edify-text));
+  background: var(--edify-teal-light);
+}
+
+.calendar-event--project .calendar-event__dot {
+  background: var(--edify-teal);
+}
+
+.calendar-event--programme {
+  color: color-mix(in oklab, var(--edify-chart-pink) 50%, var(--edify-text));
+  background: color-mix(in oklab, var(--edify-chart-pink) 10%, transparent);
+}
+
+.calendar-event--programme .calendar-event__dot {
+  background: var(--edify-chart-pink);
+}
+
 .calendar-event--leave {
   color: var(--edify-warning);
   background: var(--edify-warning-light);
@@ -334,6 +439,14 @@ a.calendar-event:focus-visible {
 .calendar-event--holiday {
   color: var(--edify-danger);
   background: var(--edify-danger-light);
+}
+
+/* Continuation days of one multi-day Activity: same chip, marked as carried
+   over from the previous day rather than starting here. */
+.calendar-event--continued {
+  border-inline-start: 3px dotted currentColor;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
 }
 
 .calendar-event__dot {
@@ -402,8 +515,82 @@ a.calendar-event:focus-visible {
 }
 
 .calendar-month__legend-dot--activity { background: var(--brand-primary); }
+.calendar-month__legend-dot--visit { background: var(--brand-primary); }
+.calendar-month__legend-dot--training { background: var(--edify-success); }
+.calendar-month__legend-dot--cluster { background: var(--edify-purple); }
+.calendar-month__legend-dot--core { background: var(--edify-chart-orange); }
+.calendar-month__legend-dot--project { background: var(--edify-teal); }
+.calendar-month__legend-dot--programme { background: var(--edify-chart-pink); }
 .calendar-month__legend-dot--leave { background: var(--edify-warning); }
 .calendar-month__legend-dot--holiday { background: var(--edify-danger); }
+
+/* Agenda list — the chronological rendering of the same month. */
+.calendar-agenda__days {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-agenda__day {
+  padding: 0.85rem clamp(0.9rem, 0.75rem + 0.55vw, 1.25rem);
+  border-bottom: 1px solid var(--edify-border);
+}
+
+.calendar-agenda__day:last-child {
+  border-bottom: 0;
+}
+
+.calendar-agenda__day--today {
+  background: color-mix(in oklab, var(--brand-primary-soft) 38%, var(--edify-surface-raised));
+}
+
+.calendar-agenda__date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.45rem;
+  color: var(--edify-text);
+  font: var(--edify-font-label);
+  font-weight: 700;
+}
+
+.calendar-agenda__today {
+  color: var(--brand-primary-text);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-agenda__events {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.calendar-agenda__empty {
+  margin: 0;
+  padding: 1.4rem clamp(0.9rem, 0.75rem + 0.55vw, 1.25rem);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-body-size);
+}
+
+/* Month view renders the agenda list instead of the grid under the lg
+   breakpoint (64rem): a seven-column grid is not phone furniture. */
+.calendar-agenda--compact {
+  display: none;
+}
+
+@media (max-width: 64rem) {
+  .calendar-month__grid-region {
+    display: none;
+  }
+
+  .calendar-agenda--compact {
+    display: block;
+  }
+}
 
 @media (max-width: 52rem) {
   .calendar-workspace__header,
@@ -418,15 +605,6 @@ a.calendar-event:focus-visible {
 
   .calendar-month__controls {
     justify-content: flex-start;
-  }
-
-  .calendar-month {
-    overflow-x: auto;
-  }
-
-  .calendar-month__toolbar,
-  .calendar-month__legend {
-    min-width: 48rem;
   }
 }
 

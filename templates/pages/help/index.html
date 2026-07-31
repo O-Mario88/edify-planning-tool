@@ -1,97 +1,74 @@
-{% extends "layouts/shell.html" %}
+{% extends "layouts/help_center.html" %}
 
 {% block title %}Knowledge Center · Edify{% endblock %}
 
-{% block shell_content %}
-<section class="help-center-main" aria-labelledby="help-title">
-  <header class="help-center-hero">
-    <div class="help-center-hero__intro">
-      <p class="help-center-kicker">Edify Knowledge Center</p>
-      <p class="edify-page-eyebrow">Support</p>
-      <h1 id="help-title" class="help-center-title edify-page-title">Find the right answer before your next step.</h1>
-      <p class="help-center-summary">Practical, role-aware guidance for every part of Edify. Start with a topic or describe the task you are trying to complete.</p>
-      <dl class="help-stat-list">
-        {% for stat in help_stats %}
-        <div><dt>{{ stat.value }}</dt><dd>{{ stat.label }}</dd></div>
-        {% endfor %}
-      </dl>
-    </div>
-    <div class="help-center-hero__search">
-      <p class="help-search-label">Search by task, feature, status or question</p>
-      <search class="help-search-panel" aria-label="Search the Knowledge Center">
-        <form action="/help/search" method="get">
-          <label class="sr-only" for="help-search">Search the Knowledge Center</label>
-          <input id="help-search" name="q" type="search" required placeholder="For example: ‘I need to submit evidence’">
-          <button class="help-search-button" type="submit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-            Search
-          </button>
-        </form>
-      </search>
-      <p class="help-role-note"><svg aria-hidden="true" class="help-role-note-icon" width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l4 4 8-9"/></svg> Showing guidance for your active role: <strong>{{ help_role }}</strong>.</p>
-    </div>
-  </header>
+{% block help_content %}
+<div class="help-article__prose">
+  <p class="text-[13px] leading-7 edify-text-muted">
+    This is the authoritative manual for the Edify Planning &amp; Monitoring
+    platform. Use the contents on the left to browse by area, or start with
+    your own role guide below. Everything here is filtered to what your active
+    role may do — opening an article never grants a permission.
+  </p>
+</div>
 
-  <section class="help-topic-section" aria-labelledby="topics-title">
-    <div class="help-topic-section__heading">
-      <div>
-        <p class="help-section-kicker">Explore by topic</p>
-        <h2 id="topics-title" class="help-section-heading">What would you like help with?</h2>
-        <p class="help-section-summary">Choose a learning area to see every guide available to you. The highlighted links give you a useful place to start.</p>
-      </div>
-      <p class="help-topic-section__hint">Pick a topic to open its full guide collection.</p>
-    </div>
+{% if role_article %}
+<section class="mt-6 rounded-surface border p-4 edify-border" aria-labelledby="role-guide-heading">
+  <p class="edify-text-caption font-bold uppercase tracking-wider edify-text-subtle">Start here</p>
+  <h2 id="role-guide-heading" class="mt-1 text-[16px] font-extrabold">
+    <a class="hover:underline edify-primary-text" href="/help/articles/{{ role_article.slug }}">{{ role_article.title }}</a>
+  </h2>
+  <p class="mt-2 text-[13px] leading-6 edify-text-muted">{{ role_article.summary }}</p>
+</section>
+{% endif %}
 
-    <ul class="help-topic-grid" role="list">
-      {% for topic in topic_cards %}
-      <li class="help-topic-card help-topic-card--{{ topic.tone }}">
-        <div class="help-topic-card__top">
-          <span class="help-topic-card__number">{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="help-topic-card__icon">{% include "partials/help/topic_icon.html" with icon=topic.icon %}</span>
-          <p class="help-topic-card__eyebrow">Learning area</p>
-          <h3><a class="help-topic-card__title" href="/help/categories/{{ topic.category.slug }}">{{ topic.category.name }}</a></h3>
-          <p class="help-topic-card__description">{{ topic.category.description }}</p>
+<section class="mt-7" aria-labelledby="areas-heading">
+  <h2 id="areas-heading" class="text-[15px] font-extrabold">Documentation areas</h2>
+  <p class="mt-1 text-[13px] edify-text-muted">Every area you are authorised to read, with the number of guides in each.</p>
+  <ul class="mt-4 grid gap-3 sm:grid-cols-2" role="list">
+    {% for group in knowledge_tree %}
+    <li>
+      <a href="{{ group.url }}" class="block h-full rounded-surface border p-4 edify-border hover:bg-[var(--edify-surface-muted)]">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-[14px] font-extrabold">{{ group.category.name }}</h3>
+          <span class="help-toc__count">{{ group.count }}</span>
         </div>
-        <div class="help-topic-card__body">
-          <p class="help-topic-card__start">Start with one of these guides</p>
-          <ul class="help-topic-card__list" role="list">
-            {% for article in topic.articles %}
-            <li><a href="/help/articles/{{ article.slug }}"><span>{{ article.title }}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a></li>
-            {% endfor %}
-          </ul>
-        </div>
-        <div class="help-topic-card__footer">
-          <span>{{ topic.count }} guide{{ topic.count|pluralize }}</span>
-          <a href="/help/categories/{{ topic.category.slug }}">View all <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg></a>
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
+        {% if group.category.description %}
+        <p class="mt-1.5 text-[12px] leading-6 edify-text-muted">{{ group.category.description }}</p>
+        {% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
 
-  <section class="help-learning-row" aria-label="Start learning and get support">
-    {% if role_article %}
-    <article class="help-learning-card">
-      <div class="help-learning-card__content">
-        <div>
-          <p class="help-section-kicker">Start with your role</p>
-          <h2>{{ role_article.title }}</h2>
-          <p>{{ role_article.summary }}</p>
-        </div>
-        <a class="help-primary-link" href="/help/articles/{{ role_article.slug }}">Open my guide</a>
-      </div>
-    </article>
-    {% endif %}
+{% if popular_workflows %}
+<section class="mt-7" aria-labelledby="workflows-heading">
+  <h2 id="workflows-heading" class="text-[15px] font-extrabold">End-to-end workflows</h2>
+  <p class="mt-1 text-[13px] edify-text-muted">How work travels from one role to the next, and what Edify does automatically at each handoff.</p>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2" role="list">
+    {% for item in popular_workflows %}
+    <li><a href="/help/articles/{{ item.slug }}" class="text-[13px] font-bold hover:underline edify-primary-text">{{ item.title }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 
-    <aside class="help-quick-card" aria-labelledby="quick-help-title">
-      <p class="help-section-kicker">Quick help</p>
-      <h2 id="quick-help-title">Need an answer now?</h2>
-      <ul class="help-quick-links" role="list">
-        <li><a href="/help/troubleshooting">Fix a common problem</a></li>
-        <li><a href="/help/glossary">Understand a word or status</a></li>
-        {% if release_notes %}<li><a href="/help/release-notes">See what changed in Edify</a></li>{% endif %}
-      </ul>
-    </aside>
-  </section>
+{% if common_problems %}
+<section class="mt-7" aria-labelledby="problems-heading">
+  <h2 id="problems-heading" class="text-[15px] font-extrabold">Common problems</h2>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2" role="list">
+    {% for item in common_problems %}
+    <li><a href="/help/articles/{{ item.slug }}" class="text-[13px] font-bold hover:underline edify-primary-text">{{ item.title }}</a></li>
+    {% endfor %}
+  </ul>
+  <a href="/help/troubleshooting" class="mt-3 inline-block text-[13px] font-bold edify-primary-text hover:underline">All troubleshooting guides</a>
+</section>
+{% endif %}
+
+<section class="mt-7 flex flex-wrap gap-3" aria-label="Reference">
+  <a href="/help/glossary" class="btn h-10">Glossary</a>
+  <a href="/help/release-notes" class="btn h-10">Release notes</a>
+  <a href="/help/export/complete" class="btn h-10">Download the manual</a>
 </section>
 {% endblock %}

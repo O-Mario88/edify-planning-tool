@@ -242,7 +242,15 @@ class RoleGatingPermissionTest(APITestCase):
         self.assertEqual(self.client.get("/system-health").status_code, 200)
 
     def test_legacy_removed_links_not_in_sidebar(self):
-        """Verify that legacy removed links (FY, Calendar, District, School Visits, Group Training, Partner Plan) are not built in sidebar."""
+        """Verify that legacy removed links are not built in the sidebar.
+
+        Calendar is deliberately NOT in this list any more. The 2026-07-30
+        Work Plan / Central Activity Calendar requirement reinstates Calendar
+        in the sidebar and explicitly supersedes the earlier instruction to
+        remove it; the calendar is now the Activity-derived central schedule
+        (one projection, no second event store). The remaining entries are
+        still retired surfaces.
+        """
         from apps.core.navigation import build_sidebar_for_user
 
         # Test CCEO sidebar
@@ -255,13 +263,23 @@ class RoleGatingPermissionTest(APITestCase):
         # Must not contain removed links
         for removed in (
             "FY",
-            "Calendar",
             "District",
             "School Visits",
             "Group Training",
             "Partner Plan",
         ):
             self.assertNotIn(removed, all_labels)
+
+        # …and the reinstated surfaces ARE present.
+        self.assertIn("Calendar", all_labels)
+        self.assertIn("Work Plan", all_labels)
+
+        labels_by_group = {
+            section["label"]: [item["label"] for item in section["items"]]
+            for section in sections
+        }
+        self.assertNotIn("Work Plan", labels_by_group["MY WORK"])
+        self.assertIn("Work Plan", labels_by_group["FINANCE & BUDGET"])
 
     def test_partner_plan_redirects_to_unified_my_plan(self):
         """Verify that partner/my-plan redirects to /my-plan."""

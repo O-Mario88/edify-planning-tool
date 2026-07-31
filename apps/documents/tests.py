@@ -165,6 +165,35 @@ class NoDuplicationTests(DocumentTestBase):
             self.assertNotIn(name, {"review_evidence", "verify_evidence"})
         self.assertTrue(callable(_evidence))
 
+    def test_upload_center_launches_only_role_authorised_workflows(self):
+        from apps.documents.upload_center import UploadCenterService
+
+        def keys(user):
+            return {
+                action["key"]
+                for action in UploadCenterService.launch_actions(user)
+            }
+
+        self.assertEqual(
+            keys(self.ia),
+            {"schools", "ssa", "training", "pd"},
+        )
+        self.assertEqual(keys(self.hr), {"policies", "pd"})
+        self.assertEqual(keys(self.cceo), {"evidence", "pd"})
+        self.assertEqual(
+            keys(self.admin),
+            {"schools", "ssa", "policies", "training", "pd"},
+        )
+
+    def test_authorised_import_tab_exists_before_the_first_batch(self):
+        from apps.documents.upload_center import UploadCenterService
+
+        tabs = {
+            tab["key"] for tab in UploadCenterService.visible_tabs(self.ia)
+        }
+
+        self.assertIn("imports", tabs)
+
 
 # ── File security ────────────────────────────────────────────────────────────
 
@@ -837,6 +866,63 @@ class DocumentPageTests(DocumentTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Upload Center", response.content.decode())
 
+    def test_upload_center_renders_ia_import_launchers(self):
+        client = Client()
+        client.force_login(self.ia)
+
+        body = client.get("/uploads").content.decode()
+
+        self.assertIn('href="/schools/upload"', body)
+        self.assertIn('href="/ssa/upload/"', body)
+        self.assertIn("Upload school data", body)
+        self.assertIn("Upload SSA scores", body)
+        self.assertNotIn("Upload policy or manual", body)
+        self.assertNotIn('id="admin-upload-drawer"', body)
+
+    def test_admin_upload_center_has_one_menu_for_every_admin_upload_action(self):
+        from apps.documents.upload_center import UploadCenterService
+
+        client = Client()
+        client.force_login(self.admin)
+
+        body = client.get("/uploads").content.decode()
+
+        self.assertIn('id="admin-upload-drawer-open"', body)
+        self.assertIn('id="admin-upload-drawer"', body)
+        self.assertIn('closedby="any"', body)
+        self.assertIn("drawer.showModal()", body)
+        self.assertIn('aria-label="Admin upload buttons"', body)
+        self.assertIn("Choose an upload type", body)
+        self.assertIn("Close upload drawer", body)
+        actions = UploadCenterService.launch_actions(self.admin)
+        self.assertGreaterEqual(
+            body.count("upload-primary-action"),
+            1 + (2 * len(actions)),
+        )
+        self.assertEqual(body.count("upload-card-actions"), 2 * len(actions))
+        self.assertEqual(
+            body.count("upload-secondary-action"),
+            2 * sum(bool(action.get("template_href")) for action in actions),
+        )
+        self.assertGreaterEqual(body.count("btn btn-primary"), 1 + (2 * len(actions)))
+        self.assertIn(
+            "upload-card-actions mt-auto flex flex-wrap items-center "
+            "justify-center",
+            body,
+        )
+        self.assertIn(
+            "upload-card-actions mt-4 flex flex-wrap items-center "
+            "justify-center",
+            body,
+        )
+        self.assertNotIn("bg-[var(--color-edify-primary)]", body)
+        for action in actions:
+            self.assertIn(f'href="{action["href"]}"', body)
+            self.assertIn(action["title"], body)
+            self.assertIn(action["action_label"], body)
+            if action.get("template_href"):
+                self.assertIn(f'href="{action["template_href"]}"', body)
+
     def test_the_upload_center_shows_only_authorised_records(self):
         from apps.documents.upload_center import UploadCenterService
 
@@ -1159,6 +1245,7 @@ class DocumentPageRenderTests(DocumentTestBase):
             self.cceo,
             _user("pl-uploads", "Program Lead"),
             _user("rvp-uploads", "RegionalVicePresident"),
+            _user("accountant-uploads", "Accountant"),
         ]
         for user in roles:
             with self.subTest(role=user.active_role):

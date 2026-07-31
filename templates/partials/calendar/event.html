@@ -1,0 +1,24 @@
+{% comment %}One calendar event chip — shared by the month grid and the agenda
+list so both views render identical data identically. Expects `event` in
+context. A multi-day Activity renders one chip per day of its range; the
+continuation days carry calendar-event--continued.{% endcomment %}
+{% if event.href %}
+<a
+  href="{{ event.href }}"
+  class="calendar-event calendar-event--{{ event.kind }}{% if event.family %} calendar-event--{{ event.family }}{% endif %}{% if event.continued %} calendar-event--continued{% endif %}"
+  x-show="eventFilter === 'all' || eventFilter === '{{ event.kind }}'"
+  title="{{ event.tooltip }}"
+>
+  <span class="calendar-event__dot" aria-hidden="true"></span>
+  <span class="calendar-event__copy"><strong>{{ event.title }}</strong>{% if event.meta %}<small>{{ event.meta }}</small>{% endif %}</span>
+</a>
+{% else %}
+<span
+  class="calendar-event calendar-event--{{ event.kind }}{% if event.family %} calendar-event--{{ event.family }}{% endif %}{% if event.continued %} calendar-event--continued{% endif %}"
+  x-show="eventFilter === 'all' || eventFilter === '{{ event.kind }}'"
+  title="{{ event.tooltip }}"
+>
+  <span class="calendar-event__dot" aria-hidden="true"></span>
+  <span class="calendar-event__copy"><strong>{{ event.title }}</strong>{% if event.meta %}<small>{{ event.meta }}</small>{% endif %}</span>
+</span>
+{% endif %}

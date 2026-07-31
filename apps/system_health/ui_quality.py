@@ -35,6 +35,8 @@ _UNSAFE_INLINE_JSON = re.compile(
     re.I,
 )
 _BUTTON = re.compile(r"<button\b[^>]*>", re.I | re.S)
+_BUTTON_ID = re.compile(r"""\bid=["']([\w:-]+)["']""")
+
 _BUTTON_BEHAVIOR = re.compile(
     r"""(?:hx-(?:get|post|put|patch|delete)
         |@(?:click|change|submit)
@@ -123,6 +125,22 @@ def ui_quality_checks() -> dict:
                 # A Django comparison can contain ">" before the HTML tag
                 # closes, making a regex-only opening-tag parse ambiguous.
                 if "{%" in opening_tag:
+                    continue
+                # A button can also be wired by a script in the same
+                # template that binds to its id (getElementById /
+                # querySelector). That is a real behaviour the attribute
+                # vocabulary above cannot see, and treating it as inert
+                # would push authors to add a decorative attribute purely to
+                # satisfy the lint. Only an id the file ACTUALLY references
+                # counts — an unreferenced id still reads as dead.
+                bound_by_script = False
+                id_match = _BUTTON_ID.search(opening_tag)
+                if id_match:
+                    button_id = id_match.group(1)
+                    bound_by_script = (
+                        f"'{button_id}'" in src or f'"{button_id}"' in src
+                    ) and src.count(button_id) > 1
+                if bound_by_script:
                     continue
                 if not _BUTTON_BEHAVIOR.search(opening_tag) or _EMPTY_HTMX.search(
                     opening_tag

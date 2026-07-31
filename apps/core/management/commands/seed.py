@@ -361,9 +361,10 @@ class Command(BaseCommand):
         # The CSV is the legacy/demo hierarchy. Reconcile it additively with
         # the current coded UBOS registry so School Profile can select every
         # mapped boundary without rewriting any existing school assignment.
-        from apps.geography.ubos_registry import ensure_ubos_subcounties
+        from apps.geography.ubos_registry import ensure_geography_reference
 
-        ubos_stats = ensure_ubos_subcounties()
+        reference_stats = ensure_geography_reference()
+        ubos_stats = reference_stats["subcounties"]
         self.stdout.write(
             f"  geography: {Region.objects.count()} regions, "
             f"{District.objects.count()} districts, {SubCounty.objects.count()} sub-counties, "

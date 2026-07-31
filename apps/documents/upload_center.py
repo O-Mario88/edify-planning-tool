@@ -109,7 +109,11 @@ def _structured_imports(principal, names) -> list[UploadRow]:
                     next_action="Review rows"
                     if batch.status == "staged"
                     else "View import results",
-                    detail_route=f"/schools/upload?batch={batch.id}",
+                    detail_route=(
+                        f"/schools/upload/{batch.id}/preview"
+                        if batch.status == "staged"
+                        else f"/schools/uploads/{batch.id}/result"
+                    ),
                     original_format="CSV / XLSX",
                     tab="imports",
                 )
@@ -135,7 +139,11 @@ def _structured_imports(principal, names) -> list[UploadRow]:
                     next_action="Resolve unmatched School IDs"
                     if unmatched
                     else "View import results",
-                    detail_route=f"/ssa/upload/?batch={batch.id}",
+                    detail_route=(
+                        f"/ssa/upload/{batch.id}/preview/"
+                        if batch.status == "staged"
+                        else f"/ssa/upload/{batch.id}/result/"
+                    ),
                     original_format="CSV",
                     tab="imports",
                 )
@@ -346,6 +354,119 @@ class UploadCenterService:
     PAGE_SIZE = 50
 
     @staticmethod
+    def launch_actions(principal) -> list[dict]:
+        """Upload entry points this user may actually complete.
+
+        Structured imports and library documents can start here directly.
+        Evidence and certificates remain attached to their owning workflow,
+        so their cards route to the relevant record list instead of creating
+        orphan files.
+        """
+        from apps.core.rbac import Permission, permissions_for_role
+        from apps.documents.services import has_permission
+
+        role = getattr(principal, "active_role", "") or ""
+        held = set(permissions_for_role(role))
+        actions: list[dict] = []
+
+        if Permission.SCHOOL_UPLOAD.value in held:
+            actions.append(
+                {
+                    "key": "schools",
+                    "category": "Structured import",
+                    "title": "School Data",
+                    "description": "Add or update schools from the approved CSV or Excel template.",
+                    "href": "/schools/upload",
+                    "action_label": "Upload school data",
+                    "template_href": "/schools/upload/template",
+                    "template_label": "Download template",
+                    "tone": "primary",
+                }
+            )
+        if Permission.SSA_UPLOAD.value in held:
+            actions.append(
+                {
+                    "key": "ssa",
+                    "category": "Structured import",
+                    "title": "SSA Scores",
+                    "description": "Import initial or monitoring SSA scores and validate every school match.",
+                    "href": "/ssa/upload/",
+                    "action_label": "Upload SSA scores",
+                    "template_href": "/ssa/upload/template",
+                    "template_label": "Download template",
+                    "tone": "primary",
+                }
+            )
+        if has_permission(principal, "documents.create"):
+            actions.append(
+                {
+                    "key": "policies",
+                    "category": "Knowledge & compliance",
+                    "title": "Policy or Manual",
+                    "description": "Create a governed document with audience, version and acknowledgement controls.",
+                    "href": "/uploads/new",
+                    "action_label": "Upload policy or manual",
+                    "tone": "document",
+                }
+            )
+        if has_permission(principal, "training_resources.create"):
+            actions.append(
+                {
+                    "key": "training",
+                    "category": "Knowledge & compliance",
+                    "title": "Training Resource",
+                    "description": "Publish a presentation, guide or training file to the resource library.",
+                    "href": "/uploads/new?kind=training",
+                    "action_label": "Upload training resource",
+                    "tone": "document",
+                }
+            )
+
+        activity_routes = {
+            "CCEO": "/my-plan",
+            "Program Lead": "/my-plan",
+            "ProjectCoordinator": "/projects/my-plan",
+            "PartnerAdmin": "/partner/activities",
+            "PartnerFieldOfficer": "/partner/activities",
+        }
+        if role in activity_routes:
+            actions.append(
+                {
+                    "key": "evidence",
+                    "category": "Workflow file",
+                    "title": "Activity Evidence",
+                    "description": "Choose an activity first, then attach attendance, photos or supporting evidence.",
+                    "href": activity_routes[role],
+                    "action_label": "Find an activity",
+                    "tone": "workflow",
+                }
+            )
+
+        if role in {
+            "CCEO",
+            "Program Lead",
+            "CountryDirector",
+            "RegionalVicePresident",
+            "ImpactAssessment",
+            "Accountant",
+            "HumanResources",
+            "ProjectCoordinator",
+            "Admin",
+        }:
+            actions.append(
+                {
+                    "key": "pd",
+                    "category": "Workflow file",
+                    "title": "PD Certificate",
+                    "description": "Open an approved professional-development record before adding completion proof.",
+                    "href": "/my-professional-development",
+                    "action_label": "Open PD records",
+                    "tone": "workflow",
+                }
+            )
+        return actions
+
+    @staticmethod
     def _require_view(principal) -> None:
         from apps.documents.services import has_permission
 
@@ -369,6 +490,15 @@ class UploadCenterService:
             present.add("documents")
         if has_permission(principal, "training_resources.create"):
             present.add("training")
+        from apps.core.rbac import Permission, permissions_for_role
+
+        held = set(
+            permissions_for_role(getattr(principal, "active_role", "") or "")
+        )
+        if held.intersection(
+            {Permission.SCHOOL_UPLOAD.value, Permission.SSA_UPLOAD.value}
+        ):
+            present.add("imports")
         out = [{"key": "all", "label": "All Authorized Uploads"}]
         out += [
             {"key": key, "label": label}

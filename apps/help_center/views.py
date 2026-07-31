@@ -19,6 +19,7 @@ from .models import (
     HelpCategory,
     HelpGlossaryTerm,
     HelpReleaseNote,
+    HelpWalkthrough,
 )
 from .services import (
     article_for_slug,
@@ -70,6 +71,16 @@ TOPIC_TONES = {
     "troubleshooting": "orange",
     "glossary": "purple",
 }
+
+
+def _shell(request, active_slug: str = "", **extra) -> dict:
+    """Context every Knowledge Center page needs: the role-aware Table of
+    Contents plus whatever the page itself adds."""
+    from apps.help_center.services import knowledge_tree
+
+    context = {"knowledge_tree": knowledge_tree(_role(request), active_slug)}
+    context.update(extra)
+    return context
 
 
 def _topic_cards(role: str) -> list[dict]:
@@ -130,32 +141,44 @@ def home(request):
     role = _role(request)
     articles = visible_articles(role)
     topic_cards = _topic_cards(role)
-    context = {
-        "topic_cards": topic_cards,
-        "help_stats": [
-            {
-                "value": sum(topic["count"] for topic in topic_cards),
-                "label": "guides for your role",
+    context = _shell(request)
+    context.update(
+        {
+            "topic_cards": topic_cards,
+            "help_stats": [
+                {
+                    "value": sum(topic["count"] for topic in topic_cards),
+                    "label": "guides for your role",
+                },
+                {"value": len(topic_cards), "label": "learning topics"},
+                {"value": "Step-by-step", "label": "plain-language lessons"},
+            ],
+            "continue_learning": personalized_articles(role, 5),
+            "role_article": article_for_slug(slug_for_role(role), role),
+            "popular_workflows": articles.filter(workflow__gt="").order_by("title")[:6],
+            "recent_articles": articles.order_by("-last_reviewed_at")[:5],
+            "common_problems": articles.filter(feature="troubleshooting").order_by(
+                "title"
+            )[:6],
+            "glossary_terms": HelpGlossaryTerm.objects.all()[:8],
+            "release_notes": HelpReleaseNote.objects.all()[:3],
+            "help_role": role,
+            # The Knowledge Center's hero field is this page's search — it is the
+            # primary thing the page exists to offer. Rather than have it sit under
+            # a second, generic top-bar search aimed at a different dataset, the
+            # top-bar control is hidden here so the page carries exactly one.
+            # The Knowledge Center now carries its own persistent Table of
+            # Contents, and search lives in the one contextual top-bar control
+            # bound to this dataset rather than a second in-page field.
+            "topbar_search": {
+                "placeholder": "Search the Knowledge Center",
+                "label": "Search help articles",
+                "name": "q",
+                "value": "",
+                "action": "/help/search",
             },
-            {"value": len(topic_cards), "label": "learning topics"},
-            {"value": "Step-by-step", "label": "plain-language lessons"},
-        ],
-        "continue_learning": personalized_articles(role, 5),
-        "role_article": article_for_slug(slug_for_role(role), role),
-        "popular_workflows": articles.filter(workflow__gt="").order_by("title")[:6],
-        "recent_articles": articles.order_by("-last_reviewed_at")[:5],
-        "common_problems": articles.filter(feature="troubleshooting").order_by("title")[
-            :6
-        ],
-        "glossary_terms": HelpGlossaryTerm.objects.all()[:8],
-        "release_notes": HelpReleaseNote.objects.all()[:3],
-        "help_role": role,
-        # The Knowledge Center's hero field is this page's search — it is the
-        # primary thing the page exists to offer. Rather than have it sit under
-        # a second, generic top-bar search aimed at a different dataset, the
-        # top-bar control is hidden here so the page carries exactly one.
-        "topbar_search": {"hide": True},
-    }
+        }
+    )
     return render(request, "pages/help/index.html", context)
 
 
@@ -176,17 +199,20 @@ def search(request):
     return render(
         request,
         "pages/help/search.html",
-        {
-            "query": query,
-            "results": results,
-            "topbar_search": {
-                "placeholder": "Search verified instructions",
-                "label": "Search help articles",
-                "name": "q",
-                "value": query,
-                "action": "/help/search",
+        _shell(
+            request,
+            **{
+                "query": query,
+                "results": results,
+                "topbar_search": {
+                    "placeholder": "Search verified instructions",
+                    "label": "Search help articles",
+                    "name": "q",
+                    "value": query,
+                    "action": "/help/search",
+                },
             },
-        },
+        ),
     )
 
 
@@ -196,10 +222,11 @@ def category(request, slug):
     return render(
         request,
         "pages/help/category.html",
-        {
-            "category": category,
-            "articles": visible_articles(_role(request)).filter(category=category),
-        },
+        _shell(
+            request,
+            category=category,
+            articles=visible_articles(_role(request)).filter(category=category),
+        ),
     )
 
 
@@ -232,7 +259,13 @@ def article(request, slug):
     return render(
         request,
         "pages/help/article.html",
-        {"article": item, "related": item.related_articles.all()},
+        _shell(
+            request,
+            item.slug,
+            article=item,
+            related=item.related_articles.all(),
+            walkthrough=HelpWalkthrough.objects.filter(article=item).first(),
+        ),
     )
 
 
@@ -241,12 +274,11 @@ def troubleshooting(request):
     return render(
         request,
         "pages/help/category.html",
-        {
-            "category": HelpCategory.objects.get(slug="troubleshooting"),
-            "articles": visible_articles(_role(request)).filter(
-                feature="troubleshooting"
-            ),
-        },
+        _shell(
+            request,
+            category=HelpCategory.objects.get(slug="troubleshooting"),
+            articles=visible_articles(_role(request)).filter(feature="troubleshooting"),
+        ),
     )
 
 
@@ -261,19 +293,22 @@ def glossary(request):
     return render(
         request,
         "pages/help/glossary.html",
-        {
-            "terms": terms,
-            "query": query,
-            # Binds the one persistent control to this page's dataset, in place
-            # of the body form that duplicated it.
-            "topbar_search": {
-                "placeholder": "Search School ID, Returned by IA, NetSuite…",
-                "label": "Search the glossary",
-                "name": "q",
-                "value": query,
-                "action": "/help/glossary",
+        _shell(
+            request,
+            **{
+                "terms": terms,
+                "query": query,
+                # Binds the one persistent control to this page's dataset, in place
+                # of the body form that duplicated it.
+                "topbar_search": {
+                    "placeholder": "Search School ID, Returned by IA, NetSuite…",
+                    "label": "Search the glossary",
+                    "name": "q",
+                    "value": query,
+                    "action": "/help/glossary",
+                },
             },
-        },
+        ),
     )
 
 
@@ -282,7 +317,10 @@ def release_notes(request):
     return render(
         request,
         "pages/help/release_notes.html",
-        {"release_notes": HelpReleaseNote.objects.prefetch_related("related_articles")},
+        _shell(
+            request,
+            release_notes=HelpReleaseNote.objects.prefetch_related("related_articles"),
+        ),
     )
 
 

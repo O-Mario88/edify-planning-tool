@@ -63,6 +63,8 @@ def upload_center_view(request):
     context["can_create_training"] = has_permission(
         request.user, "training_resources.create"
     )
+    context["upload_actions"] = UploadCenterService.launch_actions(request.user)
+    context["show_admin_upload_menu"] = request.user.active_role == "Admin"
     context["topbar_search"] = {
         "placeholder": "Search uploads…",
         "label": "Search uploads by title, context or uploader",

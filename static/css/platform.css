@@ -321,7 +321,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
 }
 
 /* Match the specificity of legacy theme rules so all registered card families
-   receive the opaque theme treatment, including feature-local components. */
+   receive the active theme treatment, including feature-local components. */
 .theme-blue main :is(
   .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
   .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
@@ -989,9 +989,9 @@ main .platform-filter-bar > :where(label, div) {
 .theme-blue main .platform-filter-bar {
   border-color: transparent;
   background: transparent;
-  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 /* Intentional dark-blue hero for high-trust operational consoles. */
@@ -1121,7 +1121,7 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   DARK WORKSPACE — CINEMATIC DEPTH, OPERATIONAL CLARITY
+   DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY
    Loaded after the legacy utility bridge so one coherent component contract
    wins across dashboards, tables, filters, drawers and HTMX partials.
    ════════════════════════════════════════════════════════════════════════════ */
@@ -1129,8 +1129,8 @@ main .platform-responsive-table [data-priority="low"] {
   background: var(--edify-topbar-bg);
   border-color: var(--edify-topbar-border);
   box-shadow: var(--edify-topbar-shadow);
-  -webkit-backdrop-filter: blur(20px) saturate(118%);
-  backdrop-filter: blur(20px) saturate(118%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .theme-dark main :where(.bg-slate-50, .bg-slate-100,
@@ -1149,9 +1149,9 @@ main .platform-responsive-table [data-priority="low"] {
   color: var(--edify-on-accent) !important;
   background-color: var(--edify-accent) !important;
   background-image: var(--edify-button-primary-treatment) !important;
-  border: 1px solid rgba(96, 165, 250, 0.62) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 10px 24px -16px rgba(37,99,235,.72) !important;
-  text-shadow: 0 1px 0 rgba(0,0,0,.18);
+  border: 1px solid var(--edify-accent) !important;
+  box-shadow: none !important;
+  text-shadow: none;
 }
 
 .theme-dark :where(.btn-primary, .edify-action-button.primary,
@@ -1163,9 +1163,9 @@ main .platform-responsive-table [data-priority="low"] {
   button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
   color: var(--edify-on-accent) !important;
   background-color: var(--edify-accent-hover) !important;
-  background-image: linear-gradient(180deg, var(--brand-primary) 0%, var(--brand-primary-hover) 62%, var(--brand-primary-active) 100%) !important;
-  border-color: rgba(147, 197, 253, 0.72) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 14px 30px -16px rgba(37,99,235,.82) !important;
+  background-image: none !important;
+  border-color: var(--edify-accent-hover) !important;
+  box-shadow: none !important;
 }
 
 .theme-dark :where(.btn-ghost, .edify-action-button.secondary,
@@ -1173,10 +1173,10 @@ main .platform-responsive-table [data-priority="low"] {
   .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
   .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary) {
   color: var(--edify-text) !important;
-  background-color: var(--edify-surface-raised) !important;
-  background-image: var(--edify-button-secondary-treatment) !important;
-  border-color: color-mix(in oklab, var(--edify-border-strong) 68%, transparent) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 8px 20px -16px rgba(0,0,0,.9) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
 }
 
 .theme-dark :where(.btn-ghost, .edify-action-button.secondary,
@@ -1191,11 +1191,11 @@ main .platform-responsive-table [data-priority="low"] {
 .theme-dark main :where(input[type="text"], input[type="email"], input[type="password"],
   input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
-  background-color: var(--edify-surface-muted) !important;
-  background-image: linear-gradient(180deg, rgba(0,0,0,.13), transparent) !important;
-  border-color: color-mix(in oklab, var(--edify-border) 70%, transparent) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
   color: var(--edify-text) !important;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,.22);
+  box-shadow: none;
 }
 
 .theme-dark main :where(input, select, textarea):hover:not(:disabled) {
@@ -1227,6 +1227,57 @@ main .platform-responsive-table [data-priority="low"] {
   background-color: color-mix(in oklab, var(--edify-accent-light) 62%, var(--edify-surface)) !important;
 }
 
+/* ── Blue workspace tables. ────────────────────────────────────────────────
+   The immersive glass theme needs stronger internal hierarchy than the flat
+   light workspace. These rules deliberately land after the shared row-led
+   contract: a distinct header band, a quiet zebra rhythm, and an unmistakable
+   hover/keyboard row keep dense operational tables scannable without turning
+   every cell back into a spreadsheet grid. */
+.theme-blue main :where(.overflow-x-auto, .overflow-auto):has(> table),
+.theme-blue .drawer-body :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  border: 1px solid var(--edify-table-divider);
+  background-color: var(--edify-table-canvas);
+  box-shadow: none;
+  scrollbar-color: var(--edify-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+.theme-blue main table thead th,
+.theme-blue .drawer-body table thead th {
+  background-color: var(--edify-table-header) !important;
+  color: var(--edify-text) !important;
+  border-block-end: 1px solid var(--edify-border-strong) !important;
+  box-shadow: none;
+}
+
+.theme-blue main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix)
+  tbody tr:nth-child(even) > :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix)
+  tbody tr:nth-child(even) > :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-alt) !important;
+}
+
+.theme-blue main table tbody tr:is(:hover, :focus-within) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table tbody tr:is(:hover, :focus-within) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-hover) !important;
+}
+
+.theme-blue main table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-selected) !important;
+}
+
+.theme-blue main table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):first-child,
+.theme-blue .drawer-body table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):first-child {
+  box-shadow: inset 3px 0 0 var(--edify-sky-400);
+}
+
 .theme-dark main :where([role="tablist"], .edify-tab-container) {
   background: transparent !important;
   border-block-end-color: var(--edify-border) !important;
@@ -1245,7 +1296,7 @@ main .platform-responsive-table [data-priority="low"] {
 
 .theme-dark .drawer-surface {
   background-color: var(--edify-surface) !important;
-  background-image: var(--edify-surface-treatment) !important;
+  background-image: none !important;
   border-color: var(--edify-border) !important;
   box-shadow: var(--edify-shadow-drawer) !important;
 }
@@ -1265,6 +1316,7 @@ main .platform-responsive-table [data-priority="low"] {
   .theme-dark {
     --edify-border: rgba(255, 255, 255, 0.18);
     --edify-border-strong: rgba(255, 255, 255, 0.30);
+    --edify-card-border: rgba(255, 255, 255, 0.36);
     --edify-text-muted: #cbd2db;
     --edify-text-subtle: #aeb8c5;
   }
@@ -1486,13 +1538,6 @@ main .platform-responsive-table [data-priority="low"] {
 
   :where(a, button, input, select, textarea, summary, [role="button"]):focus-visible {
     outline: 2px solid Highlight !important;
-  }
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .theme-blue main :where(.card, .panel, .bg-white[class*="rounded"],
-    [style*="--edify-surface"][class*="rounded"]) {
-    background-color: rgba(4, 43, 79, 0.94) !important;
   }
 }
 

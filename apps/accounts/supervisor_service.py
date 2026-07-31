@@ -7,10 +7,12 @@ previous assignment (if any) is replaced, and the old→new change is audited.
 
 from __future__ import annotations
 
+from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.rbac import EdifyRole
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
 from .models import StaffProfile, StaffSupervisorAssignment
 
@@ -131,4 +133,137 @@ def assign_supervisor(staff_id: str, data: dict, principal) -> dict:
     }
 
 
-__all__ = ["list_staff", "assign_supervisor"]
+def configure_program_lead_team(
+    program_lead_id: str, cceo_ids: list[str], principal
+) -> dict:
+    """Replace one Program Lead's CCEO team from Role Configuration.
+
+    The reporting line is the source of truth for team dashboards, approvals,
+    targets, and planning scope. A CCEO may have only one effective Program
+    Lead: selecting a CCEO already assigned elsewhere moves that relationship
+    in the same transaction.
+    """
+    if getattr(principal, "active_role", None) != EdifyRole.ADMIN.value:
+        raise Forbidden("Only an Admin can configure Program Lead teams.")
+
+    selected_ids = list(
+        dict.fromkeys(str(cceo_id).strip() for cceo_id in cceo_ids if cceo_id)
+    )
+
+    with transaction.atomic():
+        program_lead = (
+            StaffProfile.objects.select_for_update()
+            .select_related("user")
+            .filter(id=program_lead_id, deleted_at__isnull=True)
+            .filter(
+                Q(user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+                | Q(user__roles__contains=[EdifyRole.COUNTRY_PROGRAM_LEAD.value])
+            )
+            .first()
+        )
+        if not program_lead:
+            raise NotFoundError("Program Lead not found.")
+
+        cceos = list(
+            StaffProfile.objects.select_for_update()
+            .select_related("user")
+            .filter(id__in=selected_ids, deleted_at__isnull=True)
+            .filter(
+                Q(user__active_role=EdifyRole.CCEO.value)
+                | Q(user__roles__contains=[EdifyRole.CCEO.value])
+            )
+        )
+        found_ids = {str(cceo.id) for cceo in cceos}
+        missing_ids = set(selected_ids) - found_ids
+        if missing_ids:
+            raise BadRequest("One or more selected CCEOs are unavailable.")
+
+        wrong_country = [
+            cceo.user.name
+            for cceo in cceos
+            if cceo.country != program_lead.country
+        ]
+        if wrong_country:
+            raise BadRequest(
+                "A Program Lead can only manage CCEOs in the same country."
+            )
+
+        locked_links = list(
+            StaffSupervisorAssignment.objects.select_for_update()
+            .filter(
+                Q(supervisor=program_lead)
+                | Q(supervisee_id__in=selected_ids)
+            )
+            .select_related("supervisor__user")
+        )
+        current_ids = {
+            str(link.supervisee_id)
+            for link in locked_links
+            if link.supervisor_id == program_lead.id
+        }
+        previous_leads = {
+            str(link.supervisee_id): str(link.supervisor_id)
+            for link in locked_links
+            if link.supervisor_id != program_lead.id
+        }
+
+        selected_set = set(selected_ids)
+        removed_ids = sorted(current_ids - selected_set)
+        added_ids = sorted(selected_set - current_ids)
+        reassigned_ids = sorted(selected_set & set(previous_leads))
+
+        # Remove CCEOs deselected from this lead, plus any competing supervisor
+        # links for selected CCEOs. Existing correct links retain their history.
+        StaffSupervisorAssignment.objects.filter(supervisor=program_lead).exclude(
+            supervisee_id__in=selected_ids
+        ).delete()
+        if selected_ids:
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=selected_ids
+            ).exclude(supervisor=program_lead).delete()
+
+        existing_ids = set(
+            StaffSupervisorAssignment.objects.filter(
+                supervisor=program_lead, supervisee_id__in=selected_ids
+            ).values_list("supervisee_id", flat=True)
+        )
+        StaffSupervisorAssignment.objects.bulk_create(
+            [
+                StaffSupervisorAssignment(
+                    supervisee_id=cceo_id,
+                    supervisor=program_lead,
+                )
+                for cceo_id in selected_ids
+                if cceo_id not in existing_ids
+            ]
+        )
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="admin.program_lead_team_configured",
+            subject_kind="staff_profile",
+            subject_id=program_lead.id,
+            actor_id=getattr(principal, "id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload={
+                "programLeadId": str(program_lead.id),
+                "cceoIds": selected_ids,
+                "addedCceoIds": added_ids,
+                "removedCceoIds": removed_ids,
+                "reassignedCceoIds": reassigned_ids,
+            },
+        )
+
+    return {
+        "programLeadId": str(program_lead.id),
+        "programLeadName": program_lead.user.name,
+        "assignedCount": len(selected_ids),
+        "addedCount": len(added_ids),
+        "removedCount": len(removed_ids),
+        "reassignedCount": len(reassigned_ids),
+        "changedAt": timezone.now().isoformat(),
+    }
+
+
+__all__ = ["list_staff", "assign_supervisor", "configure_program_lead_team"]

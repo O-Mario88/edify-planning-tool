@@ -13,6 +13,8 @@ from __future__ import annotations
 import io
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
@@ -94,6 +96,56 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(school.region_id, self.region.id)
         self.assertEqual(school.enrollment, 320)
         self.assertEqual(school.last_enrollment_date.isoformat(), "2026-01-15")
+
+    def test_upload_request_imports_without_a_second_action(self):
+        body = "School ID,School Name\nSCH-NOW,Immediate Primary\n"
+
+        res = self._post(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertTrue(School.objects.filter(school_id="SCH-NOW").exists())
+        school = School.objects.get(school_id="SCH-NOW")
+        self.assertSetEqual(
+            set(school.quality_issues.values_list("issue_type", flat=True)),
+            {
+                "missing_phone",
+                "missing_contact",
+                "missing_enrollment",
+                "missing_sub_county",
+                "unmatched_staff",
+                "no_cluster",
+                "no_ssa",
+            },
+        )
+        self.assertEqual(
+            UploadBatch.objects.get(id=res.json()["upload_batch_id"]).status,
+            "imported",
+        )
+
+    def test_upload_query_count_does_not_grow_per_school(self):
+        def measured_upload(prefix, count):
+            rows = "".join(
+                f"{prefix}-{index},{prefix} School {index}\n"
+                for index in range(count)
+            )
+            with CaptureQueriesContext(connection) as captured:
+                response = self._post(
+                    self._csv(
+                        "School ID,School Name\n" + rows,
+                        name=f"{prefix}.csv",
+                    )
+                )
+            self.assertEqual(response.status_code, 200, response.content)
+            return len(captured)
+
+        one_school_queries = measured_upload("QUERY-SMALL", 1)
+        thirty_school_queries = measured_upload("QUERY-LARGE", 30)
+
+        self.assertLessEqual(
+            thirty_school_queries,
+            one_school_queries + 5,
+            "School import queries must be batch-bounded, not one set per row.",
+        )
 
     def test_header_variations_save_rows(self):
         body = (
@@ -308,6 +360,63 @@ class SchoolUploadTest(APITestCase):
         from apps.accounts.models import User
 
         self.assertTrue(User.objects.filter(name="Ghost Person").exists())
+        from apps.accounts.models import StaffSetupCandidate
+
+        candidate = StaffSetupCandidate.objects.get(normalized_name="ghost person")
+        self.assertEqual(candidate.school_count, 1)
+        self.assertEqual(candidate.sample_school_ids, [unmatched.id])
+
+    def test_imported_staff_becomes_default_cceo_visible_on_pl_user_page(self):
+        body = (
+            f"{EXACT_HEADERS}\n"
+            "New Field Officer,SCH-NEW-CCEO,New CCEO School,Gulu,Client,100,,,,\n"
+        )
+
+        response = self._post(self._csv(body))
+
+        self.assertEqual(response.status_code, 200, response.content)
+        imported_user = User.objects.get(name="New Field Officer")
+        imported_profile = imported_user.staff_profile
+        school = School.objects.get(school_id="SCH-NEW-CCEO")
+        self.assertEqual(imported_user.active_role, EdifyRole.CCEO.value)
+        self.assertEqual(imported_user.roles, [EdifyRole.CCEO.value])
+        self.assertEqual(imported_user.status, "pending_invited")
+        self.assertFalse(imported_user.is_active)
+        self.assertEqual(imported_profile.title, EdifyRole.CCEO.value)
+        self.assertEqual(school.account_owner_id, imported_profile.id)
+
+        program_lead = User.objects.create_user(
+            email="pl-upload-config@edify.test",
+            name="Upload Program Lead",
+            roles=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            password="password123",
+        )
+        StaffProfile.objects.create(
+            user=program_lead,
+            title=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        )
+        admin = User.objects.create_user(
+            email="admin-upload-config@edify.test",
+            name="Upload Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="password123",
+        )
+        self.client.force_login(admin)
+
+        users_page = self.client.get("/admin-panel/users?q=New+Field+Officer")
+        self.assertContains(users_page, "New Field Officer")
+        self.assertContains(users_page, EdifyRole.CCEO.value)
+        program_lead_page = self.client.get(
+            f"/admin-panel/users/{program_lead.id}"
+        )
+        self.assertContains(program_lead_page, "Managed CCEOs")
+        self.assertContains(program_lead_page, "New Field Officer")
+        imported_user_page = self.client.get(
+            f"/admin-panel/users/{imported_user.id}"
+        )
+        self.assertNotContains(imported_user_page, "Managed CCEOs")
 
     def test_row_results_persisted(self):
         body = (

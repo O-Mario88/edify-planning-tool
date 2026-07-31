@@ -292,7 +292,7 @@ class RbacGatingTestCase(TestCase):
             )
 
     def test_partner_onboarding_rbac(self):
-        """Verify that only Admin, CD, or IA can onboard partners, and others are blocked."""
+        """Verify that only Admin or CD can onboard partner organisations."""
         from apps.partners import services as partner_services
         from apps.accounts.models import User
         from apps.core.rbac import EdifyRole
@@ -331,10 +331,10 @@ class RbacGatingTestCase(TestCase):
         partner_cd = partner_services.onboard(data, cd_user)
         self.assertEqual(partner_cd["name"], "CD Test Partner")
 
-        # IA must succeed
+        # IA verifies impact data but does not administer partner identities.
         data["name"] = "IA Test Partner"
-        partner_ia = partner_services.onboard(data, ia_user)
-        self.assertEqual(partner_ia["name"], "IA Test Partner")
+        with self.assertRaises(Forbidden):
+            partner_services.onboard(data, ia_user)
 
         # Other roles (e.g., CCEO, Accountant) must be blocked
         with self.assertRaises(Forbidden):

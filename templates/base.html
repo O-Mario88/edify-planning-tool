@@ -48,32 +48,32 @@
   })();
 </script>
 
-<!-- Typography: Inter — enterprise standard for premium data-dense dashboards. -->
+<!-- Typography: Geist Sans — the platform typeface for premium data-dense dashboards. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260729fundlayout1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731geist1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260727barcharts1">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260729kpiband2">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260725settingsgear2">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731blueflat3">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260731blueflat3">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731accountsplit1">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260726cardrows2">
 <link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260725typetiers6">
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260730attendancepopover1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260727noheaderhover1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260731blueflat3">
     <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260727timelinerow1">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260731flathero1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -295,7 +295,7 @@ button, a, select, input, textarea {
       align: 'center',
       verticalAlign: 'middle',
       style: {
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'Geist, sans-serif',
         fontSize: '13px',
         /* Read from the token rather than hardcoded so the message sits at the
            same contrast as other muted copy. */
@@ -308,7 +308,7 @@ button, a, select, input, textarea {
        smooth accent line, no axis chrome, soft legend) is consistent without
        editing each template. */
     chart: {
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'Geist, sans-serif',
       foreColor: 'var(--edify-text-muted)',
       toolbar: { show: false },
       animations: { enabled: true, speed: 350 },
@@ -353,8 +353,8 @@ button, a, select, input, textarea {
       labels: { colors: 'var(--edify-text-muted)' },
       itemMargin: { horizontal: 10, vertical: 0 },
     },
-    tooltip: { theme: 'dark', style: { fontSize: '12px', fontFamily: 'Inter' } },
-    dataLabels: { style: { fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 600 } },
+    tooltip: { theme: 'dark', style: { fontSize: '12px', fontFamily: 'Geist' } },
+    dataLabels: { style: { fontFamily: 'Geist, sans-serif', fontSize: '12px', fontWeight: 600 } },
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>

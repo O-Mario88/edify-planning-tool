@@ -6,7 +6,9 @@ from django.test import SimpleTestCase, TestCase
 
 from apps.geography.models import District, Region, SubCounty
 from apps.geography.ubos_registry import (
+    boundary_district_canonical,
     district_canonical,
+    ensure_ubos_districts,
     ensure_ubos_subcounties,
     load_registry,
 )
@@ -24,10 +26,11 @@ class UbosRegistrySourceContractTest(SimpleTestCase):
             2205,
         )
 
-    def test_city_and_new_districts_use_the_overview_parent_contract(self):
+    def test_cities_fold_but_current_districts_keep_their_identity(self):
         self.assertEqual(district_canonical("Gulu City"), "GULU")
         self.assertEqual(district_canonical("Fort Portal City"), "KABAROLE")
-        self.assertEqual(district_canonical("Terego"), "ARUA")
+        self.assertEqual(district_canonical("Terego"), "TEREGO")
+        self.assertEqual(boundary_district_canonical("Terego"), "ARUA")
         self.assertEqual(district_canonical("Luwero"), "LUWEERO")
 
 
@@ -159,3 +162,54 @@ class UbosRegistrySyncTest(TestCase):
         self.assertEqual(stats["planned_create"], 1)
         self.assertEqual(stats["created"], 0)
         self.assertFalse(SubCounty.objects.filter(pcode="301102").exists())
+
+    def test_terego_subcounties_are_not_folded_into_arua(self):
+        arua = District.objects.create(name="Arua", region=self.region)
+        terego = District.objects.create(name="Terego", region=self.region)
+        path = self._registry(
+            [
+                self._row(
+                    code="340102",
+                    name="ODUPI",
+                    district="TEREGO",
+                    county="Terego East County",
+                )
+            ]
+        )
+
+        stats = ensure_ubos_subcounties(path=path)
+
+        self.assertEqual(stats["created"], 1)
+        self.assertTrue(
+            SubCounty.objects.filter(
+                district=terego,
+                pcode="340102",
+                name="Odupi",
+            ).exists()
+        )
+        self.assertFalse(SubCounty.objects.filter(district=arua).exists())
+
+    def test_current_terego_district_is_added_to_northern_region(self):
+        path = self._registry(
+            [
+                {
+                    **self._row(
+                        code="340102",
+                        name="ODUPI",
+                        district="TEREGO",
+                        county="Terego East County",
+                    ),
+                    "district_code": "340",
+                    "region_code": "3",
+                }
+            ]
+        )
+
+        first = ensure_ubos_districts(path=path)
+        second = ensure_ubos_districts(path=path)
+
+        terego = District.objects.get(name="Terego")
+        self.assertEqual(terego.region, self.region)
+        self.assertEqual(terego.code, "340")
+        self.assertEqual(first["created"], 1)
+        self.assertEqual(second["created"], 0)

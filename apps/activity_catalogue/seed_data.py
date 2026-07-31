@@ -42,6 +42,10 @@ def _item(
     client_training=False,
     core_slot_type="",
     support_objective="SSA_INTERVENTION_SUPPORT",
+    non_school=False,
+    multi_day=False,
+    participant_counts=False,
+    programme_category="",
 ):
     return {
         "stable_code": stable_code,
@@ -74,6 +78,13 @@ def _item(
         "follow_up_required": requires_source,
         "mapping_mode": mapping_mode,
         "intervention": intervention,
+        # A Group-delivered camp/conference happens at a venue, not at a
+        # school: it may ALSO be planned centrally from the Work Plan with a
+        # strategic rationale instead of a per-school SSA recommendation.
+        "non_school_allowed": non_school,
+        "multi_day_allowed": multi_day,
+        "requires_participant_counts": participant_counts,
+        "programme_category": programme_category,
     }
 
 
@@ -350,7 +361,11 @@ CATALOGUE_ITEMS = [
         intervention=I.CHRISTLIKE_BEHAVIOUR,
         target_audience="Students",
         evidence_profile="YOUTH_CAMP_SAFEGUARDING",
-        costing_profile="GROUP_YOUTH_CAMP",
+        costing_profile="PROGRAMME_EVENT",
+        non_school=True,
+        multi_day=True,
+        participant_counts=True,
+        programme_category="Student Programmes",
     ),
     _item(
         "STUDENT_LEADERSHIP_CAMPS",
@@ -361,7 +376,11 @@ CATALOGUE_ITEMS = [
         intervention=I.CHRISTLIKE_BEHAVIOUR,
         target_audience="Student leaders",
         evidence_profile="YOUTH_CAMP_SAFEGUARDING",
-        costing_profile="GROUP_YOUTH_CAMP",
+        costing_profile="PROGRAMME_EVENT",
+        non_school=True,
+        multi_day=True,
+        participant_counts=True,
+        programme_category="Student Programmes",
     ),
     _item(
         "STUDENT_CONFERENCE_CAMPS",
@@ -372,7 +391,11 @@ CATALOGUE_ITEMS = [
         intervention=I.CHRISTLIKE_BEHAVIOUR,
         target_audience="Students",
         evidence_profile="YOUTH_CAMP_SAFEGUARDING",
-        costing_profile="GROUP_YOUTH_CAMP",
+        costing_profile="PROGRAMME_EVENT",
+        non_school=True,
+        multi_day=True,
+        participant_counts=True,
+        programme_category="Student Programmes",
     ),
     _item(
         "TEACHER_PEDAGOGY_PROFESSIONALISM",
@@ -393,7 +416,11 @@ CATALOGUE_ITEMS = [
         ActivityType.TRAINING,
         intervention=I.TEACHING_ENVIRONMENT,
         target_audience="Teachers and school leaders",
-        costing_profile="GROUP_YOUTH_CAMP",
+        costing_profile="PROGRAMME_EVENT",
+        non_school=True,
+        multi_day=True,
+        participant_counts=True,
+        programme_category="People Development",
     ),
     _item(
         "CC_SEL",

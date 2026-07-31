@@ -110,6 +110,7 @@ _COSTING_PROFILE_ACTIVITY_TYPE = {
     "ADMIN_PARTNER_MEETING": "partner_activity",
     "SSA_DATA_GATHERING": "baseline_ssa_visit",
     "GROUP_YOUTH_CAMP": "training",
+    "PROGRAMME_EVENT": "programme_event",
 }
 
 
@@ -283,6 +284,108 @@ def _line_item_type(key: str) -> str:
 
 
 # ── Persist (the canonical budget-line writer) ───────────────────────────────
+def _programme_period_specs(cost, activity, planned_date):
+    """§9 cross-period allocation for multi-day activities.
+
+    Returns [(line, service_date, qty, amount, key_suffix)] — one spec per
+    persisted budget line. A single-month activity keeps one line per
+    component dated at its start. When the range crosses a month boundary,
+    day-scaled components are split into one line per month carrying the days
+    that month actually hosts, dated at that month's first service day (the
+    documented within-month rule: funding is drawn ahead of delivery).
+
+    TOTAL-PRESERVING BY CONSTRUCTION. An earlier version divided each line's
+    quantity by the number of days, which silently DELETED any component
+    whose quantity did not scale per day (`1 // 3 == 0` dropped a whole venue
+    fee) and rounded participant meals down. Here the split is driven by the
+    line's own amount using largest-remainder, and the per-month amounts are
+    asserted to re-sum to the original — a cross-period activity can never
+    cost less than a same-month one.
+
+    Key suffixes (``#mYYYYMM``) keep the one-component-per-key database
+    constraint meaningful: a component may legitimately recur once per month.
+    """
+    from datetime import timedelta
+
+    end = activity.end_date
+    if not (
+        planned_date
+        and end
+        and end > planned_date
+        and (end.year, end.month) != (planned_date.year, planned_date.month)
+    ):
+        return [(line, planned_date, line.qty, line.amount, "") for line in cost.lines]
+
+    days = [
+        planned_date + timedelta(days=i) for i in range((end - planned_date).days + 1)
+    ]
+    months: list[tuple[int, int]] = []
+    for d in days:
+        if (d.year, d.month) not in months:
+            months.append((d.year, d.month))
+    first_day_in_month: dict[tuple[int, int], object] = {}
+    for d in days:
+        first_day_in_month.setdefault((d.year, d.month), d)
+    days_in_month = {
+        ym: sum(1 for d in days if (d.year, d.month) == ym) for ym in months
+    }
+
+    # Components that accrue per service day. Anything else (materials,
+    # registration, a one-off deposit) belongs to the first service day.
+    PER_DAY_KEYS = {
+        "programme_venue_per_day",
+        "programme_facilitation_per_day",
+        "programme_transport_per_day",
+        "programme_participant_meal_cost_per_head",
+        "programme_accommodation_per_night",
+        "group_training_participant_meal_cost_per_head",
+        "group_training_facilitation_fee",
+        "group_training_venue_cost",
+    }
+
+    def _largest_remainder(total: int, weights: list[int]) -> list[int]:
+        """Split `total` across `weights`, preserving the total exactly."""
+        weight_sum = sum(weights)
+        if weight_sum <= 0:
+            return [total] + [0] * (len(weights) - 1)
+        raw = [total * w / weight_sum for w in weights]
+        floors = [int(x) for x in raw]
+        shortfall = total - sum(floors)
+        order = sorted(range(len(raw)), key=lambda i: raw[i] - floors[i], reverse=True)
+        for i in range(shortfall):
+            floors[order[i % len(order)]] += 1
+        return floors
+
+    specs = []
+    for line in cost.lines:
+        if line.key not in PER_DAY_KEYS or not line.amount:
+            specs.append((line, planned_date, line.qty, line.amount, ""))
+            continue
+        # Accommodation is slept every night except the last day.
+        if line.key.endswith("accommodation_per_night"):
+            nights = days[:-1]
+            weights = [
+                sum(1 for d in nights if (d.year, d.month) == ym) for ym in months
+            ]
+        else:
+            weights = [days_in_month[ym] for ym in months]
+        amounts = _largest_remainder(int(line.amount), weights)
+        qtys = _largest_remainder(int(line.qty), weights)
+        assert sum(amounts) == int(line.amount), (line.key, amounts, line.amount)
+        for ym, amount, qty in zip(months, amounts, qtys):
+            if amount or qty:
+                specs.append(
+                    (
+                        line,
+                        first_day_in_month[ym],
+                        qty,
+                        amount,
+                        f"#m{ym[0]:04d}{ym[1]:02d}",
+                    )
+                )
+    return specs
+
+
 def apply_to_activity(
     activity: Activity,
     input: dict,
@@ -472,15 +575,36 @@ def apply_to_activity(
                 else "Core Training"
             )
 
-        ActivityScheduleCostLine.objects.bulk_create(
-            [
+        # §9: each budget line carries its own service/allocation date so a
+        # multi-day activity crossing a month (or quarter/FY) boundary lands
+        # its cost in the periods the work actually happens in. Single-month
+        # activities keep the activity's own period stamps unchanged.
+        line_specs = _programme_period_specs(cost, activity, planned_date)
+
+        def _line_periods(service_date):
+            if service_date is None:
+                return planned_date, week_start, week_end, month, quarter, fiscal_year
+            ws = service_date - timedelta(days=service_date.weekday())
+            return (
+                service_date,
+                ws,
+                ws + timedelta(days=6),
+                service_date.month,
+                get_quarter_for_date(service_date),
+                get_operational_fy(service_date),
+            )
+
+        rows = []
+        for line, service_date, qty, amount, key_suffix in line_specs:
+            l_date, l_ws, l_we, l_month, l_quarter, l_fy = _line_periods(service_date)
+            rows.append(
                 ActivityScheduleCostLine(
                     activity=activity,
-                    cost_setting_key=line.key,
+                    cost_setting_key=f"{line.key}{key_suffix}",
                     label=line.label,
                     unit_cost=0 if line.unit is None else int(line.unit),
-                    quantity=int(line.qty),
-                    amount=int(line.amount),
+                    quantity=int(qty),
+                    amount=int(amount),
                     cost_setting_version=(
                         settings_by_key[line.key].version
                         if line.key in settings_by_key
@@ -494,13 +618,13 @@ def apply_to_activity(
                     line_item_type=_line_item_type(line.key),
                     currency="UGX",
                     description=f"[{tag}] {line.label}" if tag else line.label,
-                    total_cost=int(line.amount),
-                    planned_date=planned_date,
-                    week_start_date=week_start,
-                    week_end_date=week_end,
-                    month=month,
-                    quarter=quarter,
-                    fiscal_year=fiscal_year,
+                    total_cost=int(amount),
+                    planned_date=l_date,
+                    week_start_date=l_ws,
+                    week_end_date=l_we,
+                    month=l_month,
+                    quarter=l_quarter,
+                    fiscal_year=l_fy,
                     responsible_user=responsible_user_id
                     or activity.responsible_staff_id,
                     responsible_role=None,
@@ -509,9 +633,8 @@ def apply_to_activity(
                     partner_id=activity.assigned_partner_id or None,
                     project_id=activity.project_id,
                 )
-                for line in cost.lines
-            ]
-        )
+            )
+        ActivityScheduleCostLine.objects.bulk_create(rows)
         activity.est_cost_cents = int(cost.amount)
         activity.cost_missing = cost.cost_missing or catalogue is None
         activity.save(

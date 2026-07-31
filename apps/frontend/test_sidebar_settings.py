@@ -1,10 +1,7 @@
-"""Settings live behind the gear in the sidebar's bottom-left corner.
+"""Account identity and workspace settings have separate shell controls.
 
-That corner used to hold a decorative avatar — it showed who you were and did
-nothing — while the only route into settings was a menu behind the topbar
-avatar. These tests hold the gear in place and, more importantly, hold the
-settings actually wired to it: a menu of links that go nowhere would look
-identical to a working one in a screenshot.
+The upper-right avatar owns name, title and Log out. The sidebar footer is one
+gear icon whose panel owns appearance, settings links and sidebar layout.
 """
 
 from __future__ import annotations
@@ -21,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SIDEBAR = ROOT / "templates" / "components" / "sidebar.html"
 SHELL = ROOT / "templates" / "layouts" / "shell.html"
 BASE_DRAWER = ROOT / "templates" / "components" / "drawers" / "base_drawer.html"
+SETTINGS_PAGE = ROOT / "templates" / "pages" / "settings" / "index.html"
 
 # Everything the Settings page offers, reachable from the gear.
 SETTINGS_DESTINATIONS = ["/settings", "/profile", "/change-password", "/notifications"]
@@ -33,15 +31,12 @@ class SidebarSettingsMarkupTest(TestCase):
 
     def test_the_corner_is_a_settings_control_not_a_decorative_avatar(self):
         self.assertIn("app-sidebar__settings-trigger", self.src)
-        self.assertIn('aria-label="Settings and account"', self.src)
-        self.assertIn('aria-haspopup="true"', self.src)
-        # The initials block that used to sit here is gone.
+        self.assertIn('aria-label="Settings"', self.src)
         self.assertNotIn("avatar_initials", self.src)
-
-    def test_the_signed_in_identity_is_still_shown(self):
-        """Knowing which account you are in is the other job of this corner."""
-        self.assertIn("app-sidebar__user-name", self.src)
-        self.assertIn("app-sidebar__user-role", self.src)
+        self.assertNotIn("app-sidebar__user-name", self.src)
+        self.assertNotIn("app-sidebar__user-role", self.src)
+        self.assertNotIn("request.user.name", self.src)
+        self.assertNotIn("request.user.active_role", self.src)
 
     def test_every_theme_is_wired_to_the_real_theme_store(self):
         for theme in THEMES:
@@ -49,11 +44,28 @@ class SidebarSettingsMarkupTest(TestCase):
                 self.assertIn(f"$store.theme.setTheme('{theme}')", self.src)
                 self.assertIn(f"$store.theme.preference === '{theme}'", self.src)
 
-    def test_sign_out_posts_with_a_csrf_token(self):
-        """A GET logout link would be triggerable cross-site."""
-        self.assertIn('action="/logout"', self.src)
-        form = self.src.split('action="/logout"', 1)[1]
+    def test_account_identity_and_logout_live_in_the_top_avatar(self):
+        shell = SHELL.read_text()
+        self.assertIn("request.user.name", shell)
+        self.assertIn("request.user.active_role", shell)
+        self.assertIn('action="/logout"', shell)
+        form = shell.split('action="/logout"', 1)[1]
         self.assertIn("csrf_token", form.split("</form>", 1)[0])
+        self.assertIn("Log out", form.split("</form>", 1)[0])
+        self.assertNotIn('action="/logout"', self.src)
+
+    def test_collapse_is_an_item_inside_settings_not_a_footer_row(self):
+        self.assertIn("collapsed = !collapsed; settingsOpen = false", self.src)
+        self.assertIn("Collapse sidebar", self.src)
+        self.assertIn("Expand sidebar", self.src)
+        self.assertNotIn("app-sidebar__collapse-btn", self.src)
+
+    def test_settings_page_does_not_repeat_identity_or_logout(self):
+        settings = SETTINGS_PAGE.read_text()
+        self.assertNotIn("{{ user.name }}", settings)
+        self.assertNotIn("{{ user.active_role }}", settings)
+        self.assertNotIn('action="/logout"', settings)
+        self.assertIn("avatar in the upper-right corner", settings)
 
     def test_mobile_navigation_restores_focus_and_hides_background(self):
         shell = SHELL.read_text()
@@ -110,5 +122,8 @@ class SidebarSettingsWiringTest(TestCase):
         self.assertIn("app-sidebar__settings-trigger", body)
         for url in SETTINGS_DESTINATIONS:
             self.assertIn(f'href="{url}"', body)
-        # And the identity it labels itself with is this user's.
+        # Identity and title are rendered once in the upper-right account menu.
         self.assertIn("Gear Tester", body)
+        self.assertIn("CountryDirector", body)
+        self.assertIn("Log out", body)
+        self.assertEqual(body.count('action="/logout"'), 1)

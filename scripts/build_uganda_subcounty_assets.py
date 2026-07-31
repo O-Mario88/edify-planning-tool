@@ -32,7 +32,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from apps.geography.ubos_registry import canonical, district_canonical  # noqa: E402
+from apps.geography.ubos_registry import (  # noqa: E402
+    boundary_district_canonical,
+    canonical,
+)
 
 
 DEFAULT_SOURCE = ROOT / "data/geography/uganda_subcounties_ubos_nphc2024_live.geojson"
@@ -131,7 +134,7 @@ def build(source: Path, district_source: Path, output: Path, index_path: Path) -
     source_by_district = defaultdict(list)
     for feature in source_payload["features"]:
         source_by_district[
-            district_canonical(feature["properties"]["district_name"])
+            boundary_district_canonical(feature["properties"]["district_name"])
         ].append(feature)
 
     index = {
@@ -154,7 +157,7 @@ def build(source: Path, district_source: Path, output: Path, index_path: Path) -
         district_payload["features"], key=lambda feature: feature["properties"]["d"]
     ):
         district_name = district_feature["properties"]["d"]
-        district_key = district_canonical(district_name)
+        district_key = boundary_district_canonical(district_name)
         source_features = sorted(
             source_by_district.get(district_key, []),
             key=lambda feature: str(feature["properties"]["code"]),

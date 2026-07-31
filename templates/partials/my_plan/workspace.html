@@ -34,6 +34,11 @@ work; the Dashboard is where the day is summarised.
 <!-- 3. Cluster Meetings Planned for This Week -->
 {% include "partials/my_plan/cluster_meetings.html" %}
 
+<!-- 4. Non-school programme activities (conferences, camps, exhibitions) -->
+{% if programme_activities %}
+{% include "partials/my_plan/programme_activities.html" %}
+{% endif %}
+
 </div>
 
 <!-- Bottom Period breakdown -->

@@ -16,7 +16,7 @@
 </div>
 <p class="edify-page-eyebrow">Administration</p>
 <h1 class="text-[21px] font-extrabold tracking-tight mt-1 edify-page-title">{{ member.name }}</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, reporting teams, credentials, and account lifecycle status.</p>
 </div>
 
 <div class="flex gap-2">
@@ -189,6 +189,60 @@ Save Profile Updates
 </div>
 </form>
 </div>
+
+{% if is_program_lead and can_configure_program_lead_team %}
+<!-- Program Lead reporting team -->
+<div class="edify-surface rounded-overlay border border-[var(--border-card)] shadow-sm p-6">
+<div class="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+<div>
+<h2 class="text-[14px] font-extrabold uppercase tracking-wider text-slate-800">Managed CCEOs</h2>
+<p class="mt-1 text-[12px] font-medium text-slate-500">Choose the CCEOs who report to {{ member.name }}. These assignments control team dashboards, targets, approvals, and planning scope.</p>
+</div>
+{% if program_lead_team %}
+<span class="shrink-0 rounded-pill bg-[var(--color-edify-soft)] px-2.5 py-1 edify-text-caption font-bold text-[var(--color-edify-primary)]">{{ program_lead_team.assigned_count }} assigned</span>
+{% endif %}
+</div>
+
+{% if program_lead_team %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="mt-4">
+{% csrf_token %}
+<input type="hidden" name="action" value="configure_program_lead_team">
+<fieldset aria-describedby="program-lead-team-hint">
+<legend class="text-[12px] font-bold text-slate-700">{{ program_lead_team.country }} CCEOs</legend>
+<p id="program-lead-team-hint" class="mt-1 edify-text-caption font-medium text-slate-500">Selecting a CCEO who currently reports to another Program Lead will move them to {{ member.name }}'s team.</p>
+
+{% if program_lead_team.cceos %}
+<div class="mt-3 max-h-72 space-y-1.5 overflow-y-auto rounded-surface border border-slate-100 bg-slate-50/50 p-2">
+{% for cceo in program_lead_team.cceos %}
+<label for="program-lead-{{ member.id }}-cceo-{{ cceo.id }}" class="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border px-3 py-2 transition-colors {% if cceo.assigned %}border-emerald-200 bg-emerald-50/60{% else %}border-transparent bg-white hover:border-slate-200{% endif %}">
+<input id="program-lead-{{ member.id }}-cceo-{{ cceo.id }}" type="checkbox" name="cceo_ids" value="{{ cceo.id }}" {% if cceo.assigned %}checked{% endif %} class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-primary-focus">
+<span class="min-w-0 flex-1">
+<span class="block truncate text-[12px] font-bold text-slate-700">{{ cceo.name }}</span>
+<span class="block truncate edify-text-caption font-medium text-slate-400">{{ cceo.email }} · {{ cceo.status|capfirst }}</span>
+{% if cceo.other_lead %}
+<span class="mt-0.5 block edify-text-caption font-bold text-amber-700">Currently managed by {{ cceo.other_lead }} — selecting will reassign</span>
+{% endif %}
+</span>
+</label>
+{% endfor %}
+</div>
+{% else %}
+<div class="mt-3 rounded-surface border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center">
+<p class="text-[12px] font-bold text-slate-600">No CCEOs are available in {{ program_lead_team.country }}.</p>
+<p class="mt-1 edify-text-caption font-medium text-slate-400">Create or update a CCEO user in the same country first.</p>
+</div>
+{% endif %}
+
+<div class="mt-4 flex justify-end border-t border-slate-100 pt-4">
+<button type="submit" class="min-h-11 rounded-control bg-[var(--color-edify-primary)] px-4 text-[12px] font-bold text-white transition-all hover:bg-[var(--color-edify-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">Save managed CCEOs</button>
+</div>
+</fieldset>
+</form>
+{% else %}
+<div class="mt-4 rounded-surface border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] font-semibold text-amber-800">Save this Program Lead's profile before assigning their CCEOs.</div>
+{% endif %}
+</div>
+{% endif %}
 
 </div>
 

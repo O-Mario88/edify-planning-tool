@@ -9,13 +9,15 @@ scores fail those rows truthfully.
 from __future__ import annotations
 
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import User
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
-from apps.schools.models import School
+from apps.schools.models import DataQualityIssue, School
 from apps.ssa.models import SsaRecord
 
 
@@ -81,6 +83,58 @@ class SsaUploadTest(APITestCase):
         self.school.refresh_from_db()
         self.assertEqual(self.school.current_fy_ssa_status, "done")
         self.assertEqual(self.school.planning_readiness, "requires_cluster")
+
+    def test_upload_request_imports_without_a_second_action(self):
+        body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
+
+        res = self._post(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertTrue(SsaRecord.objects.filter(school=self.school).exists())
+        self.assertFalse(
+            DataQualityIssue.objects.filter(
+                school=self.school,
+                status="open",
+                issue_type="no_ssa",
+            ).exists()
+        )
+
+    def test_upload_query_count_does_not_grow_per_ssa_row(self):
+        def measured_upload(prefix, count):
+            schools = [
+                School(
+                    school_id=f"{prefix}-{index}",
+                    name=f"{prefix} School {index}",
+                    region=self.region,
+                    district=self.district,
+                )
+                for index in range(count)
+            ]
+            for school in schools:
+                school.recompute_quality_and_readiness()
+            School.objects.bulk_create(schools)
+            rows = "".join(
+                f"{school.school_id},2025-06-15,{SCORES}\n"
+                for school in schools
+            )
+            with CaptureQueriesContext(connection) as captured:
+                response = self._post(
+                    self._csv(
+                        f"{SSA_HEADERS}\n{rows}",
+                        name=f"{prefix}.csv",
+                    )
+                )
+            self.assertEqual(response.status_code, 200, response.content)
+            return len(captured)
+
+        one_row_queries = measured_upload("SSA-QUERY-SMALL", 1)
+        thirty_row_queries = measured_upload("SSA-QUERY-LARGE", 30)
+
+        self.assertLessEqual(
+            thirty_row_queries,
+            one_row_queries + 5,
+            "SSA import queries must be batch-bounded, not one set per row.",
+        )
 
     def test_download_template_score_headers_are_accepted(self):
         body = (

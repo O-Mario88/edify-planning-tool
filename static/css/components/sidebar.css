@@ -346,34 +346,16 @@
   flex-shrink: 0;
 }
 
-.app-sidebar__user-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-sidebar__user-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__user-role {
-  font-size: 10px;
-  color: rgba(148, 163, 184, 0.7);
-  text-transform: capitalize;
-}
-
 /* ── Settings control (bottom-left) ─────────────────────────────────────── */
 .app-sidebar__settings {
   position: relative;
 }
 
 .app-sidebar__settings-trigger {
-  width: 100%;
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  justify-content: center;
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -396,19 +378,6 @@
 .app-sidebar__settings-trigger .app-sidebar__user-avatar svg {
   width: 17px;
   height: 17px;
-}
-
-.app-sidebar__settings-caret {
-  width: 13px;
-  height: 13px;
-  margin-left: auto;
-  flex-shrink: 0;
-  color: rgba(148, 163, 184, 0.7);
-  transition: transform .15s ease;
-}
-
-.app-sidebar__settings-caret.is-open {
-  transform: rotate(180deg);
 }
 
 /* Opens upward: this control sits on the bottom edge, so a downward menu
@@ -504,13 +473,12 @@
   color: #ffffff;
 }
 
-.app-sidebar__settings-item--danger {
-  color: #fca5a5;
-}
-
-.app-sidebar__settings-item--danger:hover {
-  background: rgba(248, 113, 113, 0.14);
-  color: #fecaca;
+.app-sidebar__settings-item svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  flex: 0 0 auto;
+  transition: transform .15s ease;
 }
 
 /* Collapsed to the 72px rail the menu cannot fit inside it, so it flies out
@@ -522,30 +490,8 @@
   width: 212px;
 }
 
-.app-sidebar--collapsed .app-sidebar__settings-caret {
-  display: none;
-}
-
-.app-sidebar__collapse-btn {
-  margin-top: 8px;
-  width: 100%;
-  height: 30px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(148, 163, 184, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-}
-.app-sidebar__collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e2e8f0;
+.app-sidebar--collapsed .app-sidebar__settings-trigger {
+  margin-inline: auto;
 }
 
 /* ── Collapsed state ───────────────────────────────────────────────────── */
@@ -558,9 +504,7 @@
 .app-sidebar--collapsed .app-sidebar__brand-name,
 .app-sidebar--collapsed .app-sidebar__section-title,
 .app-sidebar--collapsed .app-sidebar__item-label,
-.app-sidebar--collapsed .app-sidebar__item-badge,
-.app-sidebar--collapsed .app-sidebar__user-info,
-.app-sidebar--collapsed .app-sidebar__collapse-btn span {
+.app-sidebar--collapsed .app-sidebar__item-badge {
   display: none;
 }
 
@@ -625,9 +569,6 @@
 }
 .app-sidebar--collapsed .app-sidebar__user {
   justify-content: center;
-}
-.app-sidebar--collapsed .app-sidebar__collapse-btn {
-  height: 30px;
 }
 .app-sidebar--collapsed .app-sidebar__item--active::before {
   left: -8px;

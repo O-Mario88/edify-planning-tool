@@ -180,6 +180,46 @@ class ActivityType(models.TextChoices):
     )
     PARTNER_SSA_COLLECTION = "partner_ssa_collection", "Partner SSA Collection"
     CORE_ASSESSMENT_VISIT = "core_assessment_visit", "Core Assessment Visit"
+    # Dated programme work that does not originate from a school or cluster
+    # plan: conferences, student camps, exhibitions, launches, stakeholder
+    # events, staff workshops. Still a full canonical Activity.
+    PROGRAMME_EVENT = "programme_event", "Programme Event"
+
+
+class PlanningSource(models.TextChoices):
+    """Where a planned Activity's budget authority originates (§1: every
+    amount in an operational budget must originate from a dated plan)."""
+
+    SCHOOL_PLANNING = "school_planning", "School Planning"
+    CLUSTER_PLANNING = "cluster_planning", "Cluster Planning"
+    CORE_PLANNING = "core_planning", "Core School Planning"
+    PROJECT_PLANNING = "project_planning", "Special Project Planning"
+    MANUAL_WORK_PLAN = "manual_work_plan", "Work Plan (Non-School)"
+
+
+class ActivityContextType(models.TextChoices):
+    SCHOOL = "school", "School"
+    CLUSTER = "cluster", "Cluster"
+    PROJECT = "project", "Project"
+    PROGRAMME = "programme", "Programme"
+    ORGANIZATION = "organization", "Organization"
+
+
+class SupportRationale(models.TextChoices):
+    """Strategic rationale for work that has no school SSA recommendation."""
+
+    PROJECT_OBJECTIVE = "project_objective", "Project Objective"
+    ORGANIZATIONAL_PRIORITY = "organizational_priority", "Organizational Priority"
+    STAFF_DEVELOPMENT = "staff_development", "Staff Development"
+    PROGRAMME_GROWTH = "programme_growth", "Programme Growth"
+    PROGRAMME_QUALITY = "programme_quality", "Programme Quality"
+    COMPLIANCE_REQUIREMENT = "compliance_requirement", "Compliance Requirement"
+    STAKEHOLDER_ENGAGEMENT = "stakeholder_engagement", "Stakeholder Engagement"
+    APPROVED_SPECIAL_INITIATIVE = (
+        "approved_special_initiative",
+        "Approved Special Initiative",
+    )
+    OTHER_AUTHORIZED = "other_authorized", "Other Authorized Rationale"
 
 
 class ClusterMeetingSlot(models.TextChoices):
@@ -192,6 +232,24 @@ class ClusterMeetingSlot(models.TextChoices):
 class DeliveryType(models.TextChoices):
     STAFF = "staff", "Staff"
     PARTNER = "partner", "Partner"
+
+
+class ProgrammeActivityType(models.TextChoices):
+    """Leadership reporting categories for non-school Work Plan activities."""
+
+    EDTECH_FOR_SCHOOLS = "edtech_for_schools", "EdTech for Schools"
+    SCHOOL_LEADERSHIP_TRAINING = (
+        "school_leadership_training",
+        "School Leadership Training",
+    )
+    STUDENT_ACTIVITIES = "student_activities", "Student Activities"
+    TEACHER_TRAINING = "teacher_training", "Teacher Training"
+    ALUMNI = "alumni", "Alumni"
+
+
+class ProgrammeDeliveryMode(models.TextChoices):
+    GROUP = "group", "Group"
+    CLUSTER = "cluster", "Cluster"
 
 
 class ActivityStatus(models.TextChoices):

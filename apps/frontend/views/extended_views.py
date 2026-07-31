@@ -3,10 +3,18 @@ GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
 from apps.core.donut import build_gauge
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
+    PROGRAMME_EVENT_TYPES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
+from apps.core.enums import ActivityType
 import calendar
 import re
 from collections import defaultdict
+from urllib.parse import urlencode
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
@@ -155,6 +163,132 @@ def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     return sorted(activity_owner_ids), sorted(leave_staff_ids)
 
 
+# Status filter families for the Calendar: a compact, workflow-honest grouping
+# of the 21-state lifecycle (ActivityStatus). "completed" reuses the canonical
+# COMPLETED_WORK_STATUSES so the calendar never re-answers "is this finished?".
+_CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
+    "scheduled": (
+        "not_planned",
+        "planned",
+        "scheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "rescheduled",
+        "deferred",
+    ),
+    "in_progress": (
+        "in_progress",
+        "completion_started",
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+        "submitted_to_pl",
+        "returned_by_pl",
+        "awaiting_ia_verification",
+        "returned",
+        "returned_by_ia",
+    ),
+    "completed": tuple(COMPLETED_WORK_STATUSES),
+    "cancelled": ("cancelled", "rejected"),
+}
+
+_CALENDAR_STATUS_OPTIONS = (
+    ("scheduled", "Scheduled"),
+    ("in_progress", "In progress"),
+    ("completed", "Completed"),
+    ("cancelled", "Cancelled / rejected"),
+)
+
+# Presentation families for calendar colouring. This is a display grouping,
+# not a metric (apps/core/activity_types.py stays the canonical vocabulary):
+# core and cluster work are pulled out of the canonical visit/training groups
+# so each programme family reads as one colour on the grid and legend.
+_CALENDAR_CORE_TYPES = (
+    ActivityType.CORE_VISIT,
+    ActivityType.CORE_TRAINING,
+    ActivityType.CORE_ASSESSMENT_VISIT,
+)
+_CALENDAR_CLUSTER_TYPES = CLUSTER_MEETING_TYPES + (
+    ActivityType.CLUSTER_TRAINING,
+    ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
+)
+
+
+def _calendar_event_family(activity_type: str) -> str:
+    """Colour family for one activity type. Order matters: core before the
+    visit/training groups (core_visit is canonically a visit), cluster before
+    training (cluster_training is canonically a training)."""
+
+    if activity_type in PROGRAMME_EVENT_TYPES:
+        return "programme"
+    if activity_type == ActivityType.PROJECT_ACTIVITY:
+        return "project"
+    if activity_type in _CALENDAR_CORE_TYPES:
+        return "core"
+    if activity_type in _CALENDAR_CLUSTER_TYPES:
+        return "cluster"
+    if activity_type in TRAINING_TYPES:
+        return "training"
+    if activity_type in VISIT_TYPES:
+        return "visit"
+    return "activity"
+
+
+def _calendar_range_label(start: date, end: date) -> str:
+    """Human date-range label: "12–14 August 2026", "30 July – 2 August 2026"."""
+
+    if start == end:
+        return f"{start.day} {calendar.month_name[start.month]} {start.year}"
+    if (start.year, start.month) == (end.year, end.month):
+        return (
+            f"{start.day}–{end.day} {calendar.month_name[start.month]}"
+            f" {start.year}"
+        )
+    if start.year == end.year:
+        return (
+            f"{start.day} {calendar.month_name[start.month]} – "
+            f"{end.day} {calendar.month_name[end.month]} {end.year}"
+        )
+    return (
+        f"{start.day} {calendar.month_name[start.month]} {start.year} – "
+        f"{end.day} {calendar.month_name[end.month]} {end.year}"
+    )
+
+
+def _calendar_staff_names(activities) -> dict[str, str]:
+    """Display names for the month's responsible/monitoring staff, resolved in
+    two batch queries (no per-activity lookups). The ownership fields are a
+    legacy dual-id (StaffProfile id or User id), so both are indexed."""
+
+    keys = set()
+    for activity in activities:
+        for key in (activity.responsible_staff_id, activity.monitored_by_staff_id):
+            if key:
+                keys.add(key)
+    if not keys:
+        return {}
+
+    names: dict[str, str] = {}
+    profiles = StaffProfile.objects.filter(
+        Q(id__in=keys) | Q(user_id__in=keys)
+    ).select_related("user")
+    for profile in profiles:
+        display = profile.user.name if profile.user_id else ""
+        if not display:
+            continue
+        names.setdefault(profile.id, display)
+        names.setdefault(profile.user_id, display)
+
+    unresolved = keys - set(names)
+    if unresolved:
+        for user_id, user_name in User.objects.filter(id__in=unresolved).values_list(
+            "id", "name"
+        ):
+            if user_name:
+                names[user_id] = user_name
+    return names
+
+
 # GROUP 4 — SSA, FY & Planning
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -240,6 +374,14 @@ def calendar_view(request):
     if not 1 <= month <= 12 or not 2000 <= year <= 2100:
         month, year = today.month, today.year
 
+    view_mode = "agenda" if request.GET.get("view") == "agenda" else "month"
+    selected_type = request.GET.get("activity_type", "")
+    if selected_type not in ActivityType.values:
+        selected_type = ""
+    selected_status = request.GET.get("status", "")
+    if selected_status not in _CALENDAR_STATUS_FAMILIES:
+        selected_status = ""
+
     month_start = date(year, month, 1)
     month_end = date(
         year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1
@@ -253,11 +395,34 @@ def calendar_view(request):
                 scheduled_date__isnull=True,
                 planned_date__range=(month_start, month_end),
             )
+            # Multi-day work that started before this month but is still
+            # running inside it: end_date reaches the window even though the
+            # start day does not.
+            | (
+                Q(end_date__gte=month_start)
+                & (
+                    Q(scheduled_date__date__lte=month_end)
+                    | Q(scheduled_date__isnull=True, planned_date__lte=month_end)
+                )
+            )
         )
-        .exclude(status__in=["cancelled", "rejected"])
-        .select_related("school", "cluster")
+        .select_related("school", "cluster", "event_district")
         .order_by("planned_date", "scheduled_date", "created_at")
     )
+    if selected_status == "cancelled":
+        # Cancelled/rejected work is hidden by default; asking for it by name
+        # is the one way to see it.
+        activities = activities.filter(
+            status__in=_CALENDAR_STATUS_FAMILIES["cancelled"]
+        )
+    else:
+        activities = activities.exclude(status__in=["cancelled", "rejected"])
+        if selected_status:
+            activities = activities.filter(
+                status__in=_CALENDAR_STATUS_FAMILIES[selected_status]
+            )
+    if selected_type:
+        activities = activities.filter(activity_type=selected_type)
 
     scope = resolve_user_scope(user)
     activity_owner_ids, leave_staff_ids = _calendar_staff_audience(user)
@@ -294,32 +459,92 @@ def calendar_view(request):
             )
         )
 
+    # One evaluation for the event loop and the name batch; the queryset
+    # itself stays in context (scoping tests inspect it as a queryset).
+    activity_rows = list(activities)
+    staff_names = _calendar_staff_names(activity_rows)
+
     events_by_date: dict[date, list[dict]] = defaultdict(list)
     event_counts = {"activity": 0, "leave": 0, "holiday": 0}
 
-    for activity in activities:
-        activity_date = (
+    for activity in activity_rows:
+        start_date = (
             activity.scheduled_date.date()
             if activity.scheduled_date
             else activity.planned_date
         )
-        if not activity_date or not month_start <= activity_date <= month_end:
+        if not start_date:
             continue
-        place = (
-            activity.school.name
-            if activity.school_id
-            else (activity.cluster.name if activity.cluster_id else "Edify activity")
+        # end_date > planned/scheduled start means the one Activity spans
+        # several days; it renders on every day of its range inside the month
+        # window but counts once.
+        end_date = (
+            activity.end_date
+            if activity.end_date and activity.end_date > start_date
+            else start_date
         )
-        events_by_date[activity_date].append(
-            {
-                "kind": "activity",
-                "title": activity.get_activity_type_display(),
-                "meta": place,
-                "href": f"/my-plan/{activity.id}",
-                "status": activity.status.replace("_", " ").title(),
-            }
+        first_day = max(start_date, month_start)
+        last_day = min(end_date, month_end)
+        if first_day > last_day:
+            continue
+
+        if activity.school_id:
+            place = activity.school.name
+        elif activity.cluster_id:
+            place = activity.cluster.name
+        elif activity.activity_type == ActivityType.PROGRAMME_EVENT:
+            # Programme events have no school/cluster: the venue or district
+            # is the place.
+            place = activity.venue or (
+                activity.event_district.name
+                if activity.event_district_id
+                else "Programme event"
+            )
+        else:
+            place = "Edify activity"
+
+        title = activity.activity_name_snapshot or activity.get_activity_type_display()
+        status_label = activity.status.replace("_", " ").title()
+        responsible = staff_names.get(activity.responsible_staff_id or "", "") or (
+            staff_names.get(activity.monitored_by_staff_id or "", "")
         )
+        total_days = (end_date - start_date).days + 1
+        range_label = _calendar_range_label(start_date, end_date)
+        tooltip = " · ".join(
+            part
+            for part in (
+                title,
+                range_label if total_days > 1 else "",
+                responsible,
+                status_label,
+            )
+            if part
+        )
+        family = _calendar_event_family(activity.activity_type)
+
         event_counts["activity"] += 1
+        current_date = first_day
+        while current_date <= last_day:
+            day_number = (current_date - start_date).days + 1
+            if total_days == 1:
+                meta = place
+            elif current_date == start_date:
+                meta = f"{place} · {range_label}"
+            else:
+                meta = f"{place} · Day {day_number} of {total_days}"
+            events_by_date[current_date].append(
+                {
+                    "kind": "activity",
+                    "family": family,
+                    "title": title,
+                    "meta": meta,
+                    "href": f"/my-plan/{activity.id}",
+                    "status": status_label,
+                    "tooltip": tooltip,
+                    "continued": current_date > start_date,
+                }
+            )
+            current_date += timedelta(days=1)
 
     # Approved leave is visible to the viewer's operational scope. A pending
     # request is private to its requester, so it appears only on their own
@@ -352,14 +577,17 @@ def calendar_view(request):
         staff_name = (
             "Your" if leave.staff_id == user.staff_profile_id else leave.staff.user.name
         )
+        leave_meta = f"{label}{' · Awaiting approval' if is_own_pending else ''}"
         while current_date <= final_date:
             events_by_date[current_date].append(
                 {
                     "kind": "leave",
                     "title": f"{staff_name} leave",
-                    "meta": f"{label}{' · Awaiting approval' if is_own_pending else ''}",
+                    "meta": leave_meta,
                     "href": "/personal-time-off",
                     "status": leave.status.title(),
+                    "tooltip": f"{staff_name} leave · {leave_meta} · "
+                    f"{leave.status.title()}",
                 }
             )
             event_counts["leave"] += 1
@@ -383,6 +611,7 @@ def calendar_view(request):
                 "meta": detail,
                 "href": "",
                 "status": "Holiday",
+                "tooltip": f"{title} · {detail}",
             }
         )
         event_counts["holiday"] += 1
@@ -421,9 +650,43 @@ def calendar_view(request):
             ]
         )
 
+    # Agenda view: the same month, the same events, listed chronologically and
+    # grouped by day. It is also the automatic mobile rendering of month view.
+    agenda_days = [
+        {
+            "date": day,
+            "events": events_by_date[day],
+            "is_today": day == today,
+        }
+        for day in sorted(events_by_date)
+        if month_start <= day <= month_end and events_by_date[day]
+    ]
+
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+
+    # One serialised copy of the non-date query state, so every navigation
+    # link preserves the filters (and the filters preserve the month).
+    keep_params = {}
+    if project_scope:
+        keep_params["project_scope"] = project_scope
+    if selected_project:
+        keep_params["project"] = selected_project
+    if selected_type:
+        keep_params["activity_type"] = selected_type
+    if selected_status:
+        keep_params["status"] = selected_status
+    view_params = dict(keep_params)
+    if view_mode == "agenda":
+        keep_params["view"] = "agenda"
+
     context = {
         "activities": activities,
         "calendar_weeks": calendar_weeks,
+        "agenda_days": agenda_days,
+        "view_mode": view_mode,
         "month": month,
         "year": year,
         "today": today,
@@ -434,41 +697,51 @@ def calendar_view(request):
         "event_total": sum(event_counts.values()),
         "project_scope": project_scope,
         "selected_project": selected_project,
-        "prev_month": month - 1 if month > 1 else 12,
-        "prev_year": year if month > 1 else year - 1,
-        "next_month": month + 1 if month < 12 else 1,
-        "next_year": year if month < 12 else year + 1,
+        "activity_type_choices": ActivityType.choices,
+        "status_options": _CALENDAR_STATUS_OPTIONS,
+        "selected_type": selected_type,
+        "selected_status": selected_status,
+        "filters_active": bool(selected_type or selected_status),
+        "prev_month": prev_month,
+        "prev_year": prev_year,
+        "next_month": next_month,
+        "next_year": next_year,
+        "prev_qs": urlencode({"year": prev_year, "month": prev_month, **keep_params}),
+        "next_qs": urlencode({"year": next_year, "month": next_month, **keep_params}),
+        "today_qs": urlencode(
+            {"year": today.year, "month": today.month, **keep_params}
+        ),
+        "month_view_qs": urlencode({"year": year, "month": month, **view_params}),
+        "agenda_view_qs": urlencode(
+            {"year": year, "month": month, **view_params, "view": "agenda"}
+        ),
+        "clear_qs": urlencode(
+            {
+                "year": year,
+                "month": month,
+                **{
+                    key: value
+                    for key, value in keep_params.items()
+                    if key not in ("activity_type", "status")
+                },
+            }
+        ),
     }
     return render(request, "pages/calendar/index.html", context)
 
 
-@require_page_permission("planning")
+# Gated on its own key rather than borrowing "planning": the sidebar
+# advertises Work Plan to CD/IA/HR too (2026-07-30 Calendar-reinstatement
+# mandate), and a link a role can see must open.
+@require_page_permission("work_plan")
 def work_plan_view(request):
-    """Full year work plan."""
-    user = request.user
-    fy = get_operational_fy()
+    """Unified Work Plan — activities, owners, status and plan-derived cost.
 
-    activities_qs = Activity.objects.filter(deleted_at__isnull=True).select_related(
-        "school", "cluster"
-    )
-    if user.active_role == "CCEO":
-        activities_qs = activities_qs.filter(responsible_staff_id=user.id)
+    The data logic lives in apps.frontend.views.work_plan_page (imported
+    lazily: that module reuses _calendar_staff_audience from this one)."""
+    from apps.frontend.views.work_plan_page import build_work_plan_context
 
-    monthly_summary = (
-        activities_qs.values("planned_date__month")
-        .annotate(
-            total=Count("id"),
-            completed=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
-        )
-        .order_by("planned_date__month")
-    )
-
-    context = {
-        "monthly_summary": monthly_summary,
-        "fy": fy,
-        "total": activities_qs.count(),
-        "completed": activities_qs.filter(status__in=COMPLETED_WORK_STATUSES).count(),
-    }
+    context = build_work_plan_context(request.user, request.GET)
     return render(request, "pages/work_plan/index.html", context)
 
 
@@ -938,13 +1211,66 @@ def admin_panel_view(request):
 
 @require_page_permission("users")
 def admin_users_view(request):
-    """User management."""
+    """User and partner organisation management."""
     from django.contrib import messages
     from apps.geography.models import District
+    from apps.core.navigation import get_user_role_slug
     from apps.core.rbac import EdifyRole
+
+    can_manage_partners = request.user.is_superuser or get_user_role_slug(
+        request.user
+    ) in {"ADMIN", "CD"}
 
     if request.method == "POST":
         action = request.POST.get("action")
+        if action in {"create_partner", "delete_partner"}:
+            from apps.core.exceptions import (
+                BadRequest,
+                ConflictError,
+                Forbidden,
+                NotFoundError,
+            )
+            from apps.partners.services import delete_partner, onboard
+
+            if not can_manage_partners:
+                messages.error(
+                    request,
+                    "Only an Admin or Country Director can manage partner organisations.",
+                )
+                return redirect("frontend:admin_users")
+
+            try:
+                if action == "create_partner":
+                    payload = {
+                        "name": request.POST.get("partner_name", "").strip(),
+                        "regionName": request.POST.get("region_name", "").strip(),
+                        "ssaIntervention": request.POST.get(
+                            "ssa_intervention", ""
+                        ).strip(),
+                        "contactPerson": request.POST.get("contact_person", "").strip(),
+                        "email": request.POST.get("partner_email", "").strip(),
+                        "phone": request.POST.get("partner_phone", "").strip(),
+                        "notes": request.POST.get("partner_notes", "").strip(),
+                    }
+                    created = onboard(payload, request.user)
+                    messages.success(
+                        request,
+                        f"Partner organisation '{created['name']}' added.",
+                    )
+                else:
+                    deleted = delete_partner(
+                        (request.POST.get("partner_id") or "").strip(),
+                        request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"Partner organisation '{deleted['name']}' removed. "
+                        "Historical assignments were retained.",
+                    )
+            except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+                messages.error(request, str(getattr(exc, "detail", exc)))
+            return redirect("frontend:admin_users")
+
         if action == "create":
             # Delegate to the canonical service instead of re-implementing it.
             # This branch was a hand-rolled copy of `admin_users.services.create`
@@ -1023,6 +1349,16 @@ def admin_users_view(request):
 
     districts = District.objects.all().order_by("name")
     roles = [r.value for r in EdifyRole]
+    partners = []
+    partner_regions = []
+    partner_interventions = []
+    if can_manage_partners:
+        from apps.core.enums import SsaIntervention
+        from apps.partners.models import Partner
+
+        partners = list(Partner.objects.select_related("user").order_by("name"))
+        partner_regions = Region.objects.order_by("name")
+        partner_interventions = SsaIntervention.choices
 
     # Supervisor candidates for the create form. Only the roles that actually
     # supervise someone under the reporting-line rules in
@@ -1057,6 +1393,10 @@ def admin_users_view(request):
         "districts": districts,
         "available_roles": roles,
         "supervisor_options": supervisor_options,
+        "can_manage_partners": can_manage_partners,
+        "partners": partners,
+        "partner_regions": partner_regions,
+        "partner_interventions": partner_interventions,
         "topbar_search": {
             "placeholder": "Search users by name, email, or role…",
             "value": search,
@@ -1220,12 +1560,43 @@ def admin_user_detail_view(request, user_id):
             )
             messages.success(request, f"Account for '{member.name}' has been locked.")
 
+        elif action == "configure_program_lead_team":
+            from apps.accounts.models import StaffProfile
+            from apps.accounts.supervisor_service import configure_program_lead_team
+            from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+            staff_profile = StaffProfile.objects.filter(user=member).first()
+            if not staff_profile:
+                messages.error(
+                    request,
+                    "Save the Program Lead's profile before assigning their CCEOs.",
+                )
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+            try:
+                result = configure_program_lead_team(
+                    staff_profile.id,
+                    request.POST.getlist("cceo_ids"),
+                    request.user,
+                )
+            except (BadRequest, Forbidden, NotFoundError) as exc:
+                messages.error(request, str(getattr(exc, "detail", exc)))
+            else:
+                messages.success(
+                    request,
+                    f"{result['programLeadName']}'s team was updated: "
+                    f"{result['assignedCount']} CCEO(s) assigned.",
+                )
+
         return redirect("frontend:admin_user_detail", user_id=user_id)
 
     # Get available roles & districts
     from apps.core.rbac import EdifyRole
     from apps.geography.models import District
-    from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+    from apps.accounts.models import (
+        StaffGeographyAssignment,
+        StaffProfile,
+        StaffSupervisorAssignment,
+    )
 
     roles = [r.value for r in EdifyRole]
     districts = District.objects.all().order_by("name")
@@ -1251,6 +1622,69 @@ def admin_user_detail_view(request, user_id):
 
     from apps.core.navigation import get_user_role_slug
 
+    is_program_lead = (
+        member.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        or EdifyRole.COUNTRY_PROGRAM_LEAD.value in (member.roles or [])
+    )
+    can_configure_program_lead_team = get_user_role_slug(request.user) == "ADMIN"
+    program_lead_team = None
+    if is_program_lead and can_configure_program_lead_team and sp:
+        cceos = list(
+            StaffProfile.objects.filter(
+                deleted_at__isnull=True,
+                user__deleted_at__isnull=True,
+                country=sp.country,
+            )
+            .filter(
+                Q(user__active_role=EdifyRole.CCEO.value)
+                | Q(user__roles__contains=[EdifyRole.CCEO.value])
+            )
+            .select_related("user")
+            .order_by("user__name")
+        )
+        links = list(
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=[cceo.id for cceo in cceos],
+                supervisee__deleted_at__isnull=True,
+                supervisor__deleted_at__isnull=True,
+            ).select_related("supervisor__user")
+        )
+        assigned_pairs = {
+            (str(link.supervisee_id), str(link.supervisor_id)) for link in links
+        }
+        assigned_leads_by_cceo = defaultdict(list)
+        for link in links:
+            assigned_leads_by_cceo[str(link.supervisee_id)].append(
+                link.supervisor.user.name
+            )
+
+        cceo_options = []
+        assigned_count = 0
+        for cceo in cceos:
+            is_assigned = (str(cceo.id), str(sp.id)) in assigned_pairs
+            if is_assigned:
+                assigned_count += 1
+            other_leads = [
+                name
+                for name in assigned_leads_by_cceo.get(str(cceo.id), [])
+                if name != member.name
+            ]
+            cceo_options.append(
+                {
+                    "id": cceo.id,
+                    "name": cceo.user.name,
+                    "email": cceo.user.email,
+                    "status": cceo.user.status,
+                    "assigned": is_assigned,
+                    "other_lead": ", ".join(other_leads),
+                }
+            )
+        program_lead_team = {
+            "country": sp.country,
+            "assigned_count": assigned_count,
+            "cceos": cceo_options,
+        }
+
     context = {
         "member": member,
         "available_roles": roles,
@@ -1261,6 +1695,9 @@ def admin_user_detail_view(request, user_id):
         # The users page is shared with CD/HR, but deletion is Admin-only
         # (the service enforces it; this only controls the button).
         "can_delete_users": get_user_role_slug(request.user) == "ADMIN",
+        "is_program_lead": is_program_lead,
+        "can_configure_program_lead_team": can_configure_program_lead_team,
+        "program_lead_team": program_lead_team,
     }
     return render(request, "pages/admin/user_detail.html", context)
 
@@ -2229,8 +2666,7 @@ def _humanize_rbac_token(token):
 
 @require_page_permission("roles_permissions")
 def admin_roles_permissions_view(request):
-    """Roles and permissions matrix, built from the real RBAC tables
-    (accounts.Permission / accounts.RolePermission)."""
+    """Roles and permissions matrix, built from the real RBAC tables."""
     from apps.accounts.models import Permission, RolePermission
     from apps.core.rbac import EdifyRole
 

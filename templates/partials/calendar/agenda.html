@@ -1,0 +1,23 @@
+{% comment %}Agenda list — the month's events in chronological order, grouped
+by day. Rendered as the Agenda view (?view=agenda) and as the automatic mobile
+rendering of Month view. Same scoping, same data as the grid: both are built
+from the one events_by_date projection.{% endcomment %}
+{% if agenda_days %}
+<ol class="calendar-agenda__days">
+  {% for day in agenda_days %}
+  <li class="calendar-agenda__day{% if day.is_today %} calendar-agenda__day--today{% endif %}">
+    <h3 class="calendar-agenda__date">
+      <time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"l j F" }}</time>
+      {% if day.is_today %}<span class="calendar-agenda__today">Today</span>{% endif %}
+    </h3>
+    <div class="calendar-agenda__events">
+      {% for event in day.events %}{% include "partials/calendar/event.html" %}{% endfor %}
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="calendar-agenda__empty">
+  No events in {{ month_name }} {{ year }}{% if filters_active %} for the selected filters{% endif %}.
+</p>
+{% endif %}

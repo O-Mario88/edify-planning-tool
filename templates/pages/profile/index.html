@@ -4,17 +4,17 @@
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
-<!-- Hero Card -->
-<div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-surface p-6 text-white shadow-lg">
+<!-- Page hero -->
+<div class="edify-page-hero">
 <div class="flex items-start gap-5">
-<div class="h-16 w-16 rounded-surface edify-surface-translucent text-white font-semibold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
+<div class="h-16 w-16 rounded-surface edify-primary-soft edify-primary-text font-semibold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
 <div class="flex-1">
 <p class="edify-page-eyebrow">Account</p>
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ member.name }}</h1>
 <p class="edify-primary-on-solid text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-pill edify-surface-translucent text-white edify-text-caption font-bold backdrop-blur">{{ role }}</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ role }}</span>
 {% endfor %}
 </div>
 </div>

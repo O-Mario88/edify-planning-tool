@@ -219,7 +219,7 @@ def ssa_upload_center_view(request):
                 .first()
             )
             if batch:
-                return local_redirect(f"/ssa/upload/{batch.id}/preview/")
+                return local_redirect(f"/ssa/upload/{batch.id}/result/")
             else:
                 messages.error(request, result.get("message", "Error uploading file."))
         except Exception as e:

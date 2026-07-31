@@ -872,7 +872,7 @@ def ia_dashboard_view(request):
                 "count": failed_uploads,
                 "text": "bulk uploads failed validation",
                 "severity": "error",
-                "href": "/ssa/upload/",
+                "href": "/uploads?tab=imports",
             },
         ]
         if e["count"] > 0

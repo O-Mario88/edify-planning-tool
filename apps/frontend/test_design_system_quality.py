@@ -39,18 +39,18 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
-    def test_inter_is_the_global_and_compiled_ui_font(self):
+    def test_geist_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
 
-        self.assertIn("family=Inter", base)
-        self.assertIn("--edify-font-sans: 'Inter'", tokens)
-        self.assertRegex(compiled, r"--font-sans:\s*Inter,")
+        self.assertIn("family=Geist", base)
+        self.assertIn("--edify-font-sans: 'Geist'", tokens)
+        self.assertRegex(compiled, r"--font-sans:\s*Geist,")
 
     def test_no_unapproved_font_family_is_shipped(self):
         forbidden = re.compile(
-            r"\b(Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
+            r"\b(Inter|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
             re.IGNORECASE,
         )
         violations = []
@@ -62,7 +62,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             violations, [], "Unapproved UI fonts: " + ", ".join(violations)
         )
 
-    def test_charts_explicitly_use_inter(self):
+    def test_charts_explicitly_use_geist(self):
         charts = "\n".join(
             path.read_text(encoding="utf-8")
             for path in (ROOT / "templates").rglob("*.html")
@@ -70,7 +70,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertNotIn("fontFamily: 'Outfit", charts)
         self.assertNotIn('fontFamily: "Outfit', charts)
-        self.assertIn("fontFamily: 'Inter", charts)
+        self.assertIn("fontFamily: 'Geist", charts)
 
     def test_content_cards_use_intrinsic_height_while_kpi_grids_stay_aligned(self):
         # Asserted against platform.css only: it is the stylesheet base.html
@@ -225,31 +225,125 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             f"login.css must use the radius token scale, found: {off_system}",
         )
 
-    def test_dark_workspace_has_accessible_depth_and_primary_actions(self):
+    def test_dark_workspace_matches_the_flat_filter_surface_contract(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
+        consistency = _read("static/css/consistency.css")
+        night_tokens = tokens.split(":root.theme-dark {", 1)[1].split("\n}", 1)[0]
 
         for declaration in (
             "--edify-bg: #000000",
             "--edify-surface: #0d0d0f",
-            "--edify-surface-raised: #151518",
-            "--edify-surface-hover: #1c1c20",
+            "--edify-surface-muted: #0d0d0f",
+            "--edify-surface-raised: #0d0d0f",
+            "--edify-surface-hover: #151518",
+            "--edify-border: rgba(255, 255, 255, 0.10)",
+            "--edify-surface-treatment: none",
+            "--edify-button-primary-treatment: none",
+            "--edify-button-secondary-treatment: none",
+            "--edify-card-surface: var(--edify-surface)",
+            "--edify-card-border: var(--edify-border)",
+            "--edify-card-shadow: none",
+            "--edify-shadow-sm: none",
+            "--edify-shadow-md: none",
+            "--edify-shadow-lg: none",
+            "--edify-shadow-drawer: none",
             "--edify-text: #f5f7fa",
             "--edify-text-muted: #d6dde7",
             "--edify-text-subtle: #aeb9c7",
             "--edify-accent: var(--brand-primary)",
             "--edify-warning: #fb923c",
         ):
-            self.assertIn(declaration, tokens)
+            self.assertIn(declaration, night_tokens)
 
-        self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#0d0d0f"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#0d0d0f"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#0d0d0f"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#000000"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#000000"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#000000"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0d5b9e"), 4.5)
-        self.assertIn("DARK WORKSPACE — CINEMATIC DEPTH, OPERATIONAL CLARITY", platform)
+        self.assertIn("DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY", platform)
         self.assertIn(
             "background-image: var(--edify-button-primary-treatment)", platform
         )
+        self.assertIn("DARK THEMES: FILTER-SURFACE CONTRACT", consistency)
+        self.assertIn(".kpi-strip__item", consistency)
+        self.assertIn(".settings-detail-tile", consistency)
+        self.assertIn(".premium-card-elevated", consistency)
+        self.assertIn(":has(> table)", consistency)
+        self.assertIn(".shadow-2xl", consistency)
+        self.assertIn("background-color: var(--edify-card-surface)", consistency)
+        self.assertIn("border-width: 1px", consistency)
+        self.assertIn("border-radius: var(--edify-radius-sm)", consistency)
+        self.assertIn("border-color: var(--edify-border-strong)", consistency)
+        self.assertIn("background-image: none !important", platform)
+        self.assertIn("box-shadow: none !important", platform)
+
+    def test_blue_workspace_matches_the_flat_filter_surface_contract(self):
+        tokens = _read("static/css/design-system.css")
+        components = _read("static/css/components.css")
+        consistency = _read("static/css/consistency.css")
+        blue_tokens = tokens.split(":root.theme-blue {", 1)[1].split("\n}", 1)[0]
+
+        for declaration in (
+            "--edify-surface: rgba(5, 54, 96, 0.58)",
+            "--edify-surface-muted: rgba(5, 54, 96, 0.58)",
+            "--edify-surface-raised: rgba(5, 54, 96, 0.58)",
+            "--edify-border: rgba(123, 189, 232, 0.32)",
+            "--edify-surface-treatment: none",
+            "--edify-glass-tile-treatment: none",
+            "--edify-glass-kpi-treatment: none",
+            "--edify-button-primary-treatment: none",
+            "--edify-button-secondary-treatment: none",
+            "--edify-glass-blur: 0px",
+            "--edify-card-surface: var(--edify-surface)",
+            "--edify-card-border: var(--edify-border)",
+            "--edify-card-shadow: none",
+            "--edify-card-backdrop-filter: none",
+            "--edify-table-canvas: var(--edify-surface)",
+            "--edify-shadow-sm: none",
+            "--edify-shadow-md: none",
+            "--edify-shadow-lg: none",
+            "--edify-shadow-drawer: none",
+            "--edify-topbar-shadow: none",
+        ):
+            self.assertIn(declaration, blue_tokens)
+
+        self.assertIn(":is(.theme-blue, .theme-dark) main :is(", consistency)
+        self.assertIn("Blue primary actions stay unmistakable", consistency)
+        for surface in (
+            ".platform-hero",
+            ".hcos-register",
+            ".admin-period-switch",
+            ".tt-signal-strip",
+            ".drawer-surface",
+            ".pto-drawer-panel",
+            ".tt-modal__panel",
+        ):
+            self.assertIn(surface, consistency)
+        self.assertIn("background-image: none !important", components)
+        self.assertIn("backdrop-filter: none", components)
+
+    def test_blue_workspace_tables_have_a_complete_visual_hierarchy(self):
+        tokens = _read("static/css/design-system.css")
+        platform = _read("static/css/platform.css")
+
+        for declaration in (
+            "--edify-table-canvas:",
+            "--edify-table-header:",
+            "--edify-table-row-alt:",
+            "--edify-table-row-hover:",
+            "--edify-table-row-selected:",
+            "--edify-table-divider:",
+        ):
+            self.assertIn(declaration, tokens)
+
+        self.assertIn("Blue workspace tables", platform)
+        self.assertIn(".theme-blue main table thead th", platform)
+        self.assertIn("var(--edify-table-header)", platform)
+        self.assertIn("tbody tr:nth-child(even)", platform)
+        self.assertIn("tbody tr:is(:hover, :focus-within)", platform)
+        self.assertIn('[aria-selected="true"]', platform)
+        self.assertIn("var(--edify-table-row-selected)", platform)
+        self.assertIn("scrollbar-color: var(--edify-scrollbar-thumb)", platform)
 
     def test_light_workspace_uses_the_approved_edify_reference_treatment(self):
         tokens = _read("static/css/design-system.css")
@@ -579,7 +673,7 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
         )
 
     def test_no_serif_or_hardcoded_font_family_in_templates(self):
-        """Inter is the single UI font; a page must not smuggle in another
+        """Geist Sans is the single UI font; a page must not smuggle in another
         family (budgets/monthly.html previously rendered a group label in
         italic Times New Roman inside an operational table)."""
         import re
@@ -593,13 +687,13 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
                         normalized = value.strip().lower()
                         if (
                             "--edify-font" not in normalized
-                            and "inter" not in normalized
+                            and "geist" not in normalized
                         ):
                             offenders.append(f"{path}:{lineno} -> {value.strip()[:50]}")
         self.assertEqual(
             offenders,
             [],
-            f"Use var(--edify-font-sans); Inter is the only approved UI font: {offenders}",
+            f"Use var(--edify-font-sans); Geist Sans is the only approved UI font: {offenders}",
         )
 
 

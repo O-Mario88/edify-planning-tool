@@ -581,6 +581,58 @@ def _seed_walkthroughs() -> None:
             )
 
 
+def knowledge_tree(role: str | None, active_slug: str = "") -> list[dict]:
+    """The Knowledge Center's left-hand Table of Contents.
+
+    One hierarchical, role-aware pass: every category the role can see, with
+    the articles it may open. Restricted operational articles never appear for
+    a role that cannot use them, because the tree is built from
+    ``visible_articles`` rather than from the category list.
+
+    Built in two queries regardless of catalogue size — the Help landing page
+    must not load article bodies to draw its own navigation.
+    """
+    from collections import defaultdict
+
+    grouped: dict[str, list] = defaultdict(list)
+    # values() rather than model instances: the tree needs four columns, and
+    # loading article bodies to draw navigation is what makes a documentation
+    # landing page slow.
+    for row in (
+        visible_articles(role)
+        .values("slug", "title", "category__slug")
+        .order_by("category__sort_order", "title")
+    ):
+        grouped[row["category__slug"]].append(row)
+
+    tree = []
+    for category in HelpCategory.objects.all():
+        articles = grouped.get(category.slug, [])
+        if not articles:
+            continue
+        entries = [
+            {
+                "slug": row["slug"],
+                "title": row["title"],
+                "url": f"/help/articles/{row['slug']}",
+                "active": row["slug"] == active_slug,
+            }
+            for row in articles
+        ]
+        tree.append(
+            {
+                "category": category,
+                "url": f"/help/categories/{category.slug}",
+                "articles": entries,
+                "count": len(entries),
+                # Keep the group holding the open article expanded, so the
+                # reader's place survives a page load and a Back button.
+                "expanded": any(entry["active"] for entry in entries),
+            }
+        )
+    return tree
+
+
 def visible_articles(role: str | None):
     queryset = (
         HelpArticle.objects.filter(
@@ -797,12 +849,19 @@ ROUTE_PREFIX_ARTICLES = [
 
 
 def _article_slug_for_route(route: str, name: str) -> str:
-    direct = {
-        route_name: slug
-        for spec in canonical_specs()
-        for route_name in spec["routes"]
-        for slug in [spec["slug"]]
-    }
+    """The article that owns a route.
+
+    Several articles legitimately mention the same route — Salesforce IDs and
+    Daily Visit Batches both reference My Plan and the Calendar — so the map
+    must keep the FIRST article that claims a route, which is the one whose
+    own subject it is. A last-wins dict comprehension silently handed
+    /my-plan to the Salesforce article and /calendar to Daily Visit Batches,
+    and contextual Help then opened the wrong guide on both pages.
+    """
+    direct: dict[str, str] = {}
+    for spec in canonical_specs():
+        for route_name in spec["routes"]:
+            direct.setdefault(route_name, spec["slug"])
     if name in direct:
         return direct[name]
     for prefix, slug in ROUTE_PREFIX_ARTICLES:
@@ -815,11 +874,22 @@ def _article_slug_for_route(route: str, name: str) -> str:
 def sync_route_contexts() -> dict:
     ensure_canonical_content()
     created = 0
+    removed = 0
     for route, name in _route_inventory():
         slug = _article_slug_for_route(route, name)
         article = HelpArticle.objects.filter(slug=slug).first()
         if not article:
             continue
+        # A route has ONE owning article. When a new article takes ownership
+        # (a feature ships and its guide is written), the previous fallback
+        # mapping must go — two rows at equal priority made the resolved
+        # article depend on insertion order, so the page opened whichever
+        # guide happened to be written first.
+        stale = HelpArticleRouteContext.objects.filter(
+            route_pattern=route, workflow_status=""
+        ).exclude(article=article)
+        removed += stale.count()
+        stale.delete()
         _, was_created = HelpArticleRouteContext.objects.get_or_create(
             article=article,
             route_pattern=route,
@@ -829,6 +899,7 @@ def sync_route_contexts() -> dict:
         created += int(was_created)
     return {
         "created": created,
+        "removed": removed,
         "mapped": HelpArticleRouteContext.objects.values("route_pattern")
         .distinct()
         .count(),

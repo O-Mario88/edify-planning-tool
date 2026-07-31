@@ -2,11 +2,14 @@ from django.db import migrations
 
 
 def seed_catalogue(apps, schema_editor):
-    # The seeder uses stable-code upserts and one atomic transaction.  It is
-    # also exposed as a dry-run management command for controlled reruns.
-    from apps.activity_catalogue.seeding import seed_activity_catalogue
-
-    seed_activity_catalogue(actor_id="migration")
+    # Historical no-op. This migration originally called the LIVE seeder,
+    # which broke fresh-database replays the moment the model grew columns in
+    # a later migration (0004): live code selected fields the 0002-era schema
+    # did not have. Seeding is owned by reference_data now —
+    # apps.activity_catalogue.apps registers ensure_catalogue_reference on
+    # post_migrate, which runs after the full chain (and after every flush),
+    # so fresh and existing databases both end up seeded.
+    return
 
 
 class Migration(migrations.Migration):

@@ -135,3 +135,6 @@ class PartnerUpdateView(APIView):
 
     def patch(self, request: Request, partner_id: str) -> Response:
         return Response(services.update(partner_id, request.data, request.user))
+
+    def delete(self, request: Request, partner_id: str) -> Response:
+        return Response(services.delete_partner(partner_id, request.user))

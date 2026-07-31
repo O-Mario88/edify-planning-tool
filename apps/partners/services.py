@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 
-from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from django.db import transaction
+
+from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
 from .models import Partner
@@ -17,6 +19,24 @@ _CORE_EXEMPT_TYPES = {
     "core_training",
     "core_assessment_visit",
 }
+
+
+def _assert_partner_directory_manager(principal) -> None:
+    """Partner-directory membership is a people-administration decision.
+
+    The Users page is shared with HR, but the business rule for partner
+    organisations is deliberately narrower: only the active Admin or Country
+    Director role may add or remove them. Keeping this guard in the canonical
+    service protects the HTML page and the API equally.
+    """
+    from apps.core.navigation import get_user_role_slug
+
+    if getattr(principal, "is_superuser", False):
+        return
+    if get_user_role_slug(principal) not in {"ADMIN", "CD"}:
+        raise Forbidden(
+            "Only an Admin or Country Director can manage partner organisations."
+        )
 
 
 def assert_partner_activity_allowance(
@@ -151,27 +171,17 @@ def eligible(query: dict) -> list[dict]:
     return [_serialize(p) for p in qs.order_by("name")]
 
 
+@transaction.atomic
 def onboard(data: dict, principal) -> dict:
-    """Onboards a new partner. Restricted to Admin, CD, or IA."""
-    from apps.core.rbac import EdifyRole
-    from apps.core.exceptions import Forbidden
-
-    allowed = {
-        EdifyRole.ADMIN.value,
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.IMPACT_ASSESSMENT.value,
-    }
-    user_roles = getattr(principal, "roles", []) or []
-    active_role = getattr(principal, "active_role", None)
-    if active_role and active_role not in user_roles:
-        user_roles = list(user_roles) + [active_role]
-
-    if not any(r in allowed for r in user_roles):
-        raise Forbidden(
-            "Only Admin, Country Director, or Impact Assessment users can onboard partners."
-        )
-
+    """Onboard a partner organisation from the CD/Admin Users workspace."""
+    _assert_partner_directory_manager(principal)
     from django.utils import timezone
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        raise BadRequest("Partner organisation name is required.")
+    if Partner.objects.filter(name__iexact=name).exists():
+        raise ConflictError(f"A partner organisation named '{name}' already exists.")
 
     email = (data.get("email") or "").strip().lower()
     partner_user = None
@@ -183,14 +193,14 @@ def onboard(data: dict, principal) -> dict:
         if not partner_user:
             partner_user = User.objects.create(
                 email=email,
-                name=data["name"],
+                name=name,
                 roles=[EdifyRole.PARTNER_ADMIN.value],
                 active_role=EdifyRole.PARTNER_ADMIN.value,
                 is_active=True,
             )
 
     p = Partner.objects.create(
-        name=data["name"],
+        name=name,
         region_name=data.get("regionName") or data.get("region_name"),
         trains_on=data.get("trainsOn", []),
         notes=data.get("notes"),
@@ -209,7 +219,48 @@ def onboard(data: dict, principal) -> dict:
         ),
         onboarded_at=timezone.now(),
     )
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner.created",
+        subject_kind="partner",
+        subject_id=p.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"name": p.name, "email": p.email, "region": p.region_name},
+    )
     return _serialize(p)
+
+
+@transaction.atomic
+def delete_partner(partner_id: str, principal) -> dict:
+    """Soft-delete a partner while preserving assignments and audit history."""
+    _assert_partner_directory_manager(principal)
+    partner = Partner.objects.select_related("user").filter(id=partner_id).first()
+    if partner is None:
+        raise NotFoundError("Partner organisation not found.")
+
+    snapshot = {
+        "id": partner.id,
+        "name": partner.name,
+        "email": partner.email,
+        "linkedUserId": partner.user_id,
+    }
+    partner.active_status = False
+    partner.save(update_fields=["active_status", "updated_at"])
+    partner.soft_delete()
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner.deleted",
+        subject_kind="partner",
+        subject_id=partner.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload=snapshot,
+    )
+    return {**snapshot, "deleted": True}
 
 
 def update(partner_id: str, data: dict, principal) -> dict:

@@ -84,6 +84,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="activity_reminders",
+        description="'Starts tomorrow' reminder to each responsible person for every planned activity (incl. non-school programme events).",
+        cron="daily 07:00 Africa/Kampala",
+        cron_kwargs={"hour": 7, "minute": 0},
+        expected_runtime_seconds=30,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note="Deduped per activity per day via a deterministic source_event_id.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="target_ledger_sync",
         description=(
             "Rebuilds TargetAchievementLedger for every active CCEO/PL so My "

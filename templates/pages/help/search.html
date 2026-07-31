@@ -1,7 +1,9 @@
-{% extends "layouts/shell.html" %}
+{% extends "layouts/help_center.html" %}
 {% block title %}Search Help · Edify{% endblock %}
-{% block shell_content %}
-<section class="max-w-5xl mx-auto px-4 sm:px-6 py-6" aria-labelledby="search-title">
+{% block help_title %}Search the Knowledge Center{% endblock %}
+{% block help_lede %}Results are filtered to what your active role may read.{% endblock %}
+{% block help_content %}
+<section aria-labelledby="search-title">
   <nav class="text-sm mb-4" aria-label="Breadcrumb"><a href="/help" class="hover:underline edify-primary-text">Knowledge Center</a><span aria-hidden="true"> / </span><span>Search</span></nav>
   <h1 id="search-title" class="text-2xl font-extrabold edify-page-title">Search the Knowledge Center</h1>
   {% comment %}

@@ -1,6 +1,7 @@
 from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
+    work_plan_views,
     visit_effectiveness_views,
     pwa_views,
     rvp_views,
@@ -1306,6 +1307,37 @@ urlpatterns = [
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
     path("calendar", extended_views.calendar_view, name="calendar"),
     path("work-plan", extended_views.work_plan_view, name="work_plan"),
+    path("work-plan/", extended_views.work_plan_view, name="work_plan_alias"),
+    path(
+        "work-plan/add",
+        work_plan_views.non_school_activity_drawer,
+        name="non_school_activity_drawer",
+    ),
+    path(
+        "work-plan/add/preview",
+        work_plan_views.non_school_activity_preview,
+        name="non_school_activity_preview",
+    ),
+    path(
+        "work-plan/add/action",
+        work_plan_views.non_school_activity_action,
+        name="non_school_activity_action",
+    ),
+    path(
+        "work-plan/export.xlsx",
+        work_plan_views.work_plan_export,
+        name="work_plan_export",
+    ),
+    path(
+        "work-plan/submit-to-rvp",
+        work_plan_views.work_plan_submit,
+        name="work_plan_submit",
+    ),
+    path(
+        "work-plan/rvp-decision",
+        work_plan_views.work_plan_rvp_decision,
+        name="work_plan_rvp_decision",
+    ),
     # ── GROUP 5: Districts, Reports & Coverage ────────────────────────────────
     path("districts", extended_views.districts_list_view, name="districts_list"),
     path(

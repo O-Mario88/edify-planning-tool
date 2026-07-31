@@ -6,13 +6,14 @@ from apps.geography.subregions import SUBREGIONS, check, district_to_subregion, 
 
 
 class SubRegionMappingTest(TestCase):
-    """The mapping has to stay a clean partition of the 135 UBOS districts."""
+    """The mapping has to stay a clean partition of the 136 UBOS districts."""
 
     def test_mapping_is_a_partition_of_the_ubos_districts(self):
         check()  # raises if a district is doubled or the count drifts
         flat = district_to_subregion()
-        self.assertEqual(len(flat), 135)
+        self.assertEqual(len(flat), 136)
         self.assertEqual(len(SUBREGIONS), 10)
+        self.assertEqual(flat["Terego"], "West Nile")
 
     def test_check_rejects_a_district_in_two_sub_regions(self):
         """A guard that cannot fail is not a guard."""

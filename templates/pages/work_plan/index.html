@@ -7,23 +7,318 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="flex items-center justify-between">
+<!-- Page header -->
+<header class="edify-page-header flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Work Plan</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Work Plan</p>
+<p class="edify-page-eyebrow">Planning &amp; Execution</p>
+<h1 class="edify-page-title text-[21px] font-extrabold tracking-tight">Work Plan</h1>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold max-w-[640px]">Review all planned Activities, responsible staff, execution status and plan-derived costs across the selected period.</p>
 </div>
+<div class="shrink-0 flex flex-wrap items-center gap-2">
+{% if can_export %}
+<a href="/work-plan/export.xlsx?{{ request.GET.urlencode }}"
+   class="btn btn-secondary h-10">
+<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+Export Excel
+</a>
+{% endif %}
+{% if can_add_activity %}
+<button type="button"
+        hx-get="/work-plan/add"
+        hx-target="#drawer-root"
+        hx-swap="innerHTML"
+        class="btn btn-primary h-10 shadow-sm">
+<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+Add Non-School Activity
+</button>
+{% endif %}
+</div>
+</header>
+
+<!-- CD → RVP annual Work Plan approval -->
+<section class="work-plan-approval" aria-labelledby="work-plan-approval-title">
+<div class="min-w-0">
+<div class="flex flex-wrap items-center gap-2">
+<h2 id="work-plan-approval-title" class="text-[13px] font-extrabold text-slate-800">FY {{ fy }} Work Plan approval</h2>
+<span class="inline-flex items-center rounded-pill border px-2.5 py-1 edify-text-caption font-bold
+{% if work_plan_approval.status == 'approved_by_rvp' %}border-emerald-200 bg-emerald-50 text-emerald-700
+{% elif work_plan_approval.status == 'submitted_to_rvp' %}edify-primary-border edify-primary-soft edify-primary-text
+{% elif work_plan_approval.status == 'returned_by_rvp' %}border-amber-200 bg-amber-50 text-amber-700
+{% else %}border-slate-200 bg-slate-50 text-slate-600{% endif %}">
+{{ work_plan_approval.status_label }}
+</span>
+</div>
+{% if work_plan_approval.review_note %}
+<p class="mt-1 text-[12px] font-semibold text-amber-700">RVP note: {{ work_plan_approval.review_note }}</p>
+{% elif work_plan_approval.issues and work_plan_approval.can_submit %}
+<p class="mt-1 text-[12px] font-semibold text-slate-500">{{ work_plan_approval.issues|join:" " }}</p>
+{% elif work_plan_approval.status == 'submitted_to_rvp' %}
+<p class="mt-1 text-[12px] font-semibold text-slate-500">Submitted for regional review. The RVP can inspect the plan rows or export the complete workbook.</p>
+{% elif work_plan_approval.status == 'approved_by_rvp' %}
+<p class="mt-1 text-[12px] font-semibold text-slate-500">Approved plan and annual budget baseline are locked.</p>
+{% endif %}
+</div>
+<div class="shrink-0 flex flex-wrap items-center gap-2">
+{% if work_plan_approval.can_submit %}
+<form method="post" action="/work-plan/submit-to-rvp">
+{% csrf_token %}
+<input type="hidden" name="fy" value="{{ fy }}">
+<button type="submit" class="btn btn-primary h-9" {% if not work_plan_approval.ready %}disabled aria-disabled="true" title="Resolve the readiness issues first"{% endif %}>
+Submit completed plan to RVP
+</button>
+</form>
+{% endif %}
+{% if work_plan_approval.can_decide %}
+<form method="post" action="/work-plan/rvp-decision" class="flex flex-wrap items-center gap-2">
+{% csrf_token %}
+<input type="hidden" name="fy" value="{{ fy }}">
+<input type="hidden" name="budget_id" value="{{ work_plan_approval.budget.id }}">
+<input name="note" maxlength="512" placeholder="Reason required when returning"
+       class="h-9 min-w-[230px] rounded-control border border-[var(--edify-border)] bg-transparent px-3 text-[12px] font-semibold">
+<button type="submit" name="action" value="return" class="btn btn-secondary h-9">Return</button>
+<button type="submit" name="action" value="approve" class="btn btn-primary h-9">Approve &amp; lock</button>
+</form>
+{% endif %}
+</div>
+</section>
+
+<!-- Primary filters: FY · period tabs · period · status -->
+<div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+
+<nav aria-label="Work plan view" class="inline-flex items-center gap-1 p-1 rounded-control border border-slate-200 edify-surface self-start">
+{% for tab in view_tabs %}
+<a href="{{ tab.url }}"
+   {% if tab.active %}aria-current="page"{% endif %}
+   class="px-3.5 py-1.5 rounded-control text-[12px] font-bold transition-colors {% if tab.active %}edify-primary-solid text-white shadow-sm{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+{{ tab.label }}
+</a>
+{% endfor %}
+</nav>
+
+<form method="get" action="/work-plan" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5">
+<input type="hidden" name="view" value="{{ view }}">
+{% if flag %}<input type="hidden" name="flag" value="{{ flag }}">{% endif %}
+
+<label class="flex flex-col min-w-[110px] edify-text-caption font-bold text-slate-500">Fiscal year
+<select name="fy" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+{% for option in fy_options %}<option value="{{ option }}" {% if fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+</select>
+</label>
+
+{% if view == "month" %}
+<label class="flex flex-col min-w-[150px] edify-text-caption font-bold text-slate-500">Month
+<select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+{% for m in month_options %}<option value="{{ m.val }}" {% if period == m.val %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
+</select>
+</label>
+{% elif view == "quarter" %}
+<label class="flex flex-col min-w-[110px] edify-text-caption font-bold text-slate-500">Quarter
+<select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+{% for q in quarter_options %}<option value="{{ q }}" {% if period == q %}selected{% endif %}>{{ q }}</option>{% endfor %}
+</select>
+</label>
+{% endif %}
+
+<label class="flex flex-col min-w-[160px] edify-text-caption font-bold text-slate-500">Activity status
+<select name="status" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+<option value="">All active statuses</option>
+{% for value, label in status_options %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</label>
+
+<button type="submit" class="btn btn-primary h-9">Apply</button>
+{% if filters_active %}
+<a href="{{ clear_filters_url }}" data-component="clear-filters" class="inline-flex items-center gap-1 h-9 px-2 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+Clear filters
+</a>
+{% endif %}
+
+<details class="relative">
+<summary class="list-none cursor-pointer inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+More filters
+</summary>
+<div class="absolute right-0 z-20 mt-2 w-[280px] p-3 rounded-surface border border-slate-200 edify-surface shadow-lg space-y-3">
+<label class="block edify-text-caption font-bold text-slate-500">Responsible person
+<select name="responsible" class="mt-1 block w-full h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+<option value="">All staff</option>
+{% for rid, rname in responsible_options %}<option value="{{ rid }}" {% if selected_responsible == rid %}selected{% endif %}>{{ rname }}</option>{% endfor %}
+</select>
+</label>
+<label class="block edify-text-caption font-bold text-slate-500">Project
+<select name="project" class="mt-1 block w-full h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+<option value="">All projects</option>
+{% for p in project_options %}<option value="{{ p.id }}" {% if selected_project == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+</select>
+</label>
+<label class="block edify-text-caption font-bold text-slate-500">Activity type
+<select name="activity_type" class="mt-1 block w-full h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+<option value="">All types</option>
+{% for value, label in activity_type_options %}<option value="{{ value }}" {% if selected_activity_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</label>
+<label class="block edify-text-caption font-bold text-slate-500">Executor
+<select name="executor" class="mt-1 block w-full h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+<option value="">Staff and partners</option>
+{% for value, label in executor_options %}<option value="{{ value }}" {% if selected_executor == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</label>
+<button type="submit" class="btn btn-primary h-9 w-full">Apply filters</button>
+</div>
+</details>
+</form>
 </div>
 
-<div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-surface p-5 text-white"><p class="edify-text-caption font-bold uppercase tracking-wider edify-primary-on-solid">FY{{ fy }} Work Plan</p><p class="text-[28px] font-semibold mt-1">{{ completed }} / {{ total }}</p><p class="text-[12px] edify-primary-on-solid">activities completed this FY</p></div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-{# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
+{% if flag %}
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-text-caption font-bold bg-amber-50 text-amber-700 border border-amber-200">
+Showing: {{ flag_label }}
+</span>
+<a href="{{ clear_flag_url }}" class="edify-text-caption font-bold edify-primary-text hover:underline">Show all</a>
+</div>
+{% endif %}
+
+<!-- KPI strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Period summary bands -->
+<section aria-label="Period summary by month" class="space-y-3">
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+{% for g in groups %}
+<a href="{{ g.url }}" class="card p-4 block hover:border-[var(--edify-accent)] transition-colors" aria-label="{{ g.label }}: {{ g.count }} activities">
+<div class="flex items-center justify-between">
+<p class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">{{ g.label }}</p>
+<span class="edify-text-caption font-bold text-slate-500 tabular-nums">{{ g.count }} activit{{ g.count|pluralize:"y,ies" }}</span>
+</div>
+<p class="text-[16px] font-extrabold tabular-nums mt-2">UGX {{ g.cost|intcomma }}</p>
+<div class="mt-2 flex items-center gap-3 edify-text-caption font-semibold">
+<span class="text-emerald-600">{{ g.completed }} completed</span>
+<span class="{% if g.at_risk %}text-rose-600{% else %}text-slate-400{% endif %}">{{ g.at_risk }} at risk</span>
+</div>
+</a>
+{% endfor %}
+</div>
+
+{% if fy_totals %}
+<div class="card p-4 flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-[var(--edify-accent)]">
+<p class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500">FY {{ fy }} total</p>
+<div class="flex flex-wrap items-center gap-4 text-[13px] font-bold">
+<span class="tabular-nums">{{ fy_totals.count }} activities</span>
+<span class="tabular-nums">UGX {{ fy_totals.cost|intcomma }}</span>
+<span class="text-emerald-600 tabular-nums">{{ fy_totals.completed }} completed</span>
+<span class="{% if fy_totals.at_risk %}text-rose-600{% else %}text-slate-400{% endif %} tabular-nums">{{ fy_totals.at_risk }} at risk</span>
+</div>
+</div>
+{% endif %}
+</section>
+
+{% if rows_visible %}
+<!-- Activity table -->
+<div class="work-plan-table-shell">
+{% if rows %}
 <div class="overflow-x-auto">
-{% paginate monthly_summary "monthly_summary_page" as monthly_summary_pager %}
-<table class="w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 edify-text-caption font-bold uppercase text-slate-400">Month</th><th class="text-center px-4 py-3 edify-text-caption font-bold uppercase text-slate-400">Total</th><th class="text-center px-4 py-3 edify-text-caption font-bold uppercase text-slate-400">Completed</th><th class="text-center px-4 py-3 edify-text-caption font-bold uppercase text-slate-400">Rate</th></tr></thead>
-<tbody class="divide-y divide-slate-100">{% for m in monthly_summary_pager.rows %}<tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5 font-bold">{{ m.planned_date__month|month_name }}</td><td class="px-4 py-3.5 text-center">{{ m.total }}</td><td class="px-4 py-3.5 text-center font-bold text-emerald-600">{{ m.completed }}</td><td class="px-4 py-3.5 text-center">{% widthratio m.completed m.total 100 %}%</td></tr>{% empty %}<tr><td colspan="4">{% include "components/empty_state.html" with title="No activities planned this fiscal year" message="Monthly totals appear here once activities are scheduled in Planning." cta_label="Open Planning" cta_href="/planning" %}</td></tr>{% endfor %}</tbody></table>
-{% include "components/table_pager.html" with pager=monthly_summary_pager param="monthly_summary_page" %}
+{% paginate rows "wp_page" as pager %}
+<table class="edify-data-table work-plan-table w-full text-[12px]">
+<thead>
+<tr>
+<th class="text-left whitespace-nowrap">Activity date</th>
+<th class="text-left">Activity</th>
+<th class="text-left">SSA intervention</th>
+<th class="text-left">Scale</th>
+<th class="text-left whitespace-nowrap">Responsible party</th>
+<th class="text-left">Venue &amp; mode</th>
+<th class="text-right">Cost</th>
+<th class="text-right">Status &amp; action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[var(--edify-border)]">
+{% for r in pager.rows %}
+<tr class="edify-data-row align-top">
+<td class="whitespace-nowrap font-semibold text-slate-700">{{ r.date_label }}</td>
+<td class="min-w-[250px]">
+<p class="font-bold text-slate-800 text-[13px] leading-tight">{{ r.name }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold mt-1">{{ r.programme_activity_type }}</p>
+<details class="mt-1.5">
+<summary class="list-none cursor-pointer edify-text-caption font-bold edify-primary-text hover:underline">Details</summary>
+<div class="mt-2 p-3 rounded-control border border-slate-200 bg-slate-50/60 space-y-2 max-w-[520px]">
+<dl class="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 edify-text-caption">
+{% if r.purpose %}<div class="sm:col-span-2"><dt class="font-bold uppercase tracking-wider text-slate-400">Purpose</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.purpose }}</dd></div>{% endif %}
+{% if r.rationale %}<div><dt class="font-bold uppercase tracking-wider text-slate-400">Rationale</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.rationale }}</dd></div>{% endif %}
+{% if r.focus_intervention %}<div><dt class="font-bold uppercase tracking-wider text-slate-400">Focus intervention</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.focus_intervention }}</dd></div>{% endif %}
+{% if r.venue %}<div><dt class="font-bold uppercase tracking-wider text-slate-400">Venue</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.venue }}</dd></div>{% endif %}
+{% if r.participants %}<div><dt class="font-bold uppercase tracking-wider text-slate-400">Participants</dt><dd class="font-semibold text-slate-600 mt-0.5 tabular-nums">{{ r.participants }}</dd></div>{% endif %}
+<div><dt class="font-bold uppercase tracking-wider text-slate-400">Weekly request</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.weekly_request_status }}</dd></div>
+<div><dt class="font-bold uppercase tracking-wider text-slate-400">Evidence</dt><dd class="font-semibold text-slate-600 mt-0.5">{{ r.evidence_status }}</dd></div>
+</dl>
+{% if r.cost_lines %}
+<div>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cost breakdown</p>
+<ul class="mt-1 divide-y divide-slate-200">
+{% for line in r.cost_lines %}
+<li class="flex items-center justify-between gap-3 py-1 edify-text-caption font-semibold text-slate-600">
+<span>{{ line.label }}</span>
+<span class="tabular-nums">UGX {{ line.amount|intcomma }}</span>
+</li>
+{% endfor %}
+</ul>
 </div>
+{% endif %}
+<a href="/my-plan/{{ r.id }}" class="inline-block edify-text-caption font-bold edify-primary-text hover:underline">Open full record</a>
 </div>
+</details>
+</td>
+<td class="min-w-[180px]">
+{% if r.focus_intervention %}
+<span class="work-plan-data-pill">{{ r.focus_intervention }}</span>
+{% else %}<span class="text-slate-400">Not linked</span>{% endif %}
+</td>
+<td class="whitespace-nowrap">
+<p class="font-bold text-slate-700 tabular-nums">{{ r.school_count|default:"—" }} <span class="font-semibold text-slate-400">schools</span></p>
+<p class="mt-1 font-bold text-slate-700 tabular-nums">{{ r.participants|default:"—" }} <span class="font-semibold text-slate-400">participants</span></p>
+</td>
+<td class="whitespace-nowrap">
+<p class="font-semibold text-slate-700">{{ r.responsible }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ r.responsibility_type }}</p>
+</td>
+<td class="min-w-[170px]">
+<p class="font-semibold text-slate-700">{{ r.venue|default:"Venue not set" }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ r.programme_delivery_mode|default:"—" }}</p>
+</td>
+<td class="text-right whitespace-nowrap">
+{% if r.cost_missing %}
+<span class="inline-flex items-center px-2.5 py-1 rounded-pill edify-text-caption font-semibold bg-amber-50 text-amber-700 border border-amber-200">Cost Setup Required</span>
+{% else %}
+<span class="font-semibold tabular-nums text-slate-700">UGX {{ r.cost|intcomma }}</span>
+{% endif %}
+</td>
+<td class="text-right whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-1 rounded-pill edify-text-caption font-semibold border {{ r.status_class }}">{{ r.status_label }}</span>
+<div class="mt-2">
+<a href="{{ r.action.url }}"
+   {% if r.action.description %}title="{{ r.action.description }}"{% endif %}
+   class="inline-flex items-center px-3 py-1.5 rounded-control text-[12px] font-bold transition-colors {% if r.action.action == 'view' or r.action.action == 'view_status' %}border border-[var(--edify-border)] text-slate-600 edify-hover-raised{% else %}edify-primary-solid text-white hover:opacity-90{% endif %}">
+{{ r.action.text }}
+</a>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=pager param="wp_page" %}
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No activities in this period" message="Nothing is planned for the selected period and filters. Activities scheduled through Planning appear here automatically." %}
+{% endif %}
+</div>
+{% else %}
+<div class="card p-5">
+<p class="text-[13px] font-bold text-slate-700">Regional summary view</p>
+<p class="text-[12px] text-slate-500 font-semibold mt-1">Operational rows are summarised for regional oversight — the month bands above carry the counts, plan-derived cost, completion and risk for your region.</p>
+</div>
+{% endif %}
 
 </div>
+<div id="drawer-root"></div>
 {% endblock %}

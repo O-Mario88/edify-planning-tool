@@ -172,6 +172,79 @@ def daily_digest_job():
     run_tracked_job("daily_digest", _do_daily_digest)
 
 
+def _do_activity_reminders() -> int:
+    """§33 — 'Activity starts tomorrow' for every responsible person.
+
+    Covers school, cluster, project and non-school programme work alike (one
+    reminder per activity per person, deduped per day via source_event_id).
+    Multi-day activities remind on the eve of their START only.
+    """
+    from datetime import timedelta
+
+    from apps.activities.models import Activity
+    from apps.notifications.models import Notification
+    from apps.notifications.services import WorkflowNotificationService
+
+    tomorrow = timezone.localdate() + timedelta(days=1)
+    upcoming = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            planned_date=tomorrow,
+        )
+        .exclude(status__in=("cancelled", "rejected", "deferred", "not_planned"))
+        .exclude(responsible_staff_id__isnull=True)
+        .exclude(responsible_staff_id="")
+    )
+    created = 0
+    for activity in upcoming:
+        recipient = _funding_owner_user_id(activity)
+        if not recipient:
+            continue
+        act_hash = hashlib.blake2s(activity.id.encode(), digest_size=6).hexdigest()
+        reminder_id = f"act-{tomorrow.isoformat()}-{act_hash}"
+        assert len(reminder_id) <= 30, reminder_id
+        if Notification.objects.filter(
+            recipient_id=recipient, source_event_id=reminder_id
+        ).exists():
+            continue
+        name = activity.activity_name_snapshot or activity.get_activity_type_display()
+        span = (
+            f" ({activity.planned_date:%-d %b}–{activity.end_date:%-d %b})"
+            if activity.end_date and activity.end_date != activity.planned_date
+            else ""
+        )
+        WorkflowNotificationService.trigger(
+            event_type="activity_reminder",
+            category="activity",
+            priority="normal",
+            title=f"Starts tomorrow: {name}{span}",
+            body="Review the plan, funding and evidence requirements before you start.",
+            context_type="Activity",
+            context_id=reminder_id,
+            recipients=[recipient],
+        )
+        created += 1
+    return created
+
+
+def _funding_owner_user_id(activity):
+    """responsible_staff_id may be a StaffProfile id or a User id."""
+    from apps.accounts.models import StaffProfile
+
+    resolved = (
+        StaffProfile.objects.filter(id=activity.responsible_staff_id)
+        .values_list("user_id", flat=True)
+        .first()
+    )
+    return resolved or activity.responsible_staff_id
+
+
+def activity_reminders_job():
+    if not _enabled():
+        return
+    run_tracked_job("activity_reminders", _do_activity_reminders)
+
+
 # ── 5. Target achievement ledger sync (closes the "ledger staleness" gap) ────
 def _do_target_ledger_sync() -> int:
     from apps.accounts.models import User

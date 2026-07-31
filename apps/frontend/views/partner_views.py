@@ -396,11 +396,6 @@ def partners_list_view(request):
             [row for row in scheduled_rows if row["date"] and row["date"] >= today],
             key=lambda row: row["date"],
         )[:5],
-        "can_add_partner": (
-            request.user.is_superuser
-            or getattr(request.user, "active_role", None)
-            in ["CountryDirector", "Admin", "ImpactAssessment", "CD", "ADMIN", "IA"]
-        ),
     }
     # One persistent search: the top bar, attached to the page filter form.
     context["topbar_search"] = {
@@ -415,7 +410,7 @@ def partners_list_view(request):
 
 @require_page_permission("partners")
 def create_partner_view(request):
-    """CD, Admin, and IA view to onboard/add a new partner linked to an SSA intervention."""
+    """Legacy partner-onboarding drawer; management now lives under Users."""
     from apps.core.enums import SsaIntervention
     from apps.partners.services import onboard as onboard_partner_service
     from django.contrib import messages
@@ -424,20 +419,18 @@ def create_partner_view(request):
     allowed_roles = {
         "CountryDirector",
         "Admin",
-        "ImpactAssessment",
         "CD",
         "ADMIN",
-        "IA",
     }
     user_role = getattr(request.user, "active_role", None)
     if user_role not in allowed_roles and not request.user.is_superuser:
         if request.headers.get("HX-Request"):
             return HttpResponseForbidden(
-                "Only Country Director, Admin, or Impact Assessment users can onboard new partners."
+                "Only a Country Director or Admin can onboard new partners."
             )
         messages.error(
             request,
-            "Only Country Director, Admin, or Impact Assessment users can onboard new partners.",
+            "Only a Country Director or Admin can onboard new partners.",
         )
         return redirect("frontend:partners_list")
 
@@ -452,7 +445,7 @@ def create_partner_view(request):
 
         if not name:
             messages.error(request, "Partner name is required.")
-            return redirect("frontend:partners_list")
+            return redirect("frontend:admin_users")
 
         payload = {
             "name": name,
@@ -472,7 +465,7 @@ def create_partner_view(request):
         except Exception as exc:
             messages.error(request, str(getattr(exc, "detail", exc)))
 
-        return redirect("frontend:partners_list")
+        return redirect("frontend:admin_users")
 
     context = {
         "regions": Region.objects.order_by("name"),

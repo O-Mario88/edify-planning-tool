@@ -80,6 +80,11 @@ CLUSTER_MEETING_TYPES: tuple[str, ...] = (
 # Assessment work that is not itself a school visit.
 SSA_TYPES: tuple[str, ...] = (ActivityType.SSA_ACTIVITY,)
 
+# Dated non-school programme work (conferences, camps, exhibitions, launches,
+# stakeholder events, staff workshops). Costed from the programme recipe, not
+# a per-school rate; never counts as school field contact.
+PROGRAMME_EVENT_TYPES: tuple[str, ...] = (ActivityType.PROGRAMME_EVENT,)
+
 
 def _remaining() -> tuple[str, ...]:
     grouped = (
@@ -87,6 +92,7 @@ def _remaining() -> tuple[str, ...]:
         | set(TRAINING_TYPES)
         | set(CLUSTER_MEETING_TYPES)
         | set(SSA_TYPES)
+        | set(PROGRAMME_EVENT_TYPES)
     )
     return tuple(v for v in ActivityType.values if v not in grouped)
 
@@ -108,6 +114,7 @@ def check() -> None:
         "TRAINING_TYPES": TRAINING_TYPES,
         "CLUSTER_MEETING_TYPES": CLUSTER_MEETING_TYPES,
         "SSA_TYPES": SSA_TYPES,
+        "PROGRAMME_EVENT_TYPES": PROGRAMME_EVENT_TYPES,
         "OTHER_TYPES": OTHER_TYPES,
     }
     seen: dict[str, str] = {}

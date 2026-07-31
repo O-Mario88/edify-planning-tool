@@ -394,6 +394,12 @@ def _costing_input(activity: Activity, data: dict) -> dict:
         "nights": data.get("nights"),
         "projectId": activity.project_id,
         "fy": activity.fy,
+        # Multi-day programme events price per service day.
+        "days": (
+            (activity.end_date - activity.planned_date).days + 1
+            if activity.end_date and activity.planned_date
+            else 1
+        ),
     }
 
 
@@ -671,9 +677,90 @@ def create(
         if not data.get("districtType") and school.district_id:
             data = {**data, "districtType": school.district.district_type}
 
-    if not school and not cluster_id:
-        raise BadRequest("Activity must reference a school or cluster")
-    _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
+    non_school = bool(
+        catalogue_item
+        and catalogue_item.non_school_allowed
+        and not school
+        and not cluster_id
+    )
+    if not school and not cluster_id and not non_school:
+        raise BadRequest(
+            "Activity must reference a school or cluster. Programme work "
+            "without one must use an approved non-school Catalogue Activity."
+        )
+
+    end_date = None
+    if non_school:
+        from apps.core.enums import (
+            ProgrammeActivityType,
+            ProgrammeDeliveryMode,
+            SsaIntervention,
+            SupportRationale,
+        )
+
+        rationale = (
+            data.get("supportRationale") or data.get("support_rationale") or ""
+        ).strip()
+        if rationale not in SupportRationale.values:
+            raise BadRequest(
+                "Select the strategic rationale for this programme Activity "
+                "(project objective, organizational priority, staff "
+                "development, …). Generic unrationalized work is not allowed."
+            )
+        if rationale == SupportRationale.PROJECT_OBJECTIVE and not data.get(
+            "projectId"
+        ):
+            raise BadRequest(
+                "A Project Objective rationale must name the Special Project "
+                "this Activity serves."
+            )
+        if catalogue_item.requires_participant_counts and not data.get(
+            "expectedParticipants"
+        ):
+            raise BadRequest(
+                "Enter the expected participant count — this Activity type is "
+                "priced and planned per participant."
+            )
+        if data.get("programmeActivityType") not in ProgrammeActivityType.values:
+            raise BadRequest("Select a valid programme Activity type.")
+        if data.get("programmeDeliveryMode") not in ProgrammeDeliveryMode.values:
+            raise BadRequest("Select Group or Cluster as the delivery mode.")
+        if (focus or data.get("purposeIntervention")) not in SsaIntervention.values:
+            raise BadRequest("Select the SSA intervention linked to this Activity.")
+        try:
+            planned_school_count = int(data.get("plannedSchoolCount") or 0)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest("Number of schools must be a whole number.") from exc
+        if planned_school_count < 1 or planned_school_count > 10000:
+            raise BadRequest("Number of schools must be between 1 and 10,000.")
+        try:
+            participant_count = int(data.get("expectedParticipants") or 0)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest("Number of participants must be a whole number.") from exc
+        if participant_count < 1 or participant_count > 100000:
+            raise BadRequest("Number of participants must be between 1 and 100,000.")
+        if not (data.get("venue") or "").strip():
+            raise BadRequest("Enter the Activity venue.")
+        end_raw = data.get("endDate") or data.get("end_date")
+        if end_raw:
+            end_date = _parse_date(str(end_raw)).date()
+            if not scheduled_date:
+                raise BadRequest("A multi-day Activity needs its start date.")
+            if end_date < scheduled_date.date():
+                raise BadRequest("The end date cannot precede the start date.")
+            if end_date != scheduled_date.date():
+                if not catalogue_item.multi_day_allowed:
+                    raise BadRequest("This Activity type is a single-day activity.")
+                if (end_date - scheduled_date.date()).days > 30:
+                    raise BadRequest("A programme Activity may span at most 31 days.")
+    if not non_school:
+        # A non-school programme activity has no school/cluster target to
+        # scope-check; its authority is the MANUAL_ACTIVITY_CREATE permission
+        # enforced by planning.schedule_programme_activity, plus the
+        # responsible-person assignment rules below.
+        _assert_target_in_scope(
+            school=school, cluster_id=cluster_id, principal=principal
+        )
     _assert_schedule_entitlement(
         activity_type,
         school,
@@ -709,6 +796,18 @@ def create(
         avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
         if avail["status"] == "blocked":
             raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+        if end_date and end_date != scheduled_date.date():
+            from datetime import datetime as _dt
+
+            end_check = _SchedulingPolicyService.check(
+                resp_user,
+                timezone.make_aware(_dt.combine(end_date, _dt.min.time())),
+            )
+            if end_check["status"] == "blocked":
+                raise BadRequest(
+                    "Scheduling blocked on the end date: "
+                    + " · ".join(end_check["blockers"])
+                )
 
     # A paused or closed Special Project must stop absorbing new commitments —
     # that is what the RVP's pause/close decision means. Gating only the
@@ -787,6 +886,7 @@ def create(
             cluster=(None if cluster_id is None else catalogue_cluster),
             project=project,
             executor_type="partner" if is_partner else "staff",
+            non_school=non_school,
         )
         validate_frequency(
             catalogue_item,
@@ -1007,6 +1107,15 @@ def create(
             from apps.clusters.models import Cluster
 
             Cluster.objects.select_for_update().filter(pk=cluster_id).first()
+        elif non_school and responsible_staff_id:
+            # Non-school work has no school/cluster row to lock; the
+            # responsible person is the natural serialization anchor, so a
+            # double-click cannot race the duplicate guard below.
+            from apps.accounts.models import StaffProfile
+
+            StaffProfile.objects.select_for_update().filter(
+                pk=responsible_staff_id
+            ).first()
         # §F partner allowance: one non-core partner activity per school per
         # FY unless the CD granted more. Checked inside the row lock so two
         # concurrent partner assignments cannot both pass.
@@ -1038,11 +1147,58 @@ def create(
                     "target on this date. Reschedule or edit the existing "
                     "activity instead of creating a duplicate."
                 )
+        # §1/§21: every activity names the planning workflow that authorized
+        # it, so every budget row can identify its dated plan source.
+        if non_school:
+            planning_source = "manual_work_plan"
+            context_type = "programme" if data.get("projectId") else "organization"
+        elif activity_type in ("core_visit", "core_training", "core_assessment_visit"):
+            planning_source, context_type = "core_planning", "school"
+        elif data.get("projectId"):
+            planning_source, context_type = "project_planning", "project"
+        elif cluster_id:
+            planning_source, context_type = "cluster_planning", "cluster"
+        else:
+            planning_source, context_type = "school_planning", "school"
+
+        event_district_id = None
+        if non_school and (data.get("districtId") or data.get("district_id")):
+            from apps.geography.models import District
+
+            event_district_id = (
+                District.objects.filter(
+                    id=data.get("districtId") or data.get("district_id")
+                )
+                .values_list("id", flat=True)
+                .first()
+            )
+
         activity = Activity.objects.create(
             activity_type=activity_type,
             school=school,
             cluster_id=cluster_id,
             project_id=data.get("projectId"),
+            end_date=end_date,
+            planning_source=planning_source,
+            activity_context_type=context_type,
+            support_rationale=(
+                (
+                    data.get("supportRationale") or data.get("support_rationale") or ""
+                ).strip()
+                if non_school
+                else ""
+            ),
+            venue=(data.get("venue") or "").strip()[:255],
+            programme_activity_type=(
+                data.get("programmeActivityType") if non_school else None
+            ),
+            programme_delivery_mode=(
+                data.get("programmeDeliveryMode") if non_school else None
+            ),
+            planned_school_count=(
+                planned_school_count if non_school else None
+            ),
+            event_district_id=event_district_id,
             fy=fy,
             quarter=quarter,
             planned_date=planned_date,
@@ -1619,6 +1775,19 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
+    # A multi-day activity keeps its duration when it moves: the end date
+    # shifts by the same delta as the start (an explicit endDate in the
+    # payload overrides, validated against the new start).
+    if a.end_date and a.planned_date:
+        duration = a.end_date - a.planned_date
+        end_raw = data.get("endDate") or data.get("end_date")
+        if end_raw:
+            new_end = _parse_date(str(end_raw)).date()
+            if new_end < planned_date:
+                raise BadRequest("The end date cannot precede the start date.")
+            a.end_date = new_end
+        else:
+            a.end_date = planned_date + duration
     a.scheduled_date = new_date
     a.fy = new_fy
     a.quarter = new_quarter
@@ -1649,6 +1818,12 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 "fy",
                 "quarter",
                 "planned_date",
+                # end_date was recomputed above for multi-day work but was
+                # missing from this list — the re-priced cost lines followed
+                # the new range while the persisted activity kept the OLD end
+                # date (for a forward move, an end date before the new start,
+                # which the §35 end-before-start health check then flags).
+                "end_date",
                 "planned_month",
                 "planned_week",
                 "expected_participants",

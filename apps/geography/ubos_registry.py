@@ -14,8 +14,9 @@ This importer is deliberately additive:
 * the three non-spatial refugee-camp reporting records are not presented as
   administrative boundaries.
 
-The same district folding is imported by the offline boundary compiler. That
-keeps the School Directory and the 135-area national overview on one contract.
+City folding is shared with the offline boundary compiler. The legacy
+135-boundary overview additionally draws Terego within Arua, but that
+presentation fallback must not collapse Terego's operational identity.
 """
 
 from __future__ import annotations
@@ -31,6 +32,12 @@ SOURCE_NAME = "UBOS_NPHC_2024_LIVE"
 REGISTRY_RELATIVE_PATH = Path(
     "data/geography/uganda_subcounty_registry_ubos_nphc2024_live.json"
 )
+REGION_NAME_BY_CODE = {
+    "1": "Central",
+    "2": "Eastern",
+    "3": "Northern",
+    "4": "Western",
+}
 
 DISTRICT_ALIASES = {
     "LUWERO": "LUWEERO",
@@ -46,6 +53,8 @@ CURRENT_CITY_PARENTS = {
     "MBALECITY": "MBALE",
     "MBARARACITY": "MBARARA",
     "SOROTICITY": "SOROTI",
+}
+LEGACY_BOUNDARY_PARENTS = {
     "TEREGO": "ARUA",
 }
 
@@ -58,6 +67,13 @@ def district_canonical(value: str | None) -> str:
     key = canonical(value)
     key = CURRENT_CITY_PARENTS.get(key, key)
     return DISTRICT_ALIASES.get(key, key)
+
+
+def boundary_district_canonical(value: str | None) -> str:
+    """Canonical district key for the legacy 135-boundary overview only."""
+
+    key = district_canonical(value)
+    return LEGACY_BOUNDARY_PARENTS.get(key, key)
 
 
 def default_registry_path() -> Path:
@@ -83,6 +99,80 @@ def _display_name(record: dict[str, Any], duplicate_names: Counter) -> str:
     if duplicate_names[identity] > 1:
         return f"{name} — {str(record['county_name']).title()}"
     return name
+
+
+def ensure_ubos_districts(
+    *,
+    path: Path | None = None,
+    dry_run: bool = False,
+) -> dict[str, int]:
+    """Add current UBOS districts beneath already-loaded parent regions."""
+
+    from django.db import transaction
+
+    from apps.core.geography import normalize_uganda_admin_name
+    from apps.geography.models import District, Region
+
+    stats = {
+        "already_present": 0,
+        "created": 0,
+        "planned_create": 0,
+        "missing_parent_region": 0,
+    }
+    regions = list(Region.objects.all())
+    if not regions:
+        return stats
+
+    payload = load_registry(path)
+    regions_by_key = {
+        normalize_uganda_admin_name(region.name): region for region in regions
+    }
+    existing_keys = {
+        district_canonical(name)
+        for name in District.objects.values_list("name", flat=True)
+    }
+    official_districts: dict[str, dict[str, Any]] = {}
+    for record in payload["records"]:
+        if not record.get("has_geometry"):
+            continue
+        key = district_canonical(record["district_name"])
+        official_districts.setdefault(key, record)
+
+    pending = []
+    for key, record in sorted(official_districts.items()):
+        if key in existing_keys:
+            stats["already_present"] += 1
+            continue
+        region_name = REGION_NAME_BY_CODE.get(str(record.get("region_code")))
+        region = regions_by_key.get(
+            normalize_uganda_admin_name(region_name) if region_name else ""
+        )
+        if region is None:
+            stats["missing_parent_region"] += 1
+            continue
+        pending.append(
+            District(
+                name=str(record["district_name"]).title(),
+                region=region,
+                code=str(record["district_code"]),
+                source=SOURCE_NAME,
+            )
+        )
+        existing_keys.add(key)
+
+    stats["planned_create"] = len(pending)
+    if dry_run or not pending:
+        return stats
+
+    with transaction.atomic():
+        before = District.objects.count()
+        District.objects.bulk_create(
+            pending,
+            batch_size=200,
+            ignore_conflicts=True,
+        )
+        stats["created"] = District.objects.count() - before
+    return stats
 
 
 def ensure_ubos_subcounties(
@@ -199,7 +289,9 @@ def ensure_geography_reference() -> dict[str, Any]:
 
     from apps.geography.subregions import sync
 
+    districts = ensure_ubos_districts()
     return {
+        "districts": districts,
         "subregions": sync(),
         "subcounties": ensure_ubos_subcounties(),
     }
@@ -208,10 +300,13 @@ def ensure_geography_reference() -> dict[str, Any]:
 __all__ = [
     "CURRENT_CITY_PARENTS",
     "DISTRICT_ALIASES",
+    "LEGACY_BOUNDARY_PARENTS",
     "SOURCE_NAME",
+    "boundary_district_canonical",
     "canonical",
     "district_canonical",
     "ensure_geography_reference",
+    "ensure_ubos_districts",
     "ensure_ubos_subcounties",
     "load_registry",
 ]

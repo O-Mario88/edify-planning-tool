@@ -1,0 +1,187 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Add Non-School Activity{% endblock %}
+{% block drawer_subtitle %}
+Plan a dated programme activity — conferences, camps, exhibitions, launches —
+costed from the Cost Catalogue and budgeted like every other activity.
+{% endblock %}
+
+{% block drawer_body %}
+<form
+  hx-post="/work-plan/add/action"
+  hx-target="#non-school-errors"
+  hx-disabled-elt="find button[type=submit]"
+  class="space-y-4 text-[12px] font-bold text-slate-600"
+  x-data="{ rationale: '', responsibility: 'staff' }"
+>
+  {% csrf_token %}
+  <div id="non-school-errors"></div>
+
+  <fieldset class="space-y-3">
+    <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity identity</legend>
+    <label class="block">Activity title
+      <select name="catalogue_item_id" required
+              class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2"
+              hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change">
+        <option value="">Choose an approved Activity title…</option>
+        {% regroup items by programme_category as categories %}
+        {% for category in categories %}
+        <optgroup label="{{ category.grouper|default:'Programme' }}">
+          {% for item in category.list %}
+          <option value="{{ item.stable_code }}">{{ item.display_name }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block">Activity type
+        <select name="programme_activity_type" required
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+          <option value="">Choose a programme type…</option>
+          {% for value, label in programme_activity_types %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="block">SSA intervention
+        <select name="focus_intervention" required
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+          <option value="">Choose the linked intervention…</option>
+          {% for value, label in ssa_interventions %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="block">Strategic rationale
+      <select name="support_rationale" required x-model="rationale"
+              class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+        <option value="">Why this work is authorized…</option>
+        {% for value, label in rationales %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">Purpose
+      <textarea name="purpose" required maxlength="1000" rows="2"
+                placeholder="What this activity delivers and for whom"
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2"></textarea>
+    </label>
+    <label class="block">Special Project <span class="font-medium text-slate-400">(required for a Project Objective rationale)</span>
+      <select name="project_id" x-bind:required="rationale === 'project_objective'"
+              class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+        <option value="">No project linkage</option>
+        {% for project in projects %}
+        <option value="{{ project.id }}">{{ project.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </fieldset>
+
+  <fieldset class="space-y-3">
+    <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schedule</legend>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block">Start date
+        <input type="date" name="scheduled_date" required
+               hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+               class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+      </label>
+      <label class="block">End date <span class="font-medium text-slate-400">(multi-day)</span>
+        <input type="date" name="end_date"
+               hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+               class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+      </label>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block">Venue
+        <input name="venue" required maxlength="255" placeholder="e.g. Kampala Serena"
+               class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+      </label>
+      <label class="block">District
+        <select name="district_id"
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+          <option value="">Not district-specific</option>
+          {% for district in districts %}
+          <option value="{{ district.id }}">{{ district.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset class="space-y-3">
+    <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsibility &amp; scale</legend>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block">Number of schools
+        <input type="number" name="planned_school_count" min="1" max="10000" required
+               class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+      </label>
+      <label class="block">Number of participants
+        <input type="number" name="expected_participants" min="1" max="100000" required
+               hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change delay:300ms"
+               class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+      </label>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="block">Delivery mode
+        <select name="programme_delivery_mode" required
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+          <option value="">Choose a delivery mode…</option>
+          {% for value, label in programme_delivery_modes %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="block">Responsible party
+        <select name="responsibility_type" x-model="responsibility" required
+                hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+                class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+          <option value="staff">Staff</option>
+          <option value="partner">Partner</option>
+        </select>
+      </label>
+    </div>
+    <label class="block" x-show="responsibility === 'staff'">Staff responsible
+      {% if assignable_staff %}
+      <select name="responsible_staff_id" x-bind:disabled="responsibility !== 'staff'"
+              class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+        <option value="">Myself</option>
+        {% for staff in assignable_staff %}
+        <option value="{{ staff.id }}">{{ staff.user.name }} — {{ staff.title }}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <span class="mt-1 flex min-h-10 items-center rounded-control border border-[var(--border-card)] bg-slate-50 px-3 py-2 text-slate-700">You</span>
+      {% endif %}
+    </label>
+    <label class="block" x-cloak x-show="responsibility === 'partner'">Partner responsible
+      <select name="partner_id"
+              x-bind:disabled="responsibility !== 'partner'"
+              x-bind:required="responsibility === 'partner'"
+              class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+        <option value="">Choose an active Partner…</option>
+        {% for partner in partners %}
+        <option value="{{ partner.id }}">{{ partner.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block">Expected outcome
+      <input name="expected_outcome" maxlength="500" placeholder="What success looks like"
+             class="mt-1 block w-full rounded-control border border-[var(--border-card)] bg-white px-3 py-2">
+    </label>
+  </fieldset>
+
+  <div id="non-school-cost-preview">
+    {% include "partials/work_plan/non_school_cost_preview.html" with preview=None days=1 %}
+  </div>
+
+  <p class="text-[12px] font-medium text-[var(--edify-text-muted)]">
+    On save this becomes a scheduled Activity: it appears in the Work Plan,
+    the responsible person's My Plan and the Calendar, and its catalogue cost
+    enters the weekly fund request and monthly budget for its dates.
+  </p>
+
+  <button type="submit" class="btn btn-primary w-full">Add to Work Plan</button>
+</form>
+{% endblock %}

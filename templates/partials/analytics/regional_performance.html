@@ -45,13 +45,16 @@
         <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
            x-show="!focused" x-transition.opacity>Click a district to zoom</p>
         <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
-           x-show="focused && !String(focused).startsWith('sub:')"
-           x-transition.opacity>Hover a sub-county for local detail</p>
+           x-show="focusedDistrict && !focusedSubcounty"
+           x-transition.opacity>Click a sub-county to zoom further</p>
         <button type="button" x-ref="mapBack" x-show="focused"
-                x-transition.opacity @click="reset()"
+                x-transition.opacity @click="back()"
                 class="rounded-control border border-slate-200 px-2.5 py-1
                        edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
-          <span x-text="focused && focused.replace('sub:', '')"></span> · Back &middot; Esc
+          <span x-text="focusedSubcounty
+            ? `Back to ${focusedDistrict}`
+            : `${focused && focused.replace('sub:', '')} · Back`"></span>
+          &middot; Esc
         </button>
       </div>
       <div class="flex flex-wrap items-center justify-start gap-0.5 sm:justify-end"
@@ -83,7 +86,7 @@
   <div class="flex flex-col lg:flex-row gap-4 lg:gap-5 items-start">
 
     <div class="relative w-full lg:flex-1 lg:min-w-0 aspect-square"
-         @keydown.escape.window="reset()" @click.outside="reset()">
+         @keydown.escape.window="back()" @click.outside="reset()">
       <div x-show="!ready && !failed"
            class="absolute inset-0 flex items-center justify-center
                   edify-text-caption font-semibold text-slate-400">
@@ -273,7 +276,8 @@ function subregionMap(){
   return {
     ready:false, failed:false, attempts:0,
     detailLoading:false, detailFailed:false, detailRequest:0,
-    focused:null, focusedDistrict:null, cam:null, labels:null, subLabels:null,
+    focused:null, focusedDistrict:null, focusedSubcounty:null,
+    districtCamera:null, cam:null, labels:null, subLabels:null,
     pinLayer:null, subcountyLayer:null, subcountyPinLayer:null, zoomScale:1,
     tip:{
       show:false,x:0,y:0,d:{},mix:[],top:[],rows:[],
@@ -284,7 +288,7 @@ function subregionMap(){
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
     boundaryExitHandler:null,
     sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
-    combinedBoundaries:{},
+    combinedBoundaries:{}, combinedDistrictRequests:{},
     schoolTypes:[
       {key:'core', label:'Core', colour:'#f97316', on:true, total:0},
       {key:'client', label:'Client', colour:'#2563eb', on:true, total:0},
@@ -308,6 +312,8 @@ function subregionMap(){
         MBALECITY:'MBALE',
         MBARARACITY:'MBARARA',
         SOROTICITY:'SOROTI',
+        // Display-only fallback: the legacy 135-boundary asset draws Terego
+        // within Arua. Operational forms and imports keep Terego independent.
         TEREGO:'ARUA',
       };
       return overview[key] || key;
@@ -1173,6 +1179,7 @@ function subregionMap(){
       anchor.dataset.pinCount = String(visible.length);
 
       const pinSet = document.createElementNS(this.NS, 'g');
+      pinSet.setAttribute('class', 'sr-pin-set');
       pinSet.setAttribute(
         'transform',
         `scale(${(1 / this.zoomScale).toFixed(4)})`,
@@ -1205,15 +1212,21 @@ function subregionMap(){
       this.clearSubcounties();
       const features = payload.features || [];
       const matching = this.matchMetricsToFeatures(features);
-      /* Ask the server to combine every matched group, then redraw once the
-         answers arrive. The first pass paints geometry with absent values --
-         honest while loading, and it keeps the map interactive rather than
-         blocking on a request. */
-      if(!this._combineRequested){
-        this._combineRequested = true;
+      /* Ask the server once per district to combine every matched group. The
+         previous boolean was cleared immediately before redraw, so redraw
+         started the same request again forever. Keep a district-keyed request
+         ledger instead: geometry remains interactive during the request and a
+         completed district never recursively fetches itself. */
+      const districtRequestKey = this.districtKey(this.focusedDistrict);
+      if(!this.combinedDistrictRequests[districtRequestKey]){
+        this.combinedDistrictRequests[districtRequestKey] = true;
         this.fetchCombinedBoundaries(features, matching).then(() => {
-          this._combineRequested = false;
-          this.drawSubcounties(payload);
+          if(
+            this.districtKey(this.focusedDistrict) === districtRequestKey &&
+            !this.focusedSubcounty
+          ){
+            this.drawSubcounties(payload);
+          }
         });
       }
       const layer = document.createElementNS(this.NS, 'g');
@@ -1247,7 +1260,7 @@ function subregionMap(){
           `${metric.school_distribution.client || 0} Client, ` +
           `${metric.school_distribution.champion || 0} Champion, and ` +
           `${metric.school_distribution.core_trained || 0} trained Core; ` +
-          `SSA average ${this._n(metric.ssa_avg)}`,
+          `SSA average ${this._n(metric.ssa_avg)}. Activate to zoom in`,
         );
         path.__boundaryProperties = properties;
         path.__boundaryMetrics = matchedRows;
@@ -1261,7 +1274,16 @@ function subregionMap(){
           this.hoverSubcountyAt(path);
         });
         path.addEventListener('blur', () => this.releaseBoundary(path));
-        path.addEventListener('click', event => event.stopPropagation());
+        path.addEventListener('click', event => {
+          event.stopPropagation();
+          this.zoomSubcounty(path);
+        });
+        path.addEventListener('keydown', event => {
+          if(event.key === 'Enter' || event.key === ' '){
+            event.preventDefault();
+            this.zoomSubcounty(path);
+          }
+        });
         layer.appendChild(path);
 
         const label = document.createElementNS(this.NS, 'text');
@@ -1348,6 +1370,61 @@ function subregionMap(){
       });
     },
 
+    scaleSubcountyOverlays(scale, selected=''){
+      this.subcountyLabelLayer?.querySelectorAll('text').forEach(label => {
+        const on = !selected || label.dataset.subcounty === selected;
+        label.style.opacity = on ? 1 : 0;
+        const match = /translate\(([-\d.]+),([-\d.]+)\)/
+          .exec(label.getAttribute('transform'));
+        if(match){
+          label.setAttribute(
+            'transform',
+            `translate(${match[1]},${match[2]}) ` +
+            `scale(${(1 / scale).toFixed(4)})`,
+          );
+        }
+      });
+      this.subcountyPinLayer?.querySelectorAll('.sr-subcounty-pins')
+        .forEach(group => {
+          const on = !selected || group.dataset.subcounty === selected;
+          group.style.opacity = on ? 1 : 0;
+          group.querySelector('.sr-pin-set')?.setAttribute(
+            'transform',
+            `scale(${(1 / scale).toFixed(4)})`,
+          );
+        });
+    },
+
+    zoomSubcounty(el){
+      const name = el.dataset.subcounty;
+      if(!name || !this.districtCamera) return;
+      if(this.focusedSubcounty === name){
+        this.back();
+        return;
+      }
+      this.releaseBoundary(el);
+      const bounds = el.getBBox();
+      let scale = Math.min(this.W / bounds.width, this.H / bounds.height) * 0.72;
+      scale = Math.max(this.districtCamera.scale * 1.18, Math.min(scale, 30));
+      const tx = this.W / 2 - (bounds.x + bounds.width / 2) * scale;
+      const ty = this.H / 2 - (bounds.y + bounds.height / 2) * scale;
+      this.cam.style.transform =
+        `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) ` +
+        `scale(${scale.toFixed(3)})`;
+      this.subcountyLayer?.querySelectorAll('path:not(.sr-boundary-lift)')
+        .forEach(path => {
+          const on = path === el;
+          path.style.opacity = on ? 1 : 0.10;
+          path.style.filter = on ? 'none' : 'grayscale(.62)';
+        });
+      this.zoomScale = scale;
+      this.scaleSubcountyOverlays(scale, name);
+      this.focusedSubcounty = name;
+      this.focused = `subcounty:${name}`;
+      this.tip.show = false;
+      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+    },
+
     zoom(el){
       if(this.focused) this.reset();
       this.releaseBoundary(el);
@@ -1357,6 +1434,7 @@ function subregionMap(){
       const tx = this.W/2 - (b.x + b.width/2)*s, ty = this.H/2 - (b.y + b.height/2)*s;
       this.cam.style.transform =
         `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(3)})`;
+      this.districtCamera = {scale:s, tx, ty};
       this.cam.classList.add('sr-zoomed');
       this.cam.querySelectorAll('#sr-cam > g:first-child path').forEach(p => {
         const on = p === el;
@@ -1381,12 +1459,36 @@ function subregionMap(){
       this.subLabels.style.opacity = 0;
       this.focused = el.dataset.district;
       this.focusedDistrict = el.dataset.district;
+      this.focusedSubcounty = null;
       this.zoomScale = s;
       this.tip.show = false;
       this.loadSubcounties(el.dataset.district);
       // A focused SVG path would otherwise retain its blue keyboard ring and
       // magnify that ring with the camera. Move focus to the visible escape
       // control, preserving keyboard navigation without drawing over the map.
+      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+    },
+
+    back(){
+      if(!this.focusedSubcounty){
+        this.reset();
+        return;
+      }
+      const camera = this.districtCamera;
+      this.cam.style.transform =
+        `translate(${camera.tx.toFixed(2)}px,${camera.ty.toFixed(2)}px) ` +
+        `scale(${camera.scale.toFixed(3)})`;
+      this.subcountyLayer?.querySelectorAll('path:not(.sr-boundary-lift)')
+        .forEach(path => {
+          path.style.opacity = '';
+          path.style.filter = '';
+        });
+      this.zoomScale = camera.scale;
+      this.focusedSubcounty = null;
+      this.focused = this.focusedDistrict;
+      this.tip.show = false;
+      this.resolveSubcountyLabelCollisions();
+      this.scaleSubcountyOverlays(camera.scale);
       this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
     },
 
@@ -1413,6 +1515,8 @@ function subregionMap(){
       this.subLabels.style.opacity = '';
       this.focused = null;
       this.focusedDistrict = null;
+      this.focusedSubcounty = null;
+      this.districtCamera = null;
       this.zoomScale = 1;
       this.tip.show = false;
     },
@@ -1506,7 +1610,7 @@ function subregionMap(){
     transition:filter 240ms ease,
       transform 260ms cubic-bezier(.2,.8,.2,1);
   }
-  #sr-cam .sr-subcounty-layer > path{cursor:help}
+  #sr-cam .sr-subcounty-layer > path{cursor:zoom-in}
   #sr-cam .sr-boundary-layer >
     path:is(.sr-boundary-active,.sr-boundary-lift){
     transform:scale(1.05) !important;

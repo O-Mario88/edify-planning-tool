@@ -69,7 +69,36 @@ DIRECT_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
     ),
 )
 
-CANONICAL_RATES = DAILY_BATCH_RATES + CLUSTER_ACTIVITY_RATES + DIRECT_ACTIVITY_RATES
+# Non-school programme event recipe (conferences, camps, exhibitions,
+# launches, workshops). Venue + participant meals are the demanded core; the
+# optional components price only when the CD keeps a rate for them.
+PROGRAMME_EVENT_RATES: tuple[tuple[str, str, int], ...] = (
+    ("programme_venue_per_day", "Programme event venue (per day)", 300000),
+    (
+        "programme_participant_meal_cost_per_head",
+        "Programme participant meals (per head per day)",
+        15000,
+    ),
+    ("programme_facilitation_per_day", "Programme facilitation (per day)", 100000),
+    ("programme_transport_per_day", "Programme transport (per day)", 100000),
+    (
+        "programme_materials_per_participant",
+        "Programme materials (per participant)",
+        5000,
+    ),
+    (
+        "programme_accommodation_per_night",
+        "Programme accommodation (per night)",
+        80000,
+    ),
+)
+
+CANONICAL_RATES = (
+    DAILY_BATCH_RATES
+    + CLUSTER_ACTIVITY_RATES
+    + DIRECT_ACTIVITY_RATES
+    + PROGRAMME_EVENT_RATES
+)
 CANONICAL_RATE_KEYS = frozenset(key for key, _label, _cost in CANONICAL_RATES)
 
 # These keys remain in old schedule snapshots and, on upgraded installations,

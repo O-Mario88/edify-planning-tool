@@ -53,25 +53,18 @@ class ImportSchoolBatchAtomicityTest(TestCase):
             status="ready",
         )
 
-    def test_failure_on_later_row_rolls_back_earlier_rows_in_the_same_batch(self):
+    def test_bulk_write_failure_rolls_back_the_whole_batch(self):
         from apps.schools.upload_service import import_school_batch
 
-        original_create = School.objects.create
-        calls = {"n": 0}
-
-        def flaky_create(*args, **kwargs):
-            calls["n"] += 1
-            if calls["n"] == 2:
-                raise RuntimeError("simulated failure on the second row")
-            return original_create(*args, **kwargs)
-
-        with patch.object(School.objects, "create", side_effect=flaky_create):
+        with patch.object(
+            School.objects,
+            "bulk_create",
+            side_effect=RuntimeError("simulated bulk write failure"),
+        ):
             with self.assertRaises(RuntimeError):
                 import_school_batch(self.batch, self.ia)
 
-        # The first row's School would have been created in isolation, but
-        # because the second row failed, NOTHING in this batch should be
-        # persisted — not a partial batch of one school.
+        # A failed bounded write cannot leave a partial batch behind.
         self.assertEqual(
             School.objects.filter(school_id__in=["ATOMIC-1", "ATOMIC-2"]).count(), 0
         )

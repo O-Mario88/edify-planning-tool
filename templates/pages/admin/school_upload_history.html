@@ -93,7 +93,7 @@
 {% empty %}
 <tr>
 <td colspan="5">
-{% include "components/empty_state.html" with title="No uploads yet" message="School data files imported through the upload console will be logged here." cta_label="Upload schools" cta_href="/schools/upload" %}
+{% include "components/empty_state.html" with title="No uploads yet" message="School data files imported through the Upload Center will be logged here." cta_label="Open Upload Center" cta_href="/uploads?tab=imports" %}
 </td>
 </tr>
 {% endfor %}

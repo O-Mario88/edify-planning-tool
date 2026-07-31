@@ -147,7 +147,7 @@ class ScaleGateTest(TestCase):
             id="scale-staff-accountant", user=cls.accountant, title="Accountant"
         )
 
-        # Geography mirrors the real shape: the 135 UBOS districts spread over
+        # Geography mirrors the real shape: the 136 UBOS districts spread over
         # their true regions, so the sub-region roll-up groups the same way it
         # will in production rather than collapsing into one bucket.
         regions: dict[str, Region] = {}

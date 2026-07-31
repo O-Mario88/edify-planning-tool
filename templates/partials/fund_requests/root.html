@@ -49,6 +49,17 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2">
+{% if can_add_non_school_activity %}
+<button
+  type="button"
+  class="btn btn-primary h-9 shadow-sm"
+  hx-get="/work-plan/add"
+  hx-target="#drawer-root"
+  hx-swap="innerHTML"
+>
+  Add Non-School Activity
+</button>
+{% endif %}
 <!-- Export button -->
 <a
 href="{% querystring export='csv' %}"
@@ -284,4 +295,5 @@ Clear Filters
 {% include "partials/fund_requests/breakdown_by_period.html" %}
 </div>
 
+<div id="drawer-root"></div>
 </div>

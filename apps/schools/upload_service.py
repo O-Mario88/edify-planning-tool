@@ -15,6 +15,8 @@ import logging
 
 import csv
 import io
+import time
+from collections import defaultdict
 from datetime import date, datetime
 
 from django.db import transaction
@@ -26,7 +28,52 @@ from . import upload_mapping as M
 logger = logging.getLogger(__name__)
 
 
-def _resolve_geography(district_name: str, sub_county_name: str):
+def _lookup_key(value: str | None) -> str:
+    return (value or "").strip().casefold()
+
+
+def _build_geography_index() -> dict:
+    """Load geography once for a whole import instead of once per row."""
+    from apps.geography.models import District, GeographyAlias, SubCounty
+
+    districts = list(District.objects.select_related("region").order_by("name", "id"))
+    sub_counties = list(
+        SubCounty.objects.select_related("district", "district__region").order_by(
+            "name", "id"
+        )
+    )
+    district_exact: dict[str, list] = defaultdict(list)
+    sub_county_exact: dict[str, list] = defaultdict(list)
+    sub_counties_by_district: dict[str, list] = defaultdict(list)
+    for district in districts:
+        district_exact[_lookup_key(district.name)].append(district)
+    for sub_county in sub_counties:
+        sub_county_exact[_lookup_key(sub_county.name)].append(sub_county)
+        sub_counties_by_district[sub_county.district_id].append(sub_county)
+
+    aliases = {}
+    for alias, admin_id in GeographyAlias.objects.filter(
+        admin_level="district"
+    ).values_list("normalized_alias", "admin_id"):
+        aliases.setdefault(_lookup_key(alias), admin_id)
+
+    return {
+        "districts": districts,
+        "district_exact": district_exact,
+        "district_by_id": {district.id: district for district in districts},
+        "district_aliases": aliases,
+        "sub_counties": sub_counties,
+        "sub_county_exact": sub_county_exact,
+        "sub_counties_by_district": sub_counties_by_district,
+    }
+
+
+def _resolve_geography(
+    district_name: str,
+    sub_county_name: str,
+    *,
+    index: dict | None = None,
+):
     """Resolve (district, sub_county, ambiguous_district_names) from raw
     upload text.
 
@@ -41,36 +88,36 @@ def _resolve_geography(district_name: str, sub_county_name: str):
     ambiguous_district_names lists the candidates so the caller can block
     the row instead of guessing.
     """
-    from apps.geography.models import District, GeographyAlias, SubCounty
+    index = index or _build_geography_index()
 
     district = None
-    if district_name:
-        district = District.objects.filter(name__iexact=district_name).first()
+    district_key = _lookup_key(district_name)
+    sub_county_key = _lookup_key(sub_county_name)
+    if district_key:
+        exact = index["district_exact"].get(district_key, [])
+        district = exact[0] if exact else None
         if not district:
-            norm = district_name.strip().lower()
-            alias = GeographyAlias.objects.filter(
-                admin_level="district", normalized_alias=norm
-            ).first()
-            if alias:
-                district = District.objects.filter(id=alias.admin_id).first()
+            alias_id = index["district_aliases"].get(district_key)
+            district = index["district_by_id"].get(alias_id)
         if not district:
-            district = District.objects.filter(
-                name__icontains=district_name.strip()
-            ).first()
+            district = next(
+                (
+                    candidate
+                    for candidate in index["districts"]
+                    if district_key in _lookup_key(candidate.name)
+                ),
+                None,
+            )
 
     ambiguous_district_names: list[str] = []
-    if not district and sub_county_name:
-        matches = list(
-            SubCounty.objects.filter(
-                name__iexact=sub_county_name.strip()
-            ).select_related("district")
-        )
+    if not district and sub_county_key:
+        matches = list(index["sub_county_exact"].get(sub_county_key, []))
         if not matches:
-            matches = list(
-                SubCounty.objects.filter(
-                    name__icontains=sub_county_name.strip()
-                ).select_related("district")
-            )
+            matches = [
+                candidate
+                for candidate in index["sub_counties"]
+                if sub_county_key in _lookup_key(candidate.name)
+            ]
         districts_by_id = {m.district_id: m.district for m in matches}
         if len(districts_by_id) == 1:
             district = next(iter(districts_by_id.values()))
@@ -78,16 +125,56 @@ def _resolve_geography(district_name: str, sub_county_name: str):
             ambiguous_district_names = sorted(d.name for d in districts_by_id.values())
 
     sub_county = None
-    if sub_county_name and district:
-        sub_county = SubCounty.objects.filter(
-            district=district, name__iexact=sub_county_name
-        ).first()
+    if sub_county_key and district:
+        candidates = index["sub_counties_by_district"].get(district.id, [])
+        sub_county = next(
+            (
+                candidate
+                for candidate in candidates
+                if _lookup_key(candidate.name) == sub_county_key
+            ),
+            None,
+        )
         if not sub_county:
-            sub_county = SubCounty.objects.filter(
-                district=district, name__icontains=sub_county_name
-            ).first()
+            sub_county = next(
+                (
+                    candidate
+                    for candidate in candidates
+                    if sub_county_key in _lookup_key(candidate.name)
+                ),
+                None,
+            )
 
     return district, sub_county, ambiguous_district_names
+
+
+def _build_staff_index() -> dict[str, list]:
+    """Map normalized field-staff names to profiles with one query."""
+    from apps.accounts.models import StaffProfile
+    from apps.accounts.staff_matching import _is_field_staff, normalize_name
+
+    index: dict[str, list] = defaultdict(list)
+    profiles = StaffProfile.objects.select_related("user").filter(
+        deleted_at__isnull=True,
+        user__is_active=True,
+    )
+    for profile in profiles:
+        if _is_field_staff(profile):
+            index[normalize_name(profile.user.name)].append(profile)
+    return index
+
+
+def _match_staff_from_index(name: str | None, index: dict[str, list]):
+    from apps.accounts.staff_matching import normalize_name
+
+    if not (name or "").strip():
+        return None, "pending"
+    candidates = index.get(normalize_name(name), [])
+    if len(candidates) == 1:
+        return candidates[0].id, "matched"
+    if len(candidates) > 1:
+        return None, "ambiguous"
+    return None, "unmatched"
 
 
 # ── Parsing ──────────────────────────────────────────────────────────────────
@@ -263,38 +350,13 @@ def _auto_create_user_from_upload(full_name: str) -> str:
     return profile.id
 
 
-def _upsert_staff_candidate(name: str, batch_id: str, school_pk: str) -> None:
-    """Create/update a StaffSetupCandidate for an unmatched/ambiguous staff name.
-    One candidate per normalized name (no duplicates across uploads); each new
-    school increments the count and is appended to the sample list."""
-    from apps.accounts.models import StaffSetupCandidate
-    from apps.accounts.staff_matching import normalize_name
-
-    norm = normalize_name(name)
-    if not norm:
-        return
-    cand, created = StaffSetupCandidate.objects.get_or_create(
-        normalized_name=norm,
-        defaults={"full_name": name.strip(), "source_upload_batch": batch_id},
-    )
-    if created:
-        cand.school_count = 1
-        cand.sample_school_ids = [school_pk]
-    else:
-        cand.school_count = (cand.school_count or 0) + 1
-        sample = list(cand.sample_school_ids or [])
-        if school_pk not in sample:
-            sample.append(school_pk)
-            cand.sample_school_ids = sample[:20]  # cap the sample list
-    cand.save(update_fields=["school_count", "sample_school_ids"])
-
-
 # ── Main entry ───────────────────────────────────────────────────────────────
 def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     """Parse + validate + stage a school onboarding file. Returns the staging
     response contract. Raises BadRequest (→ 400) on file/header errors."""
     from apps.schools.models import SchoolImportBatch, SchoolImportRow, School
 
+    started_at = time.perf_counter()
     raw_headers, data_rows = _read_rows(file)
     if not raw_headers:
         raise BadRequest("The uploaded file is empty — no header row found.")
@@ -324,6 +386,24 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     staff_counts = {"matched": 0, "unmatched": 0, "ambiguous": 0}
     errors = []
     rows_to_create = []
+    geography_index = _build_geography_index()
+    uploaded_school_ids = {
+        _value(field_index, "school_id", cells)
+        for _row_number, cells in data_rows
+        if _value(field_index, "school_id", cells)
+    }
+    existing_by_id = School.objects.filter(
+        school_id__in=uploaded_school_ids,
+        deleted_at__isnull=True,
+    ).in_bulk(field_name="school_id")
+    existing_name_keys = {
+        _lookup_key(name)
+        for name in School.objects.filter(deleted_at__isnull=True).values_list(
+            "name", flat=True
+        )
+    }
+    staff_index = _build_staff_index()
+    accepted_school_ids: set[str] = set()
 
     for row_number, cells in data_rows:
         raw_map = {f: _value(field_index, f, cells) for f in field_index}
@@ -365,7 +445,9 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         # preserve unmatched text as a non-blocking warning so the school can
         # still be created and corrected from its profile.
         district, _sub_county_preview, ambiguous_district_names = _resolve_geography(
-            district_name, sub_county_name
+            district_name,
+            sub_county_name,
+            index=geography_index,
         )
 
         if not district_name and not sub_county_name:
@@ -388,10 +470,13 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
         # C. Non-blocking warnings / updates
         if status != "blocked":
-            existing = School.objects.filter(
-                school_id=school_id_raw, deleted_at__isnull=True
-            ).first()
-            if existing:
+            if school_id_raw in accepted_school_ids:
+                status = "duplicate"
+                counts["duplicate"] += 1
+                validation_errors.append(
+                    f"Duplicate School ID '{school_id_raw}' within this file"
+                )
+            elif school_id_raw in existing_by_id:
                 if update_existing:
                     status = "update"
                     counts["updated"] += 1
@@ -400,10 +485,7 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                     counts["duplicate"] += 1
             else:
                 # Check for potential duplicates by name in DB
-                existing_name = School.objects.filter(
-                    name__iexact=name, deleted_at__isnull=True
-                ).exists()
-                if existing_name:
+                if _lookup_key(name) in existing_name_keys:
                     status = "duplicate"
                     counts["duplicate"] += 1
                     validation_errors.append(
@@ -415,9 +497,9 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
             # Match account owner to populate staff counts
             if account_owner_name:
-                from apps.accounts.staff_matching import match as staff_match
-
-                owner_id, owner_status = staff_match(account_owner_name)
+                owner_id, owner_status = _match_staff_from_index(
+                    account_owner_name, staff_index
+                )
                 if owner_status in staff_counts:
                     staff_counts[owner_status] += 1
 
@@ -428,6 +510,9 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                 validation_errors.append("Missing contact person")
             if not enrollment_raw:
                 validation_errors.append("Missing enrollment")
+
+            if status in ("ready", "update"):
+                accepted_school_ids.add(school_id_raw)
 
         enrollment = None
         if enrollment_raw:
@@ -540,6 +625,17 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         legacy_batch.save(update_fields=["status", "updated_at"])
 
     message = _build_message(success, counts, len(data_rows))
+    processing_seconds = round(time.perf_counter() - started_at, 3)
+    logger.info(
+        "School upload completed batch=%s rows=%s created=%s updated=%s "
+        "failed=%s duration_seconds=%s",
+        batch.id,
+        len(data_rows),
+        counts["created"],
+        counts["updated"],
+        counts["failed"],
+        processing_seconds,
+    )
     return {
         "success": success,
         "upload_batch_id": legacy_batch.id,
@@ -555,7 +651,106 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         "unmatched_staff": [],
         "message": message,
         "errors": errors,
+        "processing_seconds": processing_seconds,
     }
+
+
+def _active_cluster_index() -> dict[str, object]:
+    """Return the first active cluster for each covered sub-county."""
+    from apps.clusters.models import Cluster
+
+    index = {}
+    clusters = (
+        Cluster.objects.filter(deleted_at__isnull=True, status="active")
+        .prefetch_related("covered_sub_counties")
+        .order_by("name", "id")
+    )
+    for cluster in clusters:
+        if cluster.sub_county_id:
+            index.setdefault(cluster.sub_county_id, cluster)
+        for coverage in cluster.covered_sub_counties.all():
+            index.setdefault(coverage.sub_county_id, cluster)
+    return index
+
+
+def _bulk_refresh_quality_issues(schools) -> None:
+    from apps.schools.models import (
+        DataQualityIssue,
+        build_data_quality_issues,
+    )
+
+    schools = list(schools)
+    if not schools:
+        return
+    school_ids = [school.id for school in schools]
+    DataQualityIssue.objects.filter(
+        school_id__in=school_ids,
+        status="open",
+    ).delete()
+    issues = [
+        issue
+        for school in schools
+        for issue in build_data_quality_issues(school)
+    ]
+    if issues:
+        DataQualityIssue.objects.bulk_create(issues, batch_size=1000)
+
+
+def _bulk_upsert_staff_candidates(
+    grouped_schools: dict[str, tuple[str, list[str]]],
+    batch_id: str,
+) -> None:
+    if not grouped_schools:
+        return
+
+    from apps.accounts.models import StaffSetupCandidate
+
+    existing = {
+        candidate.normalized_name: candidate
+        for candidate in StaffSetupCandidate.objects.select_for_update().filter(
+            normalized_name__in=grouped_schools
+        )
+    }
+    to_create = []
+    to_update = []
+    for normalized_name, (full_name, school_ids) in grouped_schools.items():
+        unique_school_ids = list(dict.fromkeys(school_ids))
+        candidate = existing.get(normalized_name)
+        if candidate is None:
+            to_create.append(
+                StaffSetupCandidate(
+                    normalized_name=normalized_name,
+                    full_name=full_name,
+                    source_upload_batch=batch_id,
+                    school_count=len(unique_school_ids),
+                    sample_school_ids=unique_school_ids[:20],
+                )
+            )
+            continue
+        candidate.school_count = (candidate.school_count or 0) + len(
+            unique_school_ids
+        )
+        candidate.sample_school_ids = list(
+            dict.fromkeys(
+                list(candidate.sample_school_ids or []) + unique_school_ids
+            )
+        )[:20]
+        if not candidate.source_upload_batch:
+            candidate.source_upload_batch = batch_id
+        to_update.append(candidate)
+
+    if to_create:
+        StaffSetupCandidate.objects.bulk_create(
+            to_create,
+            batch_size=500,
+            ignore_conflicts=True,
+        )
+    if to_update:
+        StaffSetupCandidate.objects.bulk_update(
+            to_update,
+            ["school_count", "sample_school_ids", "source_upload_batch"],
+            batch_size=500,
+        )
 
 
 def import_school_batch(batch, user) -> dict:
@@ -565,7 +760,9 @@ def import_school_batch(batch, user) -> dict:
         UploadBatch,
         SchoolImportBatch,
     )
-    from apps.accounts.staff_matching import match as staff_match
+    from apps.accounts.staff_matching import normalize_name
+    from apps.accounts.models import StaffProfile, StaffSchoolAssignment
+    from apps.clusters.models import SchoolClusterAssignment
 
     if isinstance(batch, UploadBatch):
         real_batch = (
@@ -583,7 +780,7 @@ def import_school_batch(batch, user) -> dict:
     # silently overwriting the live school) here would contradict what the
     # uploader was told. Only "blocked" and "duplicate" are excluded;
     # "update" rows (update_existing=True) still update.
-    rows = batch.rows.exclude(status__in=["blocked", "duplicate"])
+    rows = list(batch.rows.exclude(status__in=["blocked", "duplicate"]))
     created_count = 0
     updated_count = 0
     clean_count = 0
@@ -591,7 +788,42 @@ def import_school_batch(batch, user) -> dict:
     cleanup_count = 0
     duplicate_count = 0
 
+    geography_index = _build_geography_index()
+    cluster_by_sub_county = _active_cluster_index()
+    existing_by_id = School.objects.filter(
+        school_id__in=[row.school_id for row in rows],
+        deleted_at__isnull=True,
+    ).in_bulk(field_name="school_id")
+
     with transaction.atomic():
+        # Resolve each distinct owner once. Unknown names retain the existing
+        # behavior of creating one pending CCEO profile, but never repeat that
+        # user/profile/candidate work for every school carrying the same name.
+        owner_names = {
+            normalize_name(row.account_owner_name): row.account_owner_name
+            for row in rows
+            if normalize_name(row.account_owner_name)
+        }
+        staff_index = _build_staff_index()
+        owner_results = {}
+        for normalized_name, display_name in owner_names.items():
+            owner_id, owner_status = _match_staff_from_index(
+                display_name, staff_index
+            )
+            if owner_status == "unmatched":
+                owner_id = _auto_create_user_from_upload(display_name)
+                if owner_id:
+                    owner_status = "matched"
+            owner_results[normalized_name] = (owner_id, owner_status)
+
+        new_schools = []
+        new_cluster_assignments = []
+        new_staff_assignments = []
+        candidate_groups: dict[str, tuple[str, list[str]]] = {}
+        changed_by = (
+            user.user_id if hasattr(user, "user_id") else str(user or "system")
+        )
+
         for r in rows:
             # Same resolution the staging/validation phase used (including
             # the sub-county-infers-district fallback) — using independent
@@ -599,7 +831,9 @@ def import_school_batch(batch, user) -> dict:
             # still land on a different (or, when district_name was blank,
             # an arbitrary alphabetically-first) District at import time.
             district, sub_county, _ambiguous = _resolve_geography(
-                r.district_name, r.sub_county_name
+                r.district_name,
+                r.sub_county_name,
+                index=geography_index,
             )
             # Unmatched optional geography is deliberately left null. The raw
             # uploaded text is preserved below for correction in the profile.
@@ -607,12 +841,10 @@ def import_school_batch(batch, user) -> dict:
             owner_id = None
             owner_status = "pending"
             if r.account_owner_name:
-                owner_id, owner_status = staff_match(r.account_owner_name)
-                if owner_status == "unmatched":
-                    new_owner_id = _auto_create_user_from_upload(r.account_owner_name)
-                    if new_owner_id:
-                        owner_id = new_owner_id
-                        owner_status = "matched"
+                owner_id, owner_status = owner_results.get(
+                    normalize_name(r.account_owner_name),
+                    (None, "unmatched"),
+                )
 
             # map_school_type() always returns a concrete value (defaults to
             # "client" for a blank/unrecognized cell) — never None/"" — so it
@@ -628,9 +860,7 @@ def import_school_batch(batch, user) -> dict:
                 except ValueError:
                     pass
 
-            existing = School.objects.filter(
-                school_id=r.school_id, deleted_at__isnull=True
-            ).first()
+            existing = existing_by_id.get(r.school_id)
 
             if existing:
                 # Upsert mode: do not overwrite good existing data with blanks!
@@ -674,9 +904,7 @@ def import_school_batch(batch, user) -> dict:
                                     if old_val is not None
                                     else None,
                                     new_value=str(val),
-                                    changed_by=user.user_id
-                                    if hasattr(user, "user_id")
-                                    else str(user),
+                                    changed_by=changed_by,
                                 )
                             )
                             setattr(existing, field, val)
@@ -693,7 +921,12 @@ def import_school_batch(batch, user) -> dict:
                 # and name. Missing/unmatched geography remains null and its
                 # uploaded text is retained for profile completion—never
                 # replaced by an arbitrary district.
-                saved_school = School.objects.create(
+                cluster = (
+                    cluster_by_sub_county.get(sub_county.id)
+                    if sub_county is not None
+                    else None
+                )
+                saved_school = School(
                     school_id=r.school_id,
                     name=r.name,
                     school_type=school_type,
@@ -712,35 +945,33 @@ def import_school_batch(batch, user) -> dict:
                     account_owner_name_raw=r.account_owner_name,
                     account_owner_id=owner_id,
                     account_owner_status=owner_status,
+                    cluster_id=cluster.id if cluster else None,
+                    cluster_status="clustered" if cluster else "unclustered",
                 )
+                saved_school.recompute_quality_and_readiness()
+                new_schools.append(saved_school)
+                if cluster:
+                    new_cluster_assignments.append(
+                        SchoolClusterAssignment(
+                            school=saved_school,
+                            cluster=cluster,
+                            assigned_by="system_reassign",
+                        )
+                    )
+                if owner_id and owner_status == "matched":
+                    new_staff_assignments.append(
+                        StaffSchoolAssignment(
+                            staff_id=owner_id,
+                            school_id=saved_school.id,
+                        )
+                    )
                 created_count += 1
 
-            if owner_id and owner_status == "matched":
-                from apps.accounts.models import StaffSchoolAssignment
-
+            if existing and owner_id and owner_status == "matched":
                 StaffSchoolAssignment.objects.get_or_create(
-                    staff_id=owner_id, school_id=saved_school.id
+                    staff_id=owner_id,
+                    school_id=saved_school.id,
                 )
-                from apps.accounts.models import StaffProfile
-
-                sp = (
-                    StaffProfile.objects.filter(id=owner_id)
-                    .select_related("user")
-                    .first()
-                )
-                if (
-                    sp
-                    and sp.user
-                    and (
-                        "pending." in sp.user.email
-                        or sp.user.status == "pending_invited"
-                    )
-                ):
-                    _upsert_staff_candidate(
-                        r.account_owner_name, batch.id, saved_school.id
-                    )
-            elif owner_status in ("unmatched", "ambiguous") and r.account_owner_name:
-                _upsert_staff_candidate(r.account_owner_name, batch.id, saved_school.id)
 
             q_status = saved_school.data_quality_status
             if q_status == "Clean":
@@ -752,8 +983,68 @@ def import_school_batch(batch, user) -> dict:
             elif q_status == "Duplicate Risk":
                 duplicate_count += 1
 
+        if new_schools:
+            School.objects.bulk_create(new_schools, batch_size=1000)
+            _bulk_refresh_quality_issues(new_schools)
+        new_by_school_id = {
+            school.school_id: school for school in new_schools
+        }
+        if new_cluster_assignments:
+            SchoolClusterAssignment.objects.bulk_create(
+                new_cluster_assignments,
+                batch_size=1000,
+                ignore_conflicts=True,
+            )
+        if new_staff_assignments:
+            StaffSchoolAssignment.objects.bulk_create(
+                new_staff_assignments,
+                batch_size=1000,
+                ignore_conflicts=True,
+            )
+
+        matched_owner_ids = {
+            owner_id
+            for owner_id, status in owner_results.values()
+            if owner_id and status == "matched"
+        }
+        pending_owner_ids = {
+            profile.id
+            for profile in StaffProfile.objects.filter(
+                id__in=matched_owner_ids
+            ).select_related("user")
+            if profile.user
+            and (
+                "pending." in profile.user.email
+                or profile.user.status == "pending_invited"
+            )
+        }
+        for r in rows:
+            if not r.account_owner_name:
+                continue
+            normalized_name = normalize_name(r.account_owner_name)
+            owner_id, owner_status = owner_results.get(
+                normalized_name,
+                (None, "unmatched"),
+            )
+            if owner_status not in ("unmatched", "ambiguous") and (
+                owner_id not in pending_owner_ids
+            ):
+                continue
+            school = existing_by_id.get(r.school_id) or new_by_school_id.get(
+                r.school_id
+            )
+            if school is None:
+                continue
+            if normalized_name not in candidate_groups:
+                candidate_groups[normalized_name] = (
+                    r.account_owner_name,
+                    [],
+                )
+            candidate_groups[normalized_name][1].append(school.id)
+        _bulk_upsert_staff_candidates(candidate_groups, batch.id)
+
         batch.status = "imported"
-        batch.save()
+        batch.save(update_fields=["status", "updated_at"])
 
     return {
         "created": created_count,

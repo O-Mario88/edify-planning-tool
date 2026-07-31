@@ -519,6 +519,72 @@ def _audit_plan(
     )
 
 
+def schedule_programme_activity(data: dict, principal) -> dict:
+    """§5 — the ONE backend service behind "Add Non-School Activity".
+
+    Both entry points (Fund/Budget dashboard and Work Plan) call this. It is a
+    thin authorization wrapper over the canonical activities.create funnel —
+    the same state machine, costing, budgeting, My Plan, evidence, approval
+    and audit services every school activity uses. It never invents cost or
+    approval routes of its own.
+    """
+    from apps.activities.services import create as create_activity
+    from apps.core.exceptions import Forbidden
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if not has_permission(principal, Permission.MANUAL_ACTIVITY_CREATE.value):
+        raise Forbidden(
+            "You do not have permission to add non-school programme activities."
+        )
+    result = create_activity({**data, "requireCatalogue": True}, principal)
+
+    # §33 — best-effort notifications; a failure never rolls back the plan.
+    try:
+        from apps.activities.models import Activity
+        from apps.activities.services import _notify_chain
+
+        activity = Activity.objects.get(id=result["id"])
+        creator_ids = {principal.staff_profile_id, principal.user_id}
+        if activity.responsible_staff_id not in creator_ids:
+            from apps.accounts.models import StaffProfile
+
+            recipient = (
+                StaffProfile.objects.filter(id=activity.responsible_staff_id)
+                .values_list("user_id", flat=True)
+                .first()
+            ) or activity.responsible_staff_id
+            _notify_chain(
+                activity,
+                "activity_assigned",
+                "Programme activity assigned to you",
+                f"{activity.activity_name_snapshot or 'A programme activity'} "
+                f"on {activity.planned_date:%-d %b %Y} was assigned to you. "
+                "Review it in My Plan.",
+                [recipient],
+            )
+        if activity.cost_missing:
+            from django.contrib.auth import get_user_model
+
+            cd_ids = list(
+                get_user_model()
+                .objects.filter(active_role="CountryDirector", is_active=True)
+                .values_list("id", flat=True)
+            )
+            _notify_chain(
+                activity,
+                "cost_setup_required",
+                "Cost Setup Required",
+                "A planned programme activity has no applicable Cost Catalogue "
+                "rate. Set the missing rate so it can enter a fund request.",
+                cd_ids,
+                priority="high",
+            )
+    except Exception:  # noqa: BLE001 — notification is not part of the plan
+        pass
+    return result
+
+
 def schedule_school_visit(data: dict, principal) -> dict:
     """Schedule a school visit activity (delegates to activities.create)."""
     from apps.activities.services import create as create_activity
@@ -553,9 +619,11 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
         deleted_at__isnull=True,
         active_status=True,
     ).first()
-    school = scoped_school_queryset(resolve_user_scope(principal)).filter(
-        school_id=data.get("schoolId")
-    ).first()
+    school = (
+        scoped_school_queryset(resolve_user_scope(principal))
+        .filter(school_id=data.get("schoolId"))
+        .first()
+    )
     if not partner or not school:
         raise BadRequest("Choose a valid in-scope School and active Partner.")
     validate_context(
@@ -574,9 +642,7 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
             deleted_at__isnull=True,
         ).first()
         if source_activity is None:
-            raise BadRequest(
-                "Choose a completed source Activity from the same School."
-            )
+            raise BadRequest("Choose a completed source Activity from the same School.")
         if source_activity.status not in {
             "completed",
             "ia_verified",
@@ -621,14 +687,14 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
             (row for row in rows if row["catalogueItemId"] == item.id),
             None,
         )
-        primary_ids = {
-            row["catalogueItemId"] for row in recommendations["primary"]
-        }
-        is_dynamic_followup = (
-            MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
-        )
+        primary_ids = {row["catalogueItemId"] for row in recommendations["primary"]}
+        is_dynamic_followup = MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
         override_reason = (data.get("overrideReason") or "").strip()
-        if item.id not in primary_ids and not is_dynamic_followup and not override_reason:
+        if (
+            item.id not in primary_ids
+            and not is_dynamic_followup
+            and not override_reason
+        ):
             raise BadRequest(
                 "This is not a primary SSA recommendation. Record the "
                 "authorized alternative-selection reason before assigning it."
@@ -659,9 +725,7 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
         assignment = PartnerAssignment.objects.create(
             school=school,
             partner=partner,
-            assigning_staff_id=(
-                principal.staff_profile_id or principal.user_id
-            ),
+            assigning_staff_id=(principal.staff_profile_id or principal.user_id),
             assignment_mode="specific_activity",
             catalogue_item=item,
             source_ssa=source_ssa,

@@ -179,6 +179,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
     "planning": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
+    # Work Plan is the FY-level roll-up of the same activity ledger Planning
+    # writes. Field planners keep it, and the leadership/verification roles
+    # (CD, IA, HR) read it without being able to plan. The RVP gets aggregate
+    # month bands only (the view hides operational rows) and the Accountant a
+    # read-only finance lens — §18 of the Work Plan rebuild.
+    "work_plan": {CCEO, PL, PROJECT_COORDINATOR, CD, RVP, IA, HR, ACCOUNTANT, ADMIN},
     # The Project Coordinator owns weekly requests too — weekly_service's
     # _ROUTE_TO_CD names them explicitly — so locking them out of the page meant
     # they generated requests they could never see or confirm.
@@ -225,7 +231,18 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Upload Center: one entry point for every file that enters Edify. Which
     # categories a role actually sees is decided by the adapters, so the route
     # is open to everyone who can upload or review anything at all.
-    "uploads": {ADMIN, IA, HR, CD, RVP, CCEO, PL, PARTNER, PROJECT_COORDINATOR},
+    "uploads": {
+        ADMIN,
+        IA,
+        HR,
+        CD,
+        RVP,
+        CCEO,
+        PL,
+        ACCOUNTANT,
+        PARTNER,
+        PROJECT_COORDINATOR,
+    },
     "policy_compliance": {HR, CD, PL, RVP, ADMIN},
     # Reporting a problem is every role's right, so intake is universal.
     "report_problem": ALL_ROLES,
@@ -356,6 +373,10 @@ ICONS = {
     "fund_approvals": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
     "daily_debrief": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
     "personal_time_off": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>',
+    # Calendar reuses the shared calendar glyph (same drawing as
+    # personal_time_off / monthly_request).
+    "calendar": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>',
+    "work_plan": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>',
     "schools": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>',
     "core_schools": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 4.97-3.4 8.94-8 10-4.6-1.06-8-5.03-8-10V6l8-3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12l1.8 1.8 3.2-3.6" /></svg>',
     "clusters": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>',
@@ -697,6 +718,14 @@ SIDEBAR_ITEMS = [
                 # project-scoped My Plan.
                 "role_urls": {PROJECT_COORDINATOR: "/projects/my-plan"},
             },
+            # Calendar is the operational projection of the same activity
+            # ledger My Plan executes. It remains in MY WORK because every
+            # role receives it; Work Plan now sits with the budgets it drives.
+            {
+                "label": "Calendar",
+                "url": "/calendar",
+                "page_key": "calendar",
+            },
             {
                 "label": "My Professional Development",
                 "url": "/my-professional-development",
@@ -713,7 +742,17 @@ SIDEBAR_ITEMS = [
                 "page_key": "uploads",
                 # Admin reaches it from PLATFORM OPERATIONS instead, so it is
                 # not advertised twice in one sidebar.
-                "visible_to": {IA, HR, CD, RVP, CCEO, PL, PARTNER, PROJECT_COORDINATOR},
+                "visible_to": {
+                    IA,
+                    HR,
+                    CD,
+                    RVP,
+                    CCEO,
+                    PL,
+                    ACCOUNTANT,
+                    PARTNER,
+                    PROJECT_COORDINATOR,
+                },
             },
             {
                 "label": "Field Debrief",
@@ -810,6 +849,13 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "FINANCE & BUDGET",
         "items": [
+            {
+                # The FY Work Plan is the source plan for projected activity
+                # costs, so keep it beside the requests and budgets it drives.
+                "label": "Work Plan",
+                "url": "/work-plan",
+                "page_key": "work_plan",
+            },
             {
                 "label": "Weekly Fund Request",
                 "url": "/fund-requests/weekly",
@@ -939,11 +985,6 @@ SIDEBAR_ITEMS = [
                 "label": "Verification History",
                 "url": "/ia/history/",
                 "page_key": "ia_history",
-            },
-            {
-                "label": "SSA Upload Center",
-                "url": "/ssa/upload/",
-                "page_key": "ia_upload_center",
             },
         ],
     },

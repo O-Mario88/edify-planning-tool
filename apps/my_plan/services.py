@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    PROGRAMME_EVENT_TYPES,
+)
 import calendar
 from datetime import date, timedelta
 from django.db.models import Q
@@ -790,6 +793,10 @@ def get_frontend_context(principal, query: dict) -> dict:
     school_visits_list = []
     cluster_trainings_list = []
     cluster_meetings_list = []
+    # Dated non-school programme work (conferences, camps, exhibitions) has no
+    # school or cluster, so it matched none of the three category tables above
+    # and was invisible on the page even though the urgency buckets held it.
+    programme_activities_list = []
 
     waiting_on_me_list = []
     due_today_list = []
@@ -1027,16 +1034,40 @@ def get_frontend_context(principal, query: dict) -> dict:
             "activity_type_label": a.get_activity_type_display(),
             "status": a.status,
             "planned_date": a.planned_date,
-            # School details
+            # School details. A non-school programme activity (conference,
+            # camp, exhibition) legitimately has NO school and NO cluster, so
+            # every school/cluster attribute here must tolerate both being
+            # absent — `a.school.cluster_id` used to run whenever there was no
+            # cluster, which 500'd the whole My Plan page for the responsible
+            # person the moment they were given programme work.
             "school_id": a.school.school_id if a.school else "",
-            "school_name": a.school.name if a.school else "Unknown School",
-            "school_district": a.school.district.name if a.school else "Unknown",
+            "school_name": (
+                a.school.name
+                if a.school
+                else (a.venue or a.activity_name_snapshot or "Programme activity")
+                if (
+                    a.planning_source == "manual_work_plan"
+                    or a.activity_type in PROGRAMME_EVENT_TYPES
+                )
+                else "Unknown School"
+            ),
+            "school_district": (
+                a.school.district.name
+                if a.school
+                else a.event_district.name
+                if a.event_district_id
+                else "Unknown"
+            ),
             "school_sub_county": a.school.sub_county.name
             if a.school and a.school.sub_county
             else "",
-            "school_cluster_name": a.cluster.name
-            if a.cluster
-            else (a.school.cluster_id or ""),
+            "school_cluster_name": (
+                a.cluster.name
+                if a.cluster
+                else (a.school.cluster_id or "")
+                if a.school
+                else ""
+            ),
             "school_ssa_status": a.school.get_current_fy_ssa_status_display()
             if a.school
             else "No SSA",
@@ -1087,7 +1118,11 @@ def get_frontend_context(principal, query: dict) -> dict:
         }
 
         # Legacy lists for compatibility
-        if a.activity_type in [
+        if a.planning_source == "manual_work_plan" or (
+            a.activity_type in PROGRAMME_EVENT_TYPES
+        ):
+            programme_activities_list.append(activity_data)
+        elif a.activity_type in [
             "school_visit",
             "follow_up_visit",
             "coaching_visit",
@@ -1183,11 +1218,19 @@ def get_frontend_context(principal, query: dict) -> dict:
                 "time": "08:30 AM",
                 "title": a.school.name
                 if a.school
-                else (a.cluster.name if a.cluster else "Activity"),
+                else (
+                    a.cluster.name
+                    if a.cluster
+                    else (a.activity_name_snapshot or a.venue or "Activity")
+                ),
                 "purpose": a.activity_purpose_text or a.get_activity_type_display(),
                 "district": a.school.district.name
                 if a.school
-                else (a.cluster.district.name if a.cluster else "Unknown"),
+                else (
+                    a.cluster.district.name
+                    if a.cluster
+                    else (a.event_district.name if a.event_district_id else "Unknown")
+                ),
                 "assigned_partner": assigned_partner,
             }
         )
@@ -1309,6 +1352,9 @@ def get_frontend_context(principal, query: dict) -> dict:
     cluster_trainings_page = paginate(
         cluster_trainings_list, page_from(query, "cluster_trainings_page")
     )
+    programme_activities_page = paginate(
+        programme_activities_list, page_from(query, "programme_activities_page")
+    )
     cluster_meetings_page = paginate(
         cluster_meetings_list, page_from(query, "cluster_meetings_page")
     )
@@ -1356,6 +1402,9 @@ def get_frontend_context(principal, query: dict) -> dict:
         "cluster_meetings": cluster_meetings_page["rows"],
         "cluster_meetings_all": cluster_meetings_list,
         "cluster_meetings_pager": cluster_meetings_page,
+        "programme_activities": programme_activities_page["rows"],
+        "programme_activities_all": programme_activities_list,
+        "programme_activities_pager": programme_activities_page,
         "waiting_on_me": waiting_on_me_list,
         "due_today": due_today_list,
         "this_week": this_week_list,

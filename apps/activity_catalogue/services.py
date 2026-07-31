@@ -143,7 +143,35 @@ def validate_context(
     cluster=None,
     project=None,
     executor_type: str,
+    non_school: bool = False,
 ) -> None:
+    """Validate the delivery context of a Catalogue selection.
+
+    ``non_school=True`` is the Work Plan's central-planning context: a
+    Group-delivered camp or conference is being planned as one dated
+    programme activity at a venue rather than school by school. The item must
+    still be approved for it (``non_school_allowed``); the per-school
+    requirements below then do not apply, because there is no school to which
+    they could refer.
+    """
+    if non_school:
+        if not item.non_school_allowed:
+            raise BadRequest(
+                "This Catalogue Activity is delivered through School or "
+                "Cluster planning and cannot be planned as a standalone "
+                "programme activity."
+            )
+        if executor_type == DeliveryType.PARTNER and not item.partner_delivery_allowed:
+            raise Forbidden(
+                "This Catalogue Activity is not approved for Partner delivery."
+            )
+        if executor_type == DeliveryType.STAFF and not item.staff_delivery_allowed:
+            raise Forbidden(
+                "This Catalogue Activity is not approved for Staff delivery."
+            )
+        if item.requires_project and project is None:
+            raise BadRequest("This Catalogue Activity requires a Special Project.")
+        return
     if item.requires_school and school is None:
         raise BadRequest("This Catalogue Activity requires a School.")
     if item.requires_cluster and cluster is None:
@@ -151,9 +179,13 @@ def validate_context(
     if item.requires_project and project is None:
         raise BadRequest("This Catalogue Activity requires a Special Project.")
     if school and cluster is None and not item.individual_school_allowed:
-        raise BadRequest("This Catalogue Activity is not approved for individual Schools.")
+        raise BadRequest(
+            "This Catalogue Activity is not approved for individual Schools."
+        )
     if cluster and not item.cluster_delivery_allowed:
-        raise BadRequest("This Catalogue Activity is not approved for Cluster delivery.")
+        raise BadRequest(
+            "This Catalogue Activity is not approved for Cluster delivery."
+        )
     if executor_type == DeliveryType.PARTNER and not item.partner_delivery_allowed:
         raise Forbidden("This Catalogue Activity is not approved for Partner delivery.")
     if executor_type == DeliveryType.STAFF and not item.staff_delivery_allowed:
@@ -166,11 +198,15 @@ def validate_context(
         if rule.eligible_school_categories and school_type not in set(
             rule.eligible_school_categories
         ):
-            raise BadRequest("This Catalogue Activity is not eligible for this School type.")
+            raise BadRequest(
+                "This Catalogue Activity is not eligible for this School type."
+            )
         if rule.eligible_school_levels and school_level not in set(
             rule.eligible_school_levels
         ):
-            raise BadRequest("This Catalogue Activity is not eligible for this School level.")
+            raise BadRequest(
+                "This Catalogue Activity is not eligible for this School level."
+            )
         if rule.core_school_only and school_type != "core":
             raise BadRequest("This Catalogue Activity is restricted to Core Schools.")
         if rule.client_school_only and school_type != "client":
@@ -179,7 +215,9 @@ def validate_context(
             raise BadRequest("This Catalogue Activity requires Cluster membership.")
     if item.new_school_only and school:
         fy = get_operational_fy()
-        created_fy = get_operational_fy(school.created_at) if school.created_at else None
+        created_fy = (
+            get_operational_fy(school.created_at) if school.created_at else None
+        )
         if created_fy != fy:
             raise BadRequest("New School Orientation is available only to new Schools.")
 
@@ -193,10 +231,17 @@ def validate_context(
             raise BadRequest(
                 "This Activity is not approved in the selected Special Project."
             )
-        if executor_type == DeliveryType.PARTNER and not mapping.partner_delivery_allowed:
-            raise Forbidden("The Project does not allow Partner delivery for this Activity.")
+        if (
+            executor_type == DeliveryType.PARTNER
+            and not mapping.partner_delivery_allowed
+        ):
+            raise Forbidden(
+                "The Project does not allow Partner delivery for this Activity."
+            )
         if executor_type == DeliveryType.STAFF and not mapping.staff_delivery_allowed:
-            raise Forbidden("The Project does not allow Staff delivery for this Activity.")
+            raise Forbidden(
+                "The Project does not allow Staff delivery for this Activity."
+            )
 
 
 def validate_frequency(
@@ -575,22 +620,20 @@ def recommend_activities(
             )
         except (BadRequest, Forbidden):
             continue
-        source_query = Activity.objects.filter(
-            deleted_at__isnull=True,
-            status__in=COMPLETED_SUPPORT_STATUSES,
-        ).exclude(
-            focus_intervention__isnull=True
-        ).exclude(
-            focus_intervention=""
+        source_query = (
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                status__in=COMPLETED_SUPPORT_STATUSES,
+            )
+            .exclude(focus_intervention__isnull=True)
+            .exclude(focus_intervention="")
         )
         source_query = (
             source_query.filter(cluster=cluster)
             if cluster is not None
             else source_query.filter(school=school)
         )
-        source_activity = source_query.order_by(
-            "-planned_date", "-created_at"
-        ).first()
+        source_activity = source_query.order_by("-planned_date", "-created_at").first()
         if source_activity is not None:
             target_intervention = source_activity.focus_intervention
             need = need_by_intervention.get(target_intervention)
@@ -658,9 +701,9 @@ def recommend_cluster_activities(
     # School.cluster_id is a bare CharField (no FK — see apps/schools/models),
     # so membership filters on the id, never a relation lookup.
     members = list(
-        School.objects.filter(
-            cluster_id=cluster.id, deleted_at__isnull=True
-        ).order_by("school_id")
+        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True).order_by(
+            "school_id"
+        )
     )
     merged: dict[str, dict] = {}
     schools_with_ssa = 0
@@ -694,8 +737,7 @@ def recommend_cluster_activities(
             row["schoolsMatched"] += 1
             row["rank"] = min(row["rank"], suggestion["rank"])
             row["existingSupportConflict"] = (
-                row["existingSupportConflict"]
-                or suggestion["existingSupportConflict"]
+                row["existingSupportConflict"] or suggestion["existingSupportConflict"]
             )
 
     suggestions = list(merged.values())
@@ -716,9 +758,7 @@ def recommend_cluster_activities(
     return {
         "hasApplicableSsa": bool(schools_with_ssa),
         "sourceSsaId": None,
-        "verificationState": "verified"
-        if schools_with_ssa
-        else "none",
+        "verificationState": "verified" if schools_with_ssa else "none",
         "clusterId": cluster.id,
         "memberCount": len(members),
         "membersWithApplicableSsa": schools_with_ssa,

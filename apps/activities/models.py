@@ -19,6 +19,8 @@ from apps.core.enums import (
     DeliveryType,
     EvidenceStatus,
     PaymentStatus,
+    ProgrammeActivityType,
+    ProgrammeDeliveryMode,
     SsaIntervention,
     VerificationStatus,
 )
@@ -108,6 +110,43 @@ class Activity(SoftDeleteModel):
     week = models.IntegerField(null=True, blank=True)
     scheduled_date = models.DateTimeField(null=True, blank=True)
     planned_date = models.DateField(null=True, blank=True)
+    # Multi-day programme work: the last service day. Null (or equal to
+    # planned_date) means a one-day activity. Budget lines carry their own
+    # service dates so cross-period cost lands in the right month.
+    end_date = models.DateField(null=True, blank=True)
+    # §1: every budget amount originates from a dated plan — this names which
+    # planning workflow authorized the activity (see PlanningSource).
+    planning_source = models.CharField(max_length=32, blank=True, default="")
+    # school / cluster / project / programme / organization
+    activity_context_type = models.CharField(max_length=16, blank=True, default="")
+    # Non-school work carries a strategic rationale instead of an SSA
+    # recommendation (see SupportRationale).
+    support_rationale = models.CharField(max_length=48, blank=True, default="")
+    venue = models.CharField(max_length=255, blank=True, default="")
+    # Planning/reporting attributes specific to non-school programme work.
+    # The title itself remains governed by activity_name_snapshot from the
+    # approved Activity Catalogue.
+    programme_activity_type = models.CharField(
+        max_length=48,
+        choices=ProgrammeActivityType.choices,
+        null=True,
+        blank=True,
+    )
+    programme_delivery_mode = models.CharField(
+        max_length=16,
+        choices=ProgrammeDeliveryMode.choices,
+        null=True,
+        blank=True,
+    )
+    planned_school_count = models.PositiveIntegerField(null=True, blank=True)
+    # Location for work that has no school/cluster to inherit one from.
+    event_district = models.ForeignKey(
+        "geography.District",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="programme_activities",
+    )
     week_start_date = models.DateField(null=True, blank=True)
     week_end_date = models.DateField(null=True, blank=True)
     fiscal_year = models.CharField(max_length=16, null=True, blank=True)
@@ -320,9 +359,7 @@ class ActivityScheduleCostLine(TimeStampedModel):
     # Catalogue provenance — the catalogue + version this line was priced from.
     catalogue_id = models.CharField(max_length=30, null=True, blank=True)
     catalogue_version = models.IntegerField(null=True, blank=True)
-    activity_catalogue_item_id = models.CharField(
-        max_length=30, null=True, blank=True
-    )
+    activity_catalogue_item_id = models.CharField(max_length=30, null=True, blank=True)
     activity_catalogue_version = models.PositiveIntegerField(null=True, blank=True)
     costing_profile = models.CharField(max_length=64, null=True, blank=True)
     # Itemized line type (transport / breakfast / lunch / dinner / accommodation

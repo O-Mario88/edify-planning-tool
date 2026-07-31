@@ -21,6 +21,7 @@ class CatalogueActivityType(models.TextChoices):
     SCHOOL_VISIT = "school_visit", "School Visit"
     YOUTH_CAMP = "youth_camp", "Youth Camp"
     ADMIN = "admin", "Admin"
+    PROGRAMME_EVENT = "programme_event", "Programme Event"
 
 
 class DeliveryMethod(models.TextChoices):
@@ -31,6 +32,7 @@ class DeliveryMethod(models.TextChoices):
     SCHOOL_VISIT = "school_visit", "School Visit"
     GROUP = "group", "Group"
     ADMIN = "admin", "Admin"
+    PROGRAMME_EVENT = "programme_event", "Programme Event"
 
 
 class MappingMode(models.TextChoices):
@@ -84,6 +86,18 @@ class ActivityCatalogueItem(TimeStampedModel):
     requires_cluster = models.BooleanField(default=False)
     requires_project = models.BooleanField(default=False)
     requires_current_ssa = models.BooleanField(default=True)
+    # Non-school programme work (conferences, camps, exhibitions, launches):
+    # schedulable without a school or cluster, through the Work Plan entry
+    # point, with a strategic rationale instead of an SSA recommendation.
+    non_school_allowed = models.BooleanField(default=False)
+    multi_day_allowed = models.BooleanField(default=False)
+    requires_participant_counts = models.BooleanField(default=False)
+    # §25 — verification requirements are configuration, not hardcoded per
+    # workflow. Defaults preserve the platform-wide behaviour that predates
+    # these flags (Salesforce ID + IA verification required).
+    salesforce_id_required = models.BooleanField(default=True)
+    ia_verification_required = models.BooleanField(default=True)
+    programme_category = models.CharField(max_length=64, blank=True, default="")
     requires_source_activity = models.BooleanField(default=False)
     new_school_only = models.BooleanField(default=False)
 

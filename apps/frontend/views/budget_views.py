@@ -237,6 +237,13 @@ def _build_fund_requests_context(request):
     same live state after mutating instead of round-tripping a redirect."""
     user = request.user
 
+    from apps.core.permissions import has_permission as _has_permission
+    from apps.core.rbac import Permission as _Permission
+
+    can_add_non_school_activity = _has_permission(
+        user, _Permission.MANUAL_ACTIVITY_CREATE.value
+    )
+
     # 1. Filters & Defaults
     fy = request.GET.get("fy", "2026").strip()
     quarter = request.GET.get("quarter", "").strip()
@@ -1003,6 +1010,7 @@ def _build_fund_requests_context(request):
     )
 
     return {
+        "can_add_non_school_activity": can_add_non_school_activity,
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
         "active_wfr": active_wfr,

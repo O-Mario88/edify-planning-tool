@@ -80,6 +80,19 @@ def _participants_of(a: dict, default_n: int) -> int:
     return counted if counted > 0 else default_n
 
 
+def _days_of(a: dict) -> int:
+    """Service days an activity spans (1 unless it carries a date range).
+
+    A Group-delivered camp or conference planned centrally from the Work Plan
+    runs for several days, and its per-day components must be priced per day.
+    Everything scheduled through school/cluster planning has no end date and
+    therefore prices exactly as before."""
+    try:
+        return max(1, int(a.get("days") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
 def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     """Compute the cost of an activity from the rate card.
 
@@ -116,18 +129,43 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
 
+    # Non-school programme events (conferences, camps, exhibitions, launches)
+    # price from the configurable programme component keys. Days come from the
+    # activity's date range; participants from the PLANNED count. A component
+    # is included only when the CD has configured its rate, except the two
+    # core components (venue + participant meals) which are always demanded so
+    # a missing rate blocks funded scheduling rather than under-costing.
+    if activity_type == "programme_event":
+        days = max(1, int(a.get("days") or 1))
+        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
+        add("Venue", "programme_venue_per_day", days)
+        add("Participant meals", "programme_participant_meal_cost_per_head", n * days)
+        if "programme_facilitation_per_day" in rates:
+            add("Facilitation", "programme_facilitation_per_day", days)
+        if "programme_transport_per_day" in rates:
+            add("Transport", "programme_transport_per_day", days)
+        if "programme_materials_per_participant" in rates:
+            add("Materials", "programme_materials_per_participant", n)
+        if days > 1 and "programme_accommodation_per_night" in rates:
+            add("Accommodation", "programme_accommodation_per_night", days - 1)
+
     # Cluster meetings and cluster trainings use their fixed recipe even when
     # a partner delivers the session.  The programme budget needs the same
     # transparent snack/meal/facilitation/venue breakdown in every workflow.
-    if activity_type in CLUSTER_MEETING_TYPES:
+    elif activity_type in CLUSTER_MEETING_TYPES:
         n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
         add("Participant snacks", CLUSTER_MEETING_SNACK_RATE_KEY, n)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        add("Participant meals", "group_training_participant_meal_cost_per_head", n)
-        add("Facilitation fee", "group_training_facilitation_fee")
-        add("Venue fee", "group_training_venue_cost")
+        days = _days_of(a)
+        add(
+            "Participant meals",
+            "group_training_participant_meal_cost_per_head",
+            n * days,
+        )
+        add("Facilitation fee", "group_training_facilitation_fee", days)
+        add("Venue fee", "group_training_venue_cost", days)
 
     elif is_partner:
         # Determine the key, basis, and label
@@ -254,9 +292,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 )
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        add("Participant meals", "group_training_participant_meal_cost_per_head", n)
-        add("Facilitation fee", "group_training_facilitation_fee")
-        add("Venue fee", "group_training_venue_cost")
+        days = _days_of(a)
+        add(
+            "Participant meals",
+            "group_training_participant_meal_cost_per_head",
+            n * days,
+        )
+        add("Facilitation fee", "group_training_facilitation_fee", days)
+        add("Venue fee", "group_training_venue_cost", days)
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
         key = (

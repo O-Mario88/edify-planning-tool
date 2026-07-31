@@ -1,0 +1,64 @@
+{% extends "layouts/shell.html" %}
+{% comment %}
+The Knowledge Center's two-column documentation shell.
+
+Left: the hierarchical, sticky, role-aware Table of Contents.
+Right: the selected article or landing content.
+
+Every Help page extends this, so the manual reads as one continuous document
+rather than a set of disconnected pages. On tablet portrait and below the rail
+becomes a slide-over drawer opened from a sticky "Contents" button; the
+article keeps full width at every size.
+{% endcomment %}
+{% block shell_content %}
+<div class="help-shell" x-data="{ contentsOpen: false }">
+
+  <header class="help-shell__header">
+    <p class="edify-page-eyebrow">Documentation</p>
+    <h1 class="edify-page-title">{% block help_title %}Help &amp; Knowledge Center{% endblock %}</h1>
+    <p class="help-shell__lede">{% block help_lede %}Learn how every Edify feature, workflow, role and automated process works.{% endblock %}</p>
+    {% block help_header_actions %}{% endblock %}
+  </header>
+
+  <button type="button"
+          class="help-shell__contents-toggle"
+          @click="contentsOpen = true"
+          aria-haspopup="dialog">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    Contents
+  </button>
+
+  <div class="help-shell__body">
+    <aside class="help-shell__rail" aria-label="Knowledge Center navigation">
+      {% include "partials/help/toc.html" %}
+    </aside>
+
+    <main class="help-shell__main">
+      {% block help_content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Mobile / tablet-portrait contents drawer -->
+  <div class="help-shell__drawer-backdrop"
+       x-show="contentsOpen"
+       x-transition.opacity
+       @click="contentsOpen = false"
+       x-cloak
+       aria-hidden="true"></div>
+  <div class="help-shell__drawer"
+       x-show="contentsOpen"
+       x-transition
+       x-cloak
+       role="dialog"
+       aria-modal="true"
+       aria-label="Knowledge Center contents"
+       @keydown.escape.window="contentsOpen = false">
+    <div class="help-shell__drawer-head">
+      <p class="font-extrabold">Contents</p>
+      <button type="button" class="btn btn-ghost h-9" @click="contentsOpen = false">Close</button>
+    </div>
+    {% include "partials/help/toc.html" %}
+  </div>
+
+</div>
+{% endblock %}

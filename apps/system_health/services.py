@@ -69,9 +69,21 @@ def report() -> dict:
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
     data["activityCatalogue"] = _activity_catalogue()
+    data["workPlan"] = _work_plan()
     data["strategicPriorities"] = _strategic_priorities()
     data["projectPriorities"] = _project_priorities()
     return data
+
+
+def _work_plan() -> dict:
+    """Non-school programme activity integrity (§35 — dated, owned,
+    rationalized, cross-month cost allocated)."""
+    try:
+        from apps.activities.work_plan_health import work_plan_health
+
+        return work_plan_health()
+    except Exception:  # noqa: BLE001 — health must remain inspectable
+        return {"healthy": False, "checks": []}
 
 
 def _activity_catalogue() -> dict:

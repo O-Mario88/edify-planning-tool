@@ -19,7 +19,6 @@ from apps.schools.models import School
 from apps.geography.models import Region, District, Parish, SubCounty
 from apps.core.enums import SchoolType, PlanningReadiness
 from apps.schools.upload_service import upload_school_file
-from apps.ssa.upload_service import upload_ssa_file
 from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
@@ -1200,7 +1199,6 @@ def school_upload_view(request):
 
     if request.method == "POST":
         schools_file = request.FILES.get("schools_file")
-        ssa_file = request.FILES.get("ssa_file")
 
         if schools_file:
             update_existing = request.POST.get("update_existing") == "on"
@@ -1215,18 +1213,10 @@ def school_upload_view(request):
             except Exception as e:
                 return render(request, "partials/upload_result.html", {"error": str(e)})
 
-        elif ssa_file:
-            try:
-                result = upload_ssa_file(ssa_file, request.user)
-                result["type"] = "ssa"
-                return render(
-                    request, "partials/upload_result.html", {"result": result}
-                )
-            except Exception as e:
-                return render(request, "partials/upload_result.html", {"error": str(e)})
-
         return render(
-            request, "partials/upload_result.html", {"error": "No file uploaded."}
+            request,
+            "partials/upload_result.html",
+            {"error": "Select a school roster file to upload."},
         )
 
     return render(request, "pages/schools/upload.html")

@@ -4597,3 +4597,73 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 @media (max-width: 48rem), (pointer: coarse) {
   .ad-action { min-block-size: 3.5rem; }
 }
+/* ── Work Plan: restrained approval surface + dense premium data table ─── */
+.work-plan-approval {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--edify-border) 78%, transparent);
+  border-radius: var(--radius-surface, 12px);
+  background: color-mix(in srgb, var(--edify-surface, #fff) 58%, transparent);
+}
+
+.work-plan-table-shell {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--edify-border) 82%, transparent);
+  border-radius: var(--radius-surface, 12px);
+  background: color-mix(in srgb, var(--edify-surface, #fff) 72%, transparent);
+  box-shadow: 0 12px 34px rgb(15 23 42 / 0.045);
+}
+
+.work-plan-table {
+  min-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.work-plan-table thead th {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--edify-border);
+  background: color-mix(in srgb, var(--edify-surface-subtle, #f8fafc) 76%, transparent);
+  color: var(--edify-text-muted, #64748b);
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.work-plan-table tbody td {
+  padding: 0.95rem 1rem;
+}
+
+.work-plan-table tbody tr {
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.work-plan-table tbody tr:hover {
+  background: color-mix(in srgb, var(--edify-accent) 4%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--edify-accent) 60%, transparent);
+}
+
+.work-plan-data-pill {
+  display: inline-flex;
+  max-width: 14rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--edify-accent) 22%, var(--edify-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--edify-accent) 6%, transparent);
+  padding: 0.3rem 0.6rem;
+  color: var(--edify-text, #334155);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (max-width: 767px) {
+  .work-plan-approval {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

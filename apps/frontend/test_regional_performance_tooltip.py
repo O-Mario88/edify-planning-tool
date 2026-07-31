@@ -222,6 +222,33 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("detailRequest", template)
         self.assertIn("subcountyCache", template)
 
+    def test_subcounty_boundaries_support_second_level_zoom_and_step_back(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("Click a sub-county to zoom further", template)
+        self.assertIn("this.zoomSubcounty(path);", template)
+        self.assertIn("zoomSubcounty(el){", template)
+        self.assertIn("districtCamera:null", template)
+        self.assertIn("this.districtCamera = {scale:s, tx, ty};", template)
+        self.assertIn("this.scaleSubcountyOverlays(scale, name);", template)
+        self.assertIn("this.focused = `subcounty:${name}`;", template)
+        self.assertIn("back(){", template)
+        self.assertIn("this.focused = this.focusedDistrict;", template)
+        self.assertIn('@keydown.escape.window="back()"', template)
+        self.assertIn("cursor:zoom-in", template)
+
+    def test_subcounty_metric_refresh_does_not_recursively_request_itself(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("combinedDistrictRequests:{}", template)
+        self.assertIn(
+            "if(!this.combinedDistrictRequests[districtRequestKey])", template
+        )
+        self.assertIn(
+            "this.combinedDistrictRequests[districtRequestKey] = true;", template
+        )
+        self.assertNotIn("this._combineRequested = false;", template)
+
     def test_zoomed_hover_card_switches_to_subcounty_metrics(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 

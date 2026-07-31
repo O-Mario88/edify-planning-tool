@@ -241,17 +241,16 @@ main .bg-white {
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
-/* Blue is the immersive workspace: the approved classroom image stays
-   visible through layered, frosted surfaces. Dark remains deliberately
-   opaque and therefore reads as a separate low-light mode. */
+/* Blue keeps the approved classroom image, but its content chrome now follows
+   the same flat filter-surface contract as Night Black. */
 .theme-blue :is(.edify-topbar, main .bg-white, main .card, main .premium-card,
   main .premium-card-elevated, main .panel, main .mini, main .summary-card,
   main .rail-card, main .edify-kpi-card, main .card-kpi, main .pto-panel,
   .kpi-strip, .drawer-surface, .pto-drawer-panel) {
-  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  border-color: var(--edify-border) !important;
-  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: none !important;
 }
 
 .theme-blue main :is(.bg-white, .card, .premium-card, .premium-card-elevated,
@@ -261,15 +260,14 @@ main .bg-white {
   background-image: var(--edify-surface-treatment) !important;
 }
 
-/* Glass has hierarchy: large surfaces establish the workspace, while tiles
-   remain darker and quieter so data—not decoration—owns the foreground. */
+/* Tiles use the same translucent plane as their parent cards. */
 .theme-blue main :is(.pto-balance-tile, .pto-recommendation,
   .pto-signal, .pto-coverage-card, .pto-constraint, .pto-conflict-card,
   .pto-tracker-card) {
-  background-color: rgba(0, 29, 57, 0.26) !important;
-  background-image: var(--edify-glass-tile-treatment) !important;
-  border-color: rgba(123, 189, 232, 0.28) !important;
-  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.10), 0 12px 26px -22px rgba(0, 8, 20, .84);
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: none !important;
 }
 
 .theme-blue .kpi-strip {
@@ -285,23 +283,19 @@ main .bg-white {
 .theme-blue .kpi-strip__icon-container {
   border: 1px solid rgba(123, 189, 232, 0.42);
   background-color: rgba(0, 29, 57, 0.30);
-  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.14), 0 0 20px -10px currentColor;
+  box-shadow: none;
 }
 
-/* Blue-mode controls use a luminous brand gradient for the primary action and
-   a genuine glass treatment for secondary actions. These selectors cover the
-   shared component API, legacy Tailwind actions, and the PTO gold standard. */
+/* Blue actions keep their hierarchy through colour alone; their geometry and
+   flatness match the reference filter controls. */
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
   button.bg-indigo-700, a.bg-indigo-700) {
-  /* The sky-glass gradient runs #bdd8e9→#7bbde8→#6ea2b3; white labels read
-     1.4–2.1:1 on it. The navy ink is the login-reference pairing and clears
-     AA on every gradient stop (6.7–14:1), including the lighter hover ramp. */
   color: var(--edify-navy-950) !important;
   background-color: var(--edify-sky-400) !important;
-  background-image: var(--edify-button-primary-treatment) !important;
-  border: 1px solid rgba(220, 240, 252, 0.58) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.70), 0 12px 28px -16px rgba(123,189,232,.82) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-sky-400) !important;
+  box-shadow: none !important;
   text-shadow: none;
 }
 
@@ -309,9 +303,9 @@ main .bg-white {
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
   button.bg-indigo-700, a.bg-indigo-700):hover:not(:disabled) {
   background-color: var(--edify-sky-100) !important;
-  background-image: linear-gradient(135deg, #e6f5ff 0%, var(--edify-sky-100) 48%, var(--edify-sky-400) 100%) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 16px 34px -16px rgba(123,189,232,.94) !important;
-  transform: translateY(-1px);
+  background-image: none !important;
+  box-shadow: none !important;
+  transform: none;
 }
 
 /* Every legacy primary family shares the sky-glass face in the blue theme, so
@@ -328,12 +322,12 @@ main .bg-white {
   button.border-slate-200, a.border-slate-200, button.border-slate-300,
   a.border-slate-300) {
   color: var(--edify-text) !important;
-  background-color: rgba(0, 29, 57, 0.30) !important;
-  background-image: var(--edify-button-secondary-treatment) !important;
-  border-color: rgba(123, 189, 232, 0.46) !important;
-  box-shadow: inset 0 1px 0 rgba(220, 240, 252, 0.14), 0 10px 24px -18px rgba(0,8,20,.82) !important;
-  backdrop-filter: blur(14px) saturate(145%);
-  -webkit-backdrop-filter: blur(14px) saturate(145%);
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
@@ -341,22 +335,15 @@ main .bg-white {
   a.border-slate-300):hover:not(:disabled) {
   color: var(--edify-sky-100) !important;
   border-color: var(--edify-sky-400) !important;
-  background-color: rgba(10, 65, 116, 0.50) !important;
-  transform: translateY(-1px);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .theme-blue {
-    --edify-surface: rgba(4, 43, 79, 0.92);
-    --edify-surface-muted: rgba(10, 65, 116, 0.86);
-  }
+  background-color: var(--edify-surface-raised) !important;
+  transform: none;
 }
 .theme-dark main .bg-white {
   border-color: var(--edify-border) !important;
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
-/* Every workspace uses Inter. Dark mode changes surfaces and contrast—not the
+/* Every workspace uses Geist Sans. Dark mode changes surfaces and contrast—not the
    product typeface—so moving between themes never changes the information
    density or visual language. */
 .theme-dark main h1,
@@ -376,10 +363,10 @@ main .bg-white {
 
 .theme-dark main :is(.card, .premium-card, .premium-card-elevated,
   .panel, .edify-kpi-card, .card-kpi, .bg-white) {
-  background-color: var(--edify-surface) !important;
+  background-color: var(--edify-card-surface) !important;
   background-image: var(--edify-surface-treatment) !important;
-  border-color: var(--edify-border) !important;
-  box-shadow: var(--edify-shadow-sm) !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: var(--edify-card-shadow) !important;
 }
 
 .theme-dark main :is(.font-black, .font-extrabold) {
@@ -864,8 +851,8 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 
 /* Budget category labels: distinguished in the dark header row by weight and
-   italic, on the platform's single UI font (Inter). Serif was dropped to
-   satisfy the global Inter-only rule; the visual emphasis is preserved. */
+   italic, on the platform's single UI font (Geist Sans). Serif was dropped to
+   satisfy the global Geist-only rule; the visual emphasis is preserved. */
 .budget-category-name {
   font-style: italic !important;
   color: #ffffff !important;
@@ -1533,7 +1520,7 @@ select:not([multiple]):not(.select-native) {
 .appearance-theme-preview--dark::after {
   content: "";
   position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   /* Documented radius exception (spec §11): a scaled-down illustration of
      the app shell inside a ~56px preview thumbnail, not a real UI control. */
   border-radius: 5px;

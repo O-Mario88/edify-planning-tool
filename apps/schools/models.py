@@ -333,13 +333,18 @@ class School(SoftDeleteModel):
                 )
 
 
-def create_data_quality_issues(school):
+def build_data_quality_issues(school):
+    """Build the canonical open issues for a school without writing them.
+
+    The ordinary ``School.save()`` path persists this list immediately.
+    High-volume imports use the same builder and bulk-create the combined
+    issue set, preserving the exact quality contract without an N+1 write
+    pattern.
+    """
     if not school.pk:
-        return
+        return []
 
     from apps.schools.models import DataQualityIssue
-
-    DataQualityIssue.objects.filter(school=school, status="open").delete()
 
     issues = []
     # Missing Phone
@@ -446,6 +451,17 @@ def create_data_quality_issues(school):
             )
         )
 
+    return issues
+
+
+def create_data_quality_issues(school):
+    if not school.pk:
+        return
+
+    from apps.schools.models import DataQualityIssue
+
+    DataQualityIssue.objects.filter(school=school, status="open").delete()
+    issues = build_data_quality_issues(school)
     if issues:
         DataQualityIssue.objects.bulk_create(issues)
 

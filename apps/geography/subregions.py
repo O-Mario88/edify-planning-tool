@@ -8,7 +8,7 @@ rest of the geography is built from. That is why it lives here as controlled
 reference data rather than being imported.
 
 Each sub-region nests wholly inside one region, so the lists below partition
-the 135 UBOS districts exactly. check() enforces that; the migration and
+the 136 operational UBOS districts exactly. check() enforces that; the migration and
 the test suite both call it.
 """
 
@@ -26,6 +26,7 @@ SUBREGIONS: dict[str, tuple[str, list[str]]] = {
             "Nebbi",
             "Obongi",
             "Pakwach",
+            "Terego",
             "Yumbe",
             "Zombo",
         ],
@@ -210,8 +211,8 @@ def check() -> None:
             if d in seen:
                 raise ValueError(f"district {d!r} is in both {seen[d]!r} and {name!r}")
             seen[d] = name
-    if len(seen) != 135:
-        raise ValueError(f"expected 135 districts, mapping has {len(seen)}")
+    if len(seen) != 136:
+        raise ValueError(f"expected 136 districts, mapping has {len(seen)}")
 
 
 def sync(apps=None) -> dict[str, int]:

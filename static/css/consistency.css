@@ -523,7 +523,7 @@ main table tbody tr:hover,
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
-  .app-sidebar__collapse-btn, .action-button,
+  .action-button,
   [class*="border-slate-"][class*="rounded"],
   [class*="border-blue-"][class*="rounded"],
   [class*="border-indigo-"][class*="rounded"]
@@ -550,7 +550,7 @@ main table tbody tr:hover,
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
-  .app-sidebar__collapse-btn, .action-button,
+  .action-button,
   [class*="border-slate-"][class*="rounded"],
   [class*="border-blue-"][class*="rounded"],
   [class*="border-indigo-"][class*="rounded"]
@@ -1275,6 +1275,256 @@ main .legacy-kpi-strip .card-kpi {
   min-block-size: 8rem !important;
 }
 
+/* ═══ DARK THEMES: FILTER-SURFACE CONTRACT ══════════════════════════════════
+   Night and Edify Blue both take their visual language from their filter
+   controls: one quiet translucent plane, one thin hairline and no elevation.
+   Shared and legacy KPI families consume the same contract as larger panels.
+   Semantic icon fills, alerts, selected states and focus rings remain intact. */
+:is(.theme-blue, .theme-dark) main :is(
+  .card:not(.card-alert),
+  .card-elevated,
+  .card-flat,
+  .card-insight,
+  .card-rail-amber,
+  .card-rail-emerald,
+  .card-rail-rose,
+  .premium-card,
+  .premium-card-elevated,
+  .panel,
+  .mini,
+  .summary-card,
+  .rail-card,
+  .hcos-register,
+  .admin-period-switch,
+  .tt-signal-strip,
+  .edify-kpi-card,
+  .card-kpi,
+  .admin-mini,
+  .admin-budget-grid > article,
+  .pto-balance-tile,
+  .pto-recommendation,
+  .pto-signal,
+  .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]):not([class*="filter"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  aside.edify-surface[class*="rounded"],
+  div[style*="--edify-surface"][class*="rounded"],
+  section[style*="--edify-surface"][class*="rounded"],
+  article[style*="--edify-surface"][class*="rounded"],
+  aside[style*="--edify-surface"][class*="rounded"],
+  div.bg-white[class*="rounded"],
+  section.bg-white[class*="rounded"],
+  article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"]
+) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-card-border) !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Drawers and modal panels can be mounted outside <main>; keep them on the
+   same filter plane as the rest of the workspace. */
+:is(.theme-blue, .theme-dark)
+  :is(.drawer-surface, .pto-drawer-panel, .tt-modal__panel) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-card-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:is(.theme-blue, .theme-dark) main :is(
+  .kpi-strip__item,
+  .settings-detail-tile,
+  .legacy-kpi-strip.legacy-kpi-strip > *,
+  .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
+  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
+  .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
+  .sp-kpis.sp-kpis > .sp-kpi,
+  .sp-kpi-grid.sp-kpi-grid > .sp-kpi,
+  .spp-kpi-grid.spp-kpi-grid > .spp-kpi,
+  .spa-kpi-grid.spa-kpi-grid > .spa-kpi
+) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-card-border) !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+}
+
+/* Tables use one filter-like perimeter and quiet row dividers instead of a
+   shadowed card plus an inner spreadsheet grid. */
+:is(.theme-blue, .theme-dark) main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  background-color: var(--edify-card-surface) !important;
+  border: 1px solid var(--edify-card-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: none !important;
+}
+
+/* Form fields outside the canonical filter bars share the same resting plane.
+   Focus remains blue and is intentionally handled by the accessibility ring. */
+:is(.theme-blue, .theme-dark) main :where(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  select,
+  textarea
+) {
+  background-color: var(--edify-surface) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+}
+
+/* Tailwind shadow utilities and feature-local elevation must not escape the
+   dark-theme contract. Focus rings are separate and remain visible. */
+:is(.theme-blue, .theme-dark) main :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
+  box-shadow: none !important;
+}
+
+/* Blue primary actions stay unmistakable through colour, not gradients or
+   elevation; secondary actions use the same filter surface as cards. */
+.theme-blue :is(
+  .btn-primary,
+  .btn-premium-primary,
+  .edify-action-button.primary,
+  .premium-button-primary,
+  .pto-button--primary,
+  .sp-button--primary,
+  .spa-button--primary,
+  .spp-button--primary,
+  .tt-button--primary,
+  .hcos-button--primary,
+  .admin-button--primary,
+  button.bg-indigo-600,
+  a.bg-indigo-600,
+  button.bg-indigo-700,
+  a.bg-indigo-700,
+  button.bg-blue-600,
+  a.bg-blue-600
+) {
+  color: var(--edify-navy-950) !important;
+  background-color: var(--edify-sky-400) !important;
+  background-image: none !important;
+  border-color: var(--edify-sky-400) !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+.theme-blue :is(
+  .btn-primary,
+  .btn-premium-primary,
+  .edify-action-button.primary,
+  .premium-button-primary,
+  .pto-button--primary,
+  .sp-button--primary,
+  .spa-button--primary,
+  .spp-button--primary,
+  .tt-button--primary,
+  .hcos-button--primary,
+  .admin-button--primary,
+  button.bg-indigo-600,
+  a.bg-indigo-600,
+  button.bg-indigo-700,
+  a.bg-indigo-700,
+  button.bg-blue-600,
+  a.bg-blue-600
+):hover:not(:disabled) {
+  background-color: var(--edify-sky-100) !important;
+  background-image: none !important;
+  border-color: var(--edify-sky-100) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.theme-blue :is(
+  .btn-ghost,
+  .btn-secondary,
+  .btn-premium-secondary,
+  .edify-action-button.secondary,
+  .premium-button-secondary,
+  .premium-button-outline,
+  .pto-button--secondary,
+  .sp-button--secondary,
+  .spa-button--secondary,
+  .spp-button--secondary,
+  .tt-button--secondary,
+  .hcos-button--secondary,
+  .admin-button--secondary
+) {
+  color: var(--edify-text) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transform: none !important;
+}
+
+:is(.theme-blue, .theme-dark) .kpi-strip--band {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:is(.theme-blue, .theme-dark) .kpi-strip__item::after {
+  display: none;
+}
+
+:is(.theme-blue, .theme-dark) .kpi-strip--band .kpi-strip__item,
+:is(.theme-blue, .theme-dark) main :is(
+  .legacy-kpi-strip.legacy-kpi-strip > :first-child,
+  .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
+  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
+  .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
+  .sp-kpis.sp-kpis > .sp-kpi:first-child,
+  .sp-kpi-grid.sp-kpi-grid > .sp-kpi:first-child,
+  .spp-kpi-grid.spp-kpi-grid > .spp-kpi:first-child,
+  .spa-kpi-grid.spa-kpi-grid > .spa-kpi:first-child
+) {
+  border-color: var(--edify-card-border) !important;
+}
+
+/* Resting chrome may be almost invisible; an actionable tile must still reveal
+   itself decisively when a pointer or keyboard user reaches it. */
+:is(.theme-blue, .theme-dark) main :is(
+  .card-interactive,
+  a.card,
+  button.card,
+  .kpi-strip__item:has(.kpi-strip__item-body--link)
+):is(:hover, :focus-within) {
+  background-color: var(--edify-surface-hover) !important;
+  border-color: var(--edify-border-strong) !important;
+}
+
 /* Phones never scroll a KPI strip horizontally. Below the smallest card
    minimum every legacy strip locks to a 2-column wrapping grid so the tiles
    fill the viewport instead of overflowing into a swipe carousel — matching
@@ -1307,4 +1557,134 @@ main .legacy-kpi-strip .card-kpi {
     min-inline-size: 0 !important;
     min-block-size: 7.5rem !important;
   }
+}
+
+/* ═══ PAGE HEROES: CONTENT ON THE PAGE CANVAS ═══════════════════════════════
+   A page hero is hierarchy, not a container. Every current header family and
+   the explicitly tagged legacy finance/IA/accounting headers therefore sits
+   directly on the page canvas: no panel fill, outline, radius, blur or
+   elevation. Controls and semantic status elements inside a hero keep their
+   own affordances. This late bridge intentionally outranks feature styles and
+   utility classes while those pages converge on .edify-page-hero. */
+main :is(
+  .edify-page-hero,
+  .edify-page-header,
+  .platform-page-header,
+  .platform-hero,
+  .ia-hero,
+  .help-center-hero,
+  .help-shell__header,
+  .hcos-hero,
+  .sp-page-header,
+  .pto-header,
+  .tt-page-header,
+  .calendar-workspace__header,
+  .partner-workspace__header,
+  .admin-command__header,
+  .pd-page-header,
+  .sp-plan__header,
+  .spp-header,
+  .spa-header
+) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* The legacy and feature-specific heroes supplied their spacing from the
+   removed card. Their page wrappers already own the layout gutters and rhythm,
+   so reset only those card-derived headers to the same content edge. */
+main :is(
+  .edify-page-hero,
+  .platform-hero,
+  .ia-hero,
+  .help-center-hero
+) {
+  padding: 0 !important;
+  overflow: visible !important;
+  isolation: auto !important;
+}
+
+/* Decorative glow orbs belonged to the removed hero card and have no visual
+   boundary on the page canvas. Functional positioned content remains intact. */
+main :is(.edify-page-hero, .platform-hero) > .absolute[aria-hidden="true"],
+main :is(.edify-page-hero, .platform-hero) > .absolute.pointer-events-none,
+main :is(.ia-hero, .help-center-hero)::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Card-era heroes hard-coded white and slate-on-navy text. Re-anchor their
+   content to the active theme without touching semantic badges or controls. */
+main :is(
+  .edify-page-hero,
+  .platform-hero,
+  .ia-hero,
+  .help-center-hero
+) :is(h1, h2, h3, .edify-page-title, .help-center-title) {
+  color: var(--edify-text) !important;
+}
+
+main .edify-page-hero p,
+main .platform-hero p,
+main .ia-hero__content > p,
+main .ia-hero__meta,
+main .help-center-summary,
+main .help-stat-list dd,
+main .help-search-label {
+  color: var(--edify-text-muted) !important;
+}
+
+main :is(.platform-hero__eyebrow, .ia-hero__eyebrow),
+main .help-center-hero .help-center-kicker {
+  color: var(--edify-accent) !important;
+}
+
+main .help-stat-list dt {
+  color: var(--edify-text) !important;
+}
+
+/* IA hero actions now use the same primary/secondary button treatments as the
+   rest of the platform instead of the removed navy banner's inverse palette. */
+main .ia-hero .ia-button--primary {
+  color: var(--edify-on-accent) !important;
+  background: var(--edify-accent) !important;
+  border-color: var(--edify-accent) !important;
+  box-shadow: none !important;
+}
+
+main .ia-hero .ia-button--primary:hover {
+  background: var(--edify-accent-hover) !important;
+  border-color: var(--edify-accent-hover) !important;
+}
+
+main .ia-hero .ia-button--secondary {
+  color: var(--edify-text) !important;
+  background: var(--edify-surface) !important;
+  border-color: var(--edify-border) !important;
+}
+
+main .ia-hero .ia-button--secondary:hover {
+  color: var(--edify-accent) !important;
+  background: var(--edify-surface-hover) !important;
+  border-color: var(--edify-border-strong) !important;
+}
+
+/* Legacy finance/accounting heroes use utility-styled secondary actions.
+   Restore a normal control surface once their inverse banner is gone. */
+main .edify-page-hero :is(a, button):not(
+  .edify-primary-solid,
+  .edify-selected-surface,
+  [class*="bg-emerald"],
+  [class*="bg-amber"],
+  [class*="bg-rose"],
+  [class*="bg-red"]
+) {
+  color: var(--edify-text) !important;
+  border-color: var(--edify-border) !important;
 }

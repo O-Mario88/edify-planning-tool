@@ -459,6 +459,135 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="policy_compliance",
     ),
+    # ── Work Plan (2026-07-30) ───────────────────────────────────────────────
+    MetricSpec(
+        key="work_plan_activities_planned",
+        label="Activities Planned",
+        definition=(
+            "Live planned activities in the caller's authorized scope whose "
+            "date falls in the selected Work Plan period. Cancelled, rejected "
+            "and deferred work is excluded."
+        ),
+        question="How much work has been planned for this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("activities.Activity",),
+        numerator="Live activities dated within the selected period",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience (own / supervised / country)",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="work_plan",
+        refresh_events=("activity_scheduled", "activity_rescheduled"),
+    ),
+    MetricSpec(
+        key="work_plan_activities_this_month",
+        label="Activities This Month",
+        definition=(
+            "Live planned activities in scope dated in the current calendar "
+            "month, regardless of which period the page is filtered to."
+        ),
+        question="What is actually landing this month?",
+        category=Category.PROGRESS,
+        unit=Unit.COUNT,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("activities.Activity",),
+        numerator="Live activities dated in the current calendar month",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FIXED_CONTEXT,
+        drilldown="work_plan",
+        notes="Fixed context: always *this* month, never the filtered period.",
+    ),
+    MetricSpec(
+        key="work_plan_plan_derived_budget",
+        label="Plan-Derived Budget",
+        definition=(
+            "Sum of the canonical ActivityScheduleCostLine amounts belonging "
+            "to the period's activities. Every shilling traces to a dated "
+            "plan and a Cost Catalogue rate; nothing here is typed by hand."
+        ),
+        question="What will the planned work cost?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Cost lines dated within the selected period",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="work_plan",
+        refresh_events=("activity_scheduled", "activity_rescheduled"),
+    ),
+    MetricSpec(
+        key="work_plan_pending_approval",
+        label="Pending Approval",
+        definition=(
+            "Activities in the period whose weekly fund request is submitted "
+            "and awaiting a PL or CD decision."
+        ),
+        question="What is waiting on an approver before money can move?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("fund_requests.WeeklyFundRequest",),
+        numerator="Period activities carried by a submitted weekly request",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="work_plan",
+    ),
+    MetricSpec(
+        key="work_plan_cost_setup_required",
+        label="Cost Setup Required",
+        definition=(
+            "Activities in the period with no applicable Cost Catalogue rate. "
+            "They may sit in draft planning but cannot enter a submitted fund "
+            "request until the Country Director sets the missing rate."
+        ),
+        question="What cannot be funded until the CD configures a rate?",
+        category=Category.QUALITY,
+        unit=Unit.COUNT,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("activities.Activity",),
+        numerator="Period activities flagged cost_missing",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="work_plan",
+    ),
+    MetricSpec(
+        key="work_plan_activities_at_risk",
+        label="Activities At Risk",
+        definition=(
+            "Activities whose planned date has passed while they are still "
+            "scheduled or in progress — planned work that has not been "
+            "completed or rescheduled."
+        ),
+        question="What has slipped its date without being dealt with?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.frontend.views.work_plan_page.build_work_plan_context",
+        source_models=("activities.Activity",),
+        numerator="Period activities past their date, still open",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.MONTH,
+        scope="Role-scoped Work Plan audience",
+        owner_page="work_plan",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="work_plan",
+    ),
 )
 
 

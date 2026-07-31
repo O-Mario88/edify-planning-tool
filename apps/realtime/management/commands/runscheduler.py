@@ -58,6 +58,7 @@ class Command(BaseCommand):
             "monthly_work_plan": jobs.monthly_work_plan_job,
             "notification_escalation": jobs.notification_escalation_job,
             "daily_digest": jobs.daily_digest_job,
+            "activity_reminders": jobs.activity_reminders_job,
             "target_ledger_sync": jobs.target_ledger_sync_job,
             "pd_reminders": jobs.pd_reminders_job,
             "field_debrief_recurring_issues": jobs.field_debrief_recurring_issues_job,

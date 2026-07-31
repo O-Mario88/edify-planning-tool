@@ -64,16 +64,16 @@ class Permission(str, Enum):
     SSA_UPLOAD = "ssa.upload"
     PLANNING_VIEW = "planning.view"
     PLANNING_CREATE = "planning.create"
+    # §5 — the Work Plan "Add Non-School Activity" entry point: dated
+    # programme activities (conferences, camps, exhibitions) created outside
+    # school/cluster planning but through the same canonical funnel.
+    MANUAL_ACTIVITY_CREATE = "planning.manualActivity.create"
     ACTIVITY_ASSIGN = "activity.assign"
     ACTIVITY_COMPLETE = "activity.complete"
     ACTIVITY_CATALOGUE_VIEW = "activityCatalogue.view"
     ACTIVITY_CATALOGUE_MANAGE = "activityCatalogue.manage"
-    ACTIVITY_CATALOGUE_MAP_INTERVENTIONS = (
-        "activityCatalogue.mapInterventions"
-    )
-    ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES = (
-        "activityCatalogue.manageProjectRules"
-    )
+    ACTIVITY_CATALOGUE_MAP_INTERVENTIONS = "activityCatalogue.mapInterventions"
+    ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES = "activityCatalogue.manageProjectRules"
     STRATEGIC_PRIORITIES_VIEW = "strategicPriorities.view"
     STRATEGIC_PRIORITIES_CREATE = "strategicPriorities.create"
     STRATEGIC_PRIORITIES_EDIT = "strategicPriorities.edit"
@@ -156,6 +156,7 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
     {
         # Field planning and execution
         P.PLANNING_CREATE,
+        P.MANUAL_ACTIVITY_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_COMPLETE,
         # NOT excluded: CLUSTER_ASSIGN / CLUSTER_OVERRIDE. Which cluster a
@@ -196,6 +197,8 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
     EdifyRole.COUNTRY_DIRECTOR: [
+        # §5 — authorized non-school programme activities.
+        P.MANUAL_ACTIVITY_CREATE,
         # Country-scoped policy authorship, and the country's policy comments.
         P.UPLOADS_VIEW,
         P.DOCUMENTS_CREATE,
@@ -295,6 +298,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PLANNING_VIEW,
         P.ACTIVITY_CATALOGUE_VIEW,
         P.PLANNING_CREATE,
+        P.MANUAL_ACTIVITY_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_COMPLETE,
         P.ACTIVITY_CATALOGUE_VIEW,
@@ -329,6 +333,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SSA_VIEW,
         P.PLANNING_VIEW,
         P.PLANNING_CREATE,
+        P.MANUAL_ACTIVITY_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_COMPLETE,
         P.ACTIVITY_CATALOGUE_VIEW,
@@ -347,6 +352,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
+        # §5 — authorized non-school programme activities.
+        P.MANUAL_ACTIVITY_CREATE,
         # Training manuals and presentations are IA's; organisational policy
         # is not.
         P.UPLOADS_VIEW,
@@ -382,6 +389,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
+        # Accountants are Edify employees and upload their own PD completion
+        # files through the shared Upload Center.
+        P.UPLOADS_VIEW,
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
         P.SCHOOL_VIEW,
         P.PAYMENT_ACT,
@@ -401,6 +411,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.HUMAN_RESOURCES: [
+        # §5 — authorized non-school programme activities.
+        P.MANUAL_ACTIVITY_CREATE,
         # Policies and organisational manuals are HR's to write, publish and
         # administer, including the audience, the acknowledgement rules and the
         # private comments people leave beside their answers.
@@ -436,6 +448,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SSA_VIEW,
         P.PLANNING_VIEW,
         P.PLANNING_CREATE,
+        P.MANUAL_ACTIVITY_CREATE,
         P.ACTIVITY_ASSIGN,
         P.ACTIVITY_CATALOGUE_VIEW,
         P.ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES,

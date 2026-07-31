@@ -24,21 +24,15 @@ addSchoolOpen: false
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 ">
-{% if can_upload_schools %}
-<a href="/schools/upload" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+{% if can_upload_schools or can_add_ssa %}
+<a href="/uploads" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
-<span>Upload Schools</span>
+<span>Upload Center</span>
 </a>
 {% endif %}
 {% if can_add_ssa %}
-<a href="/ssa/upload/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
-<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-</svg>
-<span>Upload SSA</span>
-</a>
 <a href="/ssa/manual/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />

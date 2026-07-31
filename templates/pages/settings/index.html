@@ -12,21 +12,13 @@
     <p>Your account, security and appearance preferences.</p>
   </div>
 
-  {# ── Account ───────────────────────────────────────────────────────────── #}
+  {# Identity is shown in the top-right avatar; Settings keeps account actions. #}
   <section class="card p-5 space-y-3" aria-labelledby="settings-account-title">
-    <h2 id="settings-account-title" class="text-sm font-semibold">Account</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="settings-detail-tile">
-        <p class="settings-detail-tile__label">Name</p>
-        <p class="settings-detail-tile__value">{{ user.name }}</p>
-      </div>
+    <h2 id="settings-account-title" class="text-sm font-semibold">Account security</h2>
+    <div class="grid grid-cols-1 gap-3">
       <div class="settings-detail-tile">
         <p class="settings-detail-tile__label">Email</p>
         <p class="settings-detail-tile__value truncate">{{ user.email }}</p>
-      </div>
-      <div class="settings-detail-tile">
-        <p class="settings-detail-tile__label">Role</p>
-        <p class="settings-detail-tile__value">{{ user.active_role }}</p>
       </div>
     </div>
     <div class="flex flex-wrap gap-2 pt-1">
@@ -160,9 +152,7 @@
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Session</h2>
       <p class="edify-text-caption text-slate-500">Signed in as {{ user.email }}.</p>
       <p class="edify-text-caption text-slate-500">You stay signed in while you are working. After {{ session_idle_minutes }} minutes without activity you will be signed out.</p>
-      <form method="post" action="/logout">{% csrf_token %}
-        <button type="submit" class="h-8 px-3 rounded-control border border-rose-200 text-rose-600 edify-text-caption font-bold hover:bg-rose-50 transition-colors">Sign Out</button>
-      </form>
+      <p class="edify-text-caption text-slate-500">Use the avatar in the upper-right corner to log out.</p>
     </div>
   </div>
 

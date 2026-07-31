@@ -13,7 +13,7 @@ const options = {
     height: 240,
     type: 'line',
     toolbar: { show: false },
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'Geist, sans-serif',
     foreColor: 'var(--edify-text-muted)'
   },
   stroke: {
@@ -74,12 +74,12 @@ const options = {
   },
   yaxis: [
     {
-      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Inter' } },
+      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Geist' } },
       labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
     },
     {
       opposite: true,
-      title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600', fontFamily: 'Inter' } },
+      title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600', fontFamily: 'Geist' } },
       max: 100,
       labels: { formatter: function (val) { return Math.round(val) + '%'; }, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
     }
@@ -103,7 +103,7 @@ const options = {
   tooltip: {
     theme: 'dark',
     shared: true,
-    style: { fontSize: '12px', fontFamily: 'Inter' }
+    style: { fontSize: '12px', fontFamily: 'Geist' }
   }
 };
 this.chart = new ApexCharts(document.querySelector('#performanceChart'), options);
