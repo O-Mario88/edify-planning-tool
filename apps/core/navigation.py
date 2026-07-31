@@ -838,6 +838,24 @@ SIDEBAR_ITEMS = [
                 "label": "Priority Dashboard",
                 "url": "/my-performance",
                 "page_key": "my_performance",
+                # Regional and country strategy authors enter the governed
+                # source-priority workspace from the familiar dashboard slot.
+                # Their personal agreement remains available as the sibling
+                # item below, so strategy ownership does not erase it.
+                "role_urls": {
+                    RVP: "/strategic-priorities",
+                    CD: "/strategic-priorities",
+                },
+                "role_labels": {
+                    RVP: "Priority Setting",
+                    CD: "Priority Setting",
+                },
+            },
+            {
+                "label": "My Performance Agreement",
+                "url": "/my-performance",
+                "page_key": "my_performance",
+                "visible_to": {RVP, CD},
             },
             {
                 "label": "My Targets",
@@ -1144,6 +1162,10 @@ SIDEBAR_ITEMS = [
                 "label": "Strategic Priorities",
                 "url": "/strategic-priorities",
                 "page_key": "strategic_priorities",
+                # RVP/CD reach the same authoring workspace from their primary
+                # performance group; keep this validation/configuration entry
+                # for the support roles that do not receive that override.
+                "visible_to": {HR, ADMIN},
             },
             {
                 "label": "Performance Cycle",

@@ -61,7 +61,22 @@ def priority_configuration_page(request):
             "Strategic priorities are set by the RVP and Country Director and "
             "validated by HR.",
         )
-    fy = _requested_fy(request)
+    # Strategy often opens before the operational FY changes.  When navigation
+    # does not name a year, open the newest governed cycle instead of showing
+    # an empty operational-year page while next year's RVP plan already exists.
+    # An explicit (including invalid) value still goes through _requested_fy so
+    # the existing validation and safe fallback contract remains intact.
+    raw_fy = (request.GET.get("fy") or "").strip()
+    if raw_fy:
+        fy = _requested_fy(request)
+    else:
+        fy = (
+            StrategicPriorityCycle.objects.exclude(status="archived")
+            .order_by("-financial_year")
+            .values_list("financial_year", flat=True)
+            .first()
+            or _requested_fy(request)
+        )
 
     cycle = (
         StrategicPriorityCycle.objects.prefetch_related(
@@ -82,6 +97,50 @@ def priority_configuration_page(request):
         "supervisor_id", flat=True
     ).distinct()
 
+    priorities = list(cycle.priorities.all()) if cycle else []
+    group_rows = []
+    milestone_count = 0
+    needs_definition_count = 0
+    defined_count = 0
+    approved_count = 0
+    allocation_count = 0
+    for priority in priorities:
+        milestones = list(priority.milestones.all())
+        group_needs_definition = sum(
+            1 for milestone in milestones if milestone.requires_definition
+        )
+        group_defined = len(milestones) - group_needs_definition
+        group_allocations = sum(
+            len(milestone.allocations.all()) for milestone in milestones
+        )
+        milestone_count += len(milestones)
+        needs_definition_count += group_needs_definition
+        defined_count += group_defined
+        approved_count += sum(
+            1
+            for milestone in milestones
+            if milestone.definition_status == "approved"
+        )
+        allocation_count += group_allocations
+        group_rows.append(
+            {
+                "priority": priority,
+                "milestones": milestones,
+                "milestone_count": len(milestones),
+                "needs_definition_count": group_needs_definition,
+                "defined_count": group_defined,
+                "allocation_count": group_allocations,
+            }
+        )
+
+    cycle_years = list(
+        StrategicPriorityCycle.objects.order_by("-financial_year").values_list(
+            "financial_year", flat=True
+        )
+    )
+    if fy not in cycle_years:
+        cycle_years.append(fy)
+
     return render(
         request,
         "pages/hr/priority_configuration.html",
@@ -91,7 +150,15 @@ def priority_configuration_page(request):
             # Same meaning as the page this replaced: RVP/CD/Admin author
             # strategy; HR reaches the page to validate coverage only.
             "can_author": role in _STRATEGY_AUTHORS,
-            "priorities": cycle.priorities.all() if cycle else [],
+            "priorities": priorities,
+            "group_rows": group_rows,
+            "cycle_years": cycle_years,
+            "milestone_count": milestone_count,
+            "needs_definition_count": needs_definition_count,
+            "defined_count": defined_count,
+            "approved_count": approved_count,
+            "pending_approval_count": milestone_count - approved_count,
+            "allocation_count": allocation_count,
             "undefined": (
                 PriorityMilestone.objects.filter(
                     priority__cycle=cycle, requires_definition=True

@@ -967,11 +967,10 @@ urlpatterns = [
         hr_views.performance_acknowledge_view,
         name="performance_acknowledge",
     ),
-    path(
-        "strategic-priorities",
-        hr_views.strategic_priorities_view,
-        name="strategic_priorities",
-    ),
+    # `/strategic-priorities` is registered once near the strategy routes and
+    # resolves to the governed FY milestone dashboard.  The legacy cascade
+    # action remains available while old role-rule records are migrated, but a
+    # duplicate GET registration here made route ownership ambiguous.
     path(
         "strategic-priorities/action",
         hr_views.strategic_priority_action_view,

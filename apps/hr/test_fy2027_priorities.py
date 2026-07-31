@@ -6,6 +6,7 @@ from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
 from apps.activity_catalogue.models import ActivityCatalogueItem
 from apps.activity_catalogue.services import apply_catalogue_snapshot
+from apps.core.navigation import build_sidebar_for_user
 
 from .milestone_progress import record_activity_progress
 from .milestone_allocations import (
@@ -21,6 +22,7 @@ from .models import (
     PerformanceReview,
     PriorityMilestone,
     StrategicPriority,
+    StrategicPriorityCycle,
 )
 from .priority_seeding import seed_fy2027_priorities
 
@@ -66,6 +68,73 @@ class Fy2027PrioritySeedTests(TestCase):
         self.assertEqual(dc.target_value, 255)
         self.assertTrue(dc.requires_definition)
         self.assertFalse(dc.active)
+
+        cycle = StrategicPriorityCycle.objects.get(financial_year="2027")
+        self.assertEqual(cycle.priorities.count(), 5)
+        self.assertEqual(
+            PriorityMilestone.objects.filter(priority__cycle=cycle).count(),
+            68,
+        )
+        self.assertTrue(
+            all(
+                priority.source_document
+                == "2027 priorities to be set by RVP.docx"
+                for priority in priorities
+            )
+        )
+
+    def test_dashboard_opens_the_newest_governed_cycle_without_a_year_query(self):
+        seed_fy2027_priorities(actor_id="test")
+        rvp = User.objects.create_user(
+            email="rvp-priority-dashboard@example.test",
+            name="RVP Priority Dashboard",
+            roles=["RegionalVicePresident"],
+            active_role="RegionalVicePresident",
+            password="test-password",
+            is_active=True,
+        )
+        self.client.force_login(rvp)
+
+        response = self.client.get("/strategic-priorities")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["fy"], "2027")
+        self.assertEqual(response.context["milestone_count"], 68)
+        self.assertEqual(len(response.context["group_rows"]), 5)
+        self.assertContains(response, "Priority Setting Dashboard")
+        self.assertContains(response, "Program Growth and Expansion")
+        self.assertContains(response, "Governance and People Management")
+
+    def test_rvp_priority_setting_navigation_opens_the_governed_dashboard(self):
+        rvp = User.objects.create_user(
+            email="rvp-priority-navigation@example.test",
+            name="RVP Priority Navigation",
+            roles=["RegionalVicePresident"],
+            active_role="RegionalVicePresident",
+            password="test-password",
+            is_active=True,
+        )
+
+        items = [
+            item
+            for section in build_sidebar_for_user(rvp, "/strategic-priorities")
+            for item in section["items"]
+        ]
+        priority_setting = next(
+            item for item in items if item["label"] == "Priority Setting"
+        )
+        personal = next(
+            item for item in items if item["label"] == "My Performance Agreement"
+        )
+
+        self.assertEqual(priority_setting["url"], "/strategic-priorities")
+        self.assertTrue(priority_setting["active"])
+        self.assertEqual(personal["url"], "/my-performance")
+        self.assertFalse(personal["active"])
+        self.assertEqual(
+            sum(item["url"] == "/strategic-priorities" for item in items),
+            1,
+        )
 
     def test_undefined_milestones_do_not_populate_targets(self):
         milestone = PriorityMilestone.objects.get(code="IDE")

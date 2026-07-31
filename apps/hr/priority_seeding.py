@@ -110,7 +110,7 @@ def seed_fy2027_priorities(*, actor_id="system", dry_run=False):
                 "cycle": cycle,
                 "title": title,
                 "source_title": title,
-                "source_document": "FY2027 RVP priority source supplied in implementation instruction",
+                "source_document": "2027 priorities to be set by RVP.docx",
                 "source_reference": f"priority-{priority_order}",
                 "strategic_purpose": title,
                 "expected_result": "Defined through approved milestone metrics and allocations.",
