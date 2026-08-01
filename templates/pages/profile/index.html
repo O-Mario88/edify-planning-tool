@@ -46,12 +46,42 @@
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold">Account Details</h2>
+<p class="mt-1 edify-text-caption font-medium text-slate-500">Your name and phone number are yours to change. Email, status and roles are set by an administrator.</p>
 </div>
-<div class="px-5 py-4 space-y-4">
-<div class="flex items-center justify-between py-2 border-b border-slate-50">
-<span class="text-[12px] font-semibold text-slate-500">Full Name</span>
-<span class="text-[14px] font-bold text-slate-800">{{ member.name }}</span>
+<form method="post" action="{% url 'frontend:profile' %}" class="px-5 py-4 space-y-4">
+{% csrf_token %}
+<div class="py-2 border-b border-slate-50">
+<label for="profile-name" class="block text-[12px] font-semibold text-slate-500">Full Name</label>
+<input
+id="profile-name"
+name="name"
+type="text"
+value="{{ member.name }}"
+maxlength="255"
+required
+autocomplete="name"
+class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
 </div>
+<div class="py-2 border-b border-slate-50">
+<label for="profile-phone" class="block text-[12px] font-semibold text-slate-500">Phone Number</label>
+<input
+id="profile-phone"
+name="phone"
+type="tel"
+value="{{ member.phone|default:'' }}"
+maxlength="64"
+autocomplete="tel"
+inputmode="tel"
+placeholder="Not set"
+class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<div class="flex justify-end pt-1">
+<button type="submit" class="min-h-11 rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">Save Changes</button>
+</div>
+</form>
+<div class="px-5 pb-4 space-y-4">
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
 <span class="text-[12px] font-semibold text-slate-500">Email</span>
 <span class="text-[14px] font-bold text-slate-800">{{ member.email }}</span>

@@ -1129,10 +1129,83 @@ def notification_badge_view(request):
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
 
 
+# What a person owns about themselves. Everything else on User is either the
+# identity the platform authenticates against (email), or authority somebody
+# else grants (roles, active_role, status, is_active, is_staff, is_superuser)
+# or that only the lockout service may write. So this is an allow-list read
+# field by field: a crafted POST naming anything outside it changes nothing,
+# rather than being trusted because it happened to arrive in the form.
+SELF_EDITABLE_PROFILE_FIELDS = ("name", "phone")
+
+NAME_MAX_LENGTH = 255
+PHONE_MAX_LENGTH = 64
+
+
+def _update_own_profile(request):
+    """Save the current user's own details. No user id is read from the
+    request — the record edited is always request.user, so there is no id to
+    tamper with and no object-level check to get wrong."""
+    user = request.user
+    name = (request.POST.get("name") or "").strip()
+    phone = (request.POST.get("phone") or "").strip()
+
+    if not name:
+        messages.error(request, "Your name cannot be empty.")
+        return redirect("frontend:profile")
+    if len(name) > NAME_MAX_LENGTH:
+        messages.error(
+            request, f"Your name cannot be longer than {NAME_MAX_LENGTH} characters."
+        )
+        return redirect("frontend:profile")
+    if len(phone) > PHONE_MAX_LENGTH:
+        messages.error(
+            request,
+            f"Your phone number cannot be longer than {PHONE_MAX_LENGTH} characters.",
+        )
+        return redirect("frontend:profile")
+
+    # The column is nullable and "no phone" is null, not "" — otherwise every
+    # cleared field becomes an empty string that reads as a set value.
+    phone = phone or None
+
+    changed = [
+        field
+        for field, new in (("name", name), ("phone", phone))
+        if getattr(user, field) != new
+    ]
+    if not changed:
+        messages.info(request, "No changes to save.")
+        return redirect("frontend:profile")
+
+    user.name = name
+    user.phone = phone
+    user.save(update_fields=list(changed))
+
+    from apps.audit.services import log as audit_log
+
+    # Which fields moved, not what they moved to: the values live on the User
+    # row already, and copying a personal phone number into a second,
+    # append-only table spreads the same PII somewhere it cannot be corrected.
+    audit_log(
+        action="user.profile_self_updated",
+        subject_kind="user",
+        subject_id=user.id,
+        actor_id=user.id,
+        actor_role=getattr(user, "active_role", None),
+        payload={"fields": changed},
+    )
+    messages.success(request, "Your profile has been updated.")
+    return redirect("frontend:profile")
+
+
 @require_page_permission("dashboard")
 def profile_view(request):
-    """User profile — role info, stats, recent activity."""
+    """User profile — role info, stats, recent activity, self-service edit."""
     user = request.user
+
+    if request.method == "POST":
+        return _update_own_profile(request)
+
     fy = get_operational_fy()
 
     profile = getattr(user, "staff_profile", None)

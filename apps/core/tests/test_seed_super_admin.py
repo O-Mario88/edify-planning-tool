@@ -29,12 +29,38 @@ class SeedSuperAdminTest(TestCase):
         self.assertTrue(u.is_staff)
         self.assertTrue(u.is_superuser)
 
-    def test_super_admin_uses_one_unambiguous_admin_role(self):
+    def test_super_admin_carries_both_the_admin_and_field_hats(self):
+        """The same person runs the platform and works the field as a CCEO, so
+        the account holds both and switches between them. It lands on Admin —
+        the field hat is chosen deliberately, never by default."""
         call_command("seed")
 
         u = User.objects.get(email="ops-boot@edify.org")
-        self.assertEqual(u.roles, ["Admin"])
+        self.assertEqual(u.roles, ["Admin", "CCEO"])
         self.assertEqual(u.active_role, "Admin")
+
+    def test_the_field_hat_has_a_staff_profile_to_work_through(self):
+        """Targets, visit plans and assignments key off StaffProfile rather
+        than the User row. Without one the CCEO hat opens onto surfaces that
+        cannot be populated."""
+        from apps.accounts.models import StaffProfile
+
+        call_command("seed")
+
+        u = User.objects.get(email="ops-boot@edify.org")
+        self.assertTrue(StaffProfile.objects.filter(user=u).exists())
+
+    def test_reseeding_leaves_the_field_hat_on(self):
+        """Someone part-way through a field shift must not be pulled back into
+        the admin workspace by a deploy."""
+        call_command("seed")
+        User.objects.filter(email="ops-boot@edify.org").update(active_role="CCEO")
+
+        call_command("seed")
+
+        self.assertEqual(
+            User.objects.get(email="ops-boot@edify.org").active_role, "CCEO"
+        )
 
     def test_reseeding_corrects_a_role_the_account_may_not_wear(self):
         call_command("seed")
@@ -45,7 +71,7 @@ class SeedSuperAdminTest(TestCase):
         call_command("seed")
 
         u = User.objects.get(email="ops-boot@edify.org")
-        self.assertEqual(u.roles, ["Admin"])
+        self.assertEqual(u.roles, ["Admin", "CCEO"])
         self.assertEqual(u.active_role, "Admin")
         # And actually log in through the shared lockout-enforcing backend.
         self.assertIsNotNone(

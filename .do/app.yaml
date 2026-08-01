@@ -231,6 +231,31 @@ services:
       - key: SPACES_PREFIX
         value: edify-production
 
+      # ── Outbound mail ─────────────────────────────────────────────────────
+      # MailerService.provider requires BOTH of the next two, or it falls back
+      # to the console provider — and in production that provider withholds the
+      # body, because it would otherwise write live invitation and reset tokens
+      # to the log. The visible symptom is the one that matters: "Send
+      # Invitation Link" reports success, nothing is delivered, and the link is
+      # not even recoverable from the logs.
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_resend_api_key
+      # The From address on invitations, password resets and reports.
+      #
+      # Resend refuses to send from a domain that is not verified in the Resend
+      # account, and rejects the whole send rather than rewriting the address —
+      # so an unverified domain here is the same silent non-delivery as leaving
+      # RESEND_API_KEY unset. edify.org must be verified (SPF/DKIM records) for
+      # this value. edifyplanning.app is the domain already being set up for
+      # this app, so it is the cheaper one to verify if edify.org's DNS is not
+      # yours to change.
+      - key: EMAIL_FROM
+        value: Edify Planning <domario@edify.org>
+
       # ── Production safety gates (prod.py refuses to boot on wrong values) ──
       - key: AUTHZ_MODE
         value: enforce

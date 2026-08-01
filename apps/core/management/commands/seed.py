@@ -41,6 +41,16 @@ from apps.core.rbac import EdifyRole, ROLE_PERMISSIONS, all_permission_keys
 
 SUPER_ADMIN_EMAIL = "domario@edify.org"
 
+# The super-admin runs the platform AND works the field as a CCEO, so the
+# account carries both hats and switches between them at /auth/switch-role
+# (which writes an audit row each time, so every action stays attributable to
+# the hat it was taken under). `roles` is the set of hats the account may wear;
+# `active_role` is the one it is wearing.
+#
+# Admin stays first because that is where the account should land on a fresh
+# login -- the field hat is chosen deliberately, not by default.
+SUPER_ADMIN_ROLES = [EdifyRole.ADMIN.value, EdifyRole.CCEO.value]
+
 # Demo role accounts — shared DEMO_LOGIN_PASSWORD. LOCAL DEVELOPMENT ONLY.
 DEMO_ACCOUNTS = [
     ("admin@edify.org", "Edify Admin", EdifyRole.ADMIN.value),
@@ -207,8 +217,7 @@ class Command(BaseCommand):
             email=email,
             defaults={
                 "name": "Omario Edwin",
-                "roles": [EdifyRole.ADMIN.value],
-                "active_role": EdifyRole.ADMIN.value,
+                "roles": SUPER_ADMIN_ROLES,
                 "status": "active",
                 "is_active": True,
                 # Django-admin access: /admin/ is the day-1 bootstrap surface
@@ -218,9 +227,23 @@ class Command(BaseCommand):
                 "is_superuser": True,
             },
         )
+        # `active_role` is deliberately absent from `defaults`: it is the hat
+        # currently being worn, and re-running seed must not pull the account
+        # out of the field hat mid-shift. Set it on creation (the model's own
+        # default is CCEO, and a new super-admin should land in the admin
+        # workspace), and otherwise only to correct a hat this account may not
+        # wear at all.
+        if created or u.active_role not in SUPER_ADMIN_ROLES:
+            u.active_role = EdifyRole.ADMIN.value
         u.set_password(super_pw)
         u.password_set_at = timezone.now()
         u.save()
+        # Field work binds to a StaffProfile, not to the User row: targets,
+        # visit plans and assignments all key off it. Without one the CCEO hat
+        # signs in to a set of empty surfaces with no way to populate them.
+        StaffProfile.objects.get_or_create(
+            user=u, defaults={"onboarding_state": "active"}
+        )
         self.stdout.write(
             f"  super-admin: {email} {'created' if created else 'updated'} "
             f"(Admin super-role, active: {u.active_role})."

@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import logging
 
+import re
 import time
+from collections import Counter
 from datetime import date, datetime
 
 from django.db import transaction
@@ -23,6 +25,15 @@ from apps.schools import upload_mapping as M
 from apps.schools.upload_service import _parse_date, _read_rows, _value
 
 logger = logging.getLogger(__name__)
+
+
+def _error_kind(text: str) -> str:
+    """Collapse one row's error to its kind, so the dominant cause can be
+    counted. An out-of-range score on `leadership` and one on `enrolment` are
+    the same problem with the file and should total together, rather than
+    splitting into eight near-identical reasons that each look rare."""
+    collapsed = re.sub(r"Score for [a-z_]+ \(-?[\d.]+\)", "A score", text)
+    return re.sub(r"\(-?[\d.]+\)", "(value)", collapsed).strip()
 
 
 def upload_ssa_file(file, principal) -> dict:
@@ -338,13 +349,34 @@ def upload_ssa_file(file, principal) -> dict:
     elif success:
         message = f"Upload complete — {counts['created']} SSA record(s) validated, {counts['unmatched']} unmatched rows queued."
     else:
-        # Use first error or generic message
-        err_msg = (
-            errors[0]["error"]
-            if errors
-            else f"School {school_id} is not in the directory."
+        # Report what actually stopped the bulk of the file, with counts —
+        # not whichever row happened to be first in the error list.
+        #
+        # A file whose School IDs are all absent from the directory was
+        # previously summarised by one unrelated out-of-range score from a
+        # single row, because that error sorted first. Every number in the
+        # sentence then pointed at the scores while the real problem was the
+        # school matching, which is the most expensive kind of wrong: it reads
+        # as a precise diagnosis and sends the reader to the wrong file.
+        reasons = []
+        if counts["unmatched"]:
+            reasons.append(
+                f"{counts['unmatched']} row(s) name a School ID that is not in "
+                "the school directory"
+            )
+        if errors:
+            kinds = Counter(_error_kind(error["error"]) for error in errors)
+            kind, kind_count = kinds.most_common(1)[0]
+            remaining = len(errors) - kind_count
+            reasons.append(
+                f"{kind_count} row(s) failed validation ({kind})"
+                + (f", plus {remaining} with other errors" if remaining else "")
+            )
+        message = (
+            "Nothing validated — "
+            + ("; ".join(reasons) if reasons else "no row could be used")
+            + ". See the errors below."
         )
-        message = f"Nothing validated — all row(s) failed validation ({err_msg}). See the errors below."
 
     processing_seconds = round(time.perf_counter() - started_at, 3)
     logger.info(
