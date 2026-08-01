@@ -244,6 +244,31 @@ class Command(BaseCommand):
             u.active_role = EdifyRole.ADMIN.value
         u.set_password(super_pw)
         u.password_set_at = timezone.now()
+
+        # Clear any lockout. This account is the platform's way back in, and a
+        # way back in that can itself be locked out is not one.
+        #
+        # The lockout ladder escalates after repeated cycles to a state only an
+        # Admin can clear, through /admin-panel/users/<id>. For the sole
+        # Admin that is circular: the one account that can lift the lock is the
+        # locked account. Re-seeding already resets this user's password, so it
+        # was offering half a recovery — new credentials against a door that
+        # was still bolted.
+        #
+        # Deliberately only the super-admin, and only when SUPER_ADMIN_PASSWORD
+        # is set: whoever can set that environment variable and deploy can
+        # already reset this password, so nothing is granted that was not
+        # already held. Every other account keeps its lockout, which is the
+        # brute-force protection doing its job.
+        u.locked_until = None
+        u.lockout_escalated = False
+        u.lockout_cycle_count = 0
+        u.failed_login_count = 0
+        u.failed_login_streak_started_at = None
+        # A forced change here would send the bootstrap login straight into the
+        # password-change funnel using the password just set from the
+        # environment, which helps nobody.
+        u.must_change_password = False
         u.save()
         # Field work binds to a StaffProfile, not to the User row: targets,
         # visit plans and assignments all key off it. Without one the CCEO hat
