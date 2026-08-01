@@ -469,8 +469,20 @@ def planning_dashboard_view(request):
                 responsible_staff_id=request.user.id
             )
 
+    # Distinguishes "your filters match nothing" from "nothing is clustered
+    # yet", which look identical on screen and need opposite responses. Scoped
+    # to what this user can see, so a lead whose own team has no clustered
+    # school is told that, not told to clear filters that are not the problem.
+    any_clustered_school = (
+        _planning_schools.filter(cluster_status="clustered")
+        .exclude(cluster_id__isnull=True)
+        .exclude(cluster_id="")
+        .exists()
+    )
+
     # 4. Construct context
     context = {
+        "any_clustered_school": any_clustered_school,
         "schools": data["schools"],
         "clusters": data.get("clusters", []),
         "kpis": data["kpis"],

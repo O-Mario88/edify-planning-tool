@@ -268,6 +268,28 @@ class PlanningDashboardService:
         else:
             table_schools_qs = schools_qs
 
+        # Planning lists clustered schools only. An unclustered school cannot be
+        # planned — PlanningRecommendationService stops at "Cluster Required"
+        # before it reads a single SSA score — so listing them fills the page
+        # with rows whose only available action is on another page, and buries
+        # the schools that can actually be worked. The full register stays in
+        # the School Directory and Core Schools, which is where an unclustered
+        # school is found and clustered.
+        #
+        # Applied to the table rows, NOT to schools_qs: the same base queryset
+        # also feeds the Core programme summaries above, and narrowing it there
+        # silently dropped unclustered Core schools out of their own completion
+        # counts — a KPI quietly answering a different question than its label.
+        #
+        # Both halves of the condition on purpose. cluster_status is a
+        # denormalised mirror maintained by School.save() and the assignment
+        # service; cluster_id is the relationship itself. Requiring both means
+        # a stale mirror can hide a school from planning, but can never smuggle
+        # an unclustered one in.
+        table_schools_qs = table_schools_qs.filter(
+            cluster_status="clustered", cluster_id__isnull=False
+        ).exclude(cluster_id="")
+
         # 2. Pagination and query based on active tab
         try:
             page = int(filters.get("page", 1))

@@ -722,7 +722,30 @@
   border-block-end: 0;
 }
 
-.drawer-body .cluster-create-check:hover {
+/* A sub-county another cluster already holds. Disabled, not hidden: the person
+   knows the sub-county exists, so removing it reads as missing data, while
+   showing it greyed with the holder named answers the question they were about
+   to ask. The hover rule below is scoped away from these so a taken row does
+   not invite a click it will refuse. */
+.drawer-body .cluster-create-check--taken {
+  cursor: not-allowed;
+  background: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text-muted) !important;
+}
+
+.drawer-body .cluster-create-check--taken input {
+  cursor: not-allowed;
+}
+
+.cluster-create-check__taken {
+  display: block;
+  margin-block-start: 1px;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.drawer-body .cluster-create-check:not(.cluster-create-check--taken):hover {
   background: var(--edify-surface-hover);
 }
 

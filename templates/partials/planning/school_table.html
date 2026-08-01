@@ -151,9 +151,26 @@
           {% endfor %}
         </ul>
       {% else %}
+        {% comment %}
+          Two different emptinesses, and telling them apart is the whole point.
+          "No rows match your filters" is advice you can act on; it is also
+          wrong and quietly alarming when the real answer is that nothing has
+          been clustered yet — planning lists clustered schools only, so on a
+          fresh deployment this page is empty by definition rather than by
+          filter. Say which one it is, and point at the surface that fixes it.
+        {% endcomment %}
         <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-surface border border-dashed border-slate-200">
-          No planning records match your filters.
-          <div class="mt-1 edify-text-caption text-slate-400 font-normal">Clear filters or adjust your search.</div>
+          {% if not any_clustered_school %}
+            No schools have been clustered yet.
+            <div class="mt-1 edify-text-caption text-slate-400 font-normal">
+              Planning works on clustered schools. Every school is still in the
+              <a href="/schools" class="edify-primary-text font-semibold underline underline-offset-2">School Directory</a> —
+              add them to a cluster and they appear here.
+            </div>
+          {% else %}
+            No planning records match your filters.
+            <div class="mt-1 edify-text-caption text-slate-400 font-normal">Clear filters or adjust your search.</div>
+          {% endif %}
         </div>
       {% endif %}
     </div>

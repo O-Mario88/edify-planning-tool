@@ -205,6 +205,43 @@ def eligible_for_school(school_id: str, principal) -> dict:
     }
 
 
+#: A cluster in either of these statuses holds its sub-counties. `needs_review`
+#: is included deliberately: an overridden overlap is still an occupancy, and
+#: treating it as free would let a second override stack silently on the first.
+CLUSTER_HOLDING_STATUSES = ("active", "needs_review")
+
+
+def covered_sub_counties(district_id: str | None = None) -> dict[str, str]:
+    """Sub-counties an existing cluster already covers → that cluster's name.
+
+    One source for the rule, read by both the validator below and the create
+    drawer. The rule was previously expressed only inside create_cluster, so
+    the UI happily offered a sub-county that was already taken and the person
+    found out by submitting the form and receiving a 400 — the answer existed,
+    it was just withheld until after the work.
+
+    Covers both shapes of occupancy: the cluster's primary `sub_county` and
+    every row in its multi-sub-county `covered_sub_counties`.
+    """
+    clusters = Cluster.objects.filter(
+        deleted_at__isnull=True, status__in=CLUSTER_HOLDING_STATUSES
+    )
+    if district_id:
+        clusters = clusters.filter(district_id=district_id)
+
+    covered: dict[str, str] = {}
+    for cluster_id, name, primary_id in clusters.values_list(
+        "id", "name", "sub_county_id"
+    ):
+        if primary_id:
+            covered.setdefault(str(primary_id), name)
+    for sub_county_id, name in ClusterSubCounty.objects.filter(
+        cluster__in=clusters
+    ).values_list("sub_county_id", "cluster__name"):
+        covered.setdefault(str(sub_county_id), name)
+    return covered
+
+
 def create_cluster(data: dict, principal) -> dict:
     """Create a cluster. Validates district↔region, sub-county↔district, and the
     sub-county uniqueness rule (override requires CLUSTER_OVERRIDE)."""
@@ -239,16 +276,10 @@ def create_cluster(data: dict, principal) -> dict:
     # Sub-county uniqueness: one active cluster per sub-county by default.
     needs_review = False
     if sub_ids:
-        taken = set(
-            Cluster.objects.filter(
-                deleted_at__isnull=True, status__in=["active", "needs_review"]
-            )
-            .filter(
-                Q(sub_county_id__in=sub_ids)
-                | Q(covered_sub_counties__sub_county_id__in=sub_ids)
-            )
-            .values_list("id", flat=True)
-        )
+        # Same helper the create drawer reads, so what the UI disables and what
+        # this refuses can never disagree.
+        covered = covered_sub_counties()
+        taken = {str(s) for s in sub_ids} & set(covered)
         if taken:
             if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get(
                 "overrideReason"

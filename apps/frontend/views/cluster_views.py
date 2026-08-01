@@ -552,8 +552,20 @@ def create_cluster_drawer_view(request):
         "name"
     )
 
+    # A sub-county an active cluster already covers cannot be clustered again —
+    # create_cluster refuses it. Send that occupancy alongside the options so
+    # the drawer can disable it and name the holder, rather than letting
+    # someone pick it and learn the rule from a 400 after submitting.
+    from apps.clusters.services import covered_sub_counties
+
+    covered = covered_sub_counties()
     sub_counties_list = [
-        {"id": sc.id, "name": sc.name, "district_id": sc.district_id}
+        {
+            "id": sc.id,
+            "name": sc.name,
+            "district_id": sc.district_id,
+            "covered_by": covered.get(str(sc.id)),
+        }
         for sc in sub_counties
     ]
     requested_district_id = request.GET.get("district_id", "").strip()
@@ -903,8 +915,22 @@ def edit_cluster_drawer_view(request, cluster_id):
         )
     )
 
+    # Same occupancy rule as the create drawer, minus this cluster's own
+    # coverage: a cluster editing itself must still be able to keep the
+    # sub-counties it already holds.
+    from apps.clusters.services import covered_sub_counties
+
+    covered = covered_sub_counties()
+    own = {str(cluster.sub_county_id)} | {str(i) for i in covered_ids}
     sub_counties_list = [
-        {"id": sc.id, "name": sc.name, "district_id": sc.district_id}
+        {
+            "id": sc.id,
+            "name": sc.name,
+            "district_id": sc.district_id,
+            "covered_by": None
+            if str(sc.id) in own
+            else covered.get(str(sc.id)),
+        }
         for sc in sub_counties
     ]
 
