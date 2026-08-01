@@ -635,6 +635,26 @@ class UpdateUserPrivilegeEscalationTest(TestCase):
         self.admin.refresh_from_db()
         self.assertEqual(self.admin.name, "Renamed Admin")
 
+    def test_admin_can_edit_own_email_when_posted_roles_are_unchanged(self):
+        """The profile form always posts its role controls. Re-posting the
+        existing role set is profile maintenance, not a self-role change."""
+        from apps.admin_users.services import update_user
+
+        update_user(
+            self.admin.id,
+            {
+                "email": "renamed-admin@edify.test",
+                "role": EdifyRole.ADMIN.value,
+                "additionalRoles": [],
+            },
+            self.admin,
+        )
+
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.email, "renamed-admin@edify.test")
+        self.assertEqual(self.admin.roles, [EdifyRole.ADMIN.value])
+        self.assertEqual(self.admin.active_role, EdifyRole.ADMIN.value)
+
     def test_hr_can_still_perform_routine_non_admin_role_change(self):
         """The fix must not block HR/CD's legitimate day-to-day staff role
         management — only the Admin-role and self-role escalation vectors."""

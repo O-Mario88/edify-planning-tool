@@ -535,7 +535,7 @@ RATE_LIMIT_FORGOT_PER_10MIN = _as_int(os.environ.get("RATE_LIMIT_FORGOT_PER_10MI
 
 # Demo / seed credentials (shared contract with the frontend bridge).
 DEMO_LOGIN_PASSWORD = os.environ.get("DEMO_LOGIN_PASSWORD") or "edify"
-SUPER_ADMIN_EMAIL = os.environ.get("SUPER_ADMIN_EMAIL", "domario@edify.org")
+SUPER_ADMIN_EMAIL = os.environ.get("SUPER_ADMIN_EMAIL", "edwin.omario@gmail.com")
 SUPER_ADMIN_PASSWORD = os.environ.get("SUPER_ADMIN_PASSWORD") or ""
 
 # App URLs (for email links + CORS).

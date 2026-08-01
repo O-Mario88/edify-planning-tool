@@ -438,7 +438,10 @@ def update_user(user_id: str, data: dict, principal) -> dict:
     role = data.get("role")
     additional = data.get("additionalRoles") or []
     requested_roles = list(dict.fromkeys([role, *additional])) if role else additional
-    if requested_roles:
+    roles_are_changing = bool(requested_roles) and (
+        role != user.active_role or set(requested_roles) != set(user.roles or [])
+    )
+    if roles_are_changing:
         if user.id == principal.id:
             raise BadRequest(
                 "You cannot change your own role. Switch among your already-"
@@ -464,7 +467,7 @@ def update_user(user_id: str, data: dict, principal) -> dict:
     if phone is not None:
         user.phone = phone.strip()
 
-    if role:
+    if roles_are_changing:
         user.roles = requested_roles
         user.active_role = role
 

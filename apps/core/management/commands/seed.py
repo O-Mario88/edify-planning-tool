@@ -39,7 +39,7 @@ from apps.accounts.models import Permission, RolePermission, StaffProfile, User
 from apps.core.rbac import EdifyRole, ROLE_PERMISSIONS, all_permission_keys
 
 
-SUPER_ADMIN_EMAIL = "domario@edify.org"
+SUPER_ADMIN_EMAIL = "edwin.omario@gmail.com"
 
 # The super-admin runs the platform AND works the field as a CCEO, so the
 # account carries both hats and switches between them at /auth/switch-role

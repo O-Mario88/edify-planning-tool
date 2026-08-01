@@ -207,7 +207,7 @@ services:
         type: SECRET
         value: REPLACE_ME_openssl_rand_hex_32
       - key: SUPER_ADMIN_EMAIL
-        value: domario@edify.org
+        value: edwin.omario@gmail.com
       - key: SUPER_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
