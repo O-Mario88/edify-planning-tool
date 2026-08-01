@@ -14,7 +14,7 @@
   <header class="edify-page-header admin-command__header">
     <div>
       <h1 class="edify-page-title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
-      <p>{% if admin_ops %}Keeping Edify available, secure, fast and working as designed. Business figures below are diagnostic context, not Admin's own targets.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
+      <p>{% if admin_ops %}Full platform authority across programme delivery, finance, HR, verification, users and operations.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
     </div>
     <div class="admin-command__actions">
       <a href="{% if admin_ops %}/admin-ops/my-plan{% else %}/my-plan{% endif %}" class="admin-button admin-button--primary">
@@ -30,8 +30,8 @@
 
 {% if admin_ops %}
   {% include "partials/dashboards/admin/_platform_operations.html" %}
-  <h2 class="admin-command__section-heading">Platform Observability — Read Only</h2>
-  <p class="admin-command__section-note">How the business surfaces are behaving. Admin observes these; the roles that own them act on them.</p>
+  <h2 class="admin-command__section-heading">Platform Business Overview</h2>
+  <p class="admin-command__section-note">Use the business workspaces in the sidebar to read, write and execute actions across the platform.</p>
 {% endif %}
 
   {% include "components/kpi_strip.html" with items=country_kpi_items title="Country operational summary" %}
