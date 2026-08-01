@@ -282,36 +282,23 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 >
 </div>
 
-<!-- Focus Intervention -->
-{% if reschedule_mode %}
-<div>
-<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
-<select
-name="focus_intervention"
-id="focus_intervention"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">Select Focus Intervention...</option>
-{% for code, label in interventions %}
-<option value="{{ code }}" {% if code == recommended_focus_intervention %}selected{% endif %}>{{ label }}</option>
-{% endfor %}
-</select>
-{% if recommendations %}
-<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-bold space-y-1">
-<p class="font-semibold edify-text-caption">Recommended focus areas based on latest SSA:</p>
-{% for r in recommendations %}
-<p>&bull; {{ r.label }} (Score: {{ r.score }})</p>
-{% endfor %}
-</div>
-{% else %}
-<div class="rounded-surface border border-slate-200 bg-slate-50 p-3">
-  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Catalogue handoff</p>
-  <p class="mt-1 font-semibold text-slate-700">Evidence: <span x-text="catalogueItemId ? 'Defined by the selected Catalogue Activity' : 'Unavailable'"></span></p>
-  <p class="mt-1 font-medium text-slate-500">Cost is resolved from the effective CD Cost Catalogue only after the Activity and delivery date are confirmed.</p>
-</div>
-{% endif %}
-{% endif %}
-</div>
+{% comment %}
+  No manual Focus Intervention select. It is chosen by the SSA-led catalogue
+  recommendation and travels in the hidden focus_intervention input near the
+  top of this form — a hand-picked intervention here would contradict the
+  recommendation the drawer just explained.
+
+  The legacy select used to sit here wrapped in {% if reschedule_mode %},
+  which inside this {% if not reschedule_mode %} branch could never be true —
+  but its closing </div> was left OUTSIDE the condition. That orphan close made
+  the browser's parser pop the open-element stack past the <form>, so in the
+  DOM every field and button from this point down sat outside the form: Alpine
+  then threw ReferenceError on the delivery binding (INC-000003, "JavaScript
+  exception on /planning"), delivery_type and the goal never submitted, and
+  the Schedule button had no form owner — a dead end dressed as a working
+  drawer. The regression test renders this modal and walks div depth inside
+  the form so an orphan close can never ship again.
+{% endcomment %}
 
 {% comment %}
   No delivery-type choice here, and no partner picker.
