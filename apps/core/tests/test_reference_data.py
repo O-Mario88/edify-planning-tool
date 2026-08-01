@@ -62,6 +62,17 @@ ONE_OFF_DATA_MIGRATIONS = {
         "migrate did not touch, they should graduate to a registered ensure "
         "function instead of staying here."
     ),
+    "accounts": (
+        "0020 grants the Admin role every canonical permission and 0021 adds "
+        "the super-admin's field hat plus the StaffProfile that field work "
+        "keys off. Both are one-offs about one named account and the role "
+        "matrix that already exists: they touch the row for SUPER_ADMIN_EMAIL "
+        "and nothing else, so on a test database — where that account is never "
+        "created — they match nothing and write nothing. Restoring them on "
+        "every flush would mean re-asserting a specific person's roles in the "
+        "middle of tests that set their own, which is the opposite of what "
+        "reference data means."
+    ),
     "clusters": "0003 repairs canonical cluster membership on existing rows.",
     "core_schools": "0003 backfills the 9th package slot onto existing packages.",
     "messaging": "0005 backfills participants for pre-multi-participant threads.",
