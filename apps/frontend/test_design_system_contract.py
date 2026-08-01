@@ -19,7 +19,7 @@ class DesignSystemContractTest(SimpleTestCase):
     def test_reference_blue_is_the_single_canonical_primary_token(self):
         tokens = (ROOT / "static/css/design-system.css").read_text()
 
-        self.assertIn("--brand-primary: #0d5b9e;", tokens)
+        self.assertIn("--brand-primary: #0e5da3;", tokens)
         self.assertIn("--brand-primary-hover: #0a4d86;", tokens)
         self.assertIn("--brand-primary-active: #083f70;", tokens)
         self.assertIn("--brand-primary-soft: #e4f2fb;", tokens)

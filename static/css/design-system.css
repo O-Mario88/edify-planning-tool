@@ -34,7 +34,7 @@
        consumes this token or an approved tonal variant — never a page-local
        Tailwind blue.
 
-       primary   #0d5b9e — primary buttons, active navigation, selected tabs,
+       primary   #0e5da3 — primary buttons, active navigation, selected tabs,
                            primary links, focus rings, primary chart series
        secondary #ef564b — secondary actions and supporting emphasis ONLY
 
@@ -46,13 +46,13 @@
      emphasis therefore uses the soft tint with the darkened brand text
      (5.22:1). It is also never used as the danger colour — destructive states
      keep the separate semantic --edify-danger ramp (spec §5, §17). */
-  --brand-primary: #0d5b9e;
+  --brand-primary: #0e5da3;
   --brand-primary-hover: #0a4d86;
   --brand-primary-active: #083f70;
   --brand-primary-press: var(--brand-primary-active);
   --brand-primary-soft: #e4f2fb;
   --brand-primary-border: #8ac6ea;
-  --brand-primary-focus: rgba(13, 91, 158, 0.28);
+  --brand-primary-focus: rgba(14, 93, 163, 0.28);
   --brand-primary-text: #0a4d86;
   --brand-primary-text-hover: var(--brand-primary);
   --brand-primary-on-solid: #ffffff;
@@ -153,7 +153,7 @@
   /* ── LIGHT WORKSPACE SURFACES (spec §6) ───────────────────────────────────
      A four-step surface ladder, so a card is always distinguishable from the
      plane behind it:
-       canvas   #edf1f3  application background
+       canvas   #e3f2fa  application background (tinted blue)
        section  #f2f5f6  section grouping surface
        card     #f8fafb  standard card
        elevated #ffffff  raised/overlay surface (drawers, modals, popovers)
@@ -174,10 +174,21 @@
      primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
   --edify-text: #17232b;
   --edify-text-muted: #3f515c;
-  --edify-text-subtle: #5f707a;
+  /* Stepped one notch deeper when the canvas became #e3f2fa. The tinted
+     background is marginally lighter than the grey it replaced, and #5f707a
+     landed at 4.49:1 against it — under AA by a hundredth, which is still
+     under. This clears every light surface it can sit on: canvas 4.84, card
+     5.29, elevated white 5.53, muted chip 4.57. Same reasoning as the success
+     and warning text tokens above. */
+  --edify-text-subtle: #5a6b75;
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
-  --edify-bg: #edf1f3;
+  /* Requested light-mode canvas. A faint blue tint rather than the old
+     neutral grey: white cards separate from it at 1.14:1, which is low as
+     a contrast figure but is doing the right job — a page background must
+     recede behind its content, not compete with it. Body text still reads
+     at 12.77:1 and muted text at 7.22:1 against it. */
+  --edify-bg: #e3f2fa;
   --edify-section-bg: #f2f5f6;
   /* Flat neutral canvas: the tinted gradient competed with card surfaces and
      made the same card read differently depending on where it sat. */
@@ -387,13 +398,13 @@
   color-scheme: light;
   /* Explicitly re-state the reference-blue light-mode scale so it cannot be
      shadowed by legacy theme rules loaded earlier in the cascade. */
-  --brand-primary: #0d5b9e;
+  --brand-primary: #0e5da3;
   --brand-primary-hover: #0a4d86;
   --brand-primary-active: #083f70;
   --brand-primary-press: var(--brand-primary-active);
   --brand-primary-soft: #e4f2fb;
   --brand-primary-border: #8ac6ea;
-  --brand-primary-focus: rgba(13, 91, 158, 0.28);
+  --brand-primary-focus: rgba(14, 93, 163, 0.28);
   --brand-primary-text: #0a4d86;
 }
 

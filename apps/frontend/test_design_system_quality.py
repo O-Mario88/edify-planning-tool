@@ -313,7 +313,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#000000"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#000000"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#000000"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0d5b9e"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0e5da3"), 4.5)
         self.assertIn(
             "DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY", platform
         )
@@ -556,12 +556,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         # Spec §5 brand + §6 four-step light surface ladder.
         for declaration in (
-            "--brand-primary: #0d5b9e",
+            "--brand-primary: #0e5da3",
             "--brand-primary-hover: #0a4d86",
             "--edify-brand-primary: var(--brand-primary)",
             "--edify-brand-primary-hover: var(--brand-primary-hover)",
             "--edify-brand-secondary: #ef564b",
-            "--edify-bg: #edf1f3",
+            "--edify-bg: #e3f2fa",
             "--edify-section-bg: #f2f5f6",
             "--edify-surface: #f8fafb",
             "--edify-surface-raised: #ffffff",
@@ -581,7 +581,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
         self.assertIn("getPropertyValue('--edify-bg')", base)
-        self.assertNotIn("#edf1f3", base)
+        self.assertNotIn("#e3f2fa", base)
 
     def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
         tokens = _read("static/css/design-system.css")
@@ -590,16 +590,19 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         for declaration in (
             "--edify-text: #17232b",
             "--edify-text-muted: #3f515c",
-            "--edify-text-subtle: #5f707a",
+            "--edify-text-subtle: #5a6b75",
             "--edify-text-disabled: #6b7b84",
         ):
             self.assertIn(declaration, tokens)
 
         # Body-text steps clear AA on the card plane they actually sit on.
         # (#6b7b84 is the disabled step, which WCAG exempts from the minimum.)
-        for colour in ("#17232b", "#3f515c", "#5f707a"):
+        # #5a6b75 is the subtle step. It was #5f707a until the canvas became
+        # the tinted #e3f2fa, against which it measured 4.49:1 — under AA by a
+        # hundredth, which is still under. This assertion is what caught it.
+        for colour in ("#17232b", "#3f515c", "#5a6b75"):
             self.assertGreaterEqual(_contrast_ratio(colour, "#f8fafb"), 4.5)
-            self.assertGreaterEqual(_contrast_ratio(colour, "#edf1f3"), 4.5)
+            self.assertGreaterEqual(_contrast_ratio(colour, "#e3f2fa"), 4.5)
 
         # Primary brand must stay legible under white button labels in every
         # interaction state.
