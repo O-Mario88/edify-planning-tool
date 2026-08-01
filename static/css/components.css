@@ -9,6 +9,53 @@
   line-height: 1rem !important;
 }
 
+/* Status pill. Used in 27 places across projects, HR and performance, and
+   defined nowhere until now — so every one of them rendered as unstyled
+   inline text, and `data-tone` selected between four appearances that did not
+   exist. Built from the semantic ramps rather than literal colours so it
+   inherits Light, Blue, Dark and System along with everything else.
+   The -text tones are the ones already measured to clear 4.5:1 on a light
+   surface, so the tone carries meaning without failing contrast. */
+.edify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--edify-border);
+  background-color: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  line-height: var(--edify-text-micro-leading);
+  letter-spacing: var(--edify-text-micro-tracking);
+  white-space: nowrap;
+}
+
+.edify-badge[data-tone="success"] {
+  background-color: var(--edify-success-light);
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
+
+.edify-badge[data-tone="warning"] {
+  background-color: var(--edify-warning-light);
+  border-color: var(--edify-warning-border);
+  color: var(--edify-warning-text);
+}
+
+.edify-badge[data-tone="info"] {
+  background-color: var(--edify-info-light);
+  border-color: var(--edify-info-border);
+  color: var(--edify-info-text);
+}
+
+.edify-badge[data-tone="danger"] {
+  background-color: var(--edify-danger-light);
+  border-color: var(--edify-danger-border);
+  color: var(--edify-danger-text);
+}
+
 .edify-surface {
   background-color: var(--edify-surface) !important;
 }
