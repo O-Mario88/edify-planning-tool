@@ -1,5 +1,10 @@
 # Admin as Platform Operations
 
+> Superseded authorization policy (2026-08-01): Admin is now the platform
+> super-role with read, write and workflow execution authority across every
+> workspace. References below to a read-only Admin boundary describe the former
+> design and are retained only as historical implementation context.
+
 **Governing principle** — Admin can observe the entire operational ecosystem,
 but does not own or execute field-programme workflows. Admin's own work is
 system maintenance, user support, incident resolution, controlled data repair,

@@ -159,19 +159,11 @@ MIDDLEWARE = [
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Admin Support View: platform-wide visibility, zero business
-    # authority. Enforced at the edge so a direct POST, an HTMX request or
-    # a hand-edited URL is refused the same way a hidden button is.
-    # Detection sits outside the read-only gate so it observes the response
-    # that is actually sent -- a 500 raised by a view, and a route that
-    # 404s, both reach it.
+    # Platform failure detection observes the response that is actually sent --
+    # a 500 raised by a view and a route that 404s both reach it.
     "apps.admin_ops.detection.PlatformFailureDetectionMiddleware",
-    "apps.admin_ops.middleware.AdminReadOnlyBusinessMiddleware",
-    "apps.admin_ops.middleware.AdminSupportViewBannerMiddleware",
-    # Mandatory-policy gate. After the admin middleware so an Admin's
-    # read-only refusal is decided first, and before the view layer so a
-    # direct URL, an HTMX fragment, an API call and an SSE stream are all
-    # withheld -- a template redirect would only stop the person who clicked.
+    # Mandatory-policy gate runs before the view layer so a direct URL, an
+    # HTMX fragment, an API call and an SSE stream are all withheld.
     "apps.documents.gate.PolicyGateMiddleware",
     # Generic error envelope — no stack traces / DB errors to clients; mirrors
     # the NestJS AllExceptionsFilter. Business 4xx keep their messages.

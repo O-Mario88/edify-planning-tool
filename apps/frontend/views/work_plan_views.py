@@ -452,7 +452,10 @@ def work_plan_rvp_decision(request):
     from apps.core.rbac import EdifyRole
     from apps.monthly_work_plan.services import rvp_annual_decide
 
-    if request.user.active_role != EdifyRole.REGIONAL_VICE_PRESIDENT.value:
+    if request.user.active_role not in (
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+        EdifyRole.ADMIN.value,
+    ):
         return HttpResponseForbidden("Only the RVP can decide this Work Plan.")
     fy = (request.POST.get("fy") or "").strip()
     budget_id = (request.POST.get("budget_id") or "").strip()

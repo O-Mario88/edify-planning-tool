@@ -5,7 +5,7 @@
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
 
-  {% include "pages/admin_ops/_header.html" with page_title="Data Repair Center" page_purpose="The only path by which Admin changes a business record — dry run first, a reason always, verification and an audit row after. Ordinary pages stay read-only." %}
+  {% include "pages/admin_ops/_header.html" with page_title="Data Repair Center" page_purpose="Controlled repairs use a dry run first, a reason always, verification and an audit row after. Normal business changes stay in their owning workflow." %}
 
   <div class="card divide-y divide-slate-50">
     {% for repair in catalogue %}

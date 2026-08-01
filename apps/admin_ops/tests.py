@@ -1,8 +1,8 @@
 """End-to-end tests for the Admin Platform Operations workflow.
 
-Grouped by the mandate's completion gate: read-only observability, the three
-workspaces, support tickets, incidents and deduplication, detection, security
-alerting, deep links, maintenance, and the finance boundary.
+Grouped by the mandate's completion gate: super-role access, the three
+operations workspaces, support tickets, incidents and deduplication, detection,
+security alerting, deep links, maintenance, and finance execution.
 """
 
 from __future__ import annotations
@@ -652,10 +652,10 @@ class AdminWorkFinanceBoundaryTests(AdminOpsTestBase):
             self.assertFalse(hasattr(item, field))
 
 
-# ── Read-only enforcement (§2) ───────────────────────────────────────────────
+# ── Admin super-role enforcement ─────────────────────────────────────────────
 
 
-class AdminReadOnlyRouteTests(TestCase):
+class AdminSuperRoleRouteTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.admin = _user("ro-admin", "Admin", password="Admin-Pass-99")
@@ -665,23 +665,21 @@ class AdminReadOnlyRouteTests(TestCase):
         self.client = Client()
         self.client.force_login(self.admin)
 
-    def test_admin_post_to_a_business_route_is_refused(self):
+    def test_admin_post_to_a_business_route_is_not_globally_refused(self):
         response = self.client.post("/planning", {})
-        self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(response.status_code, 403)
 
-    def test_the_refusal_survives_an_htmx_request(self):
+    def test_htmx_business_mutation_has_no_read_only_refusal(self):
         response = self.client.post(
             "/my-plan/anything/complete", {}, HTTP_HX_REQUEST="true"
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertIn(b"read-only", response.content.lower())
+        self.assertNotIn(b"admin support view is read-only", response.content.lower())
 
-    def test_an_api_mutation_is_refused_as_json(self):
+    def test_api_mutation_has_no_admin_read_only_refusal(self):
         response = self.client.post(
             "/api/activities", {}, content_type="application/json"
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertIn("detail", response.json())
+        self.assertNotIn(b"admin support view is read-only", response.content.lower())
 
     def test_admin_may_still_read_business_pages(self):
         response = self.client.get("/planning")
@@ -699,11 +697,11 @@ class AdminReadOnlyRouteTests(TestCase):
         item.refresh_from_db()
         self.assertEqual(item.status, WorkItemStatus.IN_PROGRESS)
 
-    def test_a_blocked_attempt_is_audited(self):
+    def test_business_post_is_not_audited_as_read_only_blocked(self):
         from apps.audit.models import AuditLog
 
         self.client.post("/planning", {})
-        self.assertTrue(
+        self.assertFalse(
             AuditLog.objects.filter(action="admin_ops.readonly.blocked").exists()
         )
 
@@ -772,21 +770,20 @@ class AdminWorkspacePageTests(TestCase):
         with self.assertRaises(Forbidden):
             AdminPlanningService.context(self.cceo)
 
-    def test_team_plans_declares_itself_read_only_on_the_page(self):
+    def test_team_plans_identifies_itself_as_a_consolidated_view(self):
         body = self.client.get("/admin-ops/team-plans").content.decode()
-        self.assertIn("Admin Support View", body)
-        self.assertIn("Read Only", body)
+        self.assertIn("Consolidated Team Plans view", body)
 
-    def test_admin_navigation_is_platform_operations(self):
+    def test_admin_navigation_includes_platform_and_business_workspaces(self):
         from apps.core.navigation import build_sidebar_for_user
 
         sidebar = build_sidebar_for_user(self.admin, "/dashboard")
         labels = {i["label"] for s in sidebar for i in s["items"]}
         self.assertIn("Admin My Plan", labels)
         self.assertIn("Team Plans", labels)
-        # No field workspace is advertised to Admin.
-        for forbidden in ("My Plan", "Planning", "Disbursements", "Fund Approvals"):
-            self.assertNotIn(forbidden, labels)
+        self.assertIn("Planning", labels)
+        self.assertIn("Fund Approvals", labels)
+        self.assertIn("Disbursement Dashboard", labels)
 
 
 # ── System Health integration (§37) ──────────────────────────────────────────
@@ -827,21 +824,24 @@ class AdminOpsHealthTests(AdminOpsTestBase):
             self._checks()["admin_ops_untriaged_tickets"]["severity"], "warning"
         )
 
-    def test_the_boundary_check_reports_a_permission_leak(self):
-        """The check that would catch Admin regaining business authority."""
+    def test_the_super_role_check_reports_a_missing_permission(self):
         from unittest.mock import patch
 
         from apps.core.rbac import ROLE_PERMISSIONS, EdifyRole, Permission
 
-        leaked = list(ROLE_PERMISSIONS[EdifyRole.ADMIN]) + [Permission.IA_VERIFY]
-        with patch.dict(ROLE_PERMISSIONS, {EdifyRole.ADMIN: leaked}):
-            check = self._checks()["admin_ops_mutation_boundary"]
+        incomplete = [
+            permission
+            for permission in ROLE_PERMISSIONS[EdifyRole.ADMIN]
+            if permission != Permission.IA_VERIFY
+        ]
+        with patch.dict(ROLE_PERMISSIONS, {EdifyRole.ADMIN: incomplete}):
+            check = self._checks()["admin_ops_super_role_permissions"]
         self.assertEqual(check["severity"], "critical")
         self.assertIn("ia.verify", check["current_state"])
 
-    def test_the_boundary_check_is_green_as_shipped(self):
+    def test_the_super_role_check_is_green_as_shipped(self):
         self.assertEqual(
-            self._checks()["admin_ops_mutation_boundary"]["severity"], "ok"
+            self._checks()["admin_ops_super_role_permissions"]["severity"], "ok"
         )
 
     def test_the_checks_reach_the_system_health_report(self):
@@ -923,11 +923,18 @@ class DetectionMiddlewareTests(TestCase):
         )()
         self.assertFalse(_is_permission_drift(request))
 
-    def test_admin_read_only_refusals_are_never_drift(self):
+    def test_an_admin_refusal_on_a_business_page_is_drift(self):
+        """Admin carries full authority, so PAGE_PERMISSIONS grants it
+        /planning and a 403 there means the guard and the matrix disagree --
+        which is precisely the drift this detector exists to report.
+
+        While Admin was a read-only support view the same 403 was the system
+        working as designed, and this asserted the opposite.
+        """
         from apps.admin_ops.detection import _is_permission_drift
 
         request = type("R", (), {"user": self.admin, "path": "/planning"})()
-        self.assertFalse(_is_permission_drift(request))
+        self.assertTrue(_is_permission_drift(request))
 
     def test_a_refusal_on_an_authorised_page_is_drift(self):
         from apps.admin_ops.detection import _is_permission_drift
@@ -1051,13 +1058,10 @@ class DataRepairTests(AdminOpsTestBase):
         with self.assertRaises(Forbidden):
             DataRepairService.catalogue(self.cceo)
 
-    def test_the_page_renders_and_the_middleware_message_points_somewhere_real(self):
-        from apps.admin_ops.middleware import AdminReadOnlyBusinessMiddleware
-
+    def test_the_page_renders(self):
         client = Client()
         client.force_login(self.admin)
         self.assertEqual(client.get("/data-repair").status_code, 200)
-        self.assertIn("Data Repair Center", AdminReadOnlyBusinessMiddleware.MESSAGE)
 
 
 # ── Real-time synchronisation (§29) ──────────────────────────────────────────
@@ -1169,30 +1173,43 @@ class AnonymousAccessTests(TestCase):
         self.assertEqual(SystemIncident.objects.count(), 0)
 
 
-class BlockedMutationAuditTests(TestCase):
-    """The refusal audit must survive a long URL.
+class AdminMutatesBusinessRoutesTests(TestCase):
+    """Admin is a full-authority role, not a read-only support view.
 
-    `AuditLog.subject_id` is 30 characters. Passing the path meant every
-    refusal on a realistic route -- which is most of them, since real paths
-    carry record ids -- threw inside the audit writer and was swallowed. The
-    rows that mattered most were the ones that went missing.
+    This replaces the refusal tests that guarded the retired Admin Support View
+    doctrine. Admin holds every canonical permission (ROLE_PERMISSIONS[ADMIN] is
+    list(Permission)), and no middleware now downgrades that to read-only, so a
+    business mutation must reach the view and be judged on permissions alone.
     """
 
     @classmethod
     def setUpTestData(cls):
         cls.admin = _user("audit-admin", "Admin")
 
-    def test_a_long_path_still_produces_an_audit_row(self):
+    def test_a_business_mutation_is_not_refused_as_read_only(self):
+        client = Client()
+        client.force_login(self.admin)
+        response = client.post(
+            "/activities/cms4titlt00lukcelkg9c/attendance/action", {}
+        )
+
+        # 404 here: the activity id is fabricated, so the route resolves and the
+        # view runs. What matters is that it is not the blanket 403 the retired
+        # middleware returned before any view was reached.
+        self.assertNotEqual(
+            response.status_code,
+            403,
+            "Admin must no longer be refused business mutations wholesale",
+        )
+
+    def test_no_read_only_refusal_is_audited(self):
         from apps.audit.models import AuditLog
 
         client = Client()
         client.force_login(self.admin)
-        long_path = "/activities/cms4titlt00lukcelkg9c/attendance/action"
-        self.assertGreater(len(long_path), 30)
-        response = client.post(long_path, {})
+        client.post("/activities/cms4titlt00lukcelkg9c/attendance/action", {})
 
-        self.assertEqual(response.status_code, 403)
-        row = AuditLog.objects.filter(action="admin_ops.readonly.blocked").first()
-        self.assertIsNotNone(row, "the refusal must be audited, whatever the URL")
-        self.assertEqual(row.subject_id, "activities")
-        self.assertIn(long_path, str(row.payload))
+        self.assertFalse(
+            AuditLog.objects.filter(action="admin_ops.readonly.blocked").exists(),
+            "the read-only refusal path is retired and must write no rows",
+        )

@@ -44,6 +44,7 @@ SUBMITTER_ROLES = (
     EdifyRole.PARTNER_ADMIN.value,
     EdifyRole.PARTNER_FIELD_OFFICER.value,
     EdifyRole.PROJECT_COORDINATOR.value,
+    EdifyRole.ADMIN.value,
 )
 STAFF_SUBMITTER_ROLES = (
     EdifyRole.CCEO.value,

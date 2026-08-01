@@ -31,7 +31,7 @@ FINANCE_ROLE = "Accountant"
 
 def _assert_finance_role(req: ProfessionalDevelopmentRequest, principal) -> None:
     role = getattr(principal, "active_role", "")
-    if role != FINANCE_ROLE:
+    if role not in (FINANCE_ROLE, "Admin"):
         raise Forbidden("Only an Accountant may act on PD finance items.")
     if req.staff_id == (principal.staff_profile_id or ""):
         raise Forbidden(
@@ -45,7 +45,7 @@ class PDFundRequestService:
     def can_review(req: ProfessionalDevelopmentRequest, principal) -> bool:
         if req.staff_id == (principal.staff_profile_id or ""):
             return False
-        if getattr(principal, "active_role", "") != FINANCE_ROLE:
+        if getattr(principal, "active_role", "") not in (FINANCE_ROLE, "Admin"):
             return False
         return req.status in (
             PDStatus.APPROVED_PENDING_FUNDING,

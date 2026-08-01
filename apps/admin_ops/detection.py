@@ -61,9 +61,6 @@ def _is_permission_drift(request) -> bool:
     user = getattr(request, "user", None)
     if not user or not getattr(user, "is_authenticated", False):
         return False
-    # Admin's read-only refusals are the doctrine holding, not a defect.
-    if getattr(user, "active_role", None) == "Admin":
-        return False
     try:
         from django.urls import resolve
 

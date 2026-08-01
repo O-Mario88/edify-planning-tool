@@ -105,11 +105,11 @@ ROLE_GUIDES = [
         "admin",
         "Admin",
         ["Admin"],
-        "Admin provisions accounts and protects the operating system; it does not automatically grant authority to execute field, finance or HR work.",
+        "Admin is the platform super-role with read, write and workflow execution authority across every workspace.",
         [
             "Create or suspend accounts through the closed onboarding process.",
             "Assign roles, country/team scope, supervisors and school/project assignments before an operational user starts work.",
-            "Use System Health, Scheduler Health and the Audit Log to investigate operational issues without altering records outside the authorised workflow.",
+            "Use every field, finance, HR and platform workflow while preserving its validation, state-transition and audit requirements.",
         ],
         [
             "apps/accounts/models.py",

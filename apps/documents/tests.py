@@ -707,7 +707,7 @@ class AccessGateTests(DocumentTestBase):
 
 
 class AdminAgreementBoundaryTests(DocumentTestBase):
-    """Admin's support view cannot block Admin's own mandatory onboarding."""
+    """Admin can complete onboarding and execute document workflows."""
 
     def setUp(self):
         self.document, self.version = self._policy()
@@ -735,10 +735,10 @@ class AdminAgreementBoundaryTests(DocumentTestBase):
         acknowledgement.refresh_from_db()
         self.assertEqual(acknowledgement.state, AcknowledgementState.AGREED)
 
-    def test_admin_still_cannot_publish_a_business_document_from_support_view(self):
+    def test_admin_document_lifecycle_action_is_not_blocked(self):
         response = self.client.post(f"/documents/{self.document.slug}/publish")
 
-        self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(response.status_code, 403)
 
 
 class CanonicalAgreementSequenceTests(DocumentTestBase):
@@ -762,9 +762,7 @@ class CanonicalAgreementSequenceTests(DocumentTestBase):
             f"/api/documents/acknowledge/{safeguarding_ack.id}",
             {"choice": "agree"},
         )
-        self.assertEqual(
-            first["Location"], "/documents/edify-apostles-creed/"
-        )
+        self.assertEqual(first["Location"], "/documents/edify-apostles-creed/")
 
         final = self.client.post(
             f"/api/documents/acknowledge/{creed_ack.id}",

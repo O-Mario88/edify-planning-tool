@@ -177,7 +177,7 @@ def fund_receipt_confirm_action(request):
 @require_page_permission("disbursements")
 def finance_action_drawer_view(request):
     """GET to render the floating drawer for various finance actions."""
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         return HttpResponse("Unauthorized", status=403)
 
     action = request.GET.get("action")
@@ -258,7 +258,7 @@ def finance_action_drawer_view(request):
 @require_page_permission("disbursements")
 def disburse_advance_action(request):
     """POST to disburse weekly advance."""
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         return HttpResponse("Unauthorized", status=403)
 
     if request.method == "POST":
@@ -291,7 +291,7 @@ def disburse_advance_action(request):
 @require_page_permission("disbursements")
 def clear_partner_payment_action(request):
     """POST to clear partner payment."""
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         return HttpResponse("Unauthorized", status=403)
 
     if request.method == "POST":
@@ -352,7 +352,7 @@ def clear_partner_payment_action(request):
 @require_page_permission("disbursements")
 def process_reimbursement_action(request):
     """POST to disburse self-funded reimbursement."""
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         return HttpResponse("Unauthorized", status=403)
 
     if request.method == "POST":
@@ -393,7 +393,7 @@ def confirm_accountability_action(request):
     enforces the hard gates: NetSuite Code present + IA verification done.
     The weekly request itself closes to "accounted" only when every one of
     its linked advances is accounted."""
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         return HttpResponse("Unauthorized", status=403)
 
     if request.method == "POST":

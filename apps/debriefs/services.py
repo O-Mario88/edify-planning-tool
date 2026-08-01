@@ -62,7 +62,7 @@ def merge_partner_debrief(data: dict, principal) -> dict:
     """CCEO merges a partner debrief -> routes up to PL/CD/IA/HR."""
     from apps.core.rbac import EdifyRole
 
-    if principal.active_role != EdifyRole.CCEO.value:
+    if principal.active_role not in (EdifyRole.CCEO.value, EdifyRole.ADMIN.value):
         raise BadRequest("Only a CCEO can merge partner debriefs.")
     parent_id = data.get("parentDebriefId")
     parent = DailyDebrief.objects.filter(id=parent_id).first() if parent_id else None

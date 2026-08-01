@@ -1,8 +1,7 @@
 """Admin platform-operations routes.
 
-``/support`` is deliberately outside the ``/admin-ops`` prefix: every role must
-be able to report a problem, and the Admin read-only middleware treats
-``/admin-ops`` as Admin-owned territory.
+``/support`` is deliberately outside the ``/admin-ops`` prefix because every
+role must be able to report a problem.
 """
 
 from django.urls import path
@@ -58,8 +57,8 @@ urlpatterns = [
         views.resolve_incident_view,
         name="admin_resolve_incident",
     ),
-    # Data Repair Center — the only path by which Admin changes a business
-    # record, and it leaves a dry run, a reason and an audit row behind.
+    # Data Repair Center — controlled repair path with a dry run, reason and
+    # audit row. Normal business changes use their owning workflow instead.
     path("data-repair", views.data_repair_view, name="data_repair"),
     path(
         "data-repair/<str:key>/apply",

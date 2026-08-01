@@ -801,7 +801,7 @@ def complete_activity_action(request, activity_id):
 
 @require_page_permission("planning")
 def pl_queue_view(request):
-    if request.user.active_role != "Program Lead":
+    if request.user.active_role not in ("Program Lead", "Admin"):
         messages.error(request, "Access restricted to Program Leads.")
         return redirect("/dashboard")
 

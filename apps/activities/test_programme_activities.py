@@ -233,9 +233,7 @@ class ProgrammeActivityValidationTest(_ProgrammeFixture):
             )
 
     def test_school_bound_item_can_also_be_planned_as_a_central_budget_activity(self):
-        activity = _schedule(
-            self.cceo, catalogueItemId="CLIENT_SCHOOL_FOLLOWUP_VISIT"
-        )
+        activity = _schedule(self.cceo, catalogueItemId="CLIENT_SCHOOL_FOLLOWUP_VISIT")
 
         self.assertIsNone(activity.school_id)
         self.assertEqual(activity.planning_source, "manual_work_plan")
@@ -273,6 +271,7 @@ class ProgrammeActivityPermissionTest(_ProgrammeFixture):
         "CountryDirector",
         "ImpactAssessment",
         "HumanResources",
+        "Admin",
     )
 
     def test_every_authorized_role_can_schedule(self):
@@ -295,15 +294,6 @@ class ProgrammeActivityPermissionTest(_ProgrammeFixture):
                 with self.assertRaises(Forbidden):
                     psvc.schedule_programme_activity(_payload(), partner)
         self.assertEqual(Activity.objects.count(), 0)
-
-    def test_platform_admin_cannot_create_programme_activity(self):
-        # The RBAC matrix deliberately EXCLUDES planning.manualActivity.create
-        # from Admin (ADMIN_EXCLUDED_PERMISSIONS: Admin is a platform-operations
-        # role with no field-programme execution authority), so Admin is
-        # refused here like the other non-field roles.
-        admin = _person("admin", "Admin")
-        with self.assertRaises(Forbidden):
-            psvc.schedule_programme_activity(_payload(), admin)
 
 
 # ── Costing (§9) ─────────────────────────────────────────────────────────────

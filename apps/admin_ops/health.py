@@ -8,8 +8,8 @@ resolution_link.
 These checks watch the operations function for the failure modes that make it
 silently stop working: an unowned critical incident, a ticket nobody triaged, a
 maintenance template that stopped generating, an alert still firing for a
-resolved defect — and the boundary itself, since a permission leak that gave
-Admin business authority back would otherwise be invisible.
+resolved defect — and the super-role grant itself, since a missing permission
+would otherwise leave part of the platform silently inaccessible to Admin.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ def admin_ops_health() -> dict:
             _overdue_admin_work(now),
             _stale_maintenance(now),
             _resolved_incidents_still_alerting(now),
-            _admin_mutation_boundary(now),
+            _admin_super_role_permissions(now),
         ]
     }
 
@@ -191,24 +191,21 @@ def _resolved_incidents_still_alerting(now) -> dict:
     )
 
 
-def _admin_mutation_boundary(now) -> dict:
-    """The boundary itself. If Admin regains an execution permission, this is
-    where it surfaces -- the matrix is derived, so a leak means someone edited
-    the exclusion set."""
-    from apps.core.rbac import ADMIN_EXCLUDED_PERMISSIONS, ROLE_PERMISSIONS, EdifyRole
+def _admin_super_role_permissions(now) -> dict:
+    """Admin must receive every canonical permission, including new ones."""
+    from apps.core.rbac import Permission, ROLE_PERMISSIONS, EdifyRole
 
     granted = set(ROLE_PERMISSIONS[EdifyRole.ADMIN])
-    leaked = sorted(p.value for p in ADMIN_EXCLUDED_PERMISSIONS if p in granted)
+    missing = sorted(p.value for p in Permission if p not in granted)
     return _check(
-        "admin_ops_mutation_boundary",
-        "critical" if leaked else "ok",
-        "Admin Business Boundary",
-        f"Admin holds {len(leaked)} excluded execution permission(s): {leaked}"
-        if leaked
-        else "Admin holds no field-execution permission",
-        "Admin observes business operations and executes none of them",
+        "admin_ops_super_role_permissions",
+        "critical" if missing else "ok",
+        "Admin Super-role Permissions",
+        f"Admin is missing {len(missing)} permission(s): {missing}"
+        if missing
+        else "Admin holds every canonical permission",
+        "Admin holds every canonical permission",
         now,
-        "Restore the exclusion in apps/core/rbac.py — Admin must not execute "
-        "field-programme work.",
+        "Restore the complete Admin grant in apps/core/rbac.py.",
         "/admin-panel/roles-permissions",
     )

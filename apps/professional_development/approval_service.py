@@ -42,7 +42,7 @@ from apps.professional_development.models import (
 
 HR_ROLE = "HumanResources"
 FINANCE_ROLE = "Accountant"
-LEADERSHIP_ROLES = ("CountryDirector", "RegionalVicePresident")
+LEADERSHIP_ROLES = ("CountryDirector", "RegionalVicePresident", "Admin")
 
 
 def _pick_approver(role: str, exclude_user_id: str) -> User | None:
@@ -124,6 +124,8 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
     approve any request anywhere and spawn the finance disbursement.
     """
     role = getattr(principal, "active_role", "")
+    if role == "Admin":
+        return req.staff_id != (getattr(principal, "staff_profile_id", None) or "")
     actor_country = _principal_country(principal)
     if role == HR_ROLE:
         # HR is a country function, not a global one. This was an

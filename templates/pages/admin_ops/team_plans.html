@@ -6,11 +6,11 @@
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
 
-  {% include "pages/admin_ops/_header.html" with page_title="Team Plans" page_purpose="Everyone's My Plan, consolidated. Read-only — this is how Platform Operations checks that plans are being generated, routed and updated correctly." %}
+  {% include "pages/admin_ops/_header.html" with page_title="Team Plans" page_purpose="Everyone's My Plan, consolidated. Open the owning workspace when you need to execute an action." %}
 
   <div class="card p-3 flex items-start gap-2.5 border-l-4 border-l-amber-400" role="status">
     <svg class="h-4 w-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
-    <p class="text-[12px] font-semibold text-slate-600">Admin Support View · Read Only — Admin observes field work and never executes it. Start, reschedule, approve, verify, disburse and close belong to the roles that own them.</p>
+    <p class="text-[12px] font-semibold text-slate-600">Consolidated Team Plans view — open the relevant Planning, My Plan, approval or finance workspace to execute an action.</p>
   </div>
 
   <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-5 gap-3" aria-label="Team plan health">

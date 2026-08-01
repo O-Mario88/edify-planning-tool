@@ -1110,7 +1110,7 @@ def dashboard_view(request):
 @require_page_permission("dashboard")
 def program_lead_dashboard_view(request):
     """Stable Program Lead dashboard URL for direct links and bookmarks."""
-    if request.user.active_role != "Program Lead":
+    if request.user.active_role not in ("Program Lead", "Admin"):
         from django.http import HttpResponseForbidden
 
         return HttpResponseForbidden("Program Lead only.")
@@ -1121,7 +1121,7 @@ def program_lead_dashboard_view(request):
 @require_page_permission("dashboard")
 def pl_dashboard_drilldown_view(request):
     """Scoped drill-down drawer for the PL Command Dashboard KPIs/backlog cards."""
-    if request.user.active_role != "Program Lead":
+    if request.user.active_role not in ("Program Lead", "Admin"):
         from django.http import HttpResponseForbidden
 
         return HttpResponseForbidden("Program Lead only.")
@@ -1143,7 +1143,7 @@ def pl_urgent_schools_page_view(request):
     """Return one compact, role-scoped page of urgent schools for HTMX."""
     from django.http import HttpResponseForbidden
 
-    if request.user.active_role != "Program Lead":
+    if request.user.active_role not in ("Program Lead", "Admin"):
         return HttpResponseForbidden("Program Lead only.")
 
     from apps.analytics.pl_analytics_service import resolve_pl_scope
@@ -1182,7 +1182,10 @@ def pl_dashboard_approve_view(request):
     dashboard approval queue, then re-render the dashboard body. The service
     enforces that a PL can only approve a supervised CCEO's request (never
     their own — those route to the CD)."""
-    if request.user.active_role != "Program Lead" or request.method != "POST":
+    if (
+        request.user.active_role not in ("Program Lead", "Admin")
+        or request.method != "POST"
+    ):
         from django.http import HttpResponseForbidden
 
         return HttpResponseForbidden("Not allowed.")
@@ -1218,7 +1221,10 @@ def pl_send_urgent_action_view(request):
     """
     from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
-    if request.user.active_role != "Program Lead" or request.method != "POST":
+    if (
+        request.user.active_role not in ("Program Lead", "Admin")
+        or request.method != "POST"
+    ):
         return HttpResponseForbidden("Program Lead only.")
 
     from apps.accounts.models import StaffSchoolAssignment
@@ -1302,7 +1308,10 @@ def cd_dashboard_approve_view(request):
     """Approve an escalated weekly fund request straight from the CD command
     dashboard, then re-render the dashboard body. The service enforces that
     only the CD may approve submitted_to_cd requests (and never their own)."""
-    if request.user.active_role != "CountryDirector" or request.method != "POST":
+    if (
+        request.user.active_role not in ("CountryDirector", "Admin")
+        or request.method != "POST"
+    ):
         from django.http import HttpResponseForbidden
 
         return HttpResponseForbidden("Not allowed.")

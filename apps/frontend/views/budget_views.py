@@ -1256,7 +1256,7 @@ def generate_request_action(request):
 
 @require_page_permission("weekly_fund_request_disburse")
 def weekly_fund_request_disburse_action(request, request_id):
-    if request.user.active_role != "Accountant":
+    if request.user.active_role not in ("Accountant", "Admin"):
         messages.error(
             request, "Only the Program Accountant can disburse fund requests."
         )

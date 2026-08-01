@@ -209,11 +209,11 @@ class ModelTests(FieldDebriefTestBase):
 
 class SubmissionTests(FieldDebriefTestBase):
     def test_can_submit_true_for_field_submitter_roles(self):
-        for u in (self.cceo, self.pl, self.pc, self.partner_user):
+        for u in (self.cceo, self.pl, self.pc, self.partner_user, self.admin):
             self.assertTrue(FieldDebriefService.can_submit(u), u.email)
 
     def test_can_submit_false_for_leadership_read_only_roles(self):
-        for u in (self.cd, self.hr, self.ia, self.rvp, self.admin):
+        for u in (self.cd, self.hr, self.ia, self.rvp):
             self.assertFalse(FieldDebriefService.can_submit(u), u.email)
 
     def test_submit_requires_title(self):

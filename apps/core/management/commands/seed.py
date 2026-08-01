@@ -222,7 +222,8 @@ class Command(BaseCommand):
         u.password_set_at = timezone.now()
         u.save()
         self.stdout.write(
-            f"  super-admin: {email} {'created' if created else 'updated'}."
+            f"  super-admin: {email} {'created' if created else 'updated'} "
+            f"(Admin super-role, active: {u.active_role})."
         )
 
     # ── Demo accounts (local only) ──────────────────────────────────────────

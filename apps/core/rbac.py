@@ -143,59 +143,16 @@ class Permission(str, Enum):
 P = Permission
 
 
-# Business-execution authority the Admin role must never hold. Admin is a
-# Platform Operations Administrator: full observability, user/system
-# administration, data-quality tooling — but no field-programme execution.
-# `list(Permission)` used to grant Admin everything, which made Admin a
-# business-process superuser: able to schedule field activities, verify as IA,
-# approve fund requests and clear disbursements. Visibility must never be
-# confused with business authority, so the matrix now states what Admin is
-# denied, and the grant is derived — a new Permission is Admin's by default
-# only if it is not an execution right.
-ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
-    {
-        # Field planning and execution
-        P.PLANNING_CREATE,
-        P.MANUAL_ACTIVITY_CREATE,
-        P.ACTIVITY_ASSIGN,
-        P.ACTIVITY_COMPLETE,
-        # NOT excluded: CLUSTER_ASSIGN / CLUSTER_OVERRIDE. Which cluster a
-        # school belongs to is registry data, and Admin already owns the school
-        # registry -- upload, edit, duplicate resolution, delete, geography
-        # setup. Scheduling a cluster *meeting* is execution and stays out via
-        # PLANNING_CREATE / ACTIVITY_ASSIGN above.
-        # Admin configures Project definitions and staff-priority membership
-        # through PROJECT_CONFIGURE_PRIORITIES, but does not run delivery.
-        P.PROJECT_MANAGE,
-        # Evidence and verification
-        P.EVIDENCE_REVIEW,
-        # NOT excluded: SSA_UPLOAD. Admin uploads school data and SSA files and
-        # edits schools -- that is data administration. What Admin may not do is
-        # CONFIRM an SSA record, which is IA_VERIFY below and stays cut.
-        P.IA_VERIFY,
-        # Money movement and approval chains
-        P.PAYMENT_ACT,
-        P.BUDGET_APPROVE,
-        P.COUNTRY_BUDGET_SUBMIT,
-        P.COUNTRY_BUDGET_APPROVE,
-        P.FUND_REQUEST_APPROVE_ESCALATED,
-        # Leadership business decisions (the engines recommend to leaders;
-        # Admin keeps the VIEW permissions for diagnostics).
-        P.LEADERSHIP_DECISION_REVIEW,
-        P.BUDGET_DECISION_REVIEW,
-        P.STRATEGIC_PRIORITIES_CREATE,
-        P.STRATEGIC_PRIORITIES_EDIT,
-        P.STRATEGIC_PRIORITIES_APPROVE,
-        P.STRATEGIC_PRIORITIES_ALLOCATE,
-        P.MILESTONES_DEFINE,
-        P.MILESTONES_ALLOCATE,
-    }
-)
+# Admin is the platform super-role. It receives every current permission, and
+# newly introduced permissions are included automatically. Keep the empty
+# constant as a compatibility surface for code importing it during a rolling
+# deployment; authorization must not derive any Admin denial from it.
+ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset()
 
 
 # Role → permissions matrix. Single source of truth seeded into RolePermission.
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
-    EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
+    EdifyRole.ADMIN: list(Permission),
     EdifyRole.COUNTRY_DIRECTOR: [
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,

@@ -738,7 +738,9 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
     sections = []
     previous_cluster = None
     for section in registry:
-        if role not in PAGE_PERMISSIONS.get(section["page_key"], set()):
+        if role != ADMIN and role not in PAGE_PERMISSIONS.get(
+            section["page_key"], set()
+        ):
             continue
         url = section.get("role_urls", {}).get(role, section["url"])
         match = section.get("match", "prefix")
@@ -1376,19 +1378,8 @@ SIDEBAR_ITEMS = [
 ]
 
 
-# Admin's sidebar is an allow-list, not a subtraction.
-#
-# Route authorization for Admin stays wide -- Platform Operations must be able
-# to OPEN any business page to diagnose it. Navigation is the opposite: it says
-# what a role's work *is*. Admin's work is the platform, so the sidebar carries
-# platform operations, access administration and system configuration, and
-# nothing else. Business pages are reached through Team Plans, Support Tickets,
-# Incidents, Search and audit deep links.
-#
-# An allow-list rather than a per-item exclusion because the failure mode being
-# fixed is exactly the drift a subtraction invites: every new business page
-# would otherwise appear in Admin's sidebar by default, and the sidebar would
-# slowly turn Admin back into a business-process superuser.
+# Legacy name retained for compatibility. Admin is the super-role and the
+# sidebar builder no longer restricts it to this set.
 ADMIN_NAV_PAGE_KEYS: set[str] = {
     # Admin home
     "dashboard",
@@ -1434,7 +1425,11 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     sections = []
     for sec in SIDEBAR_ITEMS:
         section_audience = sec.get("visible_to")
-        if section_audience is not None and role not in section_audience:
+        if (
+            role != ADMIN
+            and section_audience is not None
+            and role not in section_audience
+        ):
             continue
 
         visible_items = []
@@ -1473,9 +1468,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 "visible_to",
                 PAGE_PERMISSIONS.get(item["page_key"], set()),
             )
-            if role == ADMIN and item["page_key"] not in ADMIN_NAV_PAGE_KEYS:
-                continue
-            if role in allowed:
+            if role == ADMIN or role in allowed:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).
                 url = item.get("role_urls", {}).get(role, item["url"])

@@ -33,7 +33,7 @@ def _period_key(fy: str, month: int) -> str:
 
 
 def _require_program_lead(principal) -> None:
-    if getattr(principal, "active_role", None) != "Program Lead":
+    if getattr(principal, "active_role", None) not in ("Program Lead", "Admin"):
         raise Forbidden("Only a Program Lead can prepare a team monthly request.")
 
 

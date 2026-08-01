@@ -234,6 +234,8 @@ class RolePermissionService:
     @staticmethod
     def can_update(user, obj) -> bool:
         role = getattr(user, "active_role", None)
+        if role == EdifyRole.ADMIN.value:
+            return True
         obj_type = obj.__class__.__name__
         if role == "CountryDirector" and obj_type in [
             "School",
@@ -263,11 +265,9 @@ class RolePermissionService:
     @staticmethod
     def can_schedule_activity(user, school_or_cluster=None) -> bool:
         role = getattr(user, "active_role", None)
-        # Admin observes the whole platform but never schedules field work
-        # (Platform Operations doctrine; apps/core/tests/test_admin_platform_boundary.py).
-        # Blocked before the can_view_record fallthrough, which would otherwise
-        # let country-wide visibility double as scheduling authority.
-        if role in ["PartnerAdmin", "PartnerFieldOfficer", "Admin"]:
+        if role == EdifyRole.ADMIN.value:
+            return True
+        if role in ["PartnerAdmin", "PartnerFieldOfficer"]:
             return False
         if school_or_cluster is None:
             return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
@@ -280,14 +280,14 @@ class RolePermissionService:
         # Mirrors can_schedule_activity's allowed set: assigning to a partner
         # is the alternative to scheduling yourself (spec §5), so whoever can
         # schedule for their portfolio can also hand it off to a partner.
-        return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
+        return role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"]
 
     @staticmethod
     def can_assign_to_staff(user, school) -> bool:
         role = getattr(user, "active_role", None)
         if role == "CountryDirector":
             return False
-        return role in ["Program Lead", "ProjectCoordinator"]
+        return role in ["Program Lead", "ProjectCoordinator", "Admin"]
 
     @staticmethod
     def can_assign_to_project(user, school) -> bool:
@@ -319,11 +319,10 @@ class RolePermissionService:
     @staticmethod
     def can_upload_evidence(user, activity) -> bool:
         role = getattr(user, "active_role", None)
+        if role == EdifyRole.ADMIN.value:
+            return True
         if role in ["PartnerAdmin", "PartnerFieldOfficer"]:
             return activity.assigned_partner_id is not None
-        # IA accepts evidence anywhere; Admin only observes it. Evidence is a
-        # field-execution artefact, and an Admin upload would enter the IA chain
-        # as if a field worker had produced it.
         if role == "ImpactAssessment":
             return True
         from apps.core.scoping import owner_ids
@@ -340,11 +339,13 @@ class RolePermissionService:
     @staticmethod
     def can_enter_activity_sf_id(user, activity) -> bool:
         role = getattr(user, "active_role", None)
-        return role in ["CCEO", "Program Lead", "ImpactAssessment"]
+        return role in ["CCEO", "Program Lead", "ImpactAssessment", "Admin"]
 
     @staticmethod
     def can_review_activity(user, activity) -> bool:
         role = getattr(user, "active_role", None)
+        if role == EdifyRole.ADMIN.value:
+            return True
         if role == "CountryDirector":
             return True
         if role == "Program Lead":
@@ -357,12 +358,12 @@ class RolePermissionService:
     @staticmethod
     def can_verify_ia(user, activity) -> bool:
         role = getattr(user, "active_role", None)
-        return role in ["ImpactAssessment"]
+        return role in ["ImpactAssessment", "Admin"]
 
     @staticmethod
     def can_clear_accounts(user, activity) -> bool:
         role = getattr(user, "active_role", None)
-        return role in ["Accountant"]
+        return role in ["Accountant", "Admin"]
 
     @staticmethod
     def can_export(user, page_or_dataset: str) -> bool:

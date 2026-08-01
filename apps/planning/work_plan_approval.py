@@ -69,7 +69,8 @@ def approval_context(user, fy: str) -> dict:
         "issues": issues,
         "ready": not issues,
         "can_submit": (
-            user.active_role == EdifyRole.COUNTRY_DIRECTOR.value
+            user.active_role
+            in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value)
             and status
             in (
                 CountryAnnualBudgetStatus.DRAFT,
@@ -77,7 +78,8 @@ def approval_context(user, fy: str) -> dict:
             )
         ),
         "can_decide": (
-            user.active_role == EdifyRole.REGIONAL_VICE_PRESIDENT.value
+            user.active_role
+            in (EdifyRole.REGIONAL_VICE_PRESIDENT.value, EdifyRole.ADMIN.value)
             and status == CountryAnnualBudgetStatus.SUBMITTED_TO_RVP
         ),
     }
@@ -96,7 +98,10 @@ def submit_to_rvp(fy: str, principal):
         submit_annual_to_rvp,
     )
 
-    if principal.active_role != EdifyRole.COUNTRY_DIRECTOR.value:
+    if principal.active_role not in (
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    ):
         raise Forbidden("Only the Country Director can submit the Work Plan.")
     issues = readiness_issues(fy)
     if issues:

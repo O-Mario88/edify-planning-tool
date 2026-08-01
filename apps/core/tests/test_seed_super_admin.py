@@ -28,6 +28,25 @@ class SeedSuperAdminTest(TestCase):
         # for geography reference data.
         self.assertTrue(u.is_staff)
         self.assertTrue(u.is_superuser)
+
+    def test_super_admin_uses_one_unambiguous_admin_role(self):
+        call_command("seed")
+
+        u = User.objects.get(email="ops-boot@edify.org")
+        self.assertEqual(u.roles, ["Admin"])
+        self.assertEqual(u.active_role, "Admin")
+
+    def test_reseeding_corrects_a_role_the_account_may_not_wear(self):
+        call_command("seed")
+        User.objects.filter(email="ops-boot@edify.org").update(
+            active_role="PartnerAdmin"
+        )
+
+        call_command("seed")
+
+        u = User.objects.get(email="ops-boot@edify.org")
+        self.assertEqual(u.roles, ["Admin"])
+        self.assertEqual(u.active_role, "Admin")
         # And actually log in through the shared lockout-enforcing backend.
         self.assertIsNotNone(
             authenticate(email="ops-boot@edify.org", password="a-strong-day1-secret")

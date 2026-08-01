@@ -102,8 +102,7 @@ class PartnerWorkspaceTests(TestCase):
             "ssa_support",
         )
 
-    def test_admin_cannot_assign_work_to_a_partner_at_all(self):
-        """The doctrine, at the boundary the browser would hit."""
+    def test_admin_can_reach_partner_assignment_action(self):
         self.client.force_login(self.user)  # Admin
         response = self.client.post(
             "/planning/assign-partner-action",
@@ -114,4 +113,4 @@ class PartnerWorkspaceTests(TestCase):
                 "purpose": "Support visit.",
             },
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(response.status_code, 403)
