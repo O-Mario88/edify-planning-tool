@@ -82,6 +82,15 @@ ADMIN_WRITABLE_ROUTE_NAMES: frozenset[str] = frozenset(
         "assign_to_project_drawer",
         "cluster_bulk_assign_drawer",
         "create_cluster",
+        # Personal policy-agreement plumbing is not business execution. Admin
+        # is still a staff member who must acknowledge mandatory policies, and
+        # the policy gate cannot release the session until these writes land.
+        # Name the exact routes rather than allowing all /api/documents writes:
+        # document authoring and lifecycle mutations stay read-only.
+        "submit_acknowledgement",
+        "attest_offline",
+        "document_engagement",
+        "document_print",
     }
 )
 
