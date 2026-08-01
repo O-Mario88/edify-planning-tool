@@ -1256,11 +1256,11 @@ class TypeScaleFloorTest(SimpleTestCase):
             "--edify-text-micro-size:   var(--edify-text-floor);", tokens
         )
         self.assertIn(
-            "--edify-text-label-size:   clamp(0.8125rem, 0.79rem + 0.08vw, 0.875rem);",
+            "--edify-text-label-size:   0.875rem;",
             tokens,
         )
         self.assertIn(
-            "--edify-text-body-size:    clamp(0.9375rem, 0.91rem + 0.08vw, 1rem);",
+            "--edify-text-body-size:    0.9375rem;",
             tokens,
         )
 
@@ -1279,21 +1279,21 @@ class TypeScaleFloorTest(SimpleTestCase):
         )
 
 
-class ResponsiveTypographyContractTest(SimpleTestCase):
-    """Typography follows the component width without sacrificing legibility."""
+class StableTypographyContractTest(SimpleTestCase):
+    """Typography stays stable while component layout responds around it."""
 
-    def test_kpi_type_sizes_against_its_card_instead_of_the_viewport(self):
+    def test_core_and_component_type_steps_do_not_continuously_resize(self):
         tokens = _read("static/css/design-system.css")
         components = _read("static/css/components.css")
         consistency = _read("static/css/consistency.css")
 
-        for token in (
-            "--edify-text-tile-value-size",
-            "--edify-text-tile-label-size",
-            "--edify-text-tile-helper-size",
-        ):
-            self.assertRegex(tokens, rf"{token}:[^;]+cqi")
+        typography_block = tokens.split("/* ── TYPOGRAPHY SCALE", 1)[1].split(
+            "/* ── SPACING", 1
+        )[0]
+        self.assertNotRegex(typography_block, r"\b(?:clamp|calc)\(")
+        self.assertNotRegex(typography_block, r"\b(?:vw|cqi|cqw)\b")
 
+        # Containers still respond by changing layout, never the type scale.
         self.assertIn("container: kpi-card / inline-size", components)
         self.assertIn("container: legacy-kpi-card / inline-size", consistency)
         self.assertIn("@container kpi-card (max-width: 16rem)", components)
@@ -1310,10 +1310,10 @@ class ResponsiveTypographyContractTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
 
         for expected in (
-            "--edify-text-display-size: clamp(1.5rem, 1.34rem + 0.58vw, 2rem);",
-            "--edify-text-heading-size: clamp(1.125rem, 1.03rem + 0.3vw, 1.375rem);",
-            "--edify-text-tile-value-size: clamp(1.125rem, calc(0.9375rem + 2.5cqi), 1.5rem);",
-            "--edify-text-table-size: clamp(0.8125rem, calc(0.8125rem + 0.06cqi), 0.875rem);",
+            "--edify-text-display-size: 1.75rem;",
+            "--edify-text-heading-size: 1.25rem;",
+            "--edify-text-tile-value-size: 1.375rem;",
+            "--edify-text-table-size: 0.875rem;",
             "--edify-text-floor:        0.75rem;",
             "--edify-text-micro-size:   var(--edify-text-floor);",
         ):

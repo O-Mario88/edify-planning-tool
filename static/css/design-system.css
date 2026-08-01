@@ -213,12 +213,14 @@
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
      Geist Sans — the platform typeface for data-dense premium dashboards.
-     Readable sizes, confident weights and comfortable leading.
-       display → page titles (fluid 28–36px)
-       heading → section titles (20–24px)
-       title   → card/panel titles (16–18px)
-       body    → default text and long-form copy (16–17px)
-       label   → controls, table cells and secondary copy (14–15px)
+     Type uses stable semantic steps instead of viewport/container arithmetic.
+     Layout may reflow responsively; a label, table cell or KPI does not change
+     size merely because its card or browser happens to be a few pixels wider.
+       display → page titles (28px)
+       heading → section titles (20px)
+       title   → card/panel titles (16px)
+       body    → default text and long-form copy (15px)
+       label   → controls, table cells and secondary copy (14px)
        micro   → short overlines and compact badges only (12px) */
   --edify-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
@@ -226,28 +228,25 @@
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --edify-text-display-size: clamp(1.5rem, 1.34rem + 0.58vw, 2rem);
-  --edify-text-heading-size: clamp(1.125rem, 1.03rem + 0.3vw, 1.375rem);
-  --edify-text-title-size:   clamp(0.9375rem, 0.9rem + 0.12vw, 1.0625rem);
-  --edify-text-body-size:    clamp(0.9375rem, 0.91rem + 0.08vw, 1rem);
-  --edify-text-label-size:   clamp(0.8125rem, 0.79rem + 0.08vw, 0.875rem);
+  --edify-text-display-size: 1.75rem;
+  --edify-text-heading-size: 1.25rem;
+  --edify-text-title-size:   1rem;
+  --edify-text-body-size:    0.9375rem;
+  --edify-text-label-size:   0.875rem;
   /* No rendered interface text may fall below this floor. Keep the micro tier
      semantic so charts and compact controls share the same 12px contract. */
   --edify-text-floor:        0.75rem;
   --edify-text-micro-size:   var(--edify-text-floor);
 
-  /* Component-responsive type. These use the nearest inline-size container,
-     not the viewport, so a metric rendered in a narrow rail does not inherit
-     the same type size as one rendered in a full-width dashboard band. The
-     lower bounds preserve the 12px compact-metadata floor and a 13px data
-     floor; layout scrolls or reflows before text becomes unreadable. */
-  --edify-text-card-heading-size: clamp(0.9375rem, calc(0.9375rem + 0.8cqi), 1.25rem);
-  --edify-text-card-title-size: clamp(0.875rem, calc(0.875rem + 0.6cqi), 1.0625rem);
-  --edify-text-tile-value-size: clamp(1.125rem, calc(0.9375rem + 2.5cqi), 1.5rem);
-  --edify-text-tile-label-size: clamp(0.75rem, calc(0.6875rem + 0.35cqi), 0.8125rem);
-  --edify-text-tile-helper-size: clamp(0.75rem, calc(0.6875rem + 0.3cqi), 0.8125rem);
-  --edify-text-table-size: clamp(0.8125rem, calc(0.8125rem + 0.06cqi), 0.875rem);
-  --edify-text-table-heading-size: clamp(0.75rem, calc(0.75rem + 0.05cqi), 0.8125rem);
+  /* Component roles share stable steps as well. Container queries still own
+     layout changes (columns, icon visibility and stacking), never font size. */
+  --edify-text-card-heading-size: 1.125rem;
+  --edify-text-card-title-size: 1rem;
+  --edify-text-tile-value-size: 1.375rem;
+  --edify-text-tile-label-size: 0.8125rem;
+  --edify-text-tile-helper-size: 0.8125rem;
+  --edify-text-table-size: 0.875rem;
+  --edify-text-table-heading-size: 0.8125rem;
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
@@ -256,14 +255,14 @@
   --edify-text-label-weight:   500;
   --edify-text-micro-weight:   600;
 
-  --edify-text-display-leading: 1.1;
-  --edify-text-heading-leading: 1.25;
-  --edify-text-title-leading:   1.3;
-  --edify-text-body-leading:    1.45;
-  --edify-text-label-leading:   1.35;
-  --edify-text-micro-leading:   1.25;
+  --edify-text-display-leading: 1.15;
+  --edify-text-heading-leading: 1.3;
+  --edify-text-title-leading:   1.4;
+  --edify-text-body-leading:    1.5;
+  --edify-text-label-leading:   1.4;
+  --edify-text-micro-leading:   1.3;
 
-  --edify-text-display-tracking: -0.025em;
+  --edify-text-display-tracking: -0.02em;
   --edify-text-heading-tracking: -0.005em;
   --edify-text-title-tracking: 0;
   --edify-text-body-tracking: 0;
