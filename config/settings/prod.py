@@ -203,6 +203,14 @@ for host in ["localhost", "127.0.0.1", "0.0.0.0"]:  # nosec B104
         ALLOWED_HOSTS.append(host)
 
 SECURE_SSL_REDIRECT = _truthy(os.environ.get("SECURE_SSL_REDIRECT"), fallback=True)
+# The platform's health probe reaches the container over plain HTTP, with no
+# X-Forwarded-Proto for SECURE_PROXY_SSL_HEADER to read. Redirecting it to
+# https answers 301, which is not a 2xx, so the instance never becomes ready.
+# Exempting the probe paths costs nothing: DigitalOcean's router already
+# terminates TLS for every route a user can reach, and these two return a JSON
+# literal and a SELECT 1. Pairs with HealthProbeHostMiddleware, which handles
+# the other half — the pod-IP Host header.
+SECURE_REDIRECT_EXEMPT = [r"^api/health(/|$)"]
 SESSION_COOKIE_SECURE = _truthy(os.environ.get("SESSION_COOKIE_SECURE"), fallback=True)
 CSRF_COOKIE_SECURE = _truthy(os.environ.get("CSRF_COOKIE_SECURE"), fallback=True)
 SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30  # 30 days

@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -231,6 +231,83 @@ class AppPlatformSpecTest(SimpleTestCase):
                         env["value"].startswith("REPLACE_ME"),
                         f"{component['name']}.{env['key']} looks like a real secret",
                     )
+
+
+@override_settings(
+    # Exactly the production transport posture, plus the ALLOWED_HOSTS list
+    # prod.py builds: custom domains, the platform domain, and loopback.
+    SECURE_SSL_REDIRECT=True,
+    SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"),
+    SECURE_REDIRECT_EXEMPT=[r"^api/health(/|$)"],
+    ALLOWED_HOSTS=[
+        "www.edifyplanning.app",
+        "edifyplanning.app",
+        "edify-planning-tool-abc12.ondigitalocean.app",
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",
+    ],
+    DEBUG=False,
+)
+class HealthProbeReachabilityTest(TestCase):
+    """The configured health check must actually be able to answer 2xx.
+
+    App Platform probes the container the way kubelet does — an HTTP GET at the
+    pod's own address, so ``Host`` is an IP no ALLOWED_HOSTS entry can name in
+    advance and there is no X-Forwarded-Proto for SECURE_PROXY_SSL_HEADER to
+    read. Both of those turn the probe into a non-2xx under production settings
+    (400 DisallowedHost, and a 301 to https), and the deploy then fails with
+    nothing in the log but "readiness probe failed".
+
+    Setting ``health_check.http_path`` in the spec is what exposed this: the
+    platform default is a TCP connect, which never parses a Host header.
+    """
+
+    POD_PROBE = {"HTTP_HOST": "10.244.43.134:8080"}
+
+    def test_readiness_probe_from_the_pod_address_answers_200(self):
+        response = self.client.get("/api/health/ready", **self.POD_PROBE)
+        self.assertEqual(response.status_code, 200, response.get("Location", ""))
+        self.assertEqual(response.json()["db"], "up")
+
+    def test_liveness_probe_from_the_pod_address_answers_200(self):
+        response = self.client.get("/api/health/live", **self.POD_PROBE)
+        self.assertEqual(response.status_code, 200, response.get("Location", ""))
+
+    def test_probe_response_still_carries_the_standard_headers(self):
+        """The probe is re-hosted, not short-circuited — it runs the whole
+        middleware stack, so nothing downstream silently stops applying."""
+        response = self.client.get("/api/health/ready", **self.POD_PROBE)
+        self.assertIn("Content-Security-Policy", response)
+        self.assertIn("x-correlation-id", response)
+
+    def test_an_unknown_host_is_still_rejected_everywhere_else(self):
+        """The rescue is scoped to the probe URLs. Any other path on a host
+        Django does not recognise must still be a 400."""
+        response = self.client.get("/login", **self.POD_PROBE)
+        self.assertEqual(response.status_code, 400)
+
+    def test_real_traffic_on_a_known_host_is_untouched(self):
+        response = self.client.get(
+            "/api/health/ready",
+            HTTP_HOST="www.edifyplanning.app",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_spec_health_path_is_one_the_probe_can_actually_reach(self):
+        """Ties the two halves together: if someone repoints the spec's health
+        check at a URL outside the exempt/re-hosted set, this fails here rather
+        than in a rolled-back deploy."""
+        import yaml
+
+        spec = yaml.safe_load(_read(".do/app.yaml"))
+        path = spec["services"][0]["health_check"]["http_path"]
+        from apps.core.middleware import HealthProbeHostMiddleware
+
+        self.assertIn(path, HealthProbeHostMiddleware.PROBE_PATHS)
+        response = self.client.get(path, **self.POD_PROBE)
+        self.assertEqual(response.status_code, 200)
 
 
 class BuildTimeStaticCollectionTest(SimpleTestCase):

@@ -14,6 +14,7 @@ from typing import Any, Callable
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http.request import split_domain_port, validate_host
 
 from .request_context import (
     RequestContext,
@@ -51,6 +52,67 @@ class RequestContextMiddleware:
         # Echo the correlation id so client + logs tie together.
         response["x-correlation-id"] = correlation_id
         return response
+
+
+class HealthProbeHostMiddleware:
+    """Let an orchestrator's health probe reach the health view.
+
+    App Platform's configured health check is a kubelet HTTP GET straight at
+    the pod: ``Host: 10.244.43.134:8080``, no TLS, no ``X-Forwarded-Proto``.
+    Neither of those ever reaches the probe view under production settings:
+
+      * ``CommonMiddleware.process_request`` calls ``request.get_host()``
+        unconditionally, and a pod IP is not in ``ALLOWED_HOSTS`` — Django
+        answers 400 DisallowedHost. ``SECURE_REDIRECT_EXEMPT`` does not help
+        here; it only stops ``SecurityMiddleware`` from resolving the host.
+      * ``SECURE_SSL_REDIRECT`` would otherwise 301 the plain-HTTP probe to
+        https, which is not a 2xx either. That half IS handled by
+        ``SECURE_REDIRECT_EXEMPT`` (set in config/settings/prod.py).
+
+    Either way the probe never gets a 2xx, the instance is never marked ready,
+    and the deploy rolls back reporting only that the probe failed. The pod IP
+    cannot be added to ``ALLOWED_HOSTS`` ahead of time — it is assigned per
+    container, and Django has no CIDR syntax.
+
+    So a probe arriving on an unrecognised host is re-pointed at a host that
+    is already trusted. Deliberately narrow:
+
+      * only the health URLs, whose responses are a fixed JSON literal and a
+        ``SELECT 1`` — they never reflect the host back, so this cannot forge
+        a reset link or poison a cached page;
+      * only when the host is not already valid, so ordinary traffic and the
+        test client are untouched and still get the real 400 they deserve.
+    """
+
+    PROBE_PATHS = frozenset(
+        {"/api/health", "/api/health/", "/api/health/live", "/api/health/ready"}
+    )
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        if request.path in self.PROBE_PATHS:
+            self._rehost_probe(request)
+        return self.get_response(request)
+
+    @staticmethod
+    def _rehost_probe(request: HttpRequest) -> None:
+        # Read HTTP_HOST directly rather than through get_host(), which is the
+        # very call that raises DisallowedHost.
+        raw_host = request.META.get("HTTP_HOST") or request.META.get("SERVER_NAME", "")
+        domain, _port = split_domain_port(raw_host)
+        if domain and validate_host(domain, settings.ALLOWED_HOSTS):
+            return
+
+        # prod.py appends the loopback names precisely so container probes have
+        # a host to use; fall back to the first literal entry if some other
+        # settings module has not.
+        for candidate in ("localhost", *settings.ALLOWED_HOSTS):
+            if "*" not in candidate and not candidate.startswith("."):
+                if validate_host(candidate, settings.ALLOWED_HOSTS):
+                    request.META["HTTP_HOST"] = candidate
+                    return
 
 
 class AllExceptionsMiddleware:

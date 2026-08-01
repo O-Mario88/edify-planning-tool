@@ -135,6 +135,12 @@ MIDDLEWARE = [
     # correlationId) so the singleton audit logger stamps provenance without
     # threading it through every service. Mirrors NestJS requestContextMiddleware.
     "apps.core.middleware.RequestContextMiddleware",
+    # Before SecurityMiddleware and CommonMiddleware: both resolve the Host
+    # header, and an orchestrator's probe arrives on the container's own IP,
+    # which no ALLOWED_HOSTS entry can name in advance. Not a short circuit —
+    # the probe still runs the full stack, so its response carries CSP and the
+    # correlation id like any other.
+    "apps.core.middleware.HealthProbeHostMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
