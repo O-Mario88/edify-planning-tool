@@ -99,6 +99,37 @@ class SsaUploadTest(APITestCase):
             ).exists()
         )
 
+    def test_html_upload_center_imports_and_redirects_to_result(self):
+        self.client.force_login(self.ia)
+        body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
+
+        response = self.client.post(
+            "/ssa/upload/",
+            {"file": self._csv(body, name="ssa-browser.csv")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 302, response.content)
+        response_messages = [
+            str(message) for message in response.wsgi_request._messages
+        ]
+        self.assertRegex(
+            response["Location"],
+            r"^/ssa/upload/[^/]+/result/$",
+            response_messages,
+        )
+        self.assertTrue(SsaRecord.objects.filter(school=self.school).exists())
+
+    def test_upload_center_connects_drop_event_to_file_input(self):
+        self.client.force_login(self.ia)
+
+        response = self.client.get("/ssa/upload/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "selectDroppedFile($event.dataTransfer.files)")
+        self.assertContains(response, "this.$refs.fileInput.files = files")
+        self.assertContains(response, 'id="ssa-selected-file"')
+
     def test_upload_query_count_does_not_grow_per_ssa_row(self):
         def measured_upload(prefix, count):
             schools = [

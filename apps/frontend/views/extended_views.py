@@ -1296,6 +1296,7 @@ def admin_users_view(request):
                 "supervisorStaffId": (
                     request.POST.get("supervisor_staff_id") or ""
                 ).strip(),
+                "managedStaffIds": request.POST.getlist("managed_staff_ids"),
                 "country": (request.POST.get("country") or "").strip() or None,
                 "department": (request.POST.get("department") or "").strip() or None,
             }
@@ -1382,6 +1383,31 @@ def admin_users_view(request):
         .select_related("user")
         .order_by("user__name")
     ]
+    can_configure_management_team = get_user_role_slug(request.user) == "ADMIN"
+    management_candidates = []
+    if can_configure_management_team:
+        excluded_management_roles = {
+            EdifyRole.ADMIN.value,
+            EdifyRole.PARTNER_ADMIN.value,
+            EdifyRole.PARTNER_FIELD_OFFICER.value,
+        }
+        management_candidates = [
+            {
+                "id": sp.id,
+                "name": sp.user.name,
+                "email": sp.user.email,
+                "role": sp.user.active_role,
+                "country": sp.country,
+            }
+            for sp in _SP.objects.filter(
+                deleted_at__isnull=True,
+                user__deleted_at__isnull=True,
+                country="Uganda",
+            )
+            .exclude(user__active_role__in=excluded_management_roles)
+            .select_related("user")
+            .order_by("user__name")
+        ]
 
     context = {
         "users": users[:100],
@@ -1392,6 +1418,8 @@ def admin_users_view(request):
         "districts": districts,
         "available_roles": roles,
         "supervisor_options": supervisor_options,
+        "can_configure_management_team": can_configure_management_team,
+        "management_candidates": management_candidates,
         "can_manage_partners": can_manage_partners,
         "partners": partners,
         "partner_regions": partner_regions,
@@ -1559,22 +1587,25 @@ def admin_user_detail_view(request, user_id):
             )
             messages.success(request, f"Account for '{member.name}' has been locked.")
 
-        elif action == "configure_program_lead_team":
+        elif action in {"configure_program_lead_team", "configure_managed_people"}:
             from apps.accounts.models import StaffProfile
-            from apps.accounts.supervisor_service import configure_program_lead_team
+            from apps.accounts.supervisor_service import configure_managed_people
             from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
             staff_profile = StaffProfile.objects.filter(user=member).first()
             if not staff_profile:
                 messages.error(
                     request,
-                    "Save the Program Lead's profile before assigning their CCEOs.",
+                    "Save this user's profile before assigning managed people.",
                 )
                 return redirect("frontend:admin_user_detail", user_id=user_id)
             try:
-                result = configure_program_lead_team(
+                selected_staff_ids = request.POST.getlist("managed_staff_ids")
+                if action == "configure_program_lead_team":
+                    selected_staff_ids = request.POST.getlist("cceo_ids")
+                result = configure_managed_people(
                     staff_profile.id,
-                    request.POST.getlist("cceo_ids"),
+                    selected_staff_ids,
                     request.user,
                 )
             except (BadRequest, Forbidden, NotFoundError) as exc:
@@ -1582,8 +1613,8 @@ def admin_user_detail_view(request, user_id):
             else:
                 messages.success(
                     request,
-                    f"{result['programLeadName']}'s team was updated: "
-                    f"{result['assignedCount']} CCEO(s) assigned.",
+                    f"{result['managerName']}'s managed people were updated: "
+                    f"{result['assignedCount']} staff member(s) assigned.",
                 )
 
         return redirect("frontend:admin_user_detail", user_id=user_id)
@@ -1591,11 +1622,7 @@ def admin_user_detail_view(request, user_id):
     # Get available roles & districts
     from apps.core.rbac import EdifyRole
     from apps.geography.models import District
-    from apps.accounts.models import (
-        StaffGeographyAssignment,
-        StaffProfile,
-        StaffSupervisorAssignment,
-    )
+    from apps.accounts.models import StaffGeographyAssignment, StaffProfile
 
     roles = [r.value for r in EdifyRole]
     districts = District.objects.all().order_by("name")
@@ -1621,68 +1648,12 @@ def admin_user_detail_view(request, user_id):
 
     from apps.core.navigation import get_user_role_slug
 
-    is_program_lead = (
-        member.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
-        or EdifyRole.COUNTRY_PROGRAM_LEAD.value in (member.roles or [])
-    )
-    can_configure_program_lead_team = get_user_role_slug(request.user) == "ADMIN"
-    program_lead_team = None
-    if is_program_lead and can_configure_program_lead_team and sp:
-        cceos = list(
-            StaffProfile.objects.filter(
-                deleted_at__isnull=True,
-                user__deleted_at__isnull=True,
-                country=sp.country,
-            )
-            .filter(
-                Q(user__active_role=EdifyRole.CCEO.value)
-                | Q(user__roles__contains=[EdifyRole.CCEO.value])
-            )
-            .select_related("user")
-            .order_by("user__name")
-        )
-        links = list(
-            StaffSupervisorAssignment.objects.filter(
-                supervisee_id__in=[cceo.id for cceo in cceos],
-                supervisee__deleted_at__isnull=True,
-                supervisor__deleted_at__isnull=True,
-            ).select_related("supervisor__user")
-        )
-        assigned_pairs = {
-            (str(link.supervisee_id), str(link.supervisor_id)) for link in links
-        }
-        assigned_leads_by_cceo = defaultdict(list)
-        for link in links:
-            assigned_leads_by_cceo[str(link.supervisee_id)].append(
-                link.supervisor.user.name
-            )
+    can_configure_management_team = get_user_role_slug(request.user) == "ADMIN"
+    management_team = None
+    if can_configure_management_team and sp:
+        from apps.accounts.supervisor_service import managed_people_team
 
-        cceo_options = []
-        assigned_count = 0
-        for cceo in cceos:
-            is_assigned = (str(cceo.id), str(sp.id)) in assigned_pairs
-            if is_assigned:
-                assigned_count += 1
-            other_leads = [
-                name
-                for name in assigned_leads_by_cceo.get(str(cceo.id), [])
-                if name != member.name
-            ]
-            cceo_options.append(
-                {
-                    "id": cceo.id,
-                    "name": cceo.user.name,
-                    "email": cceo.user.email,
-                    "status": cceo.user.status,
-                    "assigned": is_assigned,
-                    "other_lead": ", ".join(other_leads),
-                }
-            )
-        program_lead_team = {
-            "country": sp.country,
-            "assigned_count": assigned_count,
-            "cceos": cceo_options,
-        }
+        management_team = managed_people_team(sp)
 
     context = {
         "member": member,
@@ -1694,9 +1665,8 @@ def admin_user_detail_view(request, user_id):
         # The users page is shared with CD/HR, but deletion is Admin-only
         # (the service enforces it; this only controls the button).
         "can_delete_users": get_user_role_slug(request.user) == "ADMIN",
-        "is_program_lead": is_program_lead,
-        "can_configure_program_lead_team": can_configure_program_lead_team,
-        "program_lead_team": program_lead_team,
+        "can_configure_management_team": can_configure_management_team,
+        "management_team": management_team,
     }
     return render(request, "pages/admin/user_detail.html", context)
 

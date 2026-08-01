@@ -172,6 +172,16 @@ def create(data: dict, principal) -> dict:
 
             assign_supervisor(sp.id, {"supervisorId": supervisor_staff_id}, principal)
 
+        managed_staff_ids = data.get("managedStaffIds") or []
+        if managed_staff_ids and role in {
+            "Program Lead",
+            "ImpactAssessment",
+            "RegionalVicePresident",
+        }:
+            from apps.accounts.supervisor_service import configure_managed_people
+
+            configure_managed_people(sp.id, managed_staff_ids, principal)
+
         selected_districts = []
         if primary_district_id:
             selected_districts.append(primary_district_id)

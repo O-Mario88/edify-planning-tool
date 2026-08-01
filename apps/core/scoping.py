@@ -55,6 +55,7 @@ class UserScope:
     core_school_ids: list[str] = field(default_factory=list)
     staff_ids: list[str] = field(default_factory=list)
     supervised_staff_ids: list[str] = field(default_factory=list)
+    managed_staff_ids: list[str] = field(default_factory=list)
     # Every staff id whose StaffSchoolAssignment rows produced school_ids —
     # self + active coverage + supervisees. Lets consumers rebuild the school
     # set as a subquery instead of shipping thousands of literal ids.
@@ -126,6 +127,7 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     assignment_staff_ids: list[str] = []
     core_school_ids: list[str] = []
     supervised_staff_ids: list[str] = []
+    managed_staff_ids: list[str] = []
     partner_ids: list[str] = []
 
     staff_id = user.staff_profile_id
@@ -133,13 +135,15 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     try:
         from apps.accounts.models import (
             StaffGeographyAssignment,
+            StaffProfile,
             StaffSchoolAssignment,
             StaffSupervisorAssignment,
         )
     except Exception:  # noqa: BLE001 - accounts may not be ready in some unit contexts
-        StaffGeographyAssignment = StaffSchoolAssignment = StaffSupervisorAssignment = (
-            None  # type: ignore
-        )
+        StaffGeographyAssignment = None  # type: ignore
+        StaffProfile = None  # type: ignore
+        StaffSchoolAssignment = None  # type: ignore
+        StaffSupervisorAssignment = None  # type: ignore
 
     if summary_only and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
@@ -350,6 +354,54 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                     getattr(user, "user_id", None),
                 )
 
+    # Organisational management can overlap a direct reporting line. Program
+    # Leads keep `supervised_staff_ids` for approvals and school scope, while
+    # this list also represents IA/RVP oversight and the CD's automatic
+    # country-wide management responsibility.
+    management_roles = {
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+    }
+    if staff_id and role in management_roles and StaffProfile:
+        if role == EdifyRole.COUNTRY_DIRECTOR.value:
+            manager_country = StaffProfile.objects.filter(id=staff_id).values_list(
+                "country", flat=True
+            ).first()
+            country_team_roles = [
+                EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                EdifyRole.IMPACT_ASSESSMENT.value,
+                EdifyRole.PROGRAM_ACCOUNTANT.value,
+                EdifyRole.CCEO.value,
+            ]
+            if manager_country:
+                managed_staff_ids = _uniq(
+                    StaffProfile.objects.filter(
+                        country=manager_country,
+                        deleted_at__isnull=True,
+                        user__deleted_at__isnull=True,
+                    )
+                    .exclude(id=staff_id)
+                    .filter(
+                        Q(user__active_role__in=country_team_roles)
+                        | Q(user__roles__overlap=country_team_roles)
+                    )
+                    .values_list("id", flat=True)
+                )
+        elif StaffSupervisorAssignment:
+            managed_staff_ids = _uniq(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisor_id=staff_id,
+                    supervisee__deleted_at__isnull=True,
+                    supervisee__user__deleted_at__isnull=True,
+                ).values_list("supervisee_id", flat=True)
+            )
+            if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+                managed_staff_ids = _uniq(
+                    [*managed_staff_ids, *supervised_staff_ids]
+                )
+
     return UserScope(
         user_id=user.user_id,
         active_role=role,
@@ -365,6 +417,7 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         core_school_ids=core_school_ids,
         staff_ids=[staff_id] if staff_id else [],
         supervised_staff_ids=supervised_staff_ids,
+        managed_staff_ids=managed_staff_ids,
         partner_ids=partner_ids,
         can_view_summary_only=summary_only,
         rvp_region_scoped=bool(summary_only and region_ids),
@@ -373,7 +426,9 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
         or has(Permission.PAYMENT_ACT.value),
         can_view_own=bool(own_school_ids) or (not country_scope and not summary_only),
-        can_view_team=(role == EdifyRole.COUNTRY_PROGRAM_LEAD.value) or country_scope,
+        can_view_team=bool(managed_staff_ids)
+        or (role == EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        or country_scope,
         can_view_country=country_scope,
         can_approve=has(Permission.BUDGET_APPROVE.value)
         or has(Permission.IA_VERIFY.value),

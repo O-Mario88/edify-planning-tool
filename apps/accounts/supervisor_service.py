@@ -23,6 +23,146 @@ _SUPERVISOR_ROLE = {
     EdifyRole.COUNTRY_PROGRAM_LEAD.value: EdifyRole.COUNTRY_DIRECTOR.value,  # PL → CD
 }
 
+_MANAGER_ROLES = {
+    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+}
+_COUNTRY_DIRECTOR_DEFAULT_ROLES = {
+    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.PROGRAM_ACCOUNTANT.value,
+    EdifyRole.CCEO.value,
+}
+_INTERNAL_MANAGED_ROLES = {
+    role.value
+    for role in EdifyRole
+    if role
+    not in {
+        EdifyRole.ADMIN,
+        EdifyRole.PARTNER_ADMIN,
+        EdifyRole.PARTNER_FIELD_OFFICER,
+    }
+}
+
+
+def _management_role(user) -> str | None:
+    """Return the effective management role, preferring the active role."""
+    if user.active_role in _MANAGER_ROLES:
+        return user.active_role
+    return next((role for role in (user.roles or []) if role in _MANAGER_ROLES), None)
+
+
+def _profile_role_query(prefix: str, role: str) -> Q:
+    """Match a StaffProfile relation whose user holds a role."""
+    return Q(**{f"{prefix}__user__active_role": role}) | Q(
+        **{f"{prefix}__user__roles__contains": [role]}
+    )
+
+
+def _eligible_managed_people(manager: StaffProfile, manager_role: str):
+    """Same-country staff an Admin may place under this manager."""
+    candidates = (
+        StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user__deleted_at__isnull=True,
+            country=manager.country,
+        )
+        .exclude(id=manager.id)
+        .select_related("user")
+        .order_by("user__name")
+    )
+    if manager_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return [
+            staff
+            for staff in candidates
+            if EdifyRole.CCEO.value
+            in {staff.user.active_role, *(staff.user.roles or [])}
+        ]
+    allowed_roles = (
+        _COUNTRY_DIRECTOR_DEFAULT_ROLES
+        if manager_role == EdifyRole.COUNTRY_DIRECTOR.value
+        else _INTERNAL_MANAGED_ROLES
+    )
+    return [
+        staff
+        for staff in candidates
+        if {staff.user.active_role, *(staff.user.roles or [])} & allowed_roles
+    ]
+
+
+def managed_people_team(manager: StaffProfile) -> dict | None:
+    """Build the Admin role-configuration card for a management-capable user.
+
+    Country Directors receive their country team automatically. Other
+    management roles are explicit so Admin can model the actual organisation.
+    """
+    manager_role = _management_role(manager.user)
+    if not manager_role:
+        return None
+
+    people = _eligible_managed_people(manager, manager_role)
+    automatic = manager_role == EdifyRole.COUNTRY_DIRECTOR.value
+    assigned_ids = (
+        {str(person.id) for person in people}
+        if automatic
+        else set(
+            StaffSupervisorAssignment.objects.filter(
+                supervisor=manager
+            ).values_list(
+                "supervisee_id", flat=True
+            )
+        )
+    )
+    if manager_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        assigned_ids.update(
+            str(staff_id)
+            for staff_id in StaffSupervisorAssignment.objects.filter(
+                supervisor=manager
+            ).values_list("supervisee_id", flat=True)
+        )
+
+    other_leads_by_staff: dict[str, list[str]] = {}
+    if manager_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        links = (
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in=[person.id for person in people]
+            )
+            .filter(
+                _profile_role_query(
+                    "supervisor", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+                )
+            )
+            .select_related("supervisor__user")
+        )
+        for link in links:
+            if link.supervisor_id != manager.id:
+                other_leads_by_staff.setdefault(str(link.supervisee_id), []).append(
+                    link.supervisor.user.name
+                )
+
+    return {
+        "role": manager_role,
+        "country": manager.country,
+        "automatic": automatic,
+        "assigned_count": len(assigned_ids),
+        "people": [
+            {
+                "id": person.id,
+                "name": person.user.name,
+                "email": person.user.email,
+                "role": person.user.active_role,
+                "status": person.user.status,
+                "assigned": str(person.id) in assigned_ids,
+                "other_manager": ", ".join(
+                    other_leads_by_staff.get(str(person.id), [])
+                ),
+            }
+            for person in people
+        ],
+    }
+
 
 def list_staff(principal=None) -> list[dict]:
     """Staff roster with their supervisor + assigned-school count.
@@ -48,7 +188,13 @@ def list_staff(principal=None) -> list[dict]:
 
     rows = []
     for sp in qs:
-        sup_link = sp.supervisor_links.first()
+        expected_role = _SUPERVISOR_ROLE.get(sp.user.active_role)
+        direct_links = sp.supervisor_links.select_related("supervisor__user")
+        if expected_role:
+            direct_links = direct_links.filter(
+                _profile_role_query("supervisor", expected_role)
+            )
+        sup_link = direct_links.first()
         supervisor = sup_link.supervisor if sup_link else None
         rows.append(
             {
@@ -103,16 +249,21 @@ def assign_supervisor(staff_id: str, data: dict, principal) -> dict:
             f"not a {supervisor.user.active_role}."
         )
 
-    old = supervisee.supervisor_links.first()
+    direct_links = supervisee.supervisor_links.select_related("supervisor__user")
+    if expected:
+        direct_links = direct_links.filter(_profile_role_query("supervisor", expected))
+    old = direct_links.first()
     old_id = old.supervisor_id if old else None
-    # Replace the assignment (one supervisor per supervisee — the unique constraint
-    # is on (supervisee, supervisor); we remove any prior links first).
+    # Replace only the direct reporting line. IA/RVP oversight rows for the
+    # same person stay intact.
     if old and old.supervisor_id != supervisor.id:
         old.delete()
-    StaffSupervisorAssignment.objects.update_or_create(
-        supervisee=supervisee,
-        defaults={"supervisor": supervisor},
-    )
+        old = None
+    if old is None:
+        StaffSupervisorAssignment.objects.get_or_create(
+            supervisee=supervisee,
+            supervisor=supervisor,
+        )
 
     from apps.audit.services import log as audit_log
 
@@ -186,9 +337,15 @@ def configure_program_lead_team(
                 "A Program Lead can only manage CCEOs in the same country."
             )
 
+        competing_program_lead = _profile_role_query(
+            "supervisor", EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
         locked_links = list(
             StaffSupervisorAssignment.objects.select_for_update()
-            .filter(Q(supervisor=program_lead) | Q(supervisee_id__in=selected_ids))
+            .filter(
+                Q(supervisor=program_lead)
+                | (Q(supervisee_id__in=selected_ids) & competing_program_lead)
+            )
             .select_related("supervisor__user")
         )
         current_ids = {
@@ -215,7 +372,7 @@ def configure_program_lead_team(
         if selected_ids:
             StaffSupervisorAssignment.objects.filter(
                 supervisee_id__in=selected_ids
-            ).exclude(supervisor=program_lead).delete()
+            ).filter(competing_program_lead).exclude(supervisor=program_lead).delete()
 
         existing_ids = set(
             StaffSupervisorAssignment.objects.filter(
@@ -261,4 +418,118 @@ def configure_program_lead_team(
     }
 
 
-__all__ = ["list_staff", "assign_supervisor", "configure_program_lead_team"]
+def configure_managed_people(
+    manager_id: str, managed_staff_ids: list[str], principal
+) -> dict:
+    """Replace the explicit managed-people list for PL, IA, or RVP.
+
+    PL assignments also update the direct reporting relationship because that
+    relationship powers approvals and PL team scope. IA/RVP oversight remains
+    deliberately separate so it can overlap a person's reporting line. A CD's
+    country team is derived automatically and therefore cannot drift through a
+    manually maintained list.
+    """
+    if getattr(principal, "active_role", None) != EdifyRole.ADMIN.value:
+        raise Forbidden("Only an Admin can configure managed people.")
+
+    selected_ids = list(
+        dict.fromkeys(str(staff_id).strip() for staff_id in managed_staff_ids if staff_id)
+    )
+
+    with transaction.atomic():
+        manager = (
+            StaffProfile.objects.select_for_update()
+            .select_related("user")
+            .filter(id=manager_id, deleted_at__isnull=True)
+            .first()
+        )
+        if not manager:
+            raise NotFoundError("Manager profile not found.")
+
+        manager_role = _management_role(manager.user)
+        if not manager_role:
+            raise BadRequest(
+                "Managed people can only be configured for PL, CD, IA, or RVP roles."
+            )
+        if manager_role == EdifyRole.COUNTRY_DIRECTOR.value:
+            raise BadRequest(
+                "Country Directors automatically manage every PL, IA, Accountant, "
+                "and CCEO in their country."
+            )
+
+        eligible = _eligible_managed_people(manager, manager_role)
+        eligible_ids = {str(person.id) for person in eligible}
+        if set(selected_ids) - eligible_ids:
+            if manager_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+                raise BadRequest(
+                    "A Program Lead can only manage CCEOs in the same country."
+                )
+            raise BadRequest(
+                f"A {manager_role} can only manage eligible staff in the same country."
+            )
+
+        # Preserve the existing PL reporting-line semantics while recording
+        # the new generic management relationship for the shared UI.
+        if manager_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+            configure_program_lead_team(manager.id, selected_ids, principal)
+
+        previous_ids = set(
+            str(staff_id)
+            for staff_id in StaffSupervisorAssignment.objects.select_for_update()
+            .filter(supervisor=manager)
+            .values_list("supervisee_id", flat=True)
+        )
+        selected_set = set(selected_ids)
+        StaffSupervisorAssignment.objects.filter(supervisor=manager).exclude(
+            supervisee_id__in=selected_ids
+        ).delete()
+        existing_ids = set(
+            str(staff_id)
+            for staff_id in StaffSupervisorAssignment.objects.filter(
+                supervisor=manager,
+                supervisee_id__in=selected_ids,
+            ).values_list("supervisee_id", flat=True)
+        )
+        StaffSupervisorAssignment.objects.bulk_create(
+            [
+                StaffSupervisorAssignment(
+                    supervisor=manager,
+                    supervisee_id=staff_id,
+                )
+                for staff_id in selected_ids
+                if staff_id not in existing_ids
+            ]
+        )
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="admin.managed_people_configured",
+            subject_kind="staff_profile",
+            subject_id=manager.id,
+            actor_id=getattr(principal, "id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload={
+                "managerRole": manager_role,
+                "managedStaffIds": selected_ids,
+                "addedStaffIds": sorted(selected_set - previous_ids),
+                "removedStaffIds": sorted(previous_ids - selected_set),
+            },
+        )
+
+    return {
+        "managerId": str(manager.id),
+        "managerName": manager.user.name,
+        "managerRole": manager_role,
+        "assignedCount": len(selected_ids),
+        "changedAt": timezone.now().isoformat(),
+    }
+
+
+__all__ = [
+    "list_staff",
+    "assign_supervisor",
+    "configure_program_lead_team",
+    "configure_managed_people",
+    "managed_people_team",
+]

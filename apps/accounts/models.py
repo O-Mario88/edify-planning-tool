@@ -402,7 +402,12 @@ class StaffProfile(SoftDeleteModel):
 
 
 class StaffSupervisorAssignment(TimeStampedModel):
-    """Join supervisee ↔ supervisor (the PL 'team lens' depends on this)."""
+    """Join managed staff ↔ manager.
+
+    PL→CCEO and CD→PL rows are direct reporting lines. IA/RVP rows are
+    overlapping management oversight; service queries distinguish those roles
+    so adding assurance or regional oversight never replaces the direct line.
+    """
 
     id = CuidField()
     supervisee = models.ForeignKey(

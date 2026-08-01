@@ -82,10 +82,18 @@
   {% csrf_token %}
 
   <div
-    x-data="{ dragging: false }"
+    x-data="{
+      dragging: false,
+      fileName: '',
+      selectDroppedFile(files) {
+        if (!files || !files.length) return;
+        this.$refs.fileInput.files = files;
+        this.fileName = files[0].name;
+      }
+    }"
     @dragover.prevent="dragging = true"
     @dragleave.prevent="dragging = false"
-    @drop.prevent="dragging = false"
+    @drop.prevent="dragging = false; selectDroppedFile($event.dataTransfer.files)"
     class="border-2 border-dashed rounded-surface p-10 text-center transition-colors flex flex-col items-center justify-center min-h-[200px]"
     :class="dragging ? 'edify-primary-border edify-primary-soft-alpha-20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'"
   >
@@ -93,11 +101,23 @@
       <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
     </svg>
     <p class="text-[14px] font-medium">Drag & drop your SSA file here</p>
-    <p class="edify-text-caption text-slate-400 font-normal mt-1">Supports Excel (.xlsx) and CSV format</p>
+    <p id="ssa-file-types" class="edify-text-caption text-slate-400 font-normal mt-1">Supports Excel (.xlsx) and CSV format</p>
     <label class="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-[12px] rounded-surface cursor-pointer transition-colors">
       Browse Files
-      <input type="file" name="file" class="hidden" required>
+      <input
+        x-ref="fileInput"
+        type="file"
+        name="file"
+        accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        aria-describedby="ssa-file-types ssa-selected-file"
+        @change="fileName = $event.target.files[0]?.name || ''"
+        class="sr-only"
+        required
+      >
     </label>
+    <p id="ssa-selected-file" class="mt-3 min-h-5 text-[12px] font-bold" :class="fileName ? 'text-emerald-700' : 'text-slate-400'" aria-live="polite">
+      <span x-text="fileName ? `Selected: ${fileName}` : 'No file selected yet.'"></span>
+    </p>
   </div>
 
   <div class="flex items-center justify-between">
