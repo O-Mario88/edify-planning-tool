@@ -7,8 +7,8 @@
     "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "4.3.2",
-    "tailwindcss": "4.3.2"
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
   },
   "dependencies": {
     "geist": "^1.7.2"
