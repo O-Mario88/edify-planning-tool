@@ -72,6 +72,7 @@ class AdminSystemTestCase(TestCase):
             key="dashboard.view", description="View dashboard"
         )
         RolePermission.objects.create(role="CCEO", permission=perm)
+        RolePermission.objects.create(role=EdifyRole.ADMIN.value, permission=perm)
 
     def test_admin_dashboard_renders(self):
         response = self.client.get("/admin-panel")
@@ -90,6 +91,7 @@ class AdminSystemTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Roles & Permissions Matrix")
         self.assertContains(response, "CCEO")
+        self.assertContains(response, 'title="Admin"')
 
     def test_staff_setup_queue_renders_and_matches(self):
         response = self.client.get("/admin-panel/staff-setup-queue")
