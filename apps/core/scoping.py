@@ -145,6 +145,20 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         StaffSchoolAssignment = None  # type: ignore
         StaffSupervisorAssignment = None  # type: ignore
 
+    # Impact Assessment officers normally operate at country scope.  An IA
+    # staff member with an explicit school portfolio is different: that is a
+    # field/assistant assignment and the uploaded portfolio is the access
+    # boundary.  Keeping the distinction data-driven lets the country IA
+    # officer (no direct schools) retain oversight while an IA assistant sees
+    # only the schools assigned to them.
+    if (
+        role == EdifyRole.IMPACT_ASSESSMENT.value
+        and staff_id
+        and StaffSchoolAssignment
+        and StaffSchoolAssignment.objects.filter(staff_id=staff_id).exists()
+    ):
+        country_scope = False
+
     if summary_only and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
         # school-level rows (see school_queryset); analytics get country counts.
@@ -184,7 +198,12 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         # Country roles are not row-constrained by geography here.
         pass
     elif (
-        role in (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        role
+        in (
+            EdifyRole.CCEO.value,
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.IMPACT_ASSESSMENT.value,
+        )
         and staff_id
         and StaffSchoolAssignment
     ):
