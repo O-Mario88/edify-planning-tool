@@ -213,6 +213,63 @@ class SsaLedRecommendationTests(TestCase):
         self.assertNotIn("ACCOUNTING_FINANCIAL_MANAGEMENT", codes)
         self.assertIn("ACCOUNTING_FINANCIAL_MANAGEMENT", clustered_codes)
 
+        # Withholding it is right; doing so silently is not. The banner names
+        # Financial Health while every activity offered answers a lower-ranked
+        # need, which reads as the engine ignoring the SSA score. Say which
+        # need is unmet and why its own response is unavailable here.
+        unmet = result["unmetPriority"]
+        self.assertIsNotNone(unmet, "the unaddressed top need must be surfaced")
+        self.assertEqual(unmet["need"]["intervention"], SsaIntervention.FINANCIAL_HEALTH)
+        self.assertIn(
+            "Accounting and Financial Management",
+            [blocked["displayName"] for blocked in unmet["blockedBy"]],
+        )
+        # School planning is for visits and partner assignment. A programme
+        # activity is planned centrally from the Work Plan, so the notice must
+        # name that surface rather than leaving a need nobody can act on.
+        self.assertEqual(
+            unmet["blockedBy"][0]["route"], "Schedule it from the Work Plan page"
+        )
+
+        # In the cluster context the need IS answered, so the notice must go
+        # quiet rather than warning about a need that is being addressed.
+        self.assertIsNone(clustered["unmetPriority"])
+
+    def test_a_follow_up_activity_does_not_count_as_addressing_a_need(self):
+        """Dynamic follow-ups inherit the top need's label when no source
+        activity exists. Counting that as coverage would silence the notice
+        using an activity that does nothing about the need."""
+        record = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa=timezone.now(),
+            fy="2027",
+            quarter="Q2",
+            average_score=8,
+            verification_status="confirmed",
+            uploaded_by="test",
+        )
+        for intervention, _label in SsaIntervention.choices:
+            SsaScore.objects.create(
+                ssa_record=record,
+                intervention=intervention,
+                score=1 if intervention == SsaIntervention.FINANCIAL_HEALTH else 9,
+            )
+
+        result = recommend_activities(school=self.school, limit=3)
+
+        inherited = [
+            row
+            for row in [*result["primary"], *result["otherEligible"]]
+            if row.get("targetIntervention") == SsaIntervention.FINANCIAL_HEALTH
+        ]
+        self.assertTrue(
+            inherited, "a follow-up should still inherit the unresolved need's label"
+        )
+        self.assertIsNotNone(
+            result["unmetPriority"],
+            "but it must not be mistaken for a response to that need",
+        )
+
     def _school_with_need(self, suffix, intervention, cluster):
         school = School.objects.create(
             school_id=f"CAT-MAP-{suffix}",

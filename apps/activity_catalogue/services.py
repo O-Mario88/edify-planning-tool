@@ -554,6 +554,7 @@ def recommend_activities(
     ).exclude(activity_type=CatalogueActivityType.ADMIN)
 
     suggestions = []
+    directly_addressed: set[str] = set()
     for item in candidates.distinct():
         try:
             validate_context(
@@ -585,6 +586,11 @@ def recommend_activities(
             ),
         )
         need = need_by_intervention[mapping.intervention]
+        # Only a real intervention mapping counts as addressing a need. The
+        # dynamic follow-ups below inherit ranked_needs[0]'s label when no
+        # source activity exists, which would otherwise make any need look
+        # answered by an activity that does nothing about it.
+        directly_addressed.add(mapping.intervention)
         suggestions.append(
             _suggestion(
                 item,
@@ -671,12 +677,66 @@ def recommend_activities(
             row["stableCode"],
         )
     )
+    # The banner names the weakest intervention, but the catalogue may hold no
+    # response that can be delivered in THIS context — five of the eight
+    # interventions are currently answered only by cluster-level trainings, so
+    # a single-school drawer silently fell through to the next-best need and
+    # presented it as the recommendation. The score shown and the activity
+    # offered then described different problems, which reads as the engine
+    # ignoring the SSA.
+    #
+    # Nothing is hidden and nothing is invented: the lower-ranked activities
+    # stay schedulable, and the unmet top need is stated with the reason its
+    # own responses are unavailable, so the choice is the planner's.
+    top_need = ranked_needs[0]
+    unmet_priority = None
+    if top_need["intervention"] not in directly_addressed:
+        blocked = []
+        for item in (
+            effective_items(on_date)
+            .filter(
+                intervention_mappings__intervention=top_need["intervention"],
+                intervention_mappings__active=True,
+            )
+            .distinct()
+        ):
+            reasons = []
+            if cluster is None and not item.individual_school_allowed:
+                reasons.append("is not delivered to a single School")
+            if executor_type == DeliveryType.PARTNER:
+                if not item.partner_delivery_allowed:
+                    reasons.append("is not approved for partner delivery")
+            elif not item.staff_delivery_allowed:
+                reasons.append("is not approved for staff delivery")
+            # Name the surface that CAN schedule it. School planning is for
+            # visits and partner assignment; a programme activity is planned
+            # centrally from the Work Plan as one dated event at a venue, and
+            # draws its cost from the same CD Cost Catalogue either way. Saying
+            # only "not available here" leaves the planner with a need they
+            # cannot act on.
+            if item.non_school_allowed:
+                route = "Schedule it from the Work Plan page"
+            elif item.cluster_delivery_allowed:
+                route = "Schedule it through a Cluster"
+            else:
+                route = "Ask IA to review its Catalogue delivery settings"
+            blocked.append(
+                {
+                    "displayName": item.display_name,
+                    "reason": " and ".join(reasons)
+                    or "is not eligible for this School right now",
+                    "route": route,
+                }
+            )
+        unmet_priority = {"need": top_need, "blockedBy": blocked}
+
     return {
         "hasApplicableSsa": True,
         "sourceSsaId": source_ssa.id,
         "verificationState": source_ssa.verification_status,
         "ssaDate": source_ssa.date_of_ssa,
-        "priority": ranked_needs[0],
+        "priority": top_need,
+        "unmetPriority": unmet_priority,
         "primary": suggestions[:limit],
         "otherEligible": suggestions[limit:],
     }
