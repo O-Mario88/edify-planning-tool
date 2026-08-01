@@ -182,3 +182,102 @@ class ClusteringBoundaryTest(TestCase):
         )
         self.assertIn("BOUND-DIR-1", directory)
         self.assertIn("BOUND-DIR-2", directory)
+
+
+class ExplicitAssignmentSurvivesTest(TestCase):
+    """A school with no sub-county keeps the cluster it was given.
+
+    School.save() derives a school's cluster from whether an active cluster
+    covers its sub-county, and re-runs that whenever the district or sub-county
+    changes. When the school has no sub-county the lookup cannot run — and the
+    old code read that as "no cluster found" and cleared the assignment.
+
+    This is not an edge case here. The operational register leaves sub-county
+    blank for every row, so every school in production has this shape, and a
+    district-level cluster holding schools by direct assignment lost them on
+    the next edit that touched their district — silently, while the cluster
+    went on listing them.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.region = Region.objects.create(name="Survive Region")
+        cls.district = District.objects.create(
+            name="Survive District", region=cls.region
+        )
+        cls.other_district = District.objects.create(
+            name="Survive Other District", region=cls.region
+        )
+        cls.sub_county = SubCounty.objects.create(
+            name="Survive Sub County", district=cls.district
+        )
+        cls.cluster = Cluster.objects.create(
+            name="Survive Cluster",
+            region=cls.region,
+            district=cls.district,
+            status="active",
+        )
+
+    def _assigned_school(self, ref, sub_county=None):
+        school = School.objects.create(
+            school_id=ref,
+            name=f"School {ref}",
+            region=self.region,
+            district=self.district,
+            sub_county=sub_county,
+        )
+        # Direct assignment, the way the cluster drawer adds a school.
+        School.objects.filter(id=school.id).update(
+            cluster_id=self.cluster.id, cluster_status="clustered"
+        )
+        school.refresh_from_db()
+        return school
+
+    def test_a_district_change_does_not_uncluster_a_sub_county_less_school(self):
+        school = self._assigned_school("SURVIVE-1")
+
+        school.district = self.other_district
+        school.save()
+
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, self.cluster.id)
+        self.assertEqual(school.cluster_status, "clustered")
+
+    def test_an_ordinary_save_leaves_the_assignment_alone(self):
+        school = self._assigned_school("SURVIVE-2")
+
+        school.name = "Renamed School"
+        school.save()
+
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, self.cluster.id)
+
+    def test_derivation_still_clusters_a_school_whose_sub_county_is_covered(self):
+        """The fix must not stop the derivation working where it can."""
+        covered = SubCounty.objects.create(
+            name="Survive Covered", district=self.district
+        )
+        ClusterSubCounty.objects.create(cluster=self.cluster, sub_county=covered)
+
+        school = School.objects.create(
+            school_id="SURVIVE-3",
+            name="School SURVIVE-3",
+            region=self.region,
+            district=self.district,
+            sub_county=covered,
+        )
+
+        self.assertEqual(school.cluster_id, self.cluster.id)
+        self.assertEqual(school.cluster_status, "clustered")
+
+    def test_a_school_whose_sub_county_is_not_covered_is_still_unclustered(self):
+        """And it must still say no when the lookup CAN run and finds nothing —
+        that is a real negative answer, not an absent one."""
+        school = self._assigned_school("SURVIVE-4", sub_county=self.sub_county)
+
+        school.district = self.other_district
+        school.save()
+
+        school.refresh_from_db()
+        self.assertIsNone(school.cluster_id)
+        self.assertEqual(school.cluster_status, "unclustered")

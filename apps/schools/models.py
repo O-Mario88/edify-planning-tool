@@ -309,9 +309,27 @@ class School(SoftDeleteModel):
                 if new_cluster:
                     self.cluster_id = new_cluster.id
                     self.cluster_status = "clustered"
-                else:
+                elif self.sub_county_id:
+                    # A sub-county exists and no active cluster covers it, so
+                    # this school genuinely belongs to none.
                     self.cluster_id = None
                     self.cluster_status = "unclustered"
+                # No sub-county: nothing to derive from, so an explicit
+                # assignment stands.
+                #
+                # This block only runs when the district or sub-county changed,
+                # and it used to fall through to "unclustered" whenever the
+                # lookup found nothing — including when the lookup could not
+                # run at all. A school with no sub-county that had been added
+                # to a district-level cluster by hand was therefore unclustered
+                # by the next edit that touched its district, silently, with
+                # the cluster still listing it. That is not a rare shape: the
+                # operational register leaves sub-county blank for every row,
+                # so it describes every school in production.
+                #
+                # Absence of evidence is not evidence of absence — a lookup
+                # that cannot be performed must not be read as a negative
+                # answer.
 
         # Recompute quality and readiness dynamically before saving
         self.recompute_quality_and_readiness()
