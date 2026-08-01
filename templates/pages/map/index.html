@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters static %}
 
 {% block title %}School Map · Edify{% endblock %}
 
@@ -43,8 +43,14 @@
 </div>
 
 {% if with_coords %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+{% comment %}
+  Leaflet self-hosted, like every other library the platform depends on. The
+  map tiles still come from tile.openstreetmap.org — those are data fetched per
+  view and cannot be vendored — but the library that draws them no longer has
+  to survive a request to unpkg first.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/vendor/leaflet-1.9.4.css' %}"/>
+<script src="{% static 'js/vendor/leaflet-1.9.4.js' %}"></script>
 <script>
   (function () {
     var points = {{ points_json|safe }};

@@ -4,8 +4,18 @@
 {% block title %}Team Availability Calendar — Edify{% endblock %}
 
 {% block shell_content %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+{% comment %}
+  FullCalendar is loaded once, globally, from base.html — self-hosted at
+  6.1.11. This page used to pull 5.11.3 from a CDN on top of it, so two major
+  versions of the same library raced to define window.FullCalendar and the
+  winner depended on network timing.
+
+  Nothing here needed the older one: initialView, headerToolbar, buttonText,
+  dayMaxEventRows, datesSet and eventClick are all v6 options, and the global
+  bundle already carries the dayGrid, timeGrid and list views this uses. v6
+  injects its own styles, so the separate main.min.css it also loaded is not
+  replaced by anything — it no longer exists.
+{% endcomment %}
 
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 

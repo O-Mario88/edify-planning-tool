@@ -31,6 +31,15 @@ def _origins_used() -> set[str]:
         for path in (ROOT / folder).rglob("*"):
             if path.suffix not in (".html", ".js"):
                 continue
+            # static/js/vendor holds the self-hosted third-party bundles. Their
+            # minified source mentions origins they do not fetch — Alpine names
+            # alpinejs.dev in a warning string, FullCalendar links its own docs
+            # — and treating those as "origins this app loads" would push four
+            # URLs into the CSP that nothing ever requests. What the page
+            # actually loads is the <script src> in the template, which is
+            # scanned above and is same-origin.
+            if "/js/vendor/" in path.as_posix():
+                continue
             found.update(ORIGIN.findall(path.read_text(errors="ignore")))
     return found
 

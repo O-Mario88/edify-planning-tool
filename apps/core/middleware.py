@@ -282,19 +282,23 @@ class ContentSecurityPolicyMiddleware:
     """
 
     # Every external origin the application actually loads, and nothing else.
-    # Fonts and the two CDN libraries are the whole list; the map tiles are
-    # images. Adding an origin here should be a deliberate, reviewed edit.
+    #
+    # That list is now one entry: the OpenStreetMap tiles, which are data
+    # fetched per map view and cannot be vendored. Everything else — Geist,
+    # htmx, Alpine, ApexCharts, FullCalendar, Leaflet — is served from this
+    # origin, so unpkg, jsdelivr and the two Google Fonts hosts have been
+    # removed rather than left as standing permission for requests nothing
+    # makes. An allowance kept "just in case" is an allowance an injected
+    # script can use.
+    #
+    # Adding an origin back should be a deliberate, reviewed edit, and worth
+    # asking first whether the dependency can simply be vendored instead.
     POLICY = "; ".join(
         (
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
-            "https://unpkg.com https://cdn.jsdelivr.net",
-            # unpkg is here for leaflet.css on the school map, not only for
-            # scripts — a stylesheet origin missing from this list fails
-            # silently as an unstyled component rather than a visible error.
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com "
-            "https://cdn.jsdelivr.net https://unpkg.com",
-            "font-src 'self' data: https://fonts.gstatic.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "style-src 'self' 'unsafe-inline'",
+            "font-src 'self' data:",
             "img-src 'self' data: blob: https://tile.openstreetmap.org",
             "connect-src 'self'",
             # No plugins, no <base> rewriting, no framing, and forms may only
