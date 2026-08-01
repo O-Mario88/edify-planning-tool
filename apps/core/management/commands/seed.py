@@ -155,6 +155,14 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.MIGRATE_HEADING("Seeding Edify API..."))
         self._seed_permissions()
+        # Uganda's administrative boundaries are REFERENCE data, not demo data.
+        # They were seeded only under --demo, so production came up with no
+        # Region, District or SubCounty rows at all -- which is not a cosmetic
+        # gap: the school upload resolves a district by name, so every school
+        # imported without one, and district-scoped analytics reported
+        # "Coverage: 0 of 0 districts". The post_migrate hook could not save it
+        # either, being a documented no-op until districts already exist.
+        self._seed_geography()
         self._seed_super_admin()
         if demo:
             if settings.IS_PRODUCTION:  # defensive double-check
@@ -162,7 +170,6 @@ class Command(BaseCommand):
             if options["reset"]:
                 self._purge_operational()
             self._seed_demo_accounts()
-            self._seed_geography()
             self._seed_sample_data()
             # Mark THIS database as demo-seeded — if this database ever
             # reaches production (dump restore), System Health raises a
@@ -389,12 +396,68 @@ class Command(BaseCommand):
 
         reference_stats = ensure_geography_reference()
         ubos_stats = reference_stats["subcounties"]
+        alias_count = self._seed_district_aliases()
         self.stdout.write(
             f"  geography: {Region.objects.count()} regions, "
             f"{District.objects.count()} districts, {SubCounty.objects.count()} sub-counties, "
             f"{Parish.objects.count()} parishes "
-            f"({ubos_stats['created']} current UBOS identities added)."
+            f"({ubos_stats['created']} current UBOS identities added, "
+            f"{alias_count} upload aliases)."
         )
+
+    # Names the operational school register uses that are not UBOS districts.
+    # Two kinds, and neither is a typo the uploader should be guessing at:
+    #
+    #   • Wakiso and Mukono are split into directional working zones by the
+    #     field teams. They are real to the people filling in the register and
+    #     absent from every official list, so ~2,700 schools resolved to no
+    #     district at all rather than to the district they are plainly in.
+    #   • Three spellings that predate the current UBOS register.
+    #
+    # Recorded as GeographyAlias rows rather than fuzzy matching, so the
+    # mapping is inspectable, revertible, and cannot quietly absorb a genuinely
+    # new district that happens to look similar.
+    DISTRICT_UPLOAD_ALIASES = {
+        "Wakiso East": "Wakiso",
+        "Wakiso West": "Wakiso",
+        "Wakiso North": "Wakiso",
+        "Wakiso South": "Wakiso",
+        "Mukono North": "Mukono",
+        "Mukono South": "Mukono",
+        "Sembabule": "Ssembabule",
+        "Bukwa": "Bukwo",
+        "Bunyangabo": "Bunyangabu",
+    }
+
+    def _seed_district_aliases(self) -> int:
+        from apps.geography.models import District, GeographyAlias
+
+        by_name = {
+            district.name.strip().casefold(): district
+            for district in District.objects.all()
+        }
+        created = 0
+        for alias, official in self.DISTRICT_UPLOAD_ALIASES.items():
+            district = by_name.get(official.strip().casefold())
+            if district is None:
+                # The official district is genuinely absent from the register:
+                # skip rather than invent one, and say so.
+                self.stdout.write(
+                    f"    alias skipped — no district named {official!r} for {alias!r}."
+                )
+                continue
+            _, was_created = GeographyAlias.objects.get_or_create(
+                admin_level="district",
+                normalized_alias=alias.strip().casefold(),
+                defaults={
+                    "admin_id": district.id,
+                    "alias": alias,
+                    "source": "operational school register",
+                    "confidence": "curated",
+                },
+            )
+            created += int(was_created)
+        return created
 
     def _purge_operational(self):
         """Purge operational tables (keeps users, geography, reference)."""
