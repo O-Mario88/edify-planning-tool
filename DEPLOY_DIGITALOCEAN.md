@@ -150,6 +150,45 @@ A buildpack deployment must set `DJANGO_SETTINGS_MODULE=config.settings.collects
 for its build phase, or otherwise make the full production environment available
 at build time.
 
+## 3a. Custom domain: www.edifyplanning.app
+
+The spec declares `www.edifyplanning.app` as `PRIMARY` and the apex
+`edifyplanning.app` as `ALIAS`. DNS is registered at GoDaddy, so choose one of
+two wirings.
+
+**Keep DNS at GoDaddy.** Leave the `zone:` lines in `.do/app.yaml` commented
+out. After the first deploy, App Platform shows a CNAME target of the form
+`<app>-<hash>.ondigitalocean.app`. In GoDaddy → Domain → DNS → Records add:
+
+| Type | Name | Value | TTL |
+|---|---|---|---|
+| CNAME | `www` | the target App Platform shows, with a trailing dot | 600 |
+
+GoDaddy cannot put a CNAME on the apex. Either use GoDaddy Forwarding to send
+`edifyplanning.app` → `https://www.edifyplanning.app` as a permanent (301)
+redirect, or drop the apex entry from the spec.
+
+**Or move DNS to DigitalOcean.** Set the GoDaddy nameservers to
+`ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`, add
+`edifyplanning.app` under Networking → Domains, then uncomment the `zone:` lines
+so App Platform manages the records. The apex then works natively.
+
+Either way DigitalOcean issues and renews a free Let's Encrypt certificate once
+DNS resolves — usually minutes, up to an hour if the old TTL is long.
+
+Two things about `.app` specifically:
+
+- It is on the HSTS preload list. Browsers refuse plain HTTP for it entirely, so
+  the site will not load *at all* until the certificate is issued. A blank page
+  during that window is expected, not a misconfiguration.
+- `SECURE_HSTS_PRELOAD` is already on in `prod.py`, which is correct here.
+
+The matching application settings are in the spec: `ALLOWED_HOSTS` (without it
+Django returns `DisallowedHost` for every request), `CSRF_TRUSTED_ORIGINS`
+(without it every login POST fails CSRF, which presents as "login is broken"
+rather than anything mentioning CSRF), and `APP_BASE_URL`, which is what
+invitation and password-reset emails build their links from.
+
 ## 4. Storage verification and recovery
 
 The production settings fail closed when any required Spaces setting is
