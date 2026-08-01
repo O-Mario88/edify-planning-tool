@@ -242,8 +242,19 @@ button, a, select, input, textarea {
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
-<!-- ApexCharts & FullCalendar JS -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!-- ApexCharts & FullCalendar JS.
+
+     ApexCharts is pinned to an exact version. It was requested unversioned,
+     which does not mean "the version we tested" — it means whatever npm
+     published most recently. Every chart here was written against the 3.x API
+     (alongside Alpine 3.14 and htmx 1.9.12), and that URL had silently moved
+     to 6.6.1: three major versions of breaking changes arriving in production
+     with no commit, no deploy and nothing to roll back, which is what raised
+     "JavaScript exception on /planning".
+
+     Upgrading is a deliberate change with its own testing. Do not drop the
+     version to pick up fixes. -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1"></script>
 <script>
   /* App-wide ordered palette for comparison charts. Semantic status charts
      (success / warning / danger) intentionally opt out so colour never lies. */
