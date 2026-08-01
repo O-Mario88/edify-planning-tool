@@ -27,7 +27,9 @@
       </span>
 
       <div class="school-record-row__identity">
-        <h2 class="school-record-row__title">{{ school.school_name }}</h2>
+        <h2 class="school-record-row__title">
+          <a href="{% url 'frontend:school_detail' school.school_id %}">{{ school.school_name }}</a>
+        </h2>
         <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{{ school.district }}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address }}</dd></div>

@@ -26,15 +26,21 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 </div>
 {% endif %}
 
-<!-- School ID (Read-only reference) -->
+<!-- Official School ID -->
 <div>
-<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID <span class="text-rose-500">*</span> <span class="normal-case tracking-normal text-slate-400">(Immutable)</span></label>
+<label for="school_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School ID <span class="text-rose-500">*</span></label>
 <input
 type="text"
+name="school_id"
+id="school_id"
 value="{{ school.school_id }}"
-disabled
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 text-slate-400 focus:outline-none"
+maxlength="64"
+required
+autocomplete="off"
+aria-describedby="school-id-help"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
+<p id="school-id-help" class="mt-1 edify-text-caption font-medium text-slate-400">Use the unique official ID used for uploads and SSA matching.</p>
 </div>
 
 <!-- School Name -->

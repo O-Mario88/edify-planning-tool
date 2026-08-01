@@ -70,6 +70,7 @@ class SchoolProfileEditTest(TestCase):
 
     def _valid_payload(self, **overrides):
         payload = {
+            "school_id": self.school.school_id,
             "name": self.school.name,
             "school_type": "client",
             "school_phone": "",
@@ -105,6 +106,52 @@ class SchoolProfileEditTest(TestCase):
             self.assertContains(response, f'name="{field}"')
         self.assertContains(response, self.sub_county.name)
         self.assertContains(response, self.parish.name)
+
+    def test_directory_school_name_links_to_its_profile(self):
+        response = self.client.get(reverse("frontend:schools_directory"))
+
+        self.assertEqual(response.status_code, 200)
+        profile_url = reverse("frontend:school_detail", args=[self.school.school_id])
+        self.assertContains(response, f'href="{profile_url}"')
+        self.assertContains(response, f">{self.school.name}</a>")
+
+    def test_edit_drawer_allows_staff_to_change_the_official_school_id(self):
+        new_school_id = "PROFILE-202"
+
+        response = self.client.post(
+            self.edit_url,
+            self._valid_payload(school_id=new_school_id),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.school_id, new_school_id)
+        profile_url = reverse("frontend:school_detail", args=[new_school_id])
+        self.assertEqual(response.headers["HX-Redirect"], profile_url)
+        self.assertEqual(self.client.get(profile_url).status_code, 200)
+        audit = AuditLog.objects.filter(
+            action="school.profile_updated",
+            subject_id=self.school.id,
+        ).latest("seq")
+        self.assertIn("school_id", audit.payload["changed_fields"])
+
+    def test_edit_drawer_rejects_a_duplicate_official_school_id(self):
+        duplicate = School.objects.create(
+            school_id="PROFILE-DUPLICATE",
+            name="Another Profile School",
+            region=self.region,
+            district=self.district,
+        )
+
+        response = self.client.post(
+            self.edit_url,
+            self._valid_payload(school_id=duplicate.school_id),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "That School ID is already in use")
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.school_id, "PROFILE-101")
 
     def test_edit_drawer_exposes_all_current_partner_types(self):
         response = self.client.get(self.edit_url)

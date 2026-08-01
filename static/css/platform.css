@@ -2695,8 +2695,19 @@ main .platform-responsive-table [data-priority="low"] {
   text-wrap: balance;
 }
 
-.school-record-row__title a { color: inherit; text-decoration: none; }
+.school-record-row__title a {
+  position: relative;
+  z-index: 3;
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+}
 .school-record-row__title a:hover { color: var(--edify-accent); text-decoration: underline; }
+.school-record-row__title a:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
+  outline-offset: 3px;
+  border-radius: .2rem;
+}
 
 .school-record-row__metadata {
   display: flex;

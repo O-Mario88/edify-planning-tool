@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.redirects import local_redirect
 from apps.core.donut import build_gauge
@@ -13,6 +15,7 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.html import escape
 from django.utils.dateparse import parse_date
+from django.urls import reverse
 from urllib.parse import urlencode
 
 from apps.schools.models import School
@@ -1643,6 +1646,20 @@ def school_edit_drawer_view(request, school_id):
 
     if request.method == "POST":
         try:
+            official_school_id = (request.POST.get("school_id") or "").strip()
+            if not official_school_id:
+                raise BadRequest("School ID is required.")
+            if len(official_school_id) > School._meta.get_field("school_id").max_length:
+                raise BadRequest("School ID must be 64 characters or fewer.")
+            if (
+                School.all_objects.filter(school_id=official_school_id)
+                .exclude(pk=school.pk)
+                .exists()
+            ):
+                raise BadRequest(
+                    "That School ID is already in use. Enter a unique School ID."
+                )
+
             name = (request.POST.get("name") or "").strip()
             if not name:
                 raise BadRequest("School name is required.")
@@ -1744,6 +1761,7 @@ def school_edit_drawer_view(request, school_id):
             )
 
         previous = {
+            "school_id": school.school_id,
             "name": school.name,
             "school_type": school.school_type,
             "enrollment": school.enrollment,
@@ -1763,6 +1781,7 @@ def school_edit_drawer_view(request, school_id):
             "account_owner_id": school.account_owner_id,
         }
 
+        school.school_id = official_school_id
         school.name = name
         school.school_type = school_type
         school.school_phone = (request.POST.get("school_phone") or "").strip() or None
@@ -1815,6 +1834,7 @@ def school_edit_drawer_view(request, school_id):
             )
 
         current = {
+            "school_id": school.school_id,
             "name": school.name,
             "school_type": school.school_type,
             "enrollment": school.enrollment,
@@ -1854,6 +1874,16 @@ def school_edit_drawer_view(request, school_id):
             request,
             f"School '{school.name}' updated. Data quality was recalculated.",
         )
+        if previous["school_id"] != school.school_id:
+            # The profile route uses the official School ID. Send both an HTMX
+            # redirect and a JavaScript fallback so changing that identifier
+            # never reloads the now-stale profile URL.
+            profile_url = reverse("frontend:school_detail", args=[school.school_id])
+            response = HttpResponse(
+                f"<script>window.location.assign({json.dumps(profile_url)});</script>"
+            )
+            response["HX-Redirect"] = profile_url
+            return response
         return HttpResponse("<script>window.location.reload();</script>")
 
     return render(
