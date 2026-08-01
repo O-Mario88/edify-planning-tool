@@ -98,3 +98,15 @@ class ReconcileStaffMemberCommandTest(TestCase):
             self._call("--expected-schools", "3", apply=True)
         self.assertFalse(User.objects.filter(email="aluyima@edify.org").exists())
         self.assertEqual(StaffSchoolAssignment.objects.count(), 0)
+
+    def test_owner_name_alias_preserves_canonical_staff_name(self):
+        for school in self.schools:
+            school.account_owner_name_raw = "Alex Luyma"
+            school.save(update_fields=["account_owner_name_raw"])
+
+        output = self._call("--owner-name", "Alex Luyma", apply=True)
+
+        self.assertIn('"uploadedOwnerName": "Alex Luyma"', output)
+        user = User.objects.get(email="aluyima@edify.org")
+        self.assertEqual(user.name, "Alex Luyima")
+        self.assertEqual(user.staff_profile.school_links.count(), 2)

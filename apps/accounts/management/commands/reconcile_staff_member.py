@@ -37,6 +37,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--name", required=True)
+        parser.add_argument(
+            "--owner-name",
+            default="",
+            help=(
+                "Exact account-owner name used by the school upload when it differs "
+                "from the staff member's canonical name."
+            ),
+        )
         parser.add_argument("--email", required=True)
         parser.add_argument("--phone", required=True)
         parser.add_argument("--position", required=True)
@@ -53,6 +61,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         desired = {
             "name": options["name"].strip(),
+            "owner_name": (options["owner_name"].strip() or options["name"].strip()),
             "email": options["email"].strip().lower(),
             "phone": options["phone"].strip(),
             "position": options["position"].strip(),
@@ -73,11 +82,12 @@ class Command(BaseCommand):
         if not actor:
             raise CommandError("--actor-email must identify an active Admin account.")
 
-        matched_school_ids = self._matched_school_ids(desired["name"])
+        matched_school_ids = self._matched_school_ids(desired["owner_name"])
         if len(matched_school_ids) != desired["expected_schools"]:
             raise CommandError(
                 "Uploaded owner-name count mismatch for "
-                f"{desired['name']}: expected {desired['expected_schools']}, "
+                f"{desired['name']} (source name: {desired['owner_name']}): "
+                f"expected {desired['expected_schools']}, "
                 f"found {len(matched_school_ids)}. No changes were made."
             )
 
@@ -325,6 +335,7 @@ class Command(BaseCommand):
         )
         return {
             "name": desired["name"],
+            "uploadedOwnerName": desired["owner_name"],
             "email": desired["email"],
             "exists": user is not None,
             "currentName": user.name if user else None,
