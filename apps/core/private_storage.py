@@ -127,9 +127,10 @@ def materialized_file(namespace: str, stored_name: str) -> Iterator[str]:
     suffix = os.path.splitext(stored_name)[1]
     with tempfile.TemporaryDirectory(prefix="edify-private-object-") as tmp_dir:
         destination = os.path.join(tmp_dir, f"source{suffix}")
-        with open_file(namespace, stored_name) as source, open(
-            destination, "wb"
-        ) as target:
+        with (
+            open_file(namespace, stored_name) as source,
+            open(destination, "wb") as target,
+        ):
             while chunk := source.read(1024 * 1024):
                 target.write(chunk)
         yield destination

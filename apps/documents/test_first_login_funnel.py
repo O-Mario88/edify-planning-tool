@@ -77,10 +77,7 @@ class FirstLoginFunnelTest(DocumentTestBase):
         response, trail = self._follow(response)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
-            any(
-                hop.startswith(("/policy-agreement", "/documents/"))
-                for hop in trail
-            ),
+            any(hop.startswith(("/policy-agreement", "/documents/")) for hop in trail),
             f"expected the policy flow after the password change, got: {trail}",
         )
         self.cceo.refresh_from_db()
@@ -103,9 +100,6 @@ class FirstLoginFunnelTest(DocumentTestBase):
         response, trail = self._follow(response)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
-            any(
-                hop.startswith(("/policy-agreement", "/documents/"))
-                for hop in trail
-            ),
+            any(hop.startswith(("/policy-agreement", "/documents/")) for hop in trail),
             f"the agreements must still gate the application: {trail}",
         )

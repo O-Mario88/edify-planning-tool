@@ -54,7 +54,9 @@ class PendingInviteStaffVisibilityTest(TestCase):
         cls.district = District.objects.create(name="Invite District", region=region)
 
         # The shape a school upload produces: real portfolio, unaccepted invite.
-        cls.pending = _staff("pending", "Nancy Akello", "CCEO", "pending_invited", False)
+        cls.pending = _staff(
+            "pending", "Nancy Akello", "CCEO", "pending_invited", False
+        )
         cls.active = _staff("active", "Active Cceo", "CCEO", "active", True)
         cls.suspended = _staff("susp", "Suspended Cceo", "CCEO", "suspended", False)
         cls.disabled = _staff("disabled", "Disabled Cceo", "CCEO", "disabled", False)
@@ -71,30 +73,22 @@ class PendingInviteStaffVisibilityTest(TestCase):
         )
 
     def test_a_pending_invite_counts_as_on_staff(self):
-        names = set(
-            on_staff(StaffProfile.objects).values_list("user__name", flat=True)
-        )
+        names = set(on_staff(StaffProfile.objects).values_list("user__name", flat=True))
         self.assertIn("Nancy Akello", names)
         self.assertIn("Active Cceo", names)
 
     def test_deliberate_removals_stay_excluded(self):
         """The point is not "show everyone" — suspended and disabled are
         decisions somebody made and must keep their effect."""
-        names = set(
-            on_staff(StaffProfile.objects).values_list("user__name", flat=True)
-        )
+        names = set(on_staff(StaffProfile.objects).values_list("user__name", flat=True))
         self.assertNotIn("Suspended Cceo", names)
         self.assertNotIn("Disabled Cceo", names)
 
     def test_a_soft_deleted_profile_is_gone(self):
         from django.utils import timezone
 
-        StaffProfile.objects.filter(id=self.active.id).update(
-            deleted_at=timezone.now()
-        )
-        names = set(
-            on_staff(StaffProfile.objects).values_list("user__name", flat=True)
-        )
+        StaffProfile.objects.filter(id=self.active.id).update(deleted_at=timezone.now())
+        names = set(on_staff(StaffProfile.objects).values_list("user__name", flat=True))
         self.assertNotIn("Active Cceo", names)
 
     def test_the_school_owner_picker_offers_a_pending_invite(self):
@@ -124,7 +118,9 @@ class PendingInviteStaffVisibilityTest(TestCase):
 
         scope = resolve_user_scope(lead.user)
 
-        self.assertIn(str(self.pending.id), [str(i) for i in scope.supervised_staff_ids])
+        self.assertIn(
+            str(self.pending.id), [str(i) for i in scope.supervised_staff_ids]
+        )
         self.assertIn(
             self.school.id,
             scope.school_ids,

@@ -111,9 +111,7 @@ class Command(BaseCommand):
                 payload={"fields": changed},
             )
         except Exception:  # noqa: BLE001 — the repair matters more than its record
-            self.stdout.write(
-                self.style.WARNING("  (audit row could not be written)")
-            )
+            self.stdout.write(self.style.WARNING("  (audit row could not be written)"))
 
         self.stdout.write(self.style.SUCCESS(f"\nUpdated: {', '.join(changed)}"))
         self.stdout.write("Re-checked state:")
@@ -146,8 +144,12 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(f"\n{user.email}  ({user.name})")
-        self.stdout.write(f"  roles            : {user.roles}  active: {user.active_role}")
-        self.stdout.write(f"  status           : {user.status}   is_active: {user.is_active}")
+        self.stdout.write(
+            f"  roles            : {user.roles}  active: {user.active_role}"
+        )
+        self.stdout.write(
+            f"  status           : {user.status}   is_active: {user.is_active}"
+        )
         self.stdout.write(f"  locked_until     : {user.locked_until}")
         self.stdout.write(f"  lockout_escalated: {user.lockout_escalated}")
         self.stdout.write(f"  failed_login_cnt : {user.failed_login_count}")

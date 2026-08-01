@@ -385,9 +385,11 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     }
     if staff_id and role in management_roles and StaffProfile:
         if role == EdifyRole.COUNTRY_DIRECTOR.value:
-            manager_country = StaffProfile.objects.filter(id=staff_id).values_list(
-                "country", flat=True
-            ).first()
+            manager_country = (
+                StaffProfile.objects.filter(id=staff_id)
+                .values_list("country", flat=True)
+                .first()
+            )
             country_team_roles = [
                 EdifyRole.COUNTRY_PROGRAM_LEAD.value,
                 EdifyRole.IMPACT_ASSESSMENT.value,
@@ -417,9 +419,7 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                 ).values_list("supervisee_id", flat=True)
             )
             if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
-                managed_staff_ids = _uniq(
-                    [*managed_staff_ids, *supervised_staff_ids]
-                )
+                managed_staff_ids = _uniq([*managed_staff_ids, *supervised_staff_ids])
 
     return UserScope(
         user_id=user.user_id,

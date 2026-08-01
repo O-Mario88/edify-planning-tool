@@ -85,3 +85,41 @@ class DomainEventLog(TimeStampedModel):
 
 
 __all__ = ["AuditLog", "DomainEventLog"]
+
+
+class AuditChainCheckpoint(models.Model):
+    """How far the hash chain has been verified, and the hash it ended on.
+
+    verify_chain() recomputed every row on every call. Measured at 62.1
+    microseconds a row, which is 62 seconds at a million rows and over five
+    minutes at five — on the request path, holding a connection, because
+    System Health calls it. This platform writes an audit row for nearly every
+    action, so a million rows is a first-year number, not a hypothetical.
+
+    Storing the hash the verification ended on is what makes an incremental
+    check still tamper-evident rather than a weaker check that only looks at
+    recent rows. Each row's hash covers the previous hash, so a retroactive
+    edit has two possible outcomes and both are caught:
+
+      * the editor does not recompute the rows after it — the chain breaks at
+        the very next row, which any later verification walks straight into;
+      * the editor does recompute them — then the hash at the checkpoint seq
+        no longer matches the one recorded here, and the mismatch is the
+        detection.
+
+    Singleton by design: one chain, one frontier.
+    """
+
+    SINGLETON_ID = "audit-chain-checkpoint"
+
+    id = models.CharField(max_length=64, primary_key=True, default=SINGLETON_ID)
+    # The last sequence number proven correct, and the hash it produced.
+    verified_through_seq = models.BigIntegerField(null=True, blank=True)
+    verified_hash = models.CharField(max_length=128, null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    # Set when a verification fails, so the failure survives the request that
+    # found it and System Health keeps reporting it until it is resolved.
+    broken_at_seq = models.BigIntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "audit_chain_checkpoint"

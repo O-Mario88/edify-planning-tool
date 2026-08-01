@@ -45,9 +45,7 @@ _development_secret = "dev-only-insecure-secret-change-me"
 # supported explicit override for existing deployments; when only SECRET_KEY
 # is configured, the JWT layer reuses the same strong secret as before.
 SECRET_KEY = (
-    os.environ.get("SECRET_KEY")
-    or os.environ.get("JWT_SECRET")
-    or _development_secret
+    os.environ.get("SECRET_KEY") or os.environ.get("JWT_SECRET") or _development_secret
 )
 
 # DEVELOPMENT default; prod.py overrides to False with a hard gate.

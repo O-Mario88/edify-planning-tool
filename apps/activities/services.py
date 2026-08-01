@@ -738,9 +738,15 @@ def create(
             mode == "inherit_from_source_activity"
             for mode, _intervention in programme_mapping_rows
         )
-        if has_fixed_intervention and selected_intervention not in SsaIntervention.values:
+        if (
+            has_fixed_intervention
+            and selected_intervention not in SsaIntervention.values
+        ):
             raise BadRequest("Select the SSA intervention linked to this Activity.")
-        if inherits_intervention and selected_intervention not in SsaIntervention.values:
+        if (
+            inherits_intervention
+            and selected_intervention not in SsaIntervention.values
+        ):
             raise BadRequest(
                 "Select the training or support intervention being followed up."
             )

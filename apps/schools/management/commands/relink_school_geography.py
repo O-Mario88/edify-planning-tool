@@ -59,7 +59,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         from apps.geography.models import District
         from apps.schools.models import School
-        from apps.schools.upload_service import _build_geography_index, _resolve_geography
+        from apps.schools.upload_service import (
+            _build_geography_index,
+            _resolve_geography,
+        )
 
         dry_run = options["dry_run"]
         force = options["force"]
@@ -128,9 +131,7 @@ class Command(BaseCommand):
                 f"\nStill unresolved ({sum(unresolved.values())} school(s)) — these "
                 "district names match no district and no alias:"
             )
-            for name, count in sorted(
-                unresolved.items(), key=lambda kv: -kv[1]
-            )[:20]:
+            for name, count in sorted(unresolved.items(), key=lambda kv: -kv[1])[:20]:
                 self.stdout.write(f"  {count:>6}  {name!r}")
             self.stdout.write(
                 "Add each to Command.DISTRICT_UPLOAD_ALIASES in the seed command "

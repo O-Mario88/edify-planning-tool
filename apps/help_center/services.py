@@ -404,7 +404,9 @@ def _canonical_content_is_installed() -> bool:
         return False
 
     expected_slugs = {slugify(term) for term, _definition, _used, _related in GLOSSARY}
-    expected_terms = {label for _source, _field, _value, label in collect_workflow_statuses()}
+    expected_terms = {
+        label for _source, _field, _value, label in collect_workflow_statuses()
+    }
     present_slugs = set()
     present_terms = set()
     for slug, term in HelpGlossaryTerm.objects.values_list("slug", "term"):
@@ -648,7 +650,9 @@ def knowledge_tree(
     categories = list(HelpCategory.objects.all())
     categories.sort(
         key=lambda category: (
-            12 if category.slug in {"glossary", "troubleshooting"} else category.sort_order,
+            12
+            if category.slug in {"glossary", "troubleshooting"}
+            else category.sort_order,
             0 if category.slug == "glossary" else 1,
         )
     )

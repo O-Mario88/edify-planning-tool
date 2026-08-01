@@ -1350,9 +1350,7 @@ def ia_dashboard_view(request):
     owner_rollup = _activity_rollup(performance_qs, "responsible_staff_id")
     active_staff_roster = list(
         # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-        on_staff(StaffProfile.objects)
-        .select_related("user")
-        .order_by("user__name")
+        on_staff(StaffProfile.objects).select_related("user").order_by("user__name")
     )
     monitored_staff = [
         staff

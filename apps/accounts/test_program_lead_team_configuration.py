@@ -281,7 +281,9 @@ class ProgramLeadTeamConfigurationTest(TestCase):
     def test_country_director_automatically_manages_required_country_roles(self):
         response = self.client.get(self._user_url(self.cd))
 
-        self.assertContains(response, "automatically manage every PL, IA, Accountant, and CCEO")
+        self.assertContains(
+            response, "automatically manage every PL, IA, Accountant, and CCEO"
+        )
         scope = resolve_user_scope(self.cd.user)
         self.assertSetEqual(
             set(scope.managed_staff_ids),

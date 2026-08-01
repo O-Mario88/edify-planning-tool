@@ -31,21 +31,16 @@ SPACES_BUCKET_NAME = os.environ.get("SPACES_BUCKET_NAME", "").strip()
 SPACES_REGION = os.environ.get("SPACES_REGION", "").strip().lower()
 SPACES_ACCESS_KEY_ID = os.environ.get("SPACES_ACCESS_KEY_ID", "").strip()
 SPACES_SECRET_ACCESS_KEY = os.environ.get("SPACES_SECRET_ACCESS_KEY", "").strip()
-SPACES_ENDPOINT_URL = (
-    os.environ.get("SPACES_ENDPOINT_URL", "").strip()
-    or (f"https://{SPACES_REGION}.digitaloceanspaces.com" if SPACES_REGION else "")
+SPACES_ENDPOINT_URL = os.environ.get("SPACES_ENDPOINT_URL", "").strip() or (
+    f"https://{SPACES_REGION}.digitaloceanspaces.com" if SPACES_REGION else ""
 )
 SPACES_PREFIX = os.environ.get("SPACES_PREFIX", "edify").strip().strip("/")
 SPACES_CONNECT_TIMEOUT_SECONDS = _as_int(
     os.environ.get("SPACES_CONNECT_TIMEOUT_SECONDS"), 5
 )
-SPACES_READ_TIMEOUT_SECONDS = _as_int(
-    os.environ.get("SPACES_READ_TIMEOUT_SECONDS"), 30
-)
+SPACES_READ_TIMEOUT_SECONDS = _as_int(os.environ.get("SPACES_READ_TIMEOUT_SECONDS"), 30)
 SPACES_MAX_ATTEMPTS = _as_int(os.environ.get("SPACES_MAX_ATTEMPTS"), 3)
-SPACES_MAX_POOL_CONNECTIONS = _as_int(
-    os.environ.get("SPACES_MAX_POOL_CONNECTIONS"), 20
-)
+SPACES_MAX_POOL_CONNECTIONS = _as_int(os.environ.get("SPACES_MAX_POOL_CONNECTIONS"), 20)
 
 # ── Production safety gates (collect ALL violations, then fail) ──────────────
 # Mirrors NestJS: "Production environment is not safe:\n<issues>".
@@ -156,6 +151,7 @@ if _issues:
 if "*" in ALLOWED_HOSTS:
     ALLOWED_HOSTS = []
 
+
 def _platform_hostname(value: str | None) -> str:
     """Return a hostname from either ``host`` or ``https://host/path``."""
 
@@ -172,8 +168,7 @@ def _platform_hostname(value: str | None) -> str:
 # for custom domains on either platform.
 _platform_domains = {
     _platform_hostname(
-        os.environ.get("DIGITALOCEAN_APP_DOMAIN")
-        or os.environ.get("APP_DOMAIN")
+        os.environ.get("DIGITALOCEAN_APP_DOMAIN") or os.environ.get("APP_DOMAIN")
     ),
     _platform_hostname(os.environ.get("RAILWAY_PUBLIC_DOMAIN")),
 }

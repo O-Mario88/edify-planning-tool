@@ -37,7 +37,9 @@ class EvidenceStorageHealthTest(SimpleTestCase):
         tmp = tempfile.mkdtemp(prefix="edify-evidence-health-")
         try:
             with (
-                patch("apps.evidence.health._probe_writable", return_value=(True, None)),
+                patch(
+                    "apps.evidence.health._probe_writable", return_value=(True, None)
+                ),
                 patch(
                     "apps.evidence.health.local_path",
                     return_value=f"{tmp}/probe.tmp",
@@ -66,7 +68,9 @@ class EvidenceStorageHealthTest(SimpleTestCase):
         try:
             fake_usage = shutil._ntuple_diskusage(total=10**12, used=10**12, free=1024)
             with (
-                patch("apps.evidence.health._probe_writable", return_value=(True, None)),
+                patch(
+                    "apps.evidence.health._probe_writable", return_value=(True, None)
+                ),
                 patch(
                     "apps.evidence.health.local_path",
                     return_value=f"{tmp}/probe.tmp",

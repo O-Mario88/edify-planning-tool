@@ -52,9 +52,7 @@ class ClusteringBoundaryTest(TestCase):
             status="active",
         )
         # The second shape of occupancy: multi-sub-county coverage.
-        ClusterSubCounty.objects.create(
-            cluster=cls.cluster, sub_county=cls.covered_sc
-        )
+        ClusterSubCounty.objects.create(cluster=cls.cluster, sub_county=cls.covered_sc)
 
         cls.admin = User.objects.create(
             id="clusterbound-admin",

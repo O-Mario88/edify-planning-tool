@@ -201,7 +201,9 @@ class KnowledgeCenterShellTest(TestCase):
 
         self.assertContains(response, "Table of contents")
         self.assertContains(response, 'class="help-toc"', count=1)
-        self.assertContains(response, '<span class="help-toc__category">Glossary</span>')
+        self.assertContains(
+            response, '<span class="help-toc__category">Glossary</span>'
+        )
         self.assertContains(
             response,
             '<span class="help-toc__category">Troubleshooting</span>',

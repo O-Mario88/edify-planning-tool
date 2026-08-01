@@ -60,6 +60,7 @@ DOCUMENT_EXTENSION_FAMILY = {**EXTENSION_FAMILY, **PRESENTATION_EXTENSION_FAMILY
 CONVERTIBLE_EXTENSIONS = {".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".odt"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
+
 def document_dir() -> str:
     """Compatibility path for local development and containment tests."""
     directory = os.path.dirname(
@@ -169,6 +170,7 @@ def build_preview(version) -> str:
         return PreviewStatus.READY  # already done; never convert twice
 
     ext = (version.file_extension or "").lower()
+
     def _finish(status, uri="", error="", pages=None):
         version.preview_status = status
         version.preview_uri = uri

@@ -111,9 +111,7 @@ class CatalogueSeedContractTests(TestCase):
 
 class CatalogueSnapshotTests(TestCase):
     def test_scheduled_activity_snapshot_does_not_change_with_master_data(self):
-        item = ActivityCatalogueItem.objects.get(
-            stable_code="PARTNER_MEETINGS_ADMIN"
-        )
+        item = ActivityCatalogueItem.objects.get(stable_code="PARTNER_MEETINGS_ADMIN")
         activity = Activity.objects.create(activity_type=item.workflow_kind)
         apply_catalogue_snapshot(activity, item=item)
         original = activity.activity_name_snapshot
@@ -163,8 +161,7 @@ class SsaLedRecommendationTests(TestCase):
         result = recommend_activities(school=self.school, limit=3)
         self.assertFalse(result["hasApplicableSsa"])
         codes = [
-            row["stableCode"]
-            for row in [*result["primary"], *result["otherEligible"]]
+            row["stableCode"] for row in [*result["primary"], *result["otherEligible"]]
         ]
         self.assertEqual(codes, ["ASA_SSA_DATA_GATHERING"])
         self.assertLessEqual(len(result["primary"]), 3)
@@ -188,8 +185,7 @@ class SsaLedRecommendationTests(TestCase):
         result = recommend_activities(school=self.school, limit=3)
         self.assertTrue(result["hasApplicableSsa"])
         codes = {
-            row["stableCode"]
-            for row in [*result["primary"], *result["otherEligible"]]
+            row["stableCode"] for row in [*result["primary"], *result["otherEligible"]]
         }
         # This item is Cluster-only, so an individual-school scheduling
         # context correctly withholds it. The cluster context makes it eligible.
@@ -203,9 +199,7 @@ class SsaLedRecommendationTests(TestCase):
             region=self.school.region,
             district=self.school.district,
         )
-        clustered = recommend_activities(
-            school=self.school, cluster=cluster, limit=3
-        )
+        clustered = recommend_activities(school=self.school, cluster=cluster, limit=3)
         clustered_codes = {
             row["stableCode"]
             for row in [*clustered["primary"], *clustered["otherEligible"]]
@@ -219,7 +213,9 @@ class SsaLedRecommendationTests(TestCase):
         # need is unmet and why its own response is unavailable here.
         unmet = result["unmetPriority"]
         self.assertIsNotNone(unmet, "the unaddressed top need must be surfaced")
-        self.assertEqual(unmet["need"]["intervention"], SsaIntervention.FINANCIAL_HEALTH)
+        self.assertEqual(
+            unmet["need"]["intervention"], SsaIntervention.FINANCIAL_HEALTH
+        )
         self.assertIn(
             "Accounting and Financial Management",
             [blocked["displayName"] for blocked in unmet["blockedBy"]],
@@ -319,12 +315,8 @@ class SsaLedRecommendationTests(TestCase):
         ]
         for index, (intervention, expected_code) in enumerate(cases):
             school = self._school_with_need(index, intervention, cluster)
-            first = recommend_activities(
-                school=school, cluster=cluster, limit=3
-            )
-            second = recommend_activities(
-                school=school, cluster=cluster, limit=3
-            )
+            first = recommend_activities(school=school, cluster=cluster, limit=3)
+            second = recommend_activities(school=school, cluster=cluster, limit=3)
             first_codes = [
                 row["stableCode"]
                 for row in [*first["primary"], *first["otherEligible"]]

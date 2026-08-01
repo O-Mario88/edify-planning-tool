@@ -240,9 +240,7 @@ class UploadCenterService:
         from apps.core.rbac import Permission, permissions_for_role
         from apps.documents.services import has_permission
 
-        held = set(
-            permissions_for_role(getattr(principal, "active_role", "") or "")
-        )
+        held = set(permissions_for_role(getattr(principal, "active_role", "") or ""))
         actions: list[dict] = []
 
         if Permission.SCHOOL_UPLOAD.value in held:

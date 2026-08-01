@@ -75,8 +75,7 @@ class Fy2027PrioritySeedTests(TestCase):
         )
         self.assertTrue(
             all(
-                priority.source_document
-                == "2027 priorities to be set by RVP.docx"
+                priority.source_document == "2027 priorities to be set by RVP.docx"
                 for priority in priorities
             )
         )

@@ -927,9 +927,7 @@ def edit_cluster_drawer_view(request, cluster_id):
             "id": sc.id,
             "name": sc.name,
             "district_id": sc.district_id,
-            "covered_by": None
-            if str(sc.id) in own
-            else covered.get(str(sc.id)),
+            "covered_by": None if str(sc.id) in own else covered.get(str(sc.id)),
         }
         for sc in sub_counties
     ]

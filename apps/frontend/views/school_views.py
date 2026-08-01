@@ -56,7 +56,8 @@ def _may_upload_ssa(request) -> bool:
 def _school_owner_queryset():
     """Active CCEO/Program Lead profiles eligible to own a school."""
     return (
-        on_staff(StaffProfile.objects).filter(
+        on_staff(StaffProfile.objects)
+        .filter(
             # on_staff, not is_active: a CCEO auto-created by a school upload
             # is a pending invite and already owns the schools that created
             # her. Filtering on login-ability hid real owners from the owner

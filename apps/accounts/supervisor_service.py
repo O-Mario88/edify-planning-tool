@@ -108,9 +108,7 @@ def managed_people_team(manager: StaffProfile) -> dict | None:
         {str(person.id) for person in people}
         if automatic
         else set(
-            StaffSupervisorAssignment.objects.filter(
-                supervisor=manager
-            ).values_list(
+            StaffSupervisorAssignment.objects.filter(supervisor=manager).values_list(
                 "supervisee_id", flat=True
             )
         )
@@ -130,9 +128,7 @@ def managed_people_team(manager: StaffProfile) -> dict | None:
                 supervisee_id__in=[person.id for person in people]
             )
             .filter(
-                _profile_role_query(
-                    "supervisor", EdifyRole.COUNTRY_PROGRAM_LEAD.value
-                )
+                _profile_role_query("supervisor", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
             )
             .select_related("supervisor__user")
         )
@@ -433,7 +429,9 @@ def configure_managed_people(
         raise Forbidden("Only an Admin can configure managed people.")
 
     selected_ids = list(
-        dict.fromkeys(str(staff_id).strip() for staff_id in managed_staff_ids if staff_id)
+        dict.fromkeys(
+            str(staff_id).strip() for staff_id in managed_staff_ids if staff_id
+        )
     )
 
     with transaction.atomic():

@@ -204,7 +204,9 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         critical = self._pending_activity(self._school("critical"))
         critical.activity_type = "core_visit"
         critical.submitted_to_ia_at = now - timezone.timedelta(hours=2)
-        critical.save(update_fields=["activity_type", "submitted_to_ia_at", "updated_at"])
+        critical.save(
+            update_fields=["activity_type", "submitted_to_ia_at", "updated_at"]
+        )
 
         overdue = self._pending_activity(self._school("overdue"))
         overdue.submitted_to_ia_at = now - timezone.timedelta(hours=30)

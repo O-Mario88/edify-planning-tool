@@ -138,7 +138,9 @@ class DigitalOceanDeploymentContractTest(SimpleTestCase):
             check=False,
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("SECRET_KEY must not contain a development placeholder", result.stderr)
+        self.assertIn(
+            "SECRET_KEY must not contain a development placeholder", result.stderr
+        )
 
     def test_production_builds_private_spaces_backends(self):
         code = """
@@ -245,7 +247,10 @@ class AppPlatformSpecTest(SimpleTestCase):
         "edify-planning-tool-abc12.ondigitalocean.app",
         "localhost",
         "127.0.0.1",
-        "0.0.0.0",
+        # nosec B104 - the ALLOWED_HOSTS Host-header allowlist, not a socket
+        # bind address; mirrors the same list (and the same annotation) in
+        # config/settings/prod.py, which is what this test exists to reproduce.
+        "0.0.0.0",  # nosec B104
     ],
     DEBUG=False,
 )
@@ -327,7 +332,11 @@ class BuildTimeStaticCollectionTest(SimpleTestCase):
 
     def test_dockerfile_carries_no_placeholder_secrets(self):
         dockerfile = _read("Dockerfile")
-        for leftover in ("JWT_SECRET=", "SUPER_ADMIN_PASSWORD=", "FIELD_ENCRYPTION_KEY="):
+        for leftover in (
+            "JWT_SECRET=",
+            "SUPER_ADMIN_PASSWORD=",
+            "FIELD_ENCRYPTION_KEY=",
+        ):
             self.assertNotIn(
                 leftover,
                 dockerfile,
@@ -339,7 +348,9 @@ class BuildTimeStaticCollectionTest(SimpleTestCase):
         env = {
             key: value
             for key, value in os.environ.items()
-            if not key.startswith(("SPACES_", "SECRET_", "JWT_", "FIELD_", "SUPER_ADMIN"))
+            if not key.startswith(
+                ("SPACES_", "SECRET_", "JWT_", "FIELD_", "SUPER_ADMIN")
+            )
         }
         env["DJANGO_SETTINGS_MODULE"] = "config.settings.collectstatic"
         result = subprocess.run(

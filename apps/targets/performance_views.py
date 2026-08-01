@@ -113,12 +113,14 @@ class CountryTargetsView(APIView):
         # All active field staff (CCEO/PL).
         staff = list(
             # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-            on_staff(StaffProfile.objects).filter(
+            on_staff(StaffProfile.objects)
+            .filter(
                 user__active_role__in=[
                     EdifyRole.CCEO.value,
                     EdifyRole.COUNTRY_PROGRAM_LEAD.value,
                 ],
-            ).select_related("user")
+            )
+            .select_related("user")
         )
 
         all_metrics = {}

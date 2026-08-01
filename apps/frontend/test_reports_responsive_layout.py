@@ -20,7 +20,9 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         self.assertNotIn("max-w-[1500px]", template)
         self.assertNotIn("mx-auto", template)
         self.assertIn("edify-report-header__layout", template)
-        self.assertIn('<label for="reports-fiscal-year">Financial year</label>', template)
+        self.assertIn(
+            '<label for="reports-fiscal-year">Financial year</label>', template
+        )
         self.assertIn('id="reports-timeline-title"', template)
         self.assertIn('id="reports-core-targets-title"', template)
         self.assertIn('id="reports-matrix-title"', template)

@@ -70,13 +70,9 @@ def priority_configuration_page(request):
     if raw_fy:
         fy = _requested_fy(request)
     else:
-        fy = (
-            StrategicPriorityCycle.objects.exclude(status="archived")
-            .order_by("-financial_year")
-            .values_list("financial_year", flat=True)
-            .first()
-            or _requested_fy(request)
-        )
+        fy = StrategicPriorityCycle.objects.exclude(status="archived").order_by(
+            "-financial_year"
+        ).values_list("financial_year", flat=True).first() or _requested_fy(request)
 
     cycle = (
         StrategicPriorityCycle.objects.prefetch_related(
@@ -121,9 +117,7 @@ def priority_configuration_page(request):
         needs_definition_count += group_needs_definition
         defined_count += group_defined
         approved_count += sum(
-            1
-            for milestone in milestones
-            if milestone.definition_status == "approved"
+            1 for milestone in milestones if milestone.definition_status == "approved"
         )
         allocation_count += group_allocations
         group_rows.append(

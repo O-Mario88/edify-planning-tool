@@ -85,9 +85,7 @@ def seed_boundaries(apps, schema_editor):
                 continue
 
             if region_name not in regions:
-                regions[region_name], _ = Region.objects.get_or_create(
-                    name=region_name
-                )
+                regions[region_name], _ = Region.objects.get_or_create(name=region_name)
             region = regions[region_name]
 
             key = (region_name, district_name)

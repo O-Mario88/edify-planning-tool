@@ -387,9 +387,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         # presented primary CTAs as selected filters with black labels.
         self.assertGreaterEqual(_contrast_ratio("#ffffff", "#1872bd"), 4.5)
         for stylesheet in (components, consistency):
-            self.assertNotIn(
-                "color: var(--edify-navy-950) !important;", stylesheet
-            )
+            self.assertNotIn("color: var(--edify-navy-950) !important;", stylesheet)
             self.assertIn("color: var(--edify-on-accent) !important;", stylesheet)
             self.assertIn(
                 "background-color: var(--edify-accent) !important;", stylesheet
@@ -514,9 +512,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         card_actions = []
         class_attribute = re.compile(r'class="([^"]*\bedify-card-action\b[^"]*)"')
         for path in (ROOT / "templates").rglob("*.html"):
-            for classes in class_attribute.findall(
-                path.read_text(encoding="utf-8")
-            ):
+            for classes in class_attribute.findall(path.read_text(encoding="utf-8")):
                 card_actions.append((str(path.relative_to(ROOT)), classes))
                 self.assertNotIn(
                     "w-full",
@@ -1244,9 +1240,7 @@ class TypeScaleFloorTest(SimpleTestCase):
                 for value, unit in value_pattern.findall(declaration):
                     pixels = float(value) * 16 if unit == "rem" else float(value)
                     if pixels < self.MICRO_PX:
-                        offenders.append(
-                            f"{path.name}: {value}{unit} ({pixels:g}px)"
-                        )
+                        offenders.append(f"{path.name}: {value}{unit} ({pixels:g}px)")
         self.assertEqual(offenders, [], f"below the micro tier: {offenders}")
 
     def test_source_stylesheets_name_every_size_below_the_label_tier(self):
@@ -1261,9 +1255,7 @@ class TypeScaleFloorTest(SimpleTestCase):
                 for value, unit in value_pattern.findall(declaration):
                     pixels = float(value) * 16 if unit == "rem" else float(value)
                     if pixels < 14:
-                        offenders.append(
-                            f"{path.name}: {value}{unit} ({pixels:g}px)"
-                        )
+                        offenders.append(f"{path.name}: {value}{unit} ({pixels:g}px)")
         self.assertEqual(offenders, [], f"unnamed compact text: {offenders}")
 
     def test_no_template_uses_a_one_off_tiny_utility(self):
@@ -1287,9 +1279,7 @@ class TypeScaleFloorTest(SimpleTestCase):
         for path in [ROOT / "static/js/alpine-components.js", *template_charts]:
             for value in pattern.findall(path.read_text()):
                 if float(value) < self.MICRO_PX:
-                    offenders.append(
-                        f"{path.relative_to(ROOT)}: fontSize {value}px"
-                    )
+                    offenders.append(f"{path.relative_to(ROOT)}: fontSize {value}px")
         self.assertEqual(offenders, [], f"chart text below the floor: {offenders}")
 
     def test_inline_template_css_respects_the_twelve_pixel_floor(self):
@@ -1301,17 +1291,13 @@ class TypeScaleFloorTest(SimpleTestCase):
                 for value, unit in value_pattern.findall(declaration):
                     pixels = float(value) * 16 if unit == "rem" else float(value)
                     if pixels < self.MICRO_PX:
-                        offenders.append(
-                            f"{path.relative_to(ROOT)}: {value}{unit}"
-                        )
+                        offenders.append(f"{path.relative_to(ROOT)}: {value}{unit}")
         self.assertEqual(offenders, [], f"inline text below the floor: {offenders}")
 
     def test_readable_core_tiers_are_defined(self):
         tokens = _read("static/css/design-system.css")
         self.assertIn("--edify-text-floor:        0.75rem;", tokens)
-        self.assertIn(
-            "--edify-text-micro-size:   var(--edify-text-floor);", tokens
-        )
+        self.assertIn("--edify-text-micro-size:   var(--edify-text-floor);", tokens)
         self.assertIn(
             "--edify-text-label-size:   0.875rem;",
             tokens,
@@ -1355,9 +1341,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("container: legacy-kpi-card / inline-size", consistency)
         self.assertIn("@container kpi-card (max-width: 16rem)", components)
         self.assertIn("@container legacy-kpi-card (max-width: 16rem)", consistency)
-        self.assertIn(
-            "font-size: var(--edify-text-tile-value-size)", components
-        )
+        self.assertIn("font-size: var(--edify-text-tile-value-size)", components)
         self.assertIn(
             "font-size: var(--edify-text-tile-value-size) !important",
             consistency,
@@ -1459,12 +1443,10 @@ class TemplateFilterArgumentGuardTest(SimpleTestCase):
         """The pattern above is easy to write so it matches nothing at all."""
         self.assertTrue(
             self.DOTTED_ARGUMENT.search(
-                '{{ school.sub_county.name|default:school.district.name }}'
+                "{{ school.sub_county.name|default:school.district.name }}"
             )
         )
-        self.assertTrue(
-            self.DOTTED_ARGUMENT.search('{{ a|default_if_none:b.c }}')
-        )
+        self.assertTrue(self.DOTTED_ARGUMENT.search("{{ a|default_if_none:b.c }}"))
         # Literals must not be flagged — they cannot fail to resolve.
         self.assertIsNone(self.DOTTED_ARGUMENT.search('{{ a|default:"—" }}'))
         self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:'Search' }}"))

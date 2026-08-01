@@ -43,7 +43,9 @@ class _SlidingWindow:
         """
         self._last_sweep_ms = now_ms
         cutoff = now_ms - self._max_window_ms
-        for key in [k for k, hits in self._hits.items() if not hits or hits[-1] <= cutoff]:
+        for key in [
+            k for k, hits in self._hits.items() if not hits or hits[-1] <= cutoff
+        ]:
             del self._hits[key]
 
     def hit(self, key: str, *, window_ms: int, limit: int) -> bool:

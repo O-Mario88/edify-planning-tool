@@ -1274,9 +1274,9 @@ class ClusterDashboardService:
             .values("ssa_record__school__cluster_id", "intervention")
             .annotate(avg=Avg("score"), below=Count("id", filter=Q(score__lt=5.5)))
         ):
-            stats_by_cluster.setdefault(
-                row["ssa_record__school__cluster_id"], {}
-            )[row["intervention"]] = {"avg": row["avg"], "below": row["below"]}
+            stats_by_cluster.setdefault(row["ssa_record__school__cluster_id"], {})[
+                row["intervention"]
+            ] = {"avg": row["avg"], "below": row["below"]}
 
         # Two grouped reads replace three activity queries per cluster. Max()
         # skips rows with no planned_date, where the previous

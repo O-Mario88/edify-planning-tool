@@ -124,9 +124,7 @@ def _assignable_staff(user):
         return StaffProfile.objects.none()
     return (
         # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-        on_staff(StaffProfile.objects)
-        .select_related("user")
-        .order_by("user__name")
+        on_staff(StaffProfile.objects).select_related("user").order_by("user__name")
     )
 
 
