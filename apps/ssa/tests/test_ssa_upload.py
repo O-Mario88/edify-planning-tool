@@ -17,7 +17,7 @@ from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import User
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
-from apps.schools.models import DataQualityIssue, School
+from apps.schools.models import DataQualityIssue, School, UnmatchedSSARecord
 from apps.ssa.models import SsaRecord
 
 
@@ -99,6 +99,72 @@ class SsaUploadTest(APITestCase):
             ).exists()
         )
 
+    def test_first_current_fy_file_upload_is_allowed_as_the_baseline(self):
+        from apps.core.fy import get_operational_fy
+
+        current_fy = get_operational_fy()
+        body = (
+            f"{SSA_HEADERS}\n"
+            f"SSA-SCH-1,{current_fy}-06-15,{current_fy},7,6,8,7,5,6,4,7\n"
+        )
+
+        response = self._post(self._csv(body))
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["created_rows"], 1)
+        self.assertEqual(SsaRecord.objects.get().fy, current_fy)
+
+    def test_multiple_assessment_dates_in_one_fy_are_imported(self):
+        from apps.core.fy import get_operational_fy
+
+        current_fy = get_operational_fy()
+        body = (
+            f"{SSA_HEADERS}\n"
+            f"SSA-SCH-1,{current_fy}-04-15,{current_fy},7,6,8,7,5,6,4,7\n"
+            f"SSA-SCH-1,{current_fy}-06-15,{current_fy},8,7,9,8,6,7,5,8\n"
+        )
+
+        response = self._post(self._csv(body))
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["created_rows"], 2)
+        self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 2)
+
+    def test_same_school_and_date_is_not_imported_twice(self):
+        from apps.core.fy import get_operational_fy
+
+        current_fy = get_operational_fy()
+        body = (
+            f"{SSA_HEADERS}\n"
+            f"SSA-SCH-1,{current_fy}-06-15,{current_fy},7,6,8,7,5,6,4,7\n"
+            f"SSA-SCH-1,{current_fy}-06-15,{current_fy},8,7,9,8,6,7,5,8\n"
+        )
+
+        response = self._post(self._csv(body))
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["created_rows"], 1)
+        self.assertEqual(response.json()["failed_rows"], 1)
+        self.assertEqual(SsaRecord.objects.filter(school=self.school).count(), 1)
+        self.assertIn("assessment date already exists", response.content.decode())
+
+    def test_reupload_does_not_duplicate_the_unmatched_queue(self):
+        body = f"{SSA_HEADERS}\nGHOST-SCHOOL,2026-07-01,{SCORES}\n"
+
+        first = self._post(self._csv(body, name="first.csv"))
+        second = self._post(self._csv(body, name="second.csv"))
+
+        self.assertEqual(first.status_code, 422, first.content)
+        self.assertEqual(second.status_code, 422, second.content)
+        self.assertEqual(
+            UnmatchedSSARecord.objects.filter(
+                school_id="GHOST-SCHOOL",
+                date_of_ssa="2026-07-01",
+                status="pending",
+            ).count(),
+            1,
+        )
+
     def test_html_upload_center_imports_and_redirects_to_result(self):
         self.client.force_login(self.ia)
         body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
@@ -120,6 +186,13 @@ class SsaUploadTest(APITestCase):
         )
         self.assertTrue(SsaRecord.objects.filter(school=self.school).exists())
 
+        result_page = self.client.get(response["Location"])
+        self.assertContains(
+            result_page,
+            "Valid SSA assessments were linked to their matching School IDs.",
+        )
+        self.assertContains(result_page, ">1<", html=False)
+
     def test_upload_center_connects_drop_event_to_file_input(self):
         self.client.force_login(self.ia)
 
@@ -129,6 +202,8 @@ class SsaUploadTest(APITestCase):
         self.assertContains(response, "selectDroppedFile($event.dataTransfer.files)")
         self.assertContains(response, "this.$refs.fileInput.files = files")
         self.assertContains(response, 'id="ssa-selected-file"')
+        self.assertContains(response, "A school may have several SSA assessments")
+        self.assertContains(response, "Large workbooks can take a few minutes")
 
     def test_upload_query_count_does_not_grow_per_ssa_row(self):
         def measured_upload(prefix, count):

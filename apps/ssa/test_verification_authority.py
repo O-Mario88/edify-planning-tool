@@ -1,4 +1,4 @@
-"""SSA verification is Impact Assessment's, and it lives in one place.
+"""SSA verification authority lives in one service boundary.
 
 `ssa_views.py` used to write `verification_status = CONFIRMED` inline. The view
 did check the permission first, so this was never an open door — but a
@@ -6,8 +6,9 @@ transition written in a view is a transition every other caller can perform
 without the authority check, the readiness recompute or the audit row, and
 those three are what make a confirmation mean anything.
 
-Section 35: official SSA verification must require IA authority and must not
-follow from a role merely being able to open the page.
+Official SSA verification requires IA authority. Platform Admin has every
+permission by policy, so it may also perform the transition; page visibility
+alone must not grant that authority to any other role.
 """
 
 from __future__ import annotations
@@ -66,9 +67,13 @@ class SsaVerificationAuthorityTests(TestCase):
         self.assertEqual(record.verification_status, VerificationStatus.CONFIRMED.value)
         self.assertIsNotNone(record.verified_at)
 
-    def test_nobody_else_may_confirm_however_senior(self):
+    def test_admin_may_confirm_with_platform_wide_authority(self):
+        record = verify_record(self._record(), self.admin)
+        self.assertEqual(record.verification_status, VerificationStatus.CONFIRMED.value)
+
+    def test_roles_without_ia_authority_may_not_confirm(self):
         """Seniority is not IA authority — the CD leads, IA verifies."""
-        for actor in (self.cceo, self.cd, self.admin):
+        for actor in (self.cceo, self.cd):
             with self.subTest(role=actor.active_role):
                 record = self._record()
                 with self.assertRaises(Forbidden):
@@ -78,8 +83,12 @@ class SsaVerificationAuthorityTests(TestCase):
                     record.verification_status, VerificationStatus.PENDING.value
                 )
 
-    def test_nobody_else_may_return_either(self):
-        for actor in (self.cceo, self.cd, self.admin):
+    def test_admin_may_return_with_platform_wide_authority(self):
+        record = return_record(self._record(), self.admin, "Administrative correction.")
+        self.assertEqual(record.verification_status, VerificationStatus.RETURNED.value)
+
+    def test_roles_without_ia_authority_may_not_return_either(self):
+        for actor in (self.cceo, self.cd):
             with self.subTest(role=actor.active_role):
                 with self.assertRaises(Forbidden):
                     return_record(self._record(), actor)

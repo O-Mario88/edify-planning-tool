@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 
 import time
-from datetime import datetime
+from datetime import date, datetime
 
 from django.db import transaction
 
@@ -74,7 +74,6 @@ def upload_ssa_file(file, principal) -> dict:
     counts = {"created": 0, "unmatched": 0, "skipped": 0, "failed": 0}
     errors = []
     rows_to_create = []
-    staged_rows = []
     uploaded_school_ids = {
         _value(field_index, "school_id", cells)
         for _row_number, cells in data_rows
@@ -89,13 +88,21 @@ def upload_ssa_file(file, principal) -> dict:
 
     current_fy = get_operational_fy()
     prev_fy = str(int(current_fy) - 1)
-    existing_fys = {
-        (school_pk, fy)
-        for school_pk, fy in _SR.objects.filter(
+    existing_records = list(
+        _SR.objects.filter(
             school_id__in=[school.id for school in schools_by_id.values()],
             deleted_at__isnull=True,
-        ).values_list("school_id", "fy")
+        ).values_list("school_id", "fy", "date_of_ssa", "verification_status")
+    )
+    existing_dates = {
+        (school_pk, assessment_at.date())
+        for school_pk, _fy, assessment_at, _status in existing_records
     }
+    previous_states: dict[str, set[str]] = {}
+    for school_pk, fy, _assessment_at, verification_status in existing_records:
+        if fy == prev_fy:
+            previous_states.setdefault(school_pk, set()).add(verification_status)
+    staged_dates: set[tuple[str, date]] = set()
     staged_fys: set[tuple[str, str]] = set()
 
     for row_number, cells in data_rows:
@@ -172,9 +179,10 @@ def upload_ssa_file(file, principal) -> dict:
                 try:
                     date_parsed = _parse_date(date_raw)
 
-                    # Determine the target FY for this row:
-                    # 1. If "SSA Year" column is present, use it (last/current/explicit year).
-                    # 2. Otherwise derive from the assessment date.
+                    # SSA Year deliberately supports explicit baseline imports
+                    # ("last" / a prior FY), even when the source workbook's
+                    # collection date falls in the current operational FY.
+                    derived_fy = get_operational_fy(date_parsed)
                     ssa_year_raw = (
                         _value(field_index, "ssa_year", cells).strip().lower()
                         if "ssa_year" in field_index
@@ -187,36 +195,36 @@ def upload_ssa_file(file, principal) -> dict:
                     elif ssa_year_raw.isdigit():
                         row_fy = ssa_year_raw
                     else:
-                        row_fy = get_operational_fy(date_parsed)
+                        row_fy = derived_fy
 
                     # ── Enforcement rules ────────────────────────────────────
-                    # Rule 1: Last FY can only be uploaded ONCE per school. If a
-                    #         previous-FY record already exists, block re-upload.
-                    # Rule 2: Current FY requires a previous-FY record to exist
-                    #         (but not necessarily verified — first upload is the
-                    #         baseline). Once a current-FY record exists, block
-                    #         re-upload (one SSA per FY per school).
-                    existing_this_fy = (school.id, row_fy) in existing_fys or (
+                    # Match manual entry: multiple dated assessments in one FY
+                    # are valid monitoring history. Only the same school/date is
+                    # a duplicate. A first-ever current-FY SSA is a legitimate
+                    # baseline; only an existing unconfirmed previous-FY record
+                    # blocks the new confirmed assessment.
+                    if (school.id, date_parsed) in existing_dates or (
                         school.id,
-                        row_fy,
-                    ) in staged_fys
-                    if existing_this_fy:
+                        date_parsed,
+                    ) in staged_dates:
                         validation_errors.append(
-                            f"SSA for FY {row_fy} already exists for this school. "
-                            f"Each school can have only one SSA per FY."
+                            "An SSA for this school and assessment date already "
+                            "exists. Keep one authoritative row for that date."
                         )
                         status = "blocked"
                         counts["failed"] += 1
                     elif row_fy == current_fy:
-                        # Current FY upload: require that a last-FY baseline exists
-                        # (either in DB or in this same batch).
-                        has_prev_db = (school.id, prev_fy) in existing_fys
+                        prior_states = previous_states.get(school.id, set())
                         has_prev_batch = (school.id, prev_fy) in staged_fys
-                        if not has_prev_db and not has_prev_batch:
+                        if (
+                            prior_states
+                            and "confirmed" not in prior_states
+                            and not has_prev_batch
+                        ):
                             validation_errors.append(
                                 f"Cannot upload current FY ({current_fy}) SSA — "
-                                f"upload the last FY ({prev_fy}) SSA score first "
-                                f"(set SSA Year to '{prev_fy}' or 'last')."
+                                f"the previous FY ({prev_fy}) SSA exists but is "
+                                "not confirmed. Verify it first."
                             )
                             status = "blocked"
                             counts["failed"] += 1
@@ -228,9 +236,7 @@ def upload_ssa_file(file, principal) -> dict:
                 if status != "blocked":
                     status = "ready"
                     counts["created"] += 1
-                    staged_rows.append(
-                        {"school_id": school_id, "date_raw": date_raw, "fy": row_fy}
-                    )
+                    staged_dates.add((school.id, date_parsed))
                     staged_fys.add((school.id, row_fy))
             else:
                 status = "unmatched"
@@ -425,6 +431,12 @@ def import_ssa_batch(batch, user) -> dict:
     records = []
     scores = []
     unmatched_records = []
+    existing_unmatched_keys = set(
+        UnmatchedSSARecord.objects.filter(
+            school_id__in=[row.school_id for row in rows],
+            status="pending",
+        ).values_list("school_id", "date_of_ssa")
+    )
     now = timezone.now()
 
     with transaction.atomic():
@@ -485,20 +497,23 @@ def import_ssa_batch(batch, user) -> dict:
             suggested_id, confidence = unmatched_service.compute_suggested_match(
                 school_name_raw, district_raw
             )
-            unmatched_records.append(
-                UnmatchedSSARecord(
-                    batch=batch,
-                    school_id=r.school_id,
-                    school_name_raw=school_name_raw,
-                    district_raw=district_raw,
-                    date_of_ssa=r.date_of_ssa,
-                    scores=row_scores,
-                    reason="School ID does not exist in School Directory",
-                    status="pending",
-                    suggested_school_id=suggested_id,
-                    match_confidence=confidence,
+            unmatched_key = (r.school_id, r.date_of_ssa)
+            if unmatched_key not in existing_unmatched_keys:
+                unmatched_records.append(
+                    UnmatchedSSARecord(
+                        batch=batch,
+                        school_id=r.school_id,
+                        school_name_raw=school_name_raw,
+                        district_raw=district_raw,
+                        date_of_ssa=r.date_of_ssa,
+                        scores=row_scores,
+                        reason="School ID does not exist in School Directory",
+                        status="pending",
+                        suggested_school_id=suggested_id,
+                        match_confidence=confidence,
+                    )
                 )
-            )
+                existing_unmatched_keys.add(unmatched_key)
 
         if records:
             SsaRecord.objects.bulk_create(records, batch_size=1000)
