@@ -9,5 +9,8 @@
   "devDependencies": {
     "@tailwindcss/cli": "4.3.2",
     "tailwindcss": "4.3.2"
+  },
+  "dependencies": {
+    "geist": "^1.7.2"
   }
 }

@@ -8,6 +8,10 @@
    Tailwind @layer utilities when needed.
    ════════════════════════════════════════════════════════════════════════════ */
 
+/* The typeface itself is declared once, in css/fonts.css, which every entry
+   point loads before this file. Tokens here are measured against Geist's
+   metrics and assume it is present. */
+
 :root {
   color-scheme: light dark;
   accent-color: var(--edify-accent);

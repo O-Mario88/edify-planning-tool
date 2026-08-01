@@ -1058,6 +1058,9 @@
   .min-h-0 {
     min-height: 0;
   }
+  .min-h-5 {
+    min-height: calc(var(--spacing) * 5);
+  }
   .min-h-7 {
     min-height: calc(var(--spacing) * 7);
   }
@@ -5613,6 +5616,11 @@
       cursor: not-allowed;
     }
   }
+  .disabled\:cursor-wait {
+    &:disabled {
+      cursor: wait;
+    }
+  }
   .disabled\:bg-slate-50 {
     &:disabled {
       background-color: var(--color-slate-50);
@@ -5641,6 +5649,11 @@
   .disabled\:opacity-50 {
     &:disabled {
       opacity: 50%;
+    }
+  }
+  .disabled\:opacity-70 {
+    &:disabled {
+      opacity: 70%;
     }
   }
   .max-xl\:block {

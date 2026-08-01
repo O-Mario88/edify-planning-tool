@@ -39,14 +39,58 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
-    def test_inter_is_the_global_and_compiled_ui_font(self):
+    def test_geist_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
 
-        self.assertIn("family=Geist", base)
+        self.assertIn("css/fonts.css", base)
         self.assertIn("--edify-font-sans: 'Geist'", tokens)
         self.assertRegex(compiled, r"--font-sans:\s*Geist,")
+
+    def test_geist_is_self_hosted_on_every_entry_point(self):
+        """The typeface must not depend on a third-party request.
+
+        Every type token is measured against Geist's metrics, so a Google Fonts
+        request that is slow or blocked rendered the whole product in
+        ui-sans-serif at Geist's measurements — the same CSS looking correct
+        locally and wrong in production on one cross-origin fetch.
+
+        This asserted `family=Geist` was present in base.html, which passed on
+        the CDN link that WAS the problem.
+        """
+        faces = _read("static/css/fonts.css")
+        self.assertIn("@font-face", faces)
+        self.assertIn("Geist-Variable.woff2", faces)
+
+        # Relative, so ManifestStaticFilesStorage can rewrite it to the hashed
+        # filename during collectstatic.
+        self.assertNotIn('url("/static/', faces)
+
+        entry_points = [
+            "templates/base.html",
+            "templates/layouts/login.html",
+            "templates/pages/auth/launch.html",
+            "templates/pages/help/print_article.html",
+            "templates/pages/help/manual_export.html",
+        ]
+        missing = [p for p in entry_points if "css/fonts.css" not in _read(p)]
+        self.assertEqual(
+            missing, [], f"entry points not loading the typeface: {missing}"
+        )
+
+    def test_no_template_fetches_a_font_from_a_third_party(self):
+        offenders = []
+        for path in (ROOT / "templates").rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            if "fonts.googleapis.com" in text or "fonts.gstatic.com" in text:
+                offenders.append(str(path.relative_to(ROOT)))
+        self.assertEqual(
+            offenders,
+            [],
+            "Geist is self-hosted; these still request it over the network: "
+            + ", ".join(offenders),
+        )
 
     def test_no_unapproved_font_family_is_shipped(self):
         forbidden = re.compile(

@@ -7,10 +7,16 @@
   <meta name="theme-color" content="var(--edify-primary-active)">
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
   {% include "partials/pwa_head.html" %}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
+  {% comment %}
+    Geist is served from this origin — see the @font-face block in
+    css/fonts.css. Preloaded here because that stylesheet has to download and
+    parse before the browser would otherwise discover the font file, and the
+    sign-in page is the first impression.
+  {% endcomment %}
+  <link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731geist2">
+
+<link rel="preload" as="image" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
   {% comment %}
     The sign-in layout previously loaded login.css alone, so it had no access
     to the design tokens and drifted into its own visual language — nine
