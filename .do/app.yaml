@@ -65,15 +65,22 @@ domains:
     # zone: edifyplanning.app
 
 databases:
+  # App Platform's development database. Cheaper than a managed cluster and
+  # fine to launch on, with two things to know: no automated failover, and no
+  # private VPC networking, so DATABASE_URL is the public host over TLS.
+  #
+  # To move to a managed cluster later, replace this block with:
+  #   production: true
+  #   cluster_name: edify-db
+  #   size: db-s-1vcpu-1gb
+  #   num_nodes: 1
+  # and switch the web service's DATABASE_URL to ${db.DATABASE_PRIVATE_URL},
+  # which only exists on a production cluster. Take a dump first — swapping the
+  # database resource does not migrate the data.
   - name: db
     engine: PG
     version: "16"
-    # "db-s-1vcpu-1gb" is the smallest managed cluster. For a dev/staging app you
-    # can instead set `production: false` for the cheaper shared dev database.
-    production: true
-    cluster_name: edify-db
-    size: db-s-1vcpu-1gb
-    num_nodes: 1
+    production: false
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 # Migrations run here, once, before the new web containers take traffic. The web
