@@ -13,7 +13,7 @@
 <div>
 <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ cluster.name }}</h1>
 <p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
-District: {{ cluster.district.name|default:cluster.district }} &bull; Sub-county: {{ cluster.subCounty.name|default:cluster.subCounty }}
+District: {% firstof cluster.district.name cluster.district %} &bull; Sub-county: {% firstof cluster.subCounty.name cluster.subCounty %}
 </p>
 </div>
 

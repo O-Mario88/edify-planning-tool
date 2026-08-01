@@ -97,7 +97,7 @@
         </form>
         {% else %}
         <p class="text-[13px] text-slate-600 whitespace-pre-line">{{ row.p.employee_reflection|default:"—" }}</p>
-        {% if row.p.employee_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {{ row.p.get_employee_rating_display|default:row.p.employee_rating }}</p>{% endif %}
+        {% if row.p.employee_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {% firstof row.p.get_employee_rating_display row.p.employee_rating %}</p>{% endif %}
         {% endif %}
       </div>
 
@@ -121,7 +121,7 @@
         </form>
         {% else %}
         <p class="text-[13px] text-slate-600 whitespace-pre-line">{{ row.p.manager_assessment|default:"—" }}</p>
-        {% if row.p.manager_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {{ row.p.get_manager_rating_display|default:row.p.manager_rating }}</p>{% endif %}
+        {% if row.p.manager_rating %}<p class="edify-text-caption text-slate-400 mt-1">Rating: {% firstof row.p.get_manager_rating_display row.p.manager_rating %}</p>{% endif %}
         {% if row.p.agreed_action %}<p class="edify-text-caption text-slate-500 mt-1">Agreed: {{ row.p.agreed_action }}</p>{% endif %}
         {% endif %}
       </div>
@@ -141,7 +141,7 @@
           <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-3 py-1.5 text-[12px] font-bold">Save rating</button>
         </form>
         {% else %}
-        {% if row.p.functional_manager_rating %}<p class="text-[13px] text-slate-600">{{ row.p.get_functional_manager_rating_display|default:row.p.functional_manager_rating }}</p>{% else %}<p class="text-[13px] text-slate-400">—</p>{% endif %}
+        {% if row.p.functional_manager_rating %}<p class="text-[13px] text-slate-600">{% firstof row.p.get_functional_manager_rating_display row.p.functional_manager_rating %}</p>{% else %}<p class="text-[13px] text-slate-400">—</p>{% endif %}
         {% endif %}
       </div>
     </div>

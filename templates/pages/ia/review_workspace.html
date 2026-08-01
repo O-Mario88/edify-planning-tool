@@ -55,7 +55,7 @@ hidden because the toolbar is chrome: `edify-page-title` forces the display
 type size, which would dwarf a 48px-tall bar.
 {% endcomment %}
 <h1 class="sr-only edify-page-title">
-Review {{ act.get_activity_type_display|default:act.activity_type }}{% if act.school %} at {{ act.school.name }}{% endif %} — activity #{{ act.id }}
+Review {% firstof act.get_activity_type_display act.activity_type %}{% if act.school %} at {{ act.school.name }}{% endif %} — activity #{{ act.id }}
 </h1>
 
 <!-- Top Navigation bar of workspace -->

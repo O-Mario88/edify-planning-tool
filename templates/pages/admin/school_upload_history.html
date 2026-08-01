@@ -33,7 +33,7 @@
 {% for batch in batches_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
-<span class="font-semibold text-slate-800 block">{{ batch.file_name|default:batch.original_file_name }}</span>
+<span class="font-semibold text-slate-800 block">{% firstof batch.file_name batch.original_file_name %}</span>
 <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Uploaded at {{ batch.created_at|date:"M d, Y H:i" }} by User ID: {{ batch.uploaded_by }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">

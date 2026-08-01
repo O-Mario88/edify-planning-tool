@@ -408,7 +408,12 @@ class SchoolUploadTest(APITestCase):
         self.assertContains(users_page, "New Field Officer")
         self.assertContains(users_page, EdifyRole.CCEO.value)
         program_lead_page = self.client.get(f"/admin-panel/users/{program_lead.id}")
-        self.assertContains(program_lead_page, "Managed CCEOs")
+        # "Managed CCEOs" became "People Managed" in b0fc9e8b, which generalised
+        # the panel so a Country Director can manage PLs, IAs and Accountants
+        # too rather than only a Program Lead's CCEOs. The heading moved; what
+        # this test is actually about did not — an imported field officer must
+        # appear in their Program Lead's managed list.
+        self.assertContains(program_lead_page, "People Managed")
         self.assertContains(program_lead_page, "New Field Officer")
         imported_user_page = self.client.get(f"/admin-panel/users/{imported_user.id}")
         self.assertNotContains(imported_user_page, "Managed CCEOs")

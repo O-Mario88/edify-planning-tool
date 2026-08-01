@@ -34,7 +34,7 @@
         <td class="px-3 py-2.5 tabular-nums">{{ row.version|default:"—" }}</td>
         <td class="px-3 py-2.5">{{ row.uploaded_by|default:"—" }}</td>
         <td class="px-3 py-2.5 tabular-nums">{{ row.uploaded_at|date:"d M H:i" }}</td>
-        <td class="px-3 py-2.5">{{ row.processing_status|default:row.publication_status|default:"—" }}</td>
+        <td class="px-3 py-2.5">{% firstof row.processing_status row.publication_status "—" %}</td>
         <td class="px-3 py-2.5">{{ row.preview_status|default:"—" }}</td>
         <td class="px-3 py-2.5">{{ row.acknowledgement_status|default:"—" }}</td>
         <td class="px-3 py-2.5"><a href="{{ row.detail_route }}" class="font-bold edify-primary-text">{{ row.next_action }}</a></td>

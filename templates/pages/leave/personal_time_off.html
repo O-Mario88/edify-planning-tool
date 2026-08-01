@@ -372,8 +372,8 @@
           {% for block in upcoming_blocks %}
           <div class="pto-constraint-row">
             <div class="pto-constraint-row__date"><strong>{{ block.start_date|date:"d" }}</strong><span>{{ block.start_date|date:"M" }}</span></div>
-            <div><strong>{{ block.title }}</strong><span>{{ block.get_block_type_display|default:block.block_type }}</span></div>
-            <span class="pto-constraint-dot is-{{ block.block_type|lower }}" aria-label="{{ block.get_block_type_display|default:block.block_type }}"></span>
+            <div><strong>{{ block.title }}</strong><span>{% firstof block.get_block_type_display block.block_type %}</span></div>
+            <span class="pto-constraint-dot is-{{ block.block_type|lower }}" aria-label="{% firstof block.get_block_type_display block.block_type %}"></span>
           </div>
           {% empty %}
           <div class="pto-empty-state pto-empty-state--compact">

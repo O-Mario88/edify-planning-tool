@@ -115,7 +115,7 @@ and autosubmit to submit that form on keyup via Alpine.
 {% endcomment %}
 {% if topbar_search and not topbar_search.hide %}
 {% if topbar_search.attach_to %}
-<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{{ topbar_search.label|default:topbar_search.placeholder|default:'Search' }}</label>
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{% firstof topbar_search.label topbar_search.placeholder 'Search' %}</label>
 <input
 type="search"
 form="{{ topbar_search.attach_to }}"
@@ -148,7 +148,7 @@ class="h-9 w-full rounded-control pl-10 pr-4 text-[13px] font-normal focus:outli
   {% if topbar_search.hx_include %}hx-include="{{ topbar_search.hx_include }}"{% endif %}
   {% endif %}
 >
-<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{{ topbar_search.label|default:topbar_search.placeholder|default:'Search' }}</label>
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{% firstof topbar_search.label topbar_search.placeholder 'Search' %}</label>
 {% for hidden in topbar_search.hidden|default:'' %}<input type="hidden" name="{{ hidden.name }}" value="{{ hidden.value }}">{% endfor %}
 <input
 type="search"

@@ -15,7 +15,7 @@
     <div class="admin-target-row">
       <span>{{ item.reference }} · {{ item.title }}</span>
       <strong>{{ item.get_category_display }}</strong>
-      <span class="admin-status s-red">{{ item.next_action|default:item.get_status_display }}</span>
+      <span class="admin-status s-red">{% firstof item.next_action item.get_status_display %}</span>
     </div>
     {% empty %}
     <p class="admin-panel__empty">Nothing critical is open. Incidents and critical tickets appear here the moment they are detected.</p>

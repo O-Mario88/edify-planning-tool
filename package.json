@@ -11,6 +11,10 @@
     "tailwindcss": "4.3.2"
   },
   "dependencies": {
-    "geist": "^1.7.2"
+    "alpinejs": "^3.14.0",
+    "apexcharts": "^3.54.1",
+    "fullcalendar": "^6.1.11",
+    "geist": "^1.7.2",
+    "htmx.org": "^1.9.12"
   }
 }

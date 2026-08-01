@@ -20,7 +20,16 @@ def _production_frontend_files():
         "assets/css/**/*.css",
     )
     for pattern in patterns:
-        yield from ROOT.glob(pattern)
+        for path in ROOT.glob(pattern):
+            # static/js/vendor holds the self-hosted third-party bundles
+            # (htmx, Alpine, ApexCharts, FullCalendar). Their minified source
+            # names fonts we do not use — ApexCharts defaults a label to Arial
+            # — and the design-system rules are about code we author. Linting
+            # vendored bytes would only ever produce noise or a temptation to
+            # edit them, and an edited vendor bundle is worse than either.
+            if "/js/vendor/" in path.as_posix():
+                continue
+            yield path
 
 
 def _contrast_ratio(foreground, background):
@@ -1398,3 +1407,61 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("white-space: nowrap", platform)
         self.assertIn("overflow-x: auto", platform)
         self.assertIn("word-break: normal", platform)
+
+
+class TemplateFilterArgumentGuardTest(SimpleTestCase):
+    """A dotted fallback in a filter ARGUMENT is a latent 500.
+
+    Django protects the variable but not the argument. In
+    FilterExpression.resolve the variable is wrapped in try/except
+    VariableDoesNotExist and falls back to string_if_invalid; the argument is
+    resolved with a bare `arg.resolve(context)` and nothing catches it. So
+
+        {{ school.sub_county.name|default:school.district.name }}
+
+    fails soft on the left and raises on the right — the fallback, which exists
+    precisely for the case where data is missing, is the thing that breaks when
+    data is missing. That 500'd the Add to Cluster drawer for every school in
+    production, because every school had a null district.
+
+    {% firstof %} resolves each candidate with ignore_failures and skips the
+    ones that are absent, which is the behaviour the default filter is being
+    reached for in the first place.
+    """
+
+    # `|default:"—"` and `|default:'Search'` are literals, not lookups, and
+    # cannot raise. Only a dotted path can.
+    DOTTED_ARGUMENT = re.compile(
+        r"\|\s*default(?:_if_none)?:\s*[A-Za-z_][\w]*(?:\.[\w]+)+"
+    )
+
+    def test_no_template_uses_a_dotted_default_argument(self):
+        offenders = []
+        for path in sorted((ROOT / "templates").rglob("*.html")):
+            for number, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), 1
+            ):
+                if self.DOTTED_ARGUMENT.search(line):
+                    offenders.append(f"{path.relative_to(ROOT)}:{number}")
+        self.assertEqual(
+            offenders,
+            [],
+            "A dotted fallback in a filter argument raises VariableDoesNotExist "
+            "rather than falling back. Use {% firstof a b %} instead: "
+            + ", ".join(offenders),
+        )
+
+    def test_the_guard_would_actually_catch_one(self):
+        """The pattern above is easy to write so it matches nothing at all."""
+        self.assertTrue(
+            self.DOTTED_ARGUMENT.search(
+                '{{ school.sub_county.name|default:school.district.name }}'
+            )
+        )
+        self.assertTrue(
+            self.DOTTED_ARGUMENT.search('{{ a|default_if_none:b.c }}')
+        )
+        # Literals must not be flagged — they cannot fail to resolve.
+        self.assertIsNone(self.DOTTED_ARGUMENT.search('{{ a|default:"—" }}'))
+        self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:'Search' }}"))
+        self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:b }}"))

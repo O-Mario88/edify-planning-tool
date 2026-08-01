@@ -106,11 +106,13 @@
             type="text"
             name="new_cluster_name"
             id="new_cluster_name"
-            {# firstof, not |default: — a filter ARGUMENT resolves eagerly, so
-               `|default:school.district.name` raised VariableDoesNotExist and
-               500'd the whole drawer for any school whose district is null.
-               firstof resolves each candidate with ignore_failures, so a
-               missing one is simply skipped. #}
+            {% comment %}
+              firstof, not the default filter — a filter ARGUMENT resolves
+              eagerly, so a dotted fallback raised VariableDoesNotExist and
+              500'd the whole drawer for any school whose district is null.
+              firstof resolves each candidate with ignore_failures, so a
+              missing one is simply skipped.
+            {% endcomment %}
             placeholder="e.g. {% firstof school.sub_county.name school.district.name %} Cluster"
             class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
           >

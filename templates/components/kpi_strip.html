@@ -64,10 +64,10 @@
             {% endcomment %}
             <span class="sr-only">{{ item.accessible_description }}</span>
             <span class="kpi-strip__label" aria-hidden="true" title="{{ item.label }}">{{ item.label }}</span>
-            <span class="kpi-strip__value" aria-hidden="true">{{ item.display_value|default:item.value }}</span>
+            <span class="kpi-strip__value" aria-hidden="true">{% firstof item.display_value item.value %}</span>
           {% else %}
             <span class="kpi-strip__label" title="{{ item.label }}">{{ item.label }}</span>
-            <span class="kpi-strip__value">{{ item.display_value|default:item.value }}</span>
+            <span class="kpi-strip__value">{% firstof item.display_value item.value %}</span>
           {% endif %}
           {% if item.trend or item.helper or item.meta %}
           <span class="kpi-strip__meta">

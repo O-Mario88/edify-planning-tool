@@ -19,7 +19,7 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Disbursed to you</p>
 <p class="text-[18px] font-semibold text-slate-800">{{ total_disbursed|ugx }}</p>
 {% for adv in disbursed_advances %}
-<p class="edify-text-caption text-slate-500 font-semibold">{{ adv.budget_line.label }} — {{ adv.disbursed_amount|default:adv.amount|ugx }}</p>
+<p class="edify-text-caption text-slate-500 font-semibold">{{ adv.budget_line.label }} — {% firstof adv.disbursed_amount adv.amount as advance_amount %}{{ advance_amount|ugx }}</p>
 {% endfor %}
 </div>
 

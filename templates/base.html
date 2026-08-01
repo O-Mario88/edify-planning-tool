@@ -199,8 +199,16 @@ button, a, select, input, textarea {
 }
 </style>
 
-<!-- HTMX (for fast server-driven partial updates) -->
-<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<!-- HTMX (for fast server-driven partial updates) — served from this origin.
+
+     It came from unpkg. htmx is not a progressive enhancement here: every
+     drawer, table refresh and form on the platform is an hx-* attribute, so a
+     CDN request that is slow or blocked does not degrade the page, it removes
+     the application. The integrity hash guarded against the CDN serving
+     something else; it could do nothing about the CDN serving nothing, which
+     is the failure that actually reaches users on a constrained network.
+     Same-origin removes both concerns — the file is in the image we built. -->
+<script src="{% static 'js/vendor/htmx-1.9.12.min.js' %}"></script>
 <script>
   // Server-side validation responses (400/403) carry user-facing notices —
   // e.g. the Daily Visit "reason required" panel and route/scheduling errors.
@@ -239,8 +247,12 @@ button, a, select, input, textarea {
      unique defect becomes one System Incident for the Admin. -->
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
 
-<!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
-<script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+<!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
+     Self-hosted: if this does not load, every x-data on the page throws and
+     the UI is inert. `defer` is kept — alpine-components.js above registers
+     Alpine.data factories on alpine:init, which requires Alpine to run after
+     the document is parsed. -->
+<script defer src="{% static 'js/vendor/alpine-3.14.0.min.js' %}"></script>
 
 <!-- ApexCharts & FullCalendar JS.
 
@@ -254,7 +266,7 @@ button, a, select, input, textarea {
 
      Upgrading is a deliberate change with its own testing. Do not drop the
      version to pick up fixes. -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.1"></script>
+<script src="{% static 'js/vendor/apexcharts-3.54.1.min.js' %}"></script>
 <script>
   /* App-wide ordered palette for comparison charts. Semantic status charts
      (success / warning / danger) intentionally opt out so colour never lies. */
@@ -421,7 +433,7 @@ button, a, select, input, textarea {
     },
   };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="{% static 'js/vendor/fullcalendar-6.1.11.min.js' %}"></script>
 </head>
 <body
 class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"

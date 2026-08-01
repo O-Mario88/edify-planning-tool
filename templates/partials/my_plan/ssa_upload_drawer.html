@@ -2,7 +2,7 @@
 {% load frontend_filters %}
 
 {% block drawer_title %}Upload SSA Score{% endblock %}
-{% block drawer_subtitle %}Collect and save SSA scores for {{ act.school.name|default:act.activity_type }}{% endblock %}
+{% block drawer_subtitle %}Collect and save SSA scores for {% firstof act.school.name act.activity_type %}{% endblock %}
 
 {% block drawer_body %}
 <form

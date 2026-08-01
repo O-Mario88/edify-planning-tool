@@ -67,7 +67,7 @@
   {% for c in certificates %}
   <a href="/my-professional-development/certificate/{{ c.id }}" target="_blank" class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600 edify-primary-text-hover">
     <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a4 4 0 100-8 4 4 0 000 8z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5L7 21l5-2.5L17 21l-1.5-8.5"/></svg>
-    {{ c.certificate_name|default:c.original_name }}
+    {% firstof c.certificate_name c.original_name %}
     {% if c.status == 'returned' %}<span class="px-1 py-0.5 rounded-pill bg-rose-50 text-rose-600 edify-text-caption font-bold">Returned</span>{% elif c.status == 'verified' %}<span class="px-1 py-0.5 rounded-pill bg-emerald-50 text-emerald-600 edify-text-caption font-bold">Verified</span>{% endif %}
   </a>
   {% endfor %}
