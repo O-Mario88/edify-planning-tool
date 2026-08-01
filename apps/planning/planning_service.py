@@ -646,7 +646,15 @@ class PlanningDashboardService:
             cluster_name_map = {c.id: c.name for c in clusters_objs}
         for s in schools_data:
             if s["cluster"] != "—":
-                s["clusterName"] = cluster_name_map.get(s["cluster"], s["cluster"])
+                # Falling back to the raw value printed a CUID into the UI as
+                # though it were a cluster name, which is what a school
+                # pointing at a deleted cluster looked like on screen:
+                # "clusterName: cmsaketxn00h3gvfkdf4u". School.cluster_id is a
+                # CharField rather than a foreign key, so the database cannot
+                # refuse the dangling reference and this is reachable whenever
+                # a cluster is removed. Say the link is broken instead of
+                # leaking an internal identifier and calling it a name.
+                s["clusterName"] = cluster_name_map.get(s["cluster"], "Cluster missing")
             else:
                 s["clusterName"] = "—"
 

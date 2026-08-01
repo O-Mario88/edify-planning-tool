@@ -16,6 +16,7 @@ offered choices the services then refused:
 
 from __future__ import annotations
 
+from django.core.management import call_command
 from django.test import TestCase
 
 from apps.accounts.models import User
@@ -279,3 +280,110 @@ class ExplicitAssignmentSurvivesTest(TestCase):
         school.refresh_from_db()
         self.assertIsNone(school.cluster_id)
         self.assertEqual(school.cluster_status, "unclustered")
+
+
+class DanglingClusterReferenceTest(TestCase):
+    """A school must not point at a cluster that no longer exists.
+
+    School.cluster_id is a CharField, not a foreign key, so the database
+    cannot refuse a dangling reference and removing a Cluster does not cascade.
+    The school kept cluster_status="clustered", so it still passed the Planning
+    filter and appeared there with its cluster gone — and the resolver's
+    fallback printed the raw identifier as the cluster's name, putting a CUID
+    on screen where a name belonged.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.region = Region.objects.create(name="Dangling Region")
+        cls.district = District.objects.create(
+            name="Dangling District", region=cls.region
+        )
+        cls.sub_county = SubCounty.objects.create(
+            name="Dangling Sub County", district=cls.district
+        )
+        cls.admin = User.objects.create(
+            id="dangling-admin",
+            email="dangling@edify.org",
+            name="Dangling Admin",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+            status="active",
+        )
+
+    def _school_pointing_at(self, cluster_id):
+        school = School.objects.create(
+            school_id="DANGLE-1",
+            name="Dangling School",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+        )
+        School.objects.filter(id=school.id).update(
+            cluster_id=cluster_id, cluster_status="clustered"
+        )
+        school.refresh_from_db()
+        return school
+
+    def test_a_missing_cluster_is_not_rendered_as_a_name(self):
+        self._school_pointing_at("cluster-that-was-deleted")
+
+        data = PlanningDashboardService.get_dashboard_data(self.admin, {})
+        rows = [r for r in data["schools"] if r["schoolId"] == "DANGLE-1"]
+        self.assertTrue(rows, "the row should still be reachable to be diagnosed")
+        self.assertEqual(
+            rows[0]["clusterName"],
+            "Cluster missing",
+            "a broken link must say so, not print the raw identifier as a name",
+        )
+
+    def test_the_repair_clears_the_link_and_is_idempotent(self):
+        self._school_pointing_at("cluster-that-was-deleted")
+
+        call_command("repair_dangling_clusters", "--apply")
+
+        school = School.objects.get(school_id="DANGLE-1")
+        self.assertIsNone(school.cluster_id)
+        self.assertEqual(school.cluster_status, "unclustered")
+
+        # Second run must be a no-op, not a second mutation.
+        call_command("repair_dangling_clusters", "--apply")
+        school.refresh_from_db()
+        self.assertIsNone(school.cluster_id)
+
+    def test_the_repair_leaves_a_real_link_alone(self):
+        """It clears what is broken, not what is merely present."""
+        cluster = Cluster.objects.create(
+            name="Real Dangling-Test Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+        )
+        school = self._school_pointing_at(cluster.id)
+
+        call_command("repair_dangling_clusters", "--apply")
+
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, cluster.id)
+        self.assertEqual(school.cluster_status, "clustered")
+
+    def test_a_soft_deleted_cluster_counts_as_gone(self):
+        from django.utils import timezone
+
+        cluster = Cluster.objects.create(
+            name="Withdrawn Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+        )
+        self._school_pointing_at(cluster.id)
+        Cluster.objects.filter(id=cluster.id).update(deleted_at=timezone.now())
+
+        call_command("repair_dangling_clusters", "--apply")
+
+        school = School.objects.get(school_id="DANGLE-1")
+        self.assertIsNone(
+            school.cluster_id,
+            "a school must not sit in a cluster that has been withdrawn",
+        )
