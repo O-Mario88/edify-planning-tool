@@ -49,6 +49,7 @@ from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.targets.models import TargetSetting, TargetType
 from apps.core.rbac import EdifyRole
+from apps.accounts.staff_matching import on_staff
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -133,18 +134,16 @@ def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     if user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and own_staff_id:
         # A PL sees only the CCEOs explicitly assigned to them, never another
         # PL's field team.
-        visible_staff = StaffProfile.objects.filter(
-            deleted_at__isnull=True,
-            user__is_active=True,
+        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+        visible_staff = on_staff(StaffProfile.objects).filter(
             user__active_role=EdifyRole.CCEO.value,
             supervisor_links__supervisor_id=own_staff_id,
         )
     elif target_roles := _CALENDAR_ROLE_AUDIENCES.get(user.active_role):
         # CD and RVP schedule views are role-specific and country-bounded.
         # Do not borrow the broader country analytics scope here.
-        visible_staff = StaffProfile.objects.filter(
-            deleted_at__isnull=True,
-            user__is_active=True,
+        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+        visible_staff = on_staff(StaffProfile.objects).filter(
             user__active_role__in=target_roles,
         )
         if own_staff_id:

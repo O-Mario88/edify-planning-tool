@@ -22,6 +22,35 @@ from apps.core.enums import AccountOwnerStatus
 # name is never silently linked to a school).
 OWNER_ROLES = ("CCEO", "Program Lead")
 
+#: Statuses that mean "this person is still on the team".
+#:
+#: `is_active` answers "may this account sign in?", which is NOT the same
+#: question as "does this person hold work?". Staff auto-created by a school
+#: upload are born `is_active=False`, `pending_invited` — the invite has not
+#: been accepted yet — while already owning every school the upload attributed
+#: to them. Filtering those lists on `is_active` therefore hid real staff
+#: behind real portfolios: one CCEO with 512 schools was absent from the CCEO
+#: lists, so no Program Lead could be given her team and none of her schools
+#: entered a PL's planning scope.
+#:
+#: Suspended and disabled are deliberate removals and stay excluded, as does
+#: any soft-deleted profile. Use `on_staff()` for "who holds work"; keep
+#: `is_active` for "who may sign in".
+ON_STAFF_STATUSES = ("active", "pending_invited")
+
+
+def on_staff(queryset):
+    """Narrow a StaffProfile queryset to people still on the team.
+
+    The replacement for `.filter(user__is_active=True)` wherever the question
+    is portfolio, supervision, targets or assignment rather than login.
+    """
+    return queryset.filter(
+        deleted_at__isnull=True,
+        user__deleted_at__isnull=True,
+        user__status__in=ON_STAFF_STATUSES,
+    )
+
 
 def normalize_name(name: str | None) -> str:
     """Normalize a staff name for matching: trim, collapse internal whitespace,
@@ -51,9 +80,13 @@ def match(name: str | None) -> tuple[str | None, str]:
     # Match field-staff users by normalized name. ArrayField `__contains` would
     # be ideal but cross-DB portability + the multi-role array shape makes an
     # iexact name filter + Python role check the clearer path.
+    # on_staff, not is_active: a pending invite created by an earlier upload is
+    # the very row this match should find. Excluding it made a re-upload fail to
+    # recognise staff it had itself created, and mint a duplicate profile beside
+    # the original — splitting one person's portfolio across two records.
     candidates = list(
-        StaffProfile.objects.select_related("user").filter(
-            user__name__iexact=normalized, deleted_at__isnull=True, user__is_active=True
+        on_staff(StaffProfile.objects.select_related("user")).filter(
+            user__name__iexact=normalized
         )
     )
     # Keep only users whose roles include a field-staff role (CCEO/PL). A

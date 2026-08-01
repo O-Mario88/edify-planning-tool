@@ -21,13 +21,14 @@ def _production_frontend_files():
     )
     for pattern in patterns:
         for path in ROOT.glob(pattern):
-            # static/js/vendor holds the self-hosted third-party bundles
-            # (htmx, Alpine, ApexCharts, FullCalendar). Their minified source
-            # names fonts we do not use — ApexCharts defaults a label to Arial
-            # — and the design-system rules are about code we author. Linting
-            # vendored bytes would only ever produce noise or a temptation to
-            # edit them, and an edited vendor bundle is worse than either.
-            if "/js/vendor/" in path.as_posix():
+            # vendor/ holds self-hosted third-party assets — the htmx, Alpine,
+            # ApexCharts and FullCalendar bundles, Leaflet's stylesheet. They
+            # name fonts we do not use (ApexCharts defaults a label to Arial,
+            # Leaflet to Helvetica) and the design-system rules are about code
+            # we author. Linting vendored bytes produces noise, or worse, a
+            # temptation to edit them — and an edited vendor asset cannot be
+            # re-fetched or upgraded cleanly.
+            if "/vendor/" in path.as_posix():
                 continue
             yield path
 

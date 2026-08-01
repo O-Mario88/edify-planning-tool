@@ -20,6 +20,7 @@ from apps.core.fy import get_operational_fy
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_user_scope
+from apps.accounts.staff_matching import on_staff
 
 from . import performance as perf
 
@@ -111,9 +112,8 @@ class CountryTargetsView(APIView):
         start, end = _period_range(_q(request), fy)
         # All active field staff (CCEO/PL).
         staff = list(
-            StaffProfile.objects.filter(
-                deleted_at__isnull=True,
-                user__is_active=True,
+            # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+            on_staff(StaffProfile.objects).filter(
                 user__active_role__in=[
                     EdifyRole.CCEO.value,
                     EdifyRole.COUNTRY_PROGRAM_LEAD.value,
@@ -161,10 +161,8 @@ class HrStaffView(APIView):
         start, end = _period_range(_q(request), fy)
         scope = resolve_user_scope(request.user)
         staff = list(
-            StaffProfile.objects.filter(
-                deleted_at__isnull=True,
-                user__is_active=True,
-            ).select_related("user")
+            # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+            on_staff(StaffProfile.objects).select_related("user")
         )
 
         rows = []

@@ -40,6 +40,7 @@ from apps.activities.ia_services import (
 from apps.core.enums import ActivityStatus
 from apps.core.exceptions import BadRequest
 from apps.core.metrics import MetricValue, render_metric, render_strip
+from apps.accounts.staff_matching import on_staff
 
 QUEUE_PAGE_SIZE = 50
 
@@ -1348,11 +1349,8 @@ def ia_dashboard_view(request):
     # spaces in memory so the roster remains constant-query at any team size.
     owner_rollup = _activity_rollup(performance_qs, "responsible_staff_id")
     active_staff_roster = list(
-        StaffProfile.objects.filter(
-            deleted_at__isnull=True,
-            user__is_active=True,
-            user__deleted_at__isnull=True,
-        )
+        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+        on_staff(StaffProfile.objects)
         .select_related("user")
         .order_by("user__name")
     )

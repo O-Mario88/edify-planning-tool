@@ -25,6 +25,7 @@ from apps.core.enums import (
 from apps.core.htmx_errors import error_fragment
 from apps.core.permissions import has_permission
 from apps.core.rbac import Permission
+from apps.accounts.staff_matching import on_staff
 
 
 def _manual_activity_permission(view):
@@ -122,7 +123,8 @@ def _assignable_staff(user):
     ):
         return StaffProfile.objects.none()
     return (
-        StaffProfile.objects.filter(deleted_at__isnull=True, user__is_active=True)
+        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
+        on_staff(StaffProfile.objects)
         .select_related("user")
         .order_by("user__name")
     )

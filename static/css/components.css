@@ -2716,3 +2716,114 @@ select:not([multiple]):not(.select-native) {
 .auth-security-title { font-size: var(--edify-text-micro-size); font-weight: 700; }
 .auth-security-copy { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); margin-top: 1px; }
 .auth-footer { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); font-weight: 500; }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   INTERACTION LAYER — hover, press, and the difference between them
+   ════════════════════════════════════════════════════════════════════════════
+   Every rule here is wrapped in :where() so its specificity is zero. A
+   Tailwind utility, a component class, and every existing hover in this
+   codebase all still win; this only supplies behaviour nothing else defines.
+   That is what makes it safe to apply platform-wide in one pass.
+
+   Three principles, in priority order:
+
+   1. A press must be acknowledged instantly and locally. The control moves
+      toward the surface (scale, not lift) within 90ms, before any network
+      round trip. This is the fix for "stiff on click": nothing was happening
+      at all.
+   2. Hover in is quicker than hover out. Symmetrical timing makes a control
+      feel like it is dragging behind the cursor.
+   3. Hover belongs to pointers. Wrapped in `(hover: hover)`, so a tap on a
+      touch device does not leave a control stuck in its hover state — the
+      most common way this kind of polish backfires on mobile.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:where(
+  button,
+  [role="button"],
+  a,
+  summary,
+  .edify-primary-solid,
+  .card-interactive
+) {
+  transition:
+    background-color var(--edify-duration-hover-out) var(--edify-ease-out),
+    border-color var(--edify-duration-hover-out) var(--edify-ease-out),
+    color var(--edify-duration-hover-out) var(--edify-ease-out),
+    box-shadow var(--edify-duration-hover-out) var(--edify-ease-out),
+    transform var(--edify-duration-hover-out) var(--edify-ease-out);
+}
+
+/* Arriving is faster than leaving. */
+@media (hover: hover) and (pointer: fine) {
+  :where(button, [role="button"], a, summary, .edify-primary-solid):hover {
+    transition-duration: var(--edify-duration-hover-in);
+  }
+}
+
+/* The press. Fastest of the three, and it wins over hover because it is the
+   more recent intent — the pointer is already there, the user has committed. */
+:where(
+  button,
+  [role="button"],
+  .edify-primary-solid
+):not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(var(--edify-press-scale));
+  transition-duration: var(--edify-duration-press);
+  transition-timing-function: var(--edify-ease-press);
+}
+
+/* A link is text, not a slab: scaling glyphs looks broken and blurs during the
+   transform. Links acknowledge a press by settling instead. */
+:where(a:not(.edify-primary-solid):not([role="button"])):active {
+  opacity: 0.72;
+  transition-duration: var(--edify-duration-press);
+}
+
+/* Disabled controls must not pretend. No lift, no press, no pointer. */
+:where(button, [role="button"], .edify-primary-solid):disabled,
+:where(button, [role="button"], .edify-primary-solid)[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Cards that behave like controls get the same grammar, one step gentler —
+   a large surface moving as far as a button reads as jitter. */
+@media (hover: hover) and (pointer: fine) {
+  :where(.card-interactive, a.card, button.card):hover {
+    transform: translateY(var(--edify-lift));
+    transition-duration: var(--edify-duration-hover-in);
+  }
+}
+
+:where(.card-interactive, a.card, button.card):active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: var(--edify-duration-press);
+}
+
+/* Keyboard parity: a control reached by Tab and fired with Enter or Space
+   should feel like one that was clicked. Focus rings are defined elsewhere and
+   are untouched — this is only the press. */
+:where(button, [role="button"], .edify-primary-solid):focus-visible:active {
+  transform: scale(var(--edify-press-scale));
+}
+
+/* Motion is a preference, not a decision we get to make for someone. Colour
+   and shadow still transition — those carry the state change and cause no
+   vestibular discomfort. Only movement is removed. */
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    button,
+    [role="button"],
+    a,
+    summary,
+    .edify-primary-solid,
+    .card-interactive,
+    a.card,
+    button.card
+  ) {
+    transform: none !important;
+    transition-duration: 1ms;
+  }
+}

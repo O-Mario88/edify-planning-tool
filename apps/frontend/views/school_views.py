@@ -23,7 +23,7 @@ from apps.schools.services import create_one as create_school
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
-from apps.accounts.staff_matching import OWNER_ROLES
+from apps.accounts.staff_matching import OWNER_ROLES, on_staff
 from apps.clusters.models import Cluster
 from apps.clusters.services import (
     assign_school as assign_school_to_cluster,
@@ -53,9 +53,11 @@ def _may_upload_ssa(request) -> bool:
 def _school_owner_queryset():
     """Active CCEO/Program Lead profiles eligible to own a school."""
     return (
-        StaffProfile.objects.filter(
-            deleted_at__isnull=True,
-            user__is_active=True,
+        on_staff(StaffProfile.objects).filter(
+            # on_staff, not is_active: a CCEO auto-created by a school upload
+            # is a pending invite and already owns the schools that created
+            # her. Filtering on login-ability hid real owners from the owner
+            # picker.
             user__roles__overlap=list(OWNER_ROLES),
         )
         .select_related("user")

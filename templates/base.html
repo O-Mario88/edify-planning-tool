@@ -192,11 +192,17 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
   }
 }
 
-/* Smooth transitions on interactive elements. */
-button, a, select, input, textarea {
-  transition-duration: var(--edify-transition-fast);
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Transitions on interactive elements live in components.css (INTERACTION
+   LAYER), which owns hover, press and reduced-motion together.
+
+   What was here did nothing, and was the larger half of why controls felt
+   stiff. `--edify-transition-fast` is a full shorthand — "150ms cubic-bezier(
+   0.4, 0, 0.2, 1)" — so feeding it to `transition-duration` produced an
+   invalid declaration that the parser drops, leaving the initial 0s. Every
+   button and link on the platform changed state instantaneously, with no
+   transition at all, while looking in the stylesheet as though it had one.
+   Element-level specificity meant it also silently outranked any zero
+   specificity rule that tried to supply one. */
 </style>
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.

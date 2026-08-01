@@ -338,6 +338,33 @@
   --edify-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --edify-transition-all: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* ── INTERACTION MOTION ──────────────────────────────────────────────────
+     Controls felt stiff for two reasons, and neither was the easing curve.
+
+     First, nothing acknowledged a press. Across 488 templates there were three
+     active states, so a click produced no feedback until the server answered —
+     on a slow connection that is indistinguishable from a dead button, which
+     is why the platform's own beacon has a "dead button" category.
+
+     Second, hover in and hover out shared one duration. Real controls do not
+     behave symmetrically: the response to a pointer arriving should be quicker
+     than the settle when it leaves, or the element feels like it is dragging
+     the cursor around. Fast in, slower out, faster still on press.
+
+     `ease-out` is an expo-out curve: most of the distance is covered in the
+     first third, so the control feels like it is already there. Deliberately
+     no overshoot — this is an operational planning tool used all day, and
+     bounce that delights once becomes noise by the fiftieth click. */
+  --edify-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --edify-ease-press: cubic-bezier(0.4, 0, 0.6, 1);
+  --edify-duration-hover-in: 130ms;
+  --edify-duration-hover-out: 240ms;
+  --edify-duration-press: 90ms;
+
+  /* Press depth. A control moves toward the surface, not away from it. */
+  --edify-press-scale: 0.975;
+  --edify-lift: -1px;
+
   /* ── THEME-AWARE SHELL SURFACES ──────────────────────────────────────────
      Frosted glass and translucent panels that adapt to light/dark. These
      aren't pure tokens — they're composite surface treatments consumed by
