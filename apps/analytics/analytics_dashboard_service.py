@@ -279,29 +279,30 @@ class AnalyticsDashboardService:
             "points": [],
         }
 
-        # Card 4: Students Impacted (Sum enrollment of reached schools, distinct)
-        reached_school_ids = (
-            curr_activities.filter(status__in=ACHIEVED_STATUSES)
-            .values_list("school_id", flat=True)
-            .distinct()
-        )
+        # Card 4: Students Impacted is the current pupil enrollment of every
+        # school in the caller's filtered directory scope. Enrollment is
+        # school master data uploaded independently of activities, so gating
+        # this metric on a completed activity made a populated directory read
+        # as zero whenever the selected quarter had no verified work.
+        scoped_school_ids = schools_qs.values("id")
         students = (
-            School.objects.filter(id__in=reached_school_ids).aggregate(
+            School.objects.filter(id__in=scoped_school_ids).aggregate(
                 s=Sum("enrollment")
             )["s"]
             or 0
         )
 
+        # Schools Impacted remains an execution metric: a school only counts
+        # here after completed/verified work in the selected quarter.
+        reached_school_ids = (
+            curr_activities.filter(status__in=ACHIEVED_STATUSES)
+            .values_list("school_id", flat=True)
+            .distinct()
+        )
         reached_prior_school_ids = (
             prior_activities.filter(status__in=ACHIEVED_STATUSES)
             .values_list("school_id", flat=True)
             .distinct()
-        )
-        students_prior = (
-            School.objects.filter(id__in=reached_prior_school_ids).aggregate(
-                s=Sum("enrollment")
-            )["s"]
-            or 0
         )
 
         def format_large(val):
@@ -313,7 +314,10 @@ class AnalyticsDashboardService:
 
         kpi_data["students_impacted"] = {
             "value": format_large(students),
-            "trend": get_trend(students, students_prior),
+            # The school table holds the latest enrollment, not a quarterly
+            # enrollment snapshot, so showing a quarter-over-quarter arrow
+            # here would fabricate a historical comparison.
+            "trend": "",
             "points": [],
         }
 
@@ -427,7 +431,7 @@ class AnalyticsDashboardService:
                 "label": "Students Impacted",
                 "value": kpi_data["students_impacted"]["value"],
                 "raw_value": students,
-                "helper": "total reached",
+                "helper": "current enrollment",
                 "icon": "users",
                 "variant": "blue",
                 "trend": {

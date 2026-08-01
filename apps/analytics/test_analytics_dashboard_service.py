@@ -55,6 +55,7 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
             name="Analytics School",
             region=self.region,
             district=self.district,
+            enrollment=350,
         )
 
     def _act(self, status, evidence="accepted", quarter="Q3"):
@@ -153,3 +154,39 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
 
         self.assertEqual(leadership["value"], 6.0)
         self.assertEqual(leadership["pct"], 60)
+
+    def test_students_impacted_uses_current_enrollment_without_activity(self):
+        self.assertFalse(Activity.objects.filter(school=self.school).exists())
+
+        data = AnalyticsDashboardService.get_analytics_data(self.user, self._filters())
+        strip = {item["label"]: item for item in data["kpi_strip_items"]}
+
+        self.assertEqual(data["kpis"]["students_impacted"]["value"], "350")
+        self.assertEqual(data["kpis"]["students_impacted"]["trend"], "")
+        self.assertEqual(data["impact_summary"]["students_impacted"], 350)
+        self.assertEqual(data["donor_snapshot"]["students_impacted"], 350)
+        self.assertEqual(strip["Students Impacted"]["raw_value"], 350)
+        self.assertEqual(strip["Students Impacted"]["helper"], "current enrollment")
+        self.assertEqual(strip["Schools Impacted"]["raw_value"], 0)
+
+    def test_students_impacted_respects_school_directory_filters(self):
+        other_district = District.objects.create(
+            name="Other District", region=self.region, district_type="primary"
+        )
+        School.objects.create(
+            school_id="S-AD2",
+            name="Other Analytics School",
+            region=self.region,
+            district=other_district,
+            enrollment=150,
+        )
+
+        unfiltered = AnalyticsDashboardService.get_analytics_data(
+            self.user, self._filters()
+        )
+        filtered = AnalyticsDashboardService.get_analytics_data(
+            self.user, self._filters(district=self.district.id)
+        )
+
+        self.assertEqual(unfiltered["impact_summary"]["students_impacted"], 500)
+        self.assertEqual(filtered["impact_summary"]["students_impacted"], 350)

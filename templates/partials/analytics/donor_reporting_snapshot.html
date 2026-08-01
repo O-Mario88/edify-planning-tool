@@ -20,7 +20,7 @@
 <span class="font-semibold text-slate-800">{{ donor_snapshot.leaders_trained }}</span>
 </div>
 <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
-<span>Students Reached</span>
+<span>Students Impacted (current enrollment)</span>
 <span class="font-semibold text-slate-800">
 {% if donor_snapshot.students_impacted >= 1000000 %}
 {{ donor_snapshot.students_impacted|divide:1000000|floatformat:2 }}M
