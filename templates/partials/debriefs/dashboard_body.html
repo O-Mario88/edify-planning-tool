@@ -23,9 +23,9 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
                  { name: 'Critical', data: {{ trend.critical|escape }} }
                ],
                chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
-               stroke: { width: [2.5, 2, 2, 2], curve: 'smooth' },
+               stroke: { width: [2.25, 2, 2, 2], curve: 'straight' },
                colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
-               markers: { size: 0 },
+               markers: { size: 4, strokeWidth: 2 },
                xaxis: { categories: {{ trend.labels|escape }}, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }, rotate: -45 } },
                yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' }, formatter: v => Math.round(v) } },
                legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
@@ -106,7 +106,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
           <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20">{{ action_center.open_commitments }}</span>
         </div>
       </div>
-      <a href="/debriefs?tab=escalated" class="block w-full text-center h-9 leading-9 rounded-control border edify-text-caption font-bold hover:bg-slate-500/10 transition-colors edify-border edify-text">View Action Center &rarr;</a>
+      <a href="/debriefs?tab=escalated" class="edify-card-action rounded-control border edify-text-caption font-bold hover:bg-slate-500/10 transition-colors edify-border edify-text">View Action Center &rarr;</a>
     </div>
   </div>
 

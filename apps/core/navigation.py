@@ -228,21 +228,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "admin_incidents": {ADMIN},
     "admin_maintenance": {ADMIN},
     "data_repair": {ADMIN},
-    # Upload Center: one entry point for every file that enters Edify. Which
-    # categories a role actually sees is decided by the adapters, so the route
-    # is open to everyone who can upload or review anything at all.
-    "uploads": {
-        ADMIN,
-        IA,
-        HR,
-        CD,
-        RVP,
-        CCEO,
-        PL,
-        ACCOUNTANT,
-        PARTNER,
-        PROJECT_COORDINATOR,
-    },
+    # Upload Center is the governed organisational-ingestion surface. Evidence
+    # and PD proof stay on their owning workflow pages and do not grant access
+    # here.
+    "uploads": {ADMIN, IA, HR, CD, RVP},
     "policy_compliance": {HR, CD, PL, RVP, ADMIN},
     # Reporting a problem is every role's right, so intake is universal.
     "report_problem": ALL_ROLES,
@@ -308,7 +297,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Feature pages that previously had no key of their own
     "projects": {PROJECT_COORDINATOR, CD, PL, CCEO, IA, ADMIN},
     "analytics_publishing": {CD, IA, ADMIN},
-    "evidence_center": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, CD, ADMIN},
+    # IA owns evidence assurance before records can enter finance and
+    # leadership analytics, so the role must be able to open the shared
+    # evidence dataset linked from its verification workspace.
+    "evidence_center": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, CD, IA, ADMIN},
     "cost_settings": {CD, ADMIN},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
@@ -587,6 +579,104 @@ ANALYTICS_SECTIONS = [
 ]
 
 
+# ── The IA verification workspace ────────────────────────────────────────────
+# These are separate authoritative datasets, not decorative client-side tabs.
+# Each item keeps its existing route, view, permission and browser history;
+# this registry gives Impact Assessment one stable command-centre mental model.
+IA_SECTIONS = [
+    {
+        "key": "dashboard",
+        "label": "Dashboard",
+        "url": "/ia/dashboard/",
+        "page_key": "ia_dashboard",
+        "match": "exact",
+        "cluster": "verification",
+        "description": "Verification workload, risk and data confidence.",
+    },
+    {
+        "key": "activities",
+        "label": "Activity Verification",
+        "url": "/ia/verification/",
+        "page_key": "ia_verification_queue",
+        "match": "exact",
+        "cluster": "verification",
+        "description": "Evidence and Salesforce checks awaiting an IA decision.",
+    },
+    {
+        "key": "ssa_verification",
+        "label": "SSA Verification",
+        "url": "/ssa/verification/",
+        "page_key": "ssa",
+        "match": "exact",
+        "cluster": "verification",
+        "description": "Submitted SSA records awaiting quality confirmation.",
+    },
+    {
+        "key": "unmatched_ssa",
+        "label": "Unmatched SSA",
+        "url": "/ssa/unmatched",
+        "page_key": "data_quality_center",
+        "match": "exact",
+        "cluster": "assurance",
+        "description": "Imported SSA records that cannot yet be trusted or linked.",
+    },
+    {
+        "key": "evidence",
+        "label": "Evidence Review",
+        "url": "/evidence/",
+        "page_key": "evidence_center",
+        "match": "exact",
+        "cluster": "assurance",
+        "description": "Proof packets across activities in IA scope.",
+    },
+    {
+        "key": "data_quality",
+        "label": "Data Quality",
+        "url": "/admin-panel/data-quality-center",
+        "page_key": "data_quality_center",
+        "match": "exact",
+        "cluster": "assurance",
+        "description": "Coverage gaps, duplicates and invalid operational records.",
+    },
+    {
+        "key": "core_verification",
+        "label": "Core Verification",
+        "url": "/core-school-health",
+        "page_key": "core_school_health",
+        "match": "exact",
+        "cluster": "readiness",
+        "description": "Core package blockers and completion-gate stalls.",
+    },
+    {
+        "key": "impact_readiness",
+        "label": "Impact Readiness",
+        "url": "/impact",
+        "page_key": "impact_analytics",
+        "match": "exact",
+        "cluster": "readiness",
+        "description": "Whether supported interventions can be measured credibly.",
+    },
+    {
+        "key": "analytics",
+        "label": "IA Analytics",
+        "url": "/analytics",
+        "page_key": "analytics",
+        "match": "exact",
+        "cluster": "reporting",
+        "description": "Role-scoped trends and operational intelligence.",
+    },
+    {
+        "key": "reports",
+        "label": "Reports",
+        "url": "/reports",
+        "page_key": "reports",
+        "match": "exact",
+        "cluster": "reporting",
+        "description": "Standing and scheduled IA reporting outputs.",
+    },
+]
+
+
 # ── The Leave workspace ───────────────────────────────────────────────────────
 # Your own leave, who is covering, and the calendar those two are decided
 # against — three sidebar links for one question ("who is off, and does that
@@ -620,6 +710,7 @@ LEAVE_SECTIONS = [
 
 # Every multi-page workspace, keyed by the eyebrow its section strip shows.
 WORKSPACES = {
+    "ia": {"label": "Impact Assessment", "sections": IA_SECTIONS},
     "analytics": {"label": "Analytics", "sections": ANALYTICS_SECTIONS},
     "leave": {"label": "Leave", "sections": LEAVE_SECTIONS},
 }
@@ -688,7 +779,16 @@ def build_workspace(user, current_path: str = "") -> dict | None:
     reach fewer than two of its sections — a one-item strip is decoration, not
     navigation.
     """
-    for key, workspace in WORKSPACES.items():
+    role = get_user_role_slug(user)
+    workspaces = list(WORKSPACES.items())
+    # `/analytics`, `/impact` and `/reports` are intentionally shared routes.
+    # IA sees those datasets inside its verification workspace; other roles
+    # retain the general Analytics workspace. Admin gets the IA workspace on
+    # explicitly IA-prefixed pages without losing its normal Analytics model.
+    if role != IA and not (current_path or "").startswith("/ia/"):
+        workspaces = [item for item in workspaces if item[0] != "ia"]
+
+    for key, workspace in workspaces:
         sections = build_sections(workspace["sections"], user, current_path)
         if len(sections) > 1 and any(s["active"] for s in sections):
             return {"key": key, "label": workspace["label"], "sections": sections}
@@ -747,11 +847,6 @@ SIDEBAR_ITEMS = [
                     HR,
                     CD,
                     RVP,
-                    CCEO,
-                    PL,
-                    ACCOUNTANT,
-                    PARTNER,
-                    PROJECT_COORDINATOR,
                 },
             },
             {

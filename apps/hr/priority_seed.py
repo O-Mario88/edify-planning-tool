@@ -5,11 +5,31 @@ PRIORITIES = [
         "PROGRAM_GROWTH_AND_EXPANSION",
         "Program Growth and Expansion",
         [
-            ("NEW_SCHOOLS", "New Schools in operational countries — 5,000 to reach 30,000", 5000, "schools"),
+            (
+                "NEW_SCHOOLS",
+                "New Schools in operational countries — 5,000 to reach 30,000",
+                5000,
+                "schools",
+            ),
             ("SCHOOLS_WITH_DCS", "Schools with DCs — 255", 255, "needs_definition"),
-            ("NEW_CORE_SCHOOLS", "New Core Schools — 730 to make 2,500", 730, "schools"),
-            ("ACTIVE_SOCIAL_MEDIA", "Keep active social media and internal marketing", None, "needs_definition"),
-            ("CONNECT_MOVEMENT", "Operationalise Connect movement in all countries and document progress", None, "needs_definition"),
+            (
+                "NEW_CORE_SCHOOLS",
+                "New Core Schools — 730 to make 2,500",
+                730,
+                "schools",
+            ),
+            (
+                "ACTIVE_SOCIAL_MEDIA",
+                "Keep active social media and internal marketing",
+                None,
+                "needs_definition",
+            ),
+            (
+                "CONNECT_MOVEMENT",
+                "Operationalise Connect movement in all countries and document progress",
+                None,
+                "needs_definition",
+            ),
         ],
     ),
     (
@@ -44,7 +64,10 @@ PRIORITIES = [
                 ("TRANSFORMATION_FROM_SSA", "Transformation based on SSA"),
                 ("MSCS", "MSCS"),
                 ("CORE_SCHOOL_GRADUATION", "Core School graduation"),
-                ("SSA_SUPPORT_CORRELATION", "Country analysis of SSA and correlation with Trainings and Visits"),
+                (
+                    "SSA_SUPPORT_CORRELATION",
+                    "Country analysis of SSA and correlation with Trainings and Visits",
+                ),
                 ("PARENT_SURVEY", "Parent survey"),
                 ("STUDENT_IMPACT", "Student-impact measurement"),
                 ("STUDENT_ALUMNI", "Student Alumni programme"),
@@ -91,7 +114,10 @@ PRIORITIES = [
         [
             (code, title, None, "needs_definition")
             for code, title in [
-                ("ANNUAL_PLAN_BUDGETS", "Annual Plan and Budgets completed by September"),
+                (
+                    "ANNUAL_PLAN_BUDGETS",
+                    "Annual Plan and Budgets completed by September",
+                ),
                 ("PTO_USAGE", "PTO usage"),
                 ("PDF_USAGE", "PDF usage — 90% (acronym needs definition)"),
                 ("ONE_ON_ONES", "One-on-Ones"),
@@ -103,7 +129,10 @@ PRIORITIES = [
                 ("QUARTERLY_BOARD_MEETINGS", "Quarterly Board Meetings"),
                 ("MENTORING_HIGHER_ROLES", "Mentoring staff for higher roles"),
                 ("COUNTRY_OPERATION_VISITS", "Country or operation Visits"),
-                ("STAKEHOLDER_PLANNING", "Stakeholder involvement in Planning and Reviews"),
+                (
+                    "STAKEHOLDER_PLANNING",
+                    "Stakeholder involvement in Planning and Reviews",
+                ),
                 ("GOVERNMENT_COMPLIANCE", "Government Reporting and Compliance"),
                 ("GOVERNANCE_SCHOOL_VISITS", "School Visits"),
                 ("REGIONAL_TEAM_PERFORMANCE", "Regional Team performance"),

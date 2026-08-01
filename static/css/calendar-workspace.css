@@ -107,7 +107,7 @@
   padding-inline: 0.3rem;
   border-radius: var(--edify-radius-pill);
   background: color-mix(in oklab, currentColor 12%, transparent);
-  font-size: 0.68rem;
+  font-size: var(--edify-text-micro-size);
   font-variant-numeric: tabular-nums;
 }
 
@@ -214,7 +214,7 @@
 
 .calendar-month__date-card span {
   margin-top: 0.1rem;
-  font-size: 0.59rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.08em;
@@ -275,13 +275,19 @@
   min-width: 48rem;
 }
 
+/* The week rows exist for `role="row"`; the seven-column track belongs to the
+   grid itself, so the row boxes step out of the way. */
+.calendar-month__row {
+  display: contents;
+}
+
 .calendar-month__weekday {
   padding: 0.7rem 0.75rem;
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
   background: var(--edify-surface-muted);
   font: var(--edify-font-label);
-  font-size: 0.69rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.035em;
   text-align: right;
@@ -329,7 +335,7 @@
   min-height: 1.45rem;
   border-radius: var(--edify-radius-pill);
   color: var(--edify-text);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -341,7 +347,7 @@
 
 .calendar-day__today-label {
   color: var(--brand-primary-text);
-  font-size: 0.62rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
 }
 
@@ -471,7 +477,7 @@ a.calendar-event:focus-visible {
 }
 
 .calendar-event__copy strong {
-  font-size: 0.69rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.25;
 }
@@ -479,7 +485,7 @@ a.calendar-event:focus-visible {
 .calendar-event__copy small {
   margin-top: 0.05rem;
   color: currentColor;
-  font-size: 0.61rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.2;
   opacity: 0.82;
 }
@@ -558,7 +564,7 @@ a.calendar-event:focus-visible {
 
 .calendar-agenda__today {
   color: var(--brand-primary-text);
-  font-size: 0.62rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

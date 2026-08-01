@@ -78,7 +78,13 @@ def _shell(request, active_slug: str = "", **extra) -> dict:
     Contents plus whatever the page itself adds."""
     from apps.help_center.services import knowledge_tree
 
-    context = {"knowledge_tree": knowledge_tree(_role(request), active_slug)}
+    context = {
+        "knowledge_tree": knowledge_tree(
+            _role(request),
+            active_slug,
+            request.path,
+        )
+    }
     context.update(extra)
     return context
 

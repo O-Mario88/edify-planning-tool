@@ -15,7 +15,7 @@
 <tr class="hover:bg-slate-50/40 transition-colors">
 <!-- School (region stacked as metadata to keep the table in frame) -->
 <td class="px-3 py-2.5">
-<p class="font-semibold text-slate-800" style="max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.name }}">{{ q.name }}</p>
+<p class="max-w-[130px] truncate font-semibold text-slate-800" title="{{ q.name }}">{{ q.name }}</p>
 <p class="edify-text-caption font-semibold text-slate-400">{{ q.region }}</p>
 </td>
 
@@ -23,12 +23,12 @@
 <td class="px-3 py-2.5 font-semibold text-slate-600">
 <p class="flex items-center gap-1.5">
 <span class="edify-text-caption font-bold text-slate-400 w-3">S</span>
-<span style="max-width:108px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.assigned_staff }}">{{ q.assigned_staff }}</span>
+<span class="inline-block max-w-[108px] truncate" title="{{ q.assigned_staff }}">{{ q.assigned_staff }}</span>
 </p>
 <p class="flex items-center gap-1.5 mt-0.5">
 <span class="edify-text-caption font-bold text-slate-400 w-3">P</span>
 {% if q.assigned_partner != "Unassigned" %}
-<span class="edify-primary-text" style="max-width:108px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.assigned_partner }}">{{ q.assigned_partner }}</span>
+<span class="edify-primary-text inline-block max-w-[108px] truncate" title="{{ q.assigned_partner }}">{{ q.assigned_partner }}</span>
 {% else %}
 <span class="text-slate-400">Unassigned</span>
 {% endif %}
@@ -40,24 +40,24 @@
 {% if q.weakest_interventions == "Requires Cluster" or q.weakest_interventions == "Assessment Required" %}
 <span class="text-slate-400 font-semibold">—</span>
 {% else %}
-<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-150/60" style="max-width:110px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis" title="{{ q.weakest_interventions }}">
+<span class="inline-flex max-w-[110px] items-center truncate rounded-pill border border-rose-150/60 bg-rose-50 px-1.5 py-0.5 edify-text-caption font-semibold text-rose-700" title="{{ q.weakest_interventions }}">
 {{ q.weakest_interventions }}
 </span>
 {% endif %}
 </td>
 
 <!-- Progress — the 4+4 core package as discrete, labelled segments -->
-<td class="px-3 py-2.5" style="min-width:124px">
+<td class="min-w-[124px] px-3 py-2.5">
 <div class="space-y-1.5" role="img" aria-label="Visits {{ q.visits_done }} of 4 complete, trainings {{ q.trainings_done }} of 4 complete">
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold text-slate-500" style="width:42px; display:inline-block">Visits</span>
+<span class="inline-block w-[42px] edify-text-caption font-semibold text-slate-500">Visits</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
 {% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.visits_done %}bg-[var(--edify-primary)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
 </span>
 <span class="edify-text-caption font-bold tabular-nums {% if q.visits_done == 4 %}edify-success-text{% else %}text-slate-600{% endif %}">{{ q.visits_done }}/4</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="edify-text-caption font-semibold text-slate-500" style="width:42px; display:inline-block">Trainings</span>
+<span class="inline-block w-[42px] edify-text-caption font-semibold text-slate-500">Trainings</span>
 <span class="flex items-center gap-[3px]" aria-hidden="true">
 {% for _ in "1234" %}<span class="h-1.5 w-3 rounded-pill {% if forloop.counter <= q.trainings_done %}bg-[var(--edify-teal)]{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
 </span>

@@ -22,7 +22,16 @@ const url = new URL(window.location.href);
 url.searchParams.set('tab', tab);
 window.history.pushState({}, '', url);
 },
+moveTab(delta) {
+const current = this.allowedTabs.indexOf(this.activeTab);
+const next = this.allowedTabs[(current + delta + this.allowedTabs.length) % this.allowedTabs.length];
+this.setTab(next);
+this.$nextTick(() => document.getElementById('ia-review-tab-' + next)?.focus());
+},
 returnOpen: false,
+returnTrigger: null,
+openReturn(event) { this.returnTrigger = event?.currentTarget || null; this.returnOpen = true; this.$nextTick(() => this.$refs.returnReason?.focus()); },
+closeReturn() { this.returnOpen = false; this.$nextTick(() => this.returnTrigger?.focus()); },
 checklist: {
 evidence_exists: {% if checks.evidence_exists %}true{% else %}false{% endif %},
 attendance_valid: {% if checks.attendance_valid %}true{% else %}false{% endif %},
@@ -37,17 +46,30 @@ analytics_ready: {% if checks.analytics_ready %}true{% else %}false{% endif %}
 zoomActive: false,
 zoomSrc: ''
 }">
+{% comment %}
+This page had no h1 at all — its highest heading was the h2 in the toolbar
+below, so the document outline started at level 2 and a screen-reader user
+had no page title to navigate to. The heading names the record rather than
+the screen, which is what a reviewer needs to hear first. It is visually
+hidden because the toolbar is chrome: `edify-page-title` forces the display
+type size, which would dwarf a 48px-tall bar.
+{% endcomment %}
+<h1 class="sr-only edify-page-title">
+Review {{ act.get_activity_type_display|default:act.activity_type }}{% if act.school %} at {{ act.school.name }}{% endif %} — activity #{{ act.id }}
+</h1>
+
 <!-- Top Navigation bar of workspace -->
-<div class="edify-surface border-b border-slate-200 px-6 py-3 shrink-0 flex items-center justify-between">
+<div class="edify-surface border-b border-slate-200 px-4 lg:px-6 py-3 shrink-0 flex flex-wrap items-center justify-between gap-3">
 <div class="flex items-center gap-3">
 <a aria-label="Back to verification queue" href="/ia/verification/" class="h-8 w-8 rounded-control hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </a>
 <div>
-<div class="flex items-center gap-2">
+<div class="hidden sm:flex items-center gap-2">
 <span class="edify-text-caption font-semibold bg-[var(--edify-chart-blue)]/10 text-[var(--edify-chart-blue)] px-1.5 py-0.5 rounded-pill">FY{{ act.fy }}</span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">Review Workspace</h2>
 </div>
+<h2 class="sm:hidden text-[14px] font-semibold text-slate-800 tracking-tight">Review {{ act.get_activity_type_display }}</h2>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Activity ID: #{{ act.id }}</p>
 </div>
 </div>
@@ -65,11 +87,20 @@ Compare Side-by-Side
 </div>
 </div>
 
+<!-- On phones the checklist is below the evidence and activity context. Keep
+     the two workflow decisions visible throughout that journey. Both buttons
+     target the canonical forms below, so this is one action implementation,
+     not a second workflow. -->
+<div class="lg:hidden fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-[var(--edify-border)] bg-[var(--edify-surface)] p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] shadow-lg">
+  <button form="verify-form" type="submit" class="btn btn-primary min-h-11">Clear Activity</button>
+  <button type="button" class="btn min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]" @click="openReturn($event)">Return</button>
+</div>
+
 <!-- Main Three-Panel Split Grid -->
-<div class="flex-1 flex overflow-hidden bg-slate-50">
+<div class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-slate-50 pb-24 lg:pb-0">
 
 <!-- LEFT PANEL: Summary -->
-<div class="w-80 shrink-0 edify-surface border-r border-slate-200 overflow-y-auto p-5 space-y-6">
+<aside class="w-full lg:w-72 xl:w-80 shrink-0 edify-surface border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto p-4 lg:p-5 space-y-6">
 <div>
 <h4 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mb-3">Activity Summary</h4>
 <div class="space-y-4">
@@ -108,6 +139,13 @@ Compare Side-by-Side
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">Focus Intervention</span>
 <span class="text-[14px] font-semibold text-slate-800 mt-0.5 block capitalize">{{ act.get_focus_intervention_display|default:"None Specified" }}</span>
 </div>
+<div>
+<span class="edify-text-caption text-slate-400 font-bold uppercase block">Salesforce Activity ID</span>
+<div class="mt-1 flex items-center gap-2">
+<code class="text-[12px] font-semibold text-slate-800 break-all">{{ act.salesforce_activity_id|default:"Missing" }}</code>
+{% if act.salesforce_activity_id %}<button type="button" class="btn btn-ghost h-8 px-2" @click="navigator.clipboard.writeText('{{ act.salesforce_activity_id|escapejs }}')" aria-label="Copy Salesforce Activity ID">Copy</button>{% endif %}
+</div>
+</div>
 <!-- Dates -->
 <div class="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
 <div>
@@ -129,30 +167,38 @@ Compare Side-by-Side
 {{ act.activity_purpose_text|default:"No purpose statement recorded." }}
 </p>
 </div>
+
+<div class="border-t border-slate-100 pt-5 space-y-3">
+<h4 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Decision context</h4>
+<div class="flex items-center justify-between gap-3"><span>Duplicate risk</span><strong>{% if duplicates %}{{ duplicates|length }} match{{ duplicates|length|pluralize:"es" }}{% else %}No matches{% endif %}</strong></div>
+<div class="flex items-center justify-between gap-3"><span>Previous returns</span><strong>{{ comments|length }}</strong></div>
+<div class="flex items-center justify-between gap-3"><span>Audit events</span><strong>{{ timeline|length }}</strong></div>
+<div class="flex items-center justify-between gap-3"><span>Finance routing</span><strong>{% if act.assigned_partner_id %}Partner payment{% else %}Accountability{% endif %}</strong></div>
 </div>
+</aside>
 
 <!-- CENTRE PANEL: Evidence Viewer -->
-<div class="flex-1 flex flex-col overflow-hidden">
+<section class="w-full flex-1 flex flex-col min-h-[34rem] lg:min-h-0 overflow-hidden">
 <!-- Tabs header -->
-<div class="edify-surface px-6 shrink-0 flex items-center gap-4" role="tablist" aria-label="IA review evidence views">
-<button id="ia-review-tab-evidence" type="button" role="tab" aria-controls="ia-review-panel-evidence" :aria-selected="activeTab === 'evidence'" :tabindex="activeTab === 'evidence' ? 0 : -1" @click="setTab('evidence')" :class="activeTab === 'evidence' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<div class="edify-surface px-4 lg:px-6 shrink-0 flex items-center gap-4 overflow-x-auto" role="tablist" aria-label="IA review evidence views">
+<button id="ia-review-tab-evidence" type="button" role="tab" aria-controls="ia-review-panel-evidence" :aria-selected="activeTab === 'evidence'" :tabindex="activeTab === 'evidence' ? 0 : -1" @click="setTab('evidence')" @keydown.arrow-right.prevent="moveTab(1)" @keydown.arrow-left.prevent="moveTab(-1)" @keydown.home.prevent="setTab('evidence')" @keydown.end.prevent="setTab('attendance')" class="edify-tab-btn">
 Evidence Attachments ({{ evidence_list|length }})
 </button>
-<button id="ia-review-tab-ssa" type="button" role="tab" aria-controls="ia-review-panel-ssa" :aria-selected="activeTab === 'ssa'" :tabindex="activeTab === 'ssa' ? 0 : -1" @click="setTab('ssa')" :class="activeTab === 'ssa' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<button id="ia-review-tab-ssa" type="button" role="tab" aria-controls="ia-review-panel-ssa" :aria-selected="activeTab === 'ssa'" :tabindex="activeTab === 'ssa' ? 0 : -1" @click="setTab('ssa')" @keydown.arrow-right.prevent="moveTab(1)" @keydown.arrow-left.prevent="moveTab(-1)" class="edify-tab-btn">
 School Assessment (SSA)
 </button>
-<button id="ia-review-tab-attendance" type="button" role="tab" aria-controls="ia-review-panel-attendance" :aria-selected="activeTab === 'attendance'" :tabindex="activeTab === 'attendance' ? 0 : -1" @click="setTab('attendance')" :class="activeTab === 'attendance' ? 'border-[var(--edify-chart-blue)] text-[var(--edify-chart-blue)]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+<button id="ia-review-tab-attendance" type="button" role="tab" aria-controls="ia-review-panel-attendance" :aria-selected="activeTab === 'attendance'" :tabindex="activeTab === 'attendance' ? 0 : -1" @click="setTab('attendance')" @keydown.arrow-right.prevent="moveTab(1)" @keydown.arrow-left.prevent="moveTab(-1)" class="edify-tab-btn">
 Attendance Sheet
 </button>
 </div>
 
 <!-- Tab Contents container -->
-<div class="flex-1 overflow-y-auto p-6">
+<div class="flex-1 overflow-y-auto p-4 lg:p-6">
 
 <!-- Tab: Evidence Records -->
 <div id="ia-review-panel-evidence" role="tabpanel" x-show="activeTab === 'evidence'" class="space-y-6">
 {% if evidence_list %}
-<div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
 {% for ev in evidence_list %}
 <div class="edify-surface p-3 rounded-surface  shadow-sm space-y-3">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -241,7 +287,7 @@ No evidence uploads available for this activity.
 {{ checks.attendance_desc }}
 </p>
 
-<div class="grid grid-cols-3 gap-4 mt-2">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
 <div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
 <span class="edify-text-caption uppercase font-bold text-slate-400">Teachers</span>
 <span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.teachers_attended|default:0 }}</span>
@@ -287,10 +333,10 @@ Absent
 </div>
 
 </div>
-</div>
+</section>
 
 <!-- RIGHT PANEL: Checklist & Gated Decisions -->
-<div class="w-80 shrink-0 edify-surface border-l border-slate-200 overflow-y-auto p-5 relative flex flex-col justify-between">
+<aside class="w-full lg:w-80 shrink-0 edify-surface border-t lg:border-t-0 lg:border-l border-slate-200 lg:overflow-y-auto p-4 lg:p-5 relative flex flex-col justify-between">
 <div class="space-y-6">
 <div>
 <h4 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mb-3">Verification Checklist</h4>
@@ -383,18 +429,18 @@ Absent
 </div>
 
 <!-- Action buttons at the bottom of the right panel -->
-<div class="space-y-2 border-t border-slate-100 pt-4 edify-surface shrink-0">
+<div class="hidden lg:block sticky bottom-0 z-20 space-y-2 border-t border-slate-100 pt-4 pb-[max(0rem,env(safe-area-inset-bottom))] edify-surface shrink-0">
 <button
 form="verify-form"
 type="submit"
-class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center transition-all bg-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] shadow-sm"
+class="btn btn-primary w-full min-h-11"
 >
-Verify &amp; Approve Activity
+Clear Activity
 </button>
 <button
-@click="returnOpen = true"
+@click="openReturn($event)"
 type="button"
-class="w-full h-10 rounded-control border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="btn w-full min-h-11 border border-[var(--edify-danger)] text-[var(--edify-danger)]"
 >
 Return for Correction
 </button>
@@ -403,41 +449,45 @@ Return for Correction
 <!-- RETURN DRAWER PANEL (Slide-over overlay inside parent) -->
 <div
 x-show="returnOpen"
+x-cloak
+@keydown.escape.window="if (returnOpen) closeReturn()"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-x-full"
 x-transition:enter-end="translate-x-0"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-x-0"
 x-transition:leave-end="translate-x-full"
-class="absolute inset-0 edify-surface z-25 p-5 flex flex-col justify-between shadow-lg"
+class="fixed inset-0 lg:absolute edify-surface z-50 p-5 flex flex-col justify-between shadow-lg"
 style="display: none;"
+role="dialog" aria-modal="true" aria-labelledby="ia-return-title"
 >
 <div class="space-y-5">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-<h3 class="text-[14px] font-semibold text-slate-800">Return Activity</h3>
-<button aria-label="Close" @click="returnOpen = false" class="text-slate-400 hover:text-slate-600">
+<h3 id="ia-return-title" class="text-[14px] font-semibold text-slate-800">Return Activity</h3>
+<button type="button" aria-label="Close return panel" @click="closeReturn()" class="text-slate-400 hover:text-slate-600">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
 </div>
 
 <form id="return-form" method="POST" action="/ia/verification/{{ act.id }}/return" class="space-y-4">
 {% csrf_token %}
-<div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Select Reason(s)</label>
+<fieldset>
+<legend class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Select reason(s)</legend>
 <!-- Multi-select Reasons grid -->
 <div class="max-h-56 overflow-y-auto space-y-1.5  rounded-surface p-2.5 bg-slate-50/50">
 {% for reason in suggested_reasons %}
 <label class="flex items-center gap-2 p-1.5 edify-hover-surface rounded-small cursor-pointer transition-colors text-[12px] font-semibold">
-<input type="checkbox" name="reasons" value="{{ reason }}" class="rounded-control text-rose-600 focus:ring-rose-500">
+<input {% if forloop.first %}x-ref="returnReason"{% endif %} type="checkbox" name="reasons" value="{{ reason }}" class="rounded-control text-rose-600 focus:ring-rose-500">
 <span>{{ reason }}</span>
 </label>
 {% endfor %}
 </div>
-</div>
+</fieldset>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Audit Comments</label>
+<label for="ia-return-comments" class="block edify-text-caption uppercase font-bold text-slate-400 mb-1">Audit comments</label>
 <textarea
+id="ia-return-comments"
 name="comment"
 placeholder="Details of corrections required e.g. Attendance sheet uploaded has only 14 teachers but activity recorded 25 participants."
 class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-control text-[12px] edify-focus-surface focus:outline-none h-24 resize-none font-semibold"
@@ -455,7 +505,7 @@ class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex ite
 Confirm &amp; Return
 </button>
 <button
-@click="returnOpen = false"
+@click="closeReturn()"
 type="button"
 class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
@@ -464,7 +514,7 @@ Cancel
 </div>
 </div>
 
-</div>
+</aside>
 
 </div>
 
@@ -475,7 +525,7 @@ class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center jus
 style="display: none;"
 @click="zoomActive = false"
 >
-<div class="max-w-4xl w-full edify-surface rounded-surface overflow-hidden p-2 relative" @click.stop>
+<div class="max-w-4xl w-full edify-surface rounded-overlay overflow-hidden p-2 relative" role="dialog" aria-modal="true" aria-label="Evidence preview" @click.stop>
 <button aria-label="Close" class="absolute top-4 right-4 w-8 h-8 rounded-pill bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>

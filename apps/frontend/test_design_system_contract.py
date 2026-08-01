@@ -116,7 +116,7 @@ class DesignSystemContractTest(SimpleTestCase):
 
         Each metric reads as its own themed card (white in Light, dark in Dark,
         blue glass in Blue) via design tokens — no hardcoded navy panel — and
-        narrow screens collapse to a 2-column grid instead of a swipe carousel.
+        narrow screens collapse to one readable column instead of a carousel.
         """
 
         components = (ROOT / "static/css/components.css").read_text()
@@ -143,10 +143,10 @@ class DesignSystemContractTest(SimpleTestCase):
         # pinned both themes to --edify-kpi-strip-background must not return.)
         self.assertNotIn("background: var(--edify-kpi-strip-background)", components)
 
-        # Mobile never scrolls a strip sideways: the carousel is replaced by a
-        # 2-column wrapping grid.
+        # Mobile never scrolls a strip sideways: one full-width tile keeps a
+        # metric title readable without wrapping it into fragments.
         self.assertNotIn("scroll-snap-type: inline mandatory", components)
-        self.assertIn("repeat(2, minmax(0, 1fr))", components)
+        self.assertIn("grid-template-columns: 1fr !important", components)
 
         # Legacy overrides must not sneak the navy treatment back in.
         self.assertNotIn(".dark .kpi-strip", legacy_css)
@@ -395,7 +395,13 @@ class DesignSystemContractTest(SimpleTestCase):
         """Nested page mains cause competing landmarks and inconsistent spacing."""
 
         pages = ROOT / "templates/pages"
-        standalone = {pages / "auth/launch.html"}
+        # Pages that render outside the app shell own their own main landmark:
+        # `base.html` declares none, so without it these have no main at all.
+        # The rule this test enforces is "no *second* main inside the shell's".
+        standalone = {
+            pages / "auth/launch.html",
+            pages / "documents/canonical_document.html",
+        }
 
         for page in pages.rglob("*.html"):
             if page in standalone:

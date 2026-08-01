@@ -3,14 +3,14 @@
 {% block title %}{{ title }} · Edify{% endblock %}
 
 {% block shell_content %}
-<section class="hcos-workspace" aria-labelledby="hcos-title">
+<section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title">
   <nav class="hcos-breadcrumbs" aria-label="Breadcrumb">
     <a href="/dashboard">Human Capital</a>
     <span aria-hidden="true">/</span>
     <span aria-current="page">{{ title }}</span>
   </nav>
 
-  <header class="hcos-hero">
+  <header class="edify-page-header hcos-hero">
     <div class="hcos-hero__copy">
       <span class="hcos-eyebrow">Human Capital Operations</span>
       <h1 id="hcos-title" class="edify-page-title">{{ title }}</h1>
@@ -27,18 +27,7 @@
 
   {% include "partials/analytics/section_nav.html" %}
 
-  <section class="hcos-metrics" aria-label="{{ title }} summary">
-    {% for metric in metrics %}
-    <article class="hcos-metric" data-tone="{{ metric.tone }}">
-      <span class="hcos-metric__marker" aria-hidden="true"></span>
-      <div>
-        <span>{{ metric.label }}</span>
-        <strong>{{ metric.value }}</strong>
-        <small>{{ metric.helper }}</small>
-      </div>
-    </article>
-    {% endfor %}
-  </section>
+  {% include "components/kpi_strip.html" with items=metrics title=title|add:" summary" %}
 
   <section class="hcos-register" aria-labelledby="hcos-register-title">
     <header class="hcos-register__header">

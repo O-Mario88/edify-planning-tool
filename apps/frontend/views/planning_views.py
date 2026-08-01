@@ -92,9 +92,7 @@ def _common_project_recommendations(assignments, *, principal, executor_type):
         by_assignment[assignment.id] = keyed
         representative.update(keyed)
         common_ids = (
-            set(keyed)
-            if common_ids is None
-            else common_ids.intersection(keyed)
+            set(keyed) if common_ids is None else common_ids.intersection(keyed)
         )
     common = [
         {
@@ -163,9 +161,7 @@ def special_projects_bulk_schedule_view(request):
             principal=request.user,
             executor_type="staff",
         )
-        if catalogue_item_id not in {
-            row["catalogueItemId"] for row in common
-        }:
+        if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
             raise ValueError(
                 "Select a Catalogue Activity eligible for every selected Project School."
             )
@@ -180,9 +176,7 @@ def special_projects_bulk_schedule_view(request):
                     "catalogueItemId": catalogue_item_id,
                     "requireCatalogue": True,
                     "focusIntervention": recommendation["targetIntervention"],
-                    "recommendationReason": recommendation[
-                        "recommendationReason"
-                    ],
+                    "recommendationReason": recommendation["recommendationReason"],
                     "activityPurposeText": f"Special project support: {assignment.project.name}",
                     "expectedOutcome": "Complete the planned project support and record evidence.",
                 }
@@ -242,6 +236,7 @@ def special_projects_bulk_partner_view(request):
         )
 
     from datetime import date
+
     partner = get_object_or_404(partners, id=request.POST.get("partner_id"))
     scheduled_date = request.POST.get("scheduled_date", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
@@ -265,9 +260,7 @@ def special_projects_bulk_partner_view(request):
             principal=request.user,
             executor_type="partner",
         )
-        if catalogue_item_id not in {
-            row["catalogueItemId"] for row in common
-        }:
+        if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
             raise ValueError(
                 "Select a Catalogue Activity eligible for every selected Project School."
             )
@@ -307,9 +300,7 @@ def special_projects_bulk_partner_view(request):
                     catalogue_item=catalogue_item,
                     project=assignment.project,
                     source_ssa=latest_applicable_record(assignment.school),
-                    recommendation_reason=recommendation[
-                        "recommendationReason"
-                    ],
+                    recommendation_reason=recommendation["recommendationReason"],
                     catalogue_snapshot=catalogue_item.snapshot(),
                     purpose=f"Special project support: {assignment.project.name}",
                     purpose_of_visit=purpose_of_visit,
@@ -984,9 +975,7 @@ def assign_partner_action_view(request):
                 else None
             )
             cluster_for_validation = (
-                get_scoped_object_or_404(
-                    Cluster, request.user, id=cluster_id
-                )
+                get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
                 if cluster_id
                 else None
             )
@@ -1057,16 +1046,11 @@ def assign_partner_action_view(request):
                 *recommendation_result["otherEligible"],
             ]
             match = next(
-                (
-                    row
-                    for row in rows
-                    if row["catalogueItemId"] == catalogue_item.id
-                ),
+                (row for row in rows if row["catalogueItemId"] == catalogue_item.id),
                 None,
             )
             primary_ids = {
-                row["catalogueItemId"]
-                for row in recommendation_result["primary"]
+                row["catalogueItemId"] for row in recommendation_result["primary"]
             }
             dynamic = catalogue_item.intervention_mappings.filter(
                 active=True,
@@ -1392,9 +1376,7 @@ def bulk_action_view(request):
                         assignment_mode="specific_activity",
                         catalogue_item=item,
                         source_ssa=latest_applicable_record(s),
-                        recommendation_reason=recommendation[
-                            "recommendationReason"
-                        ],
+                        recommendation_reason=recommendation["recommendationReason"],
                         catalogue_snapshot=item.snapshot(),
                         purpose=item.display_name,
                         purpose_of_visit="ssa_support",
@@ -1460,9 +1442,7 @@ def bulk_action_view(request):
                             "activityPurposeText": request.POST.get(
                                 "activity_goal", "Bulk-scheduled visit"
                             ),
-                            "focusIntervention": recommendation[
-                                "targetIntervention"
-                            ],
+                            "focusIntervention": recommendation["targetIntervention"],
                             "recommendationReason": recommendation[
                                 "recommendationReason"
                             ],

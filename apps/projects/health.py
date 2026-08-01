@@ -5,7 +5,11 @@ from django.utils import timezone
 
 from apps.schools.models import School
 
-from .models import OPEN_PROJECT_STATUSES, ProjectSchoolAssignment, ProjectStaffAssignment
+from .models import (
+    OPEN_PROJECT_STATUSES,
+    ProjectSchoolAssignment,
+    ProjectStaffAssignment,
+)
 
 
 def project_priority_health() -> dict:
@@ -44,8 +48,7 @@ def project_priority_health() -> dict:
     stale_staff_priority = ProjectStaffAssignment.objects.filter(
         is_active=True,
     ).filter(
-        Q(project__deleted_at__isnull=False)
-        | ~Q(project__status__in=open_statuses)
+        Q(project__deleted_at__isnull=False) | ~Q(project__status__in=open_statuses)
     )
     checks = [
         (
@@ -92,9 +95,7 @@ def project_priority_health() -> dict:
                     if count == 0
                     else "Impact Assessment / Country Director / Admin"
                 ),
-                "directCorrectionAction": (
-                    None if count == 0 else "/projects"
-                ),
+                "directCorrectionAction": (None if count == 0 else "/projects"),
                 "detectedAt": detected_at,
                 "resolutionStatus": "resolved" if count == 0 else "open",
                 "auditHistory": "Audit Log",

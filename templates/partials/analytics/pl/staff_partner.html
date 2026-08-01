@@ -14,7 +14,7 @@
            chart: { height: 240, type: 'bar', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
            colors: window.EdifyChartSystem.comparisonSeries.slice(0, 2),
            plotOptions: { bar: { dataLabels: { position: 'top' } } },
-           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '11px', colors: ['var(--edify-text-muted)'], fontWeight: 700 },
+           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', colors: ['var(--edify-text-muted)'], fontWeight: 700 },
                          formatter: (v, o) => (window.EdifyChartSystem.barLabelFits(o) ? v : '') },
            labels: {{ staff_partner.labels|escape }},
            xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },

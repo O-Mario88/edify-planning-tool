@@ -2,10 +2,10 @@
 
 /* Semantic density primitives. The product previously accumulated thousands
    of one-off 8–11px labels and literal white panels. These primitives keep the
-   compact enterprise rhythm while preserving a 12px readable floor and make
+   compact enterprise rhythm while preserving a 12px compact-text floor and make
    every surface participate in Light, Blue, Dark and System themes. */
 .edify-text-caption {
-  font-size: 0.75rem !important;
+  font-size: var(--edify-text-label-size) !important;
   line-height: 1rem !important;
 }
 
@@ -286,35 +286,37 @@ main .bg-white {
   box-shadow: none;
 }
 
-/* Blue actions keep their hierarchy through colour alone; their geometry and
-   flatness match the reference filter controls. */
+/* Blue actions keep their hierarchy through colour alone. A saturated action
+   surface always carries white ink; pale blue + navy looked like a selected
+   filter and made primary CTAs inconsistent with every other workspace. */
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
-  button.bg-indigo-700, a.bg-indigo-700) {
-  color: var(--edify-navy-950) !important;
-  background-color: var(--edify-sky-400) !important;
+  button.bg-indigo-700, a.bg-indigo-700, button.bg-sky-600, a.bg-sky-600,
+  button.bg-sky-700, a.bg-sky-700, button.bg-cyan-600, a.bg-cyan-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
   background-image: none !important;
-  border: 1px solid var(--edify-sky-400) !important;
+  border: 1px solid var(--edify-accent) !important;
   box-shadow: none !important;
   text-shadow: none;
 }
 
 .theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
   button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
-  button.bg-indigo-700, a.bg-indigo-700):hover:not(:disabled) {
-  background-color: var(--edify-sky-100) !important;
+  button.bg-indigo-700, a.bg-indigo-700, button.bg-sky-600, a.bg-sky-600,
+  button.bg-sky-700, a.bg-sky-700, button.bg-cyan-600, a.bg-cyan-600):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  border-color: var(--edify-accent-hover) !important;
   background-image: none !important;
   box-shadow: none !important;
   transform: none;
 }
 
-/* Every legacy primary family shares the sky-glass face in the blue theme, so
-   they all need the same navy ink (several of them set white via their own
-   later-loaded sheets — admin-dashboard.css, hcos-workspace.css). */
+/* Feature-local primary families resolve to the same white-on-blue contract. */
 .theme-blue :is(.premium-button-primary, .sp-button--primary, .spa-button--primary,
   .spp-button--primary, .tt-button--primary, .hcos-button--primary,
   .admin-button--primary) {
-  color: var(--edify-navy-950) !important;
+  color: var(--edify-on-accent) !important;
   text-shadow: none;
 }
 
@@ -610,6 +612,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 /* KPI Card semantic component styling */
 .edify-kpi-card, .card-kpi {
   position: relative;
+  container: metric-tile / inline-size;
   overflow: hidden;
   background-color: var(--edify-surface);
   background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
@@ -685,7 +688,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 .edify-data-table, .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
 }
 .edify-data-table th, .data-table th {
   background-color: var(--edify-surface-muted);
@@ -706,6 +709,76 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 .edify-data-table tr:hover, .data-table tr:hover {
   background-color: rgba(46, 80, 95, 0.02);
+}
+
+.edify-row-overflow > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.edify-row-overflow > summary::-webkit-details-marker { display: none; }
+
+.edify-row-overflow__menu {
+  position: absolute;
+  z-index: 30;
+  inset: calc(100% + 0.25rem) 0 auto auto;
+  display: grid;
+  min-width: 12rem;
+  padding: 0.375rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg);
+}
+
+.edify-row-overflow__menu a {
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text);
+  white-space: nowrap;
+}
+
+.edify-row-overflow__menu a:is(:hover, :focus-visible) {
+  background: var(--edify-surface-hover);
+  color: var(--edify-accent);
+}
+
+.edify-filter-drawer {
+  width: min(100%, 26rem);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--edify-radius-xl) 0 0 var(--edify-radius-xl);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  box-shadow: var(--edify-shadow-xl);
+}
+
+.edify-filter-drawer::backdrop {
+  background: color-mix(in srgb, var(--edify-sidebar-bg) 64%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.edify-filter-drawer__header,
+.edify-filter-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-color: var(--edify-border);
+}
+
+.edify-filter-drawer__header { border-bottom-width: 1px; }
+.edify-filter-drawer__footer { border-top-width: 1px; }
+.edify-filter-drawer__header h2 { font-size: var(--edify-text-title-size); font-weight: 750; }
+.edify-filter-drawer__body { display: grid; gap: 1rem; padding: 1.25rem; }
+
+@media (max-width: 30rem) {
+  .edify-filter-drawer { border-radius: 0; }
 }
 
 /* Status Badge & Pills */
@@ -807,7 +880,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   gap: 0.375rem;
   font-weight: 600;
   border-radius: var(--radius-control);
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
   padding: 0.5rem 1.15rem;
   transition: var(--edify-transition-all);
   cursor: pointer;
@@ -846,7 +919,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   padding-bottom: 0 !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;
-  font-size: 12px !important;
+  font-size: var(--edify-text-label-size) !important;
   line-height: 2.25rem !important;
 }
 
@@ -996,7 +1069,7 @@ input[type="text"], input[type="number"], input[type="email"], input[type="passw
   background-color: var(--edify-surface) !important;
   border-radius: var(--edify-radius-sm) !important;
   color: var(--edify-text) !important;
-  font-size: 12.5px !important;
+  font-size: var(--edify-text-label-size) !important;
   /* No !important on padding: inputs with icons (e.g. the topbar search)
      must be able to reserve space for them. */
   padding: 6px 12px;
@@ -1091,12 +1164,13 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
   gap: 0.75rem;
 }
 
 .kpi-strip__item {
   position: relative;
+  container: kpi-card / inline-size;
   overflow: hidden;
   padding: 1rem;
   min-height: 7.15rem;
@@ -1123,7 +1197,7 @@ select:not([multiple]):not(.select-native) {
 .kpi-strip__item-body {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: clamp(0.5rem, calc(0.375rem + 1.2cqi), 0.75rem);
   min-width: 0;
   color: inherit;
   text-decoration: none;
@@ -1153,8 +1227,8 @@ select:not([multiple]):not(.select-native) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: clamp(1.75rem, calc(1.5rem + 2.4cqi), 2.25rem);
+  height: clamp(1.75rem, calc(1.5rem + 2.4cqi), 2.25rem);
   border-radius: var(--radius-control);
   flex-shrink: 0;
 }
@@ -1216,22 +1290,31 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip__label {
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-tile-label-size);
   font-weight: 700;
-  letter-spacing: 0.035em;
+  letter-spacing: var(--edify-kpi-label-tracking);
   color: var(--edify-text-muted);
   line-height: 1.2;
   margin-bottom: 0.2rem;
-  text-transform: uppercase;
+  max-inline-size: 100%;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: none;
+  white-space: nowrap;
+  word-break: normal;
 }
 
 .kpi-strip__value {
-  font-size: clamp(1.25rem, 1.05rem + 0.55cqi, 1.625rem);
+  font-size: var(--edify-text-tile-value-size);
   font-weight: 700;
   color: var(--edify-text);
   line-height: 1.05;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
+  max-inline-size: 100%;
+  white-space: nowrap;
 }
 
 /* A tile with no number to show.
@@ -1240,7 +1323,7 @@ select:not([multiple]):not(.select-native) {
    takes the muted ink instead. Sizing it like a value is how "No data" ends up
    looking as authoritative as a measurement. */
 .kpi-strip__item--absent .kpi-strip__value {
-  font-size: var(--edify-text-label-size, 0.8rem);
+  font-size: var(--edify-text-label-size, 0.875rem);
   font-weight: 650;
   color: var(--edify-text-subtle);
   letter-spacing: normal;
@@ -1252,7 +1335,8 @@ select:not([multiple]):not(.select-native) {
   align-items: center;
   gap: 0.2rem;
   margin-top: 0.2rem;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-tile-helper-size);
+  flex-wrap: wrap;
 }
 
 .kpi-strip__trend {
@@ -1279,6 +1363,22 @@ select:not([multiple]):not(.select-native) {
 .kpi-strip__helper {
   color: var(--edify-text-muted);
   font-weight: 500;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: normal;
+}
+
+/* At the smallest supported tile width, the decorative icon is the first
+   thing to yield. Giving its lane back to the label prevents four- and
+   five-line headings without hiding or truncating the actual information. */
+@container kpi-card (max-width: 16rem) {
+  .kpi-strip__icon-container {
+    display: none;
+  }
+
+  .kpi-strip__item-body {
+    gap: 0;
+  }
 }
 
 /* Band version — one surface, items divided by rules, in the pattern of the
@@ -1298,10 +1398,10 @@ select:not([multiple]):not(.select-native) {
 .kpi-strip--band .kpi-strip__grid {
   gap: 0;
   row-gap: 0.75rem;
-  /* One row on a desktop. The default auto-fit minimum (9.5rem) wraps six
+  /* One row on a desktop. The default auto-fit minimum (14rem) wraps six
      items into two rows on ordinary laptop widths; a band exists to be a
      single line, so its items may compress further before wrapping. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }
 
 .kpi-strip--band .kpi-strip__item {
@@ -1331,7 +1431,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip--band .kpi-strip__value {
-  font-size: 1.15rem;
+  font-size: clamp(1rem, calc(0.9375rem + 2cqi), 1.15rem);
   line-height: 1.15;
 }
 
@@ -1360,7 +1460,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip--compact .kpi-strip__grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
 }
 
 .kpi-strip--compact .kpi-strip__value {
@@ -1383,9 +1483,16 @@ select:not([multiple]):not(.select-native) {
   }
 }
 
-/* Six-metric finance and operations strips need more reading room on the
-   authenticated canvas. At very wide widths they return to one row. */
-@container kpi-strip (min-width: 38rem) and (max-width: 74.99rem) {
+/* Metric labels stay on one scannable line. Between tablet and laptop widths
+   the grid yields columns before the type has to wrap or become illegible. */
+@container kpi-strip (min-width: 38rem) and (max-width: 54.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+}
+
+@container kpi-strip (min-width: 55rem) and (max-width: 74.99rem) {
   .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.625rem;
@@ -1396,7 +1503,7 @@ select:not([multiple]):not(.select-native) {
     gap: 0.625rem;
   }
 
-  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(10))) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11))) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.625rem;
   }
@@ -1404,7 +1511,7 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip__grid:is(
     :has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))),
     :has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))),
-    :has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(10)))
+    :has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11)))
   ) .kpi-strip__item {
     padding: 0.75rem;
     border: 1px solid var(--edify-border);
@@ -1440,12 +1547,12 @@ select:not([multiple]):not(.select-native) {
   }
 }
 
-/* Phones never scroll a KPI strip horizontally. Below the smallest card
-   minimum every strip locks to a 2-column wrapping grid so the tiles fill
-   the viewport instead of overflowing into a swipe carousel. */
+/* Phones never scroll a KPI strip horizontally. A single column gives labels
+   their full reading width and prevents narrow two-column cards from turning
+   one metric name into a stack of fragments. */
 @media (max-width: 36rem) {
   .kpi-strip__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: 1fr !important;
   }
 
   .kpi-strip__item {
@@ -1538,6 +1645,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .settings-detail-tile {
+  container: metric-tile / inline-size;
   min-width: 0;
   padding: 0.875rem;
   border: 1px solid var(--edify-border);
@@ -1547,9 +1655,35 @@ select:not([multiple]):not(.select-native) {
 
 .settings-detail-tile__label {
   color: var(--edify-text-muted);
-  font: var(--edify-font-micro);
+  font-size: var(--edify-text-tile-label-size);
+  font-weight: 650;
+  line-height: 1.2;
   letter-spacing: var(--edify-text-micro-tracking);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The reusable card predates the KPI strip but appears across reports and
+   operational dashboards. It follows the same one-line label contract and
+   returns its decorative icon lane before the label becomes cramped. */
+.card-kpi > .flex > .min-w-0 > p:first-child {
+  max-inline-size: 100%;
+  font-size: var(--edify-text-tile-label-size) !important;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+@container metric-tile (max-width: 16rem) {
+  .card-kpi .kpi-icon-circle {
+    display: none;
+  }
 }
 
 .settings-detail-tile__value {
@@ -1719,7 +1853,7 @@ select:not([multiple]):not(.select-native) {
 .edify-section-nav__inner {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
@@ -1738,7 +1872,7 @@ select:not([multiple]):not(.select-native) {
   flex: 0 0 auto;
   inline-size: 1px;
   block-size: 16px;
-  margin-inline: 12px 6px;
+  margin-inline: 8px 4px;
   background: var(--edify-border);
 }
 
@@ -1747,7 +1881,7 @@ select:not([multiple]):not(.select-native) {
   flex: 0 0 auto;
   inline-size: 1px;
   block-size: 14px;
-  margin-inline: 8px;
+  margin-inline: 5px;
   background: var(--edify-border);
 }
 
@@ -1755,11 +1889,11 @@ select:not([multiple]):not(.select-native) {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  min-block-size: 42px;
-  padding-inline: 10px;
+  min-block-size: 38px;
+  padding-inline: 7px;
   border-block-end: 2px solid transparent;
   color: var(--edify-text-muted);
-  font-size: 12.5px;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   white-space: nowrap;
   transition: color .15s ease, border-color .15s ease;
@@ -1925,9 +2059,19 @@ select:not([multiple]):not(.select-native) {
   background: var(--edify-surface) !important;
   border: 1px solid var(--edify-border) !important;
   border-radius: var(--radius-control, 8px);
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   text-overflow: ellipsis;
+}
+/* The dropdown arrow needs its own lane. Without this the longest option runs
+   underneath the chevron and `text-overflow: ellipsis` above truncates against
+   the control's edge rather than before the arrow. Declared once for every
+   filter toolbar: arrow spacing is a property of the control, not something
+   each page should restate with a padding utility — and the utility that would
+   express it (pr-10) is not in the compiled bundle anyway. */
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(:has(div)) select {
+  padding-right: 2.5rem !important;
 }
 
 /* ─── CONCENTRIC-RING DONUT ──────────────────────────────────────────────────
@@ -2011,7 +2155,7 @@ select:not([multiple]):not(.select-native) {
 .edify-donut__subline {
   margin: 8px 0 0;
   color: var(--edify-text-muted);
-  font-size: 13px;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
 }
 
@@ -2137,7 +2281,7 @@ select:not([multiple]):not(.select-native) {
   background: var(--edify-surface-raised);
   color: var(--edify-text);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
   resize: vertical;
 }
 
@@ -2210,7 +2354,7 @@ select:not([multiple]):not(.select-native) {
 .drawer-discard__body {
   margin: 6px 0 0;
   color: var(--edify-text-muted);
-  font-size: 12.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
 }
 
@@ -2225,7 +2369,7 @@ select:not([multiple]):not(.select-native) {
   flex: 1 1 0;
   min-block-size: 2.25rem;
   border-radius: var(--edify-radius-sm);
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   cursor: pointer;
 }
@@ -2314,7 +2458,7 @@ select:not([multiple]):not(.select-native) {
 .confirm-action__body {
   margin: 8px 0 0;
   color: var(--edify-text-muted);
-  font-size: 13px;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
   line-height: 1.5;
 }
@@ -2330,7 +2474,7 @@ select:not([multiple]):not(.select-native) {
   flex: 1 1 0;
   min-block-size: 2.5rem;
   border-radius: var(--edify-radius-sm);
-  font-size: 12.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   cursor: pointer;
 }
@@ -2462,3 +2606,66 @@ select:not([multiple]):not(.select-native) {
   .edify-admin-support-banner { flex-wrap: wrap; }
   .edify-admin-support-banner a { margin-inline-start: 0; }
 }
+
+/* ── ApexCharts reference treatment ───────────────────────────────────────
+   Series colors stay data-driven, while the hollow points and black tooltip
+   mirror the platform's chart reference across line and mixed charts. */
+.apexcharts-canvas .apexcharts-marker {
+  fill: var(--edify-surface);
+  stroke-width: 2px;
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark {
+  color: #fff;
+  background: var(--edify-chart-tooltip);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {
+  background: color-mix(in srgb, var(--edify-chart-tooltip) 92%, #fff);
+  border-block-end-color: rgb(255 255 255 / 0.12);
+}
+
+.apexcharts-xaxistooltip {
+  color: #fff;
+  background: var(--edify-chart-tooltip);
+  border: 0;
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.16);
+}
+
+.apexcharts-xaxistooltip::before,
+.apexcharts-xaxistooltip::after {
+  border-block-start-color: var(--edify-chart-tooltip);
+}
+/* Authentication layout: presentation lives here so every auth screen shares
+   the same token-driven composition without static inline declarations. */
+.auth-shell { background: radial-gradient(ellipse at top right, var(--edify-info-light) 0%, var(--edify-info-light) 45%, var(--edify-info-light) 100%); font-family: var(--edify-font-sans); }
+.auth-orb-primary { background: var(--edify-primary-active); }
+.auth-spark-surface { background: var(--edify-surface-raised); opacity: .7; }
+.auth-orb-accent { background: var(--edify-sky-400); opacity: .55; }
+.auth-spark-navy { background: var(--edify-navy-800); opacity: .35; }
+.auth-card { box-shadow: 0 30px 70px -20px color-mix(in srgb, var(--edify-primary) 40%, transparent); }
+.auth-brand-panel { background: linear-gradient(160deg, var(--edify-primary-active) 0%, var(--edify-navy-800) 55%, var(--edify-steel-600) 100%); }
+.auth-dot-grid--primary { opacity: .35; }
+.auth-dot-grid--muted { opacity: .25; }
+.auth-dot--primary { background: var(--edify-sky-400); }
+.auth-dot--muted { background: var(--edify-sky-100); }
+.auth-inverse-logo { filter: brightness(0) invert(1); }
+.auth-title { color: var(--edify-surface-raised); font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.auth-subtitle { color: var(--edify-sky-100); font-size: var(--edify-text-label-size); font-weight: 500; line-height: 1.5; margin-top: 10px; }
+.auth-feature-icon { background: color-mix(in srgb, var(--edify-on-accent) 12%, transparent); }
+.auth-feature-icon--primary { color: var(--edify-sky-400); }
+.auth-feature-icon--muted { color: var(--edify-sky-100); }
+.auth-feature-label { color: var(--edify-surface-raised); font-size: var(--edify-text-label-size); font-weight: 600; }
+.auth-stat-label { color: var(--edify-sky-400); font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.auth-stat-value { color: var(--edify-surface-raised); font-size: 20px; font-weight: 800; margin-top: 2px; }
+.auth-stat-divider { background: color-mix(in srgb, var(--edify-on-accent) 15%, transparent); height: 32px; width: 1px; }
+.auth-form-logo { background: linear-gradient(135deg, var(--edify-navy-800), var(--edify-steel-600)); box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--edify-primary) 35%, transparent); }
+.auth-security { border: 1px solid var(--edify-info-light); }
+.auth-security-icon { color: var(--edify-navy-800); }
+.auth-security-title { font-size: var(--edify-text-micro-size); font-weight: 700; }
+.auth-security-copy { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); margin-top: 1px; }
+.auth-footer { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); font-weight: 500; }

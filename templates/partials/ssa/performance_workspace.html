@@ -52,32 +52,7 @@
     <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
   </form>
 
-  <section class="sp-kpis" aria-label="SSA performance key indicators">
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 21V8l5-3v16m0-10 6-3v13m0-7 5-2v9M2 21h20"/></svg></span>
-      <div><span>Total schools assessed</span><strong>{{ dashboard.kpis.assessed }}</strong><small>of {{ dashboard.kpis.total_schools }} schools · {{ dashboard.kpis.completion_rate }}%</small></div>
-    </article>
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="success" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
-      <div><span>SSA completion rate</span><strong>{{ dashboard.kpis.completion_rate }}<em>%</em></strong><small>{{ dashboard.kpis.assessed }} confirmed this quarter</small></div>
-    </article>
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="info" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8m11 18v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-      <div><span>Districts reporting</span><strong>{{ dashboard.kpis.reporting_districts }}</strong><small>of {{ dashboard.kpis.total_districts }} in your scope</small></div>
-    </article>
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="warning" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m12 2 3 6 7 .9-5 4.8 1.2 7-6.2-3.3-6.2 3.3 1.2-7-5-4.8L9 8z"/></svg></span>
-      <div><span>Average SSA score</span><strong>{% if dashboard.kpis.average_score != None %}{{ dashboard.kpis.average_score }}{% else %}—{% endif %}<em>/10</em></strong><small>{% if dashboard.kpis.average_delta != None %}{{ dashboard.kpis.average_delta|stringformat:"+.2f" }} vs {{ dashboard.kpis.comparison_label }}{% else %}No comparable prior period{% endif %}</small></div>
-    </article>
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="danger" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10 3 2.5 19a2 2 0 0 0 1.8 2h15.4a2 2 0 0 0 1.8-2L14 3a2 2 0 0 0-4 0Z"/></svg></span>
-      <div><span>High-risk schools</span><strong>{{ dashboard.kpis.high_risk }}</strong><small>{{ dashboard.kpis.high_risk_pct }}% of assessed · below {{ dashboard.engine.high_risk_score }}</small></div>
-    </article>
-    <article class="sp-kpi">
-      <span class="sp-kpi__icon" data-tone="danger" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2"/></svg></span>
-      <div><span>Districts below target</span><strong>{{ dashboard.kpis.districts_below_target }}</strong><small>below {{ dashboard.kpis.target }} average</small></div>
-    </article>
-  </section>
+  {% include "components/kpi_strip.html" with items=ssa_kpi_items title="SSA performance key indicators" %}
 
   <div class="sp-dashboard-grid">
     <section class="sp-card sp-interventions" aria-labelledby="sp-interventions-title">
@@ -155,7 +130,7 @@
 
     <aside class="sp-card sp-insights" aria-labelledby="sp-insights-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Decision engine</span><h2 id="sp-insights-title">Insights &amp; recommendations</h2></div></header>
-      <ul>{% for insight in dashboard.insights %}<li data-tone="{{ insight.tone }}"><span class="sp-insight-icon" aria-hidden="true">{% if insight.tone == 'success' %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true" style="width:0.75em;height:0.75em"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% elif insight.tone == 'info' %}i{% else %}!{% endif %}</span><div><strong>{{ insight.title }}</strong><p>{{ insight.body }}</p><small>{{ insight.action }} →</small></div></li>{% endfor %}</ul>
+      <ul>{% for insight in dashboard.insights %}<li data-tone="{{ insight.tone }}"><span class="sp-insight-icon" aria-hidden="true">{% if insight.tone == 'success' %}<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% elif insight.tone == 'info' %}i{% else %}!{% endif %}</span><div><strong>{{ insight.title }}</strong><p>{{ insight.body }}</p><small>{{ insight.action }} →</small></div></li>{% endfor %}</ul>
     </aside>
 
     <section class="sp-card sp-trend" aria-labelledby="sp-trend-title">

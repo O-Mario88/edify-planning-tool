@@ -16,7 +16,7 @@ class EvidenceRecord(TimeStampedModel):
         "activities.Activity", on_delete=models.CASCADE, related_name="evidence"
     )
     kind = models.CharField(max_length=32, choices=EvidenceKind.choices)
-    uri = models.CharField(max_length=512)  # stored filename under EVIDENCE_STORAGE_DIR
+    uri = models.CharField(max_length=512)  # generated private-storage basename
     original_name = models.CharField(max_length=512, null=True, blank=True)
     mime_type = models.CharField(max_length=128, null=True, blank=True)
     file_extension = models.CharField(max_length=16, null=True, blank=True)

@@ -1651,9 +1651,7 @@ class MilestoneActivityRule(TimeStampedModel):
     school_type = models.CharField(max_length=32, blank=True)
     school_level = models.CharField(max_length=64, blank=True)
     target_intervention = models.CharField(max_length=64, blank=True)
-    minimum_completion_state = models.CharField(
-        max_length=32, default="ia_verified"
-    )
+    minimum_completion_state = models.CharField(max_length=32, default="ia_verified")
     weight = models.DecimalField(max_digits=6, decimal_places=2, default=1)
     active = models.BooleanField(default=True)
 

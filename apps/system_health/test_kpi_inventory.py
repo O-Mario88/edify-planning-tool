@@ -21,8 +21,11 @@ from apps.system_health.kpi_inventory import _classify, build_inventory
 # The surface before the metric registry was 281 unregistered tiles and 21
 # label families computed in more than one module. Migrating My Plan's strip
 # (8 tiles) and deleting the duplicated "Planned Activities Funding" tile on PL
-# Fund Approvals took it to the numbers below.
-MAX_UNREGISTERED_TILES = 272
+# Fund Approvals took it to 272. The shared SSA, Impact, Partner,
+# country-health and Admin Operations migration then registered 27 tiles and
+# removed the non-metric Team Plans CTA, leaving the total four below that
+# earlier baseline.
+MAX_UNREGISTERED_TILES = 268
 MAX_DUPLICATED_LABELS = 16
 
 

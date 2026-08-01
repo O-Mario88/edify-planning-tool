@@ -122,11 +122,21 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
     def test_school_pin_colours_match_the_classification_legend(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn("{key:'core', label:'Core', colour:'#f97316'", template)
-        self.assertIn("{key:'client', label:'Client', colour:'#2563eb'", template)
-        self.assertIn("{key:'champion', label:'Champion', colour:'#16a34a'", template)
         self.assertIn(
-            "{key:'core_trained', label:'Core trained', colour:'#c2410c'",
+            "{key:'core', label:'Core', colour:token('--edify-chart-orange')",
+            template,
+        )
+        self.assertIn(
+            "{key:'client', label:'Client', colour:token('--edify-chart-blue')",
+            template,
+        )
+        self.assertIn(
+            "{key:'champion', label:'Champion', colour:token('--edify-chart-green')",
+            template,
+        )
+        self.assertIn(
+            "{key:'core_trained', label:'Core trained', "
+            "colour:token('--edify-warning-text')",
             template,
         )
         self.assertIn("class', 'sr-pin-check'", template)
@@ -139,7 +149,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertIn("* 7;", template)
-        self.assertIn("font-size:5px", template)
+        self.assertIn(
+            "font-size:var(--edify-text-micro-size);font-weight:750", template
+        )
         self.assertIn("stroke:none;transition:opacity .3s", template)
         self.assertNotIn("stroke-width:1.4px", template)
         self.assertLess(
@@ -166,7 +178,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             "placed.every(existing => !overlaps(rect, existing)) &&", template
         )
         self.assertIn("markerRects.every(marker => !overlaps(rect, marker))", template)
-        self.assertIn("const labelScales = [1, .9, .8, .7];", template)
+        self.assertIn("const labelScales = [1];", template)
+        self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
+        self.assertIn("label.style.opacity = 0;", template)
         self.assertIn("placement = 'open-space';", template)
         self.assertIn("const blocked =", template)
         self.assertIn("placed.some(existing => overlaps(rect, existing))", template)

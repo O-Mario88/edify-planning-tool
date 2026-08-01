@@ -15,7 +15,7 @@
   })();
 </script>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <style>
@@ -49,7 +49,7 @@
   --info:    #1C5EDD;  --info-light:    #DBE7FB;  --info-deep:    #14419A;
   --teal:    #0B8C80;  --teal-light:    #D0F1ED;  --teal-deep:    #066760;
   --purple:  #6E3FD4;  --purple-light:  #EBE0FA;  --purple-deep:  #502BA0;
-  --font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font: 'Geist', ui-sans-serif, system-ui, sans-serif;
   /* ── ELEVATION — 4-tier shadow system ── */
   --sh-xs: 0 1px 2px rgba(16,24,40,.04);
   --sh-sm: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
@@ -669,7 +669,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
         { name: 'Verified', type: 'column', data: [15,19,16,21,18,19,17,20,18,16,18,19] },
         { name: 'Target %', type: 'line', data: [68,76,80,75,75,73,74,72,75,76,72,79] }
       ],
-      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
+      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
       stroke: { width: [0,0,0,2.5], curve: 'smooth' },
       /* Brand chart colors — green/blue/orange stay consistent across themes */
       colors: ['#008000', '#2F539B', '#EE9A4D', '#F59E0B'],
@@ -677,15 +677,15 @@ button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible
       plotOptions: { bar: { columnWidth: '50%', borderRadius: 3, radiusOnLastStackedSeries: true } },
       dataLabels: { enabled: false },
       labels: ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
-      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: c.text, fontSize: '10px', fontWeight: 600, fontFamily: 'Inter' } } },
+      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: c.text, fontSize: '10px', fontWeight: 600, fontFamily: 'Geist' } } },
       yaxis: [
-        { seriesName: 'Planned', labels: { style: { colors: c.text, fontSize: '10px', fontFamily: 'Inter' } } },
+        { seriesName: 'Planned', labels: { style: { colors: c.text, fontSize: '10px', fontFamily: 'Geist' } } },
         { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
-        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: c.text, fontSize: '10px', fontFamily: 'Inter' } } }
+        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: c.text, fontSize: '10px', fontFamily: 'Geist' } } }
       ],
       grid: { borderColor: c.grid, strokeDasharray: 3, padding: { left: 0, right: 0 }, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
       legend: { show: false },
-      tooltip: { theme: c.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '11px', fontFamily: 'Inter' }, marker: { show: true } }
+      tooltip: { theme: c.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '11px', fontFamily: 'Geist' }, marker: { show: true } }
     };
   }
 

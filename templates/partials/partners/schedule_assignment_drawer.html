@@ -13,7 +13,7 @@
   {% csrf_token %}
   <div id="partner-schedule-errors" aria-live="polite"></div>
 
-  <div class="rounded-overlay border border-[var(--border-card)] bg-white p-4 shadow-sm">
+  <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assignment context</p>
     <p class="mt-2 text-[14px] font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Choose one approved Activity below{% endif %}</p>
     {% if assignment.focus_intervention %}<p class="mt-1 text-slate-500">Intervention: {{ assignment.focus_intervention|cut:"_"|title }}</p>{% endif %}
@@ -35,11 +35,11 @@
 
   <div>
     <label for="partner-scheduled-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery date</label>
-    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus">
+    <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
   <div>
     <label for="partner-expected-participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected participants</label>
-    <input id="partner-expected-participants" name="expected_participants" type="number" min="1" inputmode="numeric" class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus">
+    <input id="partner-expected-participants" name="expected_participants" type="number" min="1" inputmode="numeric" class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div class="rounded-surface border border-sky-200 bg-sky-50 p-3 text-sky-900">
@@ -48,7 +48,7 @@
   </div>
 
   <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="px-5 h-10 rounded-control border border-[var(--border-strong)] bg-white text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
     <button type="submit" {% if not catalogue_choices %}disabled{% endif %} class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)] disabled:cursor-not-allowed disabled:opacity-50">Schedule Activity</button>
   </div>
 </form>

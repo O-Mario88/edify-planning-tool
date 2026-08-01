@@ -287,8 +287,6 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
-        # Sees their own evidence and PD certificates in the Upload Center.
-        P.UPLOADS_VIEW,
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_EDIT,
@@ -323,8 +321,6 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.CCEO: [
-        # Sees their own evidence and PD certificates in the Upload Center.
-        P.UPLOADS_VIEW,
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
@@ -389,9 +385,6 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
-        # Accountants are Edify employees and upload their own PD completion
-        # files through the shared Upload Center.
-        P.UPLOADS_VIEW,
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
         P.SCHOOL_VIEW,
         P.PAYMENT_ACT,

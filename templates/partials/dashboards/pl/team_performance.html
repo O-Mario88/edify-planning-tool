@@ -14,7 +14,7 @@
              { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|escape }} }
            ],
            chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
-           stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
+           stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
            colors: window.EdifyChartSystem.mixedSeries,
            dataLabels: { enabled: false },
            labels: {{ team_performance.labels|escape }},

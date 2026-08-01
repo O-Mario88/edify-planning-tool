@@ -46,10 +46,7 @@ def list_projects(principal=None) -> list[dict]:
         return [_serialize(p) for p in _serialization_queryset(projects)]
     from .scoping import scoped_projects
 
-    return [
-        _serialize(p)
-        for p in _serialization_queryset(scoped_projects(principal))
-    ]
+    return [_serialize(p) for p in _serialization_queryset(scoped_projects(principal))]
 
 
 def get_one(project_id: str, principal=None) -> dict:
@@ -58,9 +55,11 @@ def get_one(project_id: str, principal=None) -> dict:
 
         return _serialize(get_scoped_project(project_id, principal))
     else:
-        p = _serialization_queryset(
-            Project.objects.filter(deleted_at__isnull=True)
-        ).filter(id=project_id).first()
+        p = (
+            _serialization_queryset(Project.objects.filter(deleted_at__isnull=True))
+            .filter(id=project_id)
+            .first()
+        )
     if not p:
         raise NotFoundError("Project not found.")
     return _serialize(p)
@@ -71,12 +70,8 @@ def _serialization_queryset(queryset):
 
     return (
         queryset.annotate(
-            serialized_school_count=Count(
-                "school_assignments", distinct=True
-            ),
-            serialized_partner_count=Count(
-                "partner_assignments", distinct=True
-            ),
+            serialized_school_count=Count("school_assignments", distinct=True),
+            serialized_partner_count=Count("partner_assignments", distinct=True),
             serialized_staff_count=Count(
                 "staff_assignments",
                 filter=Q(staff_assignments__is_active=True),
@@ -152,7 +147,10 @@ def _assert_school_capacity(project, school) -> None:
             f"'{project.name}' is limited to Core Schools; {school.name} is "
             f"classified as {school.get_school_type_display()}."
         )
-    if project.school_focus == ProjectSchoolFocus.CLIENT and school.school_type == "core":
+    if (
+        project.school_focus == ProjectSchoolFocus.CLIENT
+        and school.school_type == "core"
+    ):
         raise BadRequest(
             f"'{project.name}' is limited to Client Schools; {school.name} is Core."
         )
@@ -192,14 +190,10 @@ def _assert_staff_can_plan_project(project, school, principal) -> None:
         ).exists()
     )
     if not assigned:
-        raise Forbidden(
-            "This Project is not assigned to you as a staff priority."
-        )
+        raise Forbidden("This Project is not assigned to you as a staff priority.")
     scope = resolve_user_scope(principal)
     if school.id not in set(scope.school_ids or []):
-        raise Forbidden(
-            "You may add only Schools in your own or supervised portfolio."
-        )
+        raise Forbidden("You may add only Schools in your own or supervised portfolio.")
 
 
 @transaction.atomic
@@ -241,9 +235,7 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
         project=p,
         school=school,
         defaults={
-            "assigned_by": (
-                getattr(principal, "user_id", None) if principal else None
-            ),
+            "assigned_by": (getattr(principal, "user_id", None) if principal else None),
             "project_type": data.get("projectType") or None,
             "participation_type": data.get("participationType") or None,
             "start_date": data.get("startDate") or None,
@@ -269,9 +261,7 @@ def staff_assignments(project_id: str, principal=None) -> list[dict]:
 
         project = get_scoped_project(project_id, principal)
     else:
-        project = Project.objects.filter(
-            id=project_id, deleted_at__isnull=True
-        ).first()
+        project = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not project:
         raise NotFoundError("Project not found.")
     return [
@@ -296,10 +286,14 @@ def staff_assignments(project_id: str, principal=None) -> list[dict]:
 def assign_staff(project_id: str, data: dict, principal) -> dict:
     """Assign one Project to selected staff or complete CCEO/PL role groups."""
     _assert_project_assigner(principal)
-    project = Project.objects.select_for_update().filter(
-        id=project_id,
-        deleted_at__isnull=True,
-    ).first()
+    project = (
+        Project.objects.select_for_update()
+        .filter(
+            id=project_id,
+            deleted_at__isnull=True,
+        )
+        .first()
+    )
     if not project:
         raise NotFoundError("Project not found.")
     assert_accepts_new_work(project)
@@ -343,9 +337,7 @@ def assign_staff(project_id: str, data: dict, principal) -> dict:
     start_date = data.get("startDate") or None
     due_date = data.get("dueDate") or None
     fy = (
-        data.get("fy")
-        or project.measurement_start_fy
-        or get_operational_fy()
+        data.get("fy") or project.measurement_start_fy or get_operational_fy()
     ).strip()
     created = reactivated = 0
     for staff in selected.values():

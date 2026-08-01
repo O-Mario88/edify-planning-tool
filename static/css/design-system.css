@@ -131,7 +131,8 @@
   --edify-chart-orange: #ea580c;
   --edify-chart-pink: #ec4899;
   --edify-chart-lime: #84cc16;
-  --edify-chart-grid: color-mix(in srgb, var(--edify-border) 72%, transparent);
+  --edify-chart-grid: color-mix(in srgb, var(--edify-border) 58%, transparent);
+  --edify-chart-tooltip: #111827;
   /* Ordered comparison-series contract. Bar charts always consume these
      aliases in order so the same measure does not change colour by page. */
   --edify-chart-series-primary: var(--edify-chart-blue);
@@ -212,25 +213,41 @@
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
      Geist Sans — the platform typeface for data-dense premium dashboards.
-     Tighter sizes, bolder weights, compact leading.
-       display → page titles (fluid 24–30px)
-       heading → section titles (16px)
-       title   → card/panel titles (14px)
-       body    → default text, table cells (14px)
-       label   → captions, secondary (12px)
-       micro   → overlines, badges (11px) */
+     Readable sizes, confident weights and comfortable leading.
+       display → page titles (fluid 28–36px)
+       heading → section titles (20–24px)
+       title   → card/panel titles (16–18px)
+       body    → default text and long-form copy (16–17px)
+       label   → controls, table cells and secondary copy (14–15px)
+       micro   → short overlines and compact badges only (12px) */
   --edify-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --edify-text-display-size: clamp(1.5rem, 1.34rem + 0.52vw, 1.875rem);
-  --edify-text-heading-size: clamp(1.05rem, 1rem + 0.18vw, 1.25rem);
-  --edify-text-title-size:   clamp(0.875rem, 0.84rem + 0.12vw, 1rem);
-  --edify-text-body-size:    clamp(0.875rem, 0.82rem + 0.16vw, 1rem);
-  --edify-text-label-size:   clamp(0.75rem, 0.72rem + 0.1vw, 0.875rem);
-  --edify-text-micro-size:   0.6875rem;
+  --edify-text-display-size: clamp(1.5rem, 1.34rem + 0.58vw, 2rem);
+  --edify-text-heading-size: clamp(1.125rem, 1.03rem + 0.3vw, 1.375rem);
+  --edify-text-title-size:   clamp(0.9375rem, 0.9rem + 0.12vw, 1.0625rem);
+  --edify-text-body-size:    clamp(0.9375rem, 0.91rem + 0.08vw, 1rem);
+  --edify-text-label-size:   clamp(0.8125rem, 0.79rem + 0.08vw, 0.875rem);
+  /* No rendered interface text may fall below this floor. Keep the micro tier
+     semantic so charts and compact controls share the same 12px contract. */
+  --edify-text-floor:        0.75rem;
+  --edify-text-micro-size:   var(--edify-text-floor);
+
+  /* Component-responsive type. These use the nearest inline-size container,
+     not the viewport, so a metric rendered in a narrow rail does not inherit
+     the same type size as one rendered in a full-width dashboard band. The
+     lower bounds preserve the 12px compact-metadata floor and a 13px data
+     floor; layout scrolls or reflows before text becomes unreadable. */
+  --edify-text-card-heading-size: clamp(0.9375rem, calc(0.9375rem + 0.8cqi), 1.25rem);
+  --edify-text-card-title-size: clamp(0.875rem, calc(0.875rem + 0.6cqi), 1.0625rem);
+  --edify-text-tile-value-size: clamp(1.125rem, calc(0.9375rem + 2.5cqi), 1.5rem);
+  --edify-text-tile-label-size: clamp(0.75rem, calc(0.6875rem + 0.35cqi), 0.8125rem);
+  --edify-text-tile-helper-size: clamp(0.75rem, calc(0.6875rem + 0.3cqi), 0.8125rem);
+  --edify-text-table-size: clamp(0.8125rem, calc(0.8125rem + 0.06cqi), 0.875rem);
+  --edify-text-table-heading-size: clamp(0.75rem, calc(0.75rem + 0.05cqi), 0.8125rem);
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
@@ -239,12 +256,12 @@
   --edify-text-label-weight:   500;
   --edify-text-micro-weight:   600;
 
-  --edify-text-display-leading: 1.12;
-  --edify-text-heading-leading: 1.3;
-  --edify-text-title-leading:   1.35;
-  --edify-text-body-leading:    1.5;
-  --edify-text-label-leading:   1.4;
-  --edify-text-micro-leading:   1.3;
+  --edify-text-display-leading: 1.1;
+  --edify-text-heading-leading: 1.25;
+  --edify-text-title-leading:   1.3;
+  --edify-text-body-leading:    1.45;
+  --edify-text-label-leading:   1.35;
+  --edify-text-micro-leading:   1.25;
 
   --edify-text-display-tracking: -0.025em;
   --edify-text-heading-tracking: -0.005em;

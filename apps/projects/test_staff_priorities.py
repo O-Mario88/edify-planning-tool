@@ -134,7 +134,7 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
                 "roleGroups": [
                     EdifyRole.CCEO.value,
                     EdifyRole.COUNTRY_PROGRAM_LEAD.value,
-                ]
+                ],
             },
             self.cd,
         )
@@ -148,9 +148,7 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
             ).exists()
         )
         self.assertEqual(
-            staff_project_priorities(user=self.cceo, fy="2027")[0][
-                "projectName"
-            ],
+            staff_project_priorities(user=self.cceo, fy="2027")[0]["projectName"],
             project.name,
         )
         team_rows = team_project_priorities(

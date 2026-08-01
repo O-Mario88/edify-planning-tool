@@ -181,7 +181,9 @@ class MyTargetsPageTest(TestCase):
         ):
             self.assertIn(title, html)
         self.assertIn("No approved milestone allocations yet", html)
-        self.assertIn("do not create targets, reduce achievement, or generate risk", html)
+        self.assertIn(
+            "do not create targets, reduce achievement, or generate risk", html
+        )
 
     def test_quarter_derived_from_fy_configuration(self):
         self.assertEqual(Cal.month_of_fy_for(date(2025, 10, 1), FY), 1)  # FY starts Oct

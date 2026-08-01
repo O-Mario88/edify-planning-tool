@@ -28,7 +28,7 @@ from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
-from apps.accounts.models import StaffProfile
+from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 from apps.activities.models import Activity, VerificationHistory
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
@@ -117,6 +117,60 @@ class IAPerformanceTestBase(TestCase):
 
 
 class IADashboardQueryBudgetTest(IAPerformanceTestBase):
+    def test_dashboard_monitors_district_region_cceo_and_program_lead(self):
+        cceo_user = User.objects.create_user(
+            email="ia-cceo@edify.test",
+            name="IA Monitored CCEO",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
+        )
+        cceo = StaffProfile.objects.create(user=cceo_user, title="CCEO")
+        pl_user = User.objects.create_user(
+            email="ia-pl@edify.test",
+            name="IA Monitored PL",
+            roles=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+            active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            password="x",
+            is_active=True,
+        )
+        pl = StaffProfile.objects.create(user=pl_user, title="Program Lead")
+        StaffSupervisorAssignment.objects.create(supervisor=pl, supervisee=cceo)
+        activity = self._pending_activity(self._school("leadership"))
+        activity.responsible_staff_id = cceo.id
+        activity.status = "ia_verified"
+        activity.ia_verification_status = "confirmed"
+        activity.save(
+            update_fields=[
+                "responsible_staff_id",
+                "status",
+                "ia_verification_status",
+                "updated_at",
+            ]
+        )
+
+        response = self.client.get("/ia/dashboard/")
+
+        district = next(
+            row
+            for row in response.context["district_performance"]
+            if row["name"] == self.district.name
+        )
+        region = next(
+            row
+            for row in response.context["region_performance"]
+            if row["name"] == self.region.name
+        )
+        leaders = {
+            row["name"]: row for row in response.context["leadership_performance"]
+        }
+        self.assertEqual((district["planned"], district["achieved"]), (1, 1))
+        self.assertEqual((region["planned"], region["achieved"]), (1, 1))
+        self.assertEqual(leaders[cceo_user.name]["achieved"], 1)
+        self.assertEqual(leaders[pl_user.name]["achieved"], 1)
+        self.assertEqual(leaders[pl_user.name]["scope"], "Team portfolio")
+
     def test_dashboard_prioritizes_oldest_queue_work_and_links_to_review(self):
         now = timezone.now()
         older = self._pending_activity(self._school("oldest"))
@@ -144,6 +198,31 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertContains(response, "Not yet measured")
         self.assertNotContains(response, "84%")
         self.assertNotContains(response, "2 pts vs last week")
+
+    def test_verification_queue_sorts_critical_then_overdue_then_oldest(self):
+        now = timezone.now()
+        critical = self._pending_activity(self._school("critical"))
+        critical.activity_type = "core_visit"
+        critical.submitted_to_ia_at = now - timezone.timedelta(hours=2)
+        critical.save(update_fields=["activity_type", "submitted_to_ia_at", "updated_at"])
+
+        overdue = self._pending_activity(self._school("overdue"))
+        overdue.submitted_to_ia_at = now - timezone.timedelta(hours=30)
+        overdue.save(update_fields=["submitted_to_ia_at", "updated_at"])
+
+        standard = self._pending_activity(self._school("standard"))
+        standard.submitted_to_ia_at = now - timezone.timedelta(hours=10)
+        standard.save(update_fields=["submitted_to_ia_at", "updated_at"])
+
+        response = self.client.get("/ia/verification/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [row["id"] for row in response.context["queue"][:3]],
+            [str(critical.id), str(overdue.id), str(standard.id)],
+        )
+        self.assertEqual(response.context["queue"][0]["risk_label"], "Critical")
+        self.assertTrue(response.context["queue"][1]["is_overdue"])
 
     def test_ia_dashboard_sla_uses_real_queue_cycle_timestamps(self):
         now = timezone.now()
@@ -189,13 +268,11 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(
             len(ctx.captured_queries),
-            61,
+            65,
             f"/ia/dashboard/ ran {len(ctx.captured_queries)} queries -- investigation "
-            "measured ~61-62 before deduplicating the copy-pasted KPI block; should "
-            "now be meaningfully lower and, either way, a small constant. The "
-            "ceiling moved 60 -> 61 for the policy gate's single EXISTS, which "
-            "runs on every authenticated request; the sibling test below is the "
-            "one that proves the count still does not grow with data volume.",
+            "must remain a small constant after the country-wide district, region "
+            "and leadership monitoring rollups. The sibling test below is the one "
+            "that proves the count does not grow with data volume.",
         )
 
     # ── 2. /ia/dashboard/ query count doesn't grow with data volume ─────────
@@ -333,3 +410,68 @@ class IAVerificationQueueN1FixTest(IAPerformanceTestBase):
         self.assertEqual(response.context["kpis"]["avg_time"], "20h")
         self.assertContains(response, "50.0%")
         self.assertContains(response, "n=2")
+
+
+class IAVerificationQueueFilterContractTest(IAPerformanceTestBase):
+    """The queue's filter controls must filter on values the data can have.
+
+    The Fiscal Year dropdown offered FY24 / FY25 / FY26 while `Activity.fy`
+    stores a four-digit year (see apps.core.fy.get_operational_fy). Choosing a
+    year therefore filtered on a value no row has ever carried and emptied the
+    queue, silently and with no error — the failure mode a dropdown cannot
+    show you.
+    """
+
+    def test_fiscal_year_options_are_values_the_model_actually_stores(self):
+        response = self.client.get("/ia/verification/")
+
+        options = response.context["fy_options"]
+        self.assertIn(FY, options, "the current FY must be selectable")
+        for option in options:
+            with self.subTest(option=option):
+                self.assertRegex(
+                    option,
+                    r"^\d{4}$",
+                    "FY options must match Activity.fy's four-digit format",
+                )
+
+    def test_filtering_by_the_current_fiscal_year_returns_the_queue(self):
+        self._pending_activity(self._school("fy-filter"))
+
+        unfiltered = self.client.get("/ia/verification/")
+        filtered = self.client.get("/ia/verification/", {"fy": FY})
+
+        self.assertTrue(unfiltered.context["queue"], "fixture should be visible")
+        self.assertEqual(
+            len(filtered.context["queue"]),
+            len(unfiltered.context["queue"]),
+            "filtering to the FY every fixture row carries must not drop rows",
+        )
+
+    def test_the_selected_filter_survives_the_round_trip(self):
+        """A choice that is not echoed back reads as though it never applied."""
+        response = self.client.get("/ia/verification/", {"fy": FY})
+
+        self.assertEqual(response.context["filters"]["fy"], FY)
+        self.assertTrue(response.context["filters_active"])
+        self.assertContains(response, f'value="{FY}" selected')
+
+    def test_each_filter_control_is_labelled_exactly_once(self):
+        """Every filter has one native, explicitly-associated label."""
+        response = self.client.get("/ia/verification/")
+        body = response.content.decode()
+
+        start = body.index('id="filters-form"')
+        queue_form = body[start : body.index("</form>", start)]
+        for control_id in (
+            "ia-filter-fy",
+            "ia-filter-type",
+            "ia-filter-district",
+            "ia-filter-quarter",
+            "ia-filter-scope",
+            "ia-filter-staff",
+        ):
+            with self.subTest(control=control_id):
+                self.assertEqual(queue_form.count(f'for="{control_id}"'), 1)
+                self.assertEqual(queue_form.count(f'id="{control_id}"'), 1)
+        self.assertEqual(queue_form.count("edify-filter-label"), 6)

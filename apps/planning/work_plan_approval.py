@@ -42,9 +42,7 @@ def readiness_issues(fy: str) -> list[str]:
     ).exists():
         issues.append("Every Activity must have a responsible Staff member or Partner.")
     if qs.filter(cost_missing=True).exists():
-        issues.append(
-            "Resolve all missing CD Cost Catalogue rates before submission."
-        )
+        issues.append("Resolve all missing CD Cost Catalogue rates before submission.")
     return issues
 
 
@@ -121,9 +119,11 @@ def submit_to_rvp(fy: str, principal):
     monthly = {month: 0 for month in FY_MONTH_ORDER}
     from apps.activities.models import ActivityScheduleCostLine
 
-    line_rows = ActivityScheduleCostLine.objects.filter(
-        activity__in=activities
-    ).values("month").annotate(total=Sum("amount"))
+    line_rows = (
+        ActivityScheduleCostLine.objects.filter(activity__in=activities)
+        .values("month")
+        .annotate(total=Sum("amount"))
+    )
     for row in line_rows:
         if row["month"] in monthly:
             monthly[row["month"]] = int(row["total"] or 0)
@@ -151,9 +151,7 @@ def submit_to_rvp(fy: str, principal):
         1 for a in activities if a.delivery_type == "partner"
     )
     budget.cluster_activities = sum(
-        1
-        for a in activities
-        if a.cluster_id or a.programme_delivery_mode == "cluster"
+        1 for a in activities if a.cluster_id or a.programme_delivery_mode == "cluster"
     )
     budget.program_total = program_total
     budget.total_amount = (
@@ -161,8 +159,7 @@ def submit_to_rvp(fy: str, principal):
     )
     budget.monthly_phasing = [monthly[month] for month in FY_MONTH_ORDER]
     budget.quarterly_phasing = [
-        sum(budget.monthly_phasing[offset : offset + 3])
-        for offset in range(0, 12, 3)
+        sum(budget.monthly_phasing[offset : offset + 3]) for offset in range(0, 12, 3)
     ]
     budget.rvp_review_note = ""
     budget.save()

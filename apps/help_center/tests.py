@@ -195,6 +195,31 @@ class KnowledgeCenterShellTest(TestCase):
                 self.assertContains(response, "help-shell__rail")
                 self.assertContains(response, "help-toc__link")
 
+    def test_contents_are_one_always_visible_expandable_hierarchy(self):
+        self.client.force_login(self.cceo)
+        response = self.client.get("/help")
+
+        self.assertContains(response, "Table of contents")
+        self.assertContains(response, 'class="help-toc"', count=1)
+        self.assertContains(response, '<span class="help-toc__category">Glossary</span>')
+        self.assertContains(
+            response,
+            '<span class="help-toc__category">Troubleshooting</span>',
+        )
+        self.assertContains(
+            response,
+            '<span class="help-toc__category">Release notes</span>',
+        )
+        self.assertNotContains(response, "help-shell__contents-toggle")
+        self.assertNotContains(response, "help-shell__drawer")
+        self.assertNotContains(response, "help-toc__footer-link")
+
+        tree = knowledge_tree(EdifyRole.CCEO.value)
+        self.assertEqual(
+            [group["category"].slug for group in tree][-3:],
+            ["glossary", "troubleshooting", "release-notes"],
+        )
+
     def test_the_open_article_is_marked_current_in_the_contents(self):
         self.client.force_login(self.cceo)
         response = self.client.get("/help/articles/feature-my-plan")
@@ -209,7 +234,13 @@ class KnowledgeCenterShellTest(TestCase):
         accountant_tree = knowledge_tree(EdifyRole.PROGRAM_ACCOUNTANT.value)
 
         def slugs(tree):
-            return {entry["slug"] for group in tree for entry in group["articles"]}
+            return {
+                entry["slug"]
+                for group in tree
+                if group["kind"] == "articles"
+                for entry in group["articles"]
+                if entry["slug"] != "glossary"
+            }
 
         cceo_slugs, accountant_slugs = slugs(cceo_tree), slugs(accountant_tree)
         self.assertTrue(cceo_slugs)
@@ -224,7 +255,8 @@ class KnowledgeCenterShellTest(TestCase):
                 )
 
     def test_contents_groups_are_never_empty(self):
-        for group in knowledge_tree(EdifyRole.CCEO.value):
+        tree = knowledge_tree(EdifyRole.CCEO.value)
+        for group in tree:
             with self.subTest(category=group["category"].slug):
                 self.assertTrue(group["articles"])
                 self.assertEqual(group["count"], len(group["articles"]))

@@ -125,8 +125,7 @@ class SchoolUploadTest(APITestCase):
     def test_upload_query_count_does_not_grow_per_school(self):
         def measured_upload(prefix, count):
             rows = "".join(
-                f"{prefix}-{index},{prefix} School {index}\n"
-                for index in range(count)
+                f"{prefix}-{index},{prefix} School {index}\n" for index in range(count)
             )
             with CaptureQueriesContext(connection) as captured:
                 response = self._post(
@@ -408,14 +407,10 @@ class SchoolUploadTest(APITestCase):
         users_page = self.client.get("/admin-panel/users?q=New+Field+Officer")
         self.assertContains(users_page, "New Field Officer")
         self.assertContains(users_page, EdifyRole.CCEO.value)
-        program_lead_page = self.client.get(
-            f"/admin-panel/users/{program_lead.id}"
-        )
+        program_lead_page = self.client.get(f"/admin-panel/users/{program_lead.id}")
         self.assertContains(program_lead_page, "Managed CCEOs")
         self.assertContains(program_lead_page, "New Field Officer")
-        imported_user_page = self.client.get(
-            f"/admin-panel/users/{imported_user.id}"
-        )
+        imported_user_page = self.client.get(f"/admin-panel/users/{imported_user.id}")
         self.assertNotContains(imported_user_page, "Managed CCEOs")
 
     def test_row_results_persisted(self):

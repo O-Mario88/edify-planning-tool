@@ -4,22 +4,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0029_alter_activityschedulecostline_amount_and_more'),
-        ('clusters', '0003_repair_canonical_school_cluster_membership'),
-        ('partners', '0011_partner_assignment_catalogue_context'),
-        ('projects', '0010_project_staff_priority_upgrade'),
-        ('schools', '0015_normalize_planning_readiness'),
+        ("activities", "0029_alter_activityschedulecostline_amount_and_more"),
+        ("clusters", "0003_repair_canonical_school_cluster_membership"),
+        ("partners", "0011_partner_assignment_catalogue_context"),
+        ("projects", "0010_project_staff_priority_upgrade"),
+        ("schools", "0015_normalize_planning_readiness"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='activityschedulecostline',
-            name='uniq_cost_component_per_activity',
+            model_name="activityschedulecostline",
+            name="uniq_cost_component_per_activity",
         ),
         migrations.AddConstraint(
-            model_name='activityschedulecostline',
-            constraint=models.UniqueConstraint(condition=models.Q(('cost_setting_key', ''), _negated=True), fields=('activity', 'cost_setting_key'), name='uniq_cost_component_per_activity'),
+            model_name="activityschedulecostline",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("cost_setting_key", ""), _negated=True),
+                fields=("activity", "cost_setting_key"),
+                name="uniq_cost_component_per_activity",
+            ),
         ),
     ]

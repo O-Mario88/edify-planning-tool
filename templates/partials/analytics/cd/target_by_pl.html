@@ -26,10 +26,11 @@
               value labels. */
            plotOptions: { bar: { columnWidth: '78%', dataLabels: { position: 'top' } } },
            /* Two series share each category, so the labels sit on narrow
-              adjacent bars — micro tier keeps a four-character value such as
-              208% from colliding with its neighbour. Never use double quotes
+              adjacent bars. The shared 12px floor keeps a four-character value
+              such as 208% readable; the fit guard below suppresses a label
+              rather than wrapping or forcing the chart wider. Never use double quotes
               in here: this whole object is an x-data attribute. */
-           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '11px', fontWeight: 700, colors: ['var(--edify-text-muted)'] },
+           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', fontWeight: 700, colors: ['var(--edify-text-muted)'] },
                          formatter: (v, o) => (window.EdifyChartSystem.barLabelFits(o) ? v + '%' : '') },
            labels: [{% for r in target_by_pl.rows %}'{{ r.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
            xaxis: { axisBorder: { show: false }, axisTicks: { show: false },

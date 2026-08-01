@@ -26,7 +26,12 @@
 
   function csrf() {
     var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
-    return m ? m[1] : "";
+    if (m) return m[1];
+    // Deployments may protect the CSRF cookie with HttpOnly. The base
+    // template therefore exposes the request-scoped token in a non-sensitive
+    // meta tag for same-origin telemetry and other native fetch calls.
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.content : "";
   }
 
   function send(kind, component, detail) {

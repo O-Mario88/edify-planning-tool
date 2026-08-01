@@ -41,16 +41,7 @@
   </div>
 </form>
 
-<section class="sp-kpi-grid" aria-label="Special project plan summary">
-  {% for item in kpis %}
-  <article class="sp-kpi sp-kpi--{{ item.tone }}">
-    <span class="sp-kpi__icon" aria-hidden="true">
-      {% include "partials/projects/my_plan_icon.html" with name=item.icon %}
-    </span>
-    <span class="sp-kpi__content"><span class="sp-kpi__label">{{ item.label }}</span><strong>{{ item.value }}</strong><span class="sp-kpi__helper">{{ item.helper }}</span></span>
-  </article>
-  {% endfor %}
-</section>
+{% include "components/kpi_strip.html" with items=kpis title="Special project plan summary" %}
 
 <nav class="sp-period-bar" aria-label="Plan period">
   <div class="sp-period-tabs" role="tablist" aria-label="Choose reporting period">

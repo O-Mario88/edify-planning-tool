@@ -4,12 +4,12 @@
 {% block title %}Special Projects Planning — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260719platformwide1">
+<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260731readabletype1">
 {% endblock %}
 
 {% block shell_content %}
 <section
-  class="spp"
+  class="spp edify-page-canvas"
   x-data="{
     selected: [],
     toggle(id) { this.selected.includes(id) ? this.selected = this.selected.filter(item => item !== id) : this.selected.push(id) },
@@ -22,7 +22,7 @@
   }"
   @keydown.escape.window="selected = []"
 >
-  <header class="spp-header">
+  <header class="edify-page-header spp-header">
     <div class="spp-heading">
       <p class="spp-eyebrow">Special Projects</p>
       <h1 class="edify-page-title">Special Projects Planning</h1>

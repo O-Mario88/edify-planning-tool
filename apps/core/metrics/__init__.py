@@ -50,6 +50,7 @@ from apps.core.metrics.payload import (
     RenderedMetric,
     accessible_description,
     format_value,
+    render_kpi_item,
     render_metric,
     render_strip,
 )
@@ -101,5 +102,6 @@ __all__ = [
     "percentage",
     "percentage_or_zero",
     "render_metric",
+    "render_kpi_item",
     "render_strip",
 ]

@@ -8,8 +8,6 @@ any signal that local-test data has leaked into a production deployment.
 
 from __future__ import annotations
 
-import os
-
 from django.conf import settings
 from django.db.models import Count, F, Q, Sum
 
@@ -366,16 +364,17 @@ def _workflow_issues() -> dict:
     missing_cost_lines = missing_cost_lines_count()
     missing_rates = scheduled.filter(cost_missing=True).count()
 
-    # Resolved through the evidence store's own guard rather than joined here:
-    # a uri that does not resolve inside the store is itself a missing file,
-    # and counting it as one is more honest than reaching outside for it.
+    # Resolved through the private store's own guard rather than joined here:
+    # an invalid key is itself a missing file, and counting it as one is more
+    # honest than allowing a database value to address an arbitrary object.
     from apps.core.exceptions import BadRequest
-    from apps.evidence.services import evidence_path
+    from apps.core.private_storage import file_exists
+    from apps.evidence.services import EVIDENCE_NAMESPACE
 
     missing_evidence_files = 0
     for evidence in EvidenceRecord.objects.filter(quarantined=False).only("uri"):
         try:
-            present = os.path.exists(evidence_path(evidence.uri))
+            present = file_exists(EVIDENCE_NAMESPACE, evidence.uri)
         except BadRequest:
             present = False
         if not present:

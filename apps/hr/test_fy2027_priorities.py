@@ -41,9 +41,7 @@ class Fy2027PrioritySeedTests(TestCase):
                 "GOVERNANCE_AND_PEOPLE_MANAGEMENT",
             ],
         )
-        self.assertTrue(
-            all(row["status"] == "Definition in progress" for row in rows)
-        )
+        self.assertTrue(all(row["status"] == "Definition in progress" for row in rows))
         self.assertTrue(all(row["allocatedCount"] == 0 for row in rows))
 
     def test_seed_preserves_five_groups_order_and_source(self):
@@ -231,9 +229,7 @@ class MilestoneAllocationProjectionTests(TestCase):
             allocation.allocated_target,
         )
 
-        personal = personal_milestone_targets(
-            staff=staff, fy="2027", month_of_fy=1
-        )
+        personal = personal_milestone_targets(staff=staff, fy="2027", month_of_fy=1)
         self.assertEqual(len(personal), 1)
         self.assertEqual(personal[0]["fyPlan"], allocation.allocated_target)
         self.assertEqual(personal[0]["allocatedTarget"], allocation.allocated_target)
@@ -244,15 +240,11 @@ class MilestoneAllocationProjectionTests(TestCase):
             staff_ids=[staff.id],
         )
         growth = next(
-            row
-            for row in overview
-            if row["code"] == "PROGRAM_GROWTH_AND_EXPANSION"
+            row for row in overview if row["code"] == "PROGRAM_GROWTH_AND_EXPANSION"
         )
         self.assertEqual(growth["allocatedCount"], 1)
         self.assertEqual(growth["status"], "Allocated")
-        team = team_milestone_targets(
-            users=[user], fy="2027", month_of_fy=1
-        )
+        team = team_milestone_targets(users=[user], fy="2027", month_of_fy=1)
         self.assertEqual(team[0]["teamMember"], user.name)
         self.assertEqual(team[0]["risk"], "Needs attention")
         review = PerformanceReview.objects.create(

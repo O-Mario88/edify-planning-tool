@@ -1,0 +1,248 @@
+# DigitalOcean App Platform specification — Edify Planning Tool
+#
+# Import this from the App Platform console (Create App → "Import from App Spec")
+# or apply it with:
+#
+#   doctl apps create --spec .do/app.yaml
+#   doctl apps update <APP_ID> --spec .do/app.yaml
+#
+# ── Before you deploy ────────────────────────────────────────────────────────
+# Every value below marked REPLACE_ME must be filled in. Production settings
+# (config/settings/prod.py) fail CLOSED: the container refuses to boot if a
+# secret is weak, a Spaces setting is missing, or a dev flag is on. That is the
+# intended behaviour — an app that will not start is safer than one that starts
+# with a placeholder signing key.
+#
+# The secrets below are deliberately NOT real values. Fill them in the console's
+# environment-variable editor (or with `doctl`) so they are stored encrypted and
+# never committed to git.
+
+name: edify-planning-tool
+
+# Frankfurt is the closest App Platform region to Uganda. Change if you prefer
+# another; keep SPACES_REGION in the same region so uploads stay on-continent.
+region: fra
+
+# Only pushes to main trigger a build.
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    # "db-s-1vcpu-1gb" is the smallest managed cluster. For a dev/staging app you
+    # can instead set `production: false` for the cheaper shared dev database.
+    production: true
+    cluster_name: edify-db
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
+
+# ── Migrations ───────────────────────────────────────────────────────────────
+# Migrations run here, once, before the new web containers take traffic. The web
+# service sets RUN_MIGRATIONS=false so that scaling to more than one instance can
+# never run concurrent migrations against the same database.
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: python manage.py migrate --noinput
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: RUN_MIGRATIONS
+        value: "false"
+      # The prod settings gate runs on import, so the job needs the same
+      # environment as the web service.
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ALLOWED_HOSTS
+        value: ${APP_DOMAIN}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+
+    # numpy/pandas/scipy plus headless LibreOffice need real memory. 2 GB is the
+    # smallest size this image runs comfortably in; 1 GB risks OOM during a
+    # DOCX→PDF rendition.
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-2gb
+
+    # App Platform routes public traffic to this port and injects it as $PORT,
+    # which the image's CMD binds Daphne to.
+    http_port: 8080
+
+    # Liveness vs readiness matters here: /api/health/live answers without
+    # touching the database, /api/health/ready checks dependencies. App Platform
+    # uses this to decide when an instance may receive traffic, so readiness is
+    # the correct endpoint.
+    health_check:
+      http_path: /api/health/ready
+      initial_delay_seconds: 60
+      period_seconds: 15
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 5
+
+    envs:
+      # ── Platform wiring ────────────────────────────────────────────────────
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        # On a `production: true` cluster you can switch this to
+        # ${db.DATABASE_PRIVATE_URL} to keep database traffic inside the VPC and
+        # off your bandwidth bill. DATABASE_URL works in both cases.
+        value: ${db.DATABASE_URL}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      # Migrations are owned by the PRE_DEPLOY job above. Leaving this true as
+      # well would mean every replica migrates on boot.
+      - key: RUN_MIGRATIONS
+        value: "false"
+      # Reference-data seeding is idempotent and creates the super-admin account.
+      # Set to "true" for the FIRST deploy only, then set it back to "false".
+      - key: RUN_SEED
+        value: "false"
+
+      # ── Secrets — replace every one of these ───────────────────────────────
+      # Generate with: openssl rand -hex 32
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      # Generate with: openssl rand -hex 32
+      # WARNING: rotating this key makes existing encrypted field data
+      # unreadable. Set it once, before real data exists, and keep a backup.
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_EMAIL
+        value: domario@edify.org
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+
+      # ── Private Spaces object storage ─────────────────────────────────────
+      # Bucket must be PRIVATE with a bucket-scoped Read/Write/Delete key.
+      # Do not enable the CDN — these are access-controlled files.
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+      # ── Production safety gates (prod.py refuses to boot on wrong values) ──
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ENABLE_MOCK_DATA
+        value: "false"
+      - key: ENABLE_DEV_ENDPOINTS
+        value: "false"
+      - key: ENABLE_DEV_SEED
+        value: "false"
+      - key: ENABLE_DEV_IMPORTS
+        value: "false"
+      - key: PARTNER_ROLE_BRIDGE
+        value: "false"
+
+      # ── Transport security ────────────────────────────────────────────────
+      - key: SECURE_SSL_REDIRECT
+        value: "true"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: CSRF_COOKIE_SECURE
+        value: "true"
+      # Comma-separated extra hosts once you attach a custom domain. The App
+      # Platform domain is added automatically from DIGITALOCEAN_APP_DOMAIN.
+      - key: ALLOWED_HOSTS
+        value: ""
+      # Comma-separated HTTPS origins for those custom domains, scheme included.
+      - key: CSRF_TRUSTED_ORIGINS
+        value: ""
+
+      # ── Background jobs ───────────────────────────────────────────────────
+      # The eight scheduled jobs run ONLY in a dedicated runscheduler process.
+      # Keep this false on the web service.
+      - key: ENABLE_BACKGROUND_JOBS
+        value: "false"
+
+# ── Optional: scheduled-jobs worker ──────────────────────────────────────────
+# Uncomment to run the eight scheduled jobs. This is a second billable instance.
+# Keep instance_count at exactly 1 — the scheduler is not designed to be run
+# concurrently, and two replicas would double-fire every job.
+#
+# workers:
+#   - name: scheduler
+#     dockerfile_path: Dockerfile
+#     source_dir: /
+#     github:
+#       repo: O-Mario88/edify-planning-tool
+#       branch: main
+#       deploy_on_push: true
+#     instance_count: 1
+#     instance_size_slug: apps-s-1vcpu-1gb
+#     run_command: python manage.py runscheduler
+#     envs:
+#       - key: ENABLE_BACKGROUND_JOBS
+#         value: "true"
+#       - key: RUN_MIGRATIONS
+#         value: "false"
+#       # …plus the same DJANGO_SETTINGS_MODULE, DATABASE_URL, secret, and
+#       # Spaces variables as the web service above.

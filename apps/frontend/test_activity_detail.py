@@ -21,9 +21,7 @@ from apps.schools.models import School
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "templates" / "pages" / "my_plan" / "detail.html"
-COMPLETE_DRAWER = (
-    ROOT / "templates" / "partials" / "my_plan" / "complete_drawer.html"
-)
+COMPLETE_DRAWER = ROOT / "templates" / "partials" / "my_plan" / "complete_drawer.html"
 DRAWER_CSS = ROOT / "static" / "css" / "drawers.css"
 
 

@@ -375,9 +375,17 @@ class TargetAchievementService:
         # ── Flush: one read of the existing ledger, one bulk insert, one
         #    bulk update, one reversal sweep. ─────────────────────────────
         now = timezone.now()
+        # Read the user's whole ledger, not just this FY's slice. The unique
+        # constraint is deliberately FY-agnostic — one source credits once,
+        # ever — so a source that moved across the FY boundary (an activity
+        # whose date is corrected from September to October) already has a row
+        # under the other year. Looking only within `fy` missed it, tried to
+        # insert a second one, and `ignore_conflicts` below swallowed the
+        # rejection: the new FY silently gained no credit and the old FY was
+        # never reversed, leaving both years wrong with nothing logged.
         existing = {
             (r.source_type, r.source_id): r
-            for r in TargetAchievementLedger.objects.filter(user_id=user.id, fy=fy)
+            for r in TargetAchievementLedger.objects.filter(user_id=user.id)
         }
         to_create, to_update = [], []
         for key, want in pending.items():
@@ -402,7 +410,9 @@ class TargetAchievementService:
             elif (
                 row.validation_status != want["validation_status"]
                 or row.activity_date != want["activity_date"]
+                or row.fy != fy
             ):
+                row.fy = fy
                 row.activity_date = want["activity_date"]
                 row.credited_month = want["credited_month"]
                 row.credited_quarter = want["credited_quarter"]
@@ -418,6 +428,7 @@ class TargetAchievementService:
             TargetAchievementLedger.objects.bulk_update(
                 to_update,
                 [
+                    "fy",
                     "activity_date",
                     "credited_month",
                     "credited_quarter",
@@ -430,10 +441,13 @@ class TargetAchievementService:
         # A ledger row whose source no longer exists (or dropped out of the
         # workflow) loses its credit — a rebuild never leaves orphaned
         # achievement behind.
+        # Scoped to rows credited to the FY being rebuilt. `existing` now spans
+        # every year, and this rebuild only knows which sources belong to `fy`
+        # — sweeping the rest would reverse another year's credit.
         stale_ids = [
             r.id
             for key, r in existing.items()
-            if key not in seen and r.validation_status != "reversed"
+            if r.fy == fy and key not in seen and r.validation_status != "reversed"
         ]
         if stale_ids:
             TargetAchievementLedger.objects.filter(id__in=stale_ids).update(

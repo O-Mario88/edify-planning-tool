@@ -64,27 +64,27 @@ def _authorized_for_pd_file(req: ProfessionalDevelopmentRequest, user) -> bool:
 
 
 def _serve_pd_file(model_cls, file_id: str, user, download: bool):
-    import os
-
     from django.http import FileResponse
+    from django.utils.http import content_disposition_header
 
-    from apps.professional_development.uploads import pd_storage_path
+    from apps.core.private_storage import file_exists, open_file
+    from apps.professional_development.uploads import PD_NAMESPACE
 
     rec = model_cls.objects.select_related("request").filter(id=file_id).first()
     if not rec or not _authorized_for_pd_file(rec.request, user):
         return HttpResponseNotFound("File not found.")
-    path = pd_storage_path(rec.uri)
-    if not os.path.exists(path):
-        return HttpResponseNotFound("File not found on disk.")
+    if not file_exists(PD_NAMESPACE, rec.uri):
+        return HttpResponseNotFound("File not found in private storage.")
     response = FileResponse(
-        open(path, "rb"), content_type=rec.mime_type or "application/octet-stream"
+        open_file(PD_NAMESPACE, rec.uri),
+        content_type=rec.mime_type or "application/octet-stream",
     )
     inline_ok = (rec.mime_type or "").startswith(
         "image/"
     ) or rec.mime_type == "application/pdf"
     disposition = "attachment" if download or not inline_ok else "inline"
-    response["Content-Disposition"] = (
-        f'{disposition}; filename="{rec.original_name or rec.uri}"'
+    response["Content-Disposition"] = content_disposition_header(
+        disposition == "attachment", rec.original_name or rec.uri
     )
     response["X-Content-Type-Options"] = "nosniff"
     return response

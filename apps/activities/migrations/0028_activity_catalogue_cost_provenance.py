@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0027_activity_closed_activity_must_have_sf_id'),
+        ("activities", "0027_activity_closed_activity_must_have_sf_id"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='activity_catalogue_item_id',
+            model_name="activityschedulecostline",
+            name="activity_catalogue_item_id",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='activity_catalogue_version',
+            model_name="activityschedulecostline",
+            name="activity_catalogue_version",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='costing_profile',
+            model_name="activityschedulecostline",
+            name="costing_profile",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
     ]

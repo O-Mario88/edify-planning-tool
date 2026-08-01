@@ -1,5 +1,5 @@
 {% if strategic_priorities %}
-<section class="bg-white border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
+<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
          aria-labelledby="{{ section_id }}">
   <header class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
     <div>
@@ -16,7 +16,7 @@
 
   <ol class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="FY {{ fy }} strategic priority portfolio">
     {% for priority in strategic_priorities %}
-    <li class="flex min-h-[142px] flex-col rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4 transition-all hover:-translate-y-[1.5px] hover:bg-white hover:shadow-md">
+    <li class="flex min-h-[142px] flex-col rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4 transition-all hover:-translate-y-[1.5px] hover:bg-[var(--edify-surface)] hover:shadow-md">
       <div class="flex items-center justify-between gap-2">
         <span class="edify-text-caption font-extrabold uppercase tracking-[0.14em] text-slate-400">Priority {{ priority.sequence }}</span>
         <span class="rounded-full px-2 py-1 edify-text-caption font-extrabold

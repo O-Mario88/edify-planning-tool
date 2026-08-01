@@ -688,9 +688,7 @@ def _bulk_refresh_quality_issues(schools) -> None:
         status="open",
     ).delete()
     issues = [
-        issue
-        for school in schools
-        for issue in build_data_quality_issues(school)
+        issue for school in schools for issue in build_data_quality_issues(school)
     ]
     if issues:
         DataQualityIssue.objects.bulk_create(issues, batch_size=1000)
@@ -727,13 +725,9 @@ def _bulk_upsert_staff_candidates(
                 )
             )
             continue
-        candidate.school_count = (candidate.school_count or 0) + len(
-            unique_school_ids
-        )
+        candidate.school_count = (candidate.school_count or 0) + len(unique_school_ids)
         candidate.sample_school_ids = list(
-            dict.fromkeys(
-                list(candidate.sample_school_ids or []) + unique_school_ids
-            )
+            dict.fromkeys(list(candidate.sample_school_ids or []) + unique_school_ids)
         )[:20]
         if not candidate.source_upload_batch:
             candidate.source_upload_batch = batch_id
@@ -807,9 +801,7 @@ def import_school_batch(batch, user) -> dict:
         staff_index = _build_staff_index()
         owner_results = {}
         for normalized_name, display_name in owner_names.items():
-            owner_id, owner_status = _match_staff_from_index(
-                display_name, staff_index
-            )
+            owner_id, owner_status = _match_staff_from_index(display_name, staff_index)
             if owner_status == "unmatched":
                 owner_id = _auto_create_user_from_upload(display_name)
                 if owner_id:
@@ -820,9 +812,7 @@ def import_school_batch(batch, user) -> dict:
         new_cluster_assignments = []
         new_staff_assignments = []
         candidate_groups: dict[str, tuple[str, list[str]]] = {}
-        changed_by = (
-            user.user_id if hasattr(user, "user_id") else str(user or "system")
-        )
+        changed_by = user.user_id if hasattr(user, "user_id") else str(user or "system")
 
         for r in rows:
             # Same resolution the staging/validation phase used (including
@@ -986,9 +976,7 @@ def import_school_batch(batch, user) -> dict:
         if new_schools:
             School.objects.bulk_create(new_schools, batch_size=1000)
             _bulk_refresh_quality_issues(new_schools)
-        new_by_school_id = {
-            school.school_id: school for school in new_schools
-        }
+        new_by_school_id = {school.school_id: school for school in new_schools}
         if new_cluster_assignments:
             SchoolClusterAssignment.objects.bulk_create(
                 new_cluster_assignments,

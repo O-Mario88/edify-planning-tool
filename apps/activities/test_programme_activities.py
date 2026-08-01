@@ -232,12 +232,16 @@ class ProgrammeActivityValidationTest(_ProgrammeFixture):
                 _payload(scheduledDate=_OMIT, endDate="2026-09-03"), self.cceo
             )
 
-    def test_school_bound_item_still_requires_a_school(self):
-        with self.assertRaisesMessage(BadRequest, "school or cluster"):
-            psvc.schedule_programme_activity(
-                _payload(catalogueItemId="CLIENT_SCHOOL_FOLLOWUP_VISIT"),
-                self.cceo,
-            )
+    def test_school_bound_item_can_also_be_planned_as_a_central_budget_activity(self):
+        activity = _schedule(
+            self.cceo, catalogueItemId="CLIENT_SCHOOL_FOLLOWUP_VISIT"
+        )
+
+        self.assertIsNone(activity.school_id)
+        self.assertEqual(activity.planning_source, "manual_work_plan")
+        self.assertEqual(
+            activity.catalogue_item.stable_code, "CLIENT_SCHOOL_FOLLOWUP_VISIT"
+        )
 
     def test_non_catalogue_item_is_refused(self):
         with self.assertRaises(BadRequest):
@@ -349,11 +353,7 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         )
         self.assertEqual(
             sum(ln.amount for ln in september),
-            2 * VENUE
-            + 80 * MEAL
-            + 2 * FACILITATION
-            + 2 * TRANSPORT
-            + ACCOMMODATION,
+            2 * VENUE + 80 * MEAL + 2 * FACILITATION + 2 * TRANSPORT + ACCOMMODATION,
         )
         # The two months re-sum to the whole: a cross-period activity never
         # costs less than the same activity inside one month.
@@ -420,23 +420,35 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         html = response.content.decode()
         for field_name in (
             "catalogue_item_id",
-            "programme_activity_type",
+            "support_rationale",
+            "purpose",
             "focus_intervention",
+            "scheduled_date",
+            "end_date",
             "planned_school_count",
             "expected_participants",
             "responsibility_type",
             "venue",
-            "programme_delivery_mode",
         ):
             self.assertIn(f'name="{field_name}"', html)
+
+        # Activity type and delivery mode are DERIVED from the chosen
+        # catalogue item, not entered beside it. They used to be their own
+        # selects, which let a scheduler pick a type that contradicted the
+        # catalogue entry the cost was then drawn from. The catalogue is the
+        # governed source, so the drawer publishes them as data attributes on
+        # each option and displays them read-only.
+        for derived in ('data-activity-type="', 'data-delivery="'):
+            self.assertIn(derived, html)
+        for retired in ("programme_activity_type", "programme_delivery_mode"):
+            self.assertNotIn(f'name="{retired}"', html)
+
+        # Real catalogue entries, grouped by their programme category.
         for label in (
-            "EdTech for Schools",
-            "School Leadership Training",
-            "Student Activities",
-            "Teacher Training",
-            "Alumni",
-            "Group",
-            "Cluster",
+            "School Leadership",
+            "Teacher Leadership Conference/Camp/Retreat",
+            "Programme",
+            "Student Programmes",
         ):
             self.assertIn(label, html)
 
@@ -510,9 +522,7 @@ class ProgrammeWorkPlanApprovalTest(_ProgrammeFixture):
         activity = _schedule(cd)
 
         budget = submit_to_rvp(FY, cd)
-        self.assertEqual(
-            budget.status, CountryAnnualBudgetStatus.SUBMITTED_TO_RVP
-        )
+        self.assertEqual(budget.status, CountryAnnualBudgetStatus.SUBMITTED_TO_RVP)
         self.assertEqual(budget.target_activities, 1)
         self.assertEqual(budget.target_schools, 12)
         self.assertEqual(budget.program_total, activity.est_cost_cents)

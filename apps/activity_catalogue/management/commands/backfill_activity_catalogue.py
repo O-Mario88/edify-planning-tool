@@ -43,22 +43,30 @@ class Command(BaseCommand):
         aliases = {}
         for alias in ActivityCatalogueAlias.objects.select_related("catalogue_item"):
             aliases.setdefault(alias.normalized_alias, []).append(alias.catalogue_item)
-        costed_activities = Activity.objects.filter(
-            catalogue_item__isnull=False,
-            schedule_cost_lines__isnull=False,
-        ).select_related("catalogue_item").distinct()
+        costed_activities = (
+            Activity.objects.filter(
+                catalogue_item__isnull=False,
+                schedule_cost_lines__isnull=False,
+            )
+            .select_related("catalogue_item")
+            .distinct()
+        )
         for activity in costed_activities.iterator(chunk_size=options["batch_size"]):
-            stamped = ActivityScheduleCostLine.objects.filter(
-                activity=activity,
-            ).filter(
-                models.Q(activity_catalogue_item_id__isnull=True)
-                | ~models.Q(activity_catalogue_item_id=activity.catalogue_item_id)
-                | models.Q(activity_catalogue_version__isnull=True)
-                | models.Q(costing_profile__isnull=True)
-            ).update(
-                activity_catalogue_item_id=activity.catalogue_item_id,
-                activity_catalogue_version=activity.catalogue_version,
-                costing_profile=activity.costing_profile_snapshot,
+            stamped = (
+                ActivityScheduleCostLine.objects.filter(
+                    activity=activity,
+                )
+                .filter(
+                    models.Q(activity_catalogue_item_id__isnull=True)
+                    | ~models.Q(activity_catalogue_item_id=activity.catalogue_item_id)
+                    | models.Q(activity_catalogue_version__isnull=True)
+                    | models.Q(costing_profile__isnull=True)
+                )
+                .update(
+                    activity_catalogue_item_id=activity.catalogue_item_id,
+                    activity_catalogue_version=activity.catalogue_version,
+                    costing_profile=activity.costing_profile_snapshot,
+                )
             )
             report["costLinesProvenanceStamped"] += stamped
         referenced = (
@@ -176,9 +184,7 @@ class Command(BaseCommand):
                     activity.evidence_profile_snapshot = historical_evidence
                     preserved_fields.append("evidence_profile_snapshot")
                 if preserved_fields:
-                    activity.save(
-                        update_fields=[*preserved_fields, "updated_at"]
-                    )
+                    activity.save(update_fields=[*preserved_fields, "updated_at"])
                 report["backfilled"] += 1
                 ActivityCatalogueReviewQueue.objects.filter(
                     source_model="activities.Activity",
@@ -186,9 +192,7 @@ class Command(BaseCommand):
                     status="needs_review",
                 ).update(
                     status="resolved",
-                    resolution_note=(
-                        f"Resolved deterministically by {match_basis}."
-                    ),
+                    resolution_note=(f"Resolved deterministically by {match_basis}."),
                     resolved_by="system-backfill",
                     resolved_at=timezone.now(),
                 )

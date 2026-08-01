@@ -68,7 +68,7 @@ class="space-y-4 text-[12px] font-bold text-slate-700 "
 <fieldset class="space-y-2">
   <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Core Visit</legend>
   {% for item in catalogue_items %}
-  <label class="block cursor-pointer rounded-control border border-slate-200 bg-white p-3">
+  <label class="edify-surface block cursor-pointer rounded-control border border-slate-200 p-3">
     <span class="flex items-start gap-3"><input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}" {% if forloop.first %}checked{% endif %} @change="catalogueItemId='{{ item.catalogueItemId }}'; sourceActivityId='{{ item.sourceActivityId|default:'' }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'"><span><strong>{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span></span>
   </label>
   {% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Core Visit is eligible. Complete a verified source Training or ensure the current SSA has an unresolved intervention recommendation.</div>{% endfor %}

@@ -1,22 +1,15 @@
-"""The Upload Center — one index over every file that enters Edify.
+"""The Upload Center — governed organisational ingestion.
 
-This is a control surface, not a second storage system. Four of its five
-categories already have an authoritative home, and the Upload Center reads
-those homes rather than copying anything into a table of its own:
+This is a control surface, not a second storage system. It contains only the
+upload categories that belong to organisational administration:
 
     Structured imports    -> schools.SchoolImportBatch / SSAImportBatch
-    Activity evidence     -> evidence.EvidenceRecord
-    PD certificates       -> professional_development.…Certificate
     Policies and manuals  -> documents.DocumentAsset  (the one new home)
     Training resources    -> documents.DocumentAsset
 
-Every adapter returns the same normalised row, so the page can sort, filter and
-paginate a mixed list without knowing what any of it is. What it must never do
-is offer a generic "upload a file" button: evidence without an activity, or a
-certificate without a PD record, is an orphan the owning workflow cannot act on.
-So each category's upload action is a deep link into the workflow that owns it,
-and only policies, manuals and training resources — which have no other home —
-are uploaded here.
+Activity evidence remains in activity completion and its evidence drawer. PD
+certificates remain on the PD dashboard. Keeping those records off this page
+prevents orphan files and keeps each workflow's validation in one place.
 """
 
 from __future__ import annotations
@@ -60,8 +53,6 @@ TABS = (
     ("imports", "Structured Imports"),
     ("documents", "Policies and Manuals"),
     ("training", "Training Resources"),
-    ("evidence", "Activity Evidence"),
-    ("pd", "PD Certificates"),
     ("mine", "My Uploads"),
 )
 
@@ -227,123 +218,9 @@ def _document_next_action(document) -> str:
     }.get(document.status, document.get_status_display())
 
 
-def _evidence(principal, names) -> list[UploadRow]:
-    """Activity evidence, read from its authoritative records.
-
-    Displayed and filtered here; reviewed only in the evidence workflow. A
-    second review path would be a second definition of "verified".
-    """
-    from apps.evidence.models import EvidenceRecord
-
-    qs = EvidenceRecord.objects.select_related(
-        "activity", "activity__school", "activity__cluster"
-    ).order_by("-created_at")
-    qs = _scope_evidence(qs, principal)
-
-    rows = []
-    for record in qs[:200]:
-        activity = record.activity
-        target = (
-            activity.school.name
-            if activity.school
-            else (activity.cluster.name if activity.cluster else "—")
-        )
-        rows.append(
-            UploadRow(
-                record_type="evidence",
-                record_id=record.id,
-                title=record.original_name or record.uri,
-                workflow_owner="Activity Evidence",
-                uploaded_by=names.get(record.uploaded_by, record.uploaded_by),
-                uploaded_at=record.created_at,
-                context=f"{activity.activity_type} · {target}",
-                version="—",
-                processing_status=record.get_status_display(),
-                preview_status=(record.preview_status or "").replace("_", " ").title(),
-                next_action=_evidence_next_action(record),
-                detail_route=f"/my-plan/{activity.id}",
-                original_format=record.file_extension or "",
-                tab="evidence",
-                extra={"ia_status": getattr(activity, "ia_verification_status", "")},
-            )
-        )
-    return rows
-
-
-def _scope_evidence(qs, principal):
-    """Evidence a person may see, using the canonical activity scope."""
-    from apps.core.scoping import resolve_user_scope
-
-    scope = resolve_user_scope(principal)
-    if scope.country_scope:
-        return qs
-    if scope.partner_ids:
-        return qs.filter(activity__assigned_partner_id__in=scope.partner_ids)
-    if scope.staff_ids:
-        return qs.filter(activity__responsible_staff_id__in=scope.staff_ids)
-    return qs.none()
-
-
-def _evidence_next_action(record) -> str:
-    if record.quarantined:
-        return "Quarantined — contact support"
-    if record.status == "uploaded":
-        return "Awaiting managing-staff review"
-    if record.status == "accepted":
-        return "Awaiting IA verification"
-    return record.get_status_display()
-
-
-def _pd_certificates(principal, names) -> list[UploadRow]:
-    """PD certificates, read from the PD workflow.
-
-    Never uploadable from here: a certificate with no PD record behind it has
-    no course, no provider, no approval and nobody to sign it off.
-    """
-    from apps.professional_development.models import ProfessionalDevelopmentCertificate
-
-    qs = ProfessionalDevelopmentCertificate.objects.select_related("request").order_by(
-        "-created_at"
-    )
-    role = getattr(principal, "active_role", "")
-    me = _user_id(principal)
-    if role not in ("Admin", "HumanResources", "CountryDirector"):
-        # Everyone else sees their own certificates only.
-        qs = qs.filter(uploaded_by=me)
-
-    rows = []
-    for cert in qs[:200]:
-        request = cert.request
-        rows.append(
-            UploadRow(
-                record_type="pd_certificate",
-                record_id=cert.id,
-                title=cert.certificate_name or cert.original_name,
-                workflow_owner="Professional Development",
-                uploaded_by=names.get(cert.uploaded_by, cert.uploaded_by),
-                uploaded_at=cert.created_at,
-                context=getattr(request, "course_name", "") or "PD record",
-                version="—",
-                processing_status=(cert.status or "").replace("_", " ").title(),
-                preview_status="PDF",
-                next_action="Awaiting HR verification"
-                if cert.status == "uploaded"
-                else (cert.status or "").replace("_", " ").title(),
-                detail_route=f"/my-professional-development?request={request.id}"
-                if request
-                else "/my-professional-development",
-                original_format=(cert.original_name or "").rsplit(".", 1)[-1],
-                tab="pd",
-            )
-        )
-    return rows
-
-
 ADAPTERS = {
     "imports": _structured_imports,
     "documents": _documents,
-    "evidence": _evidence,
-    "pd": _pd_certificates,
 }
 
 
@@ -357,16 +234,15 @@ class UploadCenterService:
     def launch_actions(principal) -> list[dict]:
         """Upload entry points this user may actually complete.
 
-        Structured imports and library documents can start here directly.
-        Evidence and certificates remain attached to their owning workflow,
-        so their cards route to the relevant record list instead of creating
-        orphan files.
+        Only governed organisational uploads start here. Evidence belongs to
+        activity completion and PD proof belongs to the PD dashboard.
         """
         from apps.core.rbac import Permission, permissions_for_role
         from apps.documents.services import has_permission
 
-        role = getattr(principal, "active_role", "") or ""
-        held = set(permissions_for_role(role))
+        held = set(
+            permissions_for_role(getattr(principal, "active_role", "") or "")
+        )
         actions: list[dict] = []
 
         if Permission.SCHOOL_UPLOAD.value in held:
@@ -422,48 +298,6 @@ class UploadCenterService:
                 }
             )
 
-        activity_routes = {
-            "CCEO": "/my-plan",
-            "Program Lead": "/my-plan",
-            "ProjectCoordinator": "/projects/my-plan",
-            "PartnerAdmin": "/partner/activities",
-            "PartnerFieldOfficer": "/partner/activities",
-        }
-        if role in activity_routes:
-            actions.append(
-                {
-                    "key": "evidence",
-                    "category": "Workflow file",
-                    "title": "Activity Evidence",
-                    "description": "Choose an activity first, then attach attendance, photos or supporting evidence.",
-                    "href": activity_routes[role],
-                    "action_label": "Find an activity",
-                    "tone": "workflow",
-                }
-            )
-
-        if role in {
-            "CCEO",
-            "Program Lead",
-            "CountryDirector",
-            "RegionalVicePresident",
-            "ImpactAssessment",
-            "Accountant",
-            "HumanResources",
-            "ProjectCoordinator",
-            "Admin",
-        }:
-            actions.append(
-                {
-                    "key": "pd",
-                    "category": "Workflow file",
-                    "title": "PD Certificate",
-                    "description": "Open an approved professional-development record before adding completion proof.",
-                    "href": "/my-professional-development",
-                    "action_label": "Open PD records",
-                    "tone": "workflow",
-                }
-            )
         return actions
 
     @staticmethod
@@ -492,9 +326,7 @@ class UploadCenterService:
             present.add("training")
         from apps.core.rbac import Permission, permissions_for_role
 
-        held = set(
-            permissions_for_role(getattr(principal, "active_role", "") or "")
-        )
+        held = set(permissions_for_role(getattr(principal, "active_role", "") or ""))
         if held.intersection(
             {Permission.SCHOOL_UPLOAD.value, Permission.SSA_UPLOAD.value}
         ):
@@ -535,7 +367,7 @@ class UploadCenterService:
 
         if tab == "mine":
             rows = [r for r in rows if r.uploaded_by in (me, my_name)]
-        elif tab in {"imports", "documents", "training", "evidence", "pd"}:
+        elif tab in {"imports", "documents", "training"}:
             rows = [r for r in rows if r.tab == tab]
         if record_type:
             rows = [r for r in rows if r.record_type == record_type]

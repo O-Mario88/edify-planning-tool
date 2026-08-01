@@ -39,7 +39,7 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
-    def test_geist_is_the_global_and_compiled_ui_font(self):
+    def test_inter_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
@@ -260,7 +260,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#000000"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#000000"), 4.5)
         self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0d5b9e"), 4.5)
-        self.assertIn("DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY", platform)
+        self.assertIn(
+            "DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY", platform
+        )
         self.assertIn(
             "background-image: var(--edify-button-primary-treatment)", platform
         )
@@ -322,6 +324,154 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("background-image: none !important", components)
         self.assertIn("backdrop-filter: none", components)
 
+    def test_blue_primary_actions_use_white_ink_on_saturated_blue(self):
+        components = _read("static/css/components.css")
+        consistency = _read("static/css/consistency.css")
+
+        # White on the Blue workspace action token clears AA at normal text
+        # sizes. The former sky-400/navy pairing was readable, but visually
+        # presented primary CTAs as selected filters with black labels.
+        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#1872bd"), 4.5)
+        for stylesheet in (components, consistency):
+            self.assertNotIn(
+                "color: var(--edify-navy-950) !important;", stylesheet
+            )
+            self.assertIn("color: var(--edify-on-accent) !important;", stylesheet)
+            self.assertIn(
+                "background-color: var(--edify-accent) !important;", stylesheet
+            )
+            self.assertIn(
+                "background-color: var(--edify-accent-hover) !important;",
+                stylesheet,
+            )
+
+    def test_custom_blue_surfaces_keep_inverse_heading_ink(self):
+        consistency = _read("static/css/consistency.css")
+        self.assertIn(".edify-inverse-surface", consistency)
+        self.assertNotIn("main .edify-inverse-surface", consistency)
+        self.assertIn(
+            ".edify-inverse-surface :is(h1, h2, h3, .edify-page-title, .edify-inverse-heading)",
+            consistency,
+        )
+        self.assertIn("color: var(--edify-on-accent) !important;", consistency)
+
+        agreement = _read("templates/pages/documents/canonical_document.html")
+        self.assertIn(
+            'id="agreement-response-title" class="edify-inverse-heading',
+            agreement,
+        )
+        self.assertGreaterEqual(agreement.count("edify-inverse-heading"), 3)
+
+        # These custom surfaces use class- or gradient-driven fills rather
+        # than a standard bg-blue/bg-slate utility, so the semantic inverse
+        # marker is the durable contract that beats the global h2 colour.
+        for template, fragment in (
+            (
+                "templates/pages/documents/canonical_document.html",
+                "agreement-decision edify-inverse-surface",
+            ),
+            (
+                "templates/pages/documents/canonical_document.html",
+                "agreement-masthead edify-inverse-surface",
+            ),
+            (
+                "templates/pages/dashboards/special_projects.html",
+                "edify-inverse-surface bg-[var(--edify-primary-active)]",
+            ),
+            (
+                "templates/partials/core_schools/champion_review_drawer.html",
+                "edify-inverse-surface px-6 py-5 bg-[var(--edify-text)]",
+            ),
+        ):
+            self.assertIn(fragment, _read(template), template)
+
+    def test_bespoke_workspaces_use_the_shared_page_canvas(self):
+        consistency = _read("static/css/consistency.css")
+        self.assertIn("main > .edify-page-canvas", consistency)
+        self.assertIn(
+            "padding: 1.25rem var(--edify-page-gutter) !important;",
+            consistency,
+        )
+
+        custom_workspaces = (
+            "templates/pages/accounts/budget_amendments.html",
+            "templates/pages/analytics/impact.html",
+            "templates/pages/calendar/index.html",
+            "templates/pages/dashboards/main.html",
+            "templates/pages/hr/module_workspace.html",
+            "templates/pages/ia/analytics_dashboard.html",
+            "templates/pages/leave/personal_time_off.html",
+            "templates/pages/partners/index.html",
+            "templates/pages/projects/analytics.html",
+            "templates/pages/projects/my_plan.html",
+            "templates/pages/projects/planning.html",
+            "templates/pages/ssa/performance.html",
+            "templates/pages/targets/team.html",
+        )
+        for template in custom_workspaces:
+            self.assertIn("edify-page-canvas", _read(template), template)
+
+        # These are purposefully edge-to-edge: the IA review is an evidence
+        # workstation and the conversation document is print-oriented.
+        for template in (
+            "templates/pages/ia/review_workspace.html",
+            "templates/pages/hr/conversation_document.html",
+        ):
+            self.assertNotIn("edify-page-canvas", _read(template), template)
+
+    def test_every_shell_page_has_a_gutter_contract_or_is_full_bleed(self):
+        unspaced = set()
+        root_pattern = re.compile(
+            r"{%\s*block\s+shell_content\s*%}[\s\S]*?"
+            r'<(?:div|section|main|article)\b[^>]*class="([^"]*)"'
+        )
+        for path in (ROOT / "templates" / "pages").rglob("*.html"):
+            match = root_pattern.search(path.read_text(encoding="utf-8"))
+            if not match:
+                continue
+            classes = match.group(1).split()
+            has_gutter = (
+                "edify-page-canvas" in classes
+                or "edify-report-workspace" in classes
+                or any(
+                    class_name.startswith(("p-", "px-", "sm:p-", "sm:px-"))
+                    for class_name in classes
+                )
+            )
+            if not has_gutter:
+                unspaced.add(path.relative_to(ROOT).as_posix())
+
+        self.assertEqual(
+            unspaced,
+            {
+                "templates/pages/hr/conversation_document.html",
+                "templates/pages/ia/review_workspace.html",
+            },
+            "Every shell page needs the shared gutter; only purpose-built "
+            "full-bleed or print workspaces are exempt.",
+        )
+
+    def test_card_actions_size_to_content_without_changing_form_buttons(self):
+        consistency = _read("static/css/consistency.css")
+        self.assertIn("main .edify-card-action", consistency)
+        self.assertIn("inline-size: fit-content !important", consistency)
+        self.assertIn("max-inline-size: 100%", consistency)
+
+        card_actions = []
+        class_attribute = re.compile(r'class="([^"]*\bedify-card-action\b[^"]*)"')
+        for path in (ROOT / "templates").rglob("*.html"):
+            for classes in class_attribute.findall(
+                path.read_text(encoding="utf-8")
+            ):
+                card_actions.append((str(path.relative_to(ROOT)), classes))
+                self.assertNotIn(
+                    "w-full",
+                    classes.split(),
+                    f"Card action must keep intrinsic width: {path.relative_to(ROOT)}",
+                )
+
+        self.assertGreaterEqual(len(card_actions), 8)
+
     def test_blue_workspace_tables_have_a_complete_visual_hierarchy(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
@@ -376,7 +526,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "Light workspace: the approved Edify sign-in visual language", platform
         )
         self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
-        self.assertIn("#edf1f3", base)
+        self.assertIn("getPropertyValue('--edify-bg')", base)
+        self.assertNotIn("#edf1f3", base)
 
     def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
         tokens = _read("static/css/design-system.css")
@@ -1005,7 +1156,7 @@ class SolidControlInkTest(SimpleTestCase):
 
 
 class TypeScaleFloorTest(SimpleTestCase):
-    """Two named tiers, and nothing smaller than the smaller of them.
+    """Six readable tiers, and nothing smaller than the micro tier.
 
     The stylesheets had 169 sub-12px font-size declarations across eight
     different values — 7, 8, 9, 9.5, 10, 10.5, 11 and 11.5px. That is drift,
@@ -1016,7 +1167,7 @@ class TypeScaleFloorTest(SimpleTestCase):
     text-[Npx] utilities below the caption token.
     """
 
-    MICRO_PX = 11
+    MICRO_PX = 12
 
     def _source_stylesheets(self):
         # main.css is generated from assets/css/tailwind.source.css and will
@@ -1028,13 +1179,35 @@ class TypeScaleFloorTest(SimpleTestCase):
         ]
 
     def test_no_stylesheet_hardcodes_a_size_below_the_micro_tier(self):
-        pattern = re.compile(r"font-size:\s*(\d{1,2}(?:\.\d)?)px")
+        declaration_pattern = re.compile(r"font-size:\s*([^;}{]+)")
+        value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
         offenders = []
         for path in self._source_stylesheets():
-            for value in pattern.findall(path.read_text()):
-                if float(value) < self.MICRO_PX:
-                    offenders.append(f"{path.name}: {value}px")
+            for declaration in declaration_pattern.findall(path.read_text()):
+                for value, unit in value_pattern.findall(declaration):
+                    pixels = float(value) * 16 if unit == "rem" else float(value)
+                    if pixels < self.MICRO_PX:
+                        offenders.append(
+                            f"{path.name}: {value}{unit} ({pixels:g}px)"
+                        )
         self.assertEqual(offenders, [], f"below the micro tier: {offenders}")
+
+    def test_source_stylesheets_name_every_size_below_the_label_tier(self):
+        """Compact text must opt into the micro token, never invent a size."""
+        declaration_pattern = re.compile(r"font-size:\s*([^;}{]+)")
+        value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
+        offenders = []
+        for path in self._source_stylesheets():
+            if path.name == "design-system.css":
+                continue
+            for declaration in declaration_pattern.findall(path.read_text()):
+                for value, unit in value_pattern.findall(declaration):
+                    pixels = float(value) * 16 if unit == "rem" else float(value)
+                    if pixels < 14:
+                        offenders.append(
+                            f"{path.name}: {value}{unit} ({pixels:g}px)"
+                        )
+        self.assertEqual(offenders, [], f"unnamed compact text: {offenders}")
 
     def test_no_template_uses_a_one_off_tiny_utility(self):
         offenders = []
@@ -1045,7 +1218,139 @@ class TypeScaleFloorTest(SimpleTestCase):
                     offenders.append(f"{path.name}: text-[{value}px]")
         self.assertEqual(offenders, [], f"tiny text utilities: {offenders}")
 
-    def test_both_tiers_are_defined(self):
+    def test_chart_configuration_respects_the_twelve_pixel_floor(self):
+        """Chart options cannot bypass the CSS type scale through JavaScript."""
+        pattern = re.compile(r"fontSize\s*:\s*['\"](\d+(?:\.\d+)?)px['\"]")
+        template_charts = [
+            path
+            for path in (ROOT / "templates").rglob("*.html")
+            if "fontSize" in path.read_text()
+        ]
+        offenders = []
+        for path in [ROOT / "static/js/alpine-components.js", *template_charts]:
+            for value in pattern.findall(path.read_text()):
+                if float(value) < self.MICRO_PX:
+                    offenders.append(
+                        f"{path.relative_to(ROOT)}: fontSize {value}px"
+                    )
+        self.assertEqual(offenders, [], f"chart text below the floor: {offenders}")
+
+    def test_inline_template_css_respects_the_twelve_pixel_floor(self):
+        declaration_pattern = re.compile(r"font-size\s*:\s*([^;}{]+)")
+        value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
+        offenders = []
+        for path in (ROOT / "templates").rglob("*.html"):
+            for declaration in declaration_pattern.findall(path.read_text()):
+                for value, unit in value_pattern.findall(declaration):
+                    pixels = float(value) * 16 if unit == "rem" else float(value)
+                    if pixels < self.MICRO_PX:
+                        offenders.append(
+                            f"{path.relative_to(ROOT)}: {value}{unit}"
+                        )
+        self.assertEqual(offenders, [], f"inline text below the floor: {offenders}")
+
+    def test_readable_core_tiers_are_defined(self):
         tokens = _read("static/css/design-system.css")
-        self.assertIn("--edify-text-micro-size:", tokens)
-        self.assertIn("--edify-text-label-size:", tokens)
+        self.assertIn("--edify-text-floor:        0.75rem;", tokens)
+        self.assertIn(
+            "--edify-text-micro-size:   var(--edify-text-floor);", tokens
+        )
+        self.assertIn(
+            "--edify-text-label-size:   clamp(0.8125rem, 0.79rem + 0.08vw, 0.875rem);",
+            tokens,
+        )
+        self.assertIn(
+            "--edify-text-body-size:    clamp(0.9375rem, 0.91rem + 0.08vw, 1rem);",
+            tokens,
+        )
+
+    def test_legacy_compact_template_utilities_map_to_the_label_tier(self):
+        consistency = _read("static/css/consistency.css")
+        for utility in (
+            ".text-xs",
+            '[class*="text-[12px]"]',
+            '[class*="text-[12.5px]"]',
+            '[class*="text-[13px]"]',
+        ):
+            self.assertIn(utility, consistency)
+        self.assertIn(
+            "font-size: var(--edify-text-label-size) !important;",
+            consistency,
+        )
+
+
+class ResponsiveTypographyContractTest(SimpleTestCase):
+    """Typography follows the component width without sacrificing legibility."""
+
+    def test_kpi_type_sizes_against_its_card_instead_of_the_viewport(self):
+        tokens = _read("static/css/design-system.css")
+        components = _read("static/css/components.css")
+        consistency = _read("static/css/consistency.css")
+
+        for token in (
+            "--edify-text-tile-value-size",
+            "--edify-text-tile-label-size",
+            "--edify-text-tile-helper-size",
+        ):
+            self.assertRegex(tokens, rf"{token}:[^;]+cqi")
+
+        self.assertIn("container: kpi-card / inline-size", components)
+        self.assertIn("container: legacy-kpi-card / inline-size", consistency)
+        self.assertIn("@container kpi-card (max-width: 16rem)", components)
+        self.assertIn("@container legacy-kpi-card (max-width: 16rem)", consistency)
+        self.assertIn(
+            "font-size: var(--edify-text-tile-value-size)", components
+        )
+        self.assertIn(
+            "font-size: var(--edify-text-tile-value-size) !important",
+            consistency,
+        )
+
+    def test_compact_scale_has_small_caps_without_sub_twelve_pixel_text(self):
+        tokens = _read("static/css/design-system.css")
+
+        for expected in (
+            "--edify-text-display-size: clamp(1.5rem, 1.34rem + 0.58vw, 2rem);",
+            "--edify-text-heading-size: clamp(1.125rem, 1.03rem + 0.3vw, 1.375rem);",
+            "--edify-text-tile-value-size: clamp(1.125rem, calc(0.9375rem + 2.5cqi), 1.5rem);",
+            "--edify-text-table-size: clamp(0.8125rem, calc(0.8125rem + 0.06cqi), 0.875rem);",
+            "--edify-text-floor:        0.75rem;",
+            "--edify-text-micro-size:   var(--edify-text-floor);",
+        ):
+            self.assertIn(expected, tokens)
+
+    def test_metric_labels_yield_columns_instead_of_wrapping(self):
+        components = _read("static/css/components.css")
+        consistency = _read("static/css/consistency.css")
+        pages = _read("static/css/pages.css")
+        hcos = _read("static/css/hcos-workspace.css")
+
+        self.assertIn("minmax(min(100%, 14rem), 1fr)", components)
+        self.assertIn("grid-template-columns: 1fr !important", components)
+        self.assertRegex(
+            components,
+            r"\.kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
+            r"[^}]*white-space:\s*nowrap;",
+        )
+        self.assertRegex(
+            consistency,
+            r"\.legacy-kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
+            r"[^}]*white-space:\s*nowrap;",
+        )
+        self.assertIn("container: metric-tile / inline-size", components)
+        self.assertIn("container: metric-tile / inline-size", pages)
+        self.assertIn("container: metric-tile / inline-size", hcos)
+        self.assertIn(".settings-detail-tile__label {", components)
+        self.assertIn(".pto-balance-tile__top > span:first-child {", pages)
+        self.assertIn(".hcos-metric span:not(.hcos-metric__marker)", hcos)
+
+    def test_tables_scroll_before_headers_or_words_are_crushed(self):
+        platform = _read("static/css/platform.css")
+
+        self.assertIn("--edify-text-table-size", _read("static/css/design-system.css"))
+        self.assertIn("container: edify-table / inline-size", platform)
+        self.assertIn("font-size: var(--edify-text-table-size) !important", platform)
+        self.assertIn("text-wrap: nowrap", platform)
+        self.assertIn("white-space: nowrap", platform)
+        self.assertIn("overflow-x: auto", platform)
+        self.assertIn("word-break: normal", platform)

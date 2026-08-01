@@ -17,18 +17,43 @@ from typing import Iterable
 from rest_framework.throttling import SimpleRateThrottle
 
 
+#: How often to drop buckets that have gone quiet. Cheap relative to the
+#: request rate, and the window it sweeps against is the widest any caller has
+#: asked for, so a long-window route can never have its history swept early.
+_SWEEP_INTERVAL_MS = 60_000
+
+
 class _SlidingWindow:
     """Thread-safe sliding window counter."""
 
     def __init__(self) -> None:
         self._hits: dict[str, list[float]] = defaultdict(list)
         self._lock = Lock()
+        self._max_window_ms = 0
+        self._last_sweep_ms = 0.0
+
+    def _sweep(self, now_ms: float) -> None:
+        """Drop buckets whose every hit has aged out.
+
+        `hit` prunes timestamps *inside* a bucket but never removed the bucket
+        itself, and the key is `route:client_ip` — so a long-lived worker
+        accumulated one permanent entry per distinct client address. An
+        IP-rotating credential-probe run against the login route grew it
+        without bound.
+        """
+        self._last_sweep_ms = now_ms
+        cutoff = now_ms - self._max_window_ms
+        for key in [k for k, hits in self._hits.items() if not hits or hits[-1] <= cutoff]:
+            del self._hits[key]
 
     def hit(self, key: str, *, window_ms: int, limit: int) -> bool:
         """Record a hit; return True if allowed (under limit), False if blocked."""
         now_ms = time.time() * 1000
         cutoff = now_ms - window_ms
         with self._lock:
+            self._max_window_ms = max(self._max_window_ms, window_ms)
+            if now_ms - self._last_sweep_ms > _SWEEP_INTERVAL_MS:
+                self._sweep(now_ms)
             bucket = self._hits[key]
             # Drop expired entries.
             self._hits[key] = bucket = [t for t in bucket if t > cutoff]

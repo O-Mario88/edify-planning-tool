@@ -551,6 +551,8 @@ def budget_overview_view(request):
 def cost_settings_view(request):
     """CD Cost Catalogue management."""
     from apps.budget.reference import CANONICAL_RATE_KEYS
+    from apps.budget.costing_service import activity_cost_coverage
+    from apps.activity_catalogue.services import effective_items
 
     fy = get_operational_fy()
 
@@ -566,10 +568,20 @@ def cost_settings_view(request):
             ).order_by("label")
         )
 
+    governed_activities = list(
+        effective_items()
+        .prefetch_related("intervention_mappings")
+        .order_by("display_name")
+    )
+
     context = {
         "catalogues": catalogues,
         "active_catalogue": active_catalogue,
         "cost_items": cost_items,
+        "activity_cost_coverage": activity_cost_coverage(
+            governed_activities, active_catalogue
+        ),
+        "governed_activity_count": len(governed_activities),
         "fy": fy,
         "can_initialize": request.user.active_role in ("CountryDirector", "Admin"),
     }

@@ -16,6 +16,7 @@ from apps.ssa.models import SsaRecord
 from apps.ssa.upload_service import upload_ssa_file, import_ssa_batch
 from apps.core.exceptions import BadRequest
 from apps.core.enums import VerificationStatus, SsaIntervention
+from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from django.utils import timezone
 import csv
 
@@ -26,6 +27,51 @@ def ssa_performance_view(request):
     from apps.analytics.decision_engine import ssa_performance_dashboard
 
     dashboard = ssa_performance_dashboard(request.user, request.GET.dict())
+    kpis = dashboard["kpis"]
+    ssa_kpi_items = [
+        render_kpi_item(
+            "ssa_schools_assessed",
+            MetricValue.measured(kpis["assessed"]),
+            helper=f"of {kpis['total_schools']} schools · {kpis['completion_rate']}%",
+            tone="info",
+        ),
+        render_kpi_item(
+            "ssa_completion_rate",
+            MetricValue.ratio(kpis["assessed"], kpis["total_schools"]),
+            helper=f"{kpis['assessed']} confirmed this quarter",
+            tone="success",
+        ),
+        render_kpi_item(
+            "ssa_districts_reporting",
+            MetricValue.measured(kpis["reporting_districts"]),
+            helper=f"of {kpis['total_districts']} in your scope",
+            tone="info",
+        ),
+        render_kpi_item(
+            "ssa_average_score",
+            MetricValue.measured(kpis["average_score"])
+            if kpis["average_score"] is not None
+            else MetricValue.absent(DataState.NO_DATA),
+            helper=(
+                f"{kpis['average_delta']:+.2f} vs {kpis['comparison_label']}"
+                if kpis["average_delta"] is not None
+                else "No comparable prior period"
+            ),
+            tone="warning",
+        ),
+        render_kpi_item(
+            "ssa_high_risk_schools",
+            MetricValue.measured(kpis["high_risk"]),
+            helper=f"{kpis['high_risk_pct']}% of assessed · below {dashboard['engine']['high_risk_score']}",
+            tone="danger",
+        ),
+        render_kpi_item(
+            "ssa_districts_below_target",
+            MetricValue.measured(kpis["districts_below_target"]),
+            helper=f"below {kpis['target']} average",
+            tone="danger",
+        ),
+    ]
     template = (
         "partials/ssa/performance_workspace.html"
         if request.headers.get("HX-Request") == "true"
@@ -36,6 +82,7 @@ def ssa_performance_view(request):
         template,
         {
             "dashboard": dashboard,
+            "ssa_kpi_items": ssa_kpi_items,
             "can_add_ssa": _may_upload_ssa(request),
         },
     )

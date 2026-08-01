@@ -13,7 +13,11 @@ from apps.accounts.models import (
 from apps.activities.models import Activity
 from apps.core.enums import SchoolType, SsaIntervention
 
-from .models import LIVE_PROJECT_STATUSES, ProjectSchoolAssignment, ProjectStaffAssignment
+from .models import (
+    LIVE_PROJECT_STATUSES,
+    ProjectSchoolAssignment,
+    ProjectStaffAssignment,
+)
 
 
 COMPLETED_STATES = {
@@ -29,9 +33,7 @@ PARTNER_TYPE_LABELS = dict(SchoolType.choices)
 def project_priorities_for_users(*, users, fy: str) -> dict[str, list[dict]]:
     """Return assigned Project priorities for several users in bounded queries."""
 
-    users = [
-        user for user in users if getattr(user, "staff_profile_id", None)
-    ]
+    users = [user for user in users if getattr(user, "staff_profile_id", None)]
     if not users:
         return {}
     users_by_staff = {str(user.staff_profile_id): user for user in users}
@@ -138,9 +140,7 @@ def project_priorities_for_users(*, users, fy: str) -> dict[str, list[dict]]:
                 activity["status"] in COMPLETED_STATES
             )
 
-    result: dict[str, list[dict]] = {
-        str(user.id): [] for user in users
-    }
+    result: dict[str, list[dict]] = {str(user.id): [] for user in users}
     for assignment in assignments:
         staff_id = str(assignment.staff_id)
         user = users_by_staff[staff_id]
@@ -197,9 +197,7 @@ def project_priorities_for_users(*, users, fy: str) -> dict[str, list[dict]]:
 
 
 def staff_project_priorities(*, user, fy: str) -> list[dict]:
-    return project_priorities_for_users(users=[user], fy=fy).get(
-        str(user.id), []
-    )
+    return project_priorities_for_users(users=[user], fy=fy).get(str(user.id), [])
 
 
 def team_project_priorities(*, users, fy: str) -> list[dict]:

@@ -57,8 +57,17 @@ _API_RE = re.compile(r"[\"'](/api/[^\"']+)[\"']")
 _INLINE_EVENT_RE = re.compile(
     r"\bon(?:click|change|input|submit|mouseover|mouseout)=", re.I
 )
-_RAW_HEX_RE = re.compile(r"(?<!&)#[0-9a-fA-F]{3,8}\b")
-_INLINE_STYLE_RE = re.compile(r"\bstyle=[\"']([^\"']*)[\"']", re.I)
+# CSS hex colours have exactly 3, 4, 6 or 8 digits.  Requiring the token to
+# end there prevents HTMX targets such as ``#add-school-sub-county`` from
+# being misreported merely because their first three letters are hexadecimal.
+_RAW_HEX_RE = re.compile(
+    r"(?<!&)#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})"
+    r"(?![0-9A-Za-z_-])"
+)
+# A bound Alpine ``:style`` attribute is executable state, not literal inline
+# presentation.  Match only the native HTML attribute so the audit does not
+# obscure real static style debt with false positives.
+_INLINE_STYLE_RE = re.compile(r"(?<!:)\bstyle=[\"']([^\"']*)[\"']", re.I)
 # Code-point ranges rather than a regex character class. Astral escapes inside
 # a class are read differently depending on how the pattern string was built —
 # CodeQL reads these three as overlapping U+FFFD — and a membership test says
@@ -355,7 +364,7 @@ def _unsafe_inline_style(source: str) -> bool:
             property_name, value = (part.strip() for part in declaration.split(":", 1))
             if property_name.startswith("--"):
                 continue
-            if "var(" in value or "{{" in value or "{%" in value:
+            if "var(" in value or "{{" in value or "{%" in value or "${" in value:
                 continue
             if property_name == "display" and value == "none":
                 continue

@@ -4,94 +4,50 @@
 {% block title %}Impact Assessment Dashboard — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260730iafocus1">
+<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260731compacttype1">
 {% endblock %}
 
 {% block shell_content %}
-<div class="ia-dashboard">
-  <header class="ia-hero">
-    <div class="ia-hero__content">
-      <div class="ia-hero__eyebrow">
-        <span class="ia-hero__pulse" aria-hidden="true"></span>
-        Quality operations
+<div class="ia-dashboard edify-page-canvas">
+  {% comment %}
+  The canonical page header (§8) — the same surface every major page uses,
+  rather than the page-specific `ia-hero` this dashboard used to carry. The
+  right-hand slot holds context and one primary action; search is deliberately
+  absent here because the top bar owns it.
+  {% endcomment %}
+  <header class="edify-page-header mb-5">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="lg:max-w-[560px]">
+        <p class="edify-page-eyebrow">Quality operations</p>
+        <h1 class="edify-page-title">Impact Assessment Dashboard</h1>
+        <p>
+          Verify SSA, evidence, Salesforce records and data quality before
+          results enter finance, targets and leadership analytics.
+        </p>
+        <div class="mt-2 flex flex-wrap items-center gap-2" aria-label="Current reporting period and upload status">
+          <span class="edify-text-caption edify-text-muted">{{ date_range }}</span>
+          <span class="edify-text-caption edify-text-muted">
+            Last upload:
+            {% if upload_status.last_upload %}{{ upload_status.last_upload|date:"j M, H:i" }}{% else %}none yet{% endif %}
+          </span>
+        </div>
       </div>
-      <h1 class="edify-page-title">Impact Assessment</h1>
-      <p>Certify completed work, protect data quality, and resolve exceptions before they reach reporting.</p>
-      <div class="ia-hero__meta">
-        <span>{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %} {{ date_range }}</span>
-        <span>
-          {% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}
-          Last upload:
-          {% if upload_status.last_upload %}{{ upload_status.last_upload|date:"j M, H:i" }}{% else %}none yet{% endif %}
-        </span>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="/ia/verification/" class="btn btn-primary h-10">
+          Review verification queue{% if kpis.waiting %} ({{ kpis.waiting }}){% endif %}
+        </a>
       </div>
-    </div>
-    <div class="ia-hero__actions" aria-label="Primary IA actions">
-      <a href="/ia/verification/" class="ia-button ia-button--primary">
-        Review verification queue
-        {% if kpis.waiting %}<span>{{ kpis.waiting }}</span>{% endif %}
-      </a>
-      <a href="/uploads" class="ia-button ia-button--secondary">
-        {% include "partials/dashboards/admin/_icon.html" with name="plus" only %}
-        Open Upload Center
-      </a>
     </div>
   </header>
 
   {% include "partials/analytics/section_nav.html" %}
 
-  <section class="ia-metric-grid" aria-label="Impact assessment summary" role="list">
-    <a href="/ia/verification/" class="ia-metric" data-tone="warning" role="listitem">
-      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}</span>
-      <span class="ia-metric__copy">
-        <span class="ia-metric__label">Awaiting verification</span>
-        <strong>{{ kpis.waiting }}</strong>
-        <small>{% if kpis.waiting %}Oldest work is shown first{% else %}Queue is clear{% endif %}</small>
-      </span>
-      <span class="ia-metric__arrow" aria-hidden="true">→</span>
-    </a>
-
-    <a href="/ia/returned/" class="ia-metric" data-tone="{% if kpis.returned_open %}danger{% else %}neutral{% endif %}" role="listitem">
-      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="warning" only %}</span>
-      <span class="ia-metric__copy">
-        <span class="ia-metric__label">Awaiting correction</span>
-        <strong>{{ kpis.returned_open }}</strong>
-        <small>{{ kpis.returned_today }} returned today</small>
-      </span>
-      <span class="ia-metric__arrow" aria-hidden="true">→</span>
-    </a>
-
-    <a href="/ia/history/" class="ia-metric" data-tone="success" role="listitem">
-      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
-      <span class="ia-metric__copy">
-        <span class="ia-metric__label">Verified this week</span>
-        <strong>{{ kpis.verified_week }}</strong>
-        <small>{{ kpis.verified_today }} completed today</small>
-      </span>
-      <span class="ia-metric__arrow" aria-hidden="true">→</span>
-    </a>
-
-    <a href="/ia/verification/" class="ia-metric" data-tone="{% if verification_sla.pct is None %}neutral{% elif verification_sla.pct >= 80 %}success{% else %}warning{% endif %}" role="listitem">
-      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}</span>
-      <span class="ia-metric__copy">
-        <span class="ia-metric__label">Within 24-hour SLA</span>
-        <strong>{% if verification_sla.pct is not None %}{{ verification_sla.pct|floatformat:1 }}%{% else %}—{% endif %}</strong>
-        <small>{% if verification_sla.sample_size %}{{ verification_sla.sample_size }} measured cycles{% else %}Not yet measured · waiting for a completed cycle{% endif %}</small>
-      </span>
-      <span class="ia-metric__arrow" aria-hidden="true">→</span>
-    </a>
-
-    <a href="/analytics" class="ia-metric" data-tone="{% if kpis.quality_pct >= 80 %}success{% else %}warning{% endif %}" role="listitem">
-      <span class="ia-metric__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}</span>
-      <span class="ia-metric__copy">
-        <span class="ia-metric__label">Data quality</span>
-        <strong>{{ kpis.quality }}</strong>
-        <small>Average across active schools</small>
-        <span class="ia-progress" aria-hidden="true"><i style="--ia-progress: {{ kpis.quality_pct }}%"></i></span>
-      </span>
-      <span class="ia-metric__arrow" aria-hidden="true">→</span>
-    </a>
-  </section>
+  {% comment %}
+  Six tiles, one per IA decision question, built by apps.core.metrics so the
+  definition, period and drilldown live with the metric rather than in this
+  template. Replaces the page-local `ia-metric` tiles.
+  {% endcomment %}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items title="Verification workload" %}
 
   <div class="ia-focus-grid">
     <section class="ia-panel ia-queue" aria-labelledby="ia-queue-title">
@@ -100,6 +56,21 @@
           <p class="ia-section-kicker">Do next</p>
           <h2 id="ia-queue-title">Verification queue</h2>
           <p>Prioritized by time waiting. Records beyond 24 hours are marked at risk.</p>
+          {% comment %}
+          The SLA rate qualifies this queue, so it sits with the queue rather
+          than in the KPI strip. As a tile it competed with "Verification
+          Overdue" — a rate for the week just gone against a count of what is
+          late right now — and only the count is something IA can act on.
+          {% endcomment %}
+          <p class="edify-text-caption edify-text-muted">
+            Within 24-hour SLA:
+            {% if verification_sla.pct is not None %}
+            <strong>{{ verification_sla.pct|floatformat:1 }}%</strong> ·
+            {{ verification_sla.sample_size }} measured cycles
+            {% else %}
+            Not yet measured · waiting for a completed cycle
+            {% endif %}
+          </p>
         </div>
         <a href="/ia/verification/" class="ia-text-link">Open full queue <span aria-hidden="true">→</span></a>
       </header>
@@ -212,6 +183,78 @@
     </aside>
   </div>
 
+  <section class="ia-section ia-performance" aria-labelledby="ia-performance-title">
+    <header class="ia-section__header">
+      <div>
+        <p class="ia-section-kicker">Country performance oversight</p>
+        <h2 id="ia-performance-title">Activities and verification performance</h2>
+        <p>Current FY activity delivery and IA verification across every region, district, CCEO and Program Lead.</p>
+      </div>
+    </header>
+
+    <div class="ia-performance-overview">
+      <article class="ia-panel ia-trend-card">
+        <header class="ia-card-heading">
+          <div><h3>Eight-week activity flow</h3><p>Planned work compared with completed IA verifications</p></div>
+          <div class="ia-chart-legend" aria-label="Chart legend">
+            <span data-series="planned"><i></i>Planned</span>
+            <span data-series="verified"><i></i>IA verified</span>
+          </div>
+        </header>
+        <div class="ia-line-chart">
+          <svg viewBox="0 0 720 230" role="img" aria-labelledby="activity-trend-title activity-trend-desc" preserveAspectRatio="xMidYMid meet">
+            <title id="activity-trend-title">Planned and IA-verified activities over eight weeks</title>
+            <desc id="activity-trend-desc">The blue line is planned activities and the green line is IA-verified activities. Exact weekly values follow the chart.</desc>
+            <g class="ia-line-chart__grid" aria-hidden="true">
+              <line x1="42" y1="42" x2="686" y2="42"></line><line x1="42" y1="89" x2="686" y2="89"></line>
+              <line x1="42" y1="136" x2="686" y2="136"></line><line x1="42" y1="184" x2="686" y2="184"></line>
+              <text x="28" y="47" text-anchor="end">{{ activity_trend.max }}</text><text x="28" y="188" text-anchor="end">0</text>
+            </g>
+            <polyline class="ia-line-chart__series ia-line-chart__series--planned" points="{{ activity_trend.planned_points }}"></polyline>
+            <polyline class="ia-line-chart__series ia-line-chart__series--verified" points="{{ activity_trend.verified_points }}"></polyline>
+            {% for week in activity_trend.weeks %}
+            <g class="ia-line-chart__point">
+              <circle class="ia-line-chart__dot ia-line-chart__dot--planned" cx="{{ week.x }}" cy="{{ week.planned_y }}" r="4"><title>{{ week.label }}: {{ week.planned }} planned</title></circle>
+              <circle class="ia-line-chart__dot ia-line-chart__dot--verified" cx="{{ week.x }}" cy="{{ week.verified_y }}" r="4"><title>{{ week.label }}: {{ week.verified }} IA verified</title></circle>
+              <text class="ia-line-chart__label" x="{{ week.x }}" y="215" text-anchor="middle">{{ week.label }}</text>
+            </g>
+            {% endfor %}
+          </svg>
+        </div>
+        <div class="ia-chart-values" aria-label="Exact weekly activity values">
+          {% for week in activity_trend.weeks %}<span><b>{{ week.label }}</b><small>{{ week.planned }} planned · {{ week.verified }} verified</small></span>{% endfor %}
+        </div>
+      </article>
+
+      <article class="ia-panel ia-region-card">
+        <header class="ia-card-heading"><div><h3>Regional performance</h3><p>Achieved share of FY activity plans</p></div></header>
+        <ol class="ia-region-bars">
+          {% for region in region_performance %}
+          <li><div><span><strong>{{ region.name }}</strong><small>{{ region.achieved }} of {{ region.planned }} achieved · {{ region.waiting }} awaiting IA</small></span><b>{{ region.rate }}%</b></div><span class="ia-region-bars__track"><i style="--ia-progress: {{ region.rate }}%"></i></span></li>
+          {% empty %}<li class="ia-list-empty">No regions configured.</li>{% endfor %}
+        </ol>
+      </article>
+    </div>
+
+    <div class="ia-monitoring-grid">
+      <article class="ia-panel ia-monitor-table-card">
+        <header class="ia-card-heading"><div><h3>District monitoring</h3><p>Every district, including centrally planned activities assigned to it</p></div><span class="ia-count">{{ district_performance|length }}</span></header>
+        <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
+          <thead><tr><th>District</th><th>Planned</th><th>Achieved</th><th>Awaiting IA</th><th>Returned</th><th>Performance</th></tr></thead>
+          <tbody>{% for district in district_performance %}<tr><td><strong>{{ district.name }}</strong><small>{{ district.region }}</small></td><td>{{ district.planned }}</td><td>{{ district.achieved }}</td><td>{{ district.waiting }}</td><td>{{ district.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ district.rate }}%"></i></span><b>{{ district.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No districts configured.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </article>
+
+      <article class="ia-panel ia-monitor-table-card">
+        <header class="ia-card-heading"><div><h3>CCEO and Program Lead performance</h3><p>Owned activities for CCEOs; supervised team portfolio for Program Leads</p></div><span class="ia-count">{{ leadership_performance|length }}</span></header>
+        <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
+          <thead><tr><th>Leader</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr></thead>
+          <tbody>{% for leader in leadership_performance %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No active CCEOs or Program Leads configured.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </article>
+    </div>
+  </section>
+
   <section class="ia-section" aria-labelledby="ia-quality-title">
     <header class="ia-section__header">
       <div>
@@ -311,7 +354,7 @@
             <small>{% if avg_resolution_days is not None %}Average resolution {{ avg_resolution_days }} days{% else %}No completed correction cycle yet{% endif %}</small>
           </span>
         </div>
-        <a href="/ia/returned/" class="ia-button ia-button--quiet">Review returned records <span aria-hidden="true">→</span></a>
+        <a href="/ia/returned/" class="btn h-10">Review returned records <span aria-hidden="true">→</span></a>
       </article>
     </div>
   </section>

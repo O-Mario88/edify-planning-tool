@@ -15,9 +15,8 @@ def migrate_legacy_partner_types(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0016_allow_incomplete_school_geography'),
+        ("schools", "0016_allow_incomplete_school_geography"),
     ]
 
     operations = [
@@ -26,8 +25,18 @@ class Migration(migrations.Migration):
             migrations.RunPython.noop,
         ),
         migrations.AlterField(
-            model_name='school',
-            name='school_type',
-            field=models.CharField(choices=[('champion', 'Champion'), ('client', 'Client'), ('core', 'Core'), ('core_graduate', 'Core Graduate'), ('core_trained', 'Core Trained')], default='client', max_length=32),
+            model_name="school",
+            name="school_type",
+            field=models.CharField(
+                choices=[
+                    ("champion", "Champion"),
+                    ("client", "Client"),
+                    ("core", "Core"),
+                    ("core_graduate", "Core Graduate"),
+                    ("core_trained", "Core Trained"),
+                ],
+                default="client",
+                max_length=32,
+            ),
         ),
     ]

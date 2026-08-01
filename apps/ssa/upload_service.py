@@ -196,10 +196,10 @@ def upload_ssa_file(file, principal) -> dict:
                     #         (but not necessarily verified — first upload is the
                     #         baseline). Once a current-FY record exists, block
                     #         re-upload (one SSA per FY per school).
-                    existing_this_fy = (
-                        (school.id, row_fy) in existing_fys
-                        or (school.id, row_fy) in staged_fys
-                    )
+                    existing_this_fy = (school.id, row_fy) in existing_fys or (
+                        school.id,
+                        row_fy,
+                    ) in staged_fys
                     if existing_this_fy:
                         validation_errors.append(
                             f"SSA for FY {row_fy} already exists for this school. "
@@ -509,9 +509,7 @@ def import_ssa_batch(batch, user) -> dict:
                 batch_size=1000,
             )
 
-        affected_schools = list(
-            School.objects.filter(id__in=affected_school_pks)
-        )
+        affected_schools = list(School.objects.filter(id__in=affected_school_pks))
         completed_school_ids = []
         full_quality_refresh = []
         for school in affected_schools:

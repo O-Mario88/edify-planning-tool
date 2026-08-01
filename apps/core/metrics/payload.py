@@ -155,3 +155,30 @@ def render_metric(
         denominator=measured.denominator,
         is_measured=measured.state.is_measured,
     )
+
+
+def render_kpi_item(
+    key: str,
+    measured: MetricValue,
+    *,
+    helper: str,
+    tone: str = "neutral",
+    drilldown_url: str | None = None,
+    icon: str | None = None,
+) -> dict:
+    """Return one registry-backed item for the shared KPI strip.
+
+    Meaning stays in :class:`MetricSpec`; this adapter adds only the local
+    presentation treatment.  Keeping the adapter here prevents views from
+    rebuilding ``label``/``value`` dictionaries that have no stable identity.
+    """
+
+    item = render_metric(
+        key,
+        measured,
+        drilldown_url=drilldown_url,
+    ).as_dict()
+    item.update({"helper": helper, "tone": tone})
+    if icon:
+        item["icon"] = icon
+    return item

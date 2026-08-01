@@ -18,46 +18,32 @@ const options = {
   },
   stroke: {
     width: [0, 0, 2.5],
-    curve: 'smooth',
+    curve: 'straight',
     lineCap: 'round',
     colors: ['transparent', 'transparent', 'var(--edify-chart-green)']
   },
   fill: {
-    type: ['solid', 'gradient', 'solid'],
-    gradient: {
-      shade: 'light',
-      type: 'vertical',
-      shadeIntensity: 0.25,
-      gradientToColors: ['var(--edify-chart-blue)'],
-      inverseColors: false,
-      opacityFrom: 0.95,
-      opacityTo: 0.7,
-      stops: [0, 100]
-    }
+    type: 'solid',
+    opacity: 1
   },
   colors: window.EdifyChartSystem.comparisonSeries,
   plotOptions: {
     bar: {
-      columnWidth: '42%',
-      borderRadius: 8,
+      columnWidth: '48%',
+      borderRadius: 4,
       borderRadiusApplication: 'end',
-      colors: { backgroundBarRadius: 8 }
+      colors: { backgroundBarOpacity: 0, backgroundBarRadius: 4 }
     }
   },
   markers: {
-    size: [0, 0, 6],
+    size: [0, 0, 4],
     colors: ['var(--edify-surface)'],
     strokeColors: 'var(--edify-chart-green)',
-    strokeWidth: 2.5,
-    radius: 6,
-    hover: { size: 8 }
+    strokeWidth: 2,
+    hover: { sizeOffset: 2 }
   },
   dataLabels: {
-    enabled: true,
-    enabledOnSeries: [2],
-    formatter: function (val) { return Math.round(val) + '%'; },
-    style: { colors: ['var(--edify-chart-green)'], fontSize: '11px', fontWeight: 700 },
-    background: { enabled: true, foreColor: 'var(--edify-chart-green)', borderRadius: 8, padding: 3, opacity: 1, borderWidth: 0, borderColor: 'var(--edify-surface)' }
+    enabled: false
   },
   labels: {{ performance_overview.labels|escape }},
   xaxis: {
@@ -85,20 +71,20 @@ const options = {
     }
   ],
   grid: {
-    borderColor: 'transparent',
-    strokeDashArray: 4,
+    borderColor: 'var(--edify-chart-grid)',
+    strokeDashArray: 0,
     xaxis: { lines: { show: false } },
     yaxis: { lines: { show: true } },
     padding: { left: 2, right: 6 }
   },
   legend: {
-    position: 'top',
-    horizontalAlign: 'right',
+    position: 'bottom',
+    horizontalAlign: 'left',
     fontSize: '12px',
     fontWeight: '500',
     labels: { colors: 'var(--edify-text-muted)' },
-    markers: { size: 7, strokeWidth: 0, radius: 12 },
-    itemMargin: { horizontal: 10, vertical: 0 }
+    markers: { size: 6, strokeWidth: 0, radius: 3 },
+    itemMargin: { horizontal: 8, vertical: 2 }
   },
   tooltip: {
     theme: 'dark',

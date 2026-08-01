@@ -98,7 +98,8 @@ class PartnerAssignmentEligibleActivitiesView(APIView):
         if (
             not scope.country_scope
             and assignment.partner_id not in scope.partner_ids
-            and assignment.assigning_staff_id not in {
+            and assignment.assigning_staff_id
+            not in {
                 staff_id,
                 getattr(request.user, "user_id", None),
             }
@@ -107,13 +108,13 @@ class PartnerAssignmentEligibleActivitiesView(APIView):
         ids = (
             [assignment.catalogue_item_id]
             if assignment.catalogue_item_id
-            else list(
-                assignment.allowed_catalogue_items.values_list("id", flat=True)
-            )
+            else list(assignment.allowed_catalogue_items.values_list("id", flat=True))
         )
         allowed = []
-        for item in effective_items().filter(id__in=ids).prefetch_related(
-            "intervention_mappings"
+        for item in (
+            effective_items()
+            .filter(id__in=ids)
+            .prefetch_related("intervention_mappings")
         ):
             try:
                 validate_context(

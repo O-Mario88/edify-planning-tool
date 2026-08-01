@@ -70,7 +70,7 @@
                      { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
                    ],
                    chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
-                   stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
+                   stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
                    colors: window.EdifyChartSystem.mixedSeries,
                    labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                    yaxis: [
@@ -190,7 +190,7 @@
               <div class="flex justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-pill bg-slate-300"></span>Not Submitted / Draft</span><span class="tabular-nums">{{ budget_snapshot.annual_dist.draft }}</span></div>
             </div>
             <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                    class="mt-3 w-full h-9 rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">Open Approval Center</button>
+                    class="mt-3 edify-card-action rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">Open Approval Center</button>
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@
         {% endif %}
         {% endfor %}
         <button type="button" hx-get="/rvp/approvals?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-                class="w-full h-9 rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">View All Approvals</button>
+                class="edify-card-action rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">View All Approvals</button>
       </div>
 
       <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-2">

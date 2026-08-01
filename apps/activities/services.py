@@ -725,8 +725,27 @@ def create(
             raise BadRequest("Select a valid programme Activity type.")
         if data.get("programmeDeliveryMode") not in ProgrammeDeliveryMode.values:
             raise BadRequest("Select Group or Cluster as the delivery mode.")
-        if (focus or data.get("purposeIntervention")) not in SsaIntervention.values:
+        selected_intervention = focus or data.get("purposeIntervention")
+        programme_mapping_rows = list(
+            catalogue_item.intervention_mappings.filter(active=True).values_list(
+                "mapping_mode", "intervention"
+            )
+        )
+        has_fixed_intervention = any(
+            intervention for _mode, intervention in programme_mapping_rows
+        )
+        inherits_intervention = any(
+            mode == "inherit_from_source_activity"
+            for mode, _intervention in programme_mapping_rows
+        )
+        if has_fixed_intervention and selected_intervention not in SsaIntervention.values:
             raise BadRequest("Select the SSA intervention linked to this Activity.")
+        if inherits_intervention and selected_intervention not in SsaIntervention.values:
+            raise BadRequest(
+                "Select the training or support intervention being followed up."
+            )
+        if not has_fixed_intervention and not inherits_intervention:
+            focus = None
         try:
             planned_school_count = int(data.get("plannedSchoolCount") or 0)
         except (TypeError, ValueError) as exc:
@@ -1195,9 +1214,7 @@ def create(
             programme_delivery_mode=(
                 data.get("programmeDeliveryMode") if non_school else None
             ),
-            planned_school_count=(
-                planned_school_count if non_school else None
-            ),
+            planned_school_count=(planned_school_count if non_school else None),
             event_district_id=event_district_id,
             fy=fy,
             quarter=quarter,

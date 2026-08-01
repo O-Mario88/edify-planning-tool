@@ -430,9 +430,7 @@ def core_schedule_visit_action(request):
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
             # without it, closing the raw-POST bypass around the slot cap.
-            act_data = create_activity(
-                payload, request.user, core_slot_verified=True
-            )
+            act_data = create_activity(payload, request.user, core_slot_verified=True)
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
@@ -611,9 +609,7 @@ def core_schedule_training_action(request):
             # 1. Create standard Activity in DB. The flag records that a
             # package slot was locked above — create() refuses core types
             # without it, closing the raw-POST bypass around the slot cap.
-            act_data = create_activity(
-                payload, request.user, core_slot_verified=True
-            )
+            act_data = create_activity(payload, request.user, core_slot_verified=True)
 
             # 2. Commit the policy-checked slot through the same service that
             # locked it, so the 4 + 4 guard and the state it protects share an
@@ -806,12 +802,12 @@ def core_assign_partner_action(request):
                 requested_intervention=focus_intervention,
                 source_activity=source_activity,
             )
-            if (
-                support_type == "Visit"
-                and catalogue_item.core_slot_type != "VISIT"
-            ):
+            if support_type == "Visit" and catalogue_item.core_slot_type != "VISIT":
                 raise BadRequest("Choose the approved Core Visit Catalogue item.")
-            if support_type == "Training" and catalogue_item.activity_type != "training":
+            if (
+                support_type == "Training"
+                and catalogue_item.activity_type != "training"
+            ):
                 raise BadRequest("Choose an approved Training Catalogue item.")
             if support_type not in {"Visit", "Training"}:
                 raise BadRequest("Choose either a visit or training support slot.")
@@ -853,9 +849,7 @@ def core_assign_partner_action(request):
                 catalogue_item=catalogue_item,
                 source_ssa=latest_applicable_record(school),
                 source_activity=source_activity,
-                recommendation_reason=request.POST.get(
-                    "recommendation_reason", ""
-                )
+                recommendation_reason=request.POST.get("recommendation_reason", "")
                 or (
                     recommendation["recommendationReason"]
                     if recommendation

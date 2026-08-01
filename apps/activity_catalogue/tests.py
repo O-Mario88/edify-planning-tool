@@ -48,6 +48,11 @@ class CatalogueSeedContractTests(TestCase):
             ActivityCatalogueItem.objects.values("stable_code").distinct().count(),
             28,
         )
+        self.assertEqual(
+            ActivityCatalogueItem.objects.filter(non_school_allowed=True).count(),
+            28,
+            "Every governed title must also be available for dated central budgeting.",
+        )
         self.assertFalse(
             ActivityInterventionMapping.objects.filter(
                 mapping_mode__in=[MappingMode.FIXED, MappingMode.MULTIPLE_ALLOWED],

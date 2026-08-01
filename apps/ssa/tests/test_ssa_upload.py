@@ -114,8 +114,7 @@ class SsaUploadTest(APITestCase):
                 school.recompute_quality_and_readiness()
             School.objects.bulk_create(schools)
             rows = "".join(
-                f"{school.school_id},2025-06-15,{SCORES}\n"
-                for school in schools
+                f"{school.school_id},2025-06-15,{SCORES}\n" for school in schools
             )
             with CaptureQueriesContext(connection) as captured:
                 response = self._post(

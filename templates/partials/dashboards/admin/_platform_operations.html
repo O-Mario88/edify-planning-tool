@@ -6,64 +6,7 @@
   availability, support and security, and measuring it by field results was
   part of what made this role look like a business role.
 {% endcomment %}
-<section class="admin-kpi-strip" aria-label="Platform operations summary">
-  <a class="admin-kpi" data-tone="{% if admin_ops.critical_incidents %}danger{% else %}success{% endif %}" href="/admin-ops/incidents">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Critical Incidents</span>
-      <strong>{{ admin_ops.critical_incidents }}</strong>
-      <small>{{ admin_ops.unacknowledged_incidents }} open and unacknowledged</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.untriaged_tickets %}warning{% else %}neutral{% endif %}" href="/admin-ops/support">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Open Support Tickets</span>
-      <strong>{{ admin_ops.open_tickets }}</strong>
-      <small>{{ admin_ops.untriaged_tickets }} awaiting triage</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.overdue_admin_work %}warning{% else %}neutral{% endif %}" href="/admin-ops/my-plan">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Overdue Admin Work</span>
-      <strong>{{ admin_ops.overdue_admin_work }}</strong>
-      <small>{{ admin_ops.unscheduled_work }} still unscheduled</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.job_incidents %}warning{% else %}neutral{% endif %}" href="/admin-ops/incidents">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Background Job Incidents</span>
-      <strong>{{ admin_ops.job_incidents }}</strong>
-      <small>failed or overdue jobs</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.performance_incidents %}warning{% else %}neutral{% endif %}" href="/admin-ops/incidents">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Slow or Unhealthy Routes</span>
-      <strong>{{ admin_ops.performance_incidents }}</strong>
-      <small>open SLO breaches</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.security_alerts %}danger{% else %}success{% endif %}" href="/admin-ops/incidents">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Security Alerts</span>
-      <strong>{{ admin_ops.security_alerts }}</strong>
-      <small>open security incidents</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="{% if admin_ops.maintenance_due %}warning{% else %}neutral{% endif %}" href="/admin-ops/maintenance">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Maintenance Due</span>
-      <strong>{{ admin_ops.maintenance_due }}</strong>
-      <small>templates at or past their date</small>
-    </span>
-  </a>
-  <a class="admin-kpi" data-tone="neutral" href="/admin-ops/team-plans">
-    <span class="admin-kpi__copy">
-      <span class="admin-kpi__label">Team Plans</span>
-      <strong>Open</strong>
-      <small>everyone's My Plan, read-only</small>
-    </span>
-  </a>
-</section>
+{% include "components/kpi_strip.html" with items=admin_ops_kpi_items title="Platform operations summary" %}
 
 <div class="admin-grid admin-grid--middle">
   <section class="admin-panel" aria-labelledby="admin-ops-critical-title">

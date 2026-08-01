@@ -4,20 +4,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activity_catalogue', '0004_activitycatalogueitem_ia_verification_required_and_more'),
+        (
+            "activity_catalogue",
+            "0004_activitycatalogueitem_ia_verification_required_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='activitycatalogueitem',
-            name='activity_type',
-            field=models.CharField(choices=[('training', 'Training'), ('school_visit', 'School Visit'), ('youth_camp', 'Youth Camp'), ('admin', 'Admin'), ('programme_event', 'Programme Event')], max_length=32),
+            model_name="activitycatalogueitem",
+            name="activity_type",
+            field=models.CharField(
+                choices=[
+                    ("training", "Training"),
+                    ("school_visit", "School Visit"),
+                    ("youth_camp", "Youth Camp"),
+                    ("admin", "Admin"),
+                    ("programme_event", "Programme Event"),
+                ],
+                max_length=32,
+            ),
         ),
         migrations.AlterField(
-            model_name='activitycatalogueitem',
-            name='delivery_method',
-            field=models.CharField(choices=[('in_school_training', 'In-school Training'), ('cluster_meeting', 'Cluster Meeting'), ('cluster_training', 'Cluster Training'), ('online', 'Online'), ('school_visit', 'School Visit'), ('group', 'Group'), ('admin', 'Admin'), ('programme_event', 'Programme Event')], max_length=32),
+            model_name="activitycatalogueitem",
+            name="delivery_method",
+            field=models.CharField(
+                choices=[
+                    ("in_school_training", "In-school Training"),
+                    ("cluster_meeting", "Cluster Meeting"),
+                    ("cluster_training", "Cluster Training"),
+                    ("online", "Online"),
+                    ("school_visit", "School Visit"),
+                    ("group", "Group"),
+                    ("admin", "Admin"),
+                    ("programme_event", "Programme Event"),
+                ],
+                max_length=32,
+            ),
         ),
     ]

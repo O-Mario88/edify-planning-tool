@@ -55,7 +55,7 @@ alternative: false
 <fieldset class="space-y-2">
   <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Recommended Activities</legend>
   {% for item in primary_catalogue_items %}
-  <label class="block cursor-pointer rounded-overlay border border-[var(--border-card)] bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+  <label class="edify-surface block cursor-pointer rounded-overlay border border-[var(--border-card)] p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
     <span class="flex items-start gap-3">
       <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}"
         {% if forloop.first %}checked{% endif %}
@@ -82,7 +82,7 @@ alternative: false
 </fieldset>
 
 {% if other_catalogue_items %}
-<details class="rounded-surface border border-[var(--edify-border)] bg-white p-3">
+<details class="edify-surface rounded-surface border border-[var(--edify-border)] p-3">
   <summary class="cursor-pointer font-bold text-[var(--color-edify-primary)]">View Other Eligible Activities</summary>
   <fieldset class="mt-3 space-y-2">
     <legend class="sr-only">Other eligible Activities</legend>
@@ -98,7 +98,7 @@ alternative: false
 </details>
 <div x-show="alternative" style="display:none">
   <label for="override_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for selecting an alternative</label>
-  <textarea id="override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" aria-describedby="override-help" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus"></textarea>
+  <textarea id="override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" aria-describedby="override-help" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
   <p id="override-help" class="mt-1 font-medium text-slate-500">The system recommendation, selected alternative, actor, reason and timestamp are retained for review.</p>
 </div>
 {% endif %}

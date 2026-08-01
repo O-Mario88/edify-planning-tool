@@ -80,10 +80,7 @@ class ProjectEligibleActivitiesView(APIView):
 
         project = get_scoped_project(project_id, request.user)
         return Response(
-            [
-                serialize_item(item)
-                for item in list_catalogue(project_id=project.id)
-            ]
+            [serialize_item(item) for item in list_catalogue(project_id=project.id)]
         )
 
 
@@ -127,9 +124,7 @@ class ProjectStaffAssignmentDetailView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = [Permission.PROJECT_CONFIGURE_PRIORITIES.value]
 
-    def delete(
-        self, request: Request, project_id: str, staff_id: str
-    ) -> Response:
+    def delete(self, request: Request, project_id: str, staff_id: str) -> Response:
         return Response(services.revoke_staff(project_id, staff_id, request.user))
 
 

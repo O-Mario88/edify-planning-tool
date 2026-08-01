@@ -154,43 +154,37 @@ class NoDuplicationTests(DocumentTestBase):
         self.assertEqual(ssa.preview_status, "Structured preview")
         self.assertIn("import results", ssa.next_action.lower() + " import results")
 
-    def test_evidence_appears_without_a_second_review_workflow(self):
-        from apps.documents.upload_center import _evidence
-
-        # The adapter offers no mutation at all -- review stays in the
-        # evidence workflow, which is the one definition of "verified".
+    def test_workflow_files_do_not_appear_in_the_upload_center(self):
         import apps.documents.upload_center as module
 
-        for name in dir(module):
-            self.assertNotIn(name, {"review_evidence", "verify_evidence"})
-        self.assertTrue(callable(_evidence))
+        self.assertFalse(hasattr(module, "_evidence"))
+        self.assertFalse(hasattr(module, "_pd_certificates"))
+        self.assertNotIn("evidence", module.ADAPTERS)
+        self.assertNotIn("pd", module.ADAPTERS)
 
     def test_upload_center_launches_only_role_authorised_workflows(self):
         from apps.documents.upload_center import UploadCenterService
 
         def keys(user):
             return {
-                action["key"]
-                for action in UploadCenterService.launch_actions(user)
+                action["key"] for action in UploadCenterService.launch_actions(user)
             }
 
         self.assertEqual(
             keys(self.ia),
-            {"schools", "ssa", "training", "pd"},
+            {"schools", "ssa", "training"},
         )
-        self.assertEqual(keys(self.hr), {"policies", "pd"})
-        self.assertEqual(keys(self.cceo), {"evidence", "pd"})
+        self.assertEqual(keys(self.hr), {"policies"})
+        self.assertEqual(keys(self.cceo), set())
         self.assertEqual(
             keys(self.admin),
-            {"schools", "ssa", "policies", "training", "pd"},
+            {"schools", "ssa", "policies", "training"},
         )
 
     def test_authorised_import_tab_exists_before_the_first_batch(self):
         from apps.documents.upload_center import UploadCenterService
 
-        tabs = {
-            tab["key"] for tab in UploadCenterService.visible_tabs(self.ia)
-        }
+        tabs = {tab["key"] for tab in UploadCenterService.visible_tabs(self.ia)}
 
         self.assertIn("imports", tabs)
 
@@ -628,15 +622,19 @@ class AccessGateTests(DocumentTestBase):
 
     def test_agreeing_opens_the_application(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
-        self.client.post(f"/api/documents/acknowledge/{ack.id}", {"choice": "agree"})
+        response = self.client.post(
+            f"/api/documents/acknowledge/{ack.id}", {"choice": "agree"}
+        )
+        self.assertEqual(response["Location"], "/dashboard")
         self.assertEqual(self.client.get("/dashboard").status_code, 200)
 
     def test_disagreeing_restricts_rather_than_opens(self):
         ack = DocumentAcknowledgement.objects.get(version=self.version)
-        self.client.post(
+        disagreement = self.client.post(
             f"/api/documents/acknowledge/{ack.id}",
             {"choice": "disagree", "comment": "I need clarification on section 4."},
         )
+        self.assertEqual(disagreement["Location"], "/policy-agreement/restricted")
         response = self.client.get("/dashboard")
         self.assertEqual(response["Location"], "/policy-agreement/restricted")
         self.assertEqual(
@@ -685,6 +683,74 @@ class AccessGateTests(DocumentTestBase):
         DocumentAsset.objects.update(blocks_application_access=False)
         AcknowledgementService.generate_pending(self.document, self.version)
         self.assertEqual(self.client.get("/dashboard").status_code, 200)
+
+    def test_a_user_created_after_publication_is_gated_on_first_access(self):
+        late_user = _user("late-user", "CCEO", country="Uganda")
+        self.assertFalse(
+            DocumentAcknowledgement.objects.filter(
+                version=self.version, user_id=late_user.id
+            ).exists()
+        )
+
+        client = Client()
+        client.force_login(late_user)
+        response = client.get("/dashboard")
+
+        self.assertEqual(response["Location"], "/policy-agreement")
+        self.assertTrue(
+            DocumentAcknowledgement.objects.filter(
+                version=self.version,
+                user_id=late_user.id,
+                state=AcknowledgementState.PENDING,
+            ).exists()
+        )
+
+
+class CanonicalAgreementSequenceTests(DocumentTestBase):
+    def setUp(self):
+        self.safeguarding, self.safeguarding_version = self._policy(
+            title="Edify Safeguarding Policy"
+        )
+        self.creed, self.creed_version = self._policy(title="Edify Apostles Creed")
+        self._publish(self.safeguarding, self.safeguarding_version)
+        self._publish(self.creed, self.creed_version)
+        self.client = Client()
+        self.client.force_login(self.cceo)
+
+    def test_accepting_safeguarding_opens_creed_then_belief_opens_dashboard(self):
+        safeguarding_ack = DocumentAcknowledgement.objects.get(
+            version=self.safeguarding_version
+        )
+        creed_ack = DocumentAcknowledgement.objects.get(version=self.creed_version)
+
+        first = self.client.post(
+            f"/api/documents/acknowledge/{safeguarding_ack.id}",
+            {"choice": "agree"},
+        )
+        self.assertEqual(
+            first["Location"], "/documents/edify-apostles-creed/"
+        )
+
+        final = self.client.post(
+            f"/api/documents/acknowledge/{creed_ack.id}",
+            {"choice": "agree"},
+        )
+        self.assertEqual(final["Location"], "/dashboard")
+
+    def test_declining_safeguarding_never_advances_to_creed(self):
+        safeguarding_ack = DocumentAcknowledgement.objects.get(
+            version=self.safeguarding_version
+        )
+        response = self.client.post(
+            f"/api/documents/acknowledge/{safeguarding_ack.id}",
+            {"choice": "disagree", "comment": "I need clarification."},
+        )
+
+        self.assertEqual(response["Location"], "/policy-agreement/restricted")
+        self.assertEqual(
+            DocumentAcknowledgement.objects.get(version=self.creed_version).state,
+            AcknowledgementState.PENDING,
+        )
 
 
 # ── Engagement, honestly measured ────────────────────────────────────────────
@@ -866,6 +932,41 @@ class DocumentPageTests(DocumentTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Upload Center", response.content.decode())
 
+    def test_the_source_policy_has_its_own_minimal_read_and_accept_page(self):
+        document, version = self._policy(
+            title="Edify Safeguarding Policy",
+            blocks_application_access=False,
+        )
+        self._publish(document, version)
+        client = Client()
+        client.force_login(self.cceo)
+
+        body = client.get(f"/documents/{document.slug}/").content.decode()
+
+        self.assertIn("Scope and Purpose of the Policy", body)
+        self.assertIn("Appendix B — Reporting Process/Flow", body)
+        self.assertNotIn("Appendix C:", body)
+        self.assertNotIn("Appendix D:", body)
+        self.assertIn("I Accept", body)
+        self.assertIn("Continue", body)
+        self.assertNotIn("rounded-overlay border", body)
+        self.assertNotIn("Main Navigation", body)
+
+    def test_the_creed_uses_belief_language_and_direct_entry_copy(self):
+        document, version = self._policy(
+            title="Edify Apostles Creed",
+            blocks_application_access=False,
+        )
+        self._publish(document, version)
+        client = Client()
+        client.force_login(self.cceo)
+
+        body = client.get(f"/documents/{document.slug}/").content.decode()
+
+        self.assertIn("I Believe", body)
+        self.assertIn("Enter Edify", body)
+        self.assertNotIn(f"I agree to {document.title}", body)
+
     def test_upload_center_renders_ia_import_launchers(self):
         client = Client()
         client.force_login(self.ia)
@@ -906,13 +1007,11 @@ class DocumentPageTests(DocumentTestBase):
         )
         self.assertGreaterEqual(body.count("btn btn-primary"), 1 + (2 * len(actions)))
         self.assertIn(
-            "upload-card-actions mt-auto flex flex-wrap items-center "
-            "justify-center",
+            "upload-card-actions mt-auto flex flex-wrap items-center " "justify-center",
             body,
         )
         self.assertIn(
-            "upload-card-actions mt-4 flex flex-wrap items-center "
-            "justify-center",
+            "upload-card-actions mt-4 flex flex-wrap items-center " "justify-center",
             body,
         )
         self.assertNotIn("bg-[var(--color-edify-primary)]", body)
@@ -1242,16 +1341,27 @@ class DocumentPageRenderTests(DocumentTestBase):
             self.hr,
             self.ia,
             self.cd,
-            self.cceo,
-            _user("pl-uploads", "Program Lead"),
             _user("rvp-uploads", "RegionalVicePresident"),
-            _user("accountant-uploads", "Accountant"),
         ]
         for user in roles:
             with self.subTest(role=user.active_role):
                 client = Client()
                 client.force_login(user)
                 self.assertEqual(client.get("/uploads").status_code, 200)
+
+    def test_operational_and_partner_roles_cannot_open_upload_center(self):
+        users = [
+            self.cceo,
+            _user("pl-no-uploads", "Program Lead"),
+            _user("accountant-no-uploads", "Accountant"),
+            _user("partner-no-uploads", "PartnerAdmin"),
+            _user("coordinator-no-uploads", "ProjectCoordinator"),
+        ]
+        for user in users:
+            with self.subTest(role=user.active_role):
+                client = Client()
+                client.force_login(user)
+                self.assertNotEqual(client.get("/uploads").status_code, 200)
 
 
 class ReminderDedupeAcrossTimezonesTest(DocumentTestBase):

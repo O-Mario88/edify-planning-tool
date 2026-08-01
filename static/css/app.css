@@ -12,7 +12,7 @@ select, input[type="text"], input[type="number"], input[type="date"], textarea {
   border-radius: var(--edify-radius-md);
   background-color: var(--edify-surface-muted);
   color: var(--edify-text);
-  font-size: 12px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   transition: var(--edify-transition-fast);
   outline: none;

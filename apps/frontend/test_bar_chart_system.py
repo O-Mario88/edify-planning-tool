@@ -39,17 +39,44 @@ class BarChartSystemContractTest(SimpleTestCase):
         self.assertLess(secondary, tertiary)
         self.assertIn("--edify-chart-bar-track:", tokens)
 
-    def test_global_apex_defaults_supply_polished_bar_geometry(self):
+    def test_global_apex_defaults_match_reference_chart_geometry(self):
         base = _read("templates/base.html")
         self.assertIn("window.EdifyChartSystem", base)
         self.assertIn("colors: window.EdifyChartSystem.comparisonSeries", base)
-        self.assertIn("barHeight: '62%'", base)
-        # Large enough to read as a pill cap at every bar thickness. ApexCharts
-        # clamps the radius to half the bar, so this rounds fully rather than
-        # overshooting on a thin one.
-        self.assertIn("borderRadius: 14", base)
+        self.assertIn("columnWidth: '54%'", base)
+        self.assertIn("barHeight: '58%'", base)
+        self.assertIn("borderRadius: 4", base)
         self.assertIn("borderRadiusApplication: 'end'", base)
-        self.assertIn("backgroundBarColors: ['var(--edify-surface-muted)']", base)
+        self.assertIn("backgroundBarOpacity: 0", base)
+        self.assertIn("stroke: { curve: 'straight', width: 2", base)
+        self.assertIn("size: 4", base)
+        self.assertIn("strokeWidth: 2", base)
+
+        tokens = _read("static/css/design-system.css")
+        self.assertIn("--edify-chart-blue: var(--brand-primary);", tokens)
+        self.assertIn("--edify-chart-tooltip: #111827;", tokens)
+
+    def test_line_charts_use_direct_segments_instead_of_smoothed_curves(self):
+        line_charts = (
+            "templates/partials/analytics/cd/performance_vs_target.html",
+            "templates/partials/analytics/performance_overview.html",
+            "templates/partials/analytics/pl/core_champion.html",
+            "templates/partials/analytics/pl/team_performance.html",
+            "templates/partials/dashboards/cd/body.html",
+            "templates/partials/dashboards/hr/body.html",
+            "templates/partials/dashboards/pl/body.html",
+            "templates/partials/dashboards/pl/team_performance.html",
+            "templates/partials/debriefs/dashboard_body.html",
+            "templates/partials/targets/my_body.html",
+            "templates/pages/dashboards/rvp.html",
+        )
+        for relative_path in line_charts:
+            source = _read(relative_path)
+            self.assertNotIn(
+                "curve: 'smooth'",
+                source,
+                f"{relative_path} should use the reference's direct line segments",
+            )
 
     def test_comparison_charts_use_the_shared_ordered_palette(self):
         for relative_path in self.COMPARISON_CHARTS:

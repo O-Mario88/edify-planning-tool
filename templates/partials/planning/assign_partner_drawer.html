@@ -65,7 +65,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 <fieldset class="space-y-2">
   <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Partner Activity</legend>
   {% for item in primary_catalogue_items %}
-  <label class="block cursor-pointer rounded-overlay border border-[var(--border-card)] bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5">
+  <label class="edify-surface block cursor-pointer rounded-overlay border border-[var(--border-card)] p-3 shadow-sm transition-all hover:-translate-y-0.5">
     <span class="flex items-start gap-3">
       <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}" {% if forloop.first %}checked{% endif %}
         @change="catalogueItemId='{{ item.catalogueItemId }}'; activityType='{{ item.workflowKind }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; alternative=false"
@@ -78,7 +78,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
   {% endfor %}
 </fieldset>
 {% if other_catalogue_items %}
-<details class="rounded-surface border border-slate-200 bg-white p-3">
+<details class="edify-surface rounded-surface border border-slate-200 p-3">
   <summary class="cursor-pointer font-bold text-[var(--color-edify-primary)]">View Other Eligible Activities</summary>
   <fieldset class="mt-3 space-y-2"><legend class="sr-only">Other eligible Partner Activities</legend>
   {% for item in other_catalogue_items %}
@@ -93,7 +93,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 </details>
 <div x-show="alternative" style="display:none">
   <label for="partner_override_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Alternative selection reason</label>
-  <textarea id="partner_override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[#2563eb] focus:ring-4 edify-primary-focus"></textarea>
+  <textarea id="partner_override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
 </div>
 {% endif %}
 {% else %}

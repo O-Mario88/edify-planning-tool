@@ -5,103 +5,128 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0024_uniq_salesforce_id'),
-        ('activity_catalogue', '__first__'),
-        ('clusters', '0003_repair_canonical_school_cluster_membership'),
-        ('daily_visit_batches', '0001_initial'),
-        ('schools', '0015_normalize_planning_readiness'),
-        ('ssa', '0006_alter_ssascore_intervention'),
+        ("activities", "0024_uniq_salesforce_id"),
+        ("activity_catalogue", "__first__"),
+        ("clusters", "0003_repair_canonical_school_cluster_membership"),
+        ("daily_visit_batches", "0001_initial"),
+        ("schools", "0015_normalize_planning_readiness"),
+        ("ssa", "0006_alter_ssascore_intervention"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='activity_name_snapshot',
+            model_name="activity",
+            name="activity_name_snapshot",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='activity_type_snapshot',
+            model_name="activity",
+            name="activity_type_snapshot",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='catalogue_item',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='activities', to='activity_catalogue.activitycatalogueitem'),
+            model_name="activity",
+            name="catalogue_item",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="activities",
+                to="activity_catalogue.activitycatalogueitem",
+            ),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='catalogue_version',
+            model_name="activity",
+            name="catalogue_version",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='costing_profile_snapshot',
+            model_name="activity",
+            name="costing_profile_snapshot",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='delivery_method_snapshot',
+            model_name="activity",
+            name="delivery_method_snapshot",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='evidence_profile_snapshot',
+            model_name="activity",
+            name="evidence_profile_snapshot",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='follow_up_of_activity',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='follow_up_activities', to='activities.activity'),
+            model_name="activity",
+            name="follow_up_of_activity",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="follow_up_activities",
+                to="activities.activity",
+            ),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='override_reason',
+            model_name="activity",
+            name="override_reason",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='recommendation_reason',
+            model_name="activity",
+            name="recommendation_reason",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='recommendation_source',
+            model_name="activity",
+            name="recommendation_source",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='salesforce_record_type_snapshot',
+            model_name="activity",
+            name="salesforce_record_type_snapshot",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='source_classification',
+            model_name="activity",
+            name="source_classification",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='source_score',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=4, null=True),
+            model_name="activity",
+            name="source_score",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=4, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='source_ssa',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='recommended_activities', to='ssa.ssarecord'),
+            model_name="activity",
+            name="source_ssa",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="recommended_activities",
+                to="ssa.ssarecord",
+            ),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='source_ssa_verification_state',
+            model_name="activity",
+            name="source_ssa_verification_state",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddIndex(
-            model_name='activity',
-            index=models.Index(fields=['catalogue_item', 'fy', 'status'], name='activity_catalog_fc869c_idx'),
+            model_name="activity",
+            index=models.Index(
+                fields=["catalogue_item", "fy", "status"],
+                name="activity_catalog_fc869c_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='activity',
-            index=models.Index(fields=['catalogue_item', 'focus_intervention'], name='activity_catalog_2af373_idx'),
+            model_name="activity",
+            index=models.Index(
+                fields=["catalogue_item", "focus_intervention"],
+                name="activity_catalog_2af373_idx",
+            ),
         ),
     ]

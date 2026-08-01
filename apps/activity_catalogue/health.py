@@ -80,12 +80,14 @@ def catalogue_health() -> dict:
         project_id=OuterRef("project_id"),
         active=True,
     )
-    project_unapproved = Activity.objects.filter(
-        catalogue_item__isnull=False,
-        project_id__isnull=False,
-    ).annotate(
-        approved_project=Exists(approved_project_rule)
-    ).filter(approved_project=False)
+    project_unapproved = (
+        Activity.objects.filter(
+            catalogue_item__isnull=False,
+            project_id__isnull=False,
+        )
+        .annotate(approved_project=Exists(approved_project_rule))
+        .filter(approved_project=False)
+    )
     partner_disallowed = Activity.objects.filter(
         catalogue_item__isnull=False,
         delivery_type="partner",
@@ -152,19 +154,19 @@ def catalogue_health() -> dict:
         delivery_type="staff",
         schedule_cost_lines__cost_setting_key__icontains="partner",
     ).distinct()
-    missing_cost_provenance = Activity.objects.filter(
-        catalogue_item__isnull=False,
-        schedule_cost_lines__isnull=False,
-    ).filter(
-        Q(schedule_cost_lines__activity_catalogue_item_id__isnull=True)
-        | ~Q(
-            schedule_cost_lines__activity_catalogue_item_id=F(
-                "catalogue_item_id"
-            )
+    missing_cost_provenance = (
+        Activity.objects.filter(
+            catalogue_item__isnull=False,
+            schedule_cost_lines__isnull=False,
         )
-        | Q(schedule_cost_lines__activity_catalogue_version__isnull=True)
-        | Q(schedule_cost_lines__costing_profile__isnull=True)
-    ).distinct()
+        .filter(
+            Q(schedule_cost_lines__activity_catalogue_item_id__isnull=True)
+            | ~Q(schedule_cost_lines__activity_catalogue_item_id=F("catalogue_item_id"))
+            | Q(schedule_cost_lines__activity_catalogue_version__isnull=True)
+            | Q(schedule_cost_lines__costing_profile__isnull=True)
+        )
+        .distinct()
+    )
     admin_in_ssa_impact = Activity.objects.filter(
         catalogue_item__activity_type="admin",
     ).filter(
@@ -225,18 +227,14 @@ def catalogue_health() -> dict:
             "key": "catalogue_dynamic_source_rule",
             "label": "Dynamic follow-up items not requiring a source Activity",
             "status": (
-                "pass"
-                if not dynamic_without_source_requirement.exists()
-                else "fail"
+                "pass" if not dynamic_without_source_requirement.exists() else "fail"
             ),
             "count": dynamic_without_source_requirement.count(),
         },
         {
             "key": "catalogue_ssa_completion_shape",
             "label": "SSA Completion item incorrectly mapped as an intervention",
-            "status": (
-                "pass" if not invalid_prerequisite_mapping.exists() else "fail"
-            ),
+            "status": ("pass" if not invalid_prerequisite_mapping.exists() else "fail"),
             "count": invalid_prerequisite_mapping.count(),
         },
         {
@@ -284,25 +282,19 @@ def catalogue_health() -> dict:
         {
             "key": "catalogue_intervention_consistency",
             "label": "Activity intervention inconsistent with its fixed mapping",
-            "status": (
-                "pass" if not inconsistent_intervention.exists() else "fail"
-            ),
+            "status": ("pass" if not inconsistent_intervention.exists() else "fail"),
             "count": inconsistent_intervention.count(),
         },
         {
             "key": "catalogue_partner_assignment",
             "label": "Partner Assignment missing Catalogue reference without review",
-            "status": (
-                "pass" if not unqueued_partner_assignment.exists() else "fail"
-            ),
+            "status": ("pass" if not unqueued_partner_assignment.exists() else "fail"),
             "count": unqueued_partner_assignment.count(),
         },
         {
             "key": "catalogue_partner_assignment_review",
             "label": "Legacy Partner Assignment awaiting governed mapping review",
-            "status": (
-                "pass" if not missing_partner_assignment.exists() else "warn"
-            ),
+            "status": ("pass" if not missing_partner_assignment.exists() else "warn"),
             "count": missing_partner_assignment.count(),
         },
         {

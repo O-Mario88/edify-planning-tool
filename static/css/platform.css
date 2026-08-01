@@ -212,6 +212,30 @@ main :where(.card, .panel, .premium-card, .premium-card-elevated,
   aside[style*="--edify-surface"][class*="rounded-xl"]) {
   min-inline-size: 0;
   container-type: inline-size;
+  container-name: edify-card;
+}
+
+/* Card typography responds to the card, not the browser window. A narrow
+   right-rail card therefore keeps a calmer title than a full-width panel,
+   while natural phrases wrap at word boundaries instead of breaking words. */
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded"], article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"]) :where(h2, .card-heading, .panel-heading) {
+  font-size: var(--edify-text-card-heading-size);
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
+}
+
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded"], article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"]) :where(h3, h4, .card-title, .panel-title) {
+  font-size: var(--edify-text-card-title-size);
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
 }
 
 /* Content cards keep their intrinsic height. Equal-height KPI anatomy is
@@ -590,7 +614,7 @@ main table {
   border-collapse: separate;
   border-spacing: 0;
   color: var(--edify-text);
-  font-size: var(--edify-text-label-size) !important;
+  font-size: var(--edify-text-table-size) !important;
   font-variant-numeric: tabular-nums;
 }
 
@@ -613,19 +637,24 @@ main table th {
   /* Header text sits ON the muted band: the subtle tone measures 4.24:1
      there (11px needs 4.5). The muted tone reads 6.9:1 and stays quiet. */
   color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-micro-size) !important;
+  font-size: var(--edify-text-table-heading-size) !important;
   font-weight: 600 !important;
   letter-spacing: var(--edify-text-micro-tracking) !important;
   line-height: 1.3;
-  text-wrap: balance;
+  text-wrap: nowrap;
   text-transform: none !important;
+  white-space: nowrap;
 }
 
 main table td {
   padding: 0.5625rem 0.6875rem !important;
   color: var(--edify-text-muted);
   line-height: 1.4;
+  hyphens: manual;
+  overflow-wrap: normal;
+  text-wrap: pretty;
   vertical-align: middle;
+  word-break: normal;
 }
 
 main table td :where(strong, .font-bold, .font-semibold),
@@ -740,9 +769,24 @@ main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-mat
   background: transparent !important;
 }
 
-main :where(.card, .panel, .bg-white[class*="rounded"]):has(> table),
+main :where(.card, .panel, .bg-white[class*="rounded"]):has(> table) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
 main :where(.card, .panel, .bg-white[class*="rounded"]):has(> .overflow-x-auto > table) {
   overflow: clip;
+}
+
+main :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]):has(> table),
+.drawer-body :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]):has(> table) {
+  container: edify-table / inline-size;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
 }
 
 /* ── Tabs, pills and workflow state. ───────────────────────────────────── */
@@ -782,7 +826,7 @@ main :where([role="tab"], .edify-tab-btn) {
   background: transparent !important;
   box-shadow: none !important;
   color: var(--edify-text-muted) !important;
-  font-size: 12.5px;
+  font-size: var(--edify-text-label-size);
   font-weight: 600 !important;
   white-space: nowrap;
   transition: color .15s ease, border-color .15s ease;
@@ -831,7 +875,7 @@ main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notificatio
 /* ── KPI and chart refinements. ────────────────────────────────────────── */
 main :where([class*="text-[19px]"], [class*="text-[21px]"], [class*="text-[24px]"])[class*="tabular"] {
   color: var(--edify-text) !important;
-  font-size: clamp(1.25rem, 1.16rem + 0.32vw, 1.5rem) !important;
+  font-size: var(--edify-text-tile-value-size) !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
 }
@@ -922,7 +966,7 @@ main .apexcharts-canvas:has(
   .apexcharts-line-series
 ) .apexcharts-legend-text {
   white-space: nowrap !important;
-  font-size: 0.6875rem !important;
+  font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
 }
@@ -1011,7 +1055,7 @@ main .platform-hero {
 main .platform-hero h1 {
   max-inline-size: none;
   color: #fff !important;
-  font-size: clamp(1.65rem, 1.45rem + 0.75vw, 2.125rem) !important;
+  font-size: var(--edify-text-display-size) !important;
   font-weight: 650 !important;
 }
 
@@ -1564,7 +1608,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-block-end: 1px solid var(--edify-border);
   background: color-mix(in oklab, var(--edify-surface-muted) 64%, transparent);
   color: var(--edify-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
 }
 
 .school-directory-listbar__select {
@@ -1610,7 +1654,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   color: var(--edify-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
 }
 
@@ -1629,7 +1673,7 @@ main .platform-responsive-table [data-priority="low"] {
 .school-directory-listbar__count {
   margin-inline-start: auto;
   color: var(--edify-text-subtle);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1738,7 +1782,7 @@ main .platform-responsive-table [data-priority="low"] {
   gap: 0.375rem;
   margin: 0.3125rem 0 0;
   color: var(--edify-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
   line-height: 1.35;
 }
 
@@ -1771,7 +1815,7 @@ main .platform-responsive-table [data-priority="low"] {
   padding: 0.2rem 0.575rem;
   border: 1px solid;
   border-radius: var(--edify-radius-sm);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
@@ -1821,7 +1865,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   color: var(--edify-accent);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   line-height: 1;
   white-space: nowrap;
@@ -1931,7 +1975,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-radius: var(--edify-radius-sm);
   background: transparent;
   color: var(--edify-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 550;
   text-align: start;
 }
@@ -2043,7 +2087,7 @@ main .platform-responsive-table [data-priority="low"] {
 
   .school-directory-status,
   .school-directory-priority {
-    font-size: 0.625rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .school-directory-row__quick-actions {
@@ -2183,7 +2227,7 @@ main .platform-responsive-table [data-priority="low"] {
   gap: 0.375rem;
   margin: 0.3125rem 0 0;
   color: var(--edify-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
   line-height: 1.35;
 }
 
@@ -2222,7 +2266,7 @@ main .platform-responsive-table [data-priority="low"] {
 
 .planning-school-row__meta-label {
   color: var(--edify-text-subtle);
-  font-size: 0.625rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   letter-spacing: 0.045em;
   line-height: 1.2;
@@ -2245,7 +2289,7 @@ main .platform-responsive-table [data-priority="low"] {
   padding: 0.25rem 0.5rem;
   border: 1px solid;
   border-radius: var(--edify-radius-sm);
-  font-size: 0.625rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1.15;
 }
@@ -2298,7 +2342,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-radius: var(--edify-radius-sm);
   background: var(--edify-success-light);
   color: var(--edify-success);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
   line-height: 1.15;
 }
@@ -2340,7 +2384,7 @@ main .platform-responsive-table [data-priority="low"] {
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
   color: var(--edify-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 650;
 }
 
@@ -2383,7 +2427,7 @@ main .platform-responsive-table [data-priority="low"] {
 .planning-school-detail h4 {
   margin: 0 0 0.625rem;
   color: var(--edify-text-subtle);
-  font-size: 0.625rem !important;
+  font-size: var(--edify-text-micro-size) !important;
   font-weight: 650;
   letter-spacing: 0.045em;
   text-transform: uppercase;
@@ -2400,7 +2444,7 @@ main .platform-responsive-table [data-priority="low"] {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
 }
 
 .planning-school-detail dt {
@@ -2421,13 +2465,13 @@ main .platform-responsive-table [data-priority="low"] {
 
 .planning-school-detail.is-recommendation strong {
   color: var(--edify-text);
-  font-size: 0.8125rem;
+  font-size: var(--edify-text-label-size);
 }
 
 .planning-school-detail.is-recommendation p {
   margin: 0.4rem 0 0;
   color: var(--edify-text-muted);
-  font-size: 0.6875rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.45;
 }
 
@@ -2449,7 +2493,7 @@ main .platform-responsive-table [data-priority="low"] {
 
 .planning-school-row__blocked {
   color: var(--edify-warning);
-  font-size: 0.75rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
 }
 
@@ -2841,7 +2885,7 @@ main .platform-responsive-table [data-priority="low"] {
 
 .school-ssa-group__empty {
   color: var(--edify-text-subtle);
-  font-size: .72rem !important;
+  font-size: var(--edify-text-micro-size) !important;
   font-weight: 600;
 }
 
@@ -2866,7 +2910,7 @@ main .platform-responsive-table [data-priority="low"] {
 .school-record-row__detail-footer p {
   margin: 0;
   color: var(--edify-text-muted);
-  font-size: .75rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
 }
 
@@ -2876,7 +2920,7 @@ main .platform-responsive-table [data-priority="low"] {
   border: 0;
   background: transparent;
   color: var(--edify-accent);
-  font-size: .75rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 750;
   text-decoration: none;
 }
@@ -3002,7 +3046,7 @@ main .platform-responsive-table [data-priority="low"] {
   .school-record-row__title { font-size: 1.13rem; }
   .school-record-row__metadata { gap: .38rem .75rem; }
   .school-record-action { padding-inline: .65rem; }
-  .school-record-action span { font-size: .68rem; }
+  .school-record-action span { font-size: var(--edify-text-micro-size); }
   .school-record-row__actions { padding-inline-start: 3.15rem; }
   .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
 }
@@ -3022,9 +3066,378 @@ main .platform-responsive-table [data-priority="low"] {
     .school-record-row__title { font-size: 1.13rem; }
     .school-record-row__metadata { gap: .38rem .75rem; }
     .school-record-action { padding-inline: .65rem; }
-    .school-record-action span { font-size: .68rem; }
+    .school-record-action span { font-size: var(--edify-text-micro-size); }
     .school-record-row__actions { padding-inline-start: 3.15rem; }
     .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
     .school-ssa-groups { grid-template-columns: 1fr; }
+  }
+}
+
+/* ── Report and performance workspace ──────────────────────────────────────
+   The report canvas shares the topbar's workspace gutter at every width. It
+   must not introduce a centered inner rail: on wide monitors that made the
+   page title and data bands drift inward from search and the account tools. */
+.edify-report-workspace {
+  container: edify-report / inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.125rem, 0.95rem + 0.55vw, 1.625rem);
+  inline-size: 100% !important;
+  max-inline-size: none !important;
+  margin-inline: 0 !important;
+  padding: clamp(1.375rem, 1.1rem + 0.8vw, 2rem) var(--edify-page-gutter) clamp(2rem, 1.55rem + 1.4vw, 3.25rem) !important;
+  box-sizing: border-box;
+}
+
+.edify-report-header {
+  margin-block-end: 0 !important;
+  padding-block-end: clamp(1rem, 0.85rem + 0.45vw, 1.375rem) !important;
+}
+
+.edify-report-header__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(1.25rem, 1rem + 1vw, 2.5rem);
+}
+
+.edify-report-header__copy {
+  min-inline-size: 0;
+  max-inline-size: 52rem;
+}
+
+.edify-report-header__description {
+  margin-block-start: 0.625rem;
+  max-inline-size: 68ch;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-body-size);
+  font-weight: var(--edify-text-body-weight);
+  line-height: var(--edify-text-body-leading);
+}
+
+.edify-report-header__controls {
+  display: grid;
+  gap: 0.375rem;
+  min-inline-size: 11rem;
+}
+
+.edify-report-header__controls label {
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  line-height: var(--edify-text-micro-leading);
+  text-transform: uppercase;
+}
+
+.edify-report-header__controls select {
+  inline-size: 100%;
+  min-block-size: var(--edify-control-block-size);
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-surface-raised) !important;
+  box-shadow: var(--edify-shadow-xs);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.edify-report-section {
+  display: grid;
+  gap: 0.75rem;
+  min-inline-size: 0;
+}
+
+.edify-report-section__heading,
+.edify-report-matrix__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-inline-size: 0;
+}
+
+.edify-report-section__heading > div,
+.edify-report-matrix__heading > div {
+  min-inline-size: 0;
+}
+
+.edify-report-section__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  line-height: var(--edify-text-micro-leading);
+  text-transform: uppercase;
+}
+
+.edify-report-section__heading h2,
+.edify-report-matrix__heading h2 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-heading-size) !important;
+  font-weight: var(--edify-text-heading-weight) !important;
+  line-height: var(--edify-text-heading-leading);
+}
+
+.edify-report-section__heading > p,
+.edify-report-matrix__heading > p {
+  max-inline-size: 42rem;
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+  text-align: end;
+}
+
+.edify-report-timeline-wrap {
+  min-inline-size: 0;
+  overflow: visible;
+}
+
+.edify-report-timeline {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.625rem !important;
+  min-inline-size: 0 !important;
+  margin-block-end: 0 !important;
+  overflow: visible !important;
+}
+
+.edify-report-period {
+  min-block-size: 6.5rem !important;
+  padding: 0.875rem !important;
+  gap: 0.625rem !important;
+}
+
+.edify-report-period > :first-child {
+  min-inline-size: 0;
+}
+
+.edify-report-period__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+
+.edify-report-period__date,
+.edify-report-period__kind {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  line-height: var(--edify-text-label-leading);
+}
+
+.edify-report-period__kind {
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--edify-border-strong);
+  color: var(--edify-text-subtle);
+}
+
+.edify-report-no-target {
+  inline-size: auto !important;
+  block-size: auto !important;
+  min-block-size: 1.75rem;
+  padding-inline: 0.55rem;
+  flex-direction: row !important;
+  gap: 0.25rem;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: var(--edify-radius-pill) !important;
+  background: var(--edify-surface-muted);
+  white-space: nowrap;
+}
+
+.edify-report-no-target > :first-child {
+  display: none;
+}
+
+.edify-report-no-target > :last-child {
+  margin: 0 !important;
+  font-size: var(--edify-text-micro-size) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.edify-report-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-block-end: 0 !important;
+}
+
+.edify-report-summary-card {
+  min-block-size: 6.5rem !important;
+  padding: 0.875rem !important;
+}
+
+/* The shared legacy KPI adapter centers a card's children so icon-led KPI
+   tiles balance correctly. Report summary tiles have no icon lane; keeping
+   that centering shrinks the copy column and creates a false left gutter. */
+main .edify-report-summary-grid.edify-report-summary-grid > .edify-report-summary-card {
+  align-items: stretch !important;
+  text-align: start !important;
+}
+
+main .edify-report-summary-card > :first-child {
+  inline-size: 100%;
+  min-inline-size: 0;
+  text-align: start;
+}
+
+main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
+  text-align: start !important;
+}
+
+.edify-report-matrix {
+  min-inline-size: 0;
+}
+
+.edify-report-matrix__heading {
+  padding: 1rem 1.25rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+}
+
+.edify-report-matrix__scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.edify-report-matrix__table {
+  min-inline-size: 70rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+}
+
+.edify-report-matrix__table :is(th, td) {
+  padding-block: 0.55rem !important;
+}
+
+.edify-report-matrix__table :is(th, td):first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  inline-size: 10rem;
+  min-inline-size: 10rem;
+  background: var(--edify-surface);
+  box-shadow: 1px 0 0 var(--edify-border);
+}
+
+.edify-report-matrix__table thead :is(th, td):first-child {
+  z-index: 2;
+  background: var(--edify-surface-muted);
+}
+
+.edify-report-insight-grid {
+  align-items: start !important;
+  gap: 1rem !important;
+}
+
+.edify-report-insight-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 1rem;
+  min-inline-size: 0;
+}
+
+.edify-report-panel {
+  align-self: start;
+  block-size: auto !important;
+  min-block-size: 0 !important;
+  padding: 1rem !important;
+}
+
+.edify-report-trend-chart {
+  block-size: clamp(10rem, 14vw, 13rem);
+}
+
+.edify-report-priority {
+  padding: 0.7rem !important;
+  gap: 0.625rem !important;
+}
+
+.edify-report-priority p {
+  line-height: 1.35 !important;
+}
+
+@container edify-report (max-width: 72rem) {
+  .edify-report-timeline {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-insight-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .edify-report-panel--trend {
+    grid-column: auto !important;
+  }
+
+  .edify-report-insight-rail {
+    grid-column: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container edify-report (max-width: 48rem) {
+  .edify-report-header__layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .edify-report-header__controls {
+    inline-size: min(100%, 18rem);
+  }
+
+  .edify-report-section__heading,
+  .edify-report-matrix__heading {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .edify-report-section__heading > p,
+  .edify-report-matrix__heading > p {
+    max-inline-size: 65ch;
+    text-align: start;
+  }
+
+  .edify-report-timeline,
+  .edify-report-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-insight-grid,
+  .edify-report-insight-rail {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .edify-report-panel {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 47.9375rem) {
+  .edify-report-workspace {
+    padding-inline: 0.75rem !important;
+  }
+}
+
+@container edify-report (max-width: 30rem) {
+  .edify-report-timeline,
+  .edify-report-summary-grid,
+  .edify-report-insight-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .edify-report-period,
+  .edify-report-summary-card {
+    min-block-size: 0 !important;
   }
 }

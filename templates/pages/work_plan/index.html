@@ -74,6 +74,7 @@ Submit completed plan to RVP
 <input type="hidden" name="fy" value="{{ fy }}">
 <input type="hidden" name="budget_id" value="{{ work_plan_approval.budget.id }}">
 <input name="note" maxlength="512" placeholder="Reason required when returning"
+       aria-label="Reason for returning this Work Plan"
        class="h-9 min-w-[230px] rounded-control border border-[var(--edify-border)] bg-transparent px-3 text-[12px] font-semibold">
 <button type="submit" name="action" value="return" class="btn btn-secondary h-9">Return</button>
 <button type="submit" name="action" value="approve" class="btn btn-primary h-9">Approve &amp; lock</button>
@@ -95,7 +96,7 @@ Submit completed plan to RVP
 {% endfor %}
 </nav>
 
-<form method="get" action="/work-plan" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5">
+<form method="get" action="/work-plan" data-component="filter-toolbar" class="relative flex flex-wrap items-end gap-2.5">
 <input type="hidden" name="view" value="{{ view }}">
 {% if flag %}<input type="hidden" name="flag" value="{{ flag }}">{% endif %}
 
@@ -134,12 +135,15 @@ Clear filters
 </a>
 {% endif %}
 
-<details class="relative">
+{% comment %}The panel is anchored to the filter toolbar, not to this summary:
+once the toolbar wraps, the summary sits at the start of a row and a panel
+right-aligned to it lands off the left of the screen.{% endcomment %}
+<details>
 <summary class="list-none cursor-pointer inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
 More filters
 </summary>
-<div class="absolute right-0 z-20 mt-2 w-[280px] p-3 rounded-surface border border-slate-200 edify-surface shadow-lg space-y-3">
+<div class="work-plan-filter-popover z-20 p-3 rounded-surface border border-slate-200 edify-surface shadow-lg space-y-3">
 <label class="block edify-text-caption font-bold text-slate-500">Responsible person
 <select name="responsible" class="mt-1 block w-full h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
 <option value="">All staff</option>

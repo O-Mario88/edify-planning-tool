@@ -60,6 +60,7 @@ from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.clusters.models import Cluster
+from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.geography.models import Region, District, SubCounty
 from apps.geography.subregions import SUBREGIONS
@@ -261,7 +262,10 @@ class ScaleGateTest(TestCase):
             [
                 SsaScore(
                     ssa_record_id=rid,
-                    intervention="Government Requirements",
+                    # The canonical enum *value*, not its display label: this
+                    # fixture stored the label, so every intervention rollup
+                    # measured here silently matched nothing.
+                    intervention=SsaIntervention.GOVERNMENT_REQUIREMENT.value,
                     score=4.0 + (i % 55) / 10,
                 )
                 for i, rid in enumerate(record_ids)

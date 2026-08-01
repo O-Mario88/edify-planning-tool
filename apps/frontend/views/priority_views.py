@@ -89,10 +89,14 @@ def priority_configuration_page(request):
     from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
     from apps.projects.scoping import scoped_projects
 
-    staff = StaffProfile.objects.select_related("user").filter(
-        deleted_at__isnull=True,
-        user__status="active",
-    ).order_by("user__name")
+    staff = (
+        StaffProfile.objects.select_related("user")
+        .filter(
+            deleted_at__isnull=True,
+            user__status="active",
+        )
+        .order_by("user__name")
+    )
     supervisor_ids = StaffSupervisorAssignment.objects.values_list(
         "supervisor_id", flat=True
     ).distinct()
@@ -194,9 +198,9 @@ def priority_configuration_page(request):
 def milestone_define_action(request, milestone_id):
     milestone = get_object_or_404(PriorityMilestone, id=milestone_id)
     payload = request.POST.dict()
-    payload["responsibleRoles"] = request.POST.getlist("responsibleRoles") or request.POST.get(
-        "responsibleRoles", ""
-    )
+    payload["responsibleRoles"] = request.POST.getlist(
+        "responsibleRoles"
+    ) or request.POST.get("responsibleRoles", "")
     define_milestone(milestone, data=payload, principal=request.user)
     return redirect("/strategic-priorities?fy=" + milestone.priority.fy)
 

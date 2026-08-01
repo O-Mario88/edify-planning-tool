@@ -24,21 +24,23 @@ class ThemeSystemContractTest(TestCase):
         self.assertEqual(response.status_code, 200)
         for mode in ("system", "light", "blue", "dark"):
             self.assertContains(response, f"setTheme('{mode}')")
-        self.assertContains(response, "Light by day, dark after 19:00")
+        self.assertContains(response, "Matches your device appearance")
         self.assertContains(response, "Night black")
         self.assertContains(response, "OLED-friendly")
 
     def test_bootstrap_and_runtime_keep_system_as_a_real_preference(self):
         response = self.client.get("/settings")
         self.assertContains(response, "var pref = 'system'")
-        self.assertContains(response, "hour >= 6 && hour < 19")
+        self.assertContains(response, "prefers-color-scheme: dark")
         self.assertContains(response, "html.dataset.themePref = pref")
 
         javascript = (
             Path(settings.BASE_DIR) / "static/js/alpine-components.js"
         ).read_text(encoding="utf-8")
         self.assertIn("['system', 'light', 'blue', 'dark']", javascript)
-        self.assertIn("millisecondsUntilSystemBoundary", javascript)
+        self.assertIn("matchMedia('(prefers-color-scheme: dark)')", javascript)
+        self.assertIn("addEventListener('change'", javascript)
+        self.assertNotIn("millisecondsUntilSystemBoundary", javascript)
         self.assertIn("preference: mode", javascript)
         self.assertIn("toggleNight()", javascript)
 

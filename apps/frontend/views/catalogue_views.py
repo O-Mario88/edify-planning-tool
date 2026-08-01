@@ -128,9 +128,7 @@ def activity_catalogue_review_resolve_action(request, review_id):
 
         if not item.partner_delivery_allowed:
             raise BadRequest("The selected Catalogue item disallows Partner delivery.")
-        assignment = get_object_or_404(
-            PartnerAssignment, id=review.source_record_id
-        )
+        assignment = get_object_or_404(PartnerAssignment, id=review.source_record_id)
         assignment.catalogue_item = item
         assignment.assignment_mode = "specific_activity"
         assignment.catalogue_snapshot = item.snapshot()

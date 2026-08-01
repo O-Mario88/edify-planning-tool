@@ -70,6 +70,24 @@ class CostReferenceTest(TestCase):
         self.assertEqual(visible_keys, CANONICAL_RATE_KEYS)
         self.assertTrue(visible_keys.isdisjoint(RETIRED_COST_SETTING_KEYS))
 
+    def test_cost_catalogue_projects_coverage_for_all_governed_activities(self):
+        from apps.activity_catalogue.services import effective_items
+        from apps.budget.costing_service import activity_cost_coverage
+
+        items = list(
+            effective_items()
+            .prefetch_related("intervention_mappings")
+            .order_by("display_name")
+        )
+        coverage = activity_cost_coverage(items)
+
+        self.assertEqual(len(coverage), 28)
+        self.assertEqual(
+            {row["stable_code"] for row in coverage},
+            {item.stable_code for item in items},
+        )
+        self.assertTrue(all(row["components"] for row in coverage))
+
     def test_visit_costing_prefers_one_canonical_source_per_allowance(self):
         from apps.budget.costing import cost_for_activity
 

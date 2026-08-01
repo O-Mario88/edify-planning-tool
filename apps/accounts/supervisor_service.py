@@ -179,9 +179,7 @@ def configure_program_lead_team(
             raise BadRequest("One or more selected CCEOs are unavailable.")
 
         wrong_country = [
-            cceo.user.name
-            for cceo in cceos
-            if cceo.country != program_lead.country
+            cceo.user.name for cceo in cceos if cceo.country != program_lead.country
         ]
         if wrong_country:
             raise BadRequest(
@@ -190,10 +188,7 @@ def configure_program_lead_team(
 
         locked_links = list(
             StaffSupervisorAssignment.objects.select_for_update()
-            .filter(
-                Q(supervisor=program_lead)
-                | Q(supervisee_id__in=selected_ids)
-            )
+            .filter(Q(supervisor=program_lead) | Q(supervisee_id__in=selected_ids))
             .select_related("supervisor__user")
         )
         current_ids = {

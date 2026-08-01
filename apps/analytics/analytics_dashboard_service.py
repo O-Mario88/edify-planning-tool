@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime
-from django.db.models import Avg, Q, Sum
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from apps.core.fy import get_operational_fy
@@ -186,14 +186,37 @@ class AnalyticsDashboardService:
                     else f"{pct:.0f}% vs {prior_q}"
                 )
 
+        # Cards 1-3 and 6-8 all read the same two activity querysets. Compute
+        # each period in one pass rather than issuing a separate COUNT/SUM per
+        # card: the joins are all many-to-one (activity -> school), so there is
+        # no row fan-out to distort the sums.
+        _achieved = Q(status__in=ACHIEVED_STATUSES)
+        _accepted = _achieved & Q(evidence_status="accepted")
+
+        def activity_kpis(qs):
+            return qs.aggregate(
+                accepted=Count("id", filter=_accepted),
+                teachers=Sum("teachers_attended", filter=_achieved),
+                leaders=Sum("leaders_attended", filter=_achieved),
+                districts=Count(
+                    "school__district_id",
+                    distinct=True,
+                    filter=_achieved & Q(school__district__isnull=False),
+                ),
+                clusters=Count(
+                    "school__cluster_id",
+                    distinct=True,
+                    filter=_achieved & Q(school__cluster_id__isnull=False),
+                ),
+            )
+
+        curr_kpis = activity_kpis(curr_activities)
+        prior_kpis = activity_kpis(prior_activities)
+
         # Card 1: Target Achievement
         # Count achieved activities in quarter
-        achieved_q = curr_activities.filter(
-            status__in=ACHIEVED_STATUSES, evidence_status="accepted"
-        ).count()
-        achieved_prior = prior_activities.filter(
-            status__in=ACHIEVED_STATUSES, evidence_status="accepted"
-        ).count()
+        achieved_q = curr_kpis["accepted"]
+        achieved_prior = prior_kpis["accepted"]
 
         # Targets sum — only ever a real, explicitly configured target.
         # There is no third fallback to a planned/activity count: inferring
@@ -239,18 +262,8 @@ class AnalyticsDashboardService:
             }
 
         # Card 2: Teachers Trained
-        teachers = (
-            curr_activities.filter(status__in=ACHIEVED_STATUSES).aggregate(
-                s=Sum("teachers_attended")
-            )["s"]
-            or 0
-        )
-        teachers_prior = (
-            prior_activities.filter(status__in=ACHIEVED_STATUSES).aggregate(
-                s=Sum("teachers_attended")
-            )["s"]
-            or 0
-        )
+        teachers = curr_kpis["teachers"] or 0
+        teachers_prior = prior_kpis["teachers"] or 0
         kpi_data["teachers_trained"] = {
             "value": f"{teachers:,}",
             "trend": get_trend(teachers, teachers_prior),
@@ -258,18 +271,8 @@ class AnalyticsDashboardService:
         }
 
         # Card 3: School Leaders Trained
-        leaders = (
-            curr_activities.filter(status__in=ACHIEVED_STATUSES).aggregate(
-                s=Sum("leaders_attended")
-            )["s"]
-            or 0
-        )
-        leaders_prior = (
-            prior_activities.filter(status__in=ACHIEVED_STATUSES).aggregate(
-                s=Sum("leaders_attended")
-            )["s"]
-            or 0
-        )
+        leaders = curr_kpis["leaders"] or 0
+        leaders_prior = prior_kpis["leaders"] or 0
         kpi_data["leaders_trained"] = {
             "value": f"{leaders:,}",
             "trend": get_trend(leaders, leaders_prior),
@@ -324,22 +327,8 @@ class AnalyticsDashboardService:
         }
 
         # Card 6: Districts Covered
-        districts = (
-            curr_activities.filter(
-                status__in=ACHIEVED_STATUSES, school__district__isnull=False
-            )
-            .values_list("school__district_id", flat=True)
-            .distinct()
-            .count()
-        )
-        districts_prior = (
-            prior_activities.filter(
-                status__in=ACHIEVED_STATUSES, school__district__isnull=False
-            )
-            .values_list("school__district_id", flat=True)
-            .distinct()
-            .count()
-        )
+        districts = curr_kpis["districts"]
+        districts_prior = prior_kpis["districts"]
         kpi_data["districts_covered"] = {
             "value": str(districts),
             "trend": get_trend(districts, districts_prior),
@@ -347,22 +336,8 @@ class AnalyticsDashboardService:
         }
 
         # Card 7: Clusters Covered
-        clusters = (
-            curr_activities.filter(
-                status__in=ACHIEVED_STATUSES, school__cluster_id__isnull=False
-            )
-            .values_list("school__cluster_id", flat=True)
-            .distinct()
-            .count()
-        )
-        clusters_prior = (
-            prior_activities.filter(
-                status__in=ACHIEVED_STATUSES, school__cluster_id__isnull=False
-            )
-            .values_list("school__cluster_id", flat=True)
-            .distinct()
-            .count()
-        )
+        clusters = curr_kpis["clusters"]
+        clusters_prior = prior_kpis["clusters"]
         kpi_data["clusters_covered"] = {
             "value": str(clusters),
             "trend": get_trend(clusters, clusters_prior),
@@ -370,12 +345,10 @@ class AnalyticsDashboardService:
         }
 
         # Card 8: Total Activities Completed
-        completed = curr_activities.filter(
-            status__in=ACHIEVED_STATUSES, evidence_status="accepted"
-        ).count()
-        completed_prior = prior_activities.filter(
-            status__in=ACHIEVED_STATUSES, evidence_status="accepted"
-        ).count()
+        # Same population as Card 1's numerator, so it reuses that count
+        # rather than re-running an identical query.
+        completed = achieved_q
+        completed_prior = achieved_prior
         kpi_data["activities_completed"] = {
             "value": f"{completed:,}",
             "trend": get_trend(completed, completed_prior),
@@ -569,11 +542,20 @@ class AnalyticsDashboardService:
         achieved_series = []
         ach_pct_series = []
 
+        # One grouped query for all twelve months. Counting month-by-month cost
+        # 24 round trips for data the database can group in a single pass.
+        month_counts = {
+            row["planned_month"]: row
+            for row in activities_qs.values("planned_month").annotate(
+                planned=Count("id"),
+                achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+            )
+        }
+
         for m in months_fy:
-            pl_cnt = activities_qs.filter(planned_month=m).count()
-            ach_cnt = activities_qs.filter(
-                planned_month=m, status__in=ACHIEVED_STATUSES
-            ).count()
+            row = month_counts.get(m)
+            pl_cnt = row["planned"] if row else 0
+            ach_cnt = row["achieved"] if row else 0
             pct = round((ach_cnt / pl_cnt * 100)) if pl_cnt > 0 else 0
 
             planned_series.append(pl_cnt)
@@ -593,10 +575,16 @@ class AnalyticsDashboardService:
             (code, label, None) for code, label in SsaIntervention.choices
         ]
         ssa_scores_list = []
+        intervention_avgs = {
+            row["intervention"]: row["avg"]
+            for row in SsaScore.objects.filter(
+                ssa_record__school__in=schools_qs, ssa_record__fy=fy
+            )
+            .values("intervention")
+            .annotate(avg=Avg("score"))
+        }
         for code, label, _default in ssa_interventions:
-            avg_score = SsaScore.objects.filter(
-                ssa_record__school__in=schools_qs, ssa_record__fy=fy, intervention=code
-            ).aggregate(a=Avg("score"))["a"]
+            avg_score = intervention_avgs.get(code)
             val = float(avg_score) if avg_score is not None else 0.0
             ssa_scores_list.append(
                 {
@@ -616,11 +604,23 @@ class AnalyticsDashboardService:
         if not scope.country_scope and scope.district_ids:
             all_districts = all_districts.filter(id__in=scope.district_ids)
 
-        for dist in all_districts[:8]:
-            planned_d = activities_qs.filter(school__district=dist).count()
-            achieved_d = activities_qs.filter(
-                school__district=dist, status__in=ACHIEVED_STATUSES
-            ).count()
+        shown_districts = list(all_districts[:8])
+        district_counts = {
+            row["school__district_id"]: row
+            for row in activities_qs.filter(
+                school__district_id__in=[d.id for d in shown_districts]
+            )
+            .values("school__district_id")
+            .annotate(
+                planned=Count("id"),
+                achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+            )
+        }
+
+        for dist in shown_districts:
+            row = district_counts.get(dist.id)
+            planned_d = row["planned"] if row else 0
+            achieved_d = row["achieved"] if row else 0
             pct_d = round((achieved_d / planned_d * 100)) if planned_d > 0 else 0
 
             status_color = "text-emerald-600 bg-emerald-50 border-emerald-200"
@@ -652,15 +652,32 @@ class AnalyticsDashboardService:
         # 8. Regional Performance (Map or list representation)
         regional_perf = []
         regions_list = Region.objects.all().order_by("name")
-        for reg in regions_list:
-            reg_schools = schools_qs.filter(region=reg)
-            reg_acts = activities_qs.filter(school__region=reg)
+        # Three grouped queries for the whole region table, rather than four
+        # per region: this loop grows with the estate, so per-row queries here
+        # were the one place the page's cost tracked geography growth.
+        region_acts = {
+            row["school__region_id"]: row
+            for row in activities_qs.values("school__region_id").annotate(
+                planned=Count("id"),
+                achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+            )
+        }
+        region_ssa = {
+            row["school__region_id"]: row["a"]
+            for row in SsaRecord.objects.filter(fy=fy, verification_status="confirmed")
+            .values("school__region_id")
+            .annotate(a=Avg("average_score"))
+        }
+        region_schools = {
+            row["region_id"]: row["n"]
+            for row in schools_qs.values("region_id").annotate(n=Count("id"))
+        }
 
-            reg_ssa = SsaRecord.objects.filter(
-                school__region=reg, fy=fy, verification_status="confirmed"
-            ).aggregate(a=Avg("average_score"))["a"]
-            reg_ach = reg_acts.filter(status__in=ACHIEVED_STATUSES).count()
-            reg_pl = reg_acts.count()
+        for reg in regions_list:
+            acts = region_acts.get(reg.id)
+            reg_ssa = region_ssa.get(reg.id)
+            reg_ach = acts["achieved"] if acts else 0
+            reg_pl = acts["planned"] if acts else 0
             reg_pct = round((reg_ach / reg_pl * 100)) if reg_pl > 0 else 0
 
             regional_perf.append(
@@ -669,7 +686,7 @@ class AnalyticsDashboardService:
                     "name": reg.name,
                     "ssa_avg": round(reg_ssa, 2) if reg_ssa is not None else None,
                     "pct": reg_pct,
-                    "schools_count": reg_schools.count(),
+                    "schools_count": region_schools.get(reg.id, 0),
                     "completed": reg_ach,
                 }
             )
@@ -677,25 +694,56 @@ class AnalyticsDashboardService:
         # 9. Cluster Performance (Top 10 ranked table)
         intervention_labels = dict(SsaIntervention.choices)
         cluster_perf = []
-        clusters_list = Cluster.objects.all()
-        for i, cl in enumerate(clusters_list[:10]):
-            cl_ssa = SsaRecord.objects.filter(
-                school__cluster_id=cl.id, fy=fy, verification_status="confirmed"
-            ).aggregate(a=Avg("average_score"))["a"]
-            cl_acts = activities_qs.filter(school__cluster_id=cl.id)
+        shown_clusters = list(Cluster.objects.all()[:10])
+        shown_cluster_ids = [c.id for c in shown_clusters]
+        prev_fy = str(int(fy) - 1)
 
-            train_cnt = cl_acts.filter(activity_type__in=TRAINING_TYPES).count()
-            visit_cnt = cl_acts.filter(activity_type__in=VISIT_TYPES).count()
+        # Five grouped queries for the whole table instead of five per row.
+        cluster_acts = {
+            row["school__cluster_id"]: row
+            for row in activities_qs.filter(school__cluster_id__in=shown_cluster_ids)
+            .values("school__cluster_id")
+            .annotate(
+                trainings=Count("id", filter=Q(activity_type__in=TRAINING_TYPES)),
+                visits=Count("id", filter=Q(activity_type__in=VISIT_TYPES)),
+            )
+        }
+        _cluster_ssa_rows = (
+            SsaRecord.objects.filter(
+                school__cluster_id__in=shown_cluster_ids,
+                fy__in=[fy, prev_fy],
+                verification_status="confirmed",
+            )
+            .values("school__cluster_id", "fy")
+            .annotate(a=Avg("average_score"))
+        )
+        cluster_ssa = {
+            (row["school__cluster_id"], row["fy"]): row["a"]
+            for row in _cluster_ssa_rows
+        }
+        cluster_interventions: dict[str, list[dict]] = {}
+        for row in (
+            SsaScore.objects.filter(
+                ssa_record__school__cluster_id__in=shown_cluster_ids,
+                ssa_record__fy=fy,
+            )
+            .values("ssa_record__school__cluster_id", "intervention")
+            .annotate(avg=Avg("score"))
+        ):
+            cluster_interventions.setdefault(
+                row["ssa_record__school__cluster_id"], []
+            ).append(row)
+
+        for i, cl in enumerate(shown_clusters):
+            cl_ssa = cluster_ssa.get((cl.id, fy))
+            acts = cluster_acts.get(cl.id)
+
+            train_cnt = acts["trainings"] if acts else 0
+            visit_cnt = acts["visits"] if acts else 0
 
             # Real best/worst intervention, derived the same way as the SSA
             # Performance by Intervention section (SsaScore per-intervention averages).
-            cl_intervention_scores = list(
-                SsaScore.objects.filter(
-                    ssa_record__school__cluster_id=cl.id, ssa_record__fy=fy
-                )
-                .values("intervention")
-                .annotate(avg=Avg("score"))
-            )
+            cl_intervention_scores = cluster_interventions.get(cl.id, [])
             if cl_intervention_scores:
                 best_row = max(cl_intervention_scores, key=lambda r: r["avg"])
                 worst_row = min(cl_intervention_scores, key=lambda r: r["avg"])
@@ -711,10 +759,7 @@ class AnalyticsDashboardService:
 
             # Real trend: compare this cluster's current-FY SSA average against
             # the prior FY (same comparison basis used for Impact Summary below).
-            prev_fy = str(int(fy) - 1)
-            cl_ssa_prev = SsaRecord.objects.filter(
-                school__cluster_id=cl.id, fy=prev_fy, verification_status="confirmed"
-            ).aggregate(a=Avg("average_score"))["a"]
+            cl_ssa_prev = cluster_ssa.get((cl.id, prev_fy))
             if cl_ssa is not None and cl_ssa_prev is not None and cl_ssa != cl_ssa_prev:
                 cl_trend = "up" if cl_ssa > cl_ssa_prev else "down"
             else:

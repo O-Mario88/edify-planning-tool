@@ -20,17 +20,29 @@ class EvidenceStorageHealthTest(SimpleTestCase):
     # TestCase's per-test transaction wrapping for tests that don't need it.
     databases = {"default"}
 
-    def test_unconfigured_storage_dir_is_critical(self):
-        with self.settings(EVIDENCE_STORAGE_DIR=None):
+    def test_failed_object_store_probe_is_critical(self):
+        with patch(
+            "apps.evidence.health._probe_writable",
+            return_value=(False, "credentials rejected"),
+        ):
             result = evidence_storage_health()
-        self.assertEqual(len(result["checks"]), 1)
-        self.assertEqual(result["checks"][0]["severity"], "critical")
-        self.assertEqual(result["checks"][0]["key"], "evidence_storage_configured")
+        by_key = {c["key"]: c for c in result["checks"]}
+        self.assertEqual(by_key["evidence_storage_writable"]["severity"], "critical")
+        self.assertIn(
+            "credentials rejected",
+            by_key["evidence_storage_writable"]["current_state"],
+        )
 
     def test_writable_dir_reports_ok(self):
         tmp = tempfile.mkdtemp(prefix="edify-evidence-health-")
         try:
-            with self.settings(EVIDENCE_STORAGE_DIR=tmp):
+            with (
+                patch("apps.evidence.health._probe_writable", return_value=(True, None)),
+                patch(
+                    "apps.evidence.health.local_path",
+                    return_value=f"{tmp}/probe.tmp",
+                ),
+            ):
                 result = evidence_storage_health()
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -39,9 +51,9 @@ class EvidenceStorageHealthTest(SimpleTestCase):
         self.assertEqual(by_key["evidence_storage_disk_space"]["severity"], "ok")
 
     def test_unwritable_dir_is_critical_and_skips_disk_space_check(self):
-        with (
-            self.settings(EVIDENCE_STORAGE_DIR="/nonexistent"),
-            patch("os.makedirs", side_effect=OSError("Permission denied")),
+        with patch(
+            "apps.evidence.health._probe_writable",
+            return_value=(False, "Permission denied"),
         ):
             result = evidence_storage_health()
         by_key = {c["key"]: c for c in result["checks"]}
@@ -54,7 +66,11 @@ class EvidenceStorageHealthTest(SimpleTestCase):
         try:
             fake_usage = shutil._ntuple_diskusage(total=10**12, used=10**12, free=1024)
             with (
-                self.settings(EVIDENCE_STORAGE_DIR=tmp),
+                patch("apps.evidence.health._probe_writable", return_value=(True, None)),
+                patch(
+                    "apps.evidence.health.local_path",
+                    return_value=f"{tmp}/probe.tmp",
+                ),
                 patch("shutil.disk_usage", return_value=fake_usage),
             ):
                 result = evidence_storage_health()
@@ -62,6 +78,18 @@ class EvidenceStorageHealthTest(SimpleTestCase):
             shutil.rmtree(tmp, ignore_errors=True)
         by_key = {c["key"]: c for c in result["checks"]}
         self.assertEqual(by_key["evidence_storage_disk_space"]["severity"], "critical")
+
+    def test_spaces_probe_does_not_report_ephemeral_disk_capacity(self):
+        with (
+            self.settings(USE_SPACES_STORAGE=True),
+            patch("apps.evidence.health._probe_writable", return_value=(True, None)),
+            patch("shutil.disk_usage") as disk_usage,
+        ):
+            result = evidence_storage_health()
+        by_key = {c["key"]: c for c in result["checks"]}
+        self.assertEqual(by_key["evidence_storage_writable"]["severity"], "ok")
+        self.assertNotIn("evidence_storage_disk_space", by_key)
+        disk_usage.assert_not_called()
 
     def test_wired_into_system_health_report(self):
         from apps.system_health.services import report

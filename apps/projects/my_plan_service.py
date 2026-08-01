@@ -61,8 +61,7 @@ def _project_queryset(principal, scope):
             ).distinct()
         if scope.school_ids:
             return qs.filter(
-                assigned
-                | Q(school_assignments__school_id__in=scope.school_ids)
+                assigned | Q(school_assignments__school_id__in=scope.school_ids)
             ).distinct()
         return qs.filter(assigned).distinct()
     if scope.school_ids:

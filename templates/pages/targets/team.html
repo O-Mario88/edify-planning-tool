@@ -4,10 +4,10 @@
 {% block title %}Team Targets · Edify{% endblock %}
 
 {% block shell_content %}
-<section class="tt-page"
+<section class="tt-page edify-page-canvas"
       x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all', expandedStaff: '' }"
       @click.window="if (expandedStaff && !$event.target.closest('.tt-member-row, .tt-area-row, .tt-mobile-member')) expandedStaff = ''">
-  <header class="tt-page-header">
+  <header class="edify-page-header tt-page-header">
     <div>
       <div class="tt-eyebrow">Performance intelligence</div>
       <h1 class="edify-page-title">Team Targets</h1>

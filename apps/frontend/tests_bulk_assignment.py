@@ -184,9 +184,7 @@ class BulkAssignmentTests(TestCase):
         )
         self.assertFalse(covered.context["show_cluster_directory"])
 
-        uncovered = self.client.get(
-            f"/schools/{self.school_other.id}/add-to-cluster"
-        )
+        uncovered = self.client.get(f"/schools/{self.school_other.id}/add-to-cluster")
         self.assertEqual(uncovered.status_code, 200)
         self.assertIsNone(uncovered.context["existing_covering_cluster"])
         self.assertTrue(uncovered.context["show_cluster_directory"])

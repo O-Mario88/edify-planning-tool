@@ -304,7 +304,7 @@
         { name: 'Exits', type: 'column', data: {{ workforce_overview.exits|safe }} }
       ],
       chart: { height: 260, type: 'line', toolbar: { show: false } },
-      stroke: { width: [3, 0, 0], curve: 'smooth' },
+      stroke: { width: [2.25, 0, 0], curve: 'straight' },
       colors: ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'],
       xaxis: { categories: {{ workforce_overview.months|safe }} },
       yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' } } },
@@ -371,7 +371,7 @@
          inside — the empty track already reads as zero, and white-on-track
          would be invisible. The tooltip still gives the exact number. */
       dataLabels: { enabled: true, textAnchor: 'end', offsetX: -10,
-                    style: { fontSize: '12px', fontWeight: 700, colors: ['#fff'] },
+                    style: { fontSize: '12px', fontWeight: 700, colors: [getComputedStyle(document.documentElement).getPropertyValue('--edify-on-accent').trim()] },
                     dropShadow: { enabled: false },
                     formatter: function (val, o) { return window.EdifyChartSystem.barValueFitsInside(val, o) ? val : ''; } },
       grid: { show: false },

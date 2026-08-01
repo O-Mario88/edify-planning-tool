@@ -245,11 +245,20 @@ class ProgrammeActivityType(models.TextChoices):
     STUDENT_ACTIVITIES = "student_activities", "Student Activities"
     TEACHER_TRAINING = "teacher_training", "Teacher Training"
     ALUMNI = "alumni", "Alumni"
+    TRAINING = "training", "Training"
+    SCHOOL_VISIT = "school_visit", "School Visit"
+    YOUTH_CAMP = "youth_camp", "Youth Camp"
+    ADMIN = "admin", "Admin"
+    PROGRAMME_EVENT = "programme_event", "Programme Event"
 
 
 class ProgrammeDeliveryMode(models.TextChoices):
     GROUP = "group", "Group"
     CLUSTER = "cluster", "Cluster"
+    IN_SCHOOL = "in_school", "In-school Training"
+    ONLINE = "online", "Online"
+    VISIT = "visit", "School Visit"
+    ADMIN = "admin", "Admin"
 
 
 class ActivityStatus(models.TextChoices):

@@ -292,9 +292,7 @@ def proposals(principal, limit: int = 10) -> list[dict]:
     # Candidate = a client school with the best current SSA standing.
     qs = base.filter(
         school_type__in=[SchoolType.CLIENT, SchoolType.CORE_TRAINED]
-    ).order_by(
-        "-current_fy_ssa_status", "name"
-    )[:limit]
+    ).order_by("-current_fy_ssa_status", "name")[:limit]
     return [
         {
             "id": s.id,

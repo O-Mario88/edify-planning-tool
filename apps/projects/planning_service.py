@@ -90,10 +90,17 @@ def _scoped_projects(principal):
     if getattr(principal, "active_role", "") == "ProjectCoordinator":
         if not staff_id:
             return qs.none()
-        return qs.filter(
-            Q(manager_staff_id=staff_id)
-            | Q(staff_assignments__staff_id=staff_id, staff_assignments__is_active=True)
-        ).distinct().order_by("name")
+        return (
+            qs.filter(
+                Q(manager_staff_id=staff_id)
+                | Q(
+                    staff_assignments__staff_id=staff_id,
+                    staff_assignments__is_active=True,
+                )
+            )
+            .distinct()
+            .order_by("name")
+        )
 
     school_ids = list(scope.school_ids or [])
     project_filter = Q()

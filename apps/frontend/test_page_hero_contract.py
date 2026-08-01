@@ -36,7 +36,10 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/ia/notifications.html",
     "templates/pages/ia/returned_activities.html",
     "templates/pages/ia/verification_history.html",
-    "templates/pages/ia/verification_queue.html",
+    # verification_queue.html is gone from this list: the 2026-07-31
+    # consistency pass migrated it off the legacy page-hero family onto the
+    # canonical `edify-page-header`. Anything migrated should leave here, so
+    # the list shrinks as the seventeen header families are consolidated.
     "templates/pages/profile/index.html",
     "templates/pages/staff/detail.html",
 )
@@ -90,10 +93,12 @@ class PageHeroSurfaceContractTest(SimpleTestCase):
         for relative_path in LEGACY_HERO_TEMPLATES:
             source = (ROOT / relative_path).read_text(encoding="utf-8")
             hero_start = source.index("edify-page-hero")
-            hero_tag = source[hero_start : source.index(">", hero_start)]
+            tag_start = source.rfind("<", 0, hero_start)
+            hero_tag = source[tag_start : source.index(">", hero_start)]
 
             with self.subTest(template=relative_path):
                 self.assertIn("edify-page-hero", hero_tag)
+                self.assertIn("edify-page-header", hero_tag)
                 for token in forbidden_surface_tokens:
                     self.assertNotIn(token, hero_tag)
 

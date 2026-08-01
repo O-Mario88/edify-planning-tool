@@ -241,8 +241,7 @@ def _calendar_range_label(start: date, end: date) -> str:
         return f"{start.day} {calendar.month_name[start.month]} {start.year}"
     if (start.year, start.month) == (end.year, end.month):
         return (
-            f"{start.day}–{end.day} {calendar.month_name[start.month]}"
-            f" {start.year}"
+            f"{start.day}–{end.day} {calendar.month_name[start.month]}" f" {start.year}"
         )
     if start.year == end.year:
         return (
@@ -2393,12 +2392,16 @@ def project_detail_view(request, project_id):
     from apps.projects.models import OPEN_PROJECT_STATUSES
 
     project = get_scoped_project(project_id, request.user)
-    school_assignments = ProjectSchoolAssignment.objects.filter(
-        project=project
-    ).select_related("school").order_by("school__name")
-    staff_assignments = project.staff_assignments.filter(
-        is_active=True
-    ).select_related("staff__user").order_by("staff__user__name")
+    school_assignments = (
+        ProjectSchoolAssignment.objects.filter(project=project)
+        .select_related("school")
+        .order_by("school__name")
+    )
+    staff_assignments = (
+        project.staff_assignments.filter(is_active=True)
+        .select_related("staff__user")
+        .order_by("staff__user__name")
+    )
     assigned_count = school_assignments.count()
     # NOTE: Project has no status field in the schema — the fake "Project
     # Status: Active" / "Progress Status: Ongoing" tiles that used to sit here
@@ -2465,9 +2468,7 @@ def project_detail_view(request, project_id):
         "staff_options": staff_options,
         "eligible_schools": eligible_schools,
         "can_assign_staff": can_assign_staff,
-        "assignment_fy": (
-            project.measurement_start_fy or get_operational_fy()
-        ),
+        "assignment_fy": (project.measurement_start_fy or get_operational_fy()),
         "can_add_schools": (
             can_assign_staff
             or str(project.manager_staff_id or "")

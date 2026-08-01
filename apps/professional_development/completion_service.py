@@ -17,6 +17,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.private_storage import best_effort_delete
 
 from apps.professional_development.models import (
     FUNDED_TYPES,
@@ -26,7 +27,7 @@ from apps.professional_development.models import (
     ProfessionalDevelopmentEvidence,
     ProfessionalDevelopmentRequest,
 )
-from apps.professional_development.uploads import store_pd_file
+from apps.professional_development.uploads import PD_NAMESPACE, store_pd_file
 
 HR_ROLE = "HumanResources"
 
@@ -244,20 +245,25 @@ class PDCourseTrackingService:
         stored.pop(
             "file_extension", None
         )  # not a field on Certificate (only Evidence has it)
-        cert = ProfessionalDevelopmentCertificate.objects.create(
-            request=req,
-            uploaded_by=principal.user_id,
-            certificate_name=certificate_name or req.course_name,
-            certificate_number=certificate_number,
-            issuing_institution=issuing_institution,
-            issue_date=issue_date,
-            expiry_date=expiry_date,
-            verification_link=verification_link,
-            document_type=document_type,
-            **stored,
-        )
-        req.status = PDStatus.CERTIFICATE_UPLOADED
-        req.save(update_fields=["status", "updated_at"])
+        try:
+            with transaction.atomic():
+                cert = ProfessionalDevelopmentCertificate.objects.create(
+                    request=req,
+                    uploaded_by=principal.user_id,
+                    certificate_name=certificate_name or req.course_name,
+                    certificate_number=certificate_number,
+                    issuing_institution=issuing_institution,
+                    issue_date=issue_date,
+                    expiry_date=expiry_date,
+                    verification_link=verification_link,
+                    document_type=document_type,
+                    **stored,
+                )
+                req.status = PDStatus.CERTIFICATE_UPLOADED
+                req.save(update_fields=["status", "updated_at"])
+        except Exception:
+            best_effort_delete(PD_NAMESPACE, stored["uri"])
+            raise
         return cert
 
     @staticmethod
@@ -277,9 +283,13 @@ class PDCourseTrackingService:
                 "Evidence can only be added while the request is a draft or returned for correction."
             )
         stored = store_pd_file(file_obj)
-        return ProfessionalDevelopmentEvidence.objects.create(
-            request=req, kind=kind, uploaded_by=principal.user_id, **stored
-        )
+        try:
+            return ProfessionalDevelopmentEvidence.objects.create(
+                request=req, kind=kind, uploaded_by=principal.user_id, **stored
+            )
+        except Exception:
+            best_effort_delete(PD_NAMESPACE, stored["uri"])
+            raise
 
     # ── §22 BambooHR upload confirmation ─────────────────────────────────────
     @staticmethod

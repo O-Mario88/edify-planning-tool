@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0025_activity_activity_name_snapshot_and_more'),
+        ("activities", "0025_activity_activity_name_snapshot_and_more"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='activity',
-            name='closed_activity_must_have_sf_id',
+            model_name="activity",
+            name="closed_activity_must_have_sf_id",
         ),
     ]

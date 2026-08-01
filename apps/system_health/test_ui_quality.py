@@ -2,7 +2,8 @@
 
 If any of these fail, someone reintroduced a banned pattern (emoji instead of
 an SVG icon, a mock-data marker, a dead link/HX target, a hardcoded chart
-series, an uncompiled responsive variant, or a light-only chart grid)."""
+series, an uncompiled responsive variant, a utility class that resolves to no
+CSS rule, or a light-only chart grid)."""
 
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ class UIQualityLintTest(TestCase):
             "unsafe_inline_json",
             "static_chart_series",
             "uncompiled_variants",
+            "uncompiled_utilities",
             "light_only_grids",
         )
         for key in expected:
@@ -40,4 +42,4 @@ class UIQualityLintTest(TestCase):
 
         data = report()
         self.assertIn("uiQuality", data)
-        self.assertEqual(len(data["uiQuality"]["checks"]), 11)
+        self.assertEqual(len(data["uiQuality"]["checks"]), 12)

@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4" x-data="{ open: true }" x-show="open">
-  <div class="bg-white rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in" @click.outside="open = false; $el.remove()">
+  <div class="edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in" @click.outside="open = false; $el.remove()">
     <header class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
       <div>
         <span class="edify-page-eyebrow">Delivery Partner</span>
@@ -22,7 +22,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-[12px] font-semibold text-slate-700 mb-1">Region</label>
-          <select name="region_name" class="w-full rounded-md border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white">
+          <select name="region_name" class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
             <option value="">Select Region...</option>
             {% for r in regions %}
             <option value="{{ r.name }}">{{ r.name }}</option>
@@ -32,7 +32,7 @@
 
         <div>
           <label class="block text-[12px] font-semibold text-slate-700 mb-1">Linked SSA Intervention <span class="text-rose-500">*</span></label>
-          <select name="ssa_intervention" required class="w-full rounded-md border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white">
+          <select name="ssa_intervention" required class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium shadow-xs focus:ring-2 focus:ring-sky-500 focus:outline-none">
             <option value="">Select Intervention...</option>
             {% for val, label in interventions %}
             <option value="{{ val }}">{{ label }}</option>

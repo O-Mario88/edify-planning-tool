@@ -23,6 +23,7 @@ body.launch-page {
   color: var(--launch-ink);
   background: var(--launch-navy);
   font-family: var(--launch-font);
+  font-size-adjust: from-font;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -216,7 +217,7 @@ body.launch-page {
   padding: .65rem .9rem;
   color: #d7ecff;
   border-radius: .55rem;
-  font-size: .8rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   opacity: 0;
   outline: none;

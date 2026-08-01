@@ -208,7 +208,6 @@ def destination_for(user: User, channel: str) -> tuple[str, str]:
     return user.email, _mask_email(user.email)
 
 
-@transaction.atomic
 def start_challenge(
     user: User, channel: str | None = None
 ) -> tuple[MfaChallenge | None, Delivery]:
@@ -239,20 +238,27 @@ def start_challenge(
         )
         return None, Delivery(False, resolve_channel(user), "", "too_many_requests")
 
-    _expire_open_challenges(user)
+    # Expiring the old challenge and issuing the new one is one write; the
+    # send is not. Delivering inside the transaction held a database
+    # connection for the whole provider round-trip — up to 10s for SMS, 15s
+    # for email — on the sign-in path, so a slow provider drained the
+    # connection pool one login at a time.
+    with transaction.atomic():
+        _expire_open_challenges(user)
 
-    channel = channel or resolve_channel(user)
-    code = _generate_code()
-    destination, hint = destination_for(user, channel)
+        channel = channel or resolve_channel(user)
+        code = _generate_code()
+        destination, hint = destination_for(user, channel)
 
-    challenge = MfaChallenge.objects.create(
-        user=user,
-        channel=channel,
-        destination_hint=hint,
-        code_hash=_hash(code),
-        expires_at=timezone.now() + CODE_TTL,
-        last_sent_at=timezone.now(),
-    )
+        challenge = MfaChallenge.objects.create(
+            user=user,
+            channel=channel,
+            destination_hint=hint,
+            code_hash=_hash(code),
+            expires_at=timezone.now() + CODE_TTL,
+            last_sent_at=timezone.now(),
+        )
+
     delivery = _deliver(user, challenge, code, destination)
     return challenge, delivery
 

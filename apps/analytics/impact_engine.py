@@ -818,6 +818,7 @@ def build_dashboard(principal, query: dict) -> dict:
         "kpis": {
             "median_delta": median_delta,
             "improved_pct": improved_pct,
+            "total_accepted_spend_value": funding["total_accepted_spend"],
             "total_accepted_spend": _ugx(funding["total_accepted_spend"]),
             "ugx_per_point": _ugx(funding["ugx_per_point"]),
         },

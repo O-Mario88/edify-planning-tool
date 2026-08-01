@@ -4,9 +4,9 @@
 {% block drawer_subtitle %}Confirm the cluster for this school. Its assigned owner will automatically remain responsible.{% endblock %}
 
 {% block drawer_body %}
-<div class="cluster-assignment-drawer space-y-5 bg-white">
+<div class="cluster-assignment-drawer edify-surface space-y-5">
   {% if validation_error %}
-  <div role="alert" class="flex items-start gap-2 rounded-surface border border-rose-200 bg-white p-3.5 text-[12px] font-bold text-rose-700">
+  <div role="alert" class="edify-surface flex items-start gap-2 rounded-surface border border-rose-200 p-3.5 text-[12px] font-bold text-rose-700">
     <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>
     </svg>
@@ -14,7 +14,7 @@
   </div>
   {% endif %}
 
-  <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="cluster-school-heading">
+  <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="cluster-school-heading">
     <h3 id="cluster-school-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">School</h3>
     <p class="mt-1 text-[14px] font-extrabold text-slate-800">{{ school.name }}</p>
     <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-[12px]">
@@ -36,7 +36,7 @@
   <form
     hx-post="/schools/{{ school.id }}/add-to-cluster"
     hx-target="#drawer-container"
-    class="space-y-5 bg-white text-[12px] text-slate-600"
+    class="edify-surface space-y-5 text-[12px] text-slate-600"
     x-data="{
       actionType: '{% if existing_covering_cluster or show_cluster_directory %}existing{% else %}new{% endif %}',
       selectedClusterId: '{{ existing_covering_cluster.id|default:"" }}'
@@ -47,7 +47,7 @@
     <input type="hidden" name="existing_cluster_id" x-model="selectedClusterId">
 
     {% if existing_covering_cluster %}
-    <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="automatic-cluster-heading">
+    <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="automatic-cluster-heading">
       <div class="flex items-start gap-3">
         <svg class="mt-0.5 h-5 w-5 shrink-0 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
@@ -62,13 +62,13 @@
     </section>
     {% else %}
       {% if show_cluster_directory %}
-      <div class="grid grid-cols-2 gap-1 rounded-surface border border-slate-200 bg-white p-1" role="group" aria-label="Cluster assignment method">
+      <div class="edify-surface grid grid-cols-2 gap-1 rounded-surface border border-slate-200 p-1" role="group" aria-label="Cluster assignment method">
         <button
           type="button"
           @click="actionType = 'existing'"
           :aria-pressed="actionType === 'existing'"
           :class="actionType === 'existing' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-          class="min-h-10 rounded-control border bg-white px-3 text-[12px] font-bold transition-all"
+          class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
         >
           Select nearby
         </button>
@@ -77,7 +77,7 @@
           @click="actionType = 'new'"
           :aria-pressed="actionType === 'new'"
           :class="actionType === 'new' ? 'border-slate-200 text-slate-800 shadow-sm' : 'border-transparent text-slate-500'"
-          class="min-h-10 rounded-control border bg-white px-3 text-[12px] font-bold transition-all"
+          class="edify-surface min-h-10 rounded-control border px-3 text-[12px] font-bold transition-all"
         >
           Create new
         </button>
@@ -88,7 +88,7 @@
         <select
           id="all_cluster_id"
           x-model="selectedClusterId"
-          class="w-full min-h-11 rounded-control border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-700 focus:border-[#2563eb] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+          class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
         >
           <option value="">Select a cluster</option>
           {% for cluster in all_clusters %}
@@ -107,7 +107,7 @@
             name="new_cluster_name"
             id="new_cluster_name"
             placeholder="e.g. {{ school.sub_county.name|default:school.district.name }} Cluster"
-            class="w-full min-h-11 rounded-control border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[#2563eb] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
+            class="edify-surface w-full min-h-11 rounded-control border border-slate-200 px-3 text-[16px] font-semibold text-slate-700 placeholder:text-slate-300 focus:border-[var(--edify-accent)] focus:outline-none focus:ring-4 edify-primary-focus sm:text-[13px]"
           >
         </div>
 
@@ -115,7 +115,7 @@
         {% if school.sub_county_id %}
         <input type="hidden" name="new_sub_county_ids" value="{{ school.sub_county_id }}">
         {% endif %}
-        <dl class="grid grid-cols-2 gap-3 rounded-surface border border-slate-200 bg-white p-3 text-[12px]">
+        <dl class="edify-surface grid grid-cols-2 gap-3 rounded-surface border border-slate-200 p-3 text-[12px]">
           <div>
             <dt class="font-semibold text-slate-400">District</dt>
             <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name }}</dd>
@@ -128,11 +128,11 @@
       </div>
     {% endif %}
 
-    <section class="rounded-surface border border-slate-200 bg-white p-4" aria-labelledby="responsible-staff-heading">
+    <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="responsible-staff-heading">
       <h3 id="responsible-staff-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Field Staff</h3>
       {% if responsible_staff %}
       <div class="mt-2 flex items-center gap-3">
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-[12px] font-extrabold text-[var(--edify-primary)]">
+        <span class="edify-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[12px] font-extrabold text-[var(--edify-primary)]">
           {{ responsible_staff.user.name|slice:":1"|upper }}
         </span>
         <div>
@@ -146,11 +146,11 @@
       {% endif %}
     </section>
 
-    <div class="flex items-center justify-end gap-2 border-t border-slate-100 bg-white pt-4">
+    <div class="edify-surface flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
       <button
         type="button"
         @click="$dispatch('close-drawer')"
-        class="min-h-11 rounded-control border border-slate-200 bg-white px-5 text-[12px] font-bold text-slate-700 transition-colors hover:border-slate-300"
+        class="edify-surface min-h-11 rounded-control border border-slate-200 px-5 text-[12px] font-bold text-slate-700 transition-colors hover:border-slate-300"
       >
         Cancel
       </button>

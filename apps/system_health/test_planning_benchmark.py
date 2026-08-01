@@ -183,12 +183,9 @@ class DrawerLabelTests(SimpleTestCase):
         if "purpose_of_visit" in schedule:
             self.assertNotEqual(schedule["purpose_of_visit"].strip(), goal)
             return
-        text = (Path(settings.BASE_DIR) / self.SCHEDULE).read_text(
-            encoding="utf-8"
-        )
+        text = (Path(settings.BASE_DIR) / self.SCHEDULE).read_text(encoding="utf-8")
         legends = [
-            m.strip()
-            for m in re.findall(r"<legend[^>]*>([^<]+)</legend>", text)
+            m.strip() for m in re.findall(r"<legend[^>]*>([^<]+)</legend>", text)
         ]
         self.assertTrue(
             legends,

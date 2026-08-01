@@ -5,22 +5,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0027_activity_closed_activity_must_have_sf_id'),
-        ('partners', '0010_partnerassignment_allowed_catalogue_items_and_more'),
-        ('projects', '0008_project_budget_ceiling_ugx_project_status_and_more'),
+        ("activities", "0027_activity_closed_activity_must_have_sf_id"),
+        ("partners", "0010_partnerassignment_allowed_catalogue_items_and_more"),
+        ("projects", "0008_project_budget_ceiling_ugx_project_status_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='partnerassignment',
-            name='project',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='activity_partner_assignments', to='projects.project'),
+            model_name="partnerassignment",
+            name="project",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="activity_partner_assignments",
+                to="projects.project",
+            ),
         ),
         migrations.AddField(
-            model_name='partnerassignment',
-            name='source_activity',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='derived_partner_assignments', to='activities.activity'),
+            model_name="partnerassignment",
+            name="source_activity",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="derived_partner_assignments",
+                to="activities.activity",
+            ),
         ),
     ]

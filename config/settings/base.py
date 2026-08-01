@@ -9,6 +9,7 @@ prod.py; permissive defaults for local dev live here.
 
 from __future__ import annotations
 
+import logging
 import os
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 import environ
+import dj_database_url
 
 # Load .env file if it exists
 environ.Env.read_env(env_file=str(BASE_DIR / ".env"))
@@ -38,7 +40,15 @@ def _as_int(value: str | None, default: int) -> int:
 
 
 # ── Core Django ──────────────────────────────────────────────────────────────
-SECRET_KEY = os.environ.get("JWT_SECRET", "dev-only-insecure-secret-change-me")
+_development_secret = "dev-only-insecure-secret-change-me"
+# DigitalOcean's Django convention uses SECRET_KEY. JWT_SECRET remains a
+# supported explicit override for existing deployments; when only SECRET_KEY
+# is configured, the JWT layer reuses the same strong secret as before.
+SECRET_KEY = (
+    os.environ.get("SECRET_KEY")
+    or os.environ.get("JWT_SECRET")
+    or _development_secret
+)
 
 # DEVELOPMENT default; prod.py overrides to False with a hard gate.
 DEBUG = _truthy(os.environ.get("DEBUG"), fallback=True)
@@ -126,11 +136,11 @@ MIDDLEWARE = [
     # threading it through every service. Mirrors NestJS requestContextMiddleware.
     "apps.core.middleware.RequestContextMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
     # including error pages — the ones most likely to be reached with a
     # crafted URL.
     "apps.core.middleware.ContentSecurityPolicyMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     # Directly after SessionMiddleware so its response phase runs directly
@@ -212,8 +222,10 @@ IS_TESTING = _is_testing
 # it on.
 ADMIN_OPS_DETECTION_ENABLED = not _is_testing
 
-# Parse database URL including query parameters (like sslmode=require) using django-environ
-_db_config = environ.Env.db_url_config(_db_url)
+# Parse DigitalOcean/Railway DATABASE_URL values, including managed-Postgres
+# query parameters such as sslmode=require. The settings below layer the
+# application's bounded connection/query policy onto the parsed URL.
+_db_config = dj_database_url.parse(_db_url)
 
 # Clean up options that psycopg/libpq does not support
 if "OPTIONS" in _db_config:
@@ -278,6 +290,16 @@ DATABASES["default"]["OPTIONS"]["options"] = " ".join(
     filter(None, [_existing_options, *_pg_options])
 )
 
+# How long to wait for the TCP connect and startup handshake. Without it libpq
+# waits indefinitely, so a database host that accepts the connection but never
+# completes the handshake hangs the worker outright — and CONN_HEALTH_CHECKS
+# means a reconnect can be attempted at the start of any request, not just at
+# boot. The statement and lock timeouts above only bound queries on a
+# connection that already exists.
+DATABASES["default"]["OPTIONS"].setdefault(
+    "connect_timeout", _as_int(os.environ.get("DB_CONNECT_TIMEOUT_S"), 5)
+)
+
 # ── Caching (Redis-backed with dynamic fallback to LocMemCache) ──────────────
 _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 _use_redis = False
@@ -295,9 +317,28 @@ if _use_redis:
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": _redis_url,
+            # The 1s bound on the probe above only covers the probe. Without
+            # these, every cache.get/set afterwards runs with redis-py's
+            # defaults — no timeout at all — so a Redis that degrades *after*
+            # boot blocks the worker on a cache read indefinitely.
+            "OPTIONS": {
+                "socket_connect_timeout": 2,
+                "socket_timeout": 2,
+            },
         }
     }
 else:
+    # Not interchangeable with Redis: LocMemCache is per-process, so each
+    # worker gets a private cache and anything written for another worker to
+    # read is simply lost. Worth a loud line in the log — a deploy that took
+    # this branch because Redis happened to be unreachable for one second at
+    # boot otherwise looks completely healthy.
+    if not _is_testing:
+        logging.getLogger("edify.settings").warning(
+            "Redis unreachable at %s — falling back to per-process LocMemCache. "
+            "Cache state is NOT shared between workers until this is fixed.",
+            _redis_url,
+        )
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -341,6 +382,34 @@ STATICFILES_DIRS = [
 ]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# The staticfiles backend that serves production traffic. Named here, rather
+# than written as a literal in prod.py, because the Docker image collects static
+# at build time under config.settings.collectstatic — and a manifest built by a
+# different backend than the one serving requests produces 500s on every asset.
+# One constant, two importers, no way for them to drift apart.
+STATICFILES_STORAGE_BACKEND = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# All restricted uploads use the named private backend.  Keeping it distinct
+# from ``default`` prevents a future public-media change from exposing
+# evidence, organisational documents, or professional-development records.
+USE_SPACES_STORAGE = False
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": MEDIA_ROOT, "base_url": MEDIA_URL},
+    },
+    "private_uploads": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {
+            "location": BASE_DIR / "uploads",
+            "base_url": None,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 
 # ── Edify domain settings (ported from NestJS env.validation.ts) ─────────────
@@ -396,8 +465,8 @@ PARTNER_ROLE_BRIDGE = _truthy(os.environ.get("PARTNER_ROLE_BRIDGE"), fallback=Fa
 
 REDIS_URL = os.environ.get("REDIS_URL") or None
 
-# Evidence storage — absolute, persistent path in production. Relative dev
-# default is ephemeral (files lost on redeploy), which is fine locally.
+# Legacy local directory settings remain available to maintenance tooling.
+# Runtime upload code uses STORAGES["private_uploads"] instead.
 EVIDENCE_STORAGE_DIR = os.environ.get("EVIDENCE_STORAGE_DIR") or str(
     BASE_DIR / "uploads" / "evidence"
 )
@@ -419,7 +488,7 @@ CLAMAV_PORT = _as_int(os.environ.get("CLAMAV_PORT"), 3310)
 CLAMAV_TIMEOUT_SECONDS = _as_int(os.environ.get("CLAMAV_TIMEOUT_SECONDS"), 10)
 
 # JWT / token TTLs (match NestJS defaults).
-JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-insecure-secret-change-me")
+JWT_SECRET = os.environ.get("JWT_SECRET") or SECRET_KEY
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_TTL_MINUTES = _as_int(os.environ.get("ACCESS_TOKEN_TTL_MINUTES"), 15)
 REFRESH_TOKEN_TTL_DAYS = _as_int(os.environ.get("REFRESH_TOKEN_TTL_DAYS"), 7)

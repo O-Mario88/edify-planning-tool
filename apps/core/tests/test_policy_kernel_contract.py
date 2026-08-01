@@ -46,6 +46,7 @@ PAGE_REQUIRED_PERMISSION = {
     "cd_analytics": Permission.ANALYTICS_VIEW,
     "pl_analytics": Permission.ANALYTICS_VIEW,
     "country_budget": Permission.BUDGET_VIEW_SUMMARY,
+    "uploads": Permission.UPLOADS_VIEW,
 }
 
 # Deliberately open surfaces: the page admits everyone and the *service* scopes
@@ -54,11 +55,6 @@ PAGE_REQUIRED_PERMISSION = {
 INTENTIONALLY_UNGATED_PAGES = {
     "ssa_performance": "service scopes by school/region/partner/project before "
     "computing any metric",
-    # The Upload Center is one entry point for every file that enters Edify.
-    # The route admits anyone who can upload or review anything at all; which
-    # upload categories a role actually sees is decided per adapter inside
-    # the page, so the gate is the adapter list, not the route.
-    "uploads": "adapters decide which upload categories each role sees",
     "dashboard": "role-routed inside the view",
     "todos": "derived from the caller's own workflow state",
     "search": "each result section is scope-constrained in the view",

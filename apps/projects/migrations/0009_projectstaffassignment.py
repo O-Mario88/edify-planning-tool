@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0019_user_mfa_channel_mfachallenge"),
         ("projects", "0008_project_budget_ceiling_ugx_project_status_and_more"),

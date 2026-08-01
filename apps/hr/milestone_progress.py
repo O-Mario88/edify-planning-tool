@@ -21,7 +21,10 @@ def _rule_matches(rule, activity) -> bool:
         return False
     if rule.project_id and str(activity.project_id or "") != str(rule.project_id):
         return False
-    if rule.required_executor_type and activity.delivery_type != rule.required_executor_type:
+    if (
+        rule.required_executor_type
+        and activity.delivery_type != rule.required_executor_type
+    ):
         return False
     if (
         rule.required_delivery_method
@@ -37,7 +40,10 @@ def _rule_matches(rule, activity) -> bool:
         or getattr(activity.school, "school_level", None) != rule.school_level
     ):
         return False
-    if rule.target_intervention and activity.focus_intervention != rule.target_intervention:
+    if (
+        rule.target_intervention
+        and activity.focus_intervention != rule.target_intervention
+    ):
         return False
     return activity.status in QUALIFYING_STATES
 
@@ -100,9 +106,7 @@ def refresh_period_targets(milestone_id: str) -> None:
                 | Q(activity__monitored_by_staff_id__in=owner_ids)
             )
         elif target.scope == "project" and target.allocation.project_id:
-            credits = credits.filter(
-                activity__project_id=target.allocation.project_id
-            )
+            credits = credits.filter(activity__project_id=target.allocation.project_id)
         elif target.scope == "team" and target.team_id:
             from apps.accounts.models import StaffSupervisorAssignment
 
@@ -115,9 +119,7 @@ def refresh_period_targets(milestone_id: str) -> None:
                 Q(activity__responsible_staff_id__in=member_ids)
                 | Q(activity__monitored_by_staff_id__in=member_ids)
             )
-        bases = set(
-            credits.values_list("rule__counting_basis", flat=True).distinct()
-        )
+        bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
         if bases & {
             "UNIQUE_SCHOOLS_SUPPORTED",
             "UNIQUE_SCHOOLS_TRAINED",
@@ -131,9 +133,7 @@ def refresh_period_targets(milestone_id: str) -> None:
                 "value"
             ]
         elif "SCHOOL_LEADERS_TRAINED" in bases:
-            actual = credits.aggregate(value=Sum("activity__leaders_attended"))[
-                "value"
-            ]
+            actual = credits.aggregate(value=Sum("activity__leaders_attended"))["value"]
         else:
             actual = credits.aggregate(value=Sum("credited_value"))["value"]
         target.actual_value = Decimal(actual or 0)

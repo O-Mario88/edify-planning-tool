@@ -21,6 +21,7 @@ from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
 from apps.core.donut import build_rings
+from apps.core.metrics import MetricValue, render_kpi_item
 
 
 def _format_ugx_compact(val):
@@ -958,6 +959,31 @@ def dashboard_view(request):
         "recommended_action": metrics.get("recommended_action"),
         "use_dark_sidebar": False,
     }
+    context["country_kpi_items"] = list(context["kpi_strip_items"]) + [
+        render_kpi_item(
+            "country_schools_needing_attention",
+            MetricValue.measured(context["signals"]["needs_attention"]),
+            helper="Schools",
+            tone="danger",
+            drilldown_url="/schools?readiness=attention",
+        ),
+        render_kpi_item(
+            "country_schools_ready_for_action",
+            MetricValue.measured(context["signals"]["ready_for_action"]),
+            helper="Schools",
+            tone="warning",
+            drilldown_url="/planning",
+        ),
+        render_kpi_item(
+            "country_operational_health_rate",
+            MetricValue.measured(
+                context["signals"]["operational_health"], denominator=100
+            ),
+            helper="System score",
+            tone="success",
+            drilldown_url="/system-health",
+        ),
+    ]
 
     # Registry identities for this page's cards. The bodies below stay as they
     # are; each section takes on its `data-card-key` and its canonical title
@@ -1024,7 +1050,59 @@ def dashboard_view(request):
         # but they are diagnostic context, not Admin's own scorecard.
         from apps.admin_ops.services import AdminOpsDashboardService
 
-        context["admin_ops"] = AdminOpsDashboardService.summary(request.user)
+        admin_ops = AdminOpsDashboardService.summary(request.user)
+        context["admin_ops"] = admin_ops
+        context["admin_ops_kpi_items"] = [
+            render_kpi_item(
+                "admin_critical_incidents",
+                MetricValue.measured(admin_ops["critical_incidents"]),
+                helper=f"{admin_ops['unacknowledged_incidents']} open and unacknowledged",
+                tone="danger" if admin_ops["critical_incidents"] else "success",
+                drilldown_url="/admin-ops/incidents",
+            ),
+            render_kpi_item(
+                "admin_open_support_tickets",
+                MetricValue.measured(admin_ops["open_tickets"]),
+                helper=f"{admin_ops['untriaged_tickets']} awaiting triage",
+                tone="warning" if admin_ops["untriaged_tickets"] else "neutral",
+                drilldown_url="/admin-ops/support",
+            ),
+            render_kpi_item(
+                "admin_overdue_work",
+                MetricValue.measured(admin_ops["overdue_admin_work"]),
+                helper=f"{admin_ops['unscheduled_work']} still unscheduled",
+                tone="warning" if admin_ops["overdue_admin_work"] else "neutral",
+                drilldown_url="/admin-ops/my-plan",
+            ),
+            render_kpi_item(
+                "admin_background_job_incidents",
+                MetricValue.measured(admin_ops["job_incidents"]),
+                helper="Failed or overdue jobs",
+                tone="warning" if admin_ops["job_incidents"] else "neutral",
+                drilldown_url="/admin-ops/incidents",
+            ),
+            render_kpi_item(
+                "admin_unhealthy_routes",
+                MetricValue.measured(admin_ops["performance_incidents"]),
+                helper="Open SLO breaches",
+                tone="warning" if admin_ops["performance_incidents"] else "neutral",
+                drilldown_url="/admin-ops/incidents",
+            ),
+            render_kpi_item(
+                "admin_security_alerts",
+                MetricValue.measured(admin_ops["security_alerts"]),
+                helper="Open security incidents",
+                tone="danger" if admin_ops["security_alerts"] else "success",
+                drilldown_url="/admin-ops/incidents",
+            ),
+            render_kpi_item(
+                "admin_maintenance_due",
+                MetricValue.measured(admin_ops["maintenance_due"]),
+                helper="Templates at or past their date",
+                tone="warning" if admin_ops["maintenance_due"] else "neutral",
+                drilldown_url="/admin-ops/maintenance",
+            ),
+        ]
 
     return render(request, "pages/dashboards/main.html", context)
 

@@ -12,7 +12,7 @@ from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from collections import defaultdict
 
 from django.db import transaction
-from django.db.models import Count, Max, Min, Prefetch, Q
+from django.db.models import Avg, Count, Max, Min, Prefetch, Q
 
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -21,7 +21,7 @@ from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary
-from apps.ssa.models import SsaRecord
+from apps.ssa.models import SsaRecord, SsaScore
 
 from .models import Cluster, ClusterSubCounty, SchoolClusterAssignment
 
@@ -739,28 +739,60 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     }
 
 
-def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
-    cluster = _scoped_cluster(cluster_id, principal)
+def _bucket_intervention_scores(records) -> dict[str, list[float]]:
+    """Group the scores of already-loaded SSA records by intervention.
 
-    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+    Kept separate from the queries that fetch the records so the cluster list
+    can bucket every cluster from one batched read instead of re-querying per
+    cluster.
 
-    # Collect all scores for latest SSAs of the schools
+    `intervention` is a CharField with choices, so the database does not
+    enforce membership: a legacy or mis-mapped row used to raise KeyError and
+    return a 500 for the whole page. Callers build their output from the enum,
+    so a value outside it was never displayed — skip it rather than crash.
+    """
     from apps.core.enums import SsaIntervention
 
-    intervention_scores = {key.value: [] for key in SsaIntervention}
+    buckets: dict[str, list[float]] = {key.value: [] for key in SsaIntervention}
+    for record in records:
+        for score in record.scores.all():
+            if score.score is None:
+                continue
+            bucket = buckets.get(score.intervention)
+            if bucket is not None:
+                bucket.append(score.score)
+    return buckets
 
-    # One read for every school's latest confirmed record plus its scores,
-    # rather than two per school inside the loop.
-    for latest in _latest_confirmed_ssa_map(schools).values():
-        for score in latest.scores.all():
-            if score.score is not None:
-                intervention_scores[score.intervention].append(score.score)
+
+def _stats_from_buckets(
+    intervention_scores: dict[str, list[float]],
+) -> dict[str, dict]:
+    """Reduce bucketed scores to the per-intervention stats the cards render.
+
+    The cluster list derives the same stats straight from SQL rather than
+    loading every record, so both paths converge on this shape and the
+    presentation below has one implementation.
+    """
+    stats = {}
+    for intervention, scores in intervention_scores.items():
+        if not scores:
+            continue
+        stats[intervention] = {
+            "avg": sum(scores) / len(scores),
+            "below": sum(1 for x in scores if x < 5.5),
+        }
+    return stats
+
+
+def _weakest_from_stats(stats: dict[str, dict]) -> list[dict]:
+    """Rank a cluster's weakest interventions from per-intervention stats."""
+    from apps.core.enums import SsaIntervention
 
     results = []
     for key in SsaIntervention:
-        scores = intervention_scores[key.value]
-        avg = round(sum(scores) / len(scores), 1) if scores else None
-        below_count = sum(1 for x in scores if x < 5.5)
+        row = stats.get(key.value)
+        avg = round(row["avg"], 1) if row else None
+        below_count = row["below"] if row else 0
 
         # Recommended action based on intervention key
         label = key.label
@@ -797,24 +829,32 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
     return scored[:4]
 
 
-def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
+def _cluster_ssa_stats(cluster_id: str) -> dict[str, dict]:
+    """Per-intervention stats for one cluster, from its schools' latest SSAs."""
+    schools = School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
+    # One read for every school's latest confirmed record plus its scores,
+    # rather than two per school inside a loop.
+    records = _latest_confirmed_ssa_map(schools).values()
+    return _stats_from_buckets(_bucket_intervention_scores(records))
+
+
+def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
     cluster = _scoped_cluster(cluster_id, principal)
-    schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+    return _weakest_from_stats(_cluster_ssa_stats(cluster.id))
+
+
+def _intervention_summary_from_stats(stats: dict[str, dict]) -> list[dict]:
+    """Per-intervention averages for a cluster, from per-intervention stats."""
     from apps.core.enums import SsaIntervention
 
-    intervention_scores = {key.value: [] for key in SsaIntervention}
-    for latest in _latest_confirmed_ssa_map(schools).values():
-        for score in latest.scores.all():
-            if score.score is not None:
-                intervention_scores[score.intervention].append(score.score)
     results = []
     for key in SsaIntervention:
-        scores = intervention_scores[key.value]
+        row = stats.get(key.value)
         # None (not 0.0) when no confirmed SSA covers this intervention —
         # 0.0 is a real, terrible score and reporting it for missing data
         # both misleads the reader and bands the intervention Critical.
-        avg = round(sum(scores) / len(scores), 1) if scores else None
-        below_count = sum(1 for x in scores if x < 5.5)
+        avg = round(row["avg"], 1) if row else None
+        below_count = row["below"] if row else 0
         results.append(
             {
                 "intervention": key.value,
@@ -824,6 +864,11 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
             }
         )
     return results
+
+
+def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
+    cluster = _scoped_cluster(cluster_id, principal)
+    return _intervention_summary_from_stats(_cluster_ssa_stats(cluster.id))
 
 
 def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
@@ -1144,69 +1189,113 @@ class ClusterDashboardService:
         planning_list = cluster_planning(user)
         planning_map = {p["id"]: p for p in planning_list}
 
-        # Build Card viewmodels for filtered list
+        # Everything each card needs, read in a fixed number of queries for the
+        # whole page. This loop used to query per cluster AND per school inside
+        # each cluster (a latest-SSA lookup for every school), so one load cost
+        # roughly ten queries per cluster plus one per school in it — unbounded
+        # in the size of the estate. The scale gate never caught it because it
+        # grows schools, not clusters, and most fixture schools are unclustered.
+        clusters = list(
+            filtered_qs.select_related("district", "sub_county").prefetch_related(
+                "covered_sub_counties__sub_county"
+            )
+        )
+        cluster_ids = [c.id for c in clusters]
+        cluster_schools_qs = School.objects.filter(
+            cluster_id__in=cluster_ids, deleted_at__isnull=True
+        )
+
+        schools_count_by_cluster: dict[str, int] = {}
+        staff_by_cluster: dict[str, set] = {}
+        cluster_of_school: dict[str, str] = {}
+        for row in cluster_schools_qs.values("id", "cluster_id", "account_owner_id"):
+            cid = row["cluster_id"]
+            cluster_of_school[row["id"]] = cid
+            schools_count_by_cluster[cid] = schools_count_by_cluster.get(cid, 0) + 1
+            if row["account_owner_id"]:
+                staff_by_cluster.setdefault(cid, set()).add(row["account_owner_id"])
+
+        # The SSA rollups are aggregated by the database, not in Python. Loading
+        # every clustered school's latest record with its eight scores just to
+        # average them meant ~120,000 model instances per request at full
+        # estate size — the single biggest cost on this page.
+        latest_ssa_ids = (
+            SsaRecord.objects.filter(
+                school__in=cluster_schools_qs,
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .order_by("school_id", "-date_of_ssa", "-created_at")
+            .distinct("school_id")
+            .values("id")
+        )
+        ssa_avg_by_cluster = {
+            row["school__cluster_id"]: row["avg"]
+            for row in SsaRecord.objects.filter(id__in=latest_ssa_ids)
+            .values("school__cluster_id")
+            .annotate(avg=Avg("average_score"))
+        }
+        stats_by_cluster: dict[str, dict[str, dict]] = {}
+        for row in (
+            SsaScore.objects.filter(
+                ssa_record_id__in=latest_ssa_ids, score__isnull=False
+            )
+            .values("ssa_record__school__cluster_id", "intervention")
+            .annotate(avg=Avg("score"), below=Count("id", filter=Q(score__lt=5.5)))
+        ):
+            stats_by_cluster.setdefault(
+                row["ssa_record__school__cluster_id"], {}
+            )[row["intervention"]] = {"avg": row["avg"], "below": row["below"]}
+
+        # Two grouped reads replace three activity queries per cluster. Max()
+        # skips rows with no planned_date, where the previous
+        # `order_by("-planned_date").first()` could select one (Postgres sorts
+        # NULLs first descending) and report a real meeting as "Never".
+        cluster_acts = Activity.objects.filter(
+            cluster_id__in=cluster_ids,
+            deleted_at__isnull=True,
+            status__in=COMPLETED_WORK_STATUSES,
+        )
+        meetings_by_cluster = {
+            row["cluster_id"]: row
+            for row in cluster_acts.filter(activity_type="cluster_meeting")
+            .values("cluster_id")
+            .annotate(last=Max("planned_date"), fy_count=Count("id", filter=Q(fy=fy)))
+        }
+        trainings_by_cluster = {
+            row["cluster_id"]: row["last"]
+            for row in cluster_acts.filter(
+                activity_type__in=[
+                    "training",
+                    "school_improvement_training",
+                    "cluster_training",
+                ]
+            )
+            .values("cluster_id")
+            .annotate(last=Max("planned_date"))
+        }
+
         cards = []
-        for c in filtered_qs.select_related("district", "sub_county"):
-            schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
-            schools_count = schools.count()
+        for c in clusters:
+            schools_count = schools_count_by_cluster.get(c.id, 0)
+            staff_count = len(staff_by_cluster.get(c.id, ()))
 
-            assigned_staff_ids = (
-                schools.exclude(account_owner_id__isnull=True)
-                .exclude(account_owner_id="")
-                .values_list("account_owner_id", flat=True)
-                .distinct()
-            )
-            staff_count = len(assigned_staff_ids)
+            cluster_avg = ssa_avg_by_cluster.get(c.id)
+            avg_ssa = round(cluster_avg, 1) if cluster_avg is not None else None
 
-            latest_ssas = []
-            for s in schools:
-                latest = _latest_confirmed_ssa(s)
-                if latest and latest.average_score is not None:
-                    latest_ssas.append(latest.average_score)
-            avg_ssa = (
-                round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
-            )
-
-            acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
-
-            last_meeting = (
-                acts.filter(
-                    activity_type="cluster_meeting", status__in=COMPLETED_WORK_STATUSES
-                )
-                .order_by("-planned_date")
-                .first()
-            )
+            meeting_row = meetings_by_cluster.get(c.id)
+            last_meeting_at = meeting_row["last"] if meeting_row else None
             last_meeting_date = (
-                last_meeting.planned_date.strftime("%d %b %Y")
-                if last_meeting and last_meeting.planned_date
-                else "Never"
+                last_meeting_at.strftime("%d %b %Y") if last_meeting_at else "Never"
             )
-
-            last_training = (
-                acts.filter(
-                    activity_type__in=[
-                        "training",
-                        "school_improvement_training",
-                        "cluster_training",
-                    ],
-                    status__in=COMPLETED_WORK_STATUSES,
-                )
-                .order_by("-planned_date")
-                .first()
-            )
+            last_training_at = trainings_by_cluster.get(c.id)
             last_training_date = (
-                last_training.planned_date.strftime("%d %b %Y")
-                if last_training and last_training.planned_date
-                else "Never"
+                last_training_at.strftime("%d %b %Y") if last_training_at else "Never"
             )
+            meeting_count_fy = meeting_row["fy_count"] if meeting_row else 0
 
-            meeting_count_fy = acts.filter(
-                activity_type="cluster_meeting",
-                status__in=COMPLETED_WORK_STATUSES,
-                fy=fy,
-            ).count()
-
-            intervention_scores = cluster_intervention_summary(c.id, user)
+            stats = stats_by_cluster.get(c.id) or {}
+            intervention_scores = _intervention_summary_from_stats(stats)
             ssa_summary = build_ssa_score_summary(
                 {
                     "intervention": item["intervention"],
@@ -1214,7 +1303,7 @@ class ClusterDashboardService:
                 }
                 for item in intervention_scores
             )
-            weakest = cluster_weakest_interventions(c.id, user)
+            weakest = _weakest_from_stats(stats)
             planning_info = planning_map.get(c.id, {})
 
             from apps.frontend.views.cluster_views import get_cluster_risk
@@ -1230,9 +1319,11 @@ class ClusterDashboardService:
 
             # Build sub-county display: show all covered sub-counties, or
             # "District-level cluster" if none selected.
-            covered = list(
-                c.covered_sub_counties.values_list("sub_county__name", flat=True)
-            )
+            covered = [
+                link.sub_county.name
+                for link in c.covered_sub_counties.all()
+                if link.sub_county
+            ]
             if covered:
                 sub_county_display = ", ".join(covered)
             elif c.sub_county:

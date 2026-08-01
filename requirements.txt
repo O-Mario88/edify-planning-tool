@@ -1,0 +1,5 @@
+# DigitalOcean App Platform's Python buildpack requires a dependency manifest
+# at the repository root. Keep the canonical, pinned production dependency set
+# in one place so Docker, local production smoke tests, and App Platform install
+# the same packages.
+-r requirements/prod.txt

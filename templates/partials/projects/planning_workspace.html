@@ -25,14 +25,7 @@
   </div>
 </form>
 
-<section class="spp-kpi-grid" aria-label="Project planning summary">
-  {% for item in kpis %}
-  <article class="spp-kpi spp-tone--{{ item.tone }}">
-    <span class="spp-kpi__icon" aria-hidden="true">{% include "partials/projects/planning_icon.html" with name=item.icon %}</span>
-    <div><strong>{{ item.value }}</strong><span>{{ item.label }}</span><small>{{ item.helper }}</small></div>
-  </article>
-  {% endfor %}
-</section>
+{% include "components/kpi_strip.html" with items=kpis title="Project planning summary" %}
 
 <section class="spp-band-grid" aria-label="Planning readiness bands">
   {% for item in band_cards %}

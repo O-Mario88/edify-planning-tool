@@ -99,10 +99,7 @@ def verified_ssa_change_by_catalogue(*, fy=None, project_id=None):
         bucket["costPerSsaPointImproved"] = (
             round(
                 bucket["totalCost"]
-                / (
-                    bucket["averageVerifiedSsaChange"]
-                    * bucket["comparisons"]
-                )
+                / (bucket["averageVerifiedSsaChange"] * bucket["comparisons"])
             )
             if bucket["averageVerifiedSsaChange"] > 0
             else None

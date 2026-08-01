@@ -45,11 +45,10 @@ class CatalogueListView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request) -> Response:
-        include_inactive = (
-            request.query_params.get("includeInactive", "").lower() == "true"
-            and has_permission(
-                request.user, Permission.ACTIVITY_CATALOGUE_MANAGE.value
-            )
+        include_inactive = request.query_params.get(
+            "includeInactive", ""
+        ).lower() == "true" and has_permission(
+            request.user, Permission.ACTIVITY_CATALOGUE_MANAGE.value
         )
         items = list_catalogue(
             intervention=request.query_params.get("intervention"),
@@ -179,9 +178,7 @@ class CatalogueLifecycleView(APIView):
 
 class CatalogueProjectMappingView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = [
-        Permission.ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES.value
-    ]
+    required_permissions = [Permission.ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES.value]
 
     def post(self, request: Request, item_id: str) -> Response:
         from apps.projects.models import Project
@@ -199,12 +196,8 @@ class CatalogueProjectMappingView(APIView):
                 "required_or_optional": request.data.get(
                     "requiredOrOptional", "optional"
                 ),
-                "eligible_school_levels": request.data.get(
-                    "eligibleSchoolLevels", []
-                ),
-                "eligible_school_types": request.data.get(
-                    "eligibleSchoolTypes", []
-                ),
+                "eligible_school_levels": request.data.get("eligibleSchoolLevels", []),
+                "eligible_school_types": request.data.get("eligibleSchoolTypes", []),
                 "staff_delivery_allowed": _bool(
                     request.data.get("staffDeliveryAllowed")
                 ),

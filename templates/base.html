@@ -5,7 +5,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="var(--edify-bg)">
+<meta name="theme-color">
+<meta name="csrf-token" content="{{ csrf_token }}">
 <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
 {% include "partials/pwa_head.html" %}
 
@@ -17,8 +18,9 @@
     var pref = 'system';
 
     function resolveSystemTheme() {
-      var hour = new Date().getHours();
-      return hour >= 6 && hour < 19 ? 'light' : 'dark';
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
     }
 
     try {
@@ -40,7 +42,12 @@
     var schemeMeta = document.querySelector('meta[name="color-scheme"]');
     var themeMeta = document.querySelector('meta[name="theme-color"]');
     if (schemeMeta) schemeMeta.content = pref === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
-    if (themeMeta) themeMeta.content = actual === 'light' ? '#edf1f3' : (actual === 'blue' ? '#001d39' : '#000000');
+    if (themeMeta) {
+      requestAnimationFrame(function() {
+        themeMeta.content = getComputedStyle(html)
+          .getPropertyValue('--edify-bg').trim();
+      });
+    }
 
     requestAnimationFrame(function() {
       requestAnimationFrame(function() { html.classList.add('theme-fade'); });
@@ -54,26 +61,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731geist1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731geist2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731blueflat3">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260731blueflat3">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731accountsplit1">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260726cardrows2">
-<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260725typetiers6">
-<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260715c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260730attendancepopover1">
-<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260718a">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260731blueflat3">
-    <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260718supporthub3">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731typefloor1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260731compactreports1">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260731nowraptiles1">
+<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260731nowraptiles1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260731reportsalign4">
+    <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260731readabletype1">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260731flathero1">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260731compactreports1">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -85,6 +92,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 /* Body — token-driven, adapts to light/dark automatically. */
 body {
   font-family: var(--edify-font-sans);
+  font-size-adjust: from-font;
   background-color: var(--edify-bg);
   background-image: var(--edify-canvas-treatment);
   background-position: center 28%;
@@ -217,7 +225,7 @@ button, a, select, input, textarea {
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260727barcharts2"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260731typefloor1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -300,61 +308,99 @@ button, a, select, input, textarea {
         /* Read from the token rather than hardcoded so the message sits at the
            same contrast as other muted copy. */
         color: getComputedStyle(document.documentElement)
-          .getPropertyValue('--edify-text-muted').trim() || '#5f707a',
+          .getPropertyValue('--edify-text-muted').trim(),
       },
     },
     /* Platform-wide chart styling. These merge into every chart config, so the
-       reference look (a full-width track behind every bar, pill-rounded caps,
-       smooth accent line, no axis chrome, soft legend) is consistent without
-       editing each template. */
+       reference look (clean columns, restrained gridlines, direct line
+       segments, small point markers and a compact tooltip) stays consistent
+       without editing every inline chart definition. */
     chart: {
       fontFamily: 'Geist, sans-serif',
       foreColor: 'var(--edify-text-muted)',
+      background: 'transparent',
       toolbar: { show: false },
-      animations: { enabled: true, speed: 350 },
+      animations: {
+        enabled: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        speed: 320,
+      },
     },
     grid: {
-      borderColor: 'transparent',
-      strokeDashArray: 4,
+      borderColor: 'var(--edify-chart-grid)',
+      strokeDashArray: 0,
       xaxis: { lines: { show: false } },
       yaxis: { lines: { show: true } },
-      padding: { left: 2, right: 6 },
+      padding: { left: 4, right: 8, top: 4, bottom: 0 },
     },
     plotOptions: {
       bar: {
-        columnWidth: '58%',
-        barHeight: '62%',
-        /* Reads as a pill at every thickness we render. ApexCharts clamps the
-           radius to half the bar, so an oversized value rounds fully rather
-           than overshooting — one number works for a 12px and a 40px bar. */
-        borderRadius: 14,
+        columnWidth: '54%',
+        barHeight: '58%',
+        /* The reference uses confident rectangular columns with just enough
+           rounding to remove a harsh edge, not pill-shaped progress bars. */
+        borderRadius: 4,
         borderRadiusApplication: 'end',
         borderRadiusWhenStacked: 'last',
         colors: {
-          /* The track is what makes a bar readable without gridlines: it shows
-             the full scale, so every bar states its share of the whole. */
-          backgroundBarColors: ['var(--edify-surface-muted)'],
-          backgroundBarOpacity: 1,
-          backgroundBarRadius: 14,
+          backgroundBarOpacity: 0,
+          backgroundBarRadius: 4,
         },
       },
     },
-    stroke: { curve: 'smooth', width: 2, lineCap: 'round' },
+    stroke: { curve: 'straight', width: 2, lineCap: 'round' },
+    markers: {
+      size: 4,
+      strokeWidth: 2,
+      hover: { sizeOffset: 2 },
+    },
+    xaxis: {
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      tooltip: { enabled: false },
+      labels: {
+        trim: true,
+        style: {
+          colors: 'var(--edify-text-subtle)',
+          fontSize: '12px',
+          fontWeight: 500,
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: 'var(--edify-text-subtle)',
+          fontSize: '12px',
+          fontWeight: 500,
+        },
+      },
+    },
     states: {
-      hover: { filter: { type: 'darken', value: 0.92 } },
-      active: { filter: { type: 'darken', value: 0.95 } },
+      hover: { filter: { type: 'darken', value: 0.96 } },
+      active: { filter: { type: 'darken', value: 0.93 } },
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'right',
+      position: 'bottom',
+      horizontalAlign: 'left',
       fontSize: '12px',
       fontWeight: 500,
-      markers: { size: 7, strokeWidth: 0, radius: 12 },
+      markers: { size: 6, strokeWidth: 0, radius: 3 },
       labels: { colors: 'var(--edify-text-muted)' },
-      itemMargin: { horizontal: 10, vertical: 0 },
+      itemMargin: { horizontal: 8, vertical: 2 },
     },
-    tooltip: { theme: 'dark', style: { fontSize: '12px', fontFamily: 'Geist' } },
-    dataLabels: { style: { fontFamily: 'Geist, sans-serif', fontSize: '12px', fontWeight: 600 } },
+    tooltip: {
+      theme: 'dark',
+      marker: { show: true },
+      style: { fontSize: '12px', fontFamily: 'Geist, sans-serif' },
+    },
+    dataLabels: {
+      enabled: false,
+      style: {
+        fontFamily: 'Geist, sans-serif',
+        fontSize: '12px',
+        fontWeight: 650,
+      },
+    },
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>

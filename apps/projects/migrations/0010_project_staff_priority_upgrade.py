@@ -3,7 +3,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0019_user_mfa_channel_mfachallenge"),
         ("projects", "0009_projectstaffassignment"),

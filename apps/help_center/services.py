@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from types import SimpleNamespace
 
 from django.db import transaction
 from django.db.models import Max, Q
@@ -382,8 +383,41 @@ def canonical_specs() -> list[dict]:
 
 
 @transaction.atomic
+def _canonical_content_is_installed() -> bool:
+    """True when every canonical article and glossary term already exists.
+
+    `ensure_canonical_content` is idempotent but not cheap: its get_or_create
+    loops cost one query per article and one per glossary term, so a single
+    Help page load issued over 250 of them purely to confirm rows that were
+    already there. The content is installed by the post_migrate reference-data
+    hook (see apps.py), so the request path is only ever re-confirming it.
+    Confirm it in three queries instead, and still fall through to the full
+    seeding pass whenever anything really is missing.
+    """
+    expected_articles = {spec["slug"] for spec in canonical_specs()}
+    present_articles = set(
+        HelpArticle.objects.filter(slug__in=expected_articles).values_list(
+            "slug", flat=True
+        )
+    )
+    if present_articles != expected_articles:
+        return False
+
+    expected_slugs = {slugify(term) for term, _definition, _used, _related in GLOSSARY}
+    expected_terms = {label for _source, _field, _value, label in collect_workflow_statuses()}
+    present_slugs = set()
+    present_terms = set()
+    for slug, term in HelpGlossaryTerm.objects.values_list("slug", "term"):
+        present_slugs.add(slug)
+        present_terms.add(term)
+    return expected_slugs <= present_slugs and expected_terms <= present_terms
+
+
 def ensure_canonical_content() -> dict:
     """Install v1 reviewed material once; never overwrite an editor's draft."""
+    if _canonical_content_is_installed():
+        return {"created": 0, "articles": HelpArticle.objects.count()}
+
     now = timezone.now()
     categories = {
         name: HelpCategory.objects.get_or_create(
@@ -581,7 +615,11 @@ def _seed_walkthroughs() -> None:
             )
 
 
-def knowledge_tree(role: str | None, active_slug: str = "") -> list[dict]:
+def knowledge_tree(
+    role: str | None,
+    active_slug: str = "",
+    active_path: str = "",
+) -> list[dict]:
     """The Knowledge Center's left-hand Table of Contents.
 
     One hierarchical, role-aware pass: every category the role can see, with
@@ -589,8 +627,9 @@ def knowledge_tree(role: str | None, active_slug: str = "") -> list[dict]:
     a role that cannot use them, because the tree is built from
     ``visible_articles`` rather than from the category list.
 
-    Built in two queries regardless of catalogue size — the Help landing page
-    must not load article bodies to draw its own navigation.
+    Glossary, Troubleshooting and Release notes use the same expandable,
+    counted hierarchy as every other section. Release-note titles are loaded
+    without their bodies, so drawing navigation stays lightweight.
     """
     from collections import defaultdict
 
@@ -606,7 +645,14 @@ def knowledge_tree(role: str | None, active_slug: str = "") -> list[dict]:
         grouped[row["category__slug"]].append(row)
 
     tree = []
-    for category in HelpCategory.objects.all():
+    categories = list(HelpCategory.objects.all())
+    categories.sort(
+        key=lambda category: (
+            12 if category.slug in {"glossary", "troubleshooting"} else category.sort_order,
+            0 if category.slug == "glossary" else 1,
+        )
+    )
+    for category in categories:
         articles = grouped.get(category.slug, [])
         if not articles:
             continue
@@ -619,15 +665,58 @@ def knowledge_tree(role: str | None, active_slug: str = "") -> list[dict]:
             }
             for row in articles
         ]
+        if category.slug == "glossary":
+            entries.insert(
+                0,
+                {
+                    "slug": "glossary",
+                    "title": "Browse all glossary terms",
+                    "url": "/help/glossary",
+                    "active": active_path.rstrip("/") == "/help/glossary",
+                },
+            )
+        group_url = {
+            "glossary": "/help/glossary",
+            "troubleshooting": "/help/troubleshooting",
+        }.get(category.slug, f"/help/categories/{category.slug}")
         tree.append(
             {
                 "category": category,
-                "url": f"/help/categories/{category.slug}",
+                "url": group_url,
                 "articles": entries,
                 "count": len(entries),
+                "count_label": "items",
+                "kind": "articles",
                 # Keep the group holding the open article expanded, so the
                 # reader's place survives a page load and a Back button.
-                "expanded": any(entry["active"] for entry in entries),
+                "expanded": any(entry["active"] for entry in entries)
+                or active_path.rstrip("/") == group_url,
+            }
+        )
+
+    release_entries = [
+        {
+            "slug": f"release-note-{note['id']}",
+            "title": f"{note['version_label']} — {note['title']}",
+            "url": f"/help/release-notes#release-note-{note['id']}",
+            "active": False,
+        }
+        for note in HelpReleaseNote.objects.values("id", "title", "version_label")
+    ]
+    if release_entries:
+        tree.append(
+            {
+                "category": SimpleNamespace(
+                    name="Release notes",
+                    slug="release-notes",
+                    description="What changed in Edify, newest first.",
+                ),
+                "url": "/help/release-notes",
+                "articles": release_entries,
+                "count": len(release_entries),
+                "count_label": "release notes",
+                "kind": "release_notes",
+                "expanded": active_path.rstrip("/") == "/help/release-notes",
             }
         )
     return tree

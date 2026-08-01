@@ -27,7 +27,10 @@ def restore_legacy_profile(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("activity_catalogue", "0005_alter_activitycatalogueitem_activity_type_and_more"),
+        (
+            "activity_catalogue",
+            "0005_alter_activitycatalogueitem_activity_type_and_more",
+        ),
     ]
 
     operations = [

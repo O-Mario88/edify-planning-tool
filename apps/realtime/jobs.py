@@ -81,10 +81,22 @@ def _do_monthly_work_plan() -> int:
     next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1)
     month_key = next_month.strftime("%Y-%m")
     fy = str(next_month.year + (1 if next_month.month >= 10 else 0))
+    # `status` and `generated_by` are create-only. With them in `defaults`, a
+    # second run for the same month — a scheduler restart, or a manual re-run
+    # after the envelope had already gone to the RVP — reset an approved or
+    # disbursed budget back to `draft_generated` while its submission
+    # snapshots stayed put, and the totals repair then treated it as live and
+    # overwrote the approved figures. See LOCKED_STATUSES in
+    # apps.monthly_work_plan.country_budget_service.
     MonthlyWorkPlanBudget.objects.update_or_create(
         country_id="Uganda",
         month_key=month_key,
-        defaults={"fy": fy, "generated_by": None, "status": "draft_generated"},
+        defaults={"fy": fy},
+        create_defaults={
+            "fy": fy,
+            "generated_by": None,
+            "status": "draft_generated",
+        },
     )
     return 1
 

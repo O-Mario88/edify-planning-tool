@@ -26,7 +26,7 @@ sight. Only the strip's own scrollLeft is touched — scrollIntoView would move
 the workspace behind it.
 {% endcomment %}
 <div class="edify-section-nav__inner" x-data
-x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (active) $el.scrollLeft = Math.max(0, active.offsetLeft - 120) })">
+x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (!active) return; const activeEnd = active.offsetLeft + active.offsetWidth; if (activeEnd > $el.clientWidth) $el.scrollLeft = Math.max(0, activeEnd - $el.clientWidth + 16) })">
 <span class="edify-section-nav__eyebrow">{{ workspace.label }}</span>
 <span class="edify-section-nav__rule" aria-hidden="true"></span>
 {% for section in workspace.sections %}

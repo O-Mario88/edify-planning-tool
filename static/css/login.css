@@ -34,6 +34,7 @@ body.login-page {
   color: var(--login-ink);
   background: #e7f4fc;
   font-family: var(--login-font);
+  font-size-adjust: from-font;
   font-size: 1rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -140,7 +141,7 @@ button {
 
 .login-brand__product {
   color: #b9d4e9;
-  font-size: .86rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 400;
   line-height: 1.23;
 }
@@ -153,7 +154,7 @@ button {
 .login-brand__eyebrow {
   margin: 0 0 .85rem;
   color: #77cff8;
-  font-size: .86rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 700;
   letter-spacing: .36em;
   text-transform: uppercase;
@@ -261,7 +262,7 @@ button {
 .impact-item h3 {
   margin: 0 0 .22rem;
   color: #fff;
-  font-size: .82rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
   line-height: 1.3;
   white-space: nowrap;
@@ -270,7 +271,7 @@ button {
 .impact-item p {
   margin: 0;
   color: #b9d2e5;
-  font-size: .7rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 400;
   line-height: 1.52;
 }
@@ -318,7 +319,7 @@ button {
 .login-stat__label {
   overflow: hidden;
   color: #c4d7e7;
-  font-size: .56rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   letter-spacing: .01em;
   text-overflow: ellipsis;
@@ -337,7 +338,7 @@ button {
 .login-stat__meta {
   overflow: hidden;
   color: #45e0bd;
-  font-size: .57rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -415,7 +416,7 @@ button {
   display: inline-block;
   margin-bottom: .4rem;
   color: var(--login-ink);
-  font-size: .8rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 600;
 }
 
@@ -450,7 +451,7 @@ button {
   outline: none;
   background: rgba(255, 255, 255, .76);
   box-shadow: inset 0 1px 2px rgba(7, 38, 65, .025);
-  font-size: .95rem;
+  font-size: var(--edify-text-body-size);
   font-weight: 400;
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
@@ -524,7 +525,7 @@ button {
   min-height: 2.5rem;
   color: var(--login-muted);
   cursor: pointer;
-  font-size: .82rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 400;
 }
 
@@ -542,7 +543,7 @@ button {
   color: #2779c2;
   background: transparent;
   cursor: pointer;
-  font-size: .82rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
 }
 
@@ -563,7 +564,7 @@ button {
   border: 1px solid #ffacba;
   border-radius: var(--radius-surface);
   background: #fff7f8;
-  font-size: .78rem;
+  font-size: var(--edify-text-label-size);
   font-weight: 500;
 }
 
@@ -702,7 +703,7 @@ button {
 .secure-card p {
   margin: 0;
   color: var(--login-muted);
-  font-size: .72rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.45;
 }
 
@@ -712,7 +713,7 @@ button {
   gap: .75rem;
   margin: 1.3rem 0 0;
   color: var(--login-muted);
-  font-size: .72rem;
+  font-size: var(--edify-text-micro-size);
   line-height: 1.58;
 }
 
@@ -744,11 +745,11 @@ button {
   }
 
   .impact-item h3 {
-    font-size: .75rem;
+    font-size: var(--edify-text-label-size);
   }
 
   .impact-item p {
-    font-size: .65rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .login-stat {
@@ -895,13 +896,13 @@ button {
 
   .remember-control {
     min-height: 3rem;
-    font-size: .82rem;
+    font-size: var(--edify-text-label-size);
   }
 
   .forgot-button {
     min-height: 3rem;
     padding-inline: .25rem;
-    font-size: .82rem;
+    font-size: var(--edify-text-label-size);
   }
 
   .password-toggle {
@@ -965,7 +966,7 @@ button {
 
   .remember-control,
   .forgot-button {
-    font-size: .77rem;
+    font-size: var(--edify-text-label-size);
   }
 
   .remember-control {
@@ -1017,7 +1018,7 @@ button {
 
   .login-brand__eyebrow {
     margin-bottom: .45rem;
-    font-size: .7rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .login-brand__title {
@@ -1030,7 +1031,7 @@ button {
   }
 
   .login-brand__summary {
-    font-size: .85rem;
+    font-size: var(--edify-text-label-size);
     line-height: 1.42;
   }
 
@@ -1045,7 +1046,7 @@ button {
 
   .impact-card__title {
     margin-bottom: .55rem;
-    font-size: .85rem;
+    font-size: var(--edify-text-label-size);
   }
 
   .impact-item__icon {
@@ -1060,7 +1061,7 @@ button {
   }
 
   .impact-item h3 {
-    font-size: .68rem;
+    font-size: var(--edify-text-micro-size);
   }
 
   .impact-item p {
@@ -1083,7 +1084,7 @@ button {
 
   .login-stat__label,
   .login-stat__meta {
-    font-size: .5rem;
+    font-size: var(--edify-text-micro-size);
   }
 }
 

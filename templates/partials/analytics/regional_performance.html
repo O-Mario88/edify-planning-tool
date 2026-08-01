@@ -273,6 +273,8 @@
 
 <script>
 function subregionMap(){
+  const token = (name) => getComputedStyle(document.documentElement)
+    .getPropertyValue(name).trim();
   return {
     ready:false, failed:false, attempts:0,
     detailLoading:false, detailFailed:false, detailRequest:0,
@@ -290,13 +292,13 @@ function subregionMap(){
     sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
     combinedBoundaries:{}, combinedDistrictRequests:{},
     schoolTypes:[
-      {key:'core', label:'Core', colour:'#f97316', on:true, total:0},
-      {key:'client', label:'Client', colour:'#2563eb', on:true, total:0},
-      {key:'champion', label:'Champion', colour:'#16a34a', on:true, total:0},
-      {key:'core_trained', label:'Core trained', colour:'#c2410c', on:true, total:0, trained:true},
+      {key:'core', label:'Core', colour:token('--edify-chart-orange'), on:true, total:0},
+      {key:'client', label:'Client', colour:token('--edify-chart-blue'), on:true, total:0},
+      {key:'champion', label:'Champion', colour:token('--edify-chart-green'), on:true, total:0},
+      {key:'core_trained', label:'Core trained', colour:token('--edify-warning-text'), on:true, total:0, trained:true},
     ],
 
-    colourOf(s){ return this.colours[s] || '#e2e8f0'; },
+    colourOf(s){ return this.colours[s] || token('--edify-surface-muted'); },
     canonical(v){ return String(v || '').toUpperCase().replace(/[^A-Z0-9]+/g, ''); },
     districtKey(v){
       const key = this.canonical(v);
@@ -360,7 +362,7 @@ function subregionMap(){
         'M0,0 C-.9,-2.1 -4.5,-4.5 -4.5,-7.5 A4.5,4.5 0 1 1 4.5,-7.5 C4.5,-4.5 .9,-2.1 0,0 Z',
       );
       shape.setAttribute('fill', type.colour);
-      shape.setAttribute('stroke', unmatched ? '#fef3c7' : '#fff');
+      shape.setAttribute('stroke', unmatched ? token('--edify-warning-light') : token('--edify-on-accent'));
       shape.setAttribute('stroke-width', unmatched ? '1.25' : '.9');
       if(unmatched) shape.setAttribute('stroke-dasharray', '2 1');
       pin.appendChild(shape);
@@ -471,7 +473,7 @@ function subregionMap(){
         const el = document.createElementNS(NS,'path');
         el.setAttribute('d', d);
         el.setAttribute('fill', this.colourOf(p.s));
-        el.setAttribute('stroke', '#fff');
+        el.setAttribute('stroke', token('--edify-on-accent'));
         el.setAttribute('stroke-width', '0.6');
         el.setAttribute('vector-effect', 'non-scaling-stroke');
         el.setAttribute('tabindex', '0');
@@ -989,6 +991,7 @@ function subregionMap(){
       );
 
       labels.forEach(label => {
+        label.style.opacity = '';
         const path = pathByName.get(label.dataset[key]);
         const baseX = Number(label.dataset.labelX);
         const baseY = Number(label.dataset.labelY);
@@ -1014,7 +1017,9 @@ function subregionMap(){
           placed.every(existing => !overlaps(rect, existing)) &&
           this.boundaryContainsLabel(path, rect);
 
-        const labelScales = [1, .9, .8, .7];
+        /* Labels stay at the platform's 12px floor. Density is resolved by
+           priority and omission, never by shrinking text into illegibility. */
+        const labelScales = [1];
         let labelScale = 1;
         let offset = null;
         let placement = 'clear';
@@ -1062,11 +1067,13 @@ function subregionMap(){
             offset = best.candidate;
             labelScale = best.labelScale;
           }else{
-            // This is only reachable on a path too small for the minimum
-            // label size. Keep the deterministic anchor for diagnostics.
-            placement = 'constrained';
-            offset = [0, 0];
-            labelScale = .7;
+            // The accessible boundary and hover snapshot still carry the
+            // name. Omit the visual label instead of shrinking or colliding.
+            label.style.opacity = 0;
+            label.dataset.labelOffset = '0.00,0.00';
+            label.dataset.labelScale = '1.00';
+            label.dataset.labelPlacement = 'hidden';
+            return;
           }
         }
 
@@ -1247,7 +1254,7 @@ function subregionMap(){
         path.setAttribute('fill', this.colourOf(metric.subregion));
         path.setAttribute('fill-opacity', matchedRows.length ? '0.86' : '0.62');
         path.setAttribute('fill-rule', 'evenodd');
-        path.setAttribute('stroke', '#fff');
+        path.setAttribute('stroke', token('--edify-on-accent'));
         path.setAttribute('stroke-width', '0.8');
         path.setAttribute('vector-effect', 'non-scaling-stroke');
         path.setAttribute('tabindex', '0');
@@ -1513,6 +1520,7 @@ function subregionMap(){
         group.querySelector('.sr-pin-set')?.removeAttribute('transform');
       });
       this.subLabels.style.opacity = '';
+      requestAnimationFrame(() => this.placeDistrictLabels());
       this.focused = null;
       this.focusedDistrict = null;
       this.focusedSubcounty = null;
@@ -1587,19 +1595,20 @@ function subregionMap(){
   }
   #sr-cam text{text-anchor:middle;dominant-baseline:middle;pointer-events:none;
                stroke:none;transition:opacity .3s}
-  /* Sized against the 620-unit viewBox, so they scale with the card. */
-  #sr-cam .sr-dl{font-size:5.4px;font-weight:650;fill:#3b4750;
+  /* Boundary labels use the global 12px floor; the collision engine omits a
+     low-priority name when the map cannot place it cleanly at that size. */
+  #sr-cam .sr-dl{font-size:var(--edify-text-micro-size);font-weight:650;fill:var(--edify-text-muted);
                  letter-spacing:.02em}
   /* A white halo on each glyph so a sub-region name stays legible wherever it
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline
      eats inward and the text just reads heavier instead of haloed. */
-  #sr-cam .sr-sl{font-size:12px;font-weight:800;fill:#1140a8;
+  #sr-cam .sr-sl{font-size:var(--edify-text-micro-size);font-weight:800;fill:var(--edify-accent);
                  letter-spacing:.04em;
-                 stroke:#fff;stroke-width:2.2px;stroke-linejoin:round;
+                 stroke:var(--edify-on-accent);stroke-width:2.2px;stroke-linejoin:round;
                  paint-order:stroke fill}
   #sr-cam .sr-scl{
-    font-size:5px;font-weight:750;fill:#273540;
+    font-size:var(--edify-text-micro-size);font-weight:750;fill:var(--edify-text);
     letter-spacing:.015em;
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
@@ -1637,10 +1646,10 @@ function subregionMap(){
     filter:drop-shadow(0 1px 1.2px rgba(15,23,42,.3));
   }
   #sr-cam .sr-pin-dot{
-    fill:#fff;stroke:none;
+    fill:var(--edify-on-accent);stroke:none;
   }
   #sr-cam .sr-pin-check{
-    fill:none;stroke:#fff;stroke-width:1.2;stroke-linecap:round;
+    fill:none;stroke:var(--edify-on-accent);stroke-width:1.2;stroke-linecap:round;
     stroke-linejoin:round;filter:none;
   }
   #sr-cam > g:first-child path:focus-visible{outline:none;stroke:var(--edify-accent);
@@ -1648,7 +1657,7 @@ function subregionMap(){
   /* Once zoomed, navigation moves to the Back control. This fallback also
      guarantees a browser that retains SVG focus cannot paint over geography. */
   #sr-cam.sr-zoomed > g:first-child path:focus-visible{
-    stroke:#fff;stroke-width:.6
+    stroke:var(--edify-on-accent);stroke-width:.6
   }
   @media (prefers-reduced-motion:reduce){
     #sr-cam,#sr-cam path,#sr-cam text,#sr-cam .sr-school-pin{
@@ -1671,26 +1680,26 @@ function subregionMap(){
     width:clamp(204px, 46%, 300px);
     max-width:min(calc(100% - 8px), calc(100vw - 1rem));
     padding:clamp(8px, 1.4vw, 14px);
-    background:linear-gradient(160deg,#1d4d74 0%,#153b5c 100%);
-    color:#f2f7fb;
+    background:linear-gradient(160deg,var(--edify-primary) 0%,var(--edify-accent) 100%);
+    color:var(--edify-on-accent);
     border:1px solid rgba(255,255,255,.16);
   }
-  .sr-tip .edify-text-caption{font-size:clamp(9px, 1.05vw, 11px)}
+  .sr-tip .edify-text-caption{font-size:var(--edify-text-micro-size)}
   .sr-tip__title,.sr-tip__primary{font-size:clamp(12px, 1.15vw, 15px)}
-  .sr-tip__number{font-size:clamp(10px, .95vw, 12px)}
+  .sr-tip__number{font-size:var(--edify-text-micro-size)}
   .sr-tip__head{border-bottom:1px solid rgba(255,255,255,.16)}
   .sr-tip__rule{border-top:1px solid rgba(255,255,255,.16)}
-  .sr-tip__muted{color:#a9c6dc}
-  .sr-tip__good{color:#7ee0b0}
-  .sr-tip__bad{color:#ffab9c}
+  .sr-tip__muted{color:color-mix(in srgb,var(--edify-on-accent) 72%,transparent)}
+  .sr-tip__good{color:var(--edify-chart-green)}
+  .sr-tip__bad{color:var(--edify-danger)}
 
   html.dark .sr-tip{
-    background:linear-gradient(160deg,#141a20 0%,#0b0f13 100%);
-    color:#eef2f6;
+    background:linear-gradient(160deg,var(--edify-surface-muted) 0%,var(--edify-bg) 100%);
+    color:var(--edify-text);
     border-color:rgba(255,255,255,.12);
   }
   html.dark .sr-tip__head,html.dark .sr-tip__rule{border-color:rgba(255,255,255,.10)}
-  html.dark .sr-tip__muted{color:#93a2ad}
+  html.dark .sr-tip__muted{color:var(--edify-text-muted)}
   @media (max-width:640px){
     .sr-tip{line-height:1.15}
     .sr-tip__top{

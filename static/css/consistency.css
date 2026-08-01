@@ -11,6 +11,34 @@
   accent-color: var(--brand-primary);
 }
 
+/* ── Readable typography migration ──────────────────────────────────────────
+ * Hundreds of legacy templates still carry one-off 12–13px Tailwind values.
+ * Rewriting their visual role in one final-cascade bridge keeps the migration
+ * safe and makes new scale adjustments flow through the entire application.
+ * Thirteen pixels is the standard compact UI tier; the 12px micro tier is
+ * reserved for short badges, overlines and similarly non-essential metadata. */
+main :is(
+  .text-xs,
+  [class*="text-[10px]"],
+  [class*="text-[11px]"],
+  [class*="text-[12px]"],
+  [class*="text-[12.5px]"],
+  [class*="text-[13px]"],
+  [class*="text-[13.5px]"]
+) {
+  font-size: var(--edify-text-label-size) !important;
+}
+
+main :is(
+  .edify-text-micro,
+  [class*="eyebrow"],
+  [class*="overline"],
+  [class*="badge"],
+  [class*="status"]
+) {
+  font-size: var(--edify-text-micro-size) !important;
+}
+
 /* Semantic primary utilities.  These replace framework-colour class names in
  * templates and server-rendered fragments, so source and rendered output use
  * the same product vocabulary.  Status colours never use these utilities. */
@@ -279,6 +307,8 @@ html.light :is([class~="bg-slate-900"], [class~="bg-slate-800"], [class*="bg-[va
 .edify-danger-text { color: var(--edify-danger-text) !important; }
 .edify-info-text { color: var(--edify-info-text) !important; }
 .edify-success-soft { background-color: var(--edify-success-light) !important; }
+.edify-success-solid { background-color: var(--edify-success) !important; color: var(--edify-on-accent) !important; }
+.edify-on-accent { color: var(--edify-on-accent) !important; }
 .edify-warning-soft { background-color: var(--edify-warning-light) !important; }
 .edify-danger-soft { background-color: var(--edify-danger-light) !important; }
 .edify-info-soft { background-color: var(--edify-info-light) !important; }
@@ -307,6 +337,31 @@ main .edify-surface-muted.rounded-surface.border {
  * global dark-text rule used by ordinary page content. */
 main :is(.edify-page-header--dark, [class~="bg-slate-900"], [class~="bg-slate-800"], [class~="bg-gray-900"], [class~="bg-gray-800"], [class*="bg-[var(--edify-primary"]) :is(h1, h2, h3) {
   color: var(--edify-on-accent) !important;
+}
+
+/* Custom navy/blue surfaces cannot rely on a text-white utility alone because
+ * the platform heading contract below also uses !important. Marking the
+ * surface makes inverse typography explicit and keeps headings white in every
+ * theme, including the light workspace where --edify-text is dark ink. */
+.edify-inverse-surface {
+  color: var(--edify-on-accent) !important;
+}
+
+.edify-inverse-surface :is(h1, h2, h3, .edify-page-title, .edify-inverse-heading) {
+  color: var(--edify-on-accent) !important;
+}
+
+/* Bespoke workspaces used to carry their own outer width and padding, so
+ * moving from a standard list page to IA, Calendar, Partners or a specialist
+ * cockpit visibly shifted the content edge. The semantic page canvas gives
+ * every non-full-bleed workspace the same responsive gutter and block rhythm.
+ * Internal component padding remains owned by each workspace. */
+main > .edify-page-canvas {
+  inline-size: min(100%, var(--edify-page-max-size)) !important;
+  max-inline-size: var(--edify-page-max-size) !important;
+  margin-inline: auto !important;
+  padding: 1.25rem var(--edify-page-gutter) !important;
+  box-sizing: border-box;
 }
 
 /* Every page has one predictable title treatment, whether it has a full page
@@ -910,30 +965,19 @@ main :is(
   .spp-kpi-grid,
   .spa-kpi-grid
 ):not([class*="grid-cols-"]) {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)) !important;
 }
 
-/* The timeline variant opts out of the auto-fit grid above.
-   Those cards are not an unordered set of KPIs — they are one fiscal year read
-   left to right: Jul, Q1, Q2, Mid Year, Q3, Q4, Full Year. An auto-fit grid
-   sized at 12.5rem wrapped the seven of them to four-then-three, which puts
-   Q3 underneath Jul and breaks the only thing the row is for. The template
-   already asks for a single scrollable row; this lets that ask through, and
-   scrolls on narrow screens rather than reflowing the sequence. */
+/* Period timelines retain chronological DOM order but wrap as a compact grid.
+   A forced 1400px rail made ordinary report and target pages look zoomed-in
+   and cut the first/last period off-screen. */
 main .legacy-kpi-strip.legacy-kpi-strip--timeline {
-  display: flex !important;
-  grid-template-columns: none !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;
+  overflow: visible !important;
 }
 main .legacy-kpi-strip.legacy-kpi-strip--timeline > * {
-  /* Wide enough to hold a period label, its value and the target gauge side by
-     side. Below about this width the gauge and the label fight for the same
-     space: the ring clips at the card edge and "Q1 (Oct - Dec)" breaks across
-     three lines, which is how a row of seven becomes unreadable even when it
-     is correctly in one row. Past seven cards the strip scrolls. */
-  flex: 1 0 12.5rem !important;
-  min-inline-size: 12.5rem !important;
+  min-inline-size: 0 !important;
 }
 
 main :is(
@@ -947,15 +991,16 @@ main :is(
   .spa-kpi
 ) {
   position: relative !important;
+  container: legacy-kpi-card / inline-size;
   display: flex !important;
   grid-column: auto !important;
   min-inline-size: 0 !important;
-  min-block-size: 8rem !important;
+  min-block-size: 6.75rem !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  gap: clamp(0.8rem, 0.7rem + 0.35vw, 1.15rem) !important;
+  gap: clamp(0.65rem, 0.6rem + 0.25vw, 0.9rem) !important;
   margin: 0 !important;
-  padding: 1.15rem clamp(1rem, 0.8rem + 0.55vw, 1.55rem) !important;
+  padding: 0.875rem clamp(0.8rem, 0.72rem + 0.3vw, 1.05rem) !important;
   overflow: visible !important;
   border: 1px solid var(--edify-border) !important;
   border-radius: var(--edify-radius-md) !important;
@@ -999,30 +1044,80 @@ main :is(
   border-inline-start: 1px solid var(--edify-border) !important;
 }
 
-main :is(
-  .legacy-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-):has(> :nth-child(7)):not(:has(> :nth-child(9))) {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+/* Count-aware legacy layouts use viewport tiers because these strips are the
+   layout containers themselves. The tiers account for the authenticated
+   sidebar and reduce columns before labels wrap. */
+@media (min-width: 36.01rem) and (max-width: 59.99rem) {
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
-main :is(
-  .legacy-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-):has(> :nth-child(9)):not(:has(> :nth-child(11))) {
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+@media (min-width: 60rem) and (max-width: 79.99rem) {
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 80rem) and (max-width: 94.99rem) {
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 95rem) {
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ):has(> :nth-child(7)):not(:has(> :nth-child(9))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  main :is(
+    .legacy-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ):has(> :nth-child(9)):not(:has(> :nth-child(11))) {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
 }
 
 main :is(
@@ -1074,10 +1169,17 @@ main .legacy-kpi-strip > * :is(
   .edify-kpi-label,
   .card-kpi > div > div > p:first-child
 ) {
+  max-inline-size: 100%;
   color: var(--legacy-kpi-strip-label) !important;
   font-weight: 700 !important;
-  letter-spacing: 0.035em !important;
-  text-transform: uppercase !important;
+  letter-spacing: var(--edify-kpi-label-tracking) !important;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: none !important;
+  white-space: nowrap;
+  word-break: normal;
 }
 
 main .legacy-kpi-strip > * :is(
@@ -1141,11 +1243,18 @@ main :is(
 ) {
   min-block-size: 0 !important;
   color: var(--legacy-kpi-strip-label) !important;
-  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.75rem) !important;
+  font-size: var(--edify-text-tile-label-size) !important;
   font-weight: 700 !important;
-  letter-spacing: 0.035em !important;
+  letter-spacing: var(--edify-kpi-label-tracking) !important;
   line-height: 1.2 !important;
-  text-transform: uppercase !important;
+  max-inline-size: 100%;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: none !important;
+  white-space: nowrap;
+  word-break: normal;
 }
 
 main :is(
@@ -1158,11 +1267,13 @@ main :is(
   .spa-kpi
 ) strong {
   color: var(--legacy-kpi-strip-value) !important;
-  font-size: clamp(1.45rem, 1.2rem + 0.75vw, 1.9rem) !important;
+  font-size: var(--edify-text-tile-value-size) !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   letter-spacing: -0.035em !important;
   font-variant-numeric: tabular-nums;
+  max-inline-size: 100%;
+  white-space: nowrap;
 }
 
 main :is(
@@ -1177,9 +1288,12 @@ main :is(
   min-block-size: 0 !important;
   margin-block-start: 0.4rem !important;
   color: var(--legacy-kpi-strip-helper) !important;
-  font-size: clamp(0.63rem, 0.6rem + 0.12vw, 0.72rem) !important;
+  font-size: var(--edify-text-tile-helper-size) !important;
   font-weight: 500 !important;
   line-height: 1.25 !important;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: normal;
 }
 
 main :is(
@@ -1192,8 +1306,8 @@ main :is(
   .legacy-kpi-strip__icon,
   .legacy-kpi-strip .kpi-icon-circle
 ) {
-  width: clamp(2.7rem, 2.2rem + 1.2vw, 3.4rem) !important;
-  height: clamp(2.7rem, 2.2rem + 1.2vw, 3.4rem) !important;
+  width: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
+  height: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
   flex: 0 0 auto !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -1226,17 +1340,24 @@ main :is(
 
 .legacy-kpi-strip__label {
   color: var(--legacy-kpi-strip-label) !important;
-  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.75rem);
+  font-size: var(--edify-text-tile-label-size);
   font-weight: 700;
-  letter-spacing: 0.035em;
+  letter-spacing: var(--edify-kpi-label-tracking);
   line-height: 1.2;
-  text-transform: uppercase;
+  max-inline-size: 100%;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: none;
+  white-space: nowrap;
+  word-break: normal;
 }
 
 .legacy-kpi-strip__value {
   margin-block-start: 0.2rem;
   color: var(--legacy-kpi-strip-value) !important;
-  font-size: clamp(1.35rem, 1.12rem + 0.58vw, 1.72rem) !important;
+  font-size: var(--edify-text-tile-value-size) !important;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.035em;
@@ -1247,9 +1368,27 @@ main :is(
 .legacy-kpi-strip__helper {
   margin-block-start: 0.4rem;
   color: var(--legacy-kpi-strip-helper) !important;
-  font-size: clamp(0.63rem, 0.6rem + 0.12vw, 0.72rem);
+  font-size: var(--edify-text-tile-helper-size);
   font-weight: 500;
   line-height: 1.25;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: normal;
+}
+
+@container legacy-kpi-card (max-width: 16rem) {
+  main :is(
+    .admin-kpi__icon,
+    .partner-kpi-card__icon,
+    .tt-kpi__icon,
+    .sp-kpi__icon,
+    .spp-kpi__icon,
+    .spa-kpi > span,
+    .legacy-kpi-strip__icon,
+    .legacy-kpi-strip .kpi-icon-circle
+  ) {
+    display: none !important;
+  }
 }
 
 main .legacy-kpi-strip--finance > * {
@@ -1263,7 +1402,7 @@ main .legacy-kpi-strip--finance .legacy-kpi-strip__icon {
 }
 
 main .legacy-kpi-strip--finance .legacy-kpi-strip__value {
-  font-size: clamp(1.06rem, 0.95rem + 0.3vw, 1.28rem) !important;
+  font-size: clamp(1rem, calc(0.9375rem + 2cqi), 1.28rem) !important;
 }
 
 main .legacy-kpi-strip .card-kpi > .flex {
@@ -1402,8 +1541,8 @@ main .legacy-kpi-strip .card-kpi {
   box-shadow: none !important;
 }
 
-/* Blue primary actions stay unmistakable through colour, not gradients or
-   elevation; secondary actions use the same filter surface as cards. */
+/* Blue primary actions stay unmistakable through white-on-Edify-blue contrast,
+   not gradients or elevation. Secondary actions use the card/filter surface. */
 .theme-blue :is(
   .btn-primary,
   .btn-premium-primary,
@@ -1421,12 +1560,18 @@ main .legacy-kpi-strip .card-kpi {
   button.bg-indigo-700,
   a.bg-indigo-700,
   button.bg-blue-600,
-  a.bg-blue-600
+  a.bg-blue-600,
+  button.bg-sky-600,
+  a.bg-sky-600,
+  button.bg-sky-700,
+  a.bg-sky-700,
+  button.bg-cyan-600,
+  a.bg-cyan-600
 ) {
-  color: var(--edify-navy-950) !important;
-  background-color: var(--edify-sky-400) !important;
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
   background-image: none !important;
-  border-color: var(--edify-sky-400) !important;
+  border-color: var(--edify-accent) !important;
   border-style: solid !important;
   border-width: 1px !important;
   border-radius: var(--edify-radius-sm) !important;
@@ -1452,13 +1597,64 @@ main .legacy-kpi-strip .card-kpi {
   button.bg-indigo-700,
   a.bg-indigo-700,
   button.bg-blue-600,
-  a.bg-blue-600
+  a.bg-blue-600,
+  button.bg-sky-600,
+  a.bg-sky-600,
+  button.bg-sky-700,
+  a.bg-sky-700,
+  button.bg-cyan-600,
+  a.bg-cyan-600
 ):hover:not(:disabled) {
-  background-color: var(--edify-sky-100) !important;
+  background-color: var(--edify-accent-hover) !important;
   background-image: none !important;
-  border-color: var(--edify-sky-100) !important;
+  border-color: var(--edify-accent-hover) !important;
   box-shadow: none !important;
   transform: none !important;
+}
+
+/* A nested legacy utility must not turn a primary action label dark again.
+   This covers icons and helper spans inside every shared primary family. */
+.theme-blue :is(
+  .btn-primary,
+  .btn-premium-primary,
+  .edify-action-button.primary,
+  .premium-button-primary,
+  .pto-button--primary,
+  .sp-button--primary,
+  .spa-button--primary,
+  .spp-button--primary,
+  .tt-button--primary,
+  .hcos-button--primary,
+  .admin-button--primary,
+  button.bg-indigo-600,
+  a.bg-indigo-600,
+  button.bg-indigo-700,
+  a.bg-indigo-700,
+  button.bg-blue-600,
+  a.bg-blue-600,
+  button.bg-sky-600,
+  a.bg-sky-600,
+  button.bg-sky-700,
+  a.bg-sky-700,
+  button.bg-cyan-600,
+  a.bg-cyan-600
+) :is(span, strong, small, svg) {
+  color: var(--edify-on-accent) !important;
+}
+
+/* Card CTAs size to their label instead of becoming a heavy full-width bar.
+   Full-width controls remain available for drawers, modals and narrow forms;
+   only actions explicitly marked as card actions adopt this intrinsic width. */
+main .edify-card-action {
+  inline-size: fit-content !important;
+  max-inline-size: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--edify-action-button-block-size);
+  padding-inline: var(--edify-action-button-padding-inline) !important;
+  line-height: 1.2 !important;
 }
 
 .theme-blue :is(
@@ -1525,10 +1721,8 @@ main .legacy-kpi-strip .card-kpi {
   border-color: var(--edify-border-strong) !important;
 }
 
-/* Phones never scroll a KPI strip horizontally. Below the smallest card
-   minimum every legacy strip locks to a 2-column wrapping grid so the tiles
-   fill the viewport instead of overflowing into a swipe carousel — matching
-   the shared components/kpi_strip.html contract. */
+/* Phones never scroll a KPI strip horizontally. One full-width card preserves
+   a readable title line and matches the shared KPI component contract. */
 @media (max-width: 36rem) {
   main :is(
     .legacy-kpi-strip,
@@ -1541,7 +1735,7 @@ main .legacy-kpi-strip .card-kpi {
     .spa-kpi-grid
   ) {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: 1fr !important;
   }
 
   main :is(

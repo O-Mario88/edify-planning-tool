@@ -52,6 +52,16 @@ APPS = ROOT / "apps"
 # Adding to this list is a deliberate edit somebody has to justify in review,
 # which is the entire point of it being a list rather than a heuristic.
 ONE_OFF_DATA_MIGRATIONS = {
+    "documents": (
+        "0002 installs the two first-login agreements (safeguarding policy, "
+        "Apostles' Creed). It declares itself a one-off: the migration returns "
+        "early under IS_TESTING because the suite builds its own policy "
+        "fixtures and asserts exact acknowledgement counts, so re-running it "
+        "on every flush would be wrong — the criterion this list exists for. "
+        "If these documents ever need guaranteeing on a database the initial "
+        "migrate did not touch, they should graduate to a registered ensure "
+        "function instead of staying here."
+    ),
     "clusters": "0003 repairs canonical cluster membership on existing rows.",
     "core_schools": "0003 backfills the 9th package slot onto existing packages.",
     "messaging": "0005 backfills participants for pre-multi-participant threads.",

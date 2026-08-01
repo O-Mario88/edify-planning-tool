@@ -9,37 +9,17 @@ document.addEventListener('alpine:init', () => {
     lastNonDarkPreference: document.documentElement.dataset.themePref === 'dark'
       ? 'light'
       : (document.documentElement.dataset.themePref || 'system'),
-    systemTimer: null,
+    systemMedia: null,
 
     resolveSystemTheme() {
-      const hour = new Date().getHours();
-      return hour >= 6 && hour < 19 ? 'light' : 'dark';
-    },
-
-    millisecondsUntilSystemBoundary() {
-      const now = new Date();
-      const next = new Date(now);
-      if (now.getHours() < 6) {
-        next.setHours(6, 0, 1, 0);
-      } else if (now.getHours() < 19) {
-        next.setHours(19, 0, 1, 0);
-      } else {
-        next.setDate(next.getDate() + 1);
-        next.setHours(6, 0, 1, 0);
-      }
-      return Math.max(60000, next.getTime() - now.getTime());
-    },
-
-    scheduleSystemRefresh() {
-      if (this.systemTimer) window.clearTimeout(this.systemTimer);
-      this.systemTimer = null;
-      if (this.preference !== 'system') return;
-      this.systemTimer = window.setTimeout(() => {
-        this.applyTheme('system', false);
-      }, this.millisecondsUntilSystemBoundary());
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     },
 
     init() {
+      this.systemMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemMedia.addEventListener('change', () => {
+        if (this.preference === 'system') this.applyTheme('system', false);
+      });
       /* Keep open Edify tabs visually consistent without requiring reload. */
       window.addEventListener('storage', (event) => {
         if (event.key === 'edify_theme') {
@@ -80,7 +60,6 @@ document.addEventListener('alpine:init', () => {
       if (persist) {
         try { localStorage.setItem('edify_theme', mode); } catch (error) { /* Storage can be blocked. */ }
       }
-      this.scheduleSystemRefresh();
       window.dispatchEvent(new CustomEvent('edify-theme-change', { detail: { theme: actual, preference: mode } }));
     },
 
@@ -316,7 +295,7 @@ document.addEventListener('alpine:init', () => {
           colors: ['var(--edify-chart-blue)'],
           xaxis: {
             title: { text: 'Accepted spend (UGX)', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
-            labels: { formatter: (value) => `${Math.round(value / 1000)}k`, style: { colors: 'var(--edify-text-subtle)', fontSize: '11px' } },
+            labels: { formatter: (value) => `${Math.round(value / 1000)}k`, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } },
             axisBorder: { show: false },
             axisTicks: { show: false },
           },
@@ -332,13 +311,13 @@ document.addEventListener('alpine:init', () => {
         ...shared,
         series,
         chart: { ...shared.chart, height: Math.max(160, series.length * 44 + 80), type: 'heatmap' },
-        dataLabels: { enabled: true, style: { fontSize: '11px' } },
+        dataLabels: { enabled: true, style: { fontSize: '12px' } },
         plotOptions: { heatmap: { radius: 3, colorScale: { ranges: [
           { from: -10, to: -0.31, color: 'var(--edify-danger)', name: 'declining' },
           { from: -0.3, to: 0.3, color: 'var(--edify-warning)', name: 'stagnant' },
           { from: 0.31, to: 10, color: 'var(--edify-success)', name: 'improving' },
         ] } } },
-        xaxis: { labels: { rotate: -35, style: { colors: 'var(--edify-text-subtle)', fontSize: '11px', fontWeight: '600' } } },
+        xaxis: { labels: { rotate: -35, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
         yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
         legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
       };
@@ -589,7 +568,7 @@ document.addEventListener('alpine:init', () => {
             { name: 'Initial SSA Score', data: d.baseline || [] },
             { name: 'Follow-up', data: d.followup || [] },
           ],
-          xaxis: { categories: d.labels || [], labels: { rotate: -35, style: { fontSize: '10px' } } },
+          xaxis: { categories: d.labels || [], labels: { rotate: -35, trim: true, hideOverlappingLabels: true, style: { fontSize: '12px' } } },
           colors: [brand, orange],
         };
       } else if (chartType === 'scatter') {

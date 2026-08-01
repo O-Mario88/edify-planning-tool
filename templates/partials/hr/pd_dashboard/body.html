@@ -57,7 +57,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
           <input type="hidden" name="action" value="bulk_send_reminders">
           <input type="hidden" name="bucket" value="{{ g.key }}">
           <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
-          <button type="submit" class="w-full h-7 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Remind All ({{ g.count }})</button>
+          <button type="submit" class="edify-card-action rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Remind All ({{ g.count }})</button>
         </form>
         {% endif %}
         {% else %}

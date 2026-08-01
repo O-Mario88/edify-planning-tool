@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import mimetypes
-import os
 
 from django.contrib import messages
 from django.http import FileResponse, Http404, JsonResponse
@@ -31,7 +30,8 @@ from apps.documents.services import (
     audience_matches,
     has_permission,
 )
-from apps.documents.storage import document_path
+from apps.core.private_storage import file_exists, open_file
+from apps.documents.storage import DOCUMENT_NAMESPACE
 from apps.documents.upload_center import UploadCenterService
 
 
@@ -241,6 +241,20 @@ def document_viewer_view(request, slug):
         actor_role=getattr(request.user, "active_role", None),
         payload={"version": version.version_number if version else None},
     )
+    from apps.documents.canonical_documents import context_for
+
+    canonical = context_for(slug)
+    if canonical:
+        return render(
+            request,
+            "pages/documents/canonical_document.html",
+            {
+                "document": document,
+                "version": version,
+                "acknowledgement": ack,
+                "canonical": canonical,
+            },
+        )
     return render(
         request,
         "pages/documents/viewer.html",
@@ -263,10 +277,14 @@ def document_preview_view(request, slug):
     version = document.current_version or document.versions.first()
     if not version or version.preview_status != PreviewStatus.READY:
         raise Http404
-    path = document_path(version.preview_uri)
-    if not os.path.exists(path):
+    if not file_exists(DOCUMENT_NAMESPACE, version.preview_uri):
         raise Http404
-    return FileResponse(open(path, "rb"), content_type="application/pdf")
+    response = FileResponse(
+        open_file(DOCUMENT_NAMESPACE, version.preview_uri),
+        content_type="application/pdf",
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 def document_download_view(request, slug):
@@ -276,8 +294,7 @@ def document_download_view(request, slug):
     version = document.current_version or document.versions.first()
     if not version:
         raise Http404
-    path = document_path(version.uri)
-    if not os.path.exists(path):
+    if not file_exists(DOCUMENT_NAMESPACE, version.uri):
         raise Http404
     audit_log(
         action="documents.download_initiated",
@@ -291,7 +308,7 @@ def document_download_view(request, slug):
         version.mime_type or mimetypes.guess_type(version.original_filename)[0]
     )
     return FileResponse(
-        open(path, "rb"),
+        open_file(DOCUMENT_NAMESPACE, version.uri),
         as_attachment=True,
         filename=version.original_filename,
         content_type=content_type or "application/octet-stream",
@@ -360,6 +377,17 @@ def agreement_center_view(request):
     from apps.documents.models import DocumentAcknowledgement
 
     pending = AcknowledgementService.pending_for(request.user)
+    if pending:
+        # The two onboarding commitments are read in sequence. Opening the
+        # Agreement Center therefore opens the actual document, rather than
+        # making a first-time user discover it behind a second button.
+        priority = {"edify-safeguarding-policy": 0, "edify-apostles-creed": 1}
+        canonical_pending = sorted(
+            (ack for ack in pending if ack.document.slug in priority),
+            key=lambda ack: priority[ack.document.slug],
+        )
+        if canonical_pending:
+            return redirect(f"/documents/{canonical_pending[0].document.slug}/")
     done = list(
         DocumentAcknowledgement.objects.filter(
             user_id=_user_id(request),
@@ -371,6 +399,21 @@ def agreement_center_view(request):
         "pages/documents/agreement_center.html",
         {"pending": pending, "completed": done},
     )
+
+
+def _next_blocking_destination(user) -> str:
+    """The next required document, or the workspace when onboarding is done."""
+    pending = PolicyGateService.blocking_acknowledgements(user)
+    if not pending:
+        return "/dashboard"
+    priority = {"edify-safeguarding-policy": 0, "edify-apostles-creed": 1}
+    canonical_pending = sorted(
+        (ack for ack in pending if ack.document.slug in priority),
+        key=lambda ack: priority[ack.document.slug],
+    )
+    if canonical_pending:
+        return f"/documents/{canonical_pending[0].document.slug}/"
+    return "/policy-agreement"
 
 
 def restricted_view(request):
@@ -408,7 +451,7 @@ def submit_acknowledgement_view(request, acknowledgement_id):
         )
         return redirect("/policy-agreement/restricted")
     messages.success(request, f"Thank you — “{ack.document.title}” is recorded.")
-    return redirect("/policy-agreement")
+    return redirect(_next_blocking_destination(request.user))
 
 
 @require_POST

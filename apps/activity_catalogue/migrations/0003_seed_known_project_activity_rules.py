@@ -3,15 +3,9 @@ from django.db import migrations
 
 def seed_project_rules(apps, schema_editor):
     Project = apps.get_model("projects", "Project")
-    CatalogueItem = apps.get_model(
-        "activity_catalogue", "ActivityCatalogueItem"
-    )
-    ProjectMapping = apps.get_model(
-        "activity_catalogue", "ActivityProjectMapping"
-    )
-    ReviewQueue = apps.get_model(
-        "activity_catalogue", "ActivityCatalogueReviewQueue"
-    )
+    CatalogueItem = apps.get_model("activity_catalogue", "ActivityCatalogueItem")
+    ProjectMapping = apps.get_model("activity_catalogue", "ActivityProjectMapping")
+    ReviewQueue = apps.get_model("activity_catalogue", "ActivityCatalogueReviewQueue")
     project_code_rules = {
         "SP-EDTECH": [
             "EDTECH_FOUNDATIONS",

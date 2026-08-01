@@ -14,9 +14,11 @@ from django.test import Client, TestCase
 from apps.accounts.models import StaffProfile, User
 from apps.core.navigation import (
     ANALYTICS_SECTIONS,
+    IA_SECTIONS,
     PAGE_PERMISSIONS,
     SIDEBAR_ITEMS,
     build_analytics_sections,
+    build_workspace,
     build_sidebar_for_user,
     get_user_role_slug,
 )
@@ -239,17 +241,51 @@ class AnalyticsWorkspaceRenderTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "edify-section-nav")
 
+
+class IAWorkspaceContractTest(TestCase):
+    def setUp(self):
+        self.user = _user("ia-workspace@edify.test", EdifyRole.IMPACT_ASSESSMENT.value)
+        self.client = Client()
+        self.client.force_login(self.user)
+
+    def test_sections_are_distinct_authorized_backend_routes(self):
+        self.assertEqual(len(IA_SECTIONS), 10)
+        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 10)
+        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 10)
+        for section in IA_SECTIONS:
+            with self.subTest(section=section["key"]):
+                self.assertIn(section["page_key"], PAGE_PERMISSIONS)
+                self.assertIn("IA", PAGE_PERMISSIONS[section["page_key"]])
+
+    def test_shared_analytics_routes_stay_in_the_ia_workspace_for_ia(self):
+        for path in ("/ia/dashboard/", "/impact", "/analytics", "/reports"):
+            with self.subTest(path=path):
+                workspace = build_workspace(self.user, path)
+                self.assertIsNotNone(workspace)
+                self.assertEqual(workspace["key"], "ia")
+                self.assertEqual(
+                    [s["url"] for s in workspace["sections"] if s["active"]],
+                    [path],
+                )
+
+    def test_activity_queue_renders_real_url_state_navigation(self):
+        response = self.client.get("/ia/verification/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'aria-label="Impact Assessment sections"')
+        self.assertContains(response, 'href="/ssa/verification/"')
+        self.assertContains(response, 'href="/ssa/unmatched"')
+        self.assertContains(response, 'href="/evidence/"')
+        self.assertContains(response, 'aria-current="page"')
+
     def test_the_overview_page_carries_the_sub_navigation(self):
-        """The generic /analytics URL is a real page for roles whose Overview
-        points elsewhere, and it is the page the workspace is named after — it
-        must offer the same way around as every other section. One navigation,
-        not a strip plus a duplicate grid of the same links below it."""
-        for path in ("/analytics", "/analytics/country-director"):
+        """Shared analytics pages remain inside IA's role workspace."""
+        for path in ("/analytics",):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, "edify-section-nav")
-                self.assertContains(response, 'href="/analytics/visit-effectiveness"')
+                self.assertContains(response, 'href="/ia/verification/"')
+                self.assertContains(response, 'href="/evidence/"')
                 self.assertNotContains(response, "The analysis workspace")
 
     def test_sections_are_links_not_tabs(self):

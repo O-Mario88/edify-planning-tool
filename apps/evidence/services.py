@@ -2,25 +2,37 @@
 Evidence service — the file pipeline: secure upload, list, hardened file
 serving, accept/return review, and on-demand DOCX→PDF rendition.
 
-Files stored on local disk under EVIDENCE_STORAGE_DIR (absolute, persistent in
-production). Downloads send hardened headers and object-authorize the parent
-activity. A quarantined file is never downloadable.
+Files are stored through the private-upload backend (local disk in development,
+DigitalOcean Spaces in production). Downloads send hardened headers and
+object-authorize the parent activity. A quarantined file is never downloadable.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import re
+import tempfile
 import uuid
 
 from django.conf import settings
+from django.db import transaction
 from django.http import FileResponse
+from django.utils.http import content_disposition_header
 from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core.enums import EvidenceKind, EvidenceStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from apps.core.private_storage import (
+    best_effort_delete,
+    file_exists,
+    local_path,
+    materialized_file,
+    open_file,
+    save_file,
+    save_local_file,
+    validate_stored_name,
+)
 from apps.core.scoping import resolve_user_scope
 
 from .models import EvidenceRecord
@@ -32,6 +44,7 @@ VALID_KINDS = {k.value for k in EvidenceKind}
 # handled separately via Pillow; see prepare_inline_view).
 CONVERTIBLE_EXTENSIONS = {".docx", ".doc", ".xlsx", ".xls", ".csv"}
 logger = logging.getLogger(__name__)
+EVIDENCE_NAMESPACE = "evidence"
 
 
 def _assert_activity_in_scope(activity: Activity, principal) -> None:
@@ -65,12 +78,12 @@ def _assert_activity_in_scope(activity: Activity, principal) -> None:
 
 
 def evidence_dir() -> str:
-    d = settings.EVIDENCE_STORAGE_DIR
-    os.makedirs(d, exist_ok=True)
-    return d
-
-
-_STORED_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+    """Compatibility path for local development and path-containment tests."""
+    directory = os.path.dirname(
+        local_path(EVIDENCE_NAMESPACE, "00000000000000000000000000000000.tmp")
+    )
+    os.makedirs(directory, exist_ok=True)
+    return directory
 
 
 def evidence_path(stored_name: str) -> str:
@@ -90,13 +103,8 @@ def evidence_path(stored_name: str) -> str:
     none of them can appear. The containment re-check after symlink resolution
     stays as a second, independent barrier.
     """
-    if not stored_name or not _STORED_NAME_RE.fullmatch(stored_name):
-        raise BadRequest("Invalid evidence file name.")
-    base = os.path.realpath(evidence_dir())
-    resolved = os.path.realpath(os.path.join(base, stored_name))
-    if resolved != base and not resolved.startswith(base + os.sep):
-        raise BadRequest("Invalid evidence file name.")
-    return resolved
+    validate_stored_name(stored_name, label="evidence")
+    return local_path(EVIDENCE_NAMESPACE, stored_name)
 
 
 def resolve_evidence_kind(file_obj, activity=None, asserted: str | None = None) -> str:
@@ -212,35 +220,41 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         original_name=original_name, mime_type=mime_type, head=head, size=size
     )
 
-    # Persist to disk under a unique filename.
+    # Persist through the private storage backend under a unique filename.
     stored_name = f"{uuid.uuid4().hex}{ext}"
-    dest = evidence_path(stored_name)
-    with open(dest, "wb") as out:
-        for chunk in _chunks(file_obj):
-            out.write(chunk)
-
-    scan_status, threat_name = _scan_upload(dest)
+    save_file(EVIDENCE_NAMESPACE, stored_name, file_obj)
+    try:
+        with materialized_file(EVIDENCE_NAMESPACE, stored_name) as local_file:
+            scan_status, threat_name = _scan_upload(local_file)
+    except Exception:
+        best_effort_delete(EVIDENCE_NAMESPACE, stored_name)
+        raise
 
     if scan_status == "infected":
         # Keep the record + quarantined file on disk for security review
         # (file_for() already refuses to serve anything quarantined), but
         # never let it become usable evidence or advance the activity.
-        EvidenceRecord.objects.create(
-            activity=activity,
-            kind=kind,
-            uri=stored_name,
-            original_name=original_name,
-            mime_type=mime_type or None,
-            file_extension=ext,
-            file_size=size,
-            uploaded_by=principal.user_id,
-            uploader_role=principal.active_role,
-            scan_status="infected",
-            quarantined=True,
-            status=EvidenceStatus.REJECTED,
-            review_note=f"Automatically quarantined: malware scan flagged '{threat_name}'.",
-            preview_status="not_required",
-        )
+        try:
+            EvidenceRecord.objects.create(
+                activity=activity,
+                kind=kind,
+                uri=stored_name,
+                original_name=original_name,
+                mime_type=mime_type or None,
+                file_extension=ext,
+                file_size=size,
+                uploaded_by=principal.user_id,
+                uploader_role=principal.active_role,
+                scan_status="infected",
+                quarantined=True,
+                status=EvidenceStatus.REJECTED,
+                review_note=f"Automatically quarantined: malware scan flagged '{threat_name}'.",
+                preview_status="not_required",
+                storage_provider=_storage_provider_name(),
+            )
+        except Exception:
+            best_effort_delete(EVIDENCE_NAMESPACE, stored_name)
+            raise
         raise BadRequest(
             "This file was flagged as a security threat by the malware scanner "
             "and has been rejected. Contact IT if you believe this is an error."
@@ -260,22 +274,27 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         else ("pending" if is_convertible else "not_required")
     )
 
-    record = EvidenceRecord.objects.create(
-        activity=activity,
-        kind=kind,
-        uri=stored_name,
-        original_name=original_name,
-        mime_type=mime_type or None,
-        file_extension=ext,
-        file_size=size,
-        uploaded_by=principal.user_id,
-        uploader_role=principal.active_role,
-        scan_status=scan_status,  # clean|skipped -- see _scan_upload
-        preview_status=preview_status,
-    )
-    # Bump the activity's evidence status.
-    activity.evidence_status = "uploaded"
-    activity.save(update_fields=["evidence_status", "updated_at"])
+    try:
+        with transaction.atomic():
+            record = EvidenceRecord.objects.create(
+                activity=activity,
+                kind=kind,
+                uri=stored_name,
+                original_name=original_name,
+                mime_type=mime_type or None,
+                file_extension=ext,
+                file_size=size,
+                uploaded_by=principal.user_id,
+                uploader_role=principal.active_role,
+                scan_status=scan_status,  # clean|skipped -- see _scan_upload
+                preview_status=preview_status,
+                storage_provider=_storage_provider_name(),
+            )
+            activity.evidence_status = "uploaded"
+            activity.save(update_fields=["evidence_status", "updated_at"])
+    except Exception:
+        best_effort_delete(EVIDENCE_NAMESPACE, stored_name)
+        raise
     return _serialize(record)
 
 
@@ -286,6 +305,10 @@ def _chunks(file_obj, chunk_size=64 * 1024):
         if not data:
             break
         yield data
+
+
+def _storage_provider_name() -> str:
+    return "spaces" if getattr(settings, "USE_SPACES_STORAGE", False) else "local"
 
 
 def evidence_records_for_activity(activity_id: str, principal):
@@ -319,13 +342,13 @@ def file_for(record_id: str, principal, *, download: bool = False):
     _assert_activity_in_scope(record.activity, principal)
     if record.quarantined:
         raise BadRequest("This file has been quarantined and cannot be viewed.")
-    path = evidence_path(record.uri)
-    if not os.path.exists(path):
-        raise NotFoundError("File not found on disk.")
+    if not file_exists(EVIDENCE_NAMESPACE, record.uri):
+        raise NotFoundError("File not found in private storage.")
     record.view_count += 1
     record.save(update_fields=["view_count"])
     response = FileResponse(
-        open(path, "rb"), content_type=record.mime_type or "application/octet-stream"
+        open_file(EVIDENCE_NAMESPACE, record.uri),
+        content_type=record.mime_type or "application/octet-stream",
     )
     disposition = (
         "attachment"
@@ -337,8 +360,8 @@ def file_for(record_id: str, principal, *, download: bool = False):
             else "attachment"
         )
     )
-    response["Content-Disposition"] = (
-        f'{disposition}; filename="{record.original_name or record.uri}"'
+    response["Content-Disposition"] = content_disposition_header(
+        disposition == "attachment", record.original_name or record.uri
     )
     response["X-Content-Type-Options"] = "nosniff"
     response["Content-Security-Policy"] = "default-src 'none'"
@@ -427,19 +450,33 @@ def _try_office_to_pdf(record: EvidenceRecord) -> bool:
     if not soffice:
         _fail_rendition(record, "LibreOffice not installed")
         return False
-    src = evidence_path(record.uri)
-    out_dir = evidence_dir()
     try:
-        subprocess.run(
-            [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, src],
-            check=True,
-            capture_output=True,
-            timeout=60,
-        )
-        pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
-        if os.path.exists(evidence_path(pdf_name)):
-            _save_rendition(record, pdf_name)
-            return True
+        with (
+            materialized_file(EVIDENCE_NAMESPACE, record.uri) as src,
+            tempfile.TemporaryDirectory(prefix="edify-evidence-preview-") as out_dir,
+        ):
+            subprocess.run(
+                [
+                    soffice,
+                    "--headless",
+                    "--convert-to",
+                    "pdf",
+                    "--outdir",
+                    out_dir,
+                    src,
+                ],
+                check=True,
+                capture_output=True,
+                timeout=60,
+            )
+            generated = os.path.join(
+                out_dir, os.path.splitext(os.path.basename(src))[0] + ".pdf"
+            )
+            pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
+            if os.path.exists(generated):
+                save_local_file(EVIDENCE_NAMESPACE, pdf_name, generated)
+                _save_rendition(record, pdf_name)
+                return True
     except Exception as exc:  # noqa: BLE001
         _fail_rendition(record, str(exc))
     return False
@@ -456,11 +493,15 @@ def _try_image_to_pdf(record: EvidenceRecord) -> bool:
     try:
         from PIL import Image
 
-        src = evidence_path(record.uri)
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
-        dest = evidence_path(pdf_name)
-        with Image.open(src) as img:
-            img.convert("RGB").save(dest, "PDF")
+        with (
+            materialized_file(EVIDENCE_NAMESPACE, record.uri) as src,
+            tempfile.TemporaryDirectory(prefix="edify-evidence-preview-") as tmp_dir,
+        ):
+            dest = os.path.join(tmp_dir, "preview.pdf")
+            with Image.open(src) as img:
+                img.convert("RGB").save(dest, "PDF")
+            save_local_file(EVIDENCE_NAMESPACE, pdf_name, dest)
         _save_rendition(record, pdf_name)
         return True
     except Exception as exc:  # noqa: BLE001
@@ -474,11 +515,13 @@ def rendition_for(record_id: str, principal):
     if not record or not record.pdf_rendition_storage_key:
         raise NotFoundError("PDF rendition not available.")
     _assert_activity_in_scope(record.activity, principal)
-    path = evidence_path(record.pdf_rendition_storage_key)
-    if not os.path.exists(path):
+    if not file_exists(EVIDENCE_NAMESPACE, record.pdf_rendition_storage_key):
         raise NotFoundError("Rendition file not found.")
-    response = FileResponse(open(path, "rb"), content_type="application/pdf")
-    response["Content-Disposition"] = "inline"
+    response = FileResponse(
+        open_file(EVIDENCE_NAMESPACE, record.pdf_rendition_storage_key),
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = content_disposition_header(False, "preview.pdf")
     response["X-Content-Type-Options"] = "nosniff"
     return response
 

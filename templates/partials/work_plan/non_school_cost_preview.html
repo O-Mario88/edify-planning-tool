@@ -7,7 +7,7 @@
     <li class="flex items-center justify-between gap-3">
       <span>{{ line.label }} × {{ line.qty }}</span>
       {% if line.missing %}
-      <span class="pill pill-warning">Rate not set</span>
+      <span class="pill pill-warn">Rate not set</span>
       {% else %}
       <span class="font-semibold tabular-nums">UGX {{ line.amount|intcomma }}</span>
       {% endif %}

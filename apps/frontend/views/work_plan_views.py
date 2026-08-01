@@ -50,8 +50,60 @@ def _programme_items():
     return (
         effective_items()
         .filter(non_school_allowed=True)
+        .prefetch_related("intervention_mappings")
         .order_by("programme_category", "display_name")
     )
+
+
+def _programme_item_metadata(item):
+    """Canonical reporting fields for a central budget activity.
+
+    The catalogue owns activity type, delivery method and fixed intervention;
+    asking planners to select them again created contradictory combinations.
+    """
+    from apps.activity_catalogue.models import DeliveryMethod, MappingMode
+    from apps.core.enums import ProgrammeDeliveryMode
+
+    delivery_modes = {
+        DeliveryMethod.IN_SCHOOL_TRAINING: ProgrammeDeliveryMode.IN_SCHOOL,
+        DeliveryMethod.CLUSTER_MEETING: ProgrammeDeliveryMode.CLUSTER,
+        DeliveryMethod.CLUSTER_TRAINING: ProgrammeDeliveryMode.CLUSTER,
+        DeliveryMethod.ONLINE: ProgrammeDeliveryMode.ONLINE,
+        DeliveryMethod.SCHOOL_VISIT: ProgrammeDeliveryMode.VISIT,
+        DeliveryMethod.GROUP: ProgrammeDeliveryMode.GROUP,
+        DeliveryMethod.ADMIN: ProgrammeDeliveryMode.ADMIN,
+        DeliveryMethod.PROGRAMME_EVENT: ProgrammeDeliveryMode.GROUP,
+    }
+    mapping = next(
+        (
+            mapping
+            for mapping in item.intervention_mappings.all()
+            if mapping.active and mapping.is_primary
+        ),
+        None,
+    )
+    requires_intervention = bool(
+        mapping
+        and mapping.mapping_mode == MappingMode.INHERIT_FROM_SOURCE_ACTIVITY
+        and not mapping.intervention
+    )
+    return {
+        "programme_activity_type": item.activity_type,
+        "programme_activity_type_label": item.get_activity_type_display(),
+        "programme_delivery_mode": delivery_modes[item.delivery_method],
+        "programme_delivery_mode_label": item.get_delivery_method_display(),
+        "focus_intervention": mapping.intervention if mapping else None,
+        "requires_intervention": requires_intervention,
+        "focus_intervention_label": (
+            mapping.get_intervention_display()
+            if mapping and mapping.intervention
+            else (
+                "Select follow-up intervention"
+                if requires_intervention
+                else "Administrative / not applicable"
+            )
+        ),
+    }
 
 
 def _assignable_staff(user):
@@ -90,11 +142,15 @@ def non_school_activity_drawer(request):
     from apps.geography.models import District
     from apps.projects.scoping import scoped_projects
 
+    items = list(_programme_items())
+    for item in items:
+        item.programme_metadata = _programme_item_metadata(item)
+
     return render(
         request,
         "partials/work_plan/non_school_activity_drawer.html",
         {
-            "items": _programme_items(),
+            "items": items,
             "rationales": SupportRationale.choices,
             "projects": scoped_projects(request.user).order_by("name"),
             "districts": District.objects.order_by("name"),
@@ -159,10 +215,9 @@ def non_school_activity_preview(request):
 @require_http_methods(["POST"])
 def non_school_activity_action(request):
     from apps.planning.services import schedule_programme_activity
+    from apps.activity_catalogue.services import get_selectable_item
 
-    responsibility_type = (
-        request.POST.get("responsibility_type") or "staff"
-    ).strip()
+    responsibility_type = (request.POST.get("responsibility_type") or "staff").strip()
     if responsibility_type not in ("staff", "partner"):
         return error_fragment(
             ValueError("Select Staff or Partner as the responsible party."),
@@ -175,9 +230,10 @@ def non_school_activity_action(request):
     own_id = request.user.staff_profile_id or request.user.user_id
     if responsibility_type == "staff":
         responsible = responsible or own_id
-        if responsible != own_id and not _assignable_staff(request.user).filter(
-            id=responsible
-        ).exists():
+        if (
+            responsible != own_id
+            and not _assignable_staff(request.user).filter(id=responsible).exists()
+        ):
             return HttpResponseForbidden(
                 "Only an authorized supervisor may assign this activity to "
                 "another staff member."
@@ -200,22 +256,28 @@ def non_school_activity_action(request):
         )
 
     start_raw = (request.POST.get("scheduled_date") or "").strip()
+    catalogue_item_id = (request.POST.get("catalogue_item_id") or "").strip()
+    try:
+        item = get_selectable_item(catalogue_item_id)
+        metadata = _programme_item_metadata(item)
+    except Exception as exc:  # noqa: BLE001 — htmx error surface
+        return error_fragment(
+            exc, action="Choose an approved Activity title", status=400
+        )
     payload = {
-        "catalogueItemId": (request.POST.get("catalogue_item_id") or "").strip(),
+        "catalogueItemId": catalogue_item_id,
         "scheduledDate": f"{start_raw}T09:00:00+03:00" if start_raw else "",
         "endDate": (request.POST.get("end_date") or "").strip() or None,
         "supportRationale": (request.POST.get("support_rationale") or "").strip(),
         "projectId": (request.POST.get("project_id") or "").strip() or None,
         "activityPurposeText": (request.POST.get("purpose") or "").strip(),
-        "programmeActivityType": (
-            request.POST.get("programme_activity_type") or ""
-        ).strip(),
-        "programmeDeliveryMode": (
-            request.POST.get("programme_delivery_mode") or ""
-        ).strip(),
+        "programmeActivityType": metadata["programme_activity_type"],
+        "programmeDeliveryMode": metadata["programme_delivery_mode"],
         "focusIntervention": (
-            request.POST.get("focus_intervention") or ""
-        ).strip(),
+            (request.POST.get("focus_intervention") or "").strip()
+            if metadata["requires_intervention"]
+            else metadata["focus_intervention"]
+        ),
         "plannedSchoolCount": schools,
         "expectedOutcome": (request.POST.get("expected_outcome") or "").strip(),
         "expectedParticipants": participants or None,
@@ -340,7 +402,7 @@ def work_plan_export(request):
             cell.fill = fill
             cell.border = Border(bottom=border)
             cell.alignment = Alignment(vertical="top", wrap_text=True)
-        sheet.cell(row_index, 11).number_format = '#,##0'
+        sheet.cell(row_index, 11).number_format = "#,##0"
     widths = [20, 38, 28, 26, 18, 21, 28, 14, 28, 18, 18, 20]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
@@ -354,9 +416,7 @@ def work_plan_export(request):
         )
     )
     filename = f"Edify_Work_Plan_FY_{context['fy']}.xlsx"
-    response["Content-Disposition"] = (
-        f"attachment; filename*=UTF-8''{quote(filename)}"
-    )
+    response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(filename)}"
     workbook.save(response)
     return response
 

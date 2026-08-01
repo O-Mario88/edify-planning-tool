@@ -98,6 +98,12 @@ _KEY_LABEL = {
     "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
     "secondary_breakfast_per_day": "Secondary district breakfast (optional)",
     "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
+    "programme_venue_per_day": "Programme event venue (per day)",
+    "programme_participant_meal_cost_per_head": "Programme participant meals",
+    "programme_facilitation_per_day": "Programme facilitation (per day)",
+    "programme_transport_per_day": "Programme transport (per day)",
+    "programme_materials_per_participant": "Programme materials",
+    "programme_accommodation_per_night": "Programme accommodation (per night)",
 }
 
 
@@ -165,6 +171,58 @@ def preview(input: dict) -> dict:
         "blockers": blockers,
         "canSchedule": (not cost.cost_missing) and catalogue is not None,
     }
+
+
+def activity_cost_coverage(items, catalogue: CostCatalogue | None = None) -> list[dict]:
+    """Describe how every governed Activity is covered by the CD rate card.
+
+    Cost settings are reusable ingredients, so duplicating the same meal or
+    transport rate into 28 activity-specific rows would create conflicting
+    sources of truth. This projection keeps the rates canonical while making
+    each Activity Catalogue title, its recipe, and any missing ingredient
+    visible on the CD Cost Catalogue page.
+
+    ``items`` should prefetch ``intervention_mappings``; the function performs
+    one rate-card read regardless of catalogue size and no per-item queries.
+    """
+    catalogue = catalogue or active_catalogue()
+    rates, _by_key = _rate_card(catalogue)
+    rows: list[dict] = []
+    for item in items:
+        profiled = _profiled_input(
+            {
+                "activityType": item.workflow_kind,
+                "costingProfile": item.costing_profile,
+                "deliveryType": "staff",
+                "districtType": "primary",
+                "expectedParticipants": 1,
+                "days": 1,
+            }
+        )
+        cost = cost_for_activity(profiled, rates)
+        mappings = [m for m in item.intervention_mappings.all() if m.active]
+        intervention = next(
+            (m.get_intervention_display() for m in mappings if m.is_primary),
+            "Administrative / inherited",
+        )
+        component_labels = []
+        for line in cost.lines:
+            if line.label not in component_labels:
+                component_labels.append(line.label.split(" [Rate basis:", 1)[0])
+        rows.append(
+            {
+                "stable_code": item.stable_code,
+                "name": item.display_name,
+                "activity_type": item.get_activity_type_display(),
+                "delivery_method": item.get_delivery_method_display(),
+                "intervention": intervention,
+                "costing_profile": item.costing_profile.replace("_", " ").title(),
+                "components": component_labels,
+                "missing": [_missing_label(key) for key in cost.missing_items],
+                "ready": catalogue is not None and not cost.cost_missing,
+            }
+        )
+    return rows
 
 
 def assert_schedulable(input: dict) -> None:

@@ -4,12 +4,12 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260730calendarcontract1">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260731readabletype1">
 {% endblock %}
 
 {% block shell_content %}
-<section class="calendar-workspace" x-data="{ eventFilter: 'all' }" aria-label="Operations calendar">
-  <header class="calendar-workspace__header">
+<section class="calendar-workspace edify-page-canvas" x-data="{ eventFilter: 'all' }" aria-label="Operations calendar">
+  <header class="edify-page-header calendar-workspace__header">
     <div>
       <p class="calendar-workspace__eyebrow">Operations calendar</p>
       <h1 class="edify-page-title">Calendar</h1>
@@ -118,12 +118,19 @@
     {% else %}
     <div id="calendar-event-grid" role="tabpanel" aria-label="{{ month_name }} {{ year }}">
       <div class="calendar-month__grid-region">
+        {% comment %}A grid owes its cells a row: without one the columnheaders
+        and gridcells are dropped from the accessibility tree entirely. The row
+        wrappers carry `display: contents` so the seven-column CSS grid is
+        unchanged.{% endcomment %}
         <div class="calendar-month__grid" role="grid" aria-label="{{ month_name }} {{ year }}">
-          {% for weekday in weekday_labels %}
-          <div class="calendar-month__weekday" role="columnheader">{{ weekday }}</div>
-          {% endfor %}
+          <div class="calendar-month__row" role="row">
+            {% for weekday in weekday_labels %}
+            <div class="calendar-month__weekday" role="columnheader">{{ weekday }}</div>
+            {% endfor %}
+          </div>
 
           {% for week in calendar_weeks %}
+            <div class="calendar-month__row" role="row">
             {% for day in week %}
             <article class="calendar-day{% if not day.is_current_month %} calendar-day--outside{% endif %}{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
               <div class="calendar-day__topline">
@@ -135,6 +142,7 @@
               </div>
             </article>
             {% endfor %}
+            </div>
           {% endfor %}
         </div>
       </div>

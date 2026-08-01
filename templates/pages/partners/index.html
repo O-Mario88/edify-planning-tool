@@ -4,8 +4,8 @@
 {% block title %}Partner Activities — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="partner-workspace">
-  <header class="partner-workspace__header">
+<div class="partner-workspace edify-page-canvas">
+  <header class="edify-page-header partner-workspace__header">
     <div>
       <p class="partner-workspace__eyebrow">Delivery partners</p>
       <h1 class="edify-page-title">Partner Activities</h1>
@@ -45,32 +45,7 @@
 
   <div class="partner-workspace__layout">
     <section class="partner-workspace__main" aria-label="Partner activity records">
-      <section class="partner-kpi-grid" aria-label="Partner activity overview">
-        <article class="partner-kpi-card partner-kpi-card--violet">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3 20v-1.5a5.5 5.5 0 0 1 11 0V20m1.5-4.5a4.5 4.5 0 0 1 5.5 4.4"/></svg></span>
-          <div><span>Total Partners</span><strong>{{ kpis.partners }}</strong><small>In this view</small></div>
-        </article>
-        <article class="partner-kpi-card partner-kpi-card--blue">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V5h10v16M15 9h4v12M8 9h4m-4 4h4m-4 4h4"/></svg></span>
-          <div><span>Assigned Schools</span><strong>{{ kpis.assigned_schools }}</strong><small>Across all partners</small></div>
-        </article>
-        <article class="partner-kpi-card partner-kpi-card--green">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M7 11h10m-6 4 2 2 4-4"/></svg></span>
-          <div><span>Scheduled Activities</span><strong>{{ kpis.scheduled }}</strong><small>{{ status_breakdown.scheduled_pct }}% of work</small></div>
-        </article>
-        <article class="partner-kpi-card partner-kpi-card--amber">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg></span>
-          <div><span>Yet to Schedule</span><strong>{{ kpis.pending }}</strong><small>{{ status_breakdown.pending_pct }}% need a date</small></div>
-        </article>
-        <article class="partner-kpi-card partner-kpi-card--teal">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M8 12h8m-4-4v8"/></svg></span>
-          <div><span>Partner Activity Cost</span><strong>{{ kpis.cost|ugx }}</strong><small>Scheduled work</small></div>
-        </article>
-        <article class="partner-kpi-card partner-kpi-card--rose">
-          <span class="partner-kpi-card__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/></svg></span>
-          <div><span>High-Risk Delays</span><strong>{{ kpis.overdue }}</strong><small>{% if kpis.overdue %}Needs attention{% else %}No late work{% endif %}</small></div>
-        </article>
-      </section>
+      {% include "components/kpi_strip.html" with items=partner_kpi_items title="Partner activity overview" %}
 
       <section class="partner-activity-groups" aria-label="Partner activity groups">
         {% for card in partner_cards %}

@@ -4,14 +4,14 @@
 {% block title %}Main Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="admin-command" id="main-dashboard-container">
+<div class="admin-command edify-page-canvas" id="main-dashboard-container">
   <nav class="admin-command__breadcrumbs" aria-label="Breadcrumb">
     <a href="/dashboard">Home</a>
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m7 4 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span aria-current="page">Main Dashboard</span>
   </nav>
 
-  <header class="admin-command__header">
+  <header class="edify-page-header admin-command__header">
     <div>
       <h1 class="edify-page-title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
       <p>{% if admin_ops %}Keeping Edify available, secure, fast and working as designed. Business figures below are diagnostic context, not Admin's own targets.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
@@ -34,32 +34,7 @@
   <p class="admin-command__section-note">How the business surfaces are behaving. Admin observes these; the roles that own them act on them.</p>
 {% endif %}
 
-  <section class="admin-kpi-strip" aria-label="Country operational summary">
-    {% for item in kpi_strip_items %}
-    <article class="admin-kpi" data-tone="{{ item.variant }}">
-      <span class="admin-kpi__icon">
-        {% include "partials/dashboards/admin/_icon.html" with name=item.icon only %}
-      </span>
-      <span class="admin-kpi__copy">
-        <span class="admin-kpi__label">{{ item.label }}</span>
-        <strong>{{ item.value }}</strong>
-        <small>{{ item.helper }}</small>
-      </span>
-    </article>
-    {% endfor %}
-    <a href="/schools?readiness=attention" class="admin-kpi" data-tone="danger">
-      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="attention" only %}</span>
-      <span class="admin-kpi__copy"><span class="admin-kpi__label">Needs Attention</span><strong>{{ signals.needs_attention }}</strong><small>schools</small></span>
-    </a>
-    <a href="/planning" class="admin-kpi" data-tone="warning">
-      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="arrow" only %}</span>
-      <span class="admin-kpi__copy"><span class="admin-kpi__label">Ready for Action</span><strong>{{ signals.ready_for_action }}</strong><small>schools</small></span>
-    </a>
-    <a href="/system-health" class="admin-kpi" data-tone="success">
-      <span class="admin-kpi__icon">{% include "partials/dashboards/admin/_icon.html" with name="health" only %}</span>
-      <span class="admin-kpi__copy"><span class="admin-kpi__label">Operational Health</span><strong>{{ signals.operational_health }}%</strong><small>system score</small></span>
-    </a>
-  </section>
+  {% include "components/kpi_strip.html" with items=country_kpi_items title="Country operational summary" %}
 
   <div class="admin-workspace">
     <div class="admin-workspace__main">

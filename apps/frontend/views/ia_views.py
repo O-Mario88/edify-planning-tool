@@ -4,7 +4,19 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
 
-from django.db.models import Avg, DurationField, ExpressionWrapper, F, Q
+from django.db.models import (
+    Avg,
+    Case,
+    DateTimeField,
+    DurationField,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Q,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce
 
 from apps.core.redirects import local_redirect
 from apps.core.donut import build_gauge, build_rings
@@ -27,8 +39,29 @@ from apps.activities.ia_services import (
 )
 from apps.core.enums import ActivityStatus
 from apps.core.exceptions import BadRequest
+from apps.core.metrics import MetricValue, render_metric, render_strip
 
 QUEUE_PAGE_SIZE = 50
+
+
+def _recent_fy_labels(count: int = 4) -> list[str]:
+    """The FY labels a reviewer might plausibly filter to, newest first.
+
+    Derived from the canonical FY helper rather than written into the
+    template, so the list cannot drift from the values actually stored on
+    Activity.fy.
+    """
+    from apps.core.fy import get_operational_fy
+
+    current = int(get_operational_fy())
+    return [str(current - offset) for offset in range(count)]
+
+
+#: How long an activity may sit in the IA queue before it is late. One
+#: constant, because the dashboard reports both a rate ("% verified within
+#: SLA" for the week just gone) and a count ("how many are late right now"),
+#: and those two numbers disagreeing would be worse than either being absent.
+IA_VERIFICATION_SLA_HOURS = 24
 
 
 @require_page_permission("ia_verification_queue")
@@ -40,12 +73,39 @@ def ia_verification_queue_view(request):
     Salesforce ID (apps.activities.services.complete()), this queue's own
     query excludes any activity without one — no future code path that sets
     this status can silently skip the requirement."""
+    overdue_before = timezone.now() - timedelta(hours=IA_VERIFICATION_SLA_HOURS)
     activities = (
         Activity.objects.filter(
             deleted_at__isnull=True, status="awaiting_ia_verification"
         )
         .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
-        .order_by("-updated_at")
+        .annotate(
+            # The queue is operational, not chronological decoration:
+            # critical Core/SSA work first, then SLA breaches, then the oldest
+            # submission. These ranks are explicit so database ordering and
+            # the risk label shown to IA cannot drift apart.
+            ia_risk_rank=Case(
+                When(
+                    activity_type__in=[
+                        "core_visit",
+                        "core_training",
+                        "baseline_ssa_visit",
+                    ],
+                    then=Value(0),
+                ),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+            ia_overdue_rank=Case(
+                When(submitted_to_ia_at__lte=overdue_before, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+            ia_submitted_at=Coalesce(
+                "submitted_to_ia_at", "updated_at", output_field=DateTimeField()
+            ),
+        )
+        .order_by("ia_risk_rank", "ia_overdue_rank", "ia_submitted_at", "id")
     )
 
     # ── KPI Strip Calculation ────────────────────────────────────────────────
@@ -83,7 +143,8 @@ def ia_verification_queue_view(request):
     )
     sla_total = sla_history.count()
     sla_compliant_count = sla_history.filter(
-        verified_at__lte=F("activity__submitted_to_ia_at") + timedelta(hours=24)
+        verified_at__lte=F("activity__submitted_to_ia_at")
+        + timedelta(hours=IA_VERIFICATION_SLA_HOURS)
     ).count()
     sla_compliance = (
         round((sla_compliant_count / sla_total) * 100, 1) if sla_total else None
@@ -219,6 +280,7 @@ def ia_verification_queue_view(request):
     )
 
     serialized_queue = []
+    now = timezone.now()
     for a in page_activities:
         data = _serialize(a)
         # Add quick checks recommendation
@@ -230,6 +292,37 @@ def ia_verification_queue_view(request):
             "core_training",
             "baseline_ssa_visit",
         ]
+        submitted_at = a.submitted_to_ia_at or a.updated_at
+        age_hours = max(0, int((now - submitted_at).total_seconds() // 3600))
+        is_overdue = age_hours >= IA_VERIFICATION_SLA_HOURS
+        data.update(
+            {
+                "submitted_at": submitted_at,
+                "age_hours": age_hours,
+                "age_label": (
+                    f"{age_hours // 24}d {age_hours % 24}h"
+                    if age_hours >= 24
+                    else f"{age_hours}h"
+                ),
+                "is_overdue": is_overdue,
+                "risk_label": (
+                    "Critical"
+                    if data["is_high_priority"]
+                    else "High"
+                    if is_overdue
+                    else "Standard"
+                ),
+                "evidence_status": (
+                    "Ready for review" if data["has_evidence"] else "Evidence missing"
+                ),
+                "salesforce_status": "Confirm ID",
+                "next_action_status": (
+                    "Evidence ready — verify Salesforce ID"
+                    if data["has_evidence"]
+                    else "Evidence missing — return to staff"
+                ),
+            }
+        )
         serialized_queue.append(data)
 
     kpi_items = [
@@ -328,7 +421,24 @@ def ia_verification_queue_view(request):
             "staff": staff_filter,
             "partner": partner_filter,
             "activity_type": type_filter,
+            "core_school": core_school_filter,
         },
+        # The template used to hard-code FY24/FY25/FY26. `Activity.fy` holds a
+        # four-digit year ("2026" — see apps.core.fy.get_operational_fy), so
+        # every one of those options filtered on a value no row has ever had
+        # and silently emptied the queue. Options come from the FY helper now.
+        "fy_options": _recent_fy_labels(),
+        "filters_active": any(
+            (
+                fy_filter,
+                quarter_filter,
+                district_filter,
+                staff_filter,
+                type_filter,
+                core_school_filter,
+                search_q,
+            )
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -599,13 +709,14 @@ def ia_dashboard_view(request):
     from datetime import timedelta
 
     from django.db.models import Avg, Count
+    from django.db.models.functions import TruncWeek
     from django.utils.timesince import timesince
 
-    from apps.accounts.models import StaffProfile, User
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
     from apps.core.enums import EvidenceKind, SsaIntervention
     from apps.core.fy import get_operational_fy
     from apps.evidence.models import EvidenceRecord
-    from apps.geography.models import District
+    from apps.geography.models import District, Region
     from apps.partners.models import Partner
     from apps.schools.models import School, UploadBatch
     from apps.ssa.models import SsaRecord, SsaScore
@@ -660,7 +771,9 @@ def ia_dashboard_view(request):
         if not durations:
             return None
         return round(
-            sum(duration <= 24 for duration in durations) / len(durations) * 100,
+            sum(duration <= IA_VERIFICATION_SLA_HOURS for duration in durations)
+            / len(durations)
+            * 100,
             1,
         )
 
@@ -752,6 +865,19 @@ def ia_dashboard_view(request):
     evidence_pending = EvidenceRecord.objects.filter(
         quarantined=False, status="uploaded"
     ).count()
+
+    # Two counts the canonical IA strip needs that nothing else computed.
+    # Overdue is a count of what is late *now*, deliberately distinct from
+    # `verification_sla` above, which is the rate for the week just gone.
+    from apps.schools.models import UnmatchedSSARecord
+
+    overdue_cnt = waiting_qs.filter(
+        submitted_to_ia_at__isnull=False,
+        submitted_to_ia_at__lt=now - timedelta(hours=IA_VERIFICATION_SLA_HOURS),
+    ).count()
+    unmatched_ssa_cnt = UnmatchedSSARecord.objects.filter(
+        status__in=("pending", "hold")
+    ).count()
     uploads_today = (
         SsaRecord.objects.filter(
             deleted_at__isnull=True, created_at__gte=today_start
@@ -761,8 +887,9 @@ def ia_dashboard_view(request):
 
     # ── Verification work queue (oldest first, so SLA risk is visible) ──────
     queue_activities = list(
-        waiting_qs.select_related("school", "school__district")
-        .order_by(F("submitted_to_ia_at").asc(nulls_last=True), "updated_at")[:6]
+        waiting_qs.select_related("school", "school__district").order_by(
+            F("submitted_to_ia_at").asc(nulls_last=True), "updated_at"
+        )[:6]
     )
     staff_ids = {
         a.responsible_staff_id for a in queue_activities if a.responsible_staff_id
@@ -1144,6 +1271,190 @@ def ia_dashboard_view(request):
         ],
     }
 
+    # ── IA country oversight: every region, district, CCEO and PL ───────────
+    # These are completion/verification facts from the Activity ledger, not a
+    # separate reporting store. Programme activities without a school inherit
+    # geography through event_district, so central work is not lost from the
+    # regional and district views.
+    from apps.targets.performance import ACHIEVED_STATUSES
+    from apps.core.rbac import EdifyRole
+
+    excluded_performance_statuses = ("cancelled", "rejected", "deferred")
+    performance_qs = activities.filter(fy=fy).exclude(
+        status__in=excluded_performance_statuses
+    )
+
+    def _activity_rollup(queryset, geography_field):
+        return {
+            row[geography_field]: row
+            for row in queryset.exclude(**{f"{geography_field}__isnull": True})
+            .values(geography_field)
+            .annotate(
+                planned=Count("id"),
+                achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+                verified=Count("id", filter=Q(ia_verification_status="confirmed")),
+                waiting=Count(
+                    "id", filter=Q(status=ActivityStatus.AWAITING_IA_VERIFICATION)
+                ),
+                returned=Count("id", filter=Q(status=ActivityStatus.RETURNED_BY_IA)),
+            )
+        }
+
+    def _merge_rollups(*rollups):
+        merged = {
+            "planned": 0,
+            "achieved": 0,
+            "verified": 0,
+            "waiting": 0,
+            "returned": 0,
+        }
+        for rollup in rollups:
+            if not rollup:
+                continue
+            for key in merged:
+                merged[key] += rollup.get(key, 0)
+        merged["rate"] = (
+            round(merged["achieved"] / merged["planned"] * 100)
+            if merged["planned"]
+            else 0
+        )
+        return merged
+
+    school_district_rollup = _activity_rollup(performance_qs, "school__district_id")
+    event_district_rollup = _activity_rollup(performance_qs, "event_district_id")
+    district_performance = []
+    for district in District.objects.select_related("region").order_by(
+        "region__name", "name"
+    ):
+        metrics = _merge_rollups(
+            school_district_rollup.get(district.id),
+            event_district_rollup.get(district.id),
+        )
+        district_performance.append(
+            {"name": district.name, "region": district.region.name, **metrics}
+        )
+
+    school_region_rollup = _activity_rollup(performance_qs, "school__region_id")
+    event_region_rollup = _activity_rollup(performance_qs, "event_district__region_id")
+    region_performance = []
+    for region in Region.objects.order_by("name"):
+        metrics = _merge_rollups(
+            school_region_rollup.get(region.id), event_region_rollup.get(region.id)
+        )
+        region_performance.append({"name": region.name, **metrics})
+
+    # Activity.responsible_staff_id deliberately accepts either StaffProfile
+    # or User ids for compatibility. Aggregate once, then resolve both id
+    # spaces in memory so the roster remains constant-query at any team size.
+    owner_rollup = _activity_rollup(performance_qs, "responsible_staff_id")
+    active_staff_roster = list(
+        StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user__is_active=True,
+            user__deleted_at__isnull=True,
+        )
+        .select_related("user")
+        .order_by("user__name")
+    )
+    monitored_staff = [
+        staff
+        for staff in active_staff_roster
+        if {EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value}.intersection(
+            set(staff.user.roles or []) | {staff.user.active_role}
+        )
+    ]
+    staff_by_id = {staff.id: staff for staff in active_staff_roster}
+    team_ids_by_pl = {}
+    for supervisor_id, supervisee_id in StaffSupervisorAssignment.objects.filter(
+        supervisor_id__in=[
+            staff.id
+            for staff in monitored_staff
+            if EdifyRole.COUNTRY_PROGRAM_LEAD.value
+            in (set(staff.user.roles or []) | {staff.user.active_role})
+        ]
+    ).values_list("supervisor_id", "supervisee_id"):
+        supervisee = staff_by_id.get(supervisee_id)
+        if supervisee:
+            team_ids_by_pl.setdefault(supervisor_id, set()).update(
+                {supervisee.id, supervisee.user_id}
+            )
+
+    leadership_performance = []
+    for staff in monitored_staff:
+        roles = set(staff.user.roles or []) | {staff.user.active_role}
+        is_pl = EdifyRole.COUNTRY_PROGRAM_LEAD.value in roles
+        owner_ids = (
+            team_ids_by_pl.get(staff.id, set()) | {staff.id, staff.user_id}
+            if is_pl
+            else {staff.id, staff.user_id}
+        )
+        metrics = _merge_rollups(
+            *(owner_rollup.get(owner_id) for owner_id in owner_ids)
+        )
+        leadership_performance.append(
+            {
+                "name": staff.user.name,
+                "role": "Program Lead" if is_pl else "CCEO",
+                "scope": "Team portfolio" if is_pl else "Owned activities",
+                **metrics,
+            }
+        )
+    leadership_performance.sort(
+        key=lambda row: (row["role"] != "Program Lead", row["name"].casefold())
+    )
+
+    # Eight-week planned-versus-IA-verified line chart. SVG coordinates are
+    # built server-side from real weekly counts, with text/table equivalents
+    # retained below for accessibility and zero-JavaScript rendering.
+    trend_start = week_start - timedelta(weeks=7)
+    planned_by_week = {
+        row["week_bucket"].date()
+        if hasattr(row["week_bucket"], "date")
+        else row["week_bucket"]: row["count"]
+        for row in performance_qs.filter(planned_date__gte=trend_start.date())
+        .annotate(week_bucket=TruncWeek("planned_date"))
+        .values("week_bucket")
+        .annotate(count=Count("id"))
+    }
+    verified_by_week = {
+        row["week_bucket"].date()
+        if hasattr(row["week_bucket"], "date")
+        else row["week_bucket"]: row["count"]
+        for row in VerificationHistory.objects.filter(verified_at__gte=trend_start)
+        .annotate(week_bucket=TruncWeek("verified_at"))
+        .values("week_bucket")
+        .annotate(count=Count("id"))
+    }
+    weekly_values = []
+    for offset in range(8):
+        start = (trend_start + timedelta(weeks=offset)).date()
+        weekly_values.append(
+            {
+                "label": start.strftime("%d %b"),
+                "planned": planned_by_week.get(start, 0),
+                "verified": verified_by_week.get(start, 0),
+            }
+        )
+    trend_max = max(
+        [1]
+        + [row["planned"] for row in weekly_values]
+        + [row["verified"] for row in weekly_values]
+    )
+    for index, row in enumerate(weekly_values):
+        row["x"] = 42 + index * 92
+        row["planned_y"] = round(184 - (row["planned"] / trend_max * 142), 1)
+        row["verified_y"] = round(184 - (row["verified"] / trend_max * 142), 1)
+    activity_trend = {
+        "weeks": weekly_values,
+        "max": trend_max,
+        "planned_points": " ".join(
+            f'{row["x"]},{row["planned_y"]}' for row in weekly_values
+        ),
+        "verified_points": " ".join(
+            f'{row["x"]},{row["verified_y"]}' for row in weekly_values
+        ),
+    }
+
     # ── Upload intake status ────────────────────────────────────────────────
     last_batch = UploadBatch.objects.order_by("-created_at").first()
     upload_status = {
@@ -1155,7 +1466,49 @@ def ia_dashboard_view(request):
 
     field_debrief_intel = field_debrief_intelligence_summary(request.user)
 
+    # The canonical KPI strip. Six tiles, one per IA decision question, each
+    # bound to its registry entry and drilling into the queue that resolves
+    # it. The page previously drew its own `ia-metric` tiles, two of which
+    # ("verified this week", "data quality") reported outcomes rather than
+    # work — they told IA how the week went, not what to do next.
+    kpi_strip_items = render_strip(
+        [
+            render_metric(
+                "ia_awaiting_verification",
+                MetricValue.measured(waiting_cnt),
+                drilldown_url="/ia/verification/",
+            ),
+            render_metric(
+                "ia_evidence_ready_for_review",
+                MetricValue.measured(evidence_pending),
+                drilldown_url="/ia/verification/?evidence=ready",
+            ),
+            render_metric(
+                "ia_salesforce_verification_pending",
+                MetricValue.measured(missing_sf_id),
+                drilldown_url="/ia/verification/?sf_id=missing",
+            ),
+            render_metric(
+                "ia_returned_for_correction",
+                MetricValue.measured(returned_open),
+                drilldown_url="/ia/returned/",
+            ),
+            render_metric(
+                "ia_unmatched_ssa_records",
+                MetricValue.measured(unmatched_ssa_cnt),
+                drilldown_url="/ssa/unmatched",
+            ),
+            render_metric(
+                "ia_verification_overdue",
+                MetricValue.measured(overdue_cnt),
+                drilldown_url="/ia/verification/?age=overdue",
+            ),
+        ]
+    )
+
     context = {
+        "fy": fy,
+        "kpi_strip_items": kpi_strip_items,
         "kpis": {
             "waiting": waiting_cnt,
             "verified_today": verified_today,
@@ -1183,6 +1536,10 @@ def ia_dashboard_view(request):
         "evidence_totals": evidence_totals,
         "recent_activities": recent_activities,
         "field_monitoring": field_monitoring,
+        "district_performance": district_performance,
+        "region_performance": region_performance,
+        "leadership_performance": leadership_performance,
+        "activity_trend": activity_trend,
         "upload_status": upload_status,
         "returned_open_school_cnt": returned_open_school_cnt,
         "avg_resolution_days": avg_resolution_days,

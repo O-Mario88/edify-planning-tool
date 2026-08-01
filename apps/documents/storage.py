@@ -13,9 +13,9 @@ Two things are extended rather than copied:
 * **Larger files.** A manual is not a photo of a visit form; the ceiling is
   raised for documents and stays where it is for evidence.
 
-Files never leave through a public URL. `document_path` resolves a stored name
-against the store's real path and refuses anything that escapes it, so a bad row
-or a careless migration cannot turn a database column into an arbitrary read.
+Files never leave through a public URL. Storage keys are generated and
+allow-listed; remote objects are materialized only while a scanner or document
+converter requires a local path.
 """
 
 from __future__ import annotations
@@ -23,12 +23,18 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-import re
+import tempfile
 import uuid
 
-from django.conf import settings
-
 from apps.core.exceptions import BadRequest
+from apps.core.private_storage import (
+    best_effort_delete,
+    local_path,
+    materialized_file,
+    save_file,
+    save_local_file,
+    validate_stored_name,
+)
 from apps.evidence.validation import (
     ALLOWED_MIME_TYPES,
     EXTENSION_FAMILY,
@@ -36,6 +42,7 @@ from apps.evidence.validation import (
 )
 
 logger = logging.getLogger(__name__)
+DOCUMENT_NAMESPACE = "documents"
 
 MAX_DOCUMENT_SIZE = 40 * 1024 * 1024  # 40 MB — manuals and decks are large.
 
@@ -53,14 +60,11 @@ DOCUMENT_EXTENSION_FAMILY = {**EXTENSION_FAMILY, **PRESENTATION_EXTENSION_FAMILY
 CONVERTIBLE_EXTENSIONS = {".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".odt"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
-_STORED_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
-
-
 def document_dir() -> str:
-    directory = getattr(settings, "DOCUMENT_STORAGE_DIR", None) or os.path.join(
-        settings.EVIDENCE_STORAGE_DIR, "..", "documents"
+    """Compatibility path for local development and containment tests."""
+    directory = os.path.dirname(
+        local_path(DOCUMENT_NAMESPACE, "00000000000000000000000000000000.tmp")
     )
-    directory = os.path.realpath(directory)
     os.makedirs(directory, exist_ok=True)
     return directory
 
@@ -72,13 +76,8 @@ def document_path(stored_name: str) -> str:
     deny-list has to anticipate every encoding of "..", an allow-list has to
     anticipate nothing.
     """
-    if not stored_name or not _STORED_NAME_RE.match(stored_name):
-        raise BadRequest("Invalid document file name.")
-    base = os.path.realpath(document_dir())
-    resolved = os.path.realpath(os.path.join(base, stored_name))
-    if resolved != base and not resolved.startswith(base + os.sep):
-        raise BadRequest("Invalid document file name.")
-    return resolved
+    validate_stored_name(stored_name, label="document")
+    return local_path(DOCUMENT_NAMESPACE, stored_name)
 
 
 def assert_safe_document_upload(
@@ -117,14 +116,17 @@ def store_upload(file_obj) -> dict:
     )
 
     stored_name = f"{uuid.uuid4().hex}{ext}"
-    destination = document_path(stored_name)
     digest = hashlib.sha256()
-    with open(destination, "wb") as out:
-        for chunk in file_obj.chunks():
-            digest.update(chunk)
-            out.write(chunk)
-
-    scan_status, detail = _scan(destination)
+    for chunk in file_obj.chunks():
+        digest.update(chunk)
+    file_obj.seek(0)
+    save_file(DOCUMENT_NAMESPACE, stored_name, file_obj)
+    try:
+        with materialized_file(DOCUMENT_NAMESPACE, stored_name) as local_file:
+            scan_status, detail = _scan(local_file)
+    except Exception:
+        best_effort_delete(DOCUMENT_NAMESPACE, stored_name)
+        raise
     return {
         "uri": stored_name,
         "original_filename": original_name[:512],
@@ -167,8 +169,6 @@ def build_preview(version) -> str:
         return PreviewStatus.READY  # already done; never convert twice
 
     ext = (version.file_extension or "").lower()
-    source = document_path(version.uri)
-
     def _finish(status, uri="", error="", pages=None):
         version.preview_status = status
         version.preview_uri = uri
@@ -190,15 +190,26 @@ def build_preview(version) -> str:
 
     if ext == ".pdf":
         # Already the target format — the original *is* the preview.
-        return _finish(PreviewStatus.READY, uri=version.uri, pages=_page_count(source))
+        with materialized_file(DOCUMENT_NAMESPACE, version.uri) as source:
+            return _finish(
+                PreviewStatus.READY, uri=version.uri, pages=_page_count(source)
+            )
 
     if ext in IMAGE_EXTENSIONS:
         try:
             from PIL import Image
 
             pdf_name = os.path.splitext(version.uri)[0] + ".pdf"
-            with Image.open(source) as img:
-                img.convert("RGB").save(document_path(pdf_name), "PDF")
+            with (
+                materialized_file(DOCUMENT_NAMESPACE, version.uri) as source,
+                tempfile.TemporaryDirectory(
+                    prefix="edify-document-preview-"
+                ) as tmp_dir,
+            ):
+                generated = os.path.join(tmp_dir, "preview.pdf")
+                with Image.open(source) as img:
+                    img.convert("RGB").save(generated, "PDF")
+                save_local_file(DOCUMENT_NAMESPACE, pdf_name, generated)
             return _finish(PreviewStatus.READY, uri=pdf_name, pages=1)
         except Exception as exc:  # noqa: BLE001
             return _finish(PreviewStatus.FAILED, error=str(exc))
@@ -214,27 +225,38 @@ def build_preview(version) -> str:
                 error="LibreOffice is not installed on this host.",
             )
         try:
-            subprocess.run(
-                [
-                    soffice,
-                    "--headless",
-                    "--convert-to",
-                    "pdf",
-                    "--outdir",
-                    document_dir(),
-                    source,
-                ],
-                check=True,
-                capture_output=True,
-                timeout=180,
-            )
-            pdf_name = os.path.splitext(version.uri)[0] + ".pdf"
-            if os.path.exists(document_path(pdf_name)):
-                return _finish(
-                    PreviewStatus.READY,
-                    uri=pdf_name,
-                    pages=_page_count(document_path(pdf_name)),
+            with (
+                materialized_file(DOCUMENT_NAMESPACE, version.uri) as source,
+                tempfile.TemporaryDirectory(
+                    prefix="edify-document-preview-"
+                ) as tmp_dir,
+            ):
+                subprocess.run(
+                    [
+                        soffice,
+                        "--headless",
+                        "--convert-to",
+                        "pdf",
+                        "--outdir",
+                        tmp_dir,
+                        source,
+                    ],
+                    check=True,
+                    capture_output=True,
+                    timeout=180,
                 )
+                generated = os.path.join(
+                    tmp_dir, os.path.splitext(os.path.basename(source))[0] + ".pdf"
+                )
+                pdf_name = os.path.splitext(version.uri)[0] + ".pdf"
+                if os.path.exists(generated):
+                    pages = _page_count(generated)
+                    save_local_file(DOCUMENT_NAMESPACE, pdf_name, generated)
+                    return _finish(
+                        PreviewStatus.READY,
+                        uri=pdf_name,
+                        pages=pages,
+                    )
             return _finish(PreviewStatus.FAILED, error="Converter produced no output.")
         except Exception as exc:  # noqa: BLE001
             return _finish(PreviewStatus.FAILED, error=str(exc))

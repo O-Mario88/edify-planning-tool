@@ -17,6 +17,7 @@ from datetime import date
 from django.utils import timezone
 
 from apps.core.fy import fy_options, get_fy_date_range, get_operational_fy
+from apps.core.metrics import MetricValue, render_kpi_item
 from apps.clusters.models import Cluster
 from apps.geography.models import Region
 from apps.partners.models import Partner, PartnerAssignment
@@ -323,6 +324,10 @@ def partners_list_view(request):
     scheduled_pct = round((len(scheduled_rows) / total_rows) * 100) if total_rows else 0
     pending_pct = round((len(pending_rows) / total_rows) * 100) if total_rows else 0
     overdue_pct = round((len(overdue_rows) / total_rows) * 100) if total_rows else 0
+    assigned_school_count = len(
+        {assignment.school_id for assignment in assignments if assignment.school_id}
+        | {activity.school_id for activity in activities if activity.school_id}
+    )
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -370,14 +375,7 @@ def partners_list_view(request):
         "regions": Region.objects.order_by("name"),
         "kpis": {
             "partners": len(partner_cards),
-            "assigned_schools": len(
-                {
-                    assignment.school_id
-                    for assignment in assignments
-                    if assignment.school_id
-                }
-                | {activity.school_id for activity in activities if activity.school_id}
-            ),
+            "assigned_schools": assigned_school_count,
             "scheduled": len(scheduled_rows),
             "pending": len(pending_rows),
             "cost": total_cost,
@@ -391,6 +389,42 @@ def partners_list_view(request):
             "pending_pct": pending_pct,
             "overdue_pct": overdue_pct,
         },
+        "partner_kpi_items": [
+            render_kpi_item(
+                "partner_total_partners",
+                MetricValue.measured(len(partner_cards)),
+                helper="In this view",
+            ),
+            render_kpi_item(
+                "partner_assigned_schools",
+                MetricValue.measured(assigned_school_count),
+                helper="Across all partners",
+                tone="info",
+            ),
+            render_kpi_item(
+                "partner_scheduled_activities",
+                MetricValue.measured(len(scheduled_rows)),
+                helper=f"{scheduled_pct}% of work",
+                tone="success",
+            ),
+            render_kpi_item(
+                "partner_activities_yet_to_schedule",
+                MetricValue.measured(len(pending_rows)),
+                helper=f"{pending_pct}% need a date",
+                tone="warning",
+            ),
+            render_kpi_item(
+                "partner_scheduled_activity_cost",
+                MetricValue.measured(total_cost),
+                helper="Scheduled work",
+            ),
+            render_kpi_item(
+                "partner_high_risk_delays",
+                MetricValue.measured(len(overdue_rows)),
+                helper="Needs attention" if overdue_rows else "No late work",
+                tone="danger" if overdue_rows else "success",
+            ),
+        ],
         "pending_reminders": pending_rows[:5],
         "upcoming_activities": sorted(
             [row for row in scheduled_rows if row["date"] and row["date"] >= today],

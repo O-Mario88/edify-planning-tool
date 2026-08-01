@@ -1,4 +1,4 @@
-<section class="bg-white border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
+<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
          aria-labelledby="{{ section_id }}">
   <header>
     <span class="edify-text-caption font-extrabold uppercase tracking-[0.16em] text-[var(--color-edify-primary)]">Assigned execution portfolio</span>
@@ -11,14 +11,14 @@
   {% if project_priorities %}
   <div class="grid gap-3 lg:grid-cols-2">
     {% for row in project_priorities %}
-    <article class="rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4 transition-all hover:-translate-y-[1.5px] hover:bg-white hover:shadow-md">
+    <article class="rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-4 transition-all hover:-translate-y-[1.5px] hover:bg-[var(--edify-surface)] hover:shadow-md">
       <div class="flex items-start justify-between gap-3">
         <div>
           <span class="edify-text-caption font-bold uppercase tracking-[0.12em] text-slate-400">{{ row.projectCode|default:"Project priority" }}</span>
           <h3 class="mt-1 text-[14px] font-extrabold text-slate-800">{{ row.projectName }}</h3>
           <p class="mt-1 edify-text-caption text-slate-500">{{ row.responsibility }} · {{ row.schoolFocus }}</p>
         </div>
-        <span class="rounded-full bg-white px-2.5 py-1 edify-text-caption font-bold text-slate-600 ring-1 ring-slate-200">{{ row.status }}</span>
+        <span class="edify-surface rounded-full px-2.5 py-1 edify-text-caption font-bold text-slate-600 ring-1 ring-slate-200">{{ row.status }}</span>
       </div>
       <p class="mt-3 edify-text-caption leading-5 text-slate-500">
         {% for intervention in row.targetInterventions %}{{ intervention }}{% if not forloop.last %} · {% endif %}{% empty %}No intervention declared{% endfor %}

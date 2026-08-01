@@ -1,163 +1,103 @@
 {% load frontend_filters %}
-<div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold">
-<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
-<tr>
-<th class="px-6 py-4 text-left">Activity / ID</th>
-<th class="px-6 py-4 text-left">School / Cluster</th>
-<th class="px-6 py-4 text-left">Owner / Partner</th>
-<th class="px-6 py-4 text-left">Activity Type</th>
-<th class="px-6 py-4 text-center">Evidence</th>
-<th class="px-6 py-4 text-center">SSA</th>
-<th class="px-6 py-4 text-left">Salesforce ID</th>
-<th class="px-6 py-4 text-center">Attendance</th>
-<th class="px-6 py-4 text-center">Priority</th>
-<th class="px-6 py-4 text-left">Submitted Date</th>
-<th class="px-6 py-4 text-right">Actions</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% if queue %}
-{% for act in queue %}
-<tr class="hover:bg-slate-50/50 transition-all duration-200">
-<!-- Activity ID -->
-<td class="px-6 py-4">
-<div class="font-semibold text-slate-900 text-[12px] hover:text-[var(--edify-chart-blue)] transition-colors">
-<a href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
-</div>
-<div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.fy }} &bull; {{ act.quarter }}</div>
-</td>
-<!-- School / Cluster -->
-<td class="px-6 py-4">
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.schoolName|default:"Cluster-wide" }}</div>
-<div class="edify-text-caption text-slate-400 mt-0.5 font-semibold">{{ act.clusterName|default:"No Cluster" }}</div>
-</td>
-<!-- Owner -->
-<td class="px-6 py-4">
-<div class="font-semibold text-slate-800">{{ act.responsibleStaffId|default:"Unassigned" }}</div>
-<div class="edify-text-caption text-[var(--edify-chart-blue)] font-bold mt-0.5 capitalize">{{ act.deliveryType }}</div>
-</td>
-<!-- Activity Type -->
-<td class="px-6 py-4">
-<div class="inline-flex items-center px-2.5 py-0.5 rounded-surface edify-text-caption font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
-{{ act.activityType|title|replace_underscore }}
-</div>
-</td>
-<!-- Evidence Status -->
-<td class="px-6 py-4 text-center">
-{% if act.has_evidence %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-pill bg-emerald-50 text-emerald-600 border border-emerald-150 shadow-sm" title="Evidence accepted/uploaded">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-</span>
-{% else %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-pill bg-rose-50 text-rose-600 border border-rose-150 shadow-sm" title="Evidence missing!">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-</span>
-{% endif %}
-</td>
-<!-- SSA Status -->
-<td class="px-6 py-4 text-center">
-{% if act.ssa_collection_expected %}
-{% if act.has_ssa %}
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
-{% else %}
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
-{% endif %}
-{% else %}
-<span class="text-slate-400 edify-text-caption font-normal">N/A</span>
-{% endif %}
-</td>
-<!-- Salesforce ID -->
-<td class="px-6 py-4">
-{% if act.salesforceActivityId %}
-<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill edify-text-caption">{{ act.salesforceActivityId }}</span>
-{% else %}
-<span class="text-rose-600 font-semibold edify-text-caption inline-flex items-center gap-0.5">
-<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01" /></svg>
-Unlinked
-</span>
-{% endif %}
-</td>
-<!-- Attendance -->
-<td class="px-6 py-4 text-center">
-{% if act.teachersAttended is not None or act.leadersAttended is not None %}
-<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-pill edify-text-caption">
-T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0 }}
-</span>
-{% else %}
-<span class="text-slate-400 font-normal">N/A</span>
-{% endif %}
-</td>
-<!-- Priority -->
-<td class="px-6 py-4 text-center">
-{% if act.is_high_priority %}
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
-<span class="w-1.5 h-1.5 rounded-pill bg-rose-500 animate-ping"></span>
-High
-</span>
-{% else %}
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
-Normal
-</span>
-{% endif %}
-</td>
-<!-- Submitted Date -->
-<td class="px-6 py-4 text-slate-500 font-medium">
-{{ act.updatedAt|date:"M d, Y H:i" }}
-</td>
-<!-- Actions -->
-<td class="px-6 py-4 text-right">
-<div class="flex items-center justify-end gap-2">
-<!-- Open Workspace -->
-<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-control edify-primary-soft text-[var(--edify-chart-blue)] hover:bg-[var(--edify-chart-blue)] hover:text-white edify-text-caption font-semibold flex items-center justify-center transition-all shadow-sm">
-Review Action
-</a>
+<div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
+  <div class="hidden lg:block overflow-x-auto">
+    <table class="w-full text-left" aria-describedby="ia-queue-caption">
+      <caption id="ia-queue-caption" class="sr-only">Activity verification records ordered by critical risk, overdue status, and oldest submission.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Activity or SSA record</th>
+          <th scope="col">School or cluster</th>
+          <th scope="col">Record type</th>
+          <th scope="col">Submitted by</th>
+          <th scope="col">Evidence status</th>
+          <th scope="col">Salesforce ID status</th>
+          <th scope="col">Submission date</th>
+          <th scope="col">Age</th>
+          <th scope="col">Risk</th>
+          <th scope="col">Next action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for act in queue %}
+        <tr>
+          <td>
+            <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">FY {{ act.fy }} · {{ act.quarter }}</span>
+          </td>
+          <td>
+            <strong class="block">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
+          </td>
+          <td>{{ act.activityType|title|replace_underscore }}</td>
+          <td>
+            <span class="block">{{ act.responsibleStaffId|default:"Unassigned" }}</span>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.deliveryType|title }}</span>
+          </td>
+          <td>
+            <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
+          </td>
+          <td>
+            <span class="status-pill warning">{{ act.salesforce_status }}</span>
+            <span class="block mt-1 font-mono edify-text-caption">{{ act.salesforceActivityId }}</span>
+          </td>
+          <td><time datetime="{{ act.submitted_at|date:'c' }}">{{ act.submitted_at|date:"j M Y, H:i" }}</time></td>
+          <td class="tabular-nums {% if act.is_overdue %}text-[var(--edify-danger)] font-semibold{% endif %}">{{ act.age_label }}</td>
+          <td><span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span></td>
+          <td>
+            <span class="block max-w-[17rem] text-[var(--edify-text-muted)]">{{ act.next_action_status }}</span>
+            <div class="mt-2 flex items-center gap-2">
+              <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary h-9">Review</a>
+              <details class="edify-row-overflow relative">
+                <summary class="btn btn-ghost h-9 w-9 px-0" aria-label="More actions for {{ act.activityType|title|replace_underscore }} at {{ act.schoolName|default:'cluster' }}">•••</summary>
+                <div class="edify-row-overflow__menu">
+                  <a href="/ia/compare/?activity_id={{ act.id }}">Compare evidence</a>
+                  <a href="/activities/{{ act.id }}/timeline/">View audit timeline</a>
+                </div>
+              </details>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10">
+            {% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-<!-- Side-by-side comparison icon link -->
-<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="Compare side-by-side">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</a>
+  <ul class="lg:hidden divide-y divide-[var(--edify-border)]" aria-label="Activity verification records">
+    {% for act in queue %}
+    <li class="p-4 space-y-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">{{ act.activityType|title|replace_underscore }}</a>
+          <strong class="block truncate">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+          <span class="block edify-text-caption text-[var(--edify-text-muted)]">#{{ act.id|slice:":8" }} · {{ act.age_label }} old</span>
+        </div>
+        <span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span>
+      </div>
+      <p class="text-sm text-[var(--edify-text-muted)]">{{ act.next_action_status }}</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
+        <span class="status-pill warning">{{ act.salesforce_status }}</span>
+      </div>
+      <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary min-h-11 w-full">Review</a>
+    </li>
+    {% empty %}
+    <li>{% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}</li>
+    {% endfor %}
+  </ul>
 
-<!-- Timeline stepper icon link -->
-<a href="/activities/{{ act.id }}/timeline/" class="h-8 w-8 rounded-control border border-slate-200 text-slate-400 hover:hover:bg-slate-50 flex items-center justify-center transition-colors" title="View Audit Timeline">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-</a>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--edify-border)]" aria-label="Verification queue pages">
+    <span class="edify-text-caption text-[var(--edify-text-muted)]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</span>
+    <div class="flex items-center gap-2">
+      {% if page_obj.has_previous %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Previous</a>{% endif %}
+      {% if page_obj.has_next %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.next_page_number }}" hx-get="/ia/verification/?page={{ page_obj.next_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Next</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
 </div>
-</td>
-</tr>
-{% endfor %}
-{% else %}
-<tr>
-<td colspan="11" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-surface bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">All activities verified. The queue is empty.</p>
-</div>
-</td>
-</tr>
-{% endif %}
-</tbody>
-</table>
-</div>
-
-{% if page_obj.paginator.num_pages > 1 %}
-<div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 text-[12px] font-semibold text-slate-500">
-<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} &middot; {{ page_obj.paginator.count }} awaiting verification</span>
-<div class="flex items-center gap-2">
-{% if page_obj.has_previous %}
-<a href="/ia/verification/?page={{ page_obj.previous_page_number }}"
-   hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}"
-   hx-target="#queue-table-container" hx-include="#filters-form"
-   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">&larr; Prev</a>
-{% endif %}
-{% if page_obj.has_next %}
-<a href="/ia/verification/?page={{ page_obj.next_page_number }}"
-   hx-get="/ia/verification/?page={{ page_obj.next_page_number }}"
-   hx-target="#queue-table-container" hx-include="#filters-form"
-   class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">Next &rarr;</a>
-{% endif %}
-</div>
-</div>
-{% endif %}

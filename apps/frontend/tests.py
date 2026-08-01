@@ -285,12 +285,14 @@ class FrontendViewsTestCase(TestCase):
 
         html = response.content.decode()
         # Admin's dashboard now leads with the Platform Operations command
-        # centre (8 tiles) and keeps the 7-tile country strip below it as
+        # centre (7 metrics) and keeps the 7-metric country strip below it as
         # observability. The two are counted separately so a change to either
         # is visible here rather than hidden in a single total.
         self.assertEqual(html.count('aria-label="Platform operations summary"'), 1)
         self.assertEqual(html.count('aria-label="Country operational summary"'), 1)
-        self.assertEqual(html.count('class="admin-kpi"'), 15)
+        # Both strips now use the canonical independent KPI card rather than
+        # the retired page-specific ``admin-kpi`` tile.
+        self.assertEqual(html.count('data-component="kpi-card"'), 14)
         self.assertIn("Platform Observability", html)
         for region in (
             "admin-workspace",
@@ -1056,6 +1058,19 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/my_plan/workspace.html")
 
+    def test_work_plan_budget_drawer_contains_all_governed_activities(self):
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get("/work-plan/add")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["items"]), 28)
+        self.assertContains(response, "EdTech Foundations")
+        self.assertContains(response, "Partner Meetings Admin budget")
+        self.assertContains(response, 'data-requires-intervention="true"')
+        self.assertNotContains(response, 'name="programme_activity_type"')
+        self.assertNotContains(response, 'name="programme_delivery_mode"')
+
     def test_cost_catalogue_row_and_initialization(self):
         User = get_user_model()
         cd_user = User.objects.create(
@@ -1068,6 +1083,12 @@ class FrontendViewsTestCase(TestCase):
         )
         cd_user.save()
         self.client.force_login(cd_user)
+
+        page = self.client.get("/cost-settings")
+        self.assertEqual(page.status_code, 200)
+        self.assertEqual(page.context["governed_activity_count"], 28)
+        self.assertEqual(len(page.context["activity_cost_coverage"]), 28)
+        self.assertContains(page, "All approved budget activities")
 
         # 1. Initialize default catalogue
         response = self.client.post("/cost-settings/initialize-default")
@@ -1741,9 +1762,7 @@ class FrontendViewsTestCase(TestCase):
         # verified SSA, so the catalogue correctly recommends SSA data
         # gathering ahead of intervention support.
         self.assertIsNotNone(pa.catalogue_item)
-        self.assertEqual(
-            pa.expected_activity_type, pa.catalogue_item.workflow_kind
-        )
+        self.assertEqual(pa.expected_activity_type, pa.catalogue_item.workflow_kind)
         self.assertFalse(
             Activity.objects.filter(
                 school=self.school, assigned_partner_id=partner.id

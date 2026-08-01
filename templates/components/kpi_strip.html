@@ -18,7 +18,7 @@
       registered identity -- stamping a placeholder would make an unregistered
       tile look audited.
     {% endcomment %}
-    <div class="kpi-strip__item {% if item.variant %}kpi-strip__item--{{ item.variant }}{% endif %}{% if item.data_state and not item.is_measured %} kpi-strip__item--absent{% endif %}"
+    <div class="kpi-strip__item {% if item.variant %}kpi-strip__item--{{ item.variant }}{% elif item.tone %}kpi-strip__item--{{ item.tone }}{% endif %}{% if item.data_state and not item.is_measured %} kpi-strip__item--absent{% endif %}"
          role="listitem"
          data-component="kpi-card"
          {% if item.metric_key %}data-metric-key="{{ item.metric_key }}"{% endif %}
@@ -49,7 +49,7 @@
       <div class="kpi-strip__item-body">
       {% endif %}
 
-        <span class="kpi-strip__icon-container kpi-strip__icon-container--{{ item.variant|default:'neutral' }}"
+        <span class="kpi-strip__icon-container kpi-strip__icon-container--{% if item.variant %}{{ item.variant }}{% elif item.tone %}{{ item.tone }}{% else %}neutral{% endif %}"
               aria-hidden="true">
           {% include "partials/analytics/pl/_icon.html" with name=item.icon %}
         </span>
@@ -63,13 +63,13 @@
               the split label/value pair for assistive tech.
             {% endcomment %}
             <span class="sr-only">{{ item.accessible_description }}</span>
-            <span class="kpi-strip__label" aria-hidden="true">{{ item.label }}</span>
+            <span class="kpi-strip__label" aria-hidden="true" title="{{ item.label }}">{{ item.label }}</span>
             <span class="kpi-strip__value" aria-hidden="true">{{ item.display_value|default:item.value }}</span>
           {% else %}
-            <span class="kpi-strip__label">{{ item.label }}</span>
+            <span class="kpi-strip__label" title="{{ item.label }}">{{ item.label }}</span>
             <span class="kpi-strip__value">{{ item.display_value|default:item.value }}</span>
           {% endif %}
-          {% if item.trend or item.helper %}
+          {% if item.trend or item.helper or item.meta %}
           <span class="kpi-strip__meta">
             {% if item.trend and item.trend.value %}
             <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
@@ -77,7 +77,7 @@
               {{ item.trend.value }}
             </span>
             {% endif %}
-            {% if item.helper %}<span class="kpi-strip__helper">{{ item.helper }}</span>{% endif %}
+            {% if item.helper %}<span class="kpi-strip__helper">{{ item.helper }}</span>{% elif item.meta %}<span class="kpi-strip__helper">{{ item.meta }}</span>{% endif %}
           </span>
           {% endif %}
         </span>

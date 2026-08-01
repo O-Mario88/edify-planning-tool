@@ -8,25 +8,33 @@ from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.schools.models import School
 
 
+def _distinct(base, column: str) -> list[str]:
+    """The distinct values of one column, deduplicated by the database.
+
+    Each of these used to pull every in-scope school row into Python to build
+    a set — six full scans of the directory on every filter-bar render, 90,000
+    values transferred at full estate size, to produce at most a few dozen
+    options. `.order_by()` clears School's default `-created_at` ordering
+    first: leaving it in makes Postgres reject the DISTINCT (the ordering
+    column is not in the select list) and would defeat the deduplication
+    anyway, since every row's timestamp is different.
+    """
+    return sorted(
+        x for x in base.order_by().values_list(column, flat=True).distinct() if x
+    )
+
+
 def options(principal) -> dict:
     """Distinct values for the filter bar (regions, districts, types, statuses)."""
     scope = resolve_user_scope(principal)
     base = school_queryset(scope) or School.objects.none()
     return {
-        "regions": sorted(
-            set(x for x in base.values_list("region__name", flat=True) if x)
-        ),
-        "districts": sorted(
-            set(x for x in base.values_list("district__name", flat=True) if x)
-        ),
-        "schoolTypes": sorted(set(base.values_list("school_type", flat=True))),
-        "clusterStatuses": sorted(set(base.values_list("cluster_status", flat=True))),
-        "ssaStatuses": sorted(
-            set(base.values_list("current_fy_ssa_status", flat=True))
-        ),
-        "planningReadiness": sorted(
-            set(base.values_list("planning_readiness", flat=True))
-        ),
+        "regions": _distinct(base, "region__name"),
+        "districts": _distinct(base, "district__name"),
+        "schoolTypes": _distinct(base, "school_type"),
+        "clusterStatuses": _distinct(base, "cluster_status"),
+        "ssaStatuses": _distinct(base, "current_fy_ssa_status"),
+        "planningReadiness": _distinct(base, "planning_readiness"),
     }
 
 

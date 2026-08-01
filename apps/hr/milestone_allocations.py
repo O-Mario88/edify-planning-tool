@@ -76,9 +76,7 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         from apps.accounts.models import StaffProfile
 
         employee = (
-            StaffProfile.objects.select_related("user")
-            .filter(id=employee_id)
-            .first()
+            StaffProfile.objects.select_related("user").filter(id=employee_id).first()
             if employee_id
             else None
         )
@@ -94,9 +92,7 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
                 for role in (getattr(employee.user, "roles", None) or [])
             },
         }
-        if applicable and "all" not in applicable and not (
-            applicable & employee_roles
-        ):
+        if applicable and "all" not in applicable and not (applicable & employee_roles):
             raise BadRequest(
                 "This milestone is not applicable to the selected employee's role."
             )
@@ -122,7 +118,9 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
             raise BadRequest("Choose a valid project.")
         applicable = set(milestone.project_applicability or [])
         if applicable and not ({project.id, project.code} & applicable):
-            raise BadRequest("This milestone is not applicable to the selected Project.")
+            raise BadRequest(
+                "This milestone is not applicable to the selected Project."
+            )
     elif allocated_to_type == "team" and not team_id:
         raise BadRequest("Choose a valid team.")
     elif allocated_to_type == "country" and not country_id:
@@ -134,10 +132,9 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
             StaffSupervisorAssignment.objects.filter(supervisor_id=team_id).exists()
         ):
             raise BadRequest("Choose a valid supervised team.")
-        if (
-            getattr(principal, "active_role", "") == "CountryProgramLead"
-            and str(team_id) != str(getattr(principal, "staff_profile_id", ""))
-        ):
+        if getattr(principal, "active_role", "") == "CountryProgramLead" and str(
+            team_id
+        ) != str(getattr(principal, "staff_profile_id", "")):
             raise BadRequest("Program Leads may allocate only their own team target.")
     if allocated_to_type == "country":
         applicable = set(milestone.country_applicability or [])
@@ -208,12 +205,8 @@ def approve_allocation(allocation, *, principal) -> MilestoneAllocation:
             },
         )
     allocation.status = "approved"
-    allocation.approved_by = (
-        getattr(principal, "user_id", None) or str(principal.id)
-    )
-    allocation.save(
-        update_fields=["status", "approved_by", "updated_at"]
-    )
+    allocation.approved_by = getattr(principal, "user_id", None) or str(principal.id)
+    allocation.save(update_fields=["status", "approved_by", "updated_at"])
     from .milestone_progress import refresh_period_targets
 
     refresh_period_targets(allocation.milestone_id)
@@ -234,9 +227,7 @@ def strategic_priority_overview(
 
     allocation_filter = Q(milestones__allocations__status="approved")
     if staff_ids is not None:
-        allocation_filter &= Q(
-            milestones__allocations__employee_id__in=staff_ids
-        )
+        allocation_filter &= Q(milestones__allocations__employee_id__in=staff_ids)
     priorities = (
         StrategicPriority.objects.filter(fy=fy, cycle__isnull=False)
         .annotate(
@@ -300,22 +291,24 @@ def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
             str(getattr(allocation.employee, "user_id", "") or ""),
         }
         for owner_id in owner_ids - {""}:
-            owner_to_staff.setdefault(owner_id, set()).add(
-                str(allocation.employee_id)
-            )
+            owner_to_staff.setdefault(owner_id, set()).add(str(allocation.employee_id))
     if not milestone_ids or not owner_to_staff:
         return {}
     owner_ids = list(owner_to_staff)
-    credits = MilestoneProgressCredit.objects.filter(
-        rule__milestone_id__in=milestone_ids,
-    ).filter(
-        Q(activity__responsible_staff_id__in=owner_ids)
-        | Q(activity__monitored_by_staff_id__in=owner_ids)
-    ).values(
-        "rule__milestone_id",
-        "activity_id",
-        "activity__responsible_staff_id",
-        "activity__monitored_by_staff_id",
+    credits = (
+        MilestoneProgressCredit.objects.filter(
+            rule__milestone_id__in=milestone_ids,
+        )
+        .filter(
+            Q(activity__responsible_staff_id__in=owner_ids)
+            | Q(activity__monitored_by_staff_id__in=owner_ids)
+        )
+        .values(
+            "rule__milestone_id",
+            "activity_id",
+            "activity__responsible_staff_id",
+            "activity__monitored_by_staff_id",
+        )
     )
     linked: dict[tuple[str, str], set[str]] = {}
     for credit in credits:
@@ -328,9 +321,9 @@ def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
                 owner_to_staff.get(str(credit[owner_field] or ""), set())
             )
         for staff_id in matched_staff_ids:
-            linked.setdefault(
-                (str(credit["rule__milestone_id"]), staff_id), set()
-            ).add(str(credit["activity_id"]))
+            linked.setdefault((str(credit["rule__milestone_id"]), staff_id), set()).add(
+                str(credit["activity_id"])
+            )
     return {key: len(activity_ids) for key, activity_ids in linked.items()}
 
 
@@ -353,12 +346,8 @@ def _allocation_projection(
     quarter = periods[quarter_start : quarter_start + 3]
     fy_plan = sum((target.planned_value for target in periods), Decimal("0"))
     fy_actual = sum((target.actual_value for target in periods), Decimal("0"))
-    quarter_plan = sum(
-        (target.planned_value for target in quarter), Decimal("0")
-    )
-    quarter_actual = sum(
-        (target.actual_value for target in quarter), Decimal("0")
-    )
+    quarter_plan = sum((target.planned_value for target in quarter), Decimal("0"))
+    quarter_actual = sum((target.actual_value for target in quarter), Decimal("0"))
     remaining = max(Decimal("0"), fy_plan - fy_actual)
     month_plan = current.planned_value if current else Decimal("0")
     month_actual = current.actual_value if current else Decimal("0")
@@ -369,9 +358,7 @@ def _allocation_projection(
         if fy_actual
         else "Not Started"
     )
-    if status == "Achieved" or (
-        month_plan and month_actual >= month_plan
-    ):
+    if status == "Achieved" or (month_plan and month_actual >= month_plan):
         risk, risk_tone = "On track", "success"
     elif month_actual:
         risk, risk_tone = "Watch", "warning"
@@ -391,9 +378,7 @@ def _allocation_projection(
         "fyPlan": fy_plan,
         "fyActual": fy_actual,
         "remaining": remaining,
-        "progress": (
-            round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
-        ),
+        "progress": (round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0),
         "status": status,
         "risk": risk,
         "riskTone": risk_tone,

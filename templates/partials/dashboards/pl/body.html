@@ -190,7 +190,7 @@
         { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
       ],
       chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
-      stroke: { width: [0,0,0,2.5], curve: 'smooth' },
+      stroke: { width: [0,0,0,2.25], curve: 'straight' },
       colors: window.EdifyChartSystem.mixedSeries,
       fill: { opacity: [1, 1, 1, 1] },
       dataLabels: { enabled: false },

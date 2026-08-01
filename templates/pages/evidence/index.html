@@ -4,14 +4,16 @@
 
 {% block shell_content %}
 <section class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" aria-labelledby="evidence-center-title">
-  <header class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 border-b border-slate-100 pb-4">
-    <div>
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Execution assurance</span>
+  <header class="edify-page-header">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="lg:max-w-[560px]">
       <p class="edify-page-eyebrow">Quality & Insights</p>
-      <h1 id="evidence-center-title" class="text-[21px] font-extrabold tracking-tight leading-tight mt-1 edify-page-title">Evidence Center</h1>
+      <h1 id="evidence-center-title" class="edify-page-title">Evidence Review</h1>
       <p class="text-[12px] text-slate-500 font-semibold mt-1">Review, audit, and track proof packets across the activities in your authorized scope.</p>
     </div>
+    </div>
   </header>
+  {% include "partials/_section_nav.html" %}
   {% include "partials/evidence/workspace.html" %}
 </section>
 {% endblock %}

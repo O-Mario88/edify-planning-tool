@@ -52,9 +52,7 @@ def define_milestone(milestone, *, data: dict, principal):
             "description": (data.get("metricDescription") or "").strip(),
             "source_models": data.get("sourceModels") or [data["dataSource"]],
             "canonical_service": data["canonicalService"].strip(),
-            "numerator_definition": (
-                data.get("numeratorDefinition") or ""
-            ).strip(),
+            "numerator_definition": (data.get("numeratorDefinition") or "").strip(),
             "denominator_definition": denominator,
             "included_states": data.get("includedStates") or [],
             "excluded_states": data.get("excludedStates") or [],
@@ -69,9 +67,7 @@ def define_milestone(milestone, *, data: dict, principal):
             "provisional_behavior": (
                 data.get("provisionalBehavior") or "Exclude"
             ).strip(),
-            "verified_behavior": (
-                data.get("verifiedBehavior") or "Include"
-            ).strip(),
+            "verified_behavior": (data.get("verifiedBehavior") or "Include").strip(),
         },
     )
     milestone.title = data["canonicalTitle"].strip()

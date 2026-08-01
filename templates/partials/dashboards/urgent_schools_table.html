@@ -31,7 +31,7 @@ read as decoration rather than emphasis.
           <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline edify-text">{{ row.school }}</a>
           {% if urgent_action_mode == "pl" %}
           <span class="mt-1 inline-flex items-center rounded-pill px-1.5 py-0.5 font-semibold"
-                style="font-size: 10.5px;color:{% if row.owner_kind == 'pl' %}var(--edify-info){% else %}var(--edify-purple){% endif %};background:{% if row.owner_kind == 'pl' %}var(--edify-info-light){% else %}var(--edify-purple-light){% endif %};">
+                class="text-[12px] {% if row.owner_kind == 'pl' %}edify-info-soft edify-info-text{% else %}bg-[var(--edify-purple-light)] text-[var(--edify-purple-text)]{% endif %}">
             {% if row.owner_kind == "pl" %}My portfolio{% else %}{{ row.owner_name }} · supervised{% endif %}
           </span>
           {% endif %}

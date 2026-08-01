@@ -147,7 +147,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
     {% endif %}
     <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600">
       <span>Role:</span>
-      <select name="role" x-data @change="$el.form.requestSubmit()" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] bg-white font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
+      <select name="role" x-data @change="$el.form.requestSubmit()" class="edify-surface rounded-control border border-slate-200 px-2.5 py-1 text-[12px] font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
         <option value="">All Roles</option>
         {% for r in available_roles %}
         <option value="{{ r }}" {% if selected_role == r %}selected{% endif %}>{{ r }}</option>
@@ -156,7 +156,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
     </label>
     <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600">
       <span>Status:</span>
-      <select name="status" x-data @change="$el.form.requestSubmit()" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] bg-white font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
+      <select name="status" x-data @change="$el.form.requestSubmit()" class="edify-surface rounded-control border border-slate-200 px-2.5 py-1 text-[12px] font-medium shadow-xs focus:ring-1 focus:ring-sky-500 focus:outline-none">
         <option value="">All Statuses</option>
         <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
         <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>

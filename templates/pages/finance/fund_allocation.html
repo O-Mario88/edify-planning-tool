@@ -15,7 +15,7 @@
   </nav>
 
   <!-- Header -->
-  <div class="edify-page-hero">
+  <div class="edify-page-header edify-page-hero">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Country funding roll-up</p>
@@ -42,13 +42,13 @@
   <div class="legacy-kpi-strip legacy-kpi-strip--finance grid grid-cols-1 max-w-sm gap-3" aria-label="Budget period summary">
     {% for period in comparison %}
     {% if period.key == 'month' %}
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month" class="rounded-surface border p-4 transition-all !bg-[#2563eb] !border-[#2563eb] !text-white shadow-md edify-selected-surface">
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month" class="edify-primary-solid edify-primary-on-solid rounded-surface border border-[var(--edify-accent)] p-4 shadow-md transition-all">
       <span class="legacy-kpi-strip__icon !text-white" aria-hidden="true">
         {% include "partials/analytics/pl/_icon.html" with name="currency" %}
       </span>
       <span class="legacy-kpi-strip__copy">
         <span class="legacy-kpi-strip__label !edify-primary-on-solid">Monthly Budget</span>
-        <strong class="legacy-kpi-strip__value !text-white" style="color: #ffffff !important;">{{ period.total|ugx }}</strong>
+        <strong class="legacy-kpi-strip__value edify-primary-on-solid">{{ period.total|ugx }}</strong>
         <small class="legacy-kpi-strip__helper !edify-primary-on-solid">{{ month_label }} FY {{ fy }} · {{ period.title }}</small>
       </span>
     </a>

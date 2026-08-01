@@ -46,20 +46,14 @@ TYPE_VALUES.update({value: value for value in CatalogueActivityType.values})
 DELIVERY_VALUES = {
     normalize_alias(label): value for value, label in DeliveryMethod.choices
 }
-DELIVERY_VALUES.update(
-    {
-        value: value for value in DeliveryMethod.values
-    }
-)
+DELIVERY_VALUES.update({value: value for value in DeliveryMethod.values})
 DELIVERY_VALUES.update(
     {
         "visit": DeliveryMethod.SCHOOL_VISIT,
         "school visits": DeliveryMethod.SCHOOL_VISIT,
     }
 )
-MODE_VALUES = {
-    normalize_alias(label): value for value, label in MappingMode.choices
-}
+MODE_VALUES = {normalize_alias(label): value for value, label in MappingMode.choices}
 MODE_VALUES.update({value: value for value in MappingMode.values})
 STATUS_VALUES = {
     normalize_alias(label): value for value, label in CatalogueStatus.choices
@@ -82,12 +76,27 @@ INTERVENTION_VALUES.update(
 )
 
 WORKFLOW_BY_SHAPE = {
-    (CatalogueActivityType.SCHOOL_VISIT, DeliveryMethod.SCHOOL_VISIT): ActivityType.SCHOOL_VISIT,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.IN_SCHOOL_TRAINING): ActivityType.IN_SCHOOL_TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.CLUSTER_TRAINING): ActivityType.CLUSTER_TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.CLUSTER_MEETING): ActivityType.CLUSTER_MEETING,
+    (
+        CatalogueActivityType.SCHOOL_VISIT,
+        DeliveryMethod.SCHOOL_VISIT,
+    ): ActivityType.SCHOOL_VISIT,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.IN_SCHOOL_TRAINING,
+    ): ActivityType.IN_SCHOOL_TRAINING,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.CLUSTER_TRAINING,
+    ): ActivityType.CLUSTER_TRAINING,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.CLUSTER_MEETING,
+    ): ActivityType.CLUSTER_MEETING,
     (CatalogueActivityType.TRAINING, DeliveryMethod.ONLINE): ActivityType.TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.SCHOOL_VISIT): ActivityType.BASELINE_SSA_VISIT,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.SCHOOL_VISIT,
+    ): ActivityType.BASELINE_SSA_VISIT,
     (CatalogueActivityType.YOUTH_CAMP, DeliveryMethod.GROUP): ActivityType.TRAINING,
     (CatalogueActivityType.ADMIN, DeliveryMethod.ADMIN): ActivityType.PARTNER_ACTIVITY,
 }
@@ -118,7 +127,9 @@ def _normalize_row(raw, row_number):
     errors = []
     code = str(raw.get("Stable Code") or "").strip().upper()
     if not re.fullmatch(r"[A-Z][A-Z0-9_]{2,95}", code):
-        errors.append("Stable Code must use uppercase letters, numbers and underscores.")
+        errors.append(
+            "Stable Code must use uppercase letters, numbers and underscores."
+        )
     name = str(raw.get("Activity Name") or "").strip()
     if not name:
         errors.append("Activity Name is required.")
@@ -148,10 +159,14 @@ def _normalize_row(raw, row_number):
     if fixed and not intervention:
         errors.append("A fixed mapping requires one canonical SSA intervention.")
     if not fixed and intervention:
-        errors.append("Dynamic, prerequisite and administrative mappings cannot contain an SSA intervention.")
+        errors.append(
+            "Dynamic, prerequisite and administrative mappings cannot contain an SSA intervention."
+        )
     workflow = WORKFLOW_BY_SHAPE.get((activity_type, delivery))
     if activity_type and delivery and not workflow:
-        errors.append("Activity Type and Delivery Method have no approved workflow shape.")
+        errors.append(
+            "Activity Type and Delivery Method have no approved workflow shape."
+        )
     cluster = delivery in {
         DeliveryMethod.CLUSTER_MEETING,
         DeliveryMethod.CLUSTER_TRAINING,
@@ -169,22 +184,24 @@ def _normalize_row(raw, row_number):
         "target_audience": str(raw.get("Target Audience") or "").strip(),
         "staff_delivery_allowed": _truth(raw.get("Staff Delivery")),
         "partner_delivery_allowed": _truth(raw.get("Partner Delivery")),
-        "individual_school_allowed": not cluster and activity_type != CatalogueActivityType.ADMIN,
+        "individual_school_allowed": not cluster
+        and activity_type != CatalogueActivityType.ADMIN,
         "cluster_delivery_allowed": cluster,
         "project_delivery_allowed": activity_type != CatalogueActivityType.ADMIN,
         "requires_school": not cluster and activity_type != CatalogueActivityType.ADMIN,
         "requires_cluster": cluster,
         "requires_project": False,
-        "requires_current_ssa": mode not in {
+        "requires_current_ssa": mode
+        not in {
             MappingMode.ADMINISTRATIVE,
             MappingMode.SSA_COMPLETION_PREREQUISITE,
         },
         "requires_source_activity": mode == MappingMode.INHERIT_FROM_SOURCE_ACTIVITY,
         "costing_profile": str(raw.get("Costing Profile") or "").strip(),
         "evidence_profile": str(raw.get("Evidence Profile") or "").strip(),
-        "salesforce_record_type": str(
-            raw.get("Salesforce Record Type") or ""
-        ).strip().upper(),
+        "salesforce_record_type": str(raw.get("Salesforce Record Type") or "")
+        .strip()
+        .upper(),
         "status": status,
         "errors": errors,
     }

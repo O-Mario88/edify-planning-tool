@@ -29,23 +29,20 @@ COPY --from=build /install /usr/local
 COPY . .
 # Collect static (DRF spectacular + admin assets). Fail the build if static
 # collection errors — a silent failure here means broken CSS/JS in production.
-# config/settings/prod.py fails closed at import unless its whole required set
-# is present — none of it exists at build time (.env is dockerignored) — so
-# pass build-only placeholders for this one command. They satisfy the gate,
-# never reach the image's runtime env, and collectstatic itself touches no
-# database and reads no secrets.
 #
-# FIELD_ENCRYPTION_KEY is generated here rather than written as a literal. It
-# must be a valid 32-byte key, and the list of required settings has grown
-# since this line was written — that drift is what made the image unbuildable
-# until CI started building it. A generated key cannot go stale, and a random
-# one that exists only inside this layer's shell cannot be mistaken for a real
-# one or leak into the image.
-RUN JWT_SECRET=build-time-collectstatic-placeholder-0123456789 \
-    AUTHZ_MODE=enforce \
-    SUPER_ADMIN_PASSWORD=build-time-placeholder \
-    ALLOWED_HOSTS=build-placeholder.invalid \
-    FIELD_ENCRYPTION_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')" \
+# This runs under config.settings.collectstatic, NOT config.settings.prod.
+# prod.py fails closed at import unless its entire required set of secrets and
+# Spaces credentials is present, and none of that exists at build time. The
+# previous approach — a hand-maintained list of placeholder env vars on this
+# RUN line — fell out of sync with that required set twice and made the image
+# unbuildable both times.
+#
+# collectstatic opens no socket, reads no secret, and touches no database, so
+# the production gate was never protecting anything here. See the module
+# docstring in config/settings/collectstatic.py. It shares the staticfiles
+# backend with prod.py via a single constant in base.py, so the manifest built
+# here is the manifest production serves.
+RUN DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
     python manage.py collectstatic --noinput
 
 # Run as a non-root user. Nothing this process does needs root, and a

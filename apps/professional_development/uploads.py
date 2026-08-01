@@ -1,33 +1,29 @@
 """Shared file-storage helper for PD evidence + certificates.
 
 Reuses the platform's upload validation (`assert_safe_upload` — extension,
-MIME, and magic-byte checks) and storage convention (uuid-named files under a
-configured directory), but writes to its own subdirectory rather than
-`EVIDENCE_STORAGE_DIR` — `EvidenceRecord.activity` is a required FK, so PD
-files (which have no Activity) cannot go through `evidence.services.record_upload`."""
+MIME, and magic-byte checks) and private-storage convention, but writes to its
+own object namespace. `EvidenceRecord.activity` is a required FK, so PD files
+(which have no Activity) cannot go through `evidence.services.record_upload`."""
 
 from __future__ import annotations
 
 import os
-import re
 import uuid
 
-from django.conf import settings
-
 from apps.core.exceptions import BadRequest
+from apps.core.private_storage import local_path, save_file, validate_stored_name
 from apps.evidence.validation import assert_safe_upload
+
+PD_NAMESPACE = "professional_development"
 
 
 def pd_storage_dir() -> str:
-    base = getattr(settings, "EVIDENCE_STORAGE_DIR", None) or str(
-        settings.BASE_DIR / "uploads" / "evidence"
+    """Compatibility path for local development and containment tests."""
+    directory = os.path.dirname(
+        local_path(PD_NAMESPACE, "00000000000000000000000000000000.tmp")
     )
-    d = os.path.join(os.path.dirname(base.rstrip("/")), "professional_development")
-    os.makedirs(d, exist_ok=True)
-    return d
-
-
-_STORED_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+    os.makedirs(directory, exist_ok=True)
+    return directory
 
 
 def pd_storage_path(stored_name: str) -> str:
@@ -38,15 +34,8 @@ def pd_storage_path(stored_name: str) -> str:
     and a path built by joining a column onto a directory is only as safe as
     every row that column will ever hold.
     """
-    from apps.core.exceptions import BadRequest
-
-    if not stored_name or not _STORED_NAME_RE.fullmatch(stored_name):
-        raise BadRequest("Invalid document file name.")
-    base_dir = os.path.realpath(pd_storage_dir())
-    resolved = os.path.realpath(os.path.join(base_dir, stored_name))
-    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
-        raise BadRequest("Invalid document file name.")
-    return resolved
+    validate_stored_name(stored_name, label="document")
+    return local_path(PD_NAMESPACE, stored_name)
 
 
 def _chunks(file_obj, size=1024 * 1024):
@@ -72,10 +61,7 @@ def store_pd_file(file_obj) -> dict:
         original_name=original_name, mime_type=mime_type, head=head, size=size
     )
     stored_name = f"{uuid.uuid4().hex}{ext}"
-    dest = pd_storage_path(stored_name)
-    with open(dest, "wb") as out:
-        for chunk in _chunks(file_obj):
-            out.write(chunk)
+    save_file(PD_NAMESPACE, stored_name, file_obj)
     return {
         "uri": stored_name,
         "original_name": original_name,

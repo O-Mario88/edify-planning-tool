@@ -1,8 +1,19 @@
-{% extends "layouts/shell.html" %}
+{% extends "base.html" %}
+{% load static %}
 
 {% block title %}Policy Agreement — Edify{% endblock %}
 
-{% block shell_content %}
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+<nav class="edify-surface border-b border-slate-200 px-4 py-3 sm:px-6" aria-label="Agreement navigation">
+  <div class="mx-auto flex max-w-3xl items-center justify-between gap-4">
+    <img src="{% static 'images/logo.png' %}" alt="Edify" class="h-7 w-auto">
+    <form method="post" action="/logout">
+      {% csrf_token %}
+      <button type="submit" class="text-[12px] font-bold text-slate-500 hover:text-slate-800">Sign out</button>
+    </form>
+  </div>
+</nav>
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
 
   <div class="min-w-0">
@@ -101,5 +112,6 @@
     {% endfor %}
   </section>
   {% endif %}
+</div>
 </div>
 {% endblock %}

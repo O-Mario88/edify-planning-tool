@@ -297,24 +297,29 @@ class DocumentService:
             if document.is_training_resource
             else "documents.create",
         )
-        from apps.documents.storage import store_upload
+        from apps.core.private_storage import best_effort_delete
+        from apps.documents.storage import DOCUMENT_NAMESPACE, store_upload
 
         stored = store_upload(file_obj)
         next_number = (
             document.versions.aggregate(highest=Max("version_number"))["highest"] or 0
         ) + 1
 
-        version = DocumentVersion.objects.create(
-            document=document,
-            version_number=next_number,
-            effective_date=data.get("effective_date"),
-            review_date=data.get("review_date"),
-            expiry_date=data.get("expiry_date"),
-            change_summary=(data.get("change_summary") or "").strip(),
-            material_change=bool(data.get("material_change", True)),
-            uploaded_by=_user_id(principal),
-            **stored,
-        )
+        try:
+            version = DocumentVersion.objects.create(
+                document=document,
+                version_number=next_number,
+                effective_date=data.get("effective_date"),
+                review_date=data.get("review_date"),
+                expiry_date=data.get("expiry_date"),
+                change_summary=(data.get("change_summary") or "").strip(),
+                material_change=bool(data.get("material_change", True)),
+                uploaded_by=_user_id(principal),
+                **stored,
+            )
+        except Exception:
+            best_effort_delete(DOCUMENT_NAMESPACE, stored["uri"])
+            raise
         audit_log(
             action="documents.version_uploaded",
             subject_kind="document_version",
@@ -536,6 +541,55 @@ def _notify_published(document: DocumentAsset, version: DocumentVersion) -> None
 
 class AcknowledgementService:
     @staticmethod
+    def ensure_pending_for(user) -> int:
+        """Give a newly onboarded user every live mandatory agreement.
+
+        Publication creates acknowledgements for the users who exist at that
+        moment. This lazy reconciliation closes the future-user gap: on first
+        authenticated access, any current blocking document whose audience
+        matches the user receives a version-specific pending record.
+
+        A person with any acknowledgement for a document is not synthesized a
+        second one here. Material new versions are handled by ``publish``;
+        non-material versions intentionally carry the earlier response.
+        """
+        if not getattr(user, "is_authenticated", False):
+            return 0
+        existing_document_ids = set(
+            DocumentAcknowledgement.objects.filter(user_id=_user_id(user)).values_list(
+                "document_id", flat=True
+            )
+        )
+        candidates = (
+            DocumentAsset.objects.filter(
+                status__in=READABLE_STATUSES,
+                acknowledgement_required=True,
+                blocks_application_access=True,
+                current_version__isnull=False,
+            )
+            .select_related("current_version")
+            .prefetch_related("audience_rules")
+        )
+        created = 0
+        for document in candidates:
+            if document.id in existing_document_ids or not audience_matches(
+                document, user
+            ):
+                continue
+            _, was_created = DocumentAcknowledgement.objects.get_or_create(
+                version=document.current_version,
+                user_id=_user_id(user),
+                defaults={
+                    "document": document,
+                    "state": AcknowledgementState.PENDING,
+                    "role_at_acknowledgement": getattr(user, "active_role", "") or "",
+                    "country_at_acknowledgement": country_of(user),
+                },
+            )
+            created += int(was_created)
+        return created
+
+    @staticmethod
     def generate_pending(
         document: DocumentAsset,
         version: DocumentVersion,
@@ -588,6 +642,7 @@ class AcknowledgementService:
     def pending_for(user) -> list[DocumentAcknowledgement]:
         """Outstanding mandatory acknowledgements for this user, current
         versions only."""
+        AcknowledgementService.ensure_pending_for(user)
         return list(
             DocumentAcknowledgement.objects.filter(
                 user_id=getattr(user, "id", ""),

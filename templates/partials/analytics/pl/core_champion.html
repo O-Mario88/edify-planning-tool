@@ -13,8 +13,8 @@
              { name: 'Champion Schools', data: {{ core_champion.champion.series|escape }} }
            ],
            chart: { height: 210, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
-           stroke: { width: 2.5, curve: 'smooth' },
-           markers: { size: 4, strokeWidth: 0 },
+           stroke: { width: 2.25, curve: 'straight' },
+           markers: { size: 4, strokeWidth: 2 },
            colors: ['var(--edify-chart-blue)', 'var(--edify-chart-amber)'],
            dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Number(v).toFixed(1) },
            labels: labels,
