@@ -33,6 +33,16 @@ GATE_EXEMPT_PREFIXES: tuple[str, ...] = (
     "/policy-agreement",
     "/documents/",  # the viewer, its preview stream, download and print
     "/api/documents/",  # heartbeat + acknowledgement submission
+    # The forced password change outranks this gate. An invited user arrives
+    # with BOTH obligations, and each middleware bounced the other's page:
+    # ForcePasswordChangeMiddleware exempts only /change-password, this gate
+    # did not exempt it back ("/password" does not prefix-match it), so the
+    # first login looped /change-password -> /policy-agreement until the
+    # browser gave up with ERR_TOO_MANY_REDIRECTS. Nobody invited after the
+    # agreements were installed could sign in at all. Credentials come first,
+    # then this gate takes over — the person is still inside the funnel, one
+    # obligation at a time.
+    "/change-password",
     "/login",
     "/logout",
     "/password",
