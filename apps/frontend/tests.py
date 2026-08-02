@@ -215,11 +215,17 @@ class FrontendViewsTestCase(TestCase):
         # A verified SSA exists, so the drawer must offer intervention
         # support, not the "complete SSA first" banner.
         self.assertNotIn("Top Priority: Complete SSA", html)
-        # A primary Catalogue recommendation arrives preselected, with the
-        # derived type and catalogue item flowing through hidden inputs.
-        self.assertIn('name="catalogue_choice"', html)
-        self.assertIn("checked", html)
-        self.assertContains(response, 'name="catalogue_item_id"', html=False)
+        # The drawer asks for a purpose now, not a catalogue row: it prefills
+        # the purpose and the focus intervention from the school's weakest
+        # confirmed SSA score, and shows the interventions behind that choice.
+        self.assertIn('name="purpose_of_visit"', html)
+        self.assertIn("SSA interventions performing poorly", html)
+        # Prefilled by selecting the option, not by checking a radio in a list
+        # of engine-chosen activities.
+        self.assertIn("selected", html)
+        # The catalogue link is derived server-side from the purpose, so the
+        # drawer no longer carries a catalogue_item_id the user never chose.
+        self.assertNotContains(response, 'name="catalogue_item_id"', html=False)
         self.assertContains(
             response, 'name="activity_type" :value="activityType"', html=False
         )

@@ -66,6 +66,34 @@ def get_selectable_item(item_id_or_code: str, *, on_date=None) -> ActivityCatalo
     return item
 
 
+def resolve_item_for_workflow_kind(
+    workflow_kind: str, *, on_date=None
+) -> ActivityCatalogueItem | None:
+    """The effective catalogue item that costs a given activity type.
+
+    The scheduling drawer asks for a PURPOSE OF VISIT, not a catalogue entry.
+    A field officer knows they are going to collect SSA or follow up a
+    training; asking them which catalogue row funds that is asking them to do
+    the finance system's filing. The purpose maps to an activity type
+    (PURPOSE_ACTIVITY_TYPES), and the activity type is what the catalogue
+    already keys its costing on — so the link is derivable and does not need
+    to be a question.
+
+    Returns None rather than guessing when the catalogue offers more than one
+    item for the same workflow kind: two costings for one purpose is a
+    governance question for the Country Director, and silently picking the
+    first would put money against an activity nobody chose.
+    """
+    if not workflow_kind:
+        return None
+    matches = list(
+        effective_items(on_date)
+        .filter(workflow_kind=workflow_kind)
+        .order_by("stable_code")[:2]
+    )
+    return matches[0] if len(matches) == 1 else None
+
+
 def _latest_version(item: ActivityCatalogueItem) -> ActivityCatalogueVersion:
     version = item.versions.order_by("-version").first()
     if version:

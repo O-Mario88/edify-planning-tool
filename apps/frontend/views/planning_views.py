@@ -23,6 +23,7 @@ from apps.partners.purposes import (
     STAFF_VISIT_PURPOSES,
     normalise_visit_purpose,
     purpose_activity_type,
+    visit_purpose_label,
 )
 from apps.core.enums import (
     ActivityType,
@@ -612,12 +613,26 @@ def schedule_modal_view(request):
         # with the engine on ~19% of schools.
         from apps.ssa.recommendation_engine import prioritized_interventions
 
-        for item in prioritized_interventions(school, n=2):
+        # The drawer names these as "performing poorly", so only interventions
+        # that actually are may appear. prioritized_interventions returns the
+        # LOWEST scoring, which is not the same thing: a school whose two
+        # weakest are 1.0 and 9.0 was being shown a 9.0/10 under that heading.
+        # A number presented as a problem when it is not is how people stop
+        # believing the numbers.
+        from apps.core.enums import ssa_score_band
+
+        for item in prioritized_interventions(school, n=4):
+            score = item.get("score")
+            band, _hex, _tone = ssa_score_band(score)
+            if band in ("Strong", "No SSA"):
+                continue
             code = item["intervention"]
             label = dict(SsaIntervention.choices).get(code, code)
             recommendations.append(
-                {"code": code, "label": label, "score": item.get("score")}
+                {"code": code, "label": label, "score": score, "band": band}
             )
+            if len(recommendations) == 3:
+                break
 
     partners = Partner.objects.filter(
         deleted_at__isnull=True, active_status=True
@@ -700,6 +715,8 @@ def schedule_modal_view(request):
         "activity_type_options": activity_type_options,
         "recommended_focus_intervention": recommended_focus_intervention,
         "staff_visit_purposes": STAFF_VISIT_PURPOSES,
+        # Drives which purposes stay selectable when delivery is Partner.
+        "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "recommended_visit_purpose": recommended_visit_purpose,
         "catalogue_recommendations": catalogue_recommendations,
         "primary_catalogue_items": primary_catalogue_items,
@@ -745,10 +762,36 @@ def schedule_action_view(request):
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
     source_activity_id = request.POST.get("source_activity_id", "").strip()
     if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
-        return error_fragment(
-            ValueError("Select an approved Activity Catalogue item."),
-            status=400,
+        # The drawer asks for a purpose, not a catalogue row. Derive the
+        # costing link from the purpose before refusing: purpose ->
+        # activity type (PURPOSE_ACTIVITY_TYPES) -> the catalogue item that
+        # costs that type. This keeps every scheduled visit costed against the
+        # CD catalogue exactly as before, while leaving the field officer with
+        # the one question they can actually answer.
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+        derived_type = (
+            purpose_activity_type(purpose_of_visit, activity_type)
+            if purpose_of_visit
+            else activity_type
         )
+        resolved = resolve_item_for_workflow_kind(derived_type)
+        if resolved is not None:
+            catalogue_item_id = resolved.id
+        else:
+            # Either nothing costs this purpose, or more than one thing does.
+            # Both are catalogue-governance problems and both need a person,
+            # so say which purpose could not be costed rather than asking for
+            # a catalogue item the drawer never offered.
+            label = visit_purpose_label(purpose_of_visit, fallback=derived_type)
+            return error_fragment(
+                ValueError(
+                    f"No single approved Catalogue Activity costs "
+                    f"\u201c{label}\u201d. Ask the Country Director to define "
+                    f"one costing for it before scheduling this purpose."
+                ),
+                status=400,
+            )
 
     from datetime import date
 

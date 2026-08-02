@@ -12,7 +12,8 @@ x-data="{
 delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
 ssa_expected: 'yes',
 activityType: '{{ recommended_activity_type|default:'school_visit' }}',
-catalogueItemId: '{{ selected_catalogue_item.catalogueItemId|default:'' }}',
+purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
+partnerPurposes: [{% for value, label in partner_visit_purposes %}'{{ value }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
 focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
 recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
 alternative: false
@@ -29,9 +30,7 @@ alternative: false
 
 {% if not reschedule_mode %}
 <input type="hidden" name="require_catalogue" value="yes">
-<input type="hidden" name="catalogue_item_id" :value="catalogueItemId">
 <input type="hidden" name="activity_type" :value="activityType">
-<input type="hidden" name="focus_intervention" :value="focusIntervention">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
 {% if not catalogue_recommendations.hasApplicableSsa %}
@@ -71,56 +70,67 @@ above -- they address a lower-ranked need.
 {% endif %}
 {% endif %}
 
-<fieldset class="space-y-2">
-  <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Recommended Activities</legend>
-  {% for item in primary_catalogue_items %}
-  <label class="edify-surface block cursor-pointer rounded-overlay border border-[var(--border-card)] p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-    <span class="flex items-start gap-3">
-      <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}"
-        {% if forloop.first %}checked{% endif %}
-        @change="catalogueItemId='{{ item.catalogueItemId }}'; activityType='{{ item.workflowKind }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; alternative=false"
-        class="mt-1 h-4 w-4 edify-primary-text edify-primary-focus">
-      <span class="min-w-0 flex-1">
-        <span class="flex flex-wrap items-center gap-2">
-          <strong class="text-[13px] text-slate-800">{{ item.displayName }}</strong>
-          <span class="rounded-full edify-primary-soft px-2 py-0.5 edify-text-caption font-bold edify-primary-text">Recommended</span>
-        </span>
-        <span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span>
-        <span class="mt-2 flex flex-wrap gap-2 edify-text-caption font-semibold text-slate-500">
-          <span>{{ item.suggestedDeliveryMethod|title }}</span><span>·</span>
-          <span>{{ item.targetAudience }}</span><span>·</span>
-          <span>{{ item.requiredEvidence|title }}</span>
-        </span>
-        {% if item.existingSupportConflict %}<span class="mt-2 block font-bold text-amber-700">Related support is already active.</span>{% endif %}
-      </span>
-    </span>
-  </label>
-  {% empty %}
-  <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">No approved Catalogue Activity is eligible for this context. Review Project, School, executor, and Catalogue governance rules.</div>
-  {% endfor %}
-</fieldset>
+{% comment %}
+The drawer asks what this visit is FOR, and shows the SSA evidence that should
+inform that choice. It used to lead with a list of Recommended Activities: the
+engine chose the activity and the SSA score appeared only as a badge on it,
+which inverted the judgement. A field officer knows the school; what they need
+from the system is which interventions are struggling, not an instruction.
 
-{% if other_catalogue_items %}
-<details class="edify-surface rounded-surface border border-[var(--edify-border)] p-3">
-  <summary class="cursor-pointer font-bold text-[var(--color-edify-primary)]">View Other Eligible Activities</summary>
-  <fieldset class="mt-3 space-y-2">
-    <legend class="sr-only">Other eligible Activities</legend>
-    {% for item in other_catalogue_items %}
-    <label class="flex cursor-pointer items-start gap-3 rounded-control border border-slate-200 p-3 hover:bg-slate-50">
-      <input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}"
-        @change="catalogueItemId='{{ item.catalogueItemId }}'; activityType='{{ item.workflowKind }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; alternative=true"
-        class="mt-1 h-4 w-4 edify-primary-text edify-primary-focus">
-      <span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span>
-    </label>
+Purpose of Visit is the operational spine. It drives activity_type through
+PURPOSE_ACTIVITY_TYPES, and activity_type is what the CD cost catalogue keys
+its costing on, so the costing link is derived server-side and never asked for.
+{% endcomment %}
+
+{% if recommendations %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3" role="status">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-800">SSA interventions performing poorly</p>
+  <p class="mt-0.5 font-medium text-amber-900">Latest verified SSA for {{ school.name }}. Lowest scores first — these are the needs a visit can address.</p>
+  <ul class="mt-2 space-y-1">
+    {% for r in recommendations %}
+    <li class="flex items-center justify-between gap-3 rounded-control bg-white/70 px-2.5 py-1.5">
+      <span class="font-bold text-slate-800">{{ r.label }}</span>
+      <span class="shrink-0 rounded-pill border border-amber-300 px-2 py-0.5 edify-text-caption font-bold text-amber-900">{{ r.band }} · {{ r.score }}/10</span>
+    </li>
     {% endfor %}
-  </fieldset>
-</details>
-<div x-show="alternative" style="display:none">
-  <label for="override_reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for selecting an alternative</label>
-  <textarea id="override_reason" name="override_reason" x-bind:required="alternative" maxlength="1000" aria-describedby="override-help" class="mt-1 min-h-20 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
-  <p id="override-help" class="mt-1 font-medium text-slate-500">The system recommendation, selected alternative, actor, reason and timestamp are retained for review.</p>
+  </ul>
 </div>
 {% endif %}
+
+<div>
+  <label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose of Visit <span class="text-rose-500">*</span></label>
+  <select
+    name="purpose_of_visit"
+    id="purpose_of_visit"
+    required
+    x-model="purposeOfVisit"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
+  >
+    <option value="">Select the purpose of this visit…</option>
+    {% for value, label in staff_visit_purposes %}
+    <option value="{{ value }}"
+      {% if value == recommended_visit_purpose %}selected{% endif %}
+      :disabled="delivery === 'partner' && !partnerPurposes.includes('{{ value }}')">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
+</div>
+
+<div>
+  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+  <select
+    name="focus_intervention"
+    id="focus_intervention"
+    x-model="focusIntervention"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
+  >
+    <option value="">Select Focus Intervention…</option>
+    {% for code, label in interventions %}
+    <option value="{{ code }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
+</div>
 {% else %}
 <div class="edify-primary-soft border edify-primary-border rounded-surface p-3 text-[12px] font-semibold">
 <span class="edify-text-caption uppercase tracking-wider edify-primary-text font-bold">Scheduled activity</span>
