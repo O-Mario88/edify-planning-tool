@@ -139,8 +139,52 @@ class DigitalOceanDeploymentContractTest(SimpleTestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(
-            "SECRET_KEY must not contain a development placeholder", result.stderr
+            "SECRET_KEY must not contain a deployment placeholder", result.stderr
         )
+
+    def test_production_refuses_the_placeholder_this_repo_actually_ships(self):
+        """The marker in .do/app.yaml is REPLACE_ME, and the gate did not look
+        for it — it only knew the .env.example markers. The template string is
+        30 characters so the length rule happens to stop it today; padded to 50
+        it would have booted production on a public signing key.
+        """
+        env = _safe_production_env()
+        env["SECRET_KEY"] = "REPLACE_ME_openssl_rand_hex_32_REPLACE_ME_openssl_rand"
+        env["JWT_SECRET"] = env["SECRET_KEY"]
+        self.assertGreaterEqual(
+            len(env["SECRET_KEY"]),
+            50,
+            "the point of this test is a placeholder that clears the length rule",
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", "import config.settings.prod"],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("must not contain a deployment placeholder", result.stderr)
+
+    def test_the_placeholder_check_is_case_insensitive(self):
+        """Markers were compared against the raw value, so REPLACE_ME in caps
+        missed a lower-cased marker list."""
+        env = _safe_production_env()
+        env["SECRET_KEY"] = "CHANGE-ME" + "x" * 60
+        env["JWT_SECRET"] = env["SECRET_KEY"]
+        result = subprocess.run(
+            [sys.executable, "-c", "import config.settings.prod"],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("must not contain a deployment placeholder", result.stderr)
 
     def test_production_builds_private_spaces_backends(self):
         code = """

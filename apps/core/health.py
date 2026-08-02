@@ -247,7 +247,10 @@ def _cache_backend_check(now) -> dict:
                 if not reachable
                 else "Redis was unreachable at boot so the cache fell back to "
                 "LocMemCache, which is per-process. Cached figures now differ "
-                "between workers, so the same page can show two answers."
+                "between workers, so the same page can show two answers — and "
+                "the login rate limit is counted per worker, so it is only the "
+                "configured number per minute while this app runs a single "
+                "instance. Provision Redis before raising instance_count."
             )
         ),
         "resolution_link": "/system-health",

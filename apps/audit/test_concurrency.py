@@ -47,4 +47,17 @@ class ConcurrentAuditAppendTest(TransactionTestCase):
         rows = AuditLog.objects.filter(action="audit.concurrency_probe").order_by("seq")
         self.assertEqual(rows.count(), workers)
         self.assertEqual(rows.values("seq").distinct().count(), workers)
-        self.assertEqual(verify_chain(), {"ok": True, "brokenAt": None})
+        # verify_chain() now also reports how much it checked and where it
+        # resumed from, so this asserts the fields rather than the whole dict.
+        # It gets stricter, not looser: the chain must be valid AND every row
+        # the workers appended must actually have been walked — an incremental
+        # verifier that returned ok=True having checked nothing would satisfy
+        # the old equality but not this.
+        result = verify_chain()
+        self.assertTrue(result["ok"])
+        self.assertIsNone(result["brokenAt"])
+        self.assertGreaterEqual(
+            result["checkedRows"],
+            workers,
+            "every concurrently appended row must have been verified",
+        )

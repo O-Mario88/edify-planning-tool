@@ -1422,6 +1422,28 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
 
     analytics_sections = build_analytics_sections(user, current_path)
 
+    # An item may declare a narrower nav audience than route authorization
+    # (see the `visible_to` note below). Admin overrides that so the super-role
+    # is offered everything — but when the SAME page is registered in two
+    # groups, and one of them deliberately excludes this role precisely so it
+    # is not advertised twice, the override turned that intent into the
+    # duplicate it was written to prevent: Admin was offered Upload Center in
+    # two groups at once.
+    #
+    # So the override yields only when it would produce a duplicate. Nothing
+    # disappears from Admin's sidebar — an excluded item is still shown when it
+    # is the only registration of that page — but no page is ever offered
+    # twice in one sidebar.
+    _page_key_counts: dict[str, int] = {}
+    for _sec in SIDEBAR_ITEMS:
+        _audience = _sec.get("visible_to")
+        if role != ADMIN and _audience is not None and role not in _audience:
+            continue
+        for _item in _sec["items"]:
+            _key = _item.get("page_key")
+            if _key:
+                _page_key_counts[_key] = _page_key_counts.get(_key, 0) + 1
+
     sections = []
     for sec in SIDEBAR_ITEMS:
         section_audience = sec.get("visible_to")
@@ -1468,7 +1490,19 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 "visible_to",
                 PAGE_PERMISSIONS.get(item["page_key"], set()),
             )
-            if role == ADMIN or role in allowed:
+            explicitly_scoped = "visible_to" in item
+            in_audience = role in allowed
+            # Admin's override stands unless it would duplicate a page that
+            # another group already offers this role.
+            overridden = (
+                role == ADMIN
+                and not in_audience
+                and not (
+                    explicitly_scoped
+                    and _page_key_counts.get(item.get("page_key"), 0) > 1
+                )
+            )
+            if in_audience or overridden:
                 # Per-role URL override (e.g. a Project Coordinator's "Planning"
                 # points to the project-scoped planning page).
                 url = item.get("role_urls", {}).get(role, item["url"])

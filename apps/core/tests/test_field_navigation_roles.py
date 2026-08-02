@@ -38,16 +38,23 @@ class FieldNavigationRoleTest(SimpleTestCase):
             with self.subTest(role=role):
                 self.assertIn("SCHOOLS & FIELD", self._groups(role))
 
-    def test_admin_carries_no_field_workspace(self):
-        """Admin was a field-nav role until the Platform Operations split.
+    def test_admin_carries_both_the_platform_and_field_workspaces(self):
+        """Admin was narrowed to Platform Operations, then widened again.
 
-        Route authorization is unchanged -- Admin must still be able to OPEN a
-        school or an activity to diagnose it -- but a sidebar says what a role's
-        work *is*, and Admin's work is the platform. Business pages are reached
-        through Team Plans, Support Tickets, Incidents, Search and audit links.
+        The reason is operational rather than architectural: at Edify the
+        person holding Admin also works the field as a CCEO, and a sidebar that
+        advertised none of it made the field half of their job unreachable
+        without switching roles for every action.
+
+        Navigation is not authorization, and this is why the distinction is
+        worth stating: Admin is offered the field workspace and still cannot
+        verify an activity, disburse against a budget, or approve a team fund
+        plan -- see test_admin_platform_boundary, which pins those three to
+        their owning roles. Showing someone a queue is not letting them act on
+        it.
         """
         groups = self._groups(ADMIN)
-        self.assertNotIn("SCHOOLS & FIELD", groups)
+        self.assertIn("SCHOOLS & FIELD", groups)
         self.assertIn("PLATFORM OPERATIONS", groups)
         labels = {i["label"] for i in groups["PLATFORM OPERATIONS"]["items"]}
         self.assertIn("Team Plans", labels)
@@ -67,13 +74,25 @@ class FieldNavigationRoleTest(SimpleTestCase):
         self.assertEqual(school_directory[0]["url"], "/schools")
         self.assertTrue(school_directory[0]["icon"])
 
-    def test_admin_is_offered_no_school_directory_entry_at_all(self):
-        """This used to check the directory appeared once rather than twice for
-        Admin. Under Platform Operations it appears in neither group -- the
-        duplication question is moot, and what matters now is that no field or
-        verification workspace is advertised to Admin."""
+    def test_admin_is_offered_the_school_directory_exactly_once(self):
+        """The original defect this test was written for, which the field
+        workspace coming back makes live again: Admin could be offered School
+        Directory from two different groups at once, so the same page appeared
+        twice in one sidebar.
+        """
         groups = self._groups(ADMIN)
 
-        labels = {item["label"] for group in groups.values() for item in group["items"]}
-        self.assertNotIn("School Directory", labels)
-        self.assertNotIn("Schools", labels)
+        labels = [item["label"] for group in groups.values() for item in group["items"]]
+        self.assertIn("School Directory", labels)
+        self.assertEqual(
+            labels.count("School Directory"),
+            1,
+            "one page, one sidebar entry -- two groups both offering it is the "
+            "duplication this test exists to catch",
+        )
+        duplicates = {label for label in labels if labels.count(label) > 1}
+        self.assertEqual(
+            duplicates,
+            set(),
+            f"no sidebar entry may appear twice for Admin, found: {duplicates}",
+        )

@@ -549,6 +549,12 @@ class ClusterSetupTest(APITestCase):
         response = self.client.post(
             url,
             {
+                # The real form renders school_id as a required input
+                # pre-filled with the current value, so a faithful POST
+                # carries it — this test omitted it and was rejected with
+                # "School ID is required" before it ever reached the cluster
+                # assignment it exists to check.
+                "school_id": school.school_id,
                 "name": school.name,
                 # The edit drawer now validates the classification on every
                 # save; submit the school's current type unchanged.

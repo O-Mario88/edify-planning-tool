@@ -137,9 +137,14 @@ def _require_pl(principal):
 
 
 def _require_pl_action(principal):
-    """Require team-fund approval authority."""
+    """Require team-fund approval authority.
+
+    Admin reads team fund plans (_require_pl above) and does not approve them.
+    Field budget approval is the CCEO→PL chain; an Admin approving into it is
+    an approval nobody in the field made, recorded as though they had.
+    """
     role = getattr(principal, "active_role", None)
-    if role not in ("Program Lead", "Admin"):
+    if role != "Program Lead":
         raise Forbidden("Only a Program Lead can act on team fund plans.")
 
 

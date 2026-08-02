@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.utils import timezone
 from apps.core.exceptions import BadRequest
@@ -251,6 +251,45 @@ class PartnerPaymentService:
         notes: str = "",
         netsuite_id: str = "",
     ) -> PartnerPayment:
+        # Every guard below — including the one-payout-per-activity check —
+        # must run against a LOCKED activity row, inside the same transaction
+        # that writes the payment. Read unlocked (as they were), two accountants
+        # clicking Pay at the same moment both saw payment_status != "paid",
+        # both passed, and the second insert died on the unique constraint:
+        # measured 1 success and 3 raw IntegrityErrors on a four-way race.
+        # The money was never doubled — the constraint held — but the losing
+        # accountant got a 500 on a payment screen, which is its own incident:
+        # they cannot tell whether the money moved, and the natural response to
+        # a failed payment page is to pay again.
+        with transaction.atomic():
+            locked = Activity.objects.select_for_update().filter(id=activity.id).first()
+            if locked is None:
+                raise BadRequest("Activity not found.")
+            activity = locked
+            return PartnerPaymentService._pay_partner_locked(
+                activity=activity,
+                partner_name=partner_name,
+                amount=amount,
+                method=method,
+                reference=reference,
+                user_id=user_id,
+                notes=notes,
+                netsuite_id=netsuite_id,
+            )
+
+    @staticmethod
+    def _pay_partner_locked(
+        activity: Activity,
+        partner_name: str,
+        amount: int,
+        method: str,
+        reference: str,
+        user_id: str,
+        notes: str = "",
+        netsuite_id: str = "",
+    ) -> PartnerPayment:
+        """The body of pay_partner, run with the activity row already locked
+        and inside the caller's transaction."""
         # Enforce blockers
         reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
         if reasons:
@@ -284,7 +323,11 @@ class PartnerPaymentService:
         # Idempotency: one payout per activity. get_blocked_reasons passes for
         # closed activities too, so without this a double-submit (or a second
         # call after close) would write a duplicate PartnerPayment ledger row.
-        # Backstopped by the DB unique constraint on PartnerPayment.activity.
+        # This now runs under the caller's row lock, so a concurrent second
+        # payer blocks here and then reads the committed "paid" — it gets this
+        # sentence rather than a database error. The DB unique constraint on
+        # PartnerPayment.activity stays as the last line of defence for any
+        # writer that reaches the table without taking the lock.
         if (
             activity.payment_status == "paid"
             or PartnerPayment.objects.filter(activity=activity).exists()
@@ -309,15 +352,28 @@ class PartnerPaymentService:
             )
 
         with transaction.atomic():
-            pay = PartnerPayment.objects.create(
-                activity=activity,
-                partner_name=partner_name,
-                amount_paid=amount,
-                payment_method=method,
-                payment_reference=reference,
-                paid_by=user_id,
-                notes=notes,
-            )
+            # A savepoint around the insert: if the unique constraint fires
+            # anyway — a writer that reached the table without the row lock —
+            # the accountant is told the payment already exists instead of
+            # being shown a database error on a payment screen.
+            try:
+                with transaction.atomic():
+                    pay = PartnerPayment.objects.create(
+                        activity=activity,
+                        partner_name=partner_name,
+                        amount_paid=amount,
+                        payment_method=method,
+                        payment_reference=reference,
+                        paid_by=user_id,
+                        notes=notes,
+                    )
+            except IntegrityError as exc:
+                if "uniq_partner_payment_per_activity" in str(exc):
+                    raise BadRequest(
+                        "Partner payment already recorded for this activity — a "
+                        "second payout would double-count the money."
+                    ) from exc
+                raise
 
             activity.payment_status = "paid"
             activity.save(update_fields=["payment_status", "updated_at"])

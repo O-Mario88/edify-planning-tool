@@ -1,8 +1,21 @@
 """Regression contract for the Admin platform super-role.
 
-Admin has every application permission and may execute every role-gated
-workflow. Domain invariants still apply: state transitions, required evidence,
-audit logging, and the global ban on deleting execution history are not
+Admin holds every application permission and may execute every role-gated
+workflow EXCEPT three single-role authorities: IA verification, disbursement,
+and field budget approval. Admin sees all three and exercises none of them.
+
+That boundary is the point. Admin was briefly given the full set while fixing a
+real problem — the role was read-only and blocked ordinary administration — but
+"not read-only" is about access, and these three are about authority. Holding
+all of them lets one account approve a budget, disburse against it, and then
+verify the activity it paid for, which is the entire control this platform's
+audit chain exists to make meaningful.
+
+It does not constrain the admin *person*: roles are per user and switched via
+active_role, so an admin who is also a CCEO does field work as the CCEO.
+
+Domain invariants still apply: state transitions, required evidence, audit
+logging, and the global ban on deleting execution history are not
 authorization restrictions and remain enforced.
 """
 
@@ -29,14 +42,31 @@ ADMIN = _user("Admin")
 
 
 class AdminSuperRoleMatrixTests(SimpleTestCase):
-    def test_admin_holds_every_canonical_permission(self):
+    def test_admin_holds_every_permission_except_the_reserved_authorities(self):
         self.assertEqual(
             set(ROLE_PERMISSIONS[EdifyRole.ADMIN]),
-            set(Permission),
+            set(Permission) - ADMIN_EXCLUDED_PERMISSIONS,
         )
 
-    def test_admin_has_no_permission_exclusions(self):
-        self.assertEqual(ADMIN_EXCLUDED_PERMISSIONS, frozenset())
+    def test_new_permissions_reach_admin_automatically(self):
+        """The super-role must not need editing every time a permission is
+        added — only the three exclusions are deliberate."""
+        missing = set(Permission) - set(ROLE_PERMISSIONS[EdifyRole.ADMIN])
+        self.assertEqual(missing, set(ADMIN_EXCLUDED_PERMISSIONS))
+
+    def test_the_reserved_authorities_are_exactly_the_separation_of_duties_set(self):
+        self.assertEqual(
+            ADMIN_EXCLUDED_PERMISSIONS,
+            frozenset(
+                {
+                    Permission.IA_VERIFY,
+                    Permission.PAYMENT_ACT,
+                    Permission.BUDGET_APPROVE,
+                }
+            ),
+            "verification, disbursement and field approval each belong to one "
+            "role; Admin observes them and performs none",
+        )
 
     def test_admin_can_execute_field_workflow_actions(self):
         activity = SimpleNamespace(
@@ -53,8 +83,6 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
             RolePermissionService.can_upload_evidence(ADMIN, activity),
             RolePermissionService.can_enter_activity_sf_id(ADMIN, activity),
             RolePermissionService.can_review_activity(ADMIN, activity),
-            RolePermissionService.can_verify_ia(ADMIN, activity),
-            RolePermissionService.can_clear_accounts(ADMIN, activity),
         )
         self.assertTrue(all(checks))
 
@@ -73,23 +101,37 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
 
 
 class AdminSuperRoleFinanceTests(TestCase):
-    def test_admin_passes_disbursement_action_gate(self):
+    def test_admin_reads_the_disbursement_queue_but_cannot_pay_from_it(self):
+        from apps.core.exceptions import Forbidden
         from apps.fund_requests.disbursement_dashboard_service import (
             _require_accountant,
             _require_accountant_action,
         )
 
-        _require_accountant(ADMIN)
-        _require_accountant_action(ADMIN)
+        _require_accountant(ADMIN)  # visibility: allowed
+        with self.assertRaises(Forbidden):
+            _require_accountant_action(ADMIN)
 
-    def test_admin_passes_team_fund_action_gate(self):
+    def test_admin_reads_team_fund_plans_but_cannot_approve_them(self):
+        from apps.core.exceptions import Forbidden
         from apps.fund_requests.pl_approval_service import (
             _require_pl,
             _require_pl_action,
         )
 
-        _require_pl(ADMIN)
-        _require_pl_action(ADMIN)
+        _require_pl(ADMIN)  # visibility: allowed
+        with self.assertRaises(Forbidden):
+            _require_pl_action(ADMIN)
+
+    def test_the_role_that_owns_each_authority_still_holds_it(self):
+        """Removing Admin must not have removed the actual owner."""
+        from apps.fund_requests.disbursement_dashboard_service import (
+            _require_accountant_action,
+        )
+        from apps.fund_requests.pl_approval_service import _require_pl_action
+
+        _require_accountant_action(_user("Accountant"))
+        _require_pl_action(_user("Program Lead"))
 
 
 class AdminSuperRoleNavigationTests(SimpleTestCase):

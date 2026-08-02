@@ -1,10 +1,25 @@
 """
-In-memory sliding-window rate limiting.
+Per (route-name + client IP) rate limiting for `auth/login` (10/min) and
+`auth/forgot-password` (4/10min).
 
-A faithful port of the NestJS `RateLimitGuard`: a per (route-name + client IP)
-sliding window. Applied to `auth/login` (10/min) and `auth/forgot-password`
-(4/10min). Single-instance only — multi-instance would need Redis (noted in
-the legacy code as the future swap).
+Counted in the shared cache when one is configured, and in a per-process
+sliding window when it is not.
+
+That split is the whole point. This was a module-level Python dict, which is
+correct at exactly one process and silently wrong at two: each worker keeps its
+own counter, so "10 per minute" becomes 10 per minute *per instance* and the
+limit quietly weakens in proportion to how far the app has been scaled. Nothing
+failed, nothing logged — the number in the settings file simply stopped being
+true. Production runs a single Daphne instance today, so the in-process window
+was accurate; raising `instance_count` in .do/app.yaml is a one-line change
+that would have made it inaccurate with no other signal.
+
+Provisioning Redis now fixes the throttle as well as the cache, together,
+instead of fixing the cache and leaving this behind.
+
+Note on what this is and is not: this bounds request *volume* from an address.
+The per-account brute-force bound is AuthenticationLockoutService, which counts
+in the database under select_for_update and is unaffected by process count.
 """
 
 from __future__ import annotations
@@ -68,6 +83,58 @@ class _SlidingWindow:
 _window = _SlidingWindow()
 
 
+def _cache_is_shared() -> bool:
+    """True when the configured cache is visible to every worker.
+
+    LocMemCache and DummyCache are per-process, so counting in them is no
+    better than counting in a module-level dict — and worse, because it would
+    look like it had been fixed. Anything else (Redis here) is shared.
+    """
+    from django.core.cache import cache
+
+    backend = type(cache).__module__.lower()
+    return "locmem" not in backend and "dummy" not in backend
+
+
+def _shared_hit(key: str, *, window_ms: int, limit: int) -> bool:
+    """Fixed-window counter in the shared cache.
+
+    Fixed rather than sliding: a sliding window needs read-modify-write on a
+    list, which is not atomic across workers and would let simultaneous
+    requests both read N-1 and both pass — exactly the race this is meant to
+    close. incr() is atomic, so the count is exact. The cost is the standard
+    fixed-window boundary burst (up to 2x the limit across two adjacent
+    windows), which is the right trade against a limit that does not hold at
+    all under concurrency.
+    """
+    from django.core.cache import cache
+
+    window_s = max(1, window_ms // 1000)
+    # Bucketing by window number lets the key expire on its own — no sweep,
+    # and no unbounded growth from IP-rotating probes.
+    bucket = int(time.time() // window_s)
+    cache_key = f"throttle:{key}:{bucket}"
+    try:
+        cache.add(cache_key, 0, timeout=window_s + 5)
+        count = cache.incr(cache_key)
+    except ValueError:
+        # The key expired between add and incr — treat as the first hit of a
+        # fresh window rather than failing the request.
+        cache.set(cache_key, 1, timeout=window_s + 5)
+        count = 1
+    except Exception:  # noqa: BLE001
+        # A degraded cache must not lock everyone out of login. Fall back to
+        # the in-process window: weaker across workers, but still a limit.
+        return _window.hit(key, window_ms=window_ms, limit=limit)
+    return count <= limit
+
+
+def _hit(key: str, *, window_ms: int, limit: int) -> bool:
+    if _cache_is_shared():
+        return _shared_hit(key, window_ms=window_ms, limit=limit)
+    return _window.hit(key, window_ms=window_ms, limit=limit)
+
+
 class RouteRateThrottle(SimpleRateThrottle):
     """Per (route-name + client IP) sliding-window throttle. Views set
     `rate_name`, `rate_limit`, and `rate_window_ms` as class attributes.
@@ -104,7 +171,7 @@ class RouteRateThrottle(SimpleRateThrottle):
         self.rate_window_ms = getattr(view, "rate_window_ms", self.rate_window_ms)
 
         key = self.get_cache_key(request, view)
-        if not _window.hit(key, window_ms=self.rate_window_ms, limit=self.rate_limit):
+        if not _hit(key, window_ms=self.rate_window_ms, limit=self.rate_limit):
             self.throttle = True
             return False
         return True
@@ -131,13 +198,40 @@ class ForgotPasswordRateThrottle(RouteRateThrottle):
 
 
 def reset_throttle_state(keys: Iterable[str] = ()) -> None:
-    """Test helper: clear the in-memory window (all keys, or a subset)."""
+    """Test helper: clear the window (all keys, or a subset).
+
+    Clears both backings, because which one is live depends on whether a
+    shared cache happens to be reachable — a test that only cleared the
+    in-process dict would pass locally and leak state wherever Redis exists.
+    """
     with _window._lock:  # noqa: SLF001
         if not keys:
             _window._hits.clear()  # noqa: SLF001
         else:
             for k in keys:
                 _window._hits.pop(k, None)  # noqa: SLF001
+
+    if not _cache_is_shared():
+        return
+    from django.core.cache import cache
+
+    try:
+        if not keys:
+            cache.clear()
+        else:
+            # Delete the current and previous bucket for each key: a test that
+            # resets mid-window must not be tripped by the count it just made.
+            for k in keys:
+                for window_s in (60, 600):
+                    now_bucket = int(time.time() // window_s)
+                    cache.delete_many(
+                        [
+                            f"throttle:{k}:{now_bucket}",
+                            f"throttle:{k}:{now_bucket - 1}",
+                        ]
+                    )
+    except Exception:  # noqa: BLE001 — a test helper must not fail the test
+        pass
 
 
 __all__ = [

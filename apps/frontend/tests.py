@@ -6,7 +6,7 @@ from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.geography.models import Region, District, SubCounty
 from apps.schools.models import School
-from apps.clusters.models import Cluster
+from apps.clusters.models import Cluster, ClusterSubCounty
 
 
 class FrontendViewsTestCase(TestCase):
@@ -72,6 +72,38 @@ class FrontendViewsTestCase(TestCase):
             version=1,
             defaults={"label": "Frontend workflow test catalogue"},
         )[0]
+
+    def _cluster_the_school(self):
+        """Put self.school in a cluster.
+
+        Planning lists clustered schools only, so a Planning assertion against
+        an unclustered fixture is checking an empty table. This is a helper
+        rather than setUp because the add-to-cluster drawer tests need the
+        opposite: a school that is NOT yet clustered.
+
+        Clustering is derived in School.save() from sub-county coverage, not
+        assigned directly — so the cluster is created first and the school
+        re-saved, rather than setting cluster_id by hand, which save() would
+        overwrite.
+        """
+        cluster = Cluster.objects.create(
+            name="Central Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            cluster_type="mixed",
+            status="active",
+        )
+        ClusterSubCounty.objects.create(cluster=cluster, sub_county=self.sub_county)
+        # Not a bare school.save(): the derivation in School.save() only runs
+        # when the district or sub-county actually changed, so re-saving an
+        # unchanged school leaves it unclustered. This is the canonical
+        # membership transition every other caller uses.
+        from apps.clusters.services import set_school_cluster_membership
+
+        set_school_cluster_membership(self.school, cluster, self.cceo_user.id)
+        self.school.refresh_from_db()
+        return cluster
 
     def test_anonymous_redirect_to_login(self):
         # Unauthenticated users should be redirected to login page
@@ -293,7 +325,10 @@ class FrontendViewsTestCase(TestCase):
         # Both strips now use the canonical independent KPI card rather than
         # the retired page-specific ``admin-kpi`` tile.
         self.assertEqual(html.count('data-component="kpi-card"'), 14)
-        self.assertIn("Platform Observability", html)
+        # Renamed with the read-only labels (97770f39): Admin does business
+        # work here, so the strip below the command centre is the platform's
+        # business overview rather than something merely "observed".
+        self.assertIn("Platform Business Overview", html)
         for region in (
             "admin-workspace",
             "admin-grid--top",
@@ -370,6 +405,7 @@ class FrontendViewsTestCase(TestCase):
 
     def test_school_lists_show_real_grouped_ssa_scores(self):
         """Both school lists must show the stored scores, never placeholders."""
+        self._cluster_the_school()
         from apps.core.fy import get_operational_fy
         from apps.ssa.models import SsaRecord, SsaScore
 
@@ -424,6 +460,7 @@ class FrontendViewsTestCase(TestCase):
         staff even if the school's own staff scheduling is blocked by setup
         readiness checks such as an unassigned cluster or missing catalogue.
         """
+        self._cluster_the_school()
         self.client.force_login(self.cceo_user)
 
         response = self.client.get("/planning")

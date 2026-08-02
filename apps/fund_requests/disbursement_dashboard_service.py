@@ -140,9 +140,19 @@ def _require_accountant(principal):
 
 
 def _require_accountant_action(principal):
-    """Require disbursement authority."""
+    """Require disbursement authority.
+
+    Admin may READ this dashboard (_require_accountant above) but may not move
+    money from it. Seeing a queue is not authority to pay out of it, and an
+    Admin who could approve a budget and then disburse against it would be both
+    halves of the control the Accountant exists to be.
+
+    This gate reads the role name directly rather than the permission matrix,
+    so removing payment.act from Admin there was not enough on its own — the
+    bypass had to be closed in both places or neither.
+    """
     role = getattr(principal, "active_role", None)
-    if role not in ("Accountant", "Admin"):
+    if role != "Accountant":
         raise Forbidden("Only a Program Accountant can act on disbursements.")
 
 

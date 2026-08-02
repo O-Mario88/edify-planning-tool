@@ -192,20 +192,59 @@ def _resolved_incidents_still_alerting(now) -> dict:
 
 
 def _admin_super_role_permissions(now) -> dict:
-    """Admin must receive every canonical permission, including new ones."""
-    from apps.core.rbac import Permission, ROLE_PERMISSIONS, EdifyRole
+    """Admin must hold every canonical permission EXCEPT the three reserved
+    single-role authorities — and must not have quietly regained them.
+
+    This checked one direction only, which is the direction that cannot cause
+    harm. A missing permission makes an administrator's page not work, and they
+    will say so within the hour. An *extra* permission here is IA verification,
+    disbursement, or field budget approval landing on the super-role, which
+    nobody reports because nothing breaks — the separation of duties simply
+    stops existing. So the drift that matters is now the drift that is checked.
+    """
+    from apps.core.rbac import (
+        ADMIN_EXCLUDED_PERMISSIONS,
+        Permission,
+        ROLE_PERMISSIONS,
+        EdifyRole,
+    )
 
     granted = set(ROLE_PERMISSIONS[EdifyRole.ADMIN])
-    missing = sorted(p.value for p in Permission if p not in granted)
+    expected = set(Permission) - ADMIN_EXCLUDED_PERMISSIONS
+    missing = sorted(p.value for p in expected - granted)
+    reserved_held = sorted(p.value for p in granted & ADMIN_EXCLUDED_PERMISSIONS)
+
+    if reserved_held:
+        severity = "critical"
+        state = (
+            f"Admin holds {len(reserved_held)} reserved authority(ies): "
+            f"{reserved_held}. One account can now both perform and approve "
+            "the same work."
+        )
+        action = (
+            "Remove these from the Admin grant in apps/core/rbac.py — they "
+            "belong to Impact Assessment, the Accountant, and the CCEO→PL "
+            "chain respectively."
+        )
+    elif missing:
+        severity = "critical"
+        state = f"Admin is missing {len(missing)} permission(s): {missing}"
+        action = "Restore the complete Admin grant in apps/core/rbac.py."
+    else:
+        severity = "ok"
+        state = (
+            "Admin holds every canonical permission except the reserved "
+            "authorities (verification, disbursement, field approval)"
+        )
+        action = "OK"
+
     return _check(
         "admin_ops_super_role_permissions",
-        "critical" if missing else "ok",
+        severity,
         "Admin Super-role Permissions",
-        f"Admin is missing {len(missing)} permission(s): {missing}"
-        if missing
-        else "Admin holds every canonical permission",
-        "Admin holds every canonical permission",
+        state,
+        "Admin holds every permission except the three reserved authorities",
         now,
-        "Restore the complete Admin grant in apps/core/rbac.py.",
+        action,
         "/admin-panel/roles-permissions",
     )

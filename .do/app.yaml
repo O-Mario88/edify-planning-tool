@@ -298,6 +298,34 @@ services:
       - key: ENABLE_BACKGROUND_JOBS
         value: "false"
 
+# ── Required before raising any instance_count above 1 ───────────────────────
+# REDIS_URL is deliberately unset, so the app falls back to LocMemCache. That
+# is correct at one instance and wrong at two, in ways that do not announce
+# themselves:
+#
+#   * cached figures are per-process, so the same page can show two answers
+#     depending on which worker served it;
+#   * the login rate limit (RATE_LIMIT_LOGIN_PER_MIN, default 10/min) is
+#     counted per worker, so N instances allow N x 10 attempts per minute.
+#
+# Per-account brute force stays bounded either way — AuthenticationLockoutService
+# counts in the database — but the per-address limit does not. System Health
+# reports "Cache" as a warning while this is the case; it is not silent, but it
+# is easy to scale past without reading.
+#
+# Add a managed cache and wire it in before scaling:
+#
+# databases:
+#   - name: edify-cache
+#     engine: REDIS
+#     production: true
+#
+# then add to BOTH the web service and the scheduler worker:
+#
+#       - key: REDIS_URL
+#         scope: RUN_TIME
+#         value: ${edify-cache.DATABASE_URL}
+
 # ── Optional: scheduled-jobs worker ──────────────────────────────────────────
 # Uncomment to run the eight scheduled jobs. This is a second billable instance.
 # Keep instance_count at exactly 1 — the scheduler is not designed to be run

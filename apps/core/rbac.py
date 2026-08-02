@@ -143,16 +143,40 @@ class Permission(str, Enum):
 P = Permission
 
 
-# Admin is the platform super-role. It receives every current permission, and
-# newly introduced permissions are included automatically. Keep the empty
-# constant as a compatibility surface for code importing it during a rolling
-# deployment; authorization must not derive any Admin denial from it.
-ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset()
+# Admin is the platform super-role: it receives every current permission, and
+# newly introduced permissions are included automatically — EXCEPT the three
+# below, which are single-role authorities by doctrine.
+#
+# Those three had been excluded deliberately, then the exclusion set was
+# emptied while making Admin "not read-only". Read-only was a real problem and
+# fixing it was right, but this went past access into authority: with these
+# granted, one account could approve a budget, disburse against it, and then
+# verify the activity it paid for. That is the whole control, and it is the one
+# that matters most in a system that moves money and keeps a tamper-evident
+# chain of who did what.
+#
+# This does NOT stop the admin *person* doing field work. Roles are held per
+# user and switched via active_role, so an admin who is also a CCEO does field
+# work as the CCEO. What it stops is the Admin role itself being a way around
+# the separation — which is exactly what a super-role must not be.
+#
+# Admin keeps every viewing permission over all of it, because observing a
+# control is not the same as exercising it.
+ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
+    {
+        # Activity/SSA verification is Impact Assessment's alone.
+        Permission.IA_VERIFY,
+        # Disbursement is the Accountant's alone.
+        Permission.PAYMENT_ACT,
+        # Field budget approval is the CCEO→PL chain alone.
+        Permission.BUDGET_APPROVE,
+    }
+)
 
 
 # Role → permissions matrix. Single source of truth seeded into RolePermission.
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
-    EdifyRole.ADMIN: list(Permission),
+    EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
     EdifyRole.COUNTRY_DIRECTOR: [
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,

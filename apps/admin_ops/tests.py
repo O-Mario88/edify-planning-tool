@@ -829,20 +829,38 @@ class AdminOpsHealthTests(AdminOpsTestBase):
 
         from apps.core.rbac import ROLE_PERMISSIONS, EdifyRole, Permission
 
+        # Not IA_VERIFY: that is one of the three reserved authorities Admin
+        # is now expected NOT to hold, so removing it is a no-op and the check
+        # correctly stays green. This needs a permission Admin really holds.
         incomplete = [
             permission
             for permission in ROLE_PERMISSIONS[EdifyRole.ADMIN]
-            if permission != Permission.IA_VERIFY
+            if permission != Permission.SYSTEM_ADMIN
         ]
         with patch.dict(ROLE_PERMISSIONS, {EdifyRole.ADMIN: incomplete}):
             check = self._checks()["admin_ops_super_role_permissions"]
         self.assertEqual(check["severity"], "critical")
-        self.assertIn("ia.verify", check["current_state"])
+        self.assertIn("system.admin", check["current_state"])
 
     def test_the_super_role_check_is_green_as_shipped(self):
         self.assertEqual(
             self._checks()["admin_ops_super_role_permissions"]["severity"], "ok"
         )
+
+    def test_the_check_goes_critical_if_admin_regains_a_reserved_authority(self):
+        """The drift nobody reports, because nothing visibly breaks."""
+        from unittest import mock
+
+        from apps.core.rbac import Permission, ROLE_PERMISSIONS, EdifyRole
+
+        drifted = dict(ROLE_PERMISSIONS)
+        drifted[EdifyRole.ADMIN] = list(ROLE_PERMISSIONS[EdifyRole.ADMIN]) + [
+            Permission.PAYMENT_ACT
+        ]
+        with mock.patch.dict("apps.core.rbac.ROLE_PERMISSIONS", drifted, clear=True):
+            check = self._checks()["admin_ops_super_role_permissions"]
+        self.assertEqual(check["severity"], "critical")
+        self.assertIn("payment.act", check["current_state"])
 
     def test_the_checks_reach_the_system_health_report(self):
         from apps.system_health.services import report

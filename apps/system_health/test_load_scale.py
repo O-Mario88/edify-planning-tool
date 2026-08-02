@@ -500,6 +500,26 @@ class ScaleGateTest(TestCase):
     # WSGI server and the real connection pool, so these are a lower bound on
     # production wall time. A breach is real; a pass is evidence.
 
+    def _median_latency(self, url):
+        """Median of the same samples _p95 takes.
+
+        The growth test asks a different question from the SLO test, and needs
+        a different statistic. At LATENCY_SAMPLES = 7 the p95 index rounds to
+        6 — the slowest of seven requests — which is the right worst-case
+        measure for "does this page meet its budget" and the wrong one for
+        "did the curve shift", because one descheduled request moves it and
+        nothing about the page changed. The median moves only when the whole
+        distribution does, which is exactly what proportional growth looks
+        like: a page that genuinely got 2x slower has a 2x slower median too.
+        """
+        samples = []
+        for index in range(LATENCY_SAMPLES + LATENCY_WARMUP):
+            measurement = self._measure(url, allow_statuses=(200, 302))
+            if index >= LATENCY_WARMUP:
+                samples.append(measurement["seconds"] * 1000)
+        samples.sort()
+        return samples[len(samples) // 2]
+
     def _p95(self, url):
         samples = []
         for index in range(LATENCY_SAMPLES + LATENCY_WARMUP):
@@ -545,9 +565,9 @@ class ScaleGateTest(TestCase):
         country-wide page rather than all of them, to keep the fixture build
         to one pass.
         """
-        before = self._p95("/dashboard")
+        before = self._median_latency("/dashboard")
         self._grow()
-        after = self._p95("/dashboard")
+        after = self._median_latency("/dashboard")
 
         # Generous: this is looking for proportional growth, not jitter. A
         # 20% estate increase must not cost anything like 20% more time.

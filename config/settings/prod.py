@@ -67,16 +67,25 @@ if PARTNER_ROLE_BRIDGE:
 # JWT_SECRET let a weak SECRET_KEY through whenever the two were configured
 # separately.
 _MIN_SECRET_LENGTH = 50
-_PLACEHOLDER_MARKERS = ("change-me", "dev-only")
+# Matched case-insensitively against the lower-cased secret. "replace_me" and
+# "replace-me" are here because that is the marker this project's own
+# .do/app.yaml template ships (REPLACE_ME_openssl_rand_hex_32) — the list only
+# knew about the .env.example markers, so the placeholder an operator is most
+# likely to leave in place was the one placeholder not checked for. The length
+# rule catches the template string as written today at 30 characters, but that
+# is an accident of its length, not a rule about its content: pad it and it
+# would have passed.
+_PLACEHOLDER_MARKERS = ("change-me", "dev-only", "replace_me", "replace-me")
 if JWT_SECRET == SECRET_KEY:
     _secrets_in_use = (("SECRET_KEY/JWT_SECRET", SECRET_KEY),)
 else:
     _secrets_in_use = (("SECRET_KEY", SECRET_KEY), ("JWT_SECRET", JWT_SECRET))
 for _name, _secret in _secrets_in_use:
-    if any(marker in _secret for marker in _PLACEHOLDER_MARKERS):
+    if any(marker in _secret.lower() for marker in _PLACEHOLDER_MARKERS):
         _issues.append(
-            f"{_name} must not contain a development placeholder "
-            '("change-me" / "dev-only").'
+            f"{_name} must not contain a deployment placeholder "
+            '("change-me" / "dev-only" / "REPLACE_ME"); generate one with: '
+            "openssl rand -hex 32"
         )
     elif len(_secret) < _MIN_SECRET_LENGTH:
         _issues.append(

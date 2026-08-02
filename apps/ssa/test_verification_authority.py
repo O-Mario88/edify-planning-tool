@@ -67,9 +67,26 @@ class SsaVerificationAuthorityTests(TestCase):
         self.assertEqual(record.verification_status, VerificationStatus.CONFIRMED.value)
         self.assertIsNotNone(record.verified_at)
 
-    def test_admin_may_confirm_with_platform_wide_authority(self):
-        record = verify_record(self._record(), self.admin)
-        self.assertEqual(record.verification_status, VerificationStatus.CONFIRMED.value)
+    def test_admin_may_not_confirm_either(self):
+        """Admin held ia.verify while the role was being made "not read-only",
+        which contradicted the policy kernel's own contract that SSA
+        confirmation is Impact Assessment's alone (see
+        apps/core/tests/test_policy_kernel_contract.py). Both could not be
+        true, and this is the one that gives way.
+
+        A confirmed SSA is a field judgement about a school's data. An Admin
+        confirming it records a judgement nobody in the field made, under a
+        name that says someone did — and every downstream band, weakest-
+        intervention and recommendation reads it as real.
+
+        The admin *person* still confirms SSA when they hold the Impact
+        Assessment role; what is refused is doing it as Admin.
+        """
+        record = self._record()
+        with self.assertRaises(Forbidden):
+            verify_record(record, self.admin)
+        record.refresh_from_db()
+        self.assertEqual(record.verification_status, VerificationStatus.PENDING.value)
 
     def test_roles_without_ia_authority_may_not_confirm(self):
         """Seniority is not IA authority — the CD leads, IA verifies."""
@@ -83,9 +100,15 @@ class SsaVerificationAuthorityTests(TestCase):
                     record.verification_status, VerificationStatus.PENDING.value
                 )
 
-    def test_admin_may_return_with_platform_wide_authority(self):
-        record = return_record(self._record(), self.admin, "Administrative correction.")
-        self.assertEqual(record.verification_status, VerificationStatus.RETURNED.value)
+    def test_admin_may_not_return_either(self):
+        """Returning is the same authority exercised in the other direction —
+        rejecting a school's assessment is as much an IA judgement as accepting
+        it, so it moves with confirmation rather than staying behind."""
+        record = self._record()
+        with self.assertRaises(Forbidden):
+            return_record(record, self.admin, "Administrative correction.")
+        record.refresh_from_db()
+        self.assertEqual(record.verification_status, VerificationStatus.PENDING.value)
 
     def test_roles_without_ia_authority_may_not_return_either(self):
         for actor in (self.cceo, self.cd):
