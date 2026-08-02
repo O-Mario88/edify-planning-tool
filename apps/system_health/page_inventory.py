@@ -267,9 +267,92 @@ def _dependencies(module_name: str) -> list[str]:
     return sorted(set(matches))
 
 
-def _template_findings(source: str) -> list[Finding]:
+def _template_findings(source: str, name: str = "") -> list[Finding]:
     findings: list[Finding] = []
     checks = [
+        (
+            "non-canonical-radius",
+            "medium",
+            re.search(r"\brounded-(?:2xl|3xl|\[[^\]]+\])", source),
+            "A radius outside the approved geometry is present.",
+            "Cards, KPI cards, charts and table wrappers use 12px (rounded-card); "
+            "buttons, inputs, selects, tabs and nav controls use 8px "
+            "(rounded-control); drawers, modals and overlays use 16px. Full "
+            "rounding stays for badges, pills, avatars and progress bars.",
+        ),
+        (
+            "filter-overlap",
+            "high",
+            # Scoped to elements that ARE filters. An earlier version flagged
+            # any negative margin and produced 36 findings, every one of them
+            # legitimate: icon alignment, a sticky footer bleeding to the edge,
+            # a table's gutter. The rule is "a filter must not be pulled out of
+            # flow", not "negative margins are banned".
+            re.search(
+                r"""class=["'][^"']*\b(?:filter|toolbar)[^"']*["']"""
+                r"""|class=["'][^"']*\b(?:filter|toolbar)[^"']*"""
+                r"""(?:-m[trblxy]?-\d|absolute)""",
+                source,
+                re.I,
+            )
+            and re.search(
+                r"""class=["'][^"']*\b(?:filter|toolbar)[^"']*"""
+                r"""(?:\s-m[trblxy]?-\d|\sabsolute\b)""",
+                source,
+                re.I,
+            ),
+            "A filter or toolbar is pulled out of document flow.",
+            "Filters stay in normal flow and never overlap a card. Remove the "
+            "negative margin or absolute positioning and let the grid space it.",
+        ),
+        (
+            "duplicate-persistent-search",
+            "high",
+            # The shell owns the one persistent search, and renders it once per
+            # breakpoint (desktop bar, mobile trigger, mobile full-screen
+            # panel) — mutually exclusive at any viewport, and required by the
+            # topbar spec. It is excluded because it IS the canonical search;
+            # this rule exists to catch a PAGE adding a second one on top of it.
+            "layouts/shell.html" not in (name or "")
+            and
+            # A selection search — one bound to an HTMX picker region, filtering
+            # a large selectable dataset — is explicitly allowed and is not a
+            # duplicate of the top-bar search. Counting every input with the
+            # word "search" flagged the compose page's linked-records picker,
+            # which is the permitted case, not the prohibited one.
+            len(
+                [
+                    tag
+                    for tag in re.findall(r"<input\b[^>]*>", source, re.I)
+                    if re.search(
+                        r"""type=["']search["']|placeholder=["'][^"']*[Ss]earch""",
+                        tag,
+                    )
+                    and "hx-get" not in tag
+                ]
+            )
+            > 1,
+            "More than one persistent search control is rendered on the page.",
+            "The top-bar search is the only persistent search. A selection "
+            "search may remain inside a drawer or modal over a large dataset.",
+        ),
+        (
+            "competing-primary-focus",
+            "medium",
+            # Focus rings only. §12 names focus rings as a brand-primary
+            # surface, so a sky/violet ring is unambiguously a competing
+            # primary. A violet category chip or a teal chart series is not —
+            # flagging every such utility produced 83 findings that a designer,
+            # not a regex, has to rule on, and burying four real ones in
+            # seventy-nine judgement calls is how a lint gets switched off.
+            re.search(
+                r"\bring-(?:indigo|violet|purple|teal|cyan|sky)-\d{3}\b",
+                source,
+            ),
+            "A focus ring uses a colour other than the brand primary.",
+            "Focus rings are brand-primary (--brand-primary-focus). One "
+            "primary colour, one meaning.",
+        ),
         (
             "dead-link",
             "critical",
@@ -487,7 +570,12 @@ def _component_catalog() -> list[dict]:
                     "forms": source.lower().count("<form"),
                     "tables": source.lower().count("<table"),
                     "htmx_controls": len(_HTMX_RE.findall(source)),
-                    "findings": [asdict(f) for f in _template_findings(source)],
+                    "findings": [
+                        asdict(f)
+                        for f in _template_findings(
+                            source, str(path.relative_to(TEMPLATE_ROOT))
+                        )
+                    ],
                 }
             )
     return sorted(result, key=lambda item: item["template"])
@@ -536,7 +624,7 @@ def build_page_inventory() -> dict:
         if permission_key:
             roles.add(ADMIN)  # RolePermissionService has an explicit admin bypass.
 
-        findings = _template_findings(source)
+        findings = _template_findings(source, " ".join(templates))
         state_coverage = {
             "loading": bool(
                 re.search(r"skeleton|hx-indicator|\bloading\b", source, re.I)

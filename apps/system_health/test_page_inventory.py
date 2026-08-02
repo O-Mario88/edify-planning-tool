@@ -83,8 +83,10 @@ class PageInventoryTest(SimpleTestCase):
         outstanding = []
         for template_path in Path(TEMPLATE_ROOT).rglob("*.html"):
             source = template_path.read_text(encoding="utf-8")
-            for finding in _template_findings(source):
-                outstanding.append(
-                    (str(template_path.relative_to(TEMPLATE_ROOT)), finding.key)
-                )
+            name = str(template_path.relative_to(TEMPLATE_ROOT))
+            # Pass the name, as the inventory does: some rules are scoped to
+            # where they apply (the shell legitimately renders the one
+            # persistent search once per breakpoint).
+            for finding in _template_findings(source, name):
+                outstanding.append((name, finding.key))
         self.assertEqual(outstanding, [])

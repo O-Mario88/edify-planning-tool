@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **470**
+- Routed product surfaces: **469**
 - All registered routes: **870**
-- API routes: **292**
+- API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
 - Scheduled jobs: **16**
 - Activity states: **23**
 - Shared component templates: **285**
-- Full pages: **315**
+- Full pages: **314**
 - Partials and drawers: **142**
-- Permission-gated surfaces: **461**
-- Referenced by automated tests: **436**
+- Permission-gated surfaces: **460**
+- Referenced by automated tests: **435**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -113,7 +113,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /admin-panel/roles-permissions | Roles & Permissions | ADMIN | pages/admin/roles_permissions.html | 9.6 | 0 | referenced by automated test |
 | /admin-panel/school-upload-history | Upload History | ADMIN, IA | pages/admin/school_upload_history.html | 9.7 | 0 | referenced by automated test |
 | /admin-panel/staff-setup-queue | Staff Setup Queue | ADMIN, CD, HR | pages/admin/staff_setup_queue.html | 9.6 | 0 | referenced by automated test |
-| /admin-panel/users | User Management | ADMIN, CD, HR | pages/admin/users.html | 9.7 | 0 | referenced by automated test |
+| /admin-panel/users | User Management | ADMIN, CD, HR | pages/admin/users.html | 9.8 | 0 | referenced by automated test |
 | /admin-panel/users/<str:user_id> | Manage User: | ADMIN, CD, HR | pages/admin/user_detail.html | 9.7 | 0 | referenced by automated test |
 | /admin-panel/workflow-rules | Workflow Rules | ADMIN | pages/admin/workflow_rules.html | 9.4 | 0 | referenced by automated test |
 | /analytics | Overview | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/kpi_cards.html<br>pages/analytics/index.html | 9.4 | 0 | referenced by automated test |
@@ -144,7 +144,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/edit_cluster_drawer.html | 9.4 | 0 | referenced by automated test |
 | /clusters/cost-preview | Cluster Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
 | /clusters/create | Create Cluster | ADMIN, CCEO, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /clusters/create-drawer | Create Cluster Drawer | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/create_cluster_drawer.html | 9.6 | 0 | referenced by automated test |
+| /clusters/create-drawer | Create Cluster Drawer | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/create_cluster_drawer.html | 9.7 | 0 | referenced by automated test |
 | /clusters/detail-drawer/<str:cluster_id> | Cluster Detail Drawer | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_detail_drawer.html | 9.4 | 0 | referenced by automated test |
 | /clusters/eligible-staff | Eligible Staff Options | ADMIN, CCEO, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /clusters/impact-drawer/<str:cluster_id> | Cluster Impact Drawer | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/intervention_impact_drawer.html | 9.4 | 0 | referenced by automated test |
@@ -458,15 +458,14 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /ssa/export | Ssa Performance Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /ssa/manual/ | Add SSA Score - Edify Command Center | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/manual_entry.html | 9.6 | 0 | referenced by automated test |
 | /ssa/unmatched | Unmatched SSA Queue | ADMIN, IA | pages/admin/unmatched_ssa_queue.html | 9.6 | 0 | referenced by automated test |
-| /ssa/upload/ | Upload SSA Scores | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/upload_center.html | 9.6 | 0 | referenced by automated test |
+| /ssa/upload/ | Upload SSA Scores | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/upload_center.html | 9.7 | 0 | referenced by automated test |
 | /ssa/upload/<str:batch_id>/preview/ | SSA Upload Preview | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/upload_preview.html | 9.7 | 0 | referenced by automated test |
 | /ssa/upload/<str:batch_id>/result/ | SSA Import Result | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/upload_result.html | 9.4 | 0 | referenced by automated test |
 | /ssa/upload/template | Ssa Template Download | ADMIN, CCEO, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /ssa/verification/ | IA SSA Verification Queue | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/verification_queue.html | 9.7 | 0 | referenced by automated test |
 | /staff | Human Resource Dashboard - Edify Command Center | ADMIN, CD, HR, PL, RVP | pages/staff/index.html | 9.4 | 0 | referenced by automated test |
 | /staff/<str:user_id> | Staff Profile | ADMIN, CD, HR, PL, RVP | pages/staff/detail.html | 9.4 | 0 | referenced by automated test |
-| /strategic-priorities | Strategic Priorities · Edify | ADMIN, CD, HR, RVP | pages/hr/priority_configuration.html | 9.4 | 0 | referenced by automated test |
-| /strategic-priorities | Strategic Priorities · Edify | ADMIN, CD, HR, RVP | pages/hr/strategic_priorities.html | 9.7 | 0 | referenced by automated test |
+| /strategic-priorities | Priority Setting Dashboard · Edify | ADMIN, CD, HR, RVP | pages/hr/priority_configuration.html | 9.7 | 0 | referenced by automated test |
 | /strategic-priorities/action | Strategic Priority Action | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /succession-planning | Succession Planning | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |

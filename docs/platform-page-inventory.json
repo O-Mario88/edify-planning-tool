@@ -281,7 +281,7 @@
       "template": "partials/analytics/cd/ssa_interventions.html"
     },
     {
-      "bytes": 4071,
+      "bytes": 4156,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -313,7 +313,7 @@
       "template": "partials/analytics/customize_dashboard_drawer.html"
     },
     {
-      "bytes": 1977,
+      "bytes": 1999,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -337,7 +337,7 @@
       "template": "partials/analytics/filters.html"
     },
     {
-      "bytes": 2808,
+      "bytes": 2814,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -513,7 +513,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 74581,
+      "bytes": 75100,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -641,7 +641,7 @@
       "template": "partials/clusters/cluster_schools_table.html"
     },
     {
-      "bytes": 7616,
+      "bytes": 8674,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1081,7 +1081,7 @@
       "template": "partials/disbursements/root.html"
     },
     {
-      "bytes": 4143,
+      "bytes": 4135,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1497,7 +1497,7 @@
       "template": "partials/my_plan/_pager.html"
     },
     {
-      "bytes": 2164,
+      "bytes": 2156,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1505,7 +1505,7 @@
       "template": "partials/my_plan/_priority_group.html"
     },
     {
-      "bytes": 5066,
+      "bytes": 5104,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1721,7 +1721,7 @@
       "template": "partials/notifications/notification_drawer_list.html"
     },
     {
-      "bytes": 4855,
+      "bytes": 4941,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1777,9 +1777,9 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 17622,
+      "bytes": 18413,
       "findings": [],
-      "forms": 1,
+      "forms": 2,
       "htmx_controls": 1,
       "tables": 0,
       "template": "partials/planning/schedule_drawer.html"
@@ -1793,7 +1793,7 @@
       "template": "partials/planning/school_row.html"
     },
     {
-      "bytes": 13188,
+      "bytes": 14204,
       "findings": [],
       "forms": 0,
       "htmx_controls": 6,
@@ -1841,7 +1841,7 @@
       "template": "partials/professional_development/completion_upload.html"
     },
     {
-      "bytes": 36403,
+      "bytes": 36379,
       "findings": [],
       "forms": 20,
       "htmx_controls": 0,
@@ -2001,7 +2001,7 @@
       "template": "partials/pwa_head.html"
     },
     {
-      "bytes": 8886,
+      "bytes": 9288,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2025,7 +2025,7 @@
       "template": "partials/schools/directory_intelligence.html"
     },
     {
-      "bytes": 5351,
+      "bytes": 5437,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2049,7 +2049,7 @@
       "template": "partials/schools/drawer_error.html"
     },
     {
-      "bytes": 14679,
+      "bytes": 14874,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -7221,7 +7221,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.admin_users_view",
       "charts": false,
@@ -7278,7 +7278,7 @@
         "apps.targets.models"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": true,
         "loading": false
@@ -7289,7 +7289,7 @@
         "pages/admin/users.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "migration-required",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -9084,7 +9084,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.create_cluster_drawer_view",
       "charts": false,
@@ -9124,7 +9124,7 @@
         "apps.ssa.services"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false
@@ -13720,7 +13720,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.evidence_gallery_view",
@@ -13751,6 +13751,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -20483,7 +20484,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Reschedule Drawer",
       "permission_key": "my_plan",
@@ -21161,7 +21162,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_targets_view",
@@ -21199,6 +21200,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21226,7 +21228,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_targets_area_drawer_view",
@@ -21258,6 +21260,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21284,7 +21287,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_targets_export_view",
@@ -21316,6 +21319,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21340,7 +21344,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.mscs_submit_view",
@@ -21372,6 +21376,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21396,7 +21401,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_team_view",
@@ -21427,6 +21432,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21453,7 +21459,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.notifications_page_view",
@@ -21492,6 +21498,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21518,7 +21525,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.notifications_page_view",
@@ -21557,6 +21564,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21583,7 +21591,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.mark_notification_read",
@@ -21622,6 +21630,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21648,7 +21657,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.notification_drawer_view",
@@ -21687,6 +21696,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -21713,7 +21723,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.mark_all_notifications_read",
@@ -21752,6 +21762,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -24059,7 +24070,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Planning Schedule Modal",
       "permission_key": "planning",
@@ -24370,7 +24381,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.profile_view",
@@ -24387,7 +24398,7 @@
       "permission_key": "dashboard",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "User profile \u2014 role info, stats, recent activity.",
+      "purpose": "User profile \u2014 role info, stats, recent activity, self-service edit.",
       "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
@@ -24404,11 +24415,13 @@
       "route": "/profile",
       "route_name": "profile",
       "secondary_actions": [
+        "{% url ",
         "/auth/switch-role"
       ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -27683,7 +27696,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.ssa_views",
       "backend_view": "apps.frontend.views.ssa_views.ssa_upload_center_view",
       "charts": false,
@@ -27719,7 +27732,7 @@
         "apps.ssa.services"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": true,
         "loading": false
@@ -27954,7 +27967,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.staff_directory_view",
@@ -27986,6 +27999,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28012,7 +28026,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.staff_profile_view",
@@ -28044,6 +28058,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28071,7 +28086,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.priority_views",
       "backend_view": "apps.frontend.views.priority_views.priority_configuration_page",
       "charts": false,
@@ -28083,63 +28098,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Strategic Priorities \u00b7 Edify",
-      "permission_key": "strategic_priorities",
-      "primary_action": "Save definition for RVP approval",
-      "primary_user_decision": "Requires manual product review",
-      "purpose": "Requires product-purpose documentation",
-      "responsive_state": "detected",
-      "role_access": [
-        "ADMIN",
-        "CD",
-        "HR",
-        "RVP"
-      ],
-      "route": "/strategic-priorities",
-      "route_name": "strategic_priorities",
-      "secondary_actions": [
-        "/strategic-priorities/milestones/{{ milestone.id }}/define",
-        "/strategic-priorities/milestones/{{ milestone.id }}/approve",
-        "/strategic-priorities/milestones/{{ milestone.id }}/allocate",
-        "/strategic-priorities/cycles/{{ cycle.id }}/approve"
-      ],
-      "services_and_models": [
-        "apps.accounts.models",
-        "apps.hr.models",
-        "apps.projects.scoping"
-      ],
-      "state_coverage": {
-        "disabled": false,
-        "empty": false,
-        "error": false,
-        "loading": false
-      },
-      "surface_kind": "page",
-      "tables": true,
-      "templates": [
-        "pages/hr/priority_configuration.html"
-      ],
-      "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "todos": false
-    },
-    {
-      "api_endpoints": [],
-      "app": "frontend",
-      "audit_events": true,
-      "automated_quality_score": 9.7,
-      "backend_module": "apps.frontend.views.hr_views",
-      "backend_view": "apps.frontend.views.hr_views.strategic_priorities_view",
-      "charts": false,
-      "drawers": false,
-      "findings": [],
-      "forms": true,
-      "htmx_endpoints": [],
-      "implementation_status": "existing-routed-surface",
-      "manual_quality_score": null,
-      "modals": false,
-      "notifications": false,
-      "page_title": "Strategic Priorities \u00b7 Edify",
+      "page_title": "Priority Setting Dashboard \u00b7 Edify",
       "permission_key": "strategic_priorities",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -28154,25 +28113,27 @@
       "route": "/strategic-priorities",
       "route_name": "strategic_priorities",
       "secondary_actions": [
-        "/strategic-priorities/action"
+        "/strategic-priorities",
+        "/strategic-priorities/milestones/{{ milestone.id }}/define",
+        "/strategic-priorities/milestones/{{ milestone.id }}/approve",
+        "/strategic-priorities/milestones/{{ milestone.id }}/allocate",
+        "/strategic-priorities/cycles/{{ cycle.id }}/approve"
       ],
       "services_and_models": [
         "apps.accounts.models",
-        "apps.audit.models",
         "apps.hr.models",
-        "apps.professional_development.models",
-        "apps.schools.models"
+        "apps.projects.scoping"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": true,
+        "disabled": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
       "surface_kind": "page",
-      "tables": true,
+      "tables": false,
       "templates": [
-        "pages/hr/strategic_priorities.html"
+        "pages/hr/priority_configuration.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
@@ -28450,7 +28411,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_view",
@@ -28487,6 +28448,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28514,7 +28476,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_view",
@@ -28551,6 +28513,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28578,7 +28541,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_catchup_create_view",
@@ -28610,6 +28573,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28634,7 +28598,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_catchup_action_view",
@@ -28666,6 +28630,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28690,7 +28655,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_day_view",
@@ -28722,6 +28687,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28748,7 +28714,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_export_view",
@@ -28780,6 +28746,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28804,7 +28771,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_matrix_view",
@@ -28836,6 +28803,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28862,7 +28830,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_recovery_view",
@@ -28896,6 +28864,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28922,7 +28891,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_sfid_backlog_view",
@@ -28954,6 +28923,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -28980,7 +28950,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_staff_drawer_view",
@@ -29012,6 +28982,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -29038,7 +29009,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.today_view",
@@ -29075,6 +29046,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -29180,7 +29152,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.trainings_log_view",
@@ -29214,6 +29186,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -29345,7 +29318,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.visits_log_view",
@@ -29379,6 +29352,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
+        "apps.audit.services",
         "apps.core.scoping",
         "apps.core_schools.models",
         "apps.geography.models",
@@ -35943,6 +35917,18 @@
       "templates": []
     },
     {
+      "callback": "config.urls._build",
+      "kind": "api",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/health/build",
+      "route_name": "health_build",
+      "templates": []
+    },
+    {
       "callback": "config.urls._liveness",
       "kind": "api",
       "methods": [
@@ -42149,7 +42135,8 @@
       "callback": "apps.frontend.views.staff_views.profile_view",
       "kind": "page",
       "methods": [
-        "GET"
+        "GET",
+        "POST"
       ],
       "page_permission": "dashboard",
       "required_permissions": [],
@@ -42988,20 +42975,6 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.hr_views.strategic_priorities_view",
-      "kind": "page",
-      "methods": [
-        "GET"
-      ],
-      "page_permission": "strategic_priorities",
-      "required_permissions": [],
-      "route": "/strategic-priorities",
-      "route_name": "strategic_priorities",
-      "templates": [
-        "pages/hr/strategic_priorities.html"
-      ]
-    },
-    {
       "callback": "apps.frontend.views.hr_views.strategic_priority_action_view",
       "kind": "page",
       "methods": [
@@ -43486,14 +43459,14 @@
   "summary": {
     "activity_states": 23,
     "all_routes": 870,
-    "api_routes": 292,
+    "api_routes": 293,
     "component_templates": 285,
-    "full_pages": 315,
+    "full_pages": 314,
     "partials_and_drawers": 142,
-    "permission_gated": 461,
+    "permission_gated": 460,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 470,
+    "routed_surfaces": 469,
     "scheduled_jobs": 16,
     "severity_counts": {
       "critical": 0,
@@ -43501,6 +43474,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 436
+    "test_referenced": 435
   }
 }
