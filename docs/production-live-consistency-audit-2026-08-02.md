@@ -21,7 +21,7 @@ Status: **not production-certified**. The public production surface is stable an
 | Live release provenance | **Fail** | `/api/health/build` returns 404 although the current source contains and tests this endpoint |
 | Current candidate tests | Pass | 3,683 tests passed, 2 intentional skips, 0 failures, four parallel workers |
 | Current candidate security | Pass | Bandit at CI thresholds: no medium/high findings; `pip-audit`: no known CVEs; `npm audit`: 0 vulnerabilities |
-| Current candidate image | Pass | Non-root `edify`; image `sha256:c3b2052eb323ce78d448b68597887fb9bce7ce26968fa41c73abd8a2cff2acbd`; manifest `a22d4740a6ea6c02` |
+| Current candidate image | Pass | Non-root `edify` (UID 10001); image `sha256:885400341d5fef1ddc54f0b9c0218241900ee08b32655fe3555dfedf34579a15`; manifest `a22d4740a6ea6c02` |
 | Authenticated production roles | **Blocked / unverified** | No authorized production session or safe role test accounts were available |
 | Cross-browser authenticated production | **Blocked / unverified** | Only the Codex in-app browser was available, with no authenticated session |
 
@@ -39,6 +39,16 @@ Live static responses indicate an older build:
 - The newly built candidate artifact reports static manifest `a22d4740a6ea6c02`, which is not the live release's verifiable identity because the live endpoint is absent.
 
 The timestamps strongly suggest that production was built around an earlier 2 August revision; this is an inference, not release proof.
+
+### DigitalOcean deployment inspection
+
+Authenticated, read-only inspection of App Platform confirms the release drift:
+
+- The healthy deployment still serving users is source revision `017c4fd`.
+- Revision `098f736` reached DigitalOcean automatically but failed during its Dockerfile build. DigitalOcean's builder did not create `/app/build-info.json` from the inline heredoc, so the next `chmod` instruction exited non-zero. The candidate now uses a normal Python script that succeeds in the locally reproduced production image.
+- The active web component exposes port 8000, uses a 1 GB / 1 vCPU instance, has no configured readiness check, and showed only `DATABASE_URL` in its environment. This does not match the committed production specification (port 8080, 2 GB instance, `/api/health/ready`, pre-deploy migration job, and the fail-closed production environment contract).
+- The Aug 1 deployment logs show a separate runtime failure: `RUN_SEED=true` imported production settings without the required Spaces variables, so the process exited before Daphne could bind port 8000. The later connection-refused readiness result was a consequence, not the root cause.
+- The account already contains the private `edify-planning-private-uploads` bucket in `sgp1` and a bucket-scoped Read/Write/Delete access key. No new storage resource is required. Its one-time secret still needs to be supplied securely to the app environment; it cannot be recovered from the console.
 
 ### Public shell and login
 
@@ -90,6 +100,7 @@ The generated inventory currently contains 469 routed product surfaces, 870 regi
 |---|---|---:|---|---|
 | PROD-REL-01 | Production lacks build-provenance endpoint and cannot identify its artifact | Critical | **Open; reproduced live** | Current source verifier and endpoint tests pass; candidate image embeds build info. Requires an authorized production deployment and post-deploy verification. |
 | PROD-REL-02 | App Platform Dockerfile build cannot receive its commit bindable at build time | High | Source fixed | The service now injects `${_self.COMMIT_HASH}` as runtime `GIT_COMMIT`; the endpoint prefers an image-baked commit and otherwise reports the platform's exact deployed revision. |
+| PROD-BUILD-01 | DigitalOcean/Kaniko did not execute the Dockerfile provenance heredoc; the following `chmod` failed because `/app/build-info.json` did not exist | Critical | Source fixed; redeploy pending | Replaced builder-specific heredoc syntax with `scripts/write_build_info.py` and added a subprocess regression test plus a Dockerfile contract test. |
 | CI-SEC-01 | Bandit B310 rejected unrestricted verifier URLs | High | Source fixed | Verifier now accepts only absolute HTTP(S) base URLs, rejects credentials/query/fragment, and has regression tests. CI-threshold Bandit passes. |
 | CI-AUTH-01 | Parallel auth tests collided on one shared throttle IP | Medium | Source fixed | Each test now uses a deterministic documentation-only IPv6 address and clears only its own throttle key. Parallel regression matrix and full suite pass. |
 | CI-UI-01 | Compiled CSS lacked `pr-9` and other current utilities | High | Source fixed | Canonical CSS rebuilt; UI lint and full suite pass; rebuild is byte-stable. |

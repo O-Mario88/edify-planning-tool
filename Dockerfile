@@ -55,24 +55,10 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
 # built?".
 ARG GIT_COMMIT=""
 ARG RELEASE=""
-RUN python - <<'PY'
-import hashlib, json, os
-from datetime import datetime, timezone
-
-manifest = "/app/staticfiles/staticfiles.json"
-with open(manifest, "rb") as fh:
-    digest = hashlib.sha256(fh.read()).hexdigest()[:16]
-json.dump(
-    {
-        "commit": os.environ.get("GIT_COMMIT") or "",
-        "release": os.environ.get("RELEASE") or "",
-        "build_time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "static_manifest_hash": digest,
-    },
-    open("/app/build-info.json", "w"),
-)
-print(f"build-info.json written: manifest={digest}")
-PY
+# App Platform's Dockerfile builder is Kaniko. Use a regular script rather
+# than Docker/BuildKit heredoc syntax so the file is created identically by
+# local Docker, CI, and DigitalOcean.
+RUN python scripts/write_build_info.py
 
 # Run as a non-root user. Nothing this process does needs root, and a
 # container that starts as root turns any remote-code path into host-adjacent

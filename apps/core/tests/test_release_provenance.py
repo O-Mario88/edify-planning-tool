@@ -22,6 +22,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -87,6 +90,49 @@ class ReleaseVerifierUrlSafetyTest(SimpleTestCase):
             call_command(
                 "verify_release", url="https://operator:secret@example.invalid"
             )
+
+
+class ImageBuildProvenanceTest(SimpleTestCase):
+    def test_portable_writer_creates_the_file_the_runtime_requires(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "staticfiles.json"
+            output = root / "build-info.json"
+            manifest.write_bytes(b'{{"paths":{}}}')
+            env = os.environ.copy()
+            env.update({"GIT_COMMIT": "a" * 40, "RELEASE": "production-test"})
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/write_build_info.py",
+                    "--manifest",
+                    str(manifest),
+                    "--output",
+                    str(output),
+                ],
+                cwd=REPO,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(payload["commit"], "a" * 40)
+            self.assertEqual(payload["release"], "production-test")
+            self.assertRegex(payload["build_time"], r"^\d{4}-\d{2}-\d{2}T")
+            self.assertEqual(
+                payload["static_manifest_hash"],
+                "025ecc3dd886436b",
+            )
+
+    def test_dockerfile_uses_the_portable_writer_not_a_heredoc(self):
+        dockerfile = (REPO / "Dockerfile").read_text(encoding="utf-8")
+        self.assertIn("RUN python scripts/write_build_info.py", dockerfile)
+        self.assertNotIn("RUN python - <<", dockerfile)
 
 
 class ServiceWorkerCacheTest(TestCase):
