@@ -432,14 +432,16 @@ class CoreSchoolsPlanningTest(TestCase):
             f"/planning/schedule-modal?school_id={self.school.school_id}",
         )
 
-    def test_general_school_schedule_lists_backend_catalogue_recommendations(self):
+    def test_general_school_schedule_uses_ssa_evidence_and_a_visit_purpose(self):
         response = self._client(self.cceo).get(
             f"/planning/schedule-modal?school_id={self.school.school_id}"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Recommended Activities")
+        self.assertContains(response, "SSA interventions performing poorly")
+        self.assertContains(response, "Purpose of Visit")
         self.assertContains(response, "Early Childhood Education Project")
         self.assertContains(response, "Teacher&#x27;s Environment")
+        self.assertNotContains(response, "Recommended Activities")
         self.assertNotContains(response, 'name="activity_name"')
 
     def test_general_free_text_visit_type_is_rejected(self):

@@ -131,7 +131,15 @@ class DrawerLabelTests(SimpleTestCase):
         from django.conf import settings
 
         text = (Path(settings.BASE_DIR) / relative).read_text(encoding="utf-8")
-        return re.findall(r'<label for="([^"]+)"[^>]*>([^<]+)</label>', text)
+        labels = re.findall(
+            r'<label for="([^"]+)"[^>]*>(.*?)</label>',
+            text,
+            flags=re.DOTALL,
+        )
+        return [
+            (control_id, re.sub(r"<[^>]+>", "", label).strip())
+            for control_id, label in labels
+        ]
 
     SCHEDULE = "templates/partials/planning/schedule_drawer.html"
     PARTNER = "templates/partials/planning/assign_partner_drawer.html"
@@ -168,32 +176,19 @@ class DrawerLabelTests(SimpleTestCase):
         """The classification drives activity_type; the goal is prose. They
         are not the same question and must not read as one.
 
-        The classification control has two eras: the legacy
-        `purpose_of_visit` select, and the Activity Catalogue's "Recommended
-        Activities" fieldset that now derives the type from the selected
-        Catalogue item. Whichever the drawer carries, its heading must stay
-        distinct from the free-text Goal label."""
-        import re
-        from pathlib import Path
-
-        from django.conf import settings
+        The classification is the required `purpose_of_visit` select. The
+        server derives the catalogue-backed activity type from that answer;
+        the free-text Goal remains a separate question."""
 
         schedule = dict(self._labels(self.SCHEDULE))
         goal = schedule["activity_purpose_text"].strip()
-        if "purpose_of_visit" in schedule:
-            self.assertNotEqual(schedule["purpose_of_visit"].strip(), goal)
-            return
-        text = (Path(settings.BASE_DIR) / self.SCHEDULE).read_text(encoding="utf-8")
-        legends = [
-            m.strip() for m in re.findall(r"<legend[^>]*>([^<]+)</legend>", text)
-        ]
-        self.assertTrue(
-            legends,
-            "The schedule drawer has neither a purpose_of_visit select nor a "
-            "catalogue fieldset — the classification question is missing.",
+        self.assertIn(
+            "purpose_of_visit",
+            schedule,
+            "The schedule drawer is missing its required classification question.",
         )
-        for legend in legends:
-            self.assertNotEqual(legend, goal)
+        self.assertEqual(schedule["purpose_of_visit"], "Purpose of Visit *")
+        self.assertNotEqual(schedule["purpose_of_visit"], goal)
 
 
 class OneWayToHandWorkToAPartnerTests(SimpleTestCase):

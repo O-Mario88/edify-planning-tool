@@ -12,6 +12,7 @@ full policy writeup.
 from __future__ import annotations
 
 import json
+import hashlib
 import threading
 from datetime import timedelta
 
@@ -25,7 +26,7 @@ from django.utils import timezone
 from apps.accounts.lockout_service import AuthenticationLockoutService
 from apps.accounts.models import User
 from apps.core.rbac import EdifyRole
-from apps.core.throttling import _window as _rate_window
+from apps.core.throttling import reset_throttle_state
 from apps.notifications.models import Notification
 
 API_LOGIN_URL = "/api/auth/login"
@@ -38,12 +39,17 @@ def _max_failed() -> int:
 
 class LockoutUnificationTest(TestCase):
     def setUp(self):
-        # The DRF login endpoint is rate-limited at the same default (10/min)
-        # as AUTH_MAX_FAILED_LOGINS -- a fresh window per test keeps that
-        # limit from colliding with a *different* test's recent hits on the
-        # same test-client IP (the limiter is a process-global in-memory
-        # singleton, not reset by TestCase's transaction rollback).
-        _rate_window._hits.clear()
+        # Django's parallel workers share Redis when it is available. Giving
+        # every test a stable documentation-only IPv6 address prevents one
+        # worker's login requests from consuming another worker's window.
+        # Clear only this test's key: cache.clear() would itself race with the
+        # throttle concurrency tests running in other workers.
+        suffix = hashlib.sha256(self.id().encode()).hexdigest()[:16]
+        self._client_ip = f"2001:db8::{suffix}"
+        self.client.defaults["REMOTE_ADDR"] = self._client_ip
+        self._throttle_keys = [f"auth.login:{self._client_ip}"]
+        reset_throttle_state(self._throttle_keys)
+        self.addCleanup(reset_throttle_state, self._throttle_keys)
 
     def _create_user(self, email, password="CorrectPassword1!", **extra):
         return User.objects.create_user(
@@ -184,7 +190,7 @@ class LockoutUnificationTest(TestCase):
         self.assertContains(res_unknown, "Invalid email or password.")
         self.assertContains(res_wrong_pw, "Invalid email or password.")
 
-        _rate_window._hits.clear()
+        reset_throttle_state(self._throttle_keys)
         api_unknown = self._api_login("nobody-here-2@edify.test", "whatever")
         api_wrong_pw = self._api_login("known@edify.test", "AnotherWrongPassword")
         self.assertEqual(api_unknown.status_code, 401)
@@ -215,7 +221,7 @@ class LockoutUnificationTest(TestCase):
         # account is locked. The 10 failed attempts above consumed the whole
         # default 10/min API rate window, so clear it -- this asserts the
         # lockout's rejection, not the throttle's 429.
-        _rate_window._hits.clear()
+        reset_throttle_state(self._throttle_keys)
         web_res = self._web_login("web-lock@edify.test", "CorrectPassword1!")
         self.assertContains(web_res, "Invalid email or password")
         self.assertNotContains(web_res, "locked")

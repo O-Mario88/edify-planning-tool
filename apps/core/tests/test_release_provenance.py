@@ -20,10 +20,14 @@ These tests pin the mechanism, not the opinion:
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 from django.conf import settings
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase
 
 from apps.core.build_info import UNKNOWN, build_info
@@ -60,6 +64,29 @@ class BuildEndpointTest(TestCase):
         info = build_info()
         self.assertIn(info["commit"], (UNKNOWN,) if not info["builtImage"] else ())
         self.assertIsInstance(info["staticManifestHash"], str)
+
+    def test_it_uses_the_platform_runtime_commit_when_the_image_has_none(self):
+        """App Platform bindables are runtime-only for Dockerfile builds."""
+        build_info.cache_clear()
+        self.addCleanup(build_info.cache_clear)
+        with patch.dict(os.environ, {"GIT_COMMIT": "a" * 40}):
+            self.assertEqual(build_info()["commit"], "a" * 40)
+
+
+class ReleaseVerifierUrlSafetyTest(SimpleTestCase):
+    def test_it_refuses_non_http_urls_before_opening_them(self):
+        with self.assertRaisesMessage(
+            CommandError, "--url must be an absolute http:// or https:// URL"
+        ):
+            call_command("verify_release", url="file:///etc/passwd")
+
+    def test_it_refuses_credentials_in_the_deployment_url(self):
+        with self.assertRaisesMessage(
+            CommandError, "--url must not contain credentials"
+        ):
+            call_command(
+                "verify_release", url="https://operator:secret@example.invalid"
+            )
 
 
 class ServiceWorkerCacheTest(TestCase):

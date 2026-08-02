@@ -34,6 +34,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit, urlunsplit
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -44,6 +45,29 @@ CHECKED_ASSETS = (
     "css/components.css",
     "css/fonts.css",
 )
+
+
+def _validated_base_url(raw_url: str) -> str:
+    """Return one canonical HTTP(S) deployment URL or fail closed.
+
+    ``urllib`` supports local-file and custom URL handlers.  A release verifier
+    only has a reason to contact a web deployment, so accepting those schemes
+    would turn an operator typo (or an untrusted CI input) into an unexpected
+    local-file read.  Credentials, queries and fragments are rejected too: the
+    command appends fixed health and static paths and must not reinterpret a
+    more complex URL.
+    """
+    candidate = str(raw_url or "").strip().rstrip("/")
+    parsed = urlsplit(candidate)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise CommandError("--url must be an absolute http:// or https:// URL")
+    if parsed.username or parsed.password:
+        raise CommandError("--url must not contain credentials")
+    if parsed.query or parsed.fragment:
+        raise CommandError("--url must not contain a query string or fragment")
+    return urlunsplit(
+        (parsed.scheme.lower(), parsed.netloc, parsed.path.rstrip("/"), "", "")
+    )
 
 
 class Command(BaseCommand):
@@ -67,7 +91,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        base = options["url"].rstrip("/")
+        base = _validated_base_url(options["url"])
         failures: list[str] = []
 
         remote = self._get_json(f"{base}/api/health/build", failures)
@@ -163,7 +187,11 @@ class Command(BaseCommand):
             url = f"{base}/static/{hashed}"
             try:
                 request = urllib.request.Request(url, method="GET")
-                with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
+                # nosec B310 -- _validated_base_url restricts the operator's
+                # base URL to HTTP(S); this URL only appends a manifest path.
+                with urllib.request.urlopen(  # nosec B310
+                    request, timeout=TIMEOUT_S
+                ) as response:
                     status = response.status
                     ctype = response.headers.get("Content-Type", "")
                     body = response.read(64)
@@ -188,7 +216,11 @@ class Command(BaseCommand):
 
     def _get_json(self, url: str, failures: list[str]) -> dict | None:
         try:
-            with urllib.request.urlopen(url, timeout=TIMEOUT_S) as response:
+            # nosec B310 -- every caller derives this URL from the validated
+            # HTTP(S) base URL and a fixed health endpoint.
+            with urllib.request.urlopen(  # nosec B310
+                url, timeout=TIMEOUT_S
+            ) as response:
                 return json.loads(response.read().decode())
         except urllib.error.HTTPError as exc:
             failures.append(f"{url} returned HTTP {exc.code}")

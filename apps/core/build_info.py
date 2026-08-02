@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -53,7 +54,11 @@ def build_info() -> dict:
         data = {}
 
     return {
-        "commit": data.get("commit") or UNKNOWN,
+        # App Platform exposes the source revision as a runtime bindable for
+        # services. Dockerfile builds cannot consume bindables as build args,
+        # so prefer the image value when a CI builder supplied one and fall
+        # back to the platform's exact deployed commit at runtime.
+        "commit": data.get("commit") or os.environ.get("GIT_COMMIT") or UNKNOWN,
         "release": data.get("release") or UNKNOWN,
         "buildTime": data.get("build_time") or UNKNOWN,
         "staticManifestHash": data.get("static_manifest_hash") or _live_manifest_hash(),
