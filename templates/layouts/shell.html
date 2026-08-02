@@ -76,7 +76,7 @@ class="flex-1 flex flex-col min-w-0 overflow-hidden"
 >
 <!-- Topbar -->
 <header class="edify-topbar shrink-0 relative z-10">
-<div class="flex items-center gap-4 flex-1">
+<div class="flex items-center gap-4 flex-1 min-w-0">
 <button
 type="button"
 x-ref="mobileSidebarOpen"
@@ -97,7 +97,7 @@ phone with no way to search those pages at all. The date block beside it is
 already `hidden md:flex`, so the room this needs is room the row was giving
 away.
 {% endcomment %}
-<search class="max-w-md w-full relative block">
+<search class="max-w-md w-full min-w-0 relative block">
 {% comment %}
 The magnifier is a submit control, not an ornament. It used to be a
 pointer-events-none div, so the only way to run a search anywhere in the
@@ -123,7 +123,7 @@ id="{{ topbar_search.input_id|default:'page-search-input' }}"
 name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
 placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
-class="h-9 w-full rounded-control pl-10 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 {% if topbar_search.autosubmit %}x-data="{ t: null }" @input.debounce.300ms="$el.form ? $el.form.requestSubmit() : null"{% endif %}
 >
 <button type="submit" form="{{ topbar_search.attach_to }}" aria-label="Search" class="edify-search-submit">
@@ -156,7 +156,7 @@ id="{{ topbar_search.input_id|default:'page-search-input' }}"
 name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
 placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
-class="h-9 w-full rounded-control pl-10 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
 <button type="submit" aria-label="Search" class="edify-search-submit">
@@ -173,7 +173,7 @@ id="global-search-input"
 name="q"
 value="{{ request.GET.q|default:'' }}"
 placeholder="Search schools, staff, districts..."
-class="h-9 w-full rounded-control pl-10 pr-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
 <button type="submit" aria-label="Search" class="edify-search-submit">
@@ -187,9 +187,10 @@ class="h-9 w-full rounded-control pl-10 pr-4 text-[13px] font-normal focus:outli
 <!-- Header Right Utilities -->
 <div class="flex items-center gap-2 shrink-0">
 <!-- Today's date + ISO week (shown on every page) -->
-<div class="hidden md:flex items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date">
+<div class="hidden md:flex shrink-0 items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
-<span>{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
+<span class="xl:hidden whitespace-nowrap">{{ today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
+<span class="hidden xl:inline whitespace-nowrap">{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
 </div>
 <!-- Messages drawer — recent threads, each linking to the full thread page. -->
 <button
