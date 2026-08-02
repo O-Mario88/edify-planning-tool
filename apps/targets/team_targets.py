@@ -1657,7 +1657,6 @@ class PLCatchUpPlanService:
         activity_type = PLCatchUpPlanService.AREA_ACTIVITY_TYPE.get(plan.area.key)
         if activity_type and plan.school_ids:
             from apps.activities import services as activity_services
-            from apps.schools.models import School
 
             dates = list(plan.planned_dates or [])
             for i, school_id in enumerate(plan.school_ids):
@@ -1684,19 +1683,32 @@ class PLCatchUpPlanService:
                     else:
                         # Undated → the activity enters Planning; the CCEO dates
                         # it there and costing happens at scheduling time.
-                        school = School.objects.filter(school_id=school_id).first()
-                        a = Activity.objects.create(
-                            school=school,
-                            activity_type=activity_type,
-                            delivery_type="staff",
-                            status="planned",
-                            responsible_staff_id=sp_id or plan.staff_user_id,
-                            fy=plan.fy,
-                            quarter=Cal.quarter_of_month(plan.month_of_fy),
-                            activity_purpose_text=f"Catch-up plan recovery — {plan.area.label}",
-                            purpose_type="target_recovery",
+                        #
+                        # Same canonical funnel as the dated branch above, just
+                        # without a scheduledDate. It used to build the row
+                        # directly, which skipped catalogue eligibility, scope,
+                        # duplicate prevention and the audit event — so a
+                        # catch-up plan could seed work that Planning itself
+                        # would have refused. create() prices nothing without a
+                        # date (see _schedule_period), so the "costing happens
+                        # at scheduling" intent is unchanged.
+                        result = activity_services.create(
+                            {
+                                "activityType": activity_type,
+                                "schoolId": school_id,
+                                "deliveryType": "staff",
+                                "responsibleStaffId": sp_id or plan.staff_user_id,
+                                "fy": plan.fy,
+                                "quarter": Cal.quarter_of_month(plan.month_of_fy),
+                                "plannedMonth": plan.month_of_fy,
+                                "activityPurposeText": f"Catch-up plan recovery — {plan.area.label}",
+                                "purposeType": "target_recovery",
+                            },
+                            principal=staff_user or approver,
                         )
-                        created.append(a.id)
+                        created.append(
+                            result.get("id") if isinstance(result, dict) else None
+                        )
                 except Exception as exc:  # noqa: BLE001 — surface, never hide
                     errors.append(f"{school_id}: {exc}")
         plan.status = "scheduled" if (created and plan.planned_dates) else "approved"

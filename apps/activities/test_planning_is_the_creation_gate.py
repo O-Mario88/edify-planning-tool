@@ -13,10 +13,10 @@ AdminBudgetLine each have exactly ONE construction site outside tests. One
 chokepoint per record is what makes "no cost without a catalogue snapshot" and
 "no fund-request line without a source cost line" enforceable at all.
 
-Activity does not yet hold. Two operational paths still build one directly,
-and they are named below rather than left to be discovered again. Naming them
-is the point: an unknown bypass multiplies quietly, a listed one is a debt with
-an owner. The test fails the moment a third appears.
+Activity is one path from holding. The catch-up plan now goes through the
+canonical service with no scheduled date, so it prices nothing at creation.
+The Field Debrief path does not, and the reason is recorded below rather
+than left to be rediscovered. The test fails the moment a new one appears.
 """
 
 from __future__ import annotations
@@ -52,21 +52,34 @@ PERMITTED_EXCEPTIONS = {
 #: Known operational bypasses, with what each one costs us. These are debt,
 #: not policy — every entry here is a path that skips catalogue eligibility,
 #: SSA lineage, duplicate prevention and the cost snapshot.
+#: Known operational bypasses. The catch-up plan path is gone — it now goes
+#: through activities.services.create with no scheduled date, so it prices
+#: nothing and costing still happens at scheduling.
+#:
+#: One remains, and what blocks it is worth recording. Routing the Field
+#: Debrief path through the canonical service was attempted and reverted: the
+#: service correctly refused, three times over, on rules the direct row
+#: creation had been skipping.
+#:
+#:   1. schoolId is the external directory reference, not the primary key
+#:      linked_school_ids holds (fixed, trivially).
+#:   2. Scope is judged against the person who will do the visit, not the
+#:      reviewer who accepts the recommendation — a PL accepting a CCEO's
+#:      debrief has no reason to hold that CCEO's school.
+#:   3. Visit ENTITLEMENT. A client school's FY visit allowance is finite, and
+#:      an accepted recommendation would consume one. That is a product
+#:      decision, not a refactor: it means accepting a recommendation can be
+#:      refused when the entitlement is spent, and the alternative is that
+#:      debrief follow-ups quietly create visits the school is not entitled to.
+#:
+#: Every one of those is a rule this path currently evades. That is the cost
+#: of the bypass, stated plainly rather than left to be rediscovered.
 KNOWN_BYPASSES = {
     "apps/debriefs/field_debrief_service.py": (
         "An accepted Field Debrief recommendation creates a DATED planned "
-        "Activity with no cost lines and no Cost Catalogue snapshot. The more "
-        "serious of the two: it carries a date, so it reads as real work in "
-        "every date-scoped rollup while having no costing lineage. Routing it "
-        "through activities.services.create means deciding whether an accepted "
-        "recommendation should be costed at acceptance or stay uncosted until "
-        "someone schedules it — a product decision, not a refactor."
-    ),
-    "apps/targets/team_targets.py": (
-        "A catch-up plan creates an UNDATED planned Activity so the CCEO can "
-        "date it in Planning, where costing then happens. The intent matches "
-        "the governing rule; the implementation still skips the canonical "
-        "service's validation and audit."
+        "Activity directly, skipping scope, visit entitlement and the audit "
+        "event. See the note above: the blocker is deciding whether accepting "
+        "a recommendation should consume a school's visit entitlement."
     ),
 }
 
