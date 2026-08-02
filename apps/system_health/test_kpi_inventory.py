@@ -10,7 +10,9 @@ after the surface improves.
 from __future__ import annotations
 
 import ast
+import json
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from apps.system_health.kpi_inventory import _classify, build_inventory
@@ -56,6 +58,17 @@ class InventoryTests(SimpleTestCase):
 
     def test_the_scan_finds_the_kpi_surface(self):
         self.assertGreater(len(self.inventory.tiles()), 100)
+
+    def test_checked_in_manifest_matches_the_live_source(self):
+        from pathlib import Path
+
+        path = Path(settings.BASE_DIR) / "docs/platform-kpi-inventory.json"
+        checked_in = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            checked_in,
+            json.loads(json.dumps(self.inventory.as_dict())),
+            "platform-kpi-inventory.json is stale; run build_kpi_inventory",
+        )
 
     def test_every_site_records_where_it_was_found(self):
         for site in self.inventory.tiles():

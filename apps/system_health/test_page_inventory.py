@@ -1,19 +1,64 @@
 """Contract tests for the living product-surface inventory."""
 
+import json
+from collections import Counter
+
 from pathlib import Path
 
+from django.conf import settings
 from django.test import SimpleTestCase
+from django.urls import get_resolver
 
 from apps.core.rbac import EdifyRole
 from apps.realtime.registry import JOB_REGISTRY
 from apps.system_health.page_inventory import (
     TEMPLATE_ROOT,
+    _iter_patterns,
     _template_findings,
     build_page_inventory,
+    inventory_as_markdown,
 )
 
 
 class PageInventoryTest(SimpleTestCase):
+    def test_checked_in_manifests_match_the_live_platform(self):
+        """Generated evidence must describe this exact source revision."""
+        inventory = build_page_inventory()
+        docs = Path(settings.BASE_DIR) / "docs"
+        checked_in_json = json.loads(
+            (docs / "platform-page-inventory.json").read_text(encoding="utf-8")
+        )
+        checked_in_markdown = (docs / "platform-page-inventory.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(
+            checked_in_json,
+            inventory,
+            "platform-page-inventory.json is stale; run build_page_inventory",
+        )
+        self.assertEqual(
+            checked_in_markdown,
+            inventory_as_markdown(inventory),
+            "platform-page-inventory.md is stale; run build_page_inventory",
+        )
+
+    def test_route_manifest_is_complete(self):
+        """Every resolver entry must appear exactly once in the route manifest.
+
+        Comparing counters rather than sets also detects a generator that
+        silently collapses duplicate route/name registrations.
+        """
+        manifest = build_page_inventory()
+        expected = Counter(
+            (route, pattern.name or "")
+            for pattern, route in _iter_patterns(get_resolver().url_patterns)
+        )
+        actual = Counter(
+            (item["route"], item["route_name"]) for item in manifest["routes"]
+        )
+        self.assertEqual(actual, expected)
+        self.assertEqual(manifest["summary"]["all_routes"], sum(actual.values()))
+
     def test_inventory_discovers_the_platform_and_required_metadata(self):
         inventory = build_page_inventory()
         self.assertGreaterEqual(inventory["summary"]["routed_surfaces"], 90)

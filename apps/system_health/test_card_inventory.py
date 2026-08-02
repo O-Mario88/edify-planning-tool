@@ -11,6 +11,9 @@ reports a false one, so both directions are pinned.
 
 from __future__ import annotations
 
+import json
+
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from apps.system_health.card_inventory import (
@@ -178,6 +181,17 @@ class LiveTemplateScanTests(SimpleTestCase):
 
     def test_the_scan_finds_the_card_surface(self):
         self.assertGreater(len(self.inventory.cards), 300)
+
+    def test_checked_in_manifest_matches_the_live_templates(self):
+        from pathlib import Path
+
+        path = Path(settings.BASE_DIR) / "docs/platform-card-inventory.json"
+        checked_in = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            checked_in,
+            json.loads(json.dumps(self.inventory.as_dict())),
+            "platform-card-inventory.json is stale; run build_card_inventory",
+        )
 
     def test_no_page_renders_the_same_card_title_twice(self):
         """§6 of the card mandate: required same-page duplicate count is 0."""

@@ -73,6 +73,14 @@
       "template": "components/kpi_strip.html"
     },
     {
+      "bytes": 1612,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/page_header.html"
+    },
+    {
       "bytes": 2753,
       "findings": [],
       "forms": 0,
@@ -905,7 +913,7 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 12871,
+      "bytes": 13243,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -945,7 +953,7 @@
       "template": "partials/dashboards/pl/route_capacity.html"
     },
     {
-      "bytes": 3317,
+      "bytes": 2292,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -985,10 +993,10 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 5215,
+      "bytes": 5687,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "tables": 1,
       "template": "partials/dashboards/urgent_schools_table.html"
     },
@@ -1777,7 +1785,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 18413,
+      "bytes": 17784,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -20519,8 +20527,8 @@
         "apps.ssa.services"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": true,
+        "disabled": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -24106,8 +24114,8 @@
         "apps.ssa.services"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": true,
+        "disabled": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -43460,7 +43468,7 @@
     "activity_states": 23,
     "all_routes": 870,
     "api_routes": 293,
-    "component_templates": 285,
+    "component_templates": 286,
     "full_pages": 314,
     "partials_and_drawers": 142,
     "permission_gated": 460,
