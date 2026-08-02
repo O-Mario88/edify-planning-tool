@@ -18,13 +18,18 @@ class TargetsConfig(AppConfig):
         from django.core.signals import request_finished, request_started
 
         from apps.core import reference_data, request_cache
-        from apps.targets.reference import ensure_target_areas
+        from apps.targets.reference import (
+            ensure_target_areas,
+            target_areas_are_complete,
+        )
 
         # The official target areas. Every personal target, the weighted
         # Overall Progress, and the targets HR writes on approval all resolve
         # through TargetArea.key — an empty table does not raise, it silently
         # produces no targets at all.
-        reference_data.register("targets", ensure_target_areas)
+        reference_data.register(
+            "targets", ensure_target_areas, target_areas_are_complete
+        )
 
         request_started.connect(
             lambda sender, **kw: request_cache.begin(),

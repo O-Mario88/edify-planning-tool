@@ -18,6 +18,20 @@ def ensure_catalogue_reference():
     seed_known_project_activity_rules(actor_id="reference_data")
 
 
+def catalogue_reference_is_complete() -> bool:
+    """Read-only counterpart to ``ensure_catalogue_reference``."""
+    from apps.activity_catalogue.models import ActivityCatalogueItem
+    from apps.activity_catalogue.seed_data import CATALOGUE_ITEMS
+
+    expected = {row["stable_code"] for row in CATALOGUE_ITEMS}
+    present = set(
+        ActivityCatalogueItem.objects.filter(stable_code__in=expected).values_list(
+            "stable_code", flat=True
+        )
+    )
+    return present == expected
+
+
 class ActivityCatalogueConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.activity_catalogue"
@@ -26,4 +40,8 @@ class ActivityCatalogueConfig(AppConfig):
     def ready(self):
         from apps.core import reference_data
 
-        reference_data.register("activity_catalogue", ensure_catalogue_reference)
+        reference_data.register(
+            "activity_catalogue",
+            ensure_catalogue_reference,
+            catalogue_reference_is_complete,
+        )

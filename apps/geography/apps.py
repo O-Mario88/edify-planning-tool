@@ -18,9 +18,14 @@ class GeographyConfig(AppConfig):
         """
         from apps.core import reference_data
 
-        from apps.geography.ubos_registry import ensure_geography_reference
+        from apps.geography.ubos_registry import (
+            ensure_geography_reference,
+            geography_reference_is_consistent,
+        )
 
         # A no-op until geography is bootstrapped. Once districts exist, the
         # same registered function restores statistical sub-regions and adds
         # any missing current UBOS sub-county identities.
-        reference_data.register("geography", ensure_geography_reference)
+        reference_data.register(
+            "geography", ensure_geography_reference, geography_reference_is_consistent
+        )

@@ -48,31 +48,38 @@ from collections.abc import Callable
 
 logger = logging.getLogger("edify.reference_data")
 
-# app_label -> the callable that puts this app's reference rows back.
+# app_label -> (the callable that puts this app's reference rows back, the
+# read-only callable that proves the required rows are present).
 #
 # Whatever it returns is ignored. It was tempting to make it report how many
 # rows it created and to have the tests assert on that, but a function that
 # under-reports would then be indistinguishable from one that had nothing to
 # do — the failure this whole module exists to prevent, moved one level up.
 # The tests count rows in the database instead.
-_REGISTRY: dict[str, Callable[[], object]] = {}
+_REGISTRY: dict[str, tuple[Callable[[], object], Callable[[], bool]]] = {}
 
 
-def register(app_label: str, ensure: Callable[[], object]) -> None:
+def register(
+    app_label: str,
+    ensure: Callable[[], object],
+    verify: Callable[[], bool],
+) -> None:
     """Declare that this app has reference data that must survive a flush.
 
     Call from `AppConfig.ready()`. `ensure` must be idempotent and must only
-    ever create what is missing — never update or delete. A label or a weight
-    an administrator edited is their decision, and a restore that runs on every
-    deploy must not walk it back.
+    ever create what is missing — never update or delete. `verify` must be
+    read-only and return whether the app's required state is complete. A label
+    or a weight an administrator edited is their decision, and a restore that
+    runs on every deploy must not walk it back.
     """
-    if app_label in _REGISTRY and _REGISTRY[app_label] is not ensure:
+    registration = (ensure, verify)
+    if app_label in _REGISTRY and _REGISTRY[app_label] != registration:
         raise RuntimeError(
             f"Reference data for '{app_label}' is already registered to a "
             "different function. One app, one ensure function — if it needs to "
             "restore several tables, have that function call the others."
         )
-    _REGISTRY[app_label] = ensure
+    _REGISTRY[app_label] = registration
 
 
 def registered_apps() -> tuple[str, ...]:
@@ -91,7 +98,7 @@ def restore_all() -> dict[str, bool]:
     to stay cheap. `test_reference_data.py` holds them to that.
     """
     outcome: dict[str, bool] = {}
-    for app_label, ensure in _REGISTRY.items():
+    for app_label, (ensure, _verify) in _REGISTRY.items():
         try:
             ensure()
             outcome[app_label] = True
@@ -106,4 +113,23 @@ def restore_all() -> dict[str, bool]:
     return outcome
 
 
-__all__ = ["register", "registered_apps", "restore_all"]
+def verify_all() -> dict[str, bool]:
+    """Read only: report whether every app's required rows are present.
+
+    Restoration belongs to the ``post_migrate`` receiver. Test infrastructure
+    calls this after Django's teardown flush so it can expose a broken receiver
+    instead of silently repairing the evidence it was meant to inspect.
+    """
+    outcome: dict[str, bool] = {}
+    for app_label, (_ensure, verify) in _REGISTRY.items():
+        try:
+            outcome[app_label] = bool(verify())
+        except Exception as exc:  # noqa: BLE001
+            logger.error(
+                "Reference data for '%s' could not be verified: %s", app_label, exc
+            )
+            outcome[app_label] = False
+    return outcome
+
+
+__all__ = ["register", "registered_apps", "restore_all", "verify_all"]

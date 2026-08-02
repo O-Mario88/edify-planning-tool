@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
@@ -21,6 +21,7 @@ from apps.audit.models import AuditLog
 from apps.command_center.todo_service import get_todos
 from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 from apps.fund_requests import disbursement_dashboard_service as svc
 from apps.fund_requests import pl_approval_service as pl_svc
 from apps.fund_requests.models import FundRequest, WeeklyFundRequest
@@ -380,32 +381,13 @@ class DisbursementDashboardTest(TestCase):
         self.assertEqual(ctx["utilization"]["pct"], 0)
 
 
-class DisbursementDoubleClickRaceTest(TransactionTestCase):
+class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
     """Regression test for a double-click on the "Disburse Funds" button: two
     near-simultaneous POSTs to /disbursements/action must not both pass the
     "still sent_to_accountant" check and write two sets of Disbursement audit
     rows. Uses real threads + TransactionTestCase so the two svc.disburse()
     calls run in genuinely concurrent DB transactions (a plain TestCase wraps
     the whole test in one transaction and can't reproduce the race)."""
-
-    # TransactionTestCase truncates every table after each test, which would
-    # otherwise silently wipe migration-seeded rows (e.g. the default
-    # CostCatalogue) that other test modules in the same run depend on.
-    # serialized_rollback=True would only restore that seeded state
-    # transiently in THIS class's own setUp (not permanently -- under
-    # --keepdb the next `manage.py test` invocation reuses a database left
-    # flushed), AND it collides with the explicit reseed below (Django
-    # inserts the ORIGINAL serialized snapshot's rows on top of what the
-    # previous test's teardown already reseeded -- duplicate-key IntegrityError
-    # on CostCatalogue's natural-key unique constraint). Deliberately NOT
-    # using serialized_rollback; _post_teardown is the single source of
-    # truth that leaves the kept database in a good state either way.
-
-    def _post_teardown(self):
-        super()._post_teardown()
-        from apps.core.test_seed_utils import reseed_migration_data
-
-        reseed_migration_data()
 
     def setUp(self):
         User = get_user_model()

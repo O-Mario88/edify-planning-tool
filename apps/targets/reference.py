@@ -51,3 +51,14 @@ def ensure_target_areas(model=None) -> int:
         )
         created += int(was_created)
     return created
+
+
+def target_areas_are_complete() -> bool:
+    """Read-only counterpart to ``ensure_target_areas``."""
+    from apps.targets.models import TargetArea
+
+    expected = {key for key, _label, _weight, _sort_order in OFFICIAL_TARGET_AREAS}
+    present = set(
+        TargetArea.objects.filter(key__in=expected).values_list("key", flat=True)
+    )
+    return present == expected

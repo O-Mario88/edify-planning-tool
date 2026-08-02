@@ -18,6 +18,20 @@ def ensure_priority_reference():
     seed_fy2027_priorities(actor_id="reference_data")
 
 
+def priority_reference_is_complete() -> bool:
+    """Read-only counterpart to ``ensure_priority_reference``."""
+    from apps.hr.models import StrategicPriority
+    from apps.hr.priority_seed import PRIORITIES
+
+    expected = {code for code, _title, _milestones in PRIORITIES}
+    present = set(
+        StrategicPriority.objects.filter(fy="2027", code__in=expected).values_list(
+            "code", flat=True
+        )
+    )
+    return present == expected
+
+
 class HrConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.hr"
@@ -27,4 +41,6 @@ class HrConfig(AppConfig):
     def ready(self):
         from apps.core import reference_data
 
-        reference_data.register("hr", ensure_priority_reference)
+        reference_data.register(
+            "hr", ensure_priority_reference, priority_reference_is_complete
+        )

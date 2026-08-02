@@ -181,3 +181,17 @@ def ensure_cost_reference(catalogue=None) -> int:
             rate.save(update_fields=["catalogue", "fy", "updated_at"])
         created += int(was_created)
     return created
+
+
+def cost_reference_is_complete() -> bool:
+    """Read-only counterpart to ``ensure_cost_reference``."""
+    from apps.budget.models import CostCatalogue, CostSetting
+
+    if not CostCatalogue.objects.filter(is_active=True).exists():
+        return False
+    present = set(
+        CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS).values_list(
+            "key", flat=True
+        )
+    )
+    return present == CANONICAL_RATE_KEYS

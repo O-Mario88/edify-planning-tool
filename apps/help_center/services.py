@@ -383,7 +383,7 @@ def canonical_specs() -> list[dict]:
 
 
 @transaction.atomic
-def _canonical_content_is_installed() -> bool:
+def canonical_content_is_installed() -> bool:
     """True when every canonical article and glossary term already exists.
 
     `ensure_canonical_content` is idempotent but not cheap: its get_or_create
@@ -417,7 +417,7 @@ def _canonical_content_is_installed() -> bool:
 
 def ensure_canonical_content() -> dict:
     """Install v1 reviewed material once; never overwrite an editor's draft."""
-    if _canonical_content_is_installed():
+    if canonical_content_is_installed():
         return {"created": 0, "articles": HelpArticle.objects.count()}
 
     now = timezone.now()

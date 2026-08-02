@@ -933,9 +933,7 @@ def add_to_cluster_drawer_view(request, school_id):
         # wrong. The withdrawn-cluster case is a genuine race: the drawer lists
         # a cluster, someone retires it, and the assignment arrives afterwards.
         try:
-            assign_school_to_cluster(
-                school.school_id, {"clusterId": cluster.id}, user
-            )
+            assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
         except (BadRequest, Forbidden, NotFoundError) as exc:
             return render(
                 request,

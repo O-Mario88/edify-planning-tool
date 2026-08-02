@@ -297,6 +297,20 @@ def ensure_geography_reference() -> dict[str, Any]:
     }
 
 
+def geography_reference_is_consistent() -> bool:
+    """Read-only counterpart to ``ensure_geography_reference``.
+
+    Tests deliberately begin with no production geography. In that valid
+    state the whole hierarchy must be empty. Once regions exist, every
+    source-owned district that the registry installed must have its UBOS code.
+    """
+    from apps.geography.models import District, Region, SubCounty
+
+    if not Region.objects.exists():
+        return not District.objects.exists() and not SubCounty.objects.exists()
+    return not District.objects.filter(source=SOURCE_NAME, code="").exists()
+
+
 __all__ = [
     "CURRENT_CITY_PARENTS",
     "DISTRICT_ALIASES",
@@ -306,6 +320,7 @@ __all__ = [
     "canonical",
     "district_canonical",
     "ensure_geography_reference",
+    "geography_reference_is_consistent",
     "ensure_ubos_districts",
     "ensure_ubos_subcounties",
     "load_registry",

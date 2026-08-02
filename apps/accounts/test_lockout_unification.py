@@ -20,12 +20,13 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.management import call_command
 from django.db import connection
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.lockout_service import AuthenticationLockoutService
 from apps.accounts.models import User
 from apps.core.rbac import EdifyRole
+from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 from apps.core.throttling import reset_throttle_state
 from apps.notifications.models import Notification
 
@@ -454,30 +455,10 @@ class LockoutUnificationTest(TestCase):
         self.assertIsNotNone(user)
 
 
-class ConcurrentLockoutTest(TransactionTestCase):
+class ConcurrentLockoutTest(ReferenceDataTransactionTestCase):
     """TransactionTestCase + real threads: a plain TestCase wraps everything
     in one transaction and can't reproduce genuinely concurrent DB
     transactions racing on the same row."""
-
-    # TransactionTestCase truncates every table after each test, which would
-    # otherwise silently wipe migration-seeded rows (e.g. the default
-    # TargetArea set) that other test modules in the same run depend on.
-    # serialized_rollback=True would only restore that seeded state
-    # transiently in THIS class's own setUp (not permanently -- under
-    # --keepdb the next `manage.py test` invocation reuses a database left
-    # flushed), AND it collides with the explicit reseed below (Django
-    # inserts the ORIGINAL serialized snapshot's rows on top of what the
-    # previous test's teardown already reseeded -- duplicate-key IntegrityError
-    # on CostCatalogue's natural-key unique constraint). Deliberately NOT
-    # using serialized_rollback; _post_teardown is the single source of
-    # truth that leaves the kept database in a good state either way --
-    # matches the DisbursementDoubleClickRaceTest pattern.
-
-    def _post_teardown(self):
-        super()._post_teardown()
-        from apps.core.test_seed_utils import reseed_migration_data
-
-        reseed_migration_data()
 
     def test_concurrent_failed_attempts_do_not_bypass_threshold(self):
         target = User.objects.create_user(

@@ -17,6 +17,8 @@ class HelpCenterConfig(AppConfig):
         """
         from apps.core import reference_data
 
-        from .services import ensure_canonical_content
+        from .services import canonical_content_is_installed, ensure_canonical_content
 
-        reference_data.register("help_center", ensure_canonical_content)
+        reference_data.register(
+            "help_center", ensure_canonical_content, canonical_content_is_installed
+        )

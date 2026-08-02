@@ -18,6 +18,11 @@ class BudgetConfig(AppConfig):
         """
         from apps.core import reference_data
 
-        from apps.budget.reference import ensure_cost_reference
+        from apps.budget.reference import (
+            cost_reference_is_complete,
+            ensure_cost_reference,
+        )
 
-        reference_data.register("budget", ensure_cost_reference)
+        reference_data.register(
+            "budget", ensure_cost_reference, cost_reference_is_complete
+        )

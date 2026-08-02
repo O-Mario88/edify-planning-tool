@@ -23,12 +23,14 @@ the convention has already failed or could quietly fail next:
   RESTORATION   Registration that does not actually restore anything is
                 paperwork. Proved by flushing for real and counting rows.
 
-  NO SERIALIZED Django's own remedy for this problem, `serialized_rollback`,
-  ROLLBACK      collides with ours: it re-inserts serialized content types that
-                the post_migrate restore has already recreated, and the unique
-                constraint refuses. Tried during the audit — it turned two
-                failures into six errors. Nobody should have to find that out
-                twice.
+  NO SIGNAL      `serialized_rollback` and `available_apps` both make Django
+  BYPASSES       inhibit post_migrate during teardown. The first also collides
+                 with restored content types; the second silently disables the
+                 only restoration mechanism. Neither belongs in this suite.
+
+  MIGRATIONS     Every project migration file must be loaded into one complete,
+                 conflict-free graph. A deleted dependency or orphaned branch
+                 must fail here before a release gate trusts the schema.
 """
 
 from __future__ import annotations
@@ -38,9 +40,11 @@ import pathlib
 
 from django.apps import apps as django_apps
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase, TransactionTestCase
+from django.db.migrations.loader import MigrationLoader
+from django.test import SimpleTestCase, TestCase
 
 from apps.core import reference_data
+from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 
 ROOT = pathlib.Path(settings.BASE_DIR)
 APPS = ROOT / "apps"
@@ -149,6 +153,72 @@ class CompletenessTest(SimpleTestCase):
         self.assertEqual(stale, [], f"exemptions for apps that are gone: {stale}")
 
 
+class MigrationCompletenessTest(SimpleTestCase):
+    """Every migration file belongs to one connected, conflict-free graph."""
+
+    def _project_files(self) -> set[tuple[str, str]]:
+        found = set()
+        for config in django_apps.get_app_configs():
+            app_path = pathlib.Path(config.path)
+            try:
+                app_path.relative_to(APPS)
+            except ValueError:
+                continue
+            migration_dir = app_path / "migrations"
+            if not migration_dir.is_dir():
+                continue
+            for path in migration_dir.glob("*.py"):
+                if path.name != "__init__.py":
+                    found.add((config.label, path.stem))
+        return found
+
+    def test_every_project_migration_file_is_loaded(self):
+        loader = MigrationLoader(
+            None,
+            ignore_no_migrations=True,
+            replace_migrations=False,
+        )
+        files = self._project_files()
+        labels = {label for label, _name in files}
+        loaded = {key for key in loader.disk_migrations if key[0] in labels}
+        self.assertEqual(
+            loaded,
+            files,
+            "MigrationLoader and the project filesystem disagree. A migration "
+            "file may be undiscoverable, deleted, or shadowed.",
+        )
+
+    def test_each_project_app_has_one_complete_migration_chain(self):
+        loader = MigrationLoader(
+            None,
+            ignore_no_migrations=True,
+            replace_migrations=False,
+        )
+        self.assertEqual(loader.detect_conflicts(), {})
+
+        files = self._project_files()
+        by_app: dict[str, set[tuple[str, str]]] = {}
+        for node in files:
+            by_app.setdefault(node[0], set()).add(node)
+
+        for app_label, nodes in sorted(by_app.items()):
+            with self.subTest(app=app_label):
+                roots = loader.graph.root_nodes(app_label)
+                leaves = loader.graph.leaf_nodes(app_label)
+                self.assertEqual(
+                    len(roots), 1, f"{app_label} has incomplete roots: {roots}"
+                )
+                self.assertEqual(
+                    len(leaves), 1, f"{app_label} has conflicting leaves: {leaves}"
+                )
+                connected = set(loader.graph.forwards_plan(leaves[0]))
+                self.assertTrue(
+                    nodes <= connected,
+                    f"{app_label} has migrations outside its leaf chain: "
+                    f"{sorted(nodes - connected)}",
+                )
+
+
 class TheGateCanActuallyFailTest(SimpleTestCase):
     """The completeness gate is the whole feature, so it needs proving that it
     can go red. A gate that cannot fail is a comment."""
@@ -235,7 +305,7 @@ class IdempotencyTest(TestCase):
         self.assertEqual(failed, [])
 
 
-class RestorationTest(TransactionTestCase):
+class RestorationTest(ReferenceDataTransactionTestCase):
     """The one test in this codebase whose job is to flush.
 
     It is deliberately here rather than spread around: this is the behaviour
@@ -250,8 +320,9 @@ class RestorationTest(TransactionTestCase):
         otherwise look exactly like one with nothing to do."""
         from apps.targets.models import TargetArea
 
-        # Whatever the flush did, the rows the platform needs are present.
-        reference_data.restore_all()
+        # Whatever the previous flush did, the rows the platform needs are
+        # present. This class's base will repeat the read-only verification
+        # after its own teardown flush.
         self.assertGreater(
             TargetArea.objects.count(),
             0,
@@ -261,21 +332,13 @@ class RestorationTest(TransactionTestCase):
         )
 
     def test_restoration_covers_every_registered_app(self):
-        outcome = reference_data.restore_all()
+        outcome = reference_data.verify_all()
         self.assertEqual(sorted(outcome), sorted(reference_data.registered_apps()))
         self.assertTrue(all(outcome.values()))
 
 
-class NoSerializedRollbackTest(SimpleTestCase):
-    def test_nothing_asks_django_to_restore_serialized_data(self):
-        """`serialized_rollback = True` is the documented Django remedy for
-        exactly this problem, and it does not work here: it re-inserts the
-        serialized content types that the post_migrate restore has already
-        recreated, and the unique constraint refuses. It was tried during the
-        2026-07-26 audit and turned two failures into six errors."""
-        # Parsed rather than grepped: this file and two others discuss
-        # serialized_rollback at length in prose, and only a real assignment
-        # counts.
+class NoTeardownSignalBypassTest(SimpleTestCase):
+    def _assignments(self, name: str) -> list[str]:
         offenders = []
         for path in APPS.rglob("test*.py"):
             try:
@@ -283,18 +346,39 @@ class NoSerializedRollbackTest(SimpleTestCase):
             except SyntaxError:
                 continue
             for node in ast.walk(tree):
-                if not isinstance(node, ast.Assign):
-                    continue
-                names = [t.id for t in node.targets if isinstance(t, ast.Name)]
-                if "serialized_rollback" not in names:
-                    continue
-                if isinstance(node.value, ast.Constant) and node.value.value is True:
+                targets = []
+                if isinstance(node, ast.Assign):
+                    targets = node.targets
+                elif isinstance(node, ast.AnnAssign):
+                    targets = [node.target]
+                if any(
+                    isinstance(target, ast.Name) and target.id == name
+                    for target in targets
+                ):
                     offenders.append(f"{path.relative_to(ROOT)}:{node.lineno}")
+        return offenders
+
+    def test_nothing_asks_django_to_restore_serialized_data(self):
+        """`serialized_rollback = True` is the documented Django remedy for
+        exactly this problem, and it does not work here: it re-inserts the
+        serialized content types that the post_migrate restore has already
+        recreated, and the unique constraint refuses. It was tried during the
+        2026-07-26 audit and turned two failures into six errors."""
+        offenders = self._assignments("serialized_rollback")
         self.assertEqual(
             offenders,
             [],
             "serialized_rollback collides with the post_migrate reference-data "
             f"restore — both re-insert content types: {offenders}",
+        )
+
+    def test_nothing_inhibits_post_migrate_with_available_apps(self):
+        offenders = self._assignments("available_apps")
+        self.assertEqual(
+            offenders,
+            [],
+            "available_apps makes TransactionTestCase inhibit post_migrate, "
+            f"so reference data cannot be restored after flush: {offenders}",
         )
 
 

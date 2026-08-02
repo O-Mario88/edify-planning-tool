@@ -23,12 +23,12 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.geography.models import District, Region
+from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 from apps.schools.models import SSAImportBatch, School, UnmatchedSSARecord
 from apps.ssa import unmatched_service
 from apps.ssa.upload_service import import_ssa_batch
@@ -323,23 +323,13 @@ class UnmatchedSSAQueueScopeTest(UnmatchedSSAQueueTestBase):
         self.assertEqual({r.school_id for r in page.object_list}, {"NR-A"})
 
 
-class UnmatchedSSAQueuePerformanceTest(TransactionTestCase):
+class UnmatchedSSAQueuePerformanceTest(ReferenceDataTransactionTestCase):
     """10k schools / 5k unmatched-record scale — proves the fix is O(1)
     queries at write time (bulk) and read time (bounded by page size), not
     O(schools) or O(unmatched records).
 
-    Deliberately NOT using serialized_rollback=True — see
-    DisbursementDoubleClickRaceTest / ConcurrentLockoutTest for why: Django
-    would insert the ORIGINAL serialized snapshot's rows on top of what
-    _post_teardown's reseed_migration_data() already restored, causing a
-    duplicate-key IntegrityError. reseed_migration_data() alone is the
-    single source of truth for leaving the kept database in a good state."""
-
-    def _post_teardown(self):
-        super()._post_teardown()
-        from apps.core.test_seed_utils import reseed_migration_data
-
-        reseed_migration_data()
+    The shared base verifies that ``post_migrate`` restored reference data
+    after the teardown flush; it never repairs the database itself."""
 
     def test_unmatched_queue_performance_at_scale(self):
         region = Region.objects.create(name="Perf Region")
