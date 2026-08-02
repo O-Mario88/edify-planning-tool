@@ -24,9 +24,40 @@ would drop these silently.
 
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 from django.conf import settings
 from django.db import OperationalError, connection
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
+
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+class AsgiConnectionLifecycleTest(SimpleTestCase):
+    def test_non_test_processes_disable_persistent_connections(self):
+        """The old policy was already zero under tests but 60 in production."""
+        env = os.environ.copy()
+        env["DJANGO_SETTINGS_MODULE"] = "config.settings.base"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from django.conf import settings; "
+                "print(settings.DATABASES['default']['CONN_MAX_AGE'])",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "0")
 
 
 def _setting(name: str) -> str:
@@ -36,6 +67,9 @@ def _setting(name: str) -> str:
 
 
 class TimeoutsReachThePostgresSessionTest(TestCase):
+    def test_asgi_requests_do_not_retain_database_connections(self):
+        self.assertEqual(settings.DATABASES["default"]["CONN_MAX_AGE"], 0)
+
     def test_a_statement_cannot_run_forever(self):
         self.assertNotEqual(_setting("statement_timeout"), "0")
 

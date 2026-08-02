@@ -234,7 +234,12 @@ DATABASES = {"default": _db_config}
 
 # Apply default config parameters
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-DATABASES["default"]["CONN_MAX_AGE"] = 0 if _is_testing else 60
+# This application is ASGI-only in production. A persistent connection is held
+# per sync worker thread under ASGI, so a modest burst can retain dozens of idle
+# sessions per process and exhaust a small managed Postgres instance. Django's
+# ASGI guidance requires persistent connections to be disabled; add a bounded
+# external pool (for example PgBouncer) at the infrastructure layer instead.
+DATABASES["default"]["CONN_MAX_AGE"] = 0
 
 # ── Database timeouts ────────────────────────────────────────────────────────
 # Postgres defaults all three of these to "wait forever", which is the wrong
