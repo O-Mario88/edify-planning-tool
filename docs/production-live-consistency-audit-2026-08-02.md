@@ -21,7 +21,7 @@ Status: **not production-certified**. The public production surface is stable an
 | Live release provenance | **Fail** | `/api/health/build` returns 404 although the current source contains and tests this endpoint |
 | Current candidate tests | Pass | 3,683 tests passed, 2 intentional skips, 0 failures, four parallel workers |
 | Current candidate security | Pass | Bandit at CI thresholds: no medium/high findings; `pip-audit`: no known CVEs; `npm audit`: 0 vulnerabilities |
-| Current candidate image | Pass | Non-root `edify` (UID 10001); image `sha256:885400341d5fef1ddc54f0b9c0218241900ee08b32655fe3555dfedf34579a15`; manifest `a22d4740a6ea6c02` |
+| Current candidate image | Pass | Non-root `edify` (UID 10001); image `sha256:7827c48edee9ff5d6e28226e977a513e25e67f755506f0785f0e19c7bf46ce3f`; canonical manifest `631bdab11312fe34` |
 | Authenticated production roles | **Blocked / unverified** | No authorized production session or safe role test accounts were available |
 | Cross-browser authenticated production | **Blocked / unverified** | Only the Codex in-app browser was available, with no authenticated session |
 
@@ -100,7 +100,8 @@ The generated inventory currently contains 469 routed product surfaces, 870 regi
 |---|---|---:|---|---|
 | PROD-REL-01 | Production lacks build-provenance endpoint and cannot identify its artifact | Critical | **Open; reproduced live** | Current source verifier and endpoint tests pass; candidate image embeds build info. Requires an authorized production deployment and post-deploy verification. |
 | PROD-REL-02 | App Platform Dockerfile build cannot receive its commit bindable at build time | High | Source fixed | The service now injects `${_self.COMMIT_HASH}` as runtime `GIT_COMMIT`; the endpoint prefers an image-baked commit and otherwise reports the platform's exact deployed revision. |
-| PROD-BUILD-01 | DigitalOcean/Kaniko did not execute the Dockerfile provenance heredoc; the following `chmod` failed because `/app/build-info.json` did not exist | Critical | Source fixed; redeploy pending | Replaced builder-specific heredoc syntax with `scripts/write_build_info.py` and added a subprocess regression test plus a Dockerfile contract test. |
+| PROD-BUILD-01 | DigitalOcean/Kaniko did not execute the Dockerfile provenance heredoc; the following `chmod` failed because `/app/build-info.json` did not exist | Critical | Fixed and verified live | Replaced builder-specific heredoc syntax with the `scripts.write_build_info` module and added a subprocess regression test plus a Dockerfile contract test. DigitalOcean built and promoted commit `ba8abbc`; the live provenance and readiness endpoints return 200. |
+| PROD-REL-03 | Raw manifest-byte hashes differed between local Docker and Kaniko for the same asset mapping because JSON key order is not stable | High | Source fixed; redeploy pending | Manifest identity is now calculated from canonical, sorted JSON; regression coverage proves whitespace and key order cannot change the digest. |
 | CI-SEC-01 | Bandit B310 rejected unrestricted verifier URLs | High | Source fixed | Verifier now accepts only absolute HTTP(S) base URLs, rejects credentials/query/fragment, and has regression tests. CI-threshold Bandit passes. |
 | CI-AUTH-01 | Parallel auth tests collided on one shared throttle IP | Medium | Source fixed | Each test now uses a deterministic documentation-only IPv6 address and clears only its own throttle key. Parallel regression matrix and full suite pass. |
 | CI-UI-01 | Compiled CSS lacked `pr-9` and other current utilities | High | Source fixed | Canonical CSS rebuilt; UI lint and full suite pass; rebuild is byte-stable. |

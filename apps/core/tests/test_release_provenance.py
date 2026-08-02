@@ -33,7 +33,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase
 
-from apps.core.build_info import UNKNOWN, build_info
+from apps.core.build_info import UNKNOWN, build_info, static_manifest_digest
 
 REPO = Path(settings.BASE_DIR)
 
@@ -98,14 +98,15 @@ class ImageBuildProvenanceTest(SimpleTestCase):
             root = Path(directory)
             manifest = root / "staticfiles.json"
             output = root / "build-info.json"
-            manifest.write_bytes(b'{{"paths":{}}}')
+            manifest.write_bytes(b'{"paths":{}}')
             env = os.environ.copy()
             env.update({"GIT_COMMIT": "a" * 40, "RELEASE": "production-test"})
 
             result = subprocess.run(
                 [
                     sys.executable,
-                    "scripts/write_build_info.py",
+                    "-m",
+                    "scripts.write_build_info",
                     "--manifest",
                     str(manifest),
                     "--output",
@@ -126,13 +127,34 @@ class ImageBuildProvenanceTest(SimpleTestCase):
             self.assertRegex(payload["build_time"], r"^\d{4}-\d{2}-\d{2}T")
             self.assertEqual(
                 payload["static_manifest_hash"],
-                "025ecc3dd886436b",
+                "42c15180e501471c",
             )
 
     def test_dockerfile_uses_the_portable_writer_not_a_heredoc(self):
         dockerfile = (REPO / "Dockerfile").read_text(encoding="utf-8")
-        self.assertIn("RUN python scripts/write_build_info.py", dockerfile)
+        self.assertIn("RUN python -m scripts.write_build_info", dockerfile)
         self.assertNotIn("RUN python - <<", dockerfile)
+
+    def test_manifest_identity_ignores_json_key_order_and_whitespace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = root / "first.json"
+            second = root / "second.json"
+            first.write_text(
+                '{"paths":{"css/main.css":"css/main.abc.css"},"version":"1"}',
+                encoding="utf-8",
+            )
+            second.write_text(
+                '{\n  "version": "1",\n  "paths": {\n'
+                '    "css/main.css": "css/main.abc.css"\n  }\n}',
+                encoding="utf-8",
+            )
+
+            self.assertNotEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(
+                static_manifest_digest(first),
+                static_manifest_digest(second),
+            )
 
 
 class ServiceWorkerCacheTest(TestCase):

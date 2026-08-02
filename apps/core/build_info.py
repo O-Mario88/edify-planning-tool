@@ -28,6 +28,7 @@ life of a process would be its own defect.
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
 import os
 from functools import lru_cache
@@ -40,6 +41,25 @@ logger = logging.getLogger("edify.build")
 BUILD_INFO_PATH = Path("/app/build-info.json")
 
 UNKNOWN = "unknown"
+
+
+def static_manifest_digest(manifest: Path) -> str:
+    """Hash the manifest's meaning, independent of JSON serialization order.
+
+    Django builds the same ``paths`` mapping with different key insertion
+    orders under local Docker and DigitalOcean's Kaniko builder. Hashing the
+    raw bytes therefore produced different release identities for identical
+    static bundles. Canonical JSON makes this a semantic artifact digest.
+    """
+
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    canonical = json.dumps(
+        data,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()[:16]
 
 
 @lru_cache(maxsize=1)
@@ -74,15 +94,13 @@ def _live_manifest_hash() -> str:
     is the same computation the build performs, so a developer can compare
     their tree against production without building an image first.
     """
-    import hashlib
-
     from django.conf import settings
 
     try:
         manifest = Path(settings.STATIC_ROOT) / "staticfiles.json"
         if not manifest.exists():
             return UNKNOWN
-        return hashlib.sha256(manifest.read_bytes()).hexdigest()[:16]
+        return static_manifest_digest(manifest)
     except Exception:  # noqa: BLE001
         return UNKNOWN
 
@@ -106,4 +124,10 @@ def asset_hash(path: str) -> str | None:
         return None
 
 
-__all__ = ["build_info", "asset_hash", "BUILD_INFO_PATH", "UNKNOWN"]
+__all__ = [
+    "build_info",
+    "asset_hash",
+    "static_manifest_digest",
+    "BUILD_INFO_PATH",
+    "UNKNOWN",
+]

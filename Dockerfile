@@ -58,7 +58,7 @@ ARG RELEASE=""
 # App Platform's Dockerfile builder is Kaniko. Use a regular script rather
 # than Docker/BuildKit heredoc syntax so the file is created identically by
 # local Docker, CI, and DigitalOcean.
-RUN python scripts/write_build_info.py
+RUN python -m scripts.write_build_info
 
 # Run as a non-root user. Nothing this process does needs root, and a
 # container that starts as root turns any remote-code path into host-adjacent

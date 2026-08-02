@@ -16,7 +16,7 @@ What it checks:
 
   * the deployment answers /api/health/build at all (a deployment that cannot
     say what it is running is itself the finding);
-  * its static manifest digest equals this tree's;
+  * its canonical static manifest digest equals this tree's;
   * the hashed asset filenames it reports equal this tree's, per asset, so a
     mismatch names the file rather than just failing;
   * every reported asset is actually fetchable, with a CSS content type — a

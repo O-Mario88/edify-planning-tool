@@ -8,17 +8,18 @@ heredoc ``RUN`` instructions differs from the local Docker/BuildKit path.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+from apps.core.build_info import static_manifest_digest
+
 
 def write_build_info(manifest: Path, output: Path) -> dict[str, str]:
     """Hash the collected-static manifest and write the image identity."""
 
-    digest = hashlib.sha256(manifest.read_bytes()).hexdigest()[:16]
+    digest = static_manifest_digest(manifest)
     payload = {
         "commit": os.environ.get("GIT_COMMIT") or "",
         "release": os.environ.get("RELEASE") or "",
