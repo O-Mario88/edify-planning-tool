@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.htmx_errors import error_fragment
+from apps.core.exceptions import BadRequest
 from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
@@ -163,7 +164,7 @@ def special_projects_bulk_schedule_view(request):
             executor_type="staff",
         )
         if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
-            raise ValueError(
+            raise BadRequest(
                 "Select a Catalogue Activity eligible for every selected Project School."
             )
         with transaction.atomic():
@@ -262,7 +263,7 @@ def special_projects_bulk_partner_view(request):
             executor_type="partner",
         )
         if catalogue_item_id not in {row["catalogueItemId"] for row in common}:
-            raise ValueError(
+            raise BadRequest(
                 "Select a Catalogue Activity eligible for every selected Project School."
             )
         from apps.activity_catalogue.services import get_selectable_item
@@ -1007,7 +1008,7 @@ def assign_partner_action_view(request):
         source_activity = None
         if school_id or cluster_id:
             if not catalogue_item_id:
-                raise ValueError("Select an approved Activity Catalogue item.")
+                raise BadRequest("Select an approved Activity Catalogue item.")
             from apps.activity_catalogue.services import (
                 get_selectable_item,
                 resolve_activity_intervention,
@@ -1056,7 +1057,7 @@ def assign_partner_action_view(request):
                     deleted_at__isnull=True,
                 ).first()
                 if source_activity is None:
-                    raise ValueError(
+                    raise BadRequest(
                         "Choose a valid prior Activity for this School to follow up."
                     )
             if (
@@ -1064,7 +1065,7 @@ def assign_partner_action_view(request):
                 and school_for_validation
                 and source_ssa is None
             ):
-                raise ValueError(
+                raise BadRequest(
                     "Complete the School SSA first. Intervention-specific support "
                     "cannot be assigned without an applicable SSA."
                 )
@@ -1116,7 +1117,7 @@ def assign_partner_action_view(request):
                 and not dynamic
                 and not override_reason
             ):
-                raise ValueError(
+                raise BadRequest(
                     "Record an authorized reason for selecting a non-primary "
                     "Partner Activity."
                 )
@@ -1407,7 +1408,7 @@ def bulk_action_view(request):
                         limit=1,
                     )
                     if not result["primary"]:
-                        raise ValueError(
+                        raise BadRequest(
                             f"No Partner-deliverable Catalogue Activity is eligible for {s.name}."
                         )
                     recommendation = result["primary"][0]
@@ -1472,7 +1473,6 @@ def bulk_action_view(request):
 
         from apps.activity_catalogue.services import recommend_activities
         from apps.activities.services import create as create_activity
-        from apps.core.exceptions import BadRequest
 
         try:
             with transaction.atomic():

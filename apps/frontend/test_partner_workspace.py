@@ -104,13 +104,19 @@ class PartnerWorkspaceTests(TestCase):
 
     def test_admin_can_reach_partner_assignment_action(self):
         self.client.force_login(self.user)  # Admin
-        response = self.client.post(
-            "/planning/assign-partner-action",
-            {
-                "school_id": self.school.school_id,
-                "partner_id": self.partner.id,
-                "purpose_of_visit": "ssa_support",
-                "purpose": "Support visit.",
-            },
+        with self.assertNoLogs("apps.core.htmx_errors", level="ERROR"):
+            response = self.client.post(
+                "/planning/assign-partner-action",
+                {
+                    "school_id": self.school.school_id,
+                    "partner_id": self.partner.id,
+                    "purpose_of_visit": "ssa_support",
+                    "purpose": "Support visit.",
+                },
+            )
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(
+            response,
+            "Select an approved Activity Catalogue item.",
+            status_code=400,
         )
-        self.assertNotEqual(response.status_code, 403)
