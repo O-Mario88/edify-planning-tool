@@ -724,10 +724,18 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             funding.index("pl-funding-donut"), funding.index("pl-funding-statuses")
         )
         self.assertIn("container: pl-dashboard / inline-size", pages)
+        # The intelligence row is one column now. It used to split into a
+        # narrow SSA matrix beside a wider urgent-schools card, and that narrow
+        # column is what forced the matrix down to six of its eight
+        # interventions. The risk list owns the row; the matrix sits below it
+        # at full width, where all eight columns fit.
         self.assertIn(
-            "grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.64fr)",
+            """.pl-intelligence-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);""",
             pages,
         )
+        self.assertNotIn("minmax(0, 0.76fr)", pages)
         self.assertIn("pl-funding-card--wide .pl-funding-card__body", pages)
         self.assertIn("overflow-x: clip", pages)
 

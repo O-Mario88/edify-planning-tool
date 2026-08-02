@@ -977,8 +977,12 @@ class ProgramLeadDashboardService:
         names = dict(
             Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name")
         )
-        # Show the 6 headline interventions as columns (drawer shows all 8).
-        cols = SSA_INTERVENTIONS[:6]
+        # All eight. This showed the first six, so Teacher's Environment and
+        # Enrolment were silently absent from every cluster row — and a matrix
+        # that omits two of the eight without saying so reads as a complete
+        # picture while hiding the two columns a reader might most need. The
+        # card now owns its own row, so the width is there for them.
+        cols = list(SSA_INTERVENTIONS)
         rows = []
         if not latest_fy:
             return {

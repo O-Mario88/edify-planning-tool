@@ -77,6 +77,12 @@
   max-inline-size: 100%;
 }
 
+/*
+ * One column, deliberately. This was a two-column split with SSA Intelligence
+ * in the narrow side, which is what forced that matrix down to six of its
+ * eight interventions. The risk list now has the row to itself and the matrix
+ * sits below it at full width.
+ */
 .pl-intelligence-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -399,18 +405,6 @@
   color: var(--edify-accent);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
-}
-
-@container pl-dashboard (min-width: 48rem) {
-  .pl-intelligence-grid {
-    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.48fr);
-  }
-}
-
-@container pl-dashboard (min-width: 68rem) {
-  .pl-intelligence-grid {
-    grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.64fr);
-  }
 }
 
 @container pl-funding (min-width: 24rem) {

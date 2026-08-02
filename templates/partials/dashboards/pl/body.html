@@ -105,13 +105,12 @@
     </div>
   </div>
 
-  {# ── SSA Intelligence + Urgent Schools ───────────────────────────────── #}
+  {% comment %}
+  Schools Needing Urgent Attention owns the full row. It is the page's risk
+  list and the thing a Program Lead acts on, so it no longer shares width
+  with a reference table.
+  {% endcomment %}
   <div class="pl-intelligence-grid">
-    <div class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
-      <h2 class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
-      <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
-      {% include "partials/dashboards/pl/ssa_intelligence.html" %}
-    </div>
     <div id="urgent-schools" class="pl-intelligence-card rounded-surface overflow-hidden flex flex-col scroll-mt-20 edify-surface border edify-border edify-shadow-sm">
       <div class="flex items-start justify-between gap-3 px-4 py-3 border-b edify-border-bottom">
         <div>
@@ -125,6 +124,18 @@
       </div>
       <a href="/analytics/program-lead" class="block px-4 py-3 text-[12px] font-semibold edify-info-text border-t edify-border-top">View all schools at risk &rarr;</a>
     </div>
+  </div>
+
+  {% comment %}
+  SSA Intelligence sits directly under the risk list it explains, at full
+  width because it is a matrix: eight interventions plus an overall column
+  per cluster. It used to sit beside the urgent-schools card in a narrow
+  column, which is why only six of the eight were ever shown.
+  {% endcomment %}
+  <div class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+    <h2 class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
+    <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
+    {% include "partials/dashboards/pl/ssa_intelligence.html" %}
   </div>
 
   {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
