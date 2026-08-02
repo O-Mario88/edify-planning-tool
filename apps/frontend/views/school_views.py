@@ -33,7 +33,7 @@ from apps.clusters.services import (
     create_cluster as create_cluster_service,
     set_school_cluster_membership,
 )
-from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.permissions import has_permission, render_access_denied
 from apps.core.rbac import Permission
 from apps.projects.models import (
@@ -923,7 +923,25 @@ def add_to_cluster_drawer_view(request, school_id):
         # Audited inside set_school_cluster_membership() (the canonical
         # service assign_school_to_cluster delegates to) — not duplicated
         # here.
-        assign_school_to_cluster(school.school_id, {"clusterId": cluster.id}, user)
+        #
+        # Wrapped like the create_cluster_service call above, which it was not:
+        # assign_school raises BadRequest, NotFoundError and Forbidden, and
+        # set_school_cluster_membership underneath it raises BadRequest when a
+        # school's district does not match the cluster's, or when the cluster
+        # is no longer active. Unhandled, every one of those reached the user
+        # as a 500 (INC-000001) instead of the sentence explaining what was
+        # wrong. The withdrawn-cluster case is a genuine race: the drawer lists
+        # a cluster, someone retires it, and the assignment arrives afterwards.
+        try:
+            assign_school_to_cluster(
+                school.school_id, {"clusterId": cluster.id}, user
+            )
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return render(
+                request,
+                "partials/schools/add_to_cluster_drawer.html",
+                drawer_context(str(getattr(exc, "detail", exc))),
+            )
 
         response = render(
             request,
