@@ -45,6 +45,35 @@ COPY . .
 RUN DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
     python manage.py collectstatic --noinput
 
+# Provenance for the artifact, written after the manifest exists so the hash
+# describes the bundle this image will actually serve. The commit and release
+# arguments are optional on purpose: DigitalOcean App Platform builds this
+# Dockerfile without forwarding a commit SHA, and a provenance file that
+# refused to exist without one would be missing in the only environment whose
+# provenance is in question. The manifest hash needs no cooperation from the
+# builder and is the fact that settles "is production serving the bundle I
+# built?".
+ARG GIT_COMMIT=""
+ARG RELEASE=""
+RUN python - <<'PY'
+import hashlib, json, os
+from datetime import datetime, timezone
+
+manifest = "/app/staticfiles/staticfiles.json"
+with open(manifest, "rb") as fh:
+    digest = hashlib.sha256(fh.read()).hexdigest()[:16]
+json.dump(
+    {
+        "commit": os.environ.get("GIT_COMMIT") or "",
+        "release": os.environ.get("RELEASE") or "",
+        "build_time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "static_manifest_hash": digest,
+    },
+    open("/app/build-info.json", "w"),
+)
+print(f"build-info.json written: manifest={digest}")
+PY
+
 # Run as a non-root user. Nothing this process does needs root, and a
 # container that starts as root turns any remote-code path into host-adjacent
 # access instead of an application-level one. Created after collectstatic so
@@ -53,7 +82,8 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
 # explicitly — the rest of /app stays read-only to the runtime user.
 RUN useradd --system --create-home --uid 10001 edify \
     && mkdir -p /app/uploads /app/media \
-    && chown -R edify:edify /app/staticfiles /app/uploads /app/media
+    && chown -R edify:edify /app/staticfiles /app/uploads /app/media \
+    && chmod 0444 /app/build-info.json
 USER edify
 
 # Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.

@@ -33,6 +33,37 @@ def _liveness(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"}, status=200)
 
 
+def _build(request: HttpRequest) -> JsonResponse:
+    """What artifact is serving this request?
+
+    Unauthenticated on purpose. The question "is production running the build
+    we shipped?" has to be answerable from outside — by CI, by a deploy gate,
+    by whoever is looking at a page that seems wrong — and a check that needs
+    a session is a check nobody runs. Nothing here is a secret: a commit SHA,
+    a build timestamp, a digest of the public static manifest, and the hashed
+    filenames of assets any visitor already downloads.
+
+    Cache-Control is explicit. A cached answer to "which build is this?" is
+    worse than no answer, because it is confidently wrong for exactly as long
+    as the cache lives.
+    """
+    from apps.core.build_info import asset_hash, build_info
+
+    payload = dict(build_info())
+    payload["assets"] = {
+        name: asset_hash(name)
+        for name in (
+            "css/main.css",
+            "css/design-system.css",
+            "css/components.css",
+            "css/fonts.css",
+        )
+    }
+    response = JsonResponse(payload, status=200)
+    response["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
 def _readiness(request: HttpRequest) -> JsonResponse:
     """Can this process safely serve traffic right now?
 
@@ -83,6 +114,9 @@ urlpatterns = [
     path("api/health/", _readiness),
     path("api/health/live", _liveness, name="health_live"),
     path("api/health/ready", _readiness, name="health_ready"),
+    # Release provenance. See _build: this is the endpoint that makes
+    # "is the approved design actually deployed?" a question with an answer.
+    path("api/health/build", _build, name="health_build"),
     # Auth — public login/refresh/reset + JWT-gated /me.
     *api("auth", "apps.accounts.urls"),
     # Geography — cascading admin-boundary reads.
