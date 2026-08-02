@@ -1020,7 +1020,9 @@ class ProgramLeadDashboardService:
                     {
                         "score": score,
                         "tone": band[2],
-                        "heat": None if score is None else max(0, min(10, round(score))),
+                        "heat": None
+                        if score is None
+                        else max(0, min(10, round(score))),
                     }
                 )
             overall = _ssa_score(

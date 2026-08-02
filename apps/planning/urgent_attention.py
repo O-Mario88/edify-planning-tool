@@ -174,7 +174,7 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
         "context": None,
         "action_label": "View Recommendation",
         "action_url": f"/schools/{school.id}",
-            "action_mode": "link",
+        "action_mode": "link",
     }
 
 
