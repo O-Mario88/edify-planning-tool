@@ -1780,12 +1780,23 @@ main :is(
   .spp-header,
   .spa-header
 ) {
-  background: transparent !important;
-  background-color: transparent !important;
+  /* These sixteen header classes now receive the canonical tonal surface
+     instead of having every surface stripped from them.
+
+     The previous rule set all of this to transparent/0/none, which was the
+     right call when the goal was removing heavy header cards — but it also
+     meant the one header everybody liked (the Program Lead Dashboard's quiet
+     tonal band) could not be shared: any page adopting it had its surface
+     flattened by this bridge. Inverting the bridge is what carries that band
+     to every page at once, without touching sixteen templates.
+
+     Still stripped: backdrop-filter. A blur behind a surface this close in
+     tone to the canvas buys nothing and costs a compositor layer per page. */
+  background: var(--page-header-surface) !important;
   background-image: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  border: 1px solid var(--page-header-border) !important;
+  border-radius: var(--page-header-radius, 12px) !important;
+  box-shadow: var(--page-header-shadow) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -1799,7 +1810,10 @@ main :is(
   .ia-hero,
   .help-center-hero
 ) {
-  padding: 0 !important;
+  /* Canonical padding, not zero. These four had their padding removed along
+     with their card; now that they carry the tonal surface again, zero would
+     put the title hard against the surface edge. */
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem) !important;
   overflow: visible !important;
   isolation: auto !important;
 }

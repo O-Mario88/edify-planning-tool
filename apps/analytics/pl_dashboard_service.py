@@ -1011,7 +1011,18 @@ class ProgramLeadDashboardService:
             for v, label, code in cols:
                 score = _ssa_score(by_int.get(v))
                 band = ssa_band(score)
-                cells.append({"score": score, "tone": band[2]})
+                # heat is the score rounded to a whole step, 0-10, or None.
+                # The cell is coloured by it rather than by the four bands: a
+                # band paints 5.0 and 6.9 identically, and on a matrix whose
+                # whole job is comparison across eight columns that flattens
+                # exactly the differences a reader is scanning for.
+                cells.append(
+                    {
+                        "score": score,
+                        "tone": band[2],
+                        "heat": None if score is None else max(0, min(10, round(score))),
+                    }
+                )
             overall = _ssa_score(
                 SsaRecord.objects.filter(id__in=record_ids).aggregate(
                     a=Avg("average_score")
@@ -1025,6 +1036,9 @@ class ProgramLeadDashboardService:
                     "cells": cells,
                     "overall": overall,
                     "overall_tone": oband[2],
+                    "overall_heat": (
+                        None if overall is None else max(0, min(10, round(overall)))
+                    ),
                 }
             )
         return {

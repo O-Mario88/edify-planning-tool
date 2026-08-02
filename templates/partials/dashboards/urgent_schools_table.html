@@ -77,11 +77,22 @@ read as decoration rather than emphasis.
             as the alternative when the owner has no capacity to do it
             themselves — same permission that governs scheduling it.
             {% endcomment %}
+            {% if row.action_mode == "drawer" %}
+            <button type="button"
+                    class="urgent-action urgent-action--primary"
+                    hx-get="{{ row.action_url }}"
+                    hx-target="#drawer-container"
+                    hx-swap="innerHTML"
+                    aria-label="{{ row.action_label }} for {{ row.school }}">
+              {{ row.action_label }}
+            </button>
+            {% else %}
             <a href="{{ row.action_url }}"
                class="urgent-action urgent-action--primary"
                aria-label="{{ row.action_label }} for {{ row.school }}">
               {{ row.action_label }}
             </a>
+            {% endif %}
             {% if can_assign_partner and row.partner_url %}
             <button type="button"
                     class="urgent-action"

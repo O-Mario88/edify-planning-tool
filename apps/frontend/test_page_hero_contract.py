@@ -66,7 +66,22 @@ NAMED_HERO_FAMILIES = (
 
 
 class PageHeroSurfaceContractTest(SimpleTestCase):
-    def test_every_named_hero_family_uses_the_flat_surface_contract(self):
+    def test_every_named_hero_family_uses_the_canonical_header_surface(self):
+        """One surface for every header family, and it is the tonal one.
+
+        This asserted the opposite — transparent, no border, no radius, no
+        shadow — which was right while the goal was removing heavy header
+        cards. It had a side effect nobody had reason to notice: the one
+        header the platform actually wanted, the Program Lead Dashboard's
+        quiet tonal band, could not be shared, because this bridge flattened
+        any page that adopted it.
+
+        The bridge now applies the canonical surface instead of stripping it,
+        so these sixteen families converge on one appearance rather than on
+        no appearance. backdrop-filter stays stripped: a blur behind a surface
+        this close in tone to the canvas buys nothing and costs a compositor
+        layer per page.
+        """
         css = BRIDGE.read_text(encoding="utf-8")
 
         for selector in NAMED_HERO_FAMILIES:
@@ -74,11 +89,33 @@ class PageHeroSurfaceContractTest(SimpleTestCase):
                 self.assertIn(selector, css)
 
         contract = css.split("PAGE HEROES: CONTENT ON THE PAGE CANVAS", 1)[1]
-        self.assertIn("background: transparent !important", contract)
-        self.assertIn("border: 0 !important", contract)
-        self.assertIn("border-radius: 0 !important", contract)
-        self.assertIn("box-shadow: none !important", contract)
+        self.assertIn("background: var(--page-header-surface) !important", contract)
+        self.assertIn(
+            "border: 1px solid var(--page-header-border) !important", contract
+        )
+        self.assertIn("var(--page-header-radius", contract)
+        self.assertIn("box-shadow: var(--page-header-shadow) !important", contract)
+        # Still stripped, for the reason in the docstring.
         self.assertIn("backdrop-filter: none !important", contract)
+
+    def test_the_canonical_surface_is_defined_for_every_theme(self):
+        """A token referenced by an !important bridge and defined in only one
+        theme would leave the other themes with no header surface at all."""
+        design_system = (ROOT / "static/css/design-system.css").read_text(
+            encoding="utf-8"
+        )
+        self.assertGreaterEqual(
+            design_system.count("--page-header-surface:"),
+            3,
+            "light, blue and dark each need the surface token",
+        )
+        for token in (
+            "--page-header-border:",
+            "--page-header-shadow:",
+            "--page-header-radius:",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, design_system)
 
     def test_legacy_dark_hero_cards_are_migrated_to_the_shared_marker(self):
         forbidden_surface_tokens = (

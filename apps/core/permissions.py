@@ -245,7 +245,41 @@ class RolePermissionService:
             "CoreActivitySlot",
         ]:
             return False
+        # Supervision is not ownership. A Program Lead sees their team's
+        # schools so they can monitor them; this function used to end at
+        # can_view_record, so seeing one meant being able to edit it — every
+        # school of every CCEO they supervise. No page offered those controls,
+        # which is why it stayed invisible, but the API, the HTMX endpoints and
+        # the bulk actions all resolve here, and a hidden button is not an
+        # authorization decision.
+        if obj_type == "School" and not RolePermissionService._owns_school(user, obj):
+            return False
         return RolePermissionService.can_view_record(user, obj)
+
+    @staticmethod
+    def _owns_school(user, school) -> bool:
+        """Is this school directly assigned to this person?
+
+        Ownership is recorded two ways and both are live: account_owner_id on
+        the school, and a StaffSchoolAssignment row. owner_ids() covers the
+        other half of the problem — the id may be a User id or a StaffProfile
+        id depending on which path wrote it.
+        """
+        from apps.core.scoping import owner_ids
+
+        identifiers = set(owner_ids(user))
+        if not identifiers:
+            return False
+        if str(getattr(school, "account_owner_id", "") or "") in identifiers:
+            return True
+        try:
+            from apps.accounts.models import StaffSchoolAssignment
+
+            return StaffSchoolAssignment.objects.filter(
+                school_id=school.id, staff_id__in=identifiers
+            ).exists()
+        except Exception:  # noqa: BLE001 — a lookup failure must not grant access
+            return False
 
     @staticmethod
     def can_delete(user, obj) -> bool:

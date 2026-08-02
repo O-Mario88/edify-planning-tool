@@ -86,7 +86,8 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
             ),
             "context": _schedule_context(month_activities, _VISIT_TYPES),
             "action_label": "Complete SSA" if ssa_planned else "Schedule SSA",
-            "action_url": f"/planning?school_id={school.school_id}",
+            "action_url": f"/planning/schedule-modal?school_id={school.school_id}",
+            "action_mode": "drawer",
         }
 
     from apps.activities.models import Activity
@@ -113,7 +114,8 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
                 month_activities, _VISIT_TYPES + _TRAINING_TYPES
             ),
             "action_label": "Open Planning",
-            "action_url": f"/planning?school_id={school.school_id}",
+            "action_url": f"/planning/schedule-modal?school_id={school.school_id}",
+            "action_mode": "drawer",
         }
     if not training_done:
         return {
@@ -123,7 +125,8 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
             "detail": None,
             "context": _schedule_context(month_activities, _TRAINING_TYPES),
             "action_label": "Plan Training",
-            "action_url": f"/planning?school_id={school.school_id}",
+            "action_url": f"/planning/schedule-modal?school_id={school.school_id}",
+            "action_mode": "drawer",
         }
     if not visit_done:
         return {
@@ -133,7 +136,8 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
             "detail": None,
             "context": _schedule_context(month_activities, _VISIT_TYPES),
             "action_label": "Plan Visit",
-            "action_url": f"/planning?school_id={school.school_id}",
+            "action_url": f"/planning/schedule-modal?school_id={school.school_id}",
+            "action_mode": "drawer",
         }
 
     from apps.core.enums import SsaIntervention, ssa_score_band
@@ -149,6 +153,7 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
             "context": None,
             "action_label": "View School",
             "action_url": f"/schools/{school.id}",
+            "action_mode": "link",
         }
     top = ranked[0]
     score = top.get("score")
@@ -169,6 +174,7 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
         "context": None,
         "action_label": "View Recommendation",
         "action_url": f"/schools/{school.id}",
+            "action_mode": "link",
     }
 
 

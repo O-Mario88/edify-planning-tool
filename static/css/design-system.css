@@ -189,6 +189,28 @@
      recede behind its content, not compete with it. Body text still reads
      at 12.77:1 and muted text at 7.22:1 against it. */
   --edify-bg: #e3f2fa;
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 46%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, var(--brand-primary) 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(20, 55, 75, 0.05);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-padding-x: 1rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
   --edify-section-bg: #f2f5f6;
   /* Flat neutral canvas: the tinted gradient competed with card surfaces and
      made the same card read differently depending on where it sat. */
@@ -480,6 +502,28 @@
   --edify-text-muted: var(--edify-sky-100);
   --edify-text-subtle: #91b5cc;
   --edify-bg: var(--edify-navy-950);
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 7%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-padding-x: 1rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
   --edify-canvas-treatment:
     linear-gradient(108deg, rgba(0, 19, 39, .80) 0%, rgba(0, 29, 57, .56) 46%, rgba(3, 46, 84, .74) 100%),
     radial-gradient(circle at 88% 0%, rgba(123,189,232,.24), transparent 36rem),
@@ -615,6 +659,28 @@ html.theme-blue body {
      page stays true black; cards, fields, tiles and overlays share one barely
      lifted charcoal so nesting never creates a stack of grey rectangles. */
   --edify-bg: #000000;
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 9%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-padding-x: 1rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
   --edify-section-bg: #000000;
   --edify-surface-muted: #0d0d0f;
   --edify-surface: #0d0d0f;

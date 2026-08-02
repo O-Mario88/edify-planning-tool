@@ -472,6 +472,12 @@ def dashboard_view(request):
                 "owner_name": "",
                 "action_label": r["action_label"],
                 "action_url": r["action_url"],
+                # Whether the action opens the scheduling drawer in place or
+                # navigates. The planning actions used to link to the Planning
+                # PAGE with a school_id it never reads, so "Schedule SSA"
+                # landed the user on an unfiltered list with the school to find
+                # again. schedule-modal is the endpoint that reads it.
+                "action_mode": r.get("action_mode", "link"),
             }
             for r in _urgent["rows"]
         ]

@@ -6,26 +6,31 @@
 {% block shell_content %}
 <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
-  <!-- Header — premium glass band -->
-  <div class="rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap backdrop-blur-xl edify-shadow-md"
-       style="background:var(--header-band-bg, rgba(255,255,255,.10)); border:1px solid var(--header-band-border, rgba(255,255,255,.15))">
-    <div>
-      <h1 class="text-[21px] font-semibold leading-[1.15] tracking-[-0.025em] edify-text edify-page-title">Program Lead Dashboard</h1>
-      <p class="text-[12px] mt-0.5 edify-text-muted">Team execution, approvals, targets, planning quality &amp; operations.</p>
+  {% comment %}
+  The canonical page header. This markup used to carry the surface inline —
+  background and border referencing --header-band-bg / --header-band-border,
+  variables that were defined nowhere, so the effect came from the fallback
+  literal. It looked right and was unavailable to every other page. The
+  surface now lives in .edify-page-header and real tokens.
+  {% endcomment %}
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-header__title edify-page-title">Program Lead Dashboard</h1>
+      <p class="edify-page-header__description">Team execution, approvals, targets, planning quality &amp; operations.</p>
     </div>
     <form id="pl-dashboard-filters"
           hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
           hx-trigger="change delay:80ms" hx-push-url="false"
-          class="flex flex-wrap items-stretch sm:items-center gap-2">
-      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
+          class="edify-page-header__controls">
+      <div class="edify-page-header-control">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
-        <select aria-label="Fiscal year" name="fy" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
         </select>
       </div>
-      <div class="flex w-full sm:w-auto items-center gap-1.5 rounded-control px-2.5 py-1.5 edify-surface border edify-border edify-shadow-sm">
+      <div class="edify-page-header-control">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">Activity</span>
-        <select aria-label="Activity type" name="activity_type" class="flex-1 sm:flex-none bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+        <select aria-label="Activity type" name="activity_type" class="focus:outline-none">
           <option value="">All</option>
           <option value="school_visit" {% if filters.activity_type == 'school_visit' %}selected{% endif %}>School Visits</option>
           <option value="training" {% if filters.activity_type == 'training' %}selected{% endif %}>Trainings</option>
@@ -33,11 +38,11 @@
           <option value="partner_activity" {% if filters.activity_type == 'partner_activity' %}selected{% endif %}>Partner</option>
         </select>
       </div>
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold edify-surface border edify-border edify-shadow-sm edify-text-muted">
+      <span class="edify-page-header-control rounded-pill edify-text-caption font-semibold edify-text-muted">
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools
       </span>
     </form>
-  </div>
+  </header>
 
   <div id="pl-dashboard-body">
     {% include "partials/dashboards/pl/body.html" %}

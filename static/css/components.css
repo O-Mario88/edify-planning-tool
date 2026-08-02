@@ -593,12 +593,73 @@ main .pagination button:hover, main .pagination a:hover {
   background: var(--edify-danger-light);
 }
 
-/* Page Header */
+/* ── Canonical page header ────────────────────────────────────────────────
+   One surface for every authenticated page, taken from the Program Lead
+   Dashboard: a band that is visibly structured but almost melts into the page
+   canvas. The separation is a few percent of tonal shift, a barely-there
+   border and a wide faint shadow — not contrast.
+
+   This class already existed and 73 templates already used it, but it was an
+   underline: margin, padding and a bottom rule. The tonal surface lived as an
+   inline style on the Program Lead Dashboard alone, referencing
+   --header-band-bg, a variable defined nowhere, so the effect came from a
+   fallback literal. Rewriting this one definition is what carries the
+   treatment to every page that was already using the class.
+
+   Transparency is in the colours, never on the container: fading the header
+   would fade its title and controls with it, and the point is a quiet surface
+   holding legible content.
+
+   Both shapes are styled — bare h1/p children for the templates that predate
+   the BEM classes, and __title/__description for new markup — so no template
+   has to change to receive the surface. */
 .edify-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--page-header-gap, 0.75rem);
   margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
-  padding-bottom: clamp(0.875rem, 0.7rem + 0.5vw, 1.25rem);
-  border-bottom: 1px solid color-mix(in srgb, var(--edify-border) 78%, transparent);
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem);
+  border-radius: var(--page-header-radius, 12px);
+  background: var(--page-header-surface);
+  border: 1px solid var(--page-header-border);
+  box-shadow: var(--page-header-shadow);
 }
+
+.edify-page-header__lead {
+  min-inline-size: 0;
+}
+
+.edify-page-header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Controls sit on a firmer surface than the band behind them. The header may
+   be quiet; the things you can click must not be. */
+.edify-page-header-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--edify-radius-control, 8px);
+  background: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.edify-page-header-control select {
+  background: transparent;
+  font-size: var(--edify-text-floor);
+  font-weight: 700;
+  color: var(--edify-text);
+  cursor: pointer;
+}
+
+.edify-page-header__title,
 .edify-page-header h1 {
   font-size: var(--edify-text-display-size);
   line-height: var(--edify-text-display-leading);
@@ -607,6 +668,7 @@ main .pagination button:hover, main .pagination a:hover {
   letter-spacing: -0.01em;
   font-family: var(--edify-font-display-family);
 }
+.edify-page-header__description,
 .edify-page-header p {
   font-size: var(--edify-text-body-size);
   color: var(--edify-text-muted);

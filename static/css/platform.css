@@ -679,43 +679,91 @@ main table tbody tr:hover > :where(td, th):not(.edify-primary-solid, .edify-prim
   background-color: color-mix(in oklab, var(--edify-accent-light) 54%, var(--edify-surface)) !important;
 }
 
-/* ── Row-led table system. ────────────────────────────────────────────────
-   Tables are comparison tools, not spreadsheets: remove the boxed cell grid,
-   retain a quiet header rule and a low-contrast row rhythm. Matrix views are
-   deliberately exempt because their column boundaries carry meaning. */
-main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix),
-.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) {
+/* ── One table format, everywhere. ───────────────────────────────────────
+   No gridlines, horizontal or vertical. Column headings carry medium weight;
+   the body sits lighter than the heading so the eye lands on the heading
+   first and then reads the data as text rather than as ledger entries.
+
+   Matrix tables used to be exempt on the grounds that their column boundaries
+   carried meaning. They do not need lines to do that — alignment and, where
+   the data is a scale, colour do it better, and the exemption was the reason
+   the platform had two table appearances.
+
+   Selector is broad on purpose: `main` and `.drawer-body` cover every surface
+   a user sees, so a new page inherits the format instead of authoring one. */
+main table,
+.drawer-body table {
   border: 0 !important;
   border-collapse: separate !important;
   border-spacing: 0 !important;
 }
 
-main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) :where(tr, th, td),
-.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) :where(tr, th, td) {
-  border-inline: 0 !important;
+main table :where(tr, th, td),
+.drawer-body table :where(tr, th, td) {
+  border: 0 !important;
 }
 
-main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) thead th,
-.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) thead th {
+main table thead th,
+.drawer-body table thead th {
   background: transparent !important;
-  border-block-start: 0 !important;
-  border-block-end: 1px solid color-mix(in oklab, var(--edify-border) 54%, transparent) !important;
+  border: 0 !important;
+  font-weight: 500 !important;
+  color: var(--edify-text-muted);
 }
 
-main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr,
-.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr {
+main table tbody tr,
+.drawer-body table tbody tr {
   background: transparent !important;
-  border-block: 0 !important;
 }
 
-/* No rules between rows. A hairline under every cell reads as ledger ruling
-   rather than structure; row separation comes from spacing and the header's
-   own bottom border. Matrix tables keep their grid — there the lines ARE the
-   structure. */
-main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td,
-.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody td {
-  border-block-start: 0 !important;
-  border-block-end: 0 !important;
+main table tbody :where(td, th),
+.drawer-body table tbody :where(td, th) {
+  font-weight: 300;
+}
+
+/* A row header — a school name, a cluster — is still the label for its row,
+   so it keeps the heading's weight rather than the body's. */
+main table tbody th[scope="row"],
+.drawer-body table tbody th[scope="row"] {
+  font-weight: 500;
+  color: var(--edify-text);
+}
+
+/* ── Heatmap cells ───────────────────────────────────────────────────────
+   Colour is the surface, the number sits on it. Eleven steps rather than four
+   bands: a band paints 5.0 and 6.9 identically, which on a comparison matrix
+   hides the differences being compared.
+
+   The number is always printed, so colour is never the only carrier of the
+   value — a reader who cannot separate these hues still reads the score. */
+.pl-ssa-heat {
+  --heat-mix: 0%;
+  background: color-mix(in oklab, var(--heat-hue) var(--heat-mix), transparent);
+  color: var(--edify-text);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-ssa-heat[data-heat="none"] {
+  --heat-hue: var(--edify-surface-muted);
+  --heat-mix: 100%;
+  color: var(--edify-text-subtle);
+}
+
+.pl-ssa-heat[data-heat="0"]  { --heat-hue: var(--edify-danger);  --heat-mix: 46%; }
+.pl-ssa-heat[data-heat="1"]  { --heat-hue: var(--edify-danger);  --heat-mix: 40%; }
+.pl-ssa-heat[data-heat="2"]  { --heat-hue: var(--edify-danger);  --heat-mix: 32%; }
+.pl-ssa-heat[data-heat="3"]  { --heat-hue: var(--edify-danger);  --heat-mix: 24%; }
+.pl-ssa-heat[data-heat="4"]  { --heat-hue: var(--edify-warning); --heat-mix: 30%; }
+.pl-ssa-heat[data-heat="5"]  { --heat-hue: var(--edify-warning); --heat-mix: 24%; }
+.pl-ssa-heat[data-heat="6"]  { --heat-hue: var(--edify-warning); --heat-mix: 17%; }
+.pl-ssa-heat[data-heat="7"]  { --heat-hue: var(--edify-chart-lime); --heat-mix: 22%; }
+.pl-ssa-heat[data-heat="8"]  { --heat-hue: var(--edify-success); --heat-mix: 20%; }
+.pl-ssa-heat[data-heat="9"]  { --heat-hue: var(--edify-success); --heat-mix: 30%; }
+.pl-ssa-heat[data-heat="10"] { --heat-hue: var(--edify-success); --heat-mix: 40%; }
+
+.pl-ssa-heat--overall {
+  font-weight: 500;
 }
 
 /* ─── ROW ACTION CONTROLS ────────────────────────────────────────────────────
