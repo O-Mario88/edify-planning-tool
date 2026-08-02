@@ -1,6 +1,8 @@
 from datetime import date
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
@@ -744,6 +746,24 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/analytics")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/analytics/index.html")
+
+    @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=30)
+    def test_analytics_snapshot_is_reused_within_the_ttl(self):
+        from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
+
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.client.force_login(self.cceo_user)
+        with patch.object(
+            AnalyticsDashboardService,
+            "get_analytics_data",
+            wraps=AnalyticsDashboardService.get_analytics_data,
+        ) as build:
+            first = self.client.get("/analytics", {"quarter": "Q2"})
+            second = self.client.get("/analytics", {"quarter": "Q2"})
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        build.assert_called_once()
 
     def test_system_health_view_renders(self):
         admin_user = get_user_model().objects.create(

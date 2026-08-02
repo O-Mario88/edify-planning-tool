@@ -1,6 +1,9 @@
 import csv
 import datetime
+import hashlib
+import json
 
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
@@ -15,6 +18,7 @@ from apps.accounts.models import StaffProfile
 from apps.schools.models import School
 from apps.activities.models import Activity
 from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
+from apps.core.cache_utils import stampede_safe_get_or_compute
 
 
 def _analytics_filters(request):
@@ -39,7 +43,18 @@ def analytics_dashboard_view(request):
     filters = _analytics_filters(request)
 
     # 2. Call Service to gather all dashboard datasets
-    data = AnalyticsDashboardService.get_analytics_data(request.user, filters)
+    filter_fingerprint = hashlib.sha256(
+        json.dumps(filters, sort_keys=True, default=str).encode()
+    ).hexdigest()[:20]
+    analytics_key = (
+        f"analytics-dashboard:v1:{request.user.id}:"
+        f"{request.user.active_role}:{filter_fingerprint}"
+    )
+    data = stampede_safe_get_or_compute(
+        analytics_key,
+        lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
+        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
+    )
     from apps.analytics.models import (
         DEFAULT_ANALYTICS_CARDS,
         AnalyticsDashboardPreference,
@@ -625,7 +640,11 @@ def analytics_customize_dashboard_view(request):
 def system_health_view(request):
     from apps.system_health.services import report as system_health_report
 
-    health = system_health_report()
+    health = stampede_safe_get_or_compute(
+        "system-health-dashboard:v1",
+        system_health_report,
+        timeout=settings.SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS,
+    )
     # The template reads workflow counts as top-level keys (health.unclusteredSchools
     # etc.), but report() nests them under workflowIssues — flatten them in.
     context = {

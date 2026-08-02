@@ -2485,7 +2485,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 109,
+   "line": 124,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",

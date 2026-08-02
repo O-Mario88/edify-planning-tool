@@ -683,6 +683,20 @@ SESSION_ENGINE = (
     else "django.contrib.sessions.backends.db"
 )
 
+# Read-only administrative snapshots are expensive and do not need sub-second
+# freshness. Test runs bypass these caches so data mutations remain immediately
+# visible and deterministic; production rebuilds are stampede-protected.
+ANALYTICS_DASHBOARD_CACHE_SECONDS = (
+    0
+    if _is_testing
+    else _as_int(os.environ.get("ANALYTICS_DASHBOARD_CACHE_SECONDS"), 30)
+)
+SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS = (
+    0
+    if _is_testing
+    else _as_int(os.environ.get("SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS"), 30)
+)
+
 
 # ── Security defaults (overridden/tightened in prod.py) ──────────────────────
 X_FRAME_OPTIONS = "DENY"
