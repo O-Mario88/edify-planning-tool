@@ -13,7 +13,10 @@ class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 curso
 >
 <div class="space-y-1.5 flex-1 min-w-0">
 <div class="flex items-center gap-2.5 flex-wrap">
-<h3 class="text-[18px] font-semibold text-slate-800 leading-tight">{{ cluster.name }}</h3>
+<h3 class="text-[18px] font-semibold leading-tight">
+  {% comment %}The cluster profile existed at /clusters/<id> with nothing linking to it, so the page was only reachable by typing the URL — the same affordance a school name already carries in the directory.{% endcomment %}
+  <a href="/clusters/{{ cluster.id }}" class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
+</h3>
 
 {% if cluster.risk == 'critical' %}
 <span class="edify-status-badge danger">Critical</span>

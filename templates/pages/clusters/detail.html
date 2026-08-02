@@ -18,16 +18,38 @@ District: {% firstof cluster.district.name cluster.district %} &bull; Sub-county
 </div>
 
 <!-- Actions buttons -->
-{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
 <div class="flex items-center gap-2">
+{% if can_edit_cluster %}
+{% comment %}
+A cluster profile is editable for the same reason a school profile is: the
+record has a name, a type, boundaries and a responsible person, and all of
+them change. The drawer already existed at /clusters/<id>/edit-drawer with
+nothing on this page opening it.
+
+Gated on can_edit_cluster — the permission the drawer itself enforces —
+rather than on a role string, so the button cannot offer what the endpoint
+would refuse.
+{% endcomment %}
+<button
+type="button"
+hx-get="/clusters/{{ cluster.id }}/edit-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Edit {{ cluster.name }} cluster details"
+class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
+</button>
+{% endif %}
+{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
 <a href="/planning?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
 Schedule Group Training
 </a>
 <a href="/planning?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
 Schedule Cluster Meeting
 </a>
-</div>
 {% endif %}
+</div>
 </div>
 </div>
 

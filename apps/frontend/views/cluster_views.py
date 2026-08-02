@@ -532,6 +532,14 @@ def cluster_detail_view(request, cluster_id):
         "intervention_summary": summary,
         "activity_impact": impact,
         "schools": schools,
+        # The same check edit_cluster_drawer_view enforces. Asking the
+        # permission service rather than comparing role strings means the
+        # button appears exactly when the drawer behind it would open — a
+        # template that guesses can offer a control the endpoint refuses, or
+        # hide one the user is entitled to.
+        "can_edit_cluster": RolePermissionService.can_view_page(
+            request.user, "planning"
+        ),
     }
     return render(request, "pages/clusters/detail.html", context)
 
