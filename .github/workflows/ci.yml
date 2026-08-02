@@ -161,6 +161,13 @@ jobs:
             || { echo "::error::the runtime image runs as root"; exit 1; }
           echo "runtime user: $user"
 
+      - name: The runtime user can import the application
+        run: |
+          docker run --rm --entrypoint python \
+            -e DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
+            edify-ci:${{ github.sha }} \
+            -c 'import config.settings.collectstatic; print("runtime import: ok")'
+
       - name: Scan the image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

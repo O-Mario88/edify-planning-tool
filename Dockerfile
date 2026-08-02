@@ -27,6 +27,11 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 COPY --from=build /install /usr/local
 # Application source.
 COPY . .
+# Docker preserves permissions from a local build context. Normalize read and
+# directory traversal bits so the runtime user can import the application even
+# when a developer's working tree has owner-only modes. Capital X preserves
+# executability only for directories and files already marked executable.
+RUN chmod -R a+rX /app
 # Collect static (DRF spectacular + admin assets). Fail the build if static
 # collection errors — a silent failure here means broken CSS/JS in production.
 #

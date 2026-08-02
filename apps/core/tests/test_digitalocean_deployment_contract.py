@@ -374,6 +374,14 @@ class BuildTimeStaticCollectionTest(SimpleTestCase):
         )
         self.assertIn("collectstatic --noinput", dockerfile)
 
+    def test_runtime_source_is_readable_independent_of_build_context_modes(self):
+        dockerfile = _read("Dockerfile")
+        self.assertIn("RUN chmod -R a+rX /app", dockerfile)
+        self.assertLess(
+            dockerfile.index("RUN chmod -R a+rX /app"),
+            dockerfile.index("USER edify"),
+        )
+
     def test_dockerfile_carries_no_placeholder_secrets(self):
         dockerfile = _read("Dockerfile")
         for leftover in (
