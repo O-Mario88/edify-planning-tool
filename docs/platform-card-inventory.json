@@ -845,7 +845,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 38,
+   "line": 60,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -854,7 +854,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 61,
+   "line": 83,
    "title": "Assigned Roster",
    "heading_level": 3,
    "has_card_key": false,
@@ -863,7 +863,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 109,
+   "line": 131,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -872,7 +872,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 144,
+   "line": 166,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -881,7 +881,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 167,
+   "line": 189,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,

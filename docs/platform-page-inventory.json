@@ -617,7 +617,7 @@
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 7051,
+      "bytes": 7423,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -8753,10 +8753,12 @@
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "findings": [],
       "forms": false,
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /clusters/{{ cluster.id }}/edit-drawer"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
