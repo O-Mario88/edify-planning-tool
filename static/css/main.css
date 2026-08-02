@@ -5543,6 +5543,11 @@
       --tw-ring-inset: inset;
     }
   }
+  .focus-visible\:underline {
+    &:focus-visible {
+      text-decoration-line: underline;
+    }
+  }
   .focus-visible\:opacity-100 {
     &:focus-visible {
       opacity: 100%;
