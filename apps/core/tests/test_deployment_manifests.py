@@ -17,3 +17,4 @@ class DeploymentManifestTests(SimpleTestCase):
         self.assertIn("ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-false}", web)
         self.assertIn("command: python manage.py runscheduler", worker)
         self.assertIn('ENABLE_BACKGROUND_JOBS: "true"', worker)
+        self.assertIn('RUN_MIGRATIONS: "false"', worker)

@@ -1,11 +1,9 @@
 """SEC-01 — production boot gates that need the app registry / a live DB
 connection (database availability, applied-migration state, collected
 static assets), so unlike config/settings/prod.py's import-time checks
-(which run before the app registry is ready) these run from
-apps.core.apps.CoreConfig.ready() instead — once, in every production
-process that boots the Django app (gunicorn/daphne workers), but skipped
-for management commands that legitimately manage the DB schema themselves
-(migrate/makemigrations) or only introspect it.
+(which run before the app registry is ready) these run from the explicit
+``production_preflight`` management command after Django has completed app
+initialization and before the production server process starts.
 
 Fail-closed: any violation here means the process refuses to start, exactly
 like the settings-import-time checks in prod.py.

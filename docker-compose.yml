@@ -80,6 +80,7 @@ services:
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env (32-byte hex/base64)}
       SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
       ENABLE_BACKGROUND_JOBS: "true"
+      RUN_MIGRATIONS: "false"
       EVIDENCE_STORAGE_DIR: /data/evidence
     volumes:
       - edify_evidence:/data/evidence

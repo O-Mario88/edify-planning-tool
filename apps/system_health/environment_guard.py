@@ -8,11 +8,10 @@ Blocks the two directions of local↔production data contamination:
      accident, since a habitual `manage.py seed --demo` would pour demo
      schools into real data).
 
-The guard runs from SystemHealthConfig.ready(). It deliberately SKIPS
-management commands that must work before/around the stamp (migrate creates
-it; collectstatic runs at Docker build with no database; the stamp command
-itself repairs it) and skips silently when the database is unreachable or
-the table doesn't exist yet — an absent stamp is a first-boot condition,
+The production entrypoint invokes this guard through the explicit
+``production_preflight`` management command after Django has completed app
+initialization. Direct callers can still use the skip rules for commands that
+must work before/around the stamp. An absent stamp is a first-boot condition,
 not a violation. A PRESENT-but-mismatched stamp is always fatal.
 """
 
@@ -62,19 +61,12 @@ def validate_environment(*, force: bool = False) -> str:
 
     from django.conf import settings
 
-    import warnings
-
     try:
         from apps.system_health.models import EnvironmentStamp
 
-        # Deliberate boot-time DB access: failing at process start (not at
-        # first request) is the point of this guard. Suppress Django's
-        # ready()-query RuntimeWarning for this one query only.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            stamp = EnvironmentStamp.objects.filter(
-                id=EnvironmentStamp.SINGLETON_ID
-            ).first()
+        stamp = EnvironmentStamp.objects.filter(
+            id=EnvironmentStamp.SINGLETON_ID
+        ).first()
     except Exception:
         # Database unreachable or table not yet migrated (image build, first
         # boot). Nothing to validate against — migrate will write the stamp.
@@ -88,13 +80,11 @@ def validate_environment(*, force: bool = False) -> str:
         # belt-and-suspenders path for databases migrated before the guard
         # existed.)
         try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=RuntimeWarning)
-                EnvironmentStamp.objects.create(
-                    id=EnvironmentStamp.SINGLETON_ID,
-                    environment=process_env,
-                    stamped_by="first-boot",
-                )
+            EnvironmentStamp.objects.create(
+                id=EnvironmentStamp.SINGLETON_ID,
+                environment=process_env,
+                stamped_by="first-boot",
+            )
         except Exception:
             return "unavailable"
         return "stamped"

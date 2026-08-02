@@ -24,5 +24,15 @@ if [ "${RUN_SEED:-false}" = "true" ]; then
   python manage.py seed ${SEED_ARGS:-}
 fi
 
+# Database checks must run after Django's app registry is ready (never from an
+# AppConfig.ready hook) and before a production process accepts work. The
+# pre-deploy migrate job intentionally does not reach this branch.
+case "${DJANGO_SETTINGS_MODULE:-}:$*" in
+  config.settings.prod:*daphne*|config.settings.prod:*gunicorn*|config.settings.prod:*runscheduler*)
+    echo "▶ Running production preflight..."
+    python manage.py production_preflight
+    ;;
+esac
+
 echo "▶ Starting edify-api (Django + DRF)..."
 exec "$@"

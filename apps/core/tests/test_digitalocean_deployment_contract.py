@@ -62,7 +62,9 @@ class DigitalOceanDeploymentContractTest(SimpleTestCase):
 
     def test_procfile_runs_asgi_gunicorn_on_the_platform_port(self):
         procfile = _read("Procfile")
-        self.assertIn("web: gunicorn", procfile)
+        self.assertIn(
+            "web: python manage.py production_preflight && exec gunicorn", procfile
+        )
         self.assertIn("--worker-tmp-dir /dev/shm", procfile)
         self.assertIn("--bind 0.0.0.0:${PORT:-8080}", procfile)
         self.assertIn("uvicorn.workers.UvicornWorker", procfile)
@@ -204,6 +206,31 @@ assert private["OPTIONS"]["client_config"].connect_timeout == 5
             capture_output=True,
             text=True,
             timeout=15,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_production_app_initialization_never_queries_the_database(self):
+        """Django turns AppConfig database access into a RuntimeWarning.
+
+        Promoting that warning to an error makes the startup invariant
+        executable without requiring an unavailable database to hang or fail.
+        """
+        code = """
+import warnings
+warnings.filterwarnings("error", category=RuntimeWarning)
+import django
+django.setup()
+"""
+        env = _safe_production_env()
+        env["DJANGO_SETTINGS_MODULE"] = "config.settings.prod"
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -442,3 +469,42 @@ class MigrationOwnershipTest(SimpleTestCase):
         this default, so the flag must be opt-out rather than opt-in."""
         entrypoint = _read("docker-entrypoint.sh")
         self.assertIn("RUN_MIGRATIONS:-true", entrypoint)
+
+    def test_every_production_process_route_runs_preflight(self):
+        """Docker and Procfile deployments are both supported runtime routes."""
+        entrypoint = _read("docker-entrypoint.sh")
+        self.assertIn("python manage.py production_preflight", entrypoint)
+        for process in ("daphne", "gunicorn", "runscheduler"):
+            self.assertIn(f"config.settings.prod:*{process}*", entrypoint)
+        self.assertLess(
+            entrypoint.index("python manage.py production_preflight"),
+            entrypoint.index('exec "$@"'),
+        )
+
+        procfile = _read("Procfile")
+        for route in ("web:", "worker:"):
+            line = next(
+                line for line in procfile.splitlines() if line.startswith(route)
+            )
+            self.assertIn("python manage.py production_preflight && exec", line)
+
+    def test_supported_deployment_manifests_all_route_through_docker_or_procfile(self):
+        """A new deployment manifest cannot silently bypass startup gates."""
+        dockerfile = _read("Dockerfile")
+        self.assertIn('ENTRYPOINT ["./docker-entrypoint.sh"]', dockerfile)
+
+        compose = _read("docker-compose.yml")
+        self.assertEqual(compose.count("build: ."), 2)
+        self.assertNotIn("entrypoint:", compose)
+
+        import yaml
+
+        app_spec = yaml.safe_load(_read(".do/app.yaml"))
+        docker_components = app_spec["services"] + app_spec.get("jobs", [])
+        self.assertTrue(docker_components)
+        for component in docker_components:
+            self.assertEqual(component["dockerfile_path"], "Dockerfile")
+
+        railway = __import__("json").loads(_read("railway.json"))
+        self.assertEqual(railway["build"]["builder"], "DOCKERFILE")
+        self.assertEqual(railway["build"]["dockerfilePath"], "Dockerfile")

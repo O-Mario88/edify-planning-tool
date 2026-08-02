@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase
 
 from apps.core import boot_gates
@@ -138,17 +141,7 @@ class VerifyOrExitTest(SimpleTestCase):
             boot_gates.verify_or_exit()  # must not raise
 
 
-class AppReadySkipsForManagementCommandsTest(SimpleTestCase):
-    """apps.core.apps.CoreConfig.ready() must not gate commands that
-    legitimately manage/introspect the DB schema, or any non-production
-    process (dev, test)."""
-
-    def test_skip_list_covers_migrate_and_friends(self):
-        from apps.core.apps import _SKIP_BOOT_GATES_FOR_COMMANDS
-
-        for command in ("migrate", "makemigrations", "collectstatic", "test"):
-            self.assertIn(command, _SKIP_BOOT_GATES_FOR_COMMANDS)
-
+class AppReadyDoesNotQueryDatabaseTest(SimpleTestCase):
     @staticmethod
     def _core_config():
         # The already-registered instance from the live app registry —
@@ -159,35 +152,48 @@ class AppReadySkipsForManagementCommandsTest(SimpleTestCase):
 
         return apps.get_app_config("core")
 
-    def test_ready_is_a_noop_outside_production(self):
+    def test_ready_never_runs_database_boot_gates(self):
         config = self._core_config()
         with (
-            self.settings(IS_PRODUCTION=False),
+            self.settings(IS_PRODUCTION=True),
             patch("apps.core.boot_gates.verify_or_exit") as mock_verify,
         ):
             config.ready()
         mock_verify.assert_not_called()
 
-    def test_ready_runs_the_gates_in_production_for_the_server_process(self):
-        import sys
 
-        config = self._core_config()
+class ProductionPreflightCommandTest(SimpleTestCase):
+    def test_refuses_non_production_settings(self):
+        with self.settings(IS_PRODUCTION=False):
+            with self.assertRaisesMessage(CommandError, "requires production settings"):
+                call_command("production_preflight")
+
+    def test_runs_environment_and_boot_gates_in_production(self):
+        output = StringIO()
         with (
             self.settings(IS_PRODUCTION=True),
-            patch.object(sys, "argv", ["daphne", "config.asgi:application"]),
+            patch(
+                "apps.core.management.commands.production_preflight."
+                "validate_environment",
+                return_value="ok",
+            ) as mock_environment,
             patch("apps.core.boot_gates.verify_or_exit") as mock_verify,
         ):
-            config.ready()
-        mock_verify.assert_called_once()
+            call_command("production_preflight", stdout=output)
+        mock_environment.assert_called_once_with(force=True)
+        mock_verify.assert_called_once_with()
+        self.assertIn("Production preflight passed", output.getvalue())
 
-    def test_ready_skips_gates_for_migrate_command_in_production(self):
-        import sys
-
-        config = self._core_config()
+    def test_fails_closed_when_environment_cannot_be_validated(self):
         with (
             self.settings(IS_PRODUCTION=True),
-            patch.object(sys, "argv", ["manage.py", "migrate", "--noinput"]),
+            patch(
+                "apps.core.management.commands.production_preflight."
+                "validate_environment",
+                return_value="unavailable",
+            ),
             patch("apps.core.boot_gates.verify_or_exit") as mock_verify,
+            self.assertRaisesMessage(CommandError, "refusing boot"),
         ):
-            config.ready()
+            call_command("production_preflight")
         mock_verify.assert_not_called()
