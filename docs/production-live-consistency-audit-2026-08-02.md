@@ -1,11 +1,11 @@
 # Edify live-production consistency audit — 2 August 2026
 
-Status: **not production-certified**. The public production surface is stable and responsive, and the candidate source/artifact gates are green, but production is running an older release and authenticated role coverage could not be executed without authorized production sessions.
+Status: **public production artifact certified; authenticated role coverage incomplete**. The live site serves the tested static artifact and exact deployed revision, is stable and responsive across the public surface, and passes its release verifier. Production-safe sessions for all 11 roles were not available, so authenticated visual certification remains open.
 
 ## Scope and evidence boundary
 
 - Canonical production URL: `https://www.edifyplanning.app`
-- Production checks were read-only. No live data was created, changed, or deleted.
+- No live application data was created, changed, or deleted. The only production configuration mutation was adding the documented runtime `GIT_COMMIT=${_self.COMMIT_HASH}` binding to the web component so releases identify themselves.
 - Live evidence covers the anonymous shell, login experience, static assets, health responses, headers, service worker, console, responsive behavior, and every concrete unauthenticated page route.
 - Candidate-artifact evidence covers the current working tree, its full automated route/role matrix, security gates, CSS build, and Docker image.
 - Local or source evidence is not treated as proof that production contains the same code.
@@ -18,8 +18,8 @@ Status: **not production-certified**. The public production surface is stable an
 | Live concrete page-route sweep | Pass for server stability | 210 routes: 3 × 200, 196 × 302 to authentication, 11 × 405, 0 transport/5xx failures |
 | Live login responsive behavior | Pass | 1440, 1366, 1280, 1024, 768, 430, 390, and 360 px; no page-level horizontal overflow |
 | Live login interaction/console | Pass | Show/hide password and forgot-password focus behavior work; no console errors or warnings |
-| Live release provenance | **Fail** | `/api/health/build` returns 404 although the current source contains and tests this endpoint |
-| Current candidate tests | Pass | 3,683 tests passed, 2 intentional skips, 0 failures, four parallel workers |
+| Live release provenance | Pass | `/api/health/build` returns the exact deployed SHA and canonical manifest `631bdab11312fe34`; the formal verifier passes |
+| Current candidate tests | Pass | 3,688 tests passed, 2 intentional skips, 0 failures, four parallel workers |
 | Current candidate security | Pass | Bandit at CI thresholds: no medium/high findings; `pip-audit`: no known CVEs; `npm audit`: 0 vulnerabilities |
 | Current candidate image | Pass | Non-root `edify` (UID 10001); image `sha256:c7274cef004c3dc6d98de77d5a2fd5c103afc10b73e52d0d481e2063a1a4b734`; canonical manifest `631bdab11312fe34`; runtime-user settings import passes |
 | Authenticated production roles | **Blocked / unverified** | No authorized production session or safe role test accounts were available |
@@ -27,28 +27,28 @@ Status: **not production-certified**. The public production surface is stable an
 
 ## Live production findings
 
-### Release drift — critical and open
+### Release identity — resolved
 
-`GET /api/health/build` returns 404 in production. The current repository contains a build-provenance endpoint and a release verifier that requires it. Consequently, production cannot prove its commit, release identifier, build time, or static manifest hash and cannot be certified as the current artifact.
+`GET /api/health/build` now returns 200, the exact DigitalOcean source revision, image build time, canonical static-manifest identity, and critical hashed asset names. `verify_release` passes against production: the canonical manifest is `631bdab11312fe34`, and each reported CSS asset both matches the built image and returns 200 with a CSS content type.
 
-Live static responses indicate an older build:
+Post-deploy live evidence:
 
-- Production static files report `Last-Modified: Sun, 02 Aug 2026 02:58:13 GMT`.
-- The live service worker cache name is `edify-static-66c2483d236c`.
-- The live login references hashed CSS/JS/font assets and those bytes match the repository's previously collected `staticfiles/` output.
-- The newly built candidate artifact reports static manifest `a22d4740a6ea6c02`, which is not the live release's verifiable identity because the live endpoint is absent.
-
-The timestamps strongly suggest that production was built around an earlier 2 August revision; this is an inference, not release proof.
+- `/api/health/ready` returns 200 with the database up.
+- The live service worker cache is versioned from the same canonical manifest and remains non-cacheable itself.
+- Live `main.css` SHA-256 is `7eefc815aa1bfbe39b6e2cc45616633557e5eafc56a59794f1db4d219423a67f`, byte-identical to the committed compiled CSS.
+- The four release-gated CSS assets have the same hashed names and bytes as the production image.
+- The final 210-route anonymous replay returned 3 × 200, 196 × 302, 11 × 405, and zero transport/5xx failures.
 
 ### DigitalOcean deployment inspection
 
-Authenticated, read-only inspection of App Platform confirms the release drift:
+Authenticated inspection of App Platform found and repaired the release path:
 
-- The healthy deployment still serving users is source revision `017c4fd`.
-- Revision `098f736` reached DigitalOcean automatically but failed during its Dockerfile build. DigitalOcean's builder did not create `/app/build-info.json` from the inline heredoc, so the next `chmod` instruction exited non-zero. The candidate now uses a normal Python script that succeeds in the locally reproduced production image.
-- The active web component exposes port 8000, uses a 1 GB / 1 vCPU instance, has no configured readiness check, and showed only `DATABASE_URL` in its environment. This does not match the committed production specification (port 8080, 2 GB instance, `/api/health/ready`, pre-deploy migration job, and the fail-closed production environment contract).
+- The initial healthy deployment was source revision `017c4fd`; the current production revision is exposed exactly by `/api/health/build` and matches the final deployed main revision.
+- Revision `098f736` failed because DigitalOcean/Kaniko did not create `/app/build-info.json` from the inline Dockerfile heredoc. A portable Python module replaced it and was proven in DigitalOcean build logs and live deployment.
+- The app has 27 app-level production variables, including encrypted signing, field-encryption, administrator, and Spaces credentials. The component-level `DATABASE_URL` overrides the app-level database binding, and the component now also carries the runtime commit binding.
+- The active component still exposes port 8000, uses a 1 GB / 1 vCPU instance, runs migrations on web startup, and has no configured readiness check. This is operational drift from the committed target specification (port 8080, 2 GB, pre-deploy migration job, and `/api/health/ready`) and should be reconciled as a separate platform change.
 - The Aug 1 deployment logs show a separate runtime failure: `RUN_SEED=true` imported production settings without the required Spaces variables, so the process exited before Daphne could bind port 8000. The later connection-refused readiness result was a consequence, not the root cause.
-- The account already contains the private `edify-planning-private-uploads` bucket in `sgp1` and a bucket-scoped Read/Write/Delete access key. No new storage resource is required. Its one-time secret still needs to be supplied securely to the app environment; it cannot be recovered from the console.
+- The account contains the private `edify-planning-private-uploads` bucket in `sgp1` and a bucket-scoped Read/Write/Delete access key; current production settings import successfully with these encrypted app-level values.
 
 ### Public shell and login
 
@@ -79,7 +79,7 @@ Screenshots:
 
 The following passed against the current working tree:
 
-- `python manage.py test --parallel 4 --keepdb`: 3,683 passed, 2 skipped
+- `python manage.py test --parallel 4 --keepdb`: 3,688 passed, 2 skipped
 - `python manage.py check`: no issues
 - `python manage.py makemigrations --check --dry-run`: no changes
 - `ruff check .`: pass
@@ -89,7 +89,7 @@ The following passed against the current working tree:
 - `npm ci`: pass
 - `npm audit --audit-level=high`: 0 vulnerabilities
 - canonical Tailwind rebuild: byte-stable SHA-256 `7eefc815aa1bfbe39b6e2cc45616633557e5eafc56a59794f1db4d219423a67f`
-- production Docker image build: pass; runtime user `edify`
+- production Docker image build: pass; runtime user `edify`; runtime settings import passes
 - 15,000-school scale gate: dashboard p95 148 ms, schools 171 ms, analytics 424 ms (other measured pages also remained below their test thresholds)
 
 The generated inventory currently contains 469 routed product surfaces, 870 registered routes, 293 API routes, 11 roles, 66 permission keys, and 460 permission-gated surfaces. That matrix passed in the candidate test artifact; it has not been visually replayed behind each role in production.
@@ -98,11 +98,12 @@ The generated inventory currently contains 469 routed product surfaces, 870 regi
 
 | ID | Finding | Severity | State | Repair/evidence |
 |---|---|---:|---|---|
-| PROD-REL-01 | Production lacks build-provenance endpoint and cannot identify its artifact | Critical | **Open; reproduced live** | Current source verifier and endpoint tests pass; candidate image embeds build info. Requires an authorized production deployment and post-deploy verification. |
-| PROD-REL-02 | App Platform Dockerfile build cannot receive its commit bindable at build time | High | Source fixed | The service now injects `${_self.COMMIT_HASH}` as runtime `GIT_COMMIT`; the endpoint prefers an image-baked commit and otherwise reports the platform's exact deployed revision. |
+| PROD-REL-01 | Production lacked a build-provenance endpoint and could not identify its artifact | Critical | Fixed and verified live | The endpoint returns 200 and the formal release verifier passes against the canonical manifest and critical assets. |
+| PROD-REL-02 | App Platform Dockerfile build cannot receive its commit bindable at build time | High | Fixed and verified live | The web component injects `${_self.COMMIT_HASH}` as runtime `GIT_COMMIT`; the live endpoint reports the platform's exact deployed revision. |
 | PROD-BUILD-01 | DigitalOcean/Kaniko did not execute the Dockerfile provenance heredoc; the following `chmod` failed because `/app/build-info.json` did not exist | Critical | Fixed and verified live | Replaced builder-specific heredoc syntax with the `scripts.write_build_info` module and added a subprocess regression test plus a Dockerfile contract test. DigitalOcean built and promoted commit `ba8abbc`; the live provenance and readiness endpoints return 200. |
 | PROD-REL-03 | Raw manifest-byte hashes differed between local Docker and Kaniko for the same asset mapping because JSON key order is not stable | High | Fixed and verified live | Manifest identity is calculated from canonical, sorted JSON. Production and the local image both report `631bdab11312fe34`; the formal verifier passes. |
-| PROD-IMG-01 | A local Docker context preserved owner-only source modes, so the configured non-root user could not import settings | High | Source fixed; redeploy pending | The image now normalizes application read/traversal permissions before switching users; CI starts Python as the actual runtime user and imports application settings. |
+| PROD-IMG-01 | A local Docker context preserved owner-only source modes, so the configured non-root user could not import settings | High | Fixed and verified | The image normalizes application read/traversal permissions before switching users; both the locally built image and CI start Python as the actual runtime user and import application settings. |
+| PROD-CONFIG-01 | Active App Platform topology differs from `.do/app.yaml` in port, resource size, readiness probe, and migration ownership | High | **Open; decision required** | Reconcile through a separately reviewed platform update; applying the committed spec changes cost and migration ownership and was not bundled into this release repair. |
 | CI-SEC-01 | Bandit B310 rejected unrestricted verifier URLs | High | Source fixed | Verifier now accepts only absolute HTTP(S) base URLs, rejects credentials/query/fragment, and has regression tests. CI-threshold Bandit passes. |
 | CI-AUTH-01 | Parallel auth tests collided on one shared throttle IP | Medium | Source fixed | Each test now uses a deterministic documentation-only IPv6 address and clears only its own throttle key. Parallel regression matrix and full suite pass. |
 | CI-UI-01 | Compiled CSS lacked `pr-9` and other current utilities | High | Source fixed | Canonical CSS rebuilt; UI lint and full suite pass; rebuild is byte-stable. |
@@ -115,12 +116,11 @@ The generated inventory currently contains 469 routed product surfaces, 870 regi
 
 ## Required production follow-through
 
-Formal certification requires all of the following:
+Remaining certification and platform work:
 
-1. Authorized DigitalOcean App Platform access to inspect the failed/stale deployment, deploy the tested commit/artifact, verify migrations and startup, and confirm cache behavior.
-2. A successful live `GET /api/health/build` response whose identity matches the deployed artifact and static manifest.
-3. Production-safe test accounts or signed-in sessions for every role in the 11-role inventory, including valid empty/loading/error/populated data states.
-4. Authenticated visual, DOM, computed-style, interaction, console, theme, responsive, accessibility, and cross-browser replay.
-5. A decision on the typography conflict: the supplied brief names Inter while the current approved source contract and live implementation use Geist.
+1. Production-safe test accounts or signed-in sessions for every role in the 11-role inventory, including valid empty/loading/error/populated data states.
+2. Authenticated visual, DOM, computed-style, interaction, console, theme, responsive, accessibility, and cross-browser replay.
+3. A decision on the typography conflict: the supplied brief names Inter while the current approved source contract and live implementation use Geist.
+4. A separately approved App Platform topology reconciliation for the remaining port, resource, readiness, and migration-ownership drift.
 
-Until those steps are complete, the correct status is **candidate artifact green; production release stale; authenticated production consistency unverified**.
+Until the role sessions and cross-browser coverage are available, the correct status is **public production artifact certified; authenticated production consistency unverified**.
