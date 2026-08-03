@@ -69,3 +69,66 @@ class ClusterMatrixShowsEveryInterventionTest(SimpleTestCase):
             "slicing the canonical list drops columns from the right-hand end "
             "of the matrix, where nobody checks",
         )
+
+
+class UrgentRowActionIsUsableTest(SimpleTestCase):
+    """Every urgent-schools row must offer an action that says what it does.
+
+    The Program Lead's card rendered a blue button with no label and no href.
+    risk_list names the recommended work and urgent_schools_page builds the URL
+    that opens it, but nothing joined either to the action_* fields the shared
+    table renders, so the cell drew `<a href="">` — a control that looks
+    pressable, does nothing, and does not say what it would have done.
+
+    A button with no label is worse than a missing button: it occupies the
+    place a user looks for the action and gives them nothing to read.
+    """
+
+    def test_the_shared_table_renders_the_action_from_these_fields(self):
+        """Pins the contract between the row builder and the template, since
+        the two live in different apps and drifted apart once already."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        template = (
+            Path(settings.BASE_DIR)
+            / "templates/partials/dashboards/urgent_schools_table.html"
+        ).read_text()
+        for field in ("row.action_label", "row.action_url", "row.action_mode"):
+            with self.subTest(field=field):
+                self.assertIn(field, template)
+
+    def test_the_program_lead_builder_sets_every_field_the_table_reads(self):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        source = (
+            Path(settings.BASE_DIR) / "apps/analytics/pl_dashboard_service.py"
+        ).read_text()
+        for field in ('row["action_label"]', 'row["action_url"]', 'row["action_mode"]'):
+            with self.subTest(field=field):
+                self.assertIn(
+                    field,
+                    source,
+                    "the table reads this; a row that omits it renders an "
+                    "empty control",
+                )
+
+    def test_the_label_falls_back_rather_than_rendering_empty(self):
+        """recommended_activity_label is derived, so it can be absent. An
+        empty string would put the blank button straight back."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        source = (
+            Path(settings.BASE_DIR) / "apps/analytics/pl_dashboard_service.py"
+        ).read_text()
+        assignment = source.split('row["action_label"]', 1)[1][:160]
+        self.assertIn(
+            "or ",
+            assignment,
+            "the label needs a fallback — an empty one renders a blank button",
+        )

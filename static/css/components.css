@@ -2917,3 +2917,69 @@ search:has(.edify-search-submit) input[type="search"] {
     transition-duration: 1ms;
   }
 }
+
+/* ── Pending controls ─────────────────────────────────────────────────────
+   The visual half of interaction-pending.js. A control in flight must read as
+   busy without looking broken: it keeps its size and its label position, and
+   only its surface tells you it is working.
+
+   aria-disabled rather than :disabled is what the script sets, so the styling
+   hangs off that — a genuinely disabled button loses keyboard focus, which
+   sends a keyboard user back to the top of the document mid-task. */
+:where(button, a, [role="button"]).is-pending {
+  cursor: progress;
+  opacity: 0.78;
+  /* No lift, no press. A control that is already working should not keep
+     responding to the pointer as though it were waiting for input. */
+  transform: none !important;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, a, [role="button"]).is-pending {
+    transition: opacity var(--edify-duration-hover-in, 130ms) ease-out;
+  }
+}
+
+/* ── Route progress ───────────────────────────────────────────────────────
+   A thin primary line at the top of the viewport while a request is in
+   flight. Paired with the 140ms delay in interaction-pending.js: a bar that
+   flashes on every fast response reads as a glitch, and one that appears
+   constantly stops meaning "working".
+
+   Animates transform and opacity only — both composited, so the bar cannot
+   cost frames on the very requests that are already slow. It is fixed and
+   1px tall, so it can never shift layout. */
+.edify-route-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  background: var(--brand-primary);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.edify-route-progress.is-active {
+  opacity: 1;
+  /* Creeps toward 90% and waits. It never completes on its own, because
+     completion is the response arriving — a bar that reaches 100% while the
+     user is still waiting has told them something untrue. */
+  animation: edify-route-progress-creep 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes edify-route-progress-creep {
+  0%   { transform: scaleX(0); }
+  40%  { transform: scaleX(0.6); }
+  100% { transform: scaleX(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-route-progress.is-active {
+    animation: none;
+    transform: scaleX(0.9);
+  }
+}

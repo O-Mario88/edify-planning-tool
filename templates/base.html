@@ -252,6 +252,10 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
      exchanges are invisible to the server, so the page reports them. Each
      unique defect becomes one System Incident for the Admin. -->
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
+{% comment %}One pending state for every HTMX mutation on the platform. Installs
+document-level lifecycle handlers, so no template needs hx-disabled-elt.
+{% endcomment %}
+<script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

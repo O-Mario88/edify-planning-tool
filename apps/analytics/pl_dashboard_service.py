@@ -203,6 +203,26 @@ class ProgramLeadDashboardService:
             row["partner_url"] = (
                 f"/planning/assign-partner-modal?{urlencode(partner_query)}"
             )
+            # The row's primary action. risk_list names the recommended work
+            # (recommended_activity_label) and this loop builds the URL that
+            # opens it (schedule_url), but nothing ever joined them to the
+            # action_* fields the shared table renders — so the cell drew
+            # `<a href="">` with no text: a blue button with no label and
+            # nowhere to go. The other caller of this table populates
+            # action_label from urgent_attention; this one simply never did.
+            # Short on purpose. The recommended work is already named in its
+            # own column a few pixels to the left ("Complete SSA"), and the
+            # full recommendation makes a 50-character button — "Schedule
+            # Exposure to the Word of God Coaching Visit" — in a cell that
+            # also has to hold Assign. The verb is what the button contributes;
+            # the row supplies the noun. The full text stays on the control as
+            # its title for anyone who wants it.
+            row["action_label"] = "Schedule"
+            row["action_title"] = (
+                row.get("recommended_activity_label") or "Open Planning"
+            )
+            row["action_url"] = row["schedule_url"]
+            row["action_mode"] = "drawer"
         first_row = (page - 1) * page_size + 1 if total else 0
         return {
             "rows": rows,

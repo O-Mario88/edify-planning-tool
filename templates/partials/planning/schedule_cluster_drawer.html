@@ -165,16 +165,51 @@ x-text="day"
 </div>
 </div>
 
-<!-- Expected Participants -->
-<div>
-<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participant Count</label>
-<input
-type="number"
-name="expected_participants"
-id="expected_participants"
-placeholder="e.g. 15"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
->
+{% comment %}
+Participants are planned per school, not as a total. Asking for the total made
+the planner do the arithmetic the system already has the inputs for — and a
+typed total is unverifiable: 47 for a 30-school cluster could be a considered
+figure or a slip, and nothing downstream can tell.
+
+The number shown here is a preview. The backend recounts the cluster and
+recomputes the total at submission, so a drawer left open while membership
+changes cannot price an activity on a stale count.
+{% endcomment %}
+<div class="rounded-surface border edify-border edify-surface-muted p-3 space-y-3">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Participants</p>
+
+  <div class="flex items-center justify-between gap-3">
+    <span class="text-[12px] font-medium edify-text-muted">Active schools in cluster</span>
+    <span id="cluster-school-count" class="text-[13px] font-bold edify-text tabular-nums">{{ cluster_school_count }}</span>
+  </div>
+
+  <div x-data="{ perSchool: 2, schools: {{ cluster_school_count|default:0 }} }">
+    <label for="participants_per_school" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+      Participants per School <span class="text-rose-500">*</span>
+    </label>
+    <input
+      type="number"
+      name="participants_per_school"
+      id="participants_per_school"
+      min="1"
+      step="1"
+      required
+      x-model.number="perSchool"
+      placeholder="e.g. 2"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+      aria-describedby="participants-help participants-total"
+    >
+    <p id="participants-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+      How many people you intend to invite from each school in this cluster. Edify calculates the total.
+    </p>
+
+    <div id="participants-total" class="mt-2 flex items-center justify-between gap-3 rounded-control bg-white/70 px-3 py-2" aria-live="polite">
+      <span class="text-[12px] font-medium edify-text-muted">
+        <span x-text="schools"></span> schools &times; <span x-text="perSchool || 0"></span> per school
+      </span>
+      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="(schools * (perSchool || 0)).toLocaleString()"></span>
+    </div>
+  </div>
 </div>
 
 <!-- Delivery Type selection -->

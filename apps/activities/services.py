@@ -582,6 +582,43 @@ def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
     return [i for i in ids if i in member_ids]
 
 
+#: Cluster activities whose participant count is derived from per-school
+#: invitations rather than typed as a total. Deliberately explicit: a school
+#: visit or a conference has no cluster membership to multiply by, and must
+#: keep its own participant semantics.
+CLUSTER_PARTICIPANT_ACTIVITY_TYPES = {
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+}
+
+
+def _validated_participants_per_school(raw) -> int:
+    """A positive whole number, or a refusal that says which rule was broken.
+
+    Decimals are rejected rather than rounded: 2.5 participants per school
+    across 30 schools is 75 people if you round up and 60 if you truncate, and
+    neither is a number anybody chose.
+    """
+    text = str(raw).strip()
+    if not text:
+        raise BadRequest("Enter how many participants to invite from each school.")
+    try:
+        value = int(text)
+    except (TypeError, ValueError) as exc:
+        raise BadRequest(
+            "Participants per school must be a whole number — 2, not 2.5."
+        ) from exc
+    if str(value) != text.lstrip("+"):
+        raise BadRequest("Participants per school must be a whole number — 2, not 2.5.")
+    if value < 1:
+        raise BadRequest("Participants per school must be at least 1.")
+    if value > 500:
+        raise BadRequest("Participants per school must be 500 or fewer.")
+    return value
+
+
 # ── Create ───────────────────────────────────────────────────────────────────
 def create(
     data: dict,
@@ -676,6 +713,34 @@ def create(
         # the form did not explicitly provide one.
         if not data.get("districtType") and school.district_id:
             data = {**data, "districtType": school.district.district_type}
+
+    # ── Cluster participant planning ─────────────────────────────────────
+    # The user states how many people to invite per school. The total is
+    # derived HERE, from the cluster's live membership, and never taken from
+    # the request: a submitted total is a number the browser computed, and the
+    # thing it multiplies into is a budget line.
+    participants_per_school = None
+    cluster_school_count = None
+    if activity_type in CLUSTER_PARTICIPANT_ACTIVITY_TYPES and cluster_id:
+        raw_per_school = data.get("participantsPerSchool")
+        if raw_per_school not in (None, ""):
+            participants_per_school = _validated_participants_per_school(raw_per_school)
+            from apps.clusters.services import active_school_count
+
+            cluster_school_count = active_school_count(cluster_id)
+            if cluster_school_count < 1:
+                raise BadRequest(
+                    "This cluster has no active schools, so there is nobody to "
+                    "invite. Add schools to the cluster before planning a "
+                    "cluster activity for it."
+                )
+            # Overwrites whatever the form sent. The browser's arithmetic is a
+            # preview; this is the number that gets costed and stored.
+            data = {
+                **data,
+                "expectedParticipants": participants_per_school
+                * cluster_school_count,
+            }
 
     non_school = bool(
         catalogue_item
@@ -1239,6 +1304,11 @@ def create(
             secondary_focus_interventions=data.get("secondaryFocusInterventions", []),
             expected_outcome=data.get("expectedOutcome"),
             expected_participants=data.get("expectedParticipants"),
+            # Snapshot, not a live lookup: an approved budget keeps the
+            # school count it was priced with, so a school joining the
+            # cluster later cannot re-price work already approved.
+            participants_per_school=participants_per_school,
+            cluster_school_count_snapshot=cluster_school_count,
             teachers_attended=data.get("teachersAttended"),
             leaders_attended=data.get("leadersAttended"),
             other_participants=data.get("otherParticipants"),

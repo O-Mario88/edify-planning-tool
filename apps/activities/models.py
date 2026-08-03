@@ -239,6 +239,15 @@ class Activity(SoftDeleteModel):
     # planning, fund requests and budget reporting before actual attendance is
     # recorded after the activity.
     expected_participants = models.IntegerField(null=True, blank=True)
+    # Cluster participant planning. The user states how many people to invite
+    # from each school; the total is derived, never typed.
+    #
+    # The school count is SNAPSHOT rather than looked up on read, because
+    # cluster membership changes and an approved budget must keep the number it
+    # was priced with. A school joining the cluster in November must not
+    # silently re-price an activity approved in August.
+    participants_per_school = models.IntegerField(null=True, blank=True)
+    cluster_school_count_snapshot = models.IntegerField(null=True, blank=True)
     teachers_attended = models.IntegerField(null=True, blank=True)
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)

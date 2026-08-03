@@ -700,6 +700,31 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     return out
 
 
+def active_school_count(cluster_id: str) -> int:
+    """How many live schools a cluster currently holds.
+
+    One definition, because this number multiplies a per-school participant
+    figure into a budget: if the drawer, the cost preview and the persisted
+    activity each counted schools their own way, the three would disagree by
+    whole participants and the difference would land in money.
+
+    "Active" here means not soft-deleted AND still carrying the cluster link.
+    Both conditions are needed, not one: School.cluster_id is a CharField
+    rather than a foreign key, so a school can point at a cluster that no
+    longer exists, and cluster_status can disagree with cluster_id. Requiring
+    both keeps a stale pointer from inflating a participant count.
+    """
+    from apps.schools.models import School
+
+    if not cluster_id:
+        return 0
+    return School.objects.filter(
+        cluster_id=cluster_id,
+        cluster_status="clustered",
+        deleted_at__isnull=True,
+    ).count()
+
+
 def cluster_detail(cluster_id: str, principal) -> dict:
     cluster = _scoped_cluster(cluster_id, principal)
 

@@ -83,7 +83,8 @@ read as decoration rather than emphasis.
                     hx-get="{{ row.action_url }}"
                     hx-target="#drawer-container"
                     hx-swap="innerHTML"
-                    aria-label="{{ row.action_label }} for {{ row.school }}">
+                    title="{% firstof row.action_title row.action_label %}"
+                    aria-label="{% firstof row.action_title row.action_label %} for {{ row.school }}">
               {{ row.action_label }}
             </button>
             {% else %}

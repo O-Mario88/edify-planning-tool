@@ -568,12 +568,18 @@ def schedule_modal_view(request):
         partners = Partner.objects.filter(
             deleted_at__isnull=True, active_status=True
         ).order_by("name")
+        from apps.clusters.services import active_school_count
+
         context = {
             "cluster": cluster,
             "action": action,
             "partners": partners,
             "interventions": SsaIntervention.choices,
             "drawer_size": "lg",
+            # Read-only, and from the canonical counter. The drawer shows it so
+            # the multiplication is visible; the backend recomputes it at
+            # submission so a stale drawer cannot price an activity.
+            "cluster_school_count": active_school_count(cluster.id),
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context
@@ -754,6 +760,7 @@ def schedule_action_view(request):
     ).strip()
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     expected_participants = request.POST.get("expected_participants", "").strip()
+    participants_per_school = request.POST.get("participants_per_school", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
     partner_id = request.POST.get("assigned_partner_id", "").strip()
     project_id = request.POST.get("project_id", "").strip()
@@ -857,6 +864,12 @@ def schedule_action_view(request):
         payload["purposeType"] = purpose_type
     if expected_participants:
         payload["expectedParticipants"] = int(expected_participants)
+    if participants_per_school:
+        # Passed through as-is; activities.services validates it and derives
+        # the total from live cluster membership, overwriting any
+        # expectedParticipants the form happened to carry. The browser's
+        # multiplication is a preview, not an input.
+        payload["participantsPerSchool"] = participants_per_school
     if partner_id:
         payload["assignedPartnerId"] = partner_id
     if project_id:
