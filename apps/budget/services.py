@@ -1007,7 +1007,17 @@ def budget_workspace(principal, query: dict) -> dict:
         "cluster_meeting_cost",
     }
 
-    def table_kind(activity_type: str) -> str:
+    def table_kind(activity) -> str:
+        # A non-school programme activity keeps the operational workflow type
+        # needed by costing (for example ``partner_activity``) as well as the
+        # leadership reporting category selected from the governed catalogue.
+        # The reporting category must win for an Admin programme item; treating
+        # every unfamiliar workflow type as ``standard`` put Admin money in the
+        # School Visits tile even though the schedule and catalogue both called
+        # it Admin.
+        if activity.programme_activity_type == "admin":
+            return "admin"
+        activity_type = activity.activity_type
         if activity_type in meeting_types:
             return "meeting"
         if activity_type in training_types:
@@ -1017,7 +1027,6 @@ def budget_workspace(principal, query: dict) -> dict:
     scheduled_participants: dict[str, int] = {}
     for line in selected_lines:
         activity = line.activity
-        activity_type = activity.activity_type
         actual_attendance = sum(
             int(value or 0)
             for value in (
@@ -1032,7 +1041,7 @@ def budget_workspace(principal, query: dict) -> dict:
         if activity.expected_participants:
             scheduled_participants[activity.id] = int(activity.expected_participants)
             continue
-        if table_kind(activity_type) in {"training", "meeting"} and (
+        if table_kind(activity) in {"training", "meeting"} and (
             line.line_item_type in participant_line_types
             or line.cost_setting_key in participant_setting_keys
         ):
@@ -1043,12 +1052,16 @@ def budget_workspace(principal, query: dict) -> dict:
     groups: dict[str, dict] = {}
     for line in selected_lines:
         activity = line.activity
-        activity_label = activity.get_activity_type_display()
+        activity_label = (
+            activity.get_programme_activity_type_display()
+            if activity.programme_activity_type
+            else activity.get_activity_type_display()
+        )
         group = groups.setdefault(
             activity_label,
             {
                 "label": activity_label,
-                "table_kind": table_kind(activity.activity_type),
+                "table_kind": table_kind(activity),
                 "rows": {},
                 "total": 0,
                 "staff_total": 0,

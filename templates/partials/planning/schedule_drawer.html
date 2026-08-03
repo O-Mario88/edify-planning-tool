@@ -30,6 +30,15 @@ alternative: false
 
 {% if not reschedule_mode %}
 <input type="hidden" name="require_catalogue" value="yes">
+{% comment %}
+  The user chooses the purpose, while the SSA-led recommendation displayed in
+  this drawer identifies the governed Catalogue Activity that will deliver it.
+  Preserve that already-visible recommendation in the POST. Deriving only from
+  workflow_kind fails whenever several approved activities share the same kind
+  (for example multiple in-school trainings), because the server correctly
+  refuses to guess between them.
+{% endcomment %}
+{% if selected_catalogue_item %}<input type="hidden" name="catalogue_item_id" value="{{ selected_catalogue_item.catalogueItemId }}">{% endif %}
 <input type="hidden" name="activity_type" :value="activityType">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
 

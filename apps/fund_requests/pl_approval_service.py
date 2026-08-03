@@ -42,6 +42,7 @@ CLUSTER_MEETING = ["cluster_meeting", "cluster_meeting_ssa_review"]
 CLUSTER_TRAINING = ["cluster_training", "cluster_training_ssa_collection"]
 
 CATEGORY_ORDER = [
+    "Admin Budget",
     "Staff School Visits",
     "Partner School Visits",
     "Cluster Meetings",
@@ -52,6 +53,7 @@ CATEGORY_ORDER = [
 ]
 # Budget-mix segment colours (Tailwind bg classes).
 MIX_COLORS = {
+    "Admin Budget": "bg-sky-500",
     "Staff School Visits": "bg-emerald-500",
     "Partner School Visits": "bg-violet-500",
     "Cluster Meetings": "edify-primary-solid",
@@ -84,7 +86,9 @@ from apps.core.metrics import format_ugx_compact as _ugx  # noqa: E402
 # the same amount reads the same on the approval queue and the finance pages.
 
 
-def _category(activity_type, delivery_type):
+def _category(activity_type, delivery_type, programme_activity_type=None):
+    if programme_activity_type == "admin":
+        return "Admin Budget"
     if activity_type in VISIT_TYPES:
         return (
             "Partner School Visits"
@@ -237,7 +241,7 @@ def _build_cceo_plan(cceo, lines, fy, month):
         acts[a.id] = a
         if a.school_id:
             schools.add(a.school_id)
-        cat = _category(a.activity_type, a.delivery_type)
+        cat = _category(a.activity_type, a.delivery_type, a.programme_activity_type)
         d = cat_totals.setdefault(cat, {"total": 0, "acts": set()})
         d["total"] += li.amount
         d["acts"].add(a.id)
