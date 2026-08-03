@@ -84,7 +84,17 @@ def build_info() -> dict:
         # runtime.  Prefer the image value when CI supplied it, then fall back
         # to that platform value instead of publishing a misleading
         # ``unknown`` release for the production deployment.
-        "release": data.get("release") or os.environ.get("RELEASE") or UNKNOWN,
+        "release": (
+            data.get("release")
+            or os.environ.get("RELEASE")
+            # Existing App Platform apps keep their control-plane spec until
+            # it is updated explicitly; repository app-spec edits alone do
+            # not add a new runtime variable. GIT_COMMIT is already injected
+            # in production and is the immutable release identity we want.
+            or data.get("commit")
+            or os.environ.get("GIT_COMMIT")
+            or UNKNOWN
+        ),
         "buildTime": data.get("build_time") or UNKNOWN,
         "staticManifestHash": data.get("static_manifest_hash") or _live_manifest_hash(),
         "builtImage": bool(data),
