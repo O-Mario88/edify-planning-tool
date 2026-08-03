@@ -1,0 +1,40 @@
+{
+  "auditDate": "2026-08-03",
+  "productionUrl": "https://www.edifyplanning.app",
+  "decision": "NO-GO",
+  "release": {
+    "commit": "d9d50adf24c40454d372663d4b19155cba0807f8",
+    "releaseId": "unknown",
+    "buildTime": "2026-08-03T03:45:36+00:00",
+    "staticManifestHash": "f5b29e60f2158ff0"
+  },
+  "liveVerified": [
+    "/api/health/live",
+    "/api/health/ready",
+    "/api/health/build",
+    "/dashboard",
+    "/planning",
+    "/my-plan",
+    "/work-plan",
+    "/fund-requests/weekly",
+    "/accounts/monthly-request/",
+    "/fund-approvals"
+  ],
+  "issues": [
+    {"id": "PROD-AUTH-001", "severity": "high", "status": "Regression Tested", "liveClosed": false},
+    {"id": "PROD-REL-001", "severity": "high", "status": "Regression Tested", "liveClosed": false},
+    {"id": "PROD-REL-002", "severity": "high", "status": "Regression Tested", "liveClosed": false},
+    {"id": "PROD-PLAN-001", "severity": "critical", "status": "Regression Tested", "liveClosed": false},
+    {"id": "PROD-PLAN-002", "severity": "critical", "status": "Regression Tested", "liveClosed": false}
+  ],
+  "notVerified": [
+    "production database lineage",
+    "all non-Program-Lead roles",
+    "System Health financial checks",
+    "scheduler and worker release",
+    "instance image digests",
+    "production clone scenarios",
+    "staging promotion",
+    "post-deploy live verification"
+  ]
+}

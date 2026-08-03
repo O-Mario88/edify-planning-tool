@@ -595,6 +595,33 @@ button {
   stroke-linejoin: round;
 }
 
+.password-requirements {
+  margin-top: 1rem;
+  padding: .85rem 1rem;
+  color: var(--login-muted);
+  border: 1px solid var(--login-border);
+  border-radius: var(--radius-surface);
+  background: rgba(245, 251, 255, .82);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.5;
+}
+
+.password-requirements p {
+  margin: 0;
+  color: var(--login-ink);
+  font-weight: 600;
+}
+
+.password-requirements ul {
+  margin: .35rem 0 0;
+  padding-inline-start: 1.15rem;
+}
+
+.auth-primary-link {
+  margin-top: 1rem;
+  text-decoration: none;
+}
+
 .login-submit {
   display: flex;
   align-items: center;

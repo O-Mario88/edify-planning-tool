@@ -1,16 +1,28 @@
 (function () {
   "use strict";
 
-  function getCookie(name) {
-    var prefix = name + "=";
-    var cookies = document.cookie ? document.cookie.split(";") : [];
-    for (var index = 0; index < cookies.length; index += 1) {
-      var cookie = cookies[index].trim();
-      if (cookie.indexOf(prefix) === 0) {
-        return decodeURIComponent(cookie.slice(prefix.length));
-      }
-    }
-    return "";
+  function initPasswordToggles() {
+    document.querySelectorAll("[data-password-toggle]").forEach(function (toggle) {
+      var password = document.getElementById(toggle.getAttribute("aria-controls"));
+      if (!password) return;
+      var eyeOpen = toggle.querySelector("[data-eye-open]");
+      var eyeClosed = toggle.querySelector("[data-eye-closed]");
+      var fieldLabel = toggle.getAttribute("aria-label").replace(/^Show /, "");
+
+      toggle.addEventListener("click", function () {
+        var showing = password.type === "text";
+        password.type = showing ? "password" : "text";
+        toggle.setAttribute("aria-pressed", String(!showing));
+        toggle.setAttribute(
+          "aria-label",
+          (showing ? "Show " : "Hide ") + fieldLabel
+        );
+        if (eyeOpen && eyeClosed) {
+          eyeOpen.classList.toggle("password-toggle__hidden", !showing);
+          eyeClosed.classList.toggle("password-toggle__hidden", showing);
+        }
+      });
+    });
   }
 
   function initLogin() {
@@ -18,9 +30,6 @@
     if (!form) return;
 
     var password = form.querySelector("#current-password");
-    var toggle = form.querySelector("[data-password-toggle]");
-    var eyeOpen = toggle ? toggle.querySelector("[data-eye-open]") : null;
-    var eyeClosed = toggle ? toggle.querySelector("[data-eye-closed]") : null;
     var status = form.querySelector("[data-form-status]");
     var statusMessage = status ? status.querySelector("[data-form-status-message]") : null;
     var email = form.querySelector("#email");
@@ -43,19 +52,6 @@
       if (password) password.removeAttribute("aria-invalid");
     }
 
-    if (toggle && password) {
-      toggle.addEventListener("click", function () {
-        var showing = password.type === "text";
-        password.type = showing ? "password" : "text";
-        toggle.setAttribute("aria-pressed", String(!showing));
-        toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
-        if (eyeOpen && eyeClosed) {
-          eyeOpen.classList.toggle("password-toggle__hidden", !showing);
-          eyeClosed.classList.toggle("password-toggle__hidden", showing);
-        }
-      });
-    }
-
     [email, password].forEach(function (input) {
       if (input) input.addEventListener("input", clearStatus);
     });
@@ -76,7 +72,7 @@
           credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken")
+            "X-CSRFToken": form.querySelector('[name="csrfmiddlewaretoken"]').value
           },
           body: JSON.stringify({ email: email.value.trim() })
         })
@@ -101,9 +97,27 @@
     });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initLogin);
-  } else {
+  function initResetPassword() {
+    var form = document.querySelector("[data-reset-password-form]");
+    var submit = form ? form.querySelector("[data-reset-password-submit]") : null;
+    if (!form || !submit) return;
+    form.addEventListener("submit", function () {
+      if (!form.checkValidity()) return;
+      submit.disabled = true;
+      submit.classList.add("is-submitting");
+      submit.setAttribute("aria-busy", "true");
+    });
+  }
+
+  function init() {
+    initPasswordToggles();
     initLogin();
+    initResetPassword();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
   }
 })();

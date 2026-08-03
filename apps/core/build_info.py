@@ -79,7 +79,12 @@ def build_info() -> dict:
         # so prefer the image value when a CI builder supplied one and fall
         # back to the platform's exact deployed commit at runtime.
         "commit": data.get("commit") or os.environ.get("GIT_COMMIT") or UNKNOWN,
-        "release": data.get("release") or UNKNOWN,
+        # DigitalOcean's Dockerfile builder does not forward build arguments,
+        # but App Platform can inject an immutable release identifier at
+        # runtime.  Prefer the image value when CI supplied it, then fall back
+        # to that platform value instead of publishing a misleading
+        # ``unknown`` release for the production deployment.
+        "release": data.get("release") or os.environ.get("RELEASE") or UNKNOWN,
         "buildTime": data.get("build_time") or UNKNOWN,
         "staticManifestHash": data.get("static_manifest_hash") or _live_manifest_hash(),
         "builtImage": bool(data),

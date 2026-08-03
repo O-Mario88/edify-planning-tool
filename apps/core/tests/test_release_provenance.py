@@ -75,6 +75,13 @@ class BuildEndpointTest(TestCase):
         with patch.dict(os.environ, {"GIT_COMMIT": "a" * 40}):
             self.assertEqual(build_info()["commit"], "a" * 40)
 
+    def test_it_uses_the_platform_runtime_release_when_the_image_has_none(self):
+        """Runtime provenance must identify the production release too."""
+        build_info.cache_clear()
+        self.addCleanup(build_info.cache_clear)
+        with patch.dict(os.environ, {"RELEASE": "production-a" * 3}):
+            self.assertEqual(build_info()["release"], "production-a" * 3)
+
 
 class ReleaseVerifierUrlSafetyTest(SimpleTestCase):
     def test_it_refuses_non_http_urls_before_opening_them(self):

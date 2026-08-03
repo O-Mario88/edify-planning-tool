@@ -65,13 +65,13 @@
 
   <div
     id="login-status"
-    class="login-alert{% if not error %} is-hidden{% endif %}"
+    class="login-alert{% if notice %} login-alert--success{% elif not error %} is-hidden{% endif %}"
     role="alert"
     aria-live="polite"
     data-form-status
   >
     <svg class="login-alert__icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 17h.01"></path></svg>
-    <span data-form-status-message>{{ error|default:"" }}</span>
+    <span data-form-status-message>{% if error %}{{ error }}{% elif notice %}{{ notice }}{% endif %}</span>
   </div>
 
   <button class="login-submit" type="submit" data-login-submit>

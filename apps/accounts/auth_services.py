@@ -380,15 +380,19 @@ def reset_password(token: str, new_password: str, confirm: str) -> dict:
     if violations:
         raise BadRequest(" ".join(violations))
 
-    user = _find_user_by_reset_token(token)
-    if not user:
-        raise BadRequest("This reset link is invalid or has expired.")
-
-    user.set_password(new_password)
-    user.password_reset_token_hash = None
-    user.password_reset_expires = None
-    user.password_set_at = timezone.now()
     with transaction.atomic():
+        # Lock the matching account until the token is cleared. Without the
+        # row lock, two near-simultaneous submissions can both validate the
+        # same token before either one consumes it, contradicting the
+        # single-use guarantee in the reset email.
+        user = _find_user_by_reset_token(token, for_update=True)
+        if not user:
+            raise BadRequest("This reset link is invalid or has expired.")
+
+        user.set_password(new_password)
+        user.password_reset_token_hash = None
+        user.password_reset_expires = None
+        user.password_set_at = timezone.now()
         user.save(
             update_fields=[
                 "password",
@@ -404,9 +408,17 @@ def reset_password(token: str, new_password: str, confirm: str) -> dict:
     return {"ok": True}
 
 
-def _find_user_by_reset_token(token: str) -> User | None:
+def password_reset_token_is_valid(token: str) -> bool:
+    """Return whether a reset link can still be used, without consuming it."""
+    return _find_user_by_reset_token(token) is not None
+
+
+def _find_user_by_reset_token(token: str, *, for_update: bool = False) -> User | None:
     token_hash = hash_token(token or "")
-    user = User.objects.filter(
+    users = User.objects
+    if for_update:
+        users = users.select_for_update()
+    user = users.filter(
         password_reset_token_hash=token_hash, deleted_at__isnull=True
     ).first()
     if not user:
@@ -507,6 +519,7 @@ __all__ = [
     "logout",
     "forgot_password",
     "reset_password",
+    "password_reset_token_is_valid",
     "validate_invite",
     "set_password",
 ]

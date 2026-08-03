@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0034_expand_programme_budget_choices'),
+        ("activities", "0034_expand_programme_budget_choices"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='cluster_school_count_snapshot',
+            model_name="activity",
+            name="cluster_school_count_snapshot",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='participants_per_school',
+            model_name="activity",
+            name="participants_per_school",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]
