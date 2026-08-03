@@ -62,11 +62,15 @@
         <div class="flex items-center gap-2.5 p-2.5 rounded-surface edify-surface-muted">
           <div>
             <p class="edify-kpi-label text-[12px] edify-text-subtle">{{ c.label }}</p>
-            <p class="text-[15px] font-semibold tabular-nums edify-text">{{ c.done }}<span class="text-[12px] font-semibold edify-text-subtle">/{{ c.target }}</span></p>
+            <p class="text-[15px] font-semibold tabular-nums edify-text">{{ c.done }}<span class="text-[12px] font-semibold edify-text-subtle">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span></p>
+            {% if c.has_target %}
             <p class="text-[12px] font-semibold" style="color:
               {% if c.pct >= 80 %}var(--edify-success)
               {% elif c.pct >= 60 %}var(--edify-warning)
               {% else %}var(--edify-danger){% endif %};">{{ c.pct }}%</p>
+            {% else %}
+            <p class="text-[12px] font-semibold edify-text-subtle">Not measurable</p>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -82,7 +86,7 @@
         </div>
       </div>
       {% else %}
-      <p class="text-[12px] mt-2 edify-text-subtle">No personal targets configured for this period.</p>
+      <p class="text-[12px] mt-2 edify-text-subtle">No measurable personal target denominators for this period.</p>
       {% endif %}
     </div>
   </div>

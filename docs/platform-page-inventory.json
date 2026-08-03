@@ -913,7 +913,7 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 13243,
+      "bytes": 13467,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -921,7 +921,7 @@
       "template": "partials/dashboards/pl/body.html"
     },
     {
-      "bytes": 3769,
+      "bytes": 3815,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -929,11 +929,11 @@
       "template": "partials/dashboards/pl/cceo_performance.html"
     },
     {
-      "bytes": 3402,
+      "bytes": 4655,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
-      "tables": 1,
+      "tables": 2,
       "template": "partials/dashboards/pl/drilldown.html"
     },
     {
@@ -1273,7 +1273,7 @@
       "template": "partials/fund_requests/breakdown_by_period.html"
     },
     {
-      "bytes": 7003,
+      "bytes": 6990,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,

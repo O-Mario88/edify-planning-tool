@@ -84,7 +84,7 @@ class ProgramLeadDashboardService:
             "month": month,
             "filters": filters,
             "kpi_strip_items": ProgramLeadDashboardService.kpis(
-                user, pls, fy, filters, acts
+                user, pls, fy, filters, acts, month=month
             ),
             "leadership_attention": ProgramLeadDashboardService.leadership_attention(
                 pls, fy, filters, acts
@@ -269,10 +269,13 @@ class ProgramLeadDashboardService:
 
     # ── 1. KPI strip (8) ─────────────────────────────────────────────────────
     @staticmethod
-    def kpis(user, pls, fy, filters, acts) -> list[dict]:
-        team_pct, on_track = PLAnalyticsService._team_target(pls, fy, None, filters)
-        cceo_n = len(pls.cceos) or 1
-        cceos_on_track_pct = round(on_track / cceo_n * 100)
+    def kpis(user, pls, fy, filters, acts, month=None) -> list[dict]:
+        team_pct, on_track, measurable_cceos, _team_target = (
+            PLAnalyticsService._team_target_status(pls, fy, None, filters)
+        )
+        cceos_on_track_pct = (
+            round(on_track / measurable_cceos * 100) if measurable_cceos else None
+        )
 
         plans_awaiting = ProgramLeadDashboardService._count_awaiting(user, pls, fy)
 
@@ -293,7 +296,10 @@ class ProgramLeadDashboardService:
         sf_compliance = _pct(with_sf, req_total)
 
         backlog = ProgramLeadDashboardService._team_backlog_total(pls, fy, acts)
-        fund_total = ProgramLeadDashboardService._monthly_fund_total(pls, fy)
+        fund_month = ProgramLeadDashboardService._dashboard_month(month)
+        fund_total = ProgramLeadDashboardService._monthly_fund_total(
+            pls, fy, fund_month
+        )
         fund_util = PLAnalyticsService._budget_utilization(pls, fy)
         high_risk = ProgramLeadDashboardService._high_risk_count(pls, fy, acts)
 
@@ -316,17 +322,29 @@ class ProgramLeadDashboardService:
                 # this is a raw execution count. pl_analytics_service documents
                 # that the two must never share a name, then this card did.
                 "Team Execution Progress",
-                f"{team_pct}%",
-                "success",
-                "field execution, not IA-verified",
+                f"{team_pct}%" if team_pct is not None else "Not measured",
+                "success" if team_pct is not None else "info",
+                (
+                    "field execution, not IA-verified"
+                    if team_pct is not None
+                    else "No team target denominator configured"
+                ),
                 "?drill=team_target",
             ),
             card(
                 "users",
                 "CCEOs On Track",
-                f"{cceos_on_track_pct}%",
+                (
+                    f"{cceos_on_track_pct}%"
+                    if cceos_on_track_pct is not None
+                    else "Not measured"
+                ),
                 "info",
-                f"{on_track}/{len(pls.cceos)} at pace",
+                (
+                    f"{on_track}/{measurable_cceos} at pace"
+                    if measurable_cceos
+                    else "No CCEO targets configured"
+                ),
                 "?drill=cceos",
             ),
             card(
@@ -366,8 +384,11 @@ class ProgramLeadDashboardService:
                 "Monthly Fund Request",
                 _ugx_compact(fund_total),
                 "finance",
-                f"{fund_util}% utilized",
-                "?drill=funding",
+                (
+                    f"{date(2000, fund_month, 1).strftime('%B')} team plan"
+                    f" · {fund_util}% FY utilized"
+                ),
+                f"?drill=funding&month={fund_month}",
             ),
             card(
                 "warning",
@@ -432,18 +453,65 @@ class ProgramLeadDashboardService:
         return overdue + returned + missing_ev + missing_sf + partner_pending
 
     @staticmethod
-    def _monthly_fund_total(pls, fy):
-        from apps.fund_requests.models import WeeklyFundRequest
+    def _dashboard_month(month) -> int:
+        try:
+            value = int(month)
+        except (TypeError, ValueError):
+            value = date.today().month
+        return value if 1 <= value <= 12 else date.today().month
 
-        cceo_user_ids = [c["user_id"] for c in pls.cceos if c["user_id"]]
-        if not cceo_user_ids:
-            return 0
+    @staticmethod
+    def _monthly_fund_requests(pls, fy, month):
+        """Canonical persisted monthly requests for the complete PL team.
+
+        The Program Lead's own plan is part of the same Team Budget workspace
+        as supervised CCEO plans.  Weekly requests cannot be used here: a week
+        may straddle months, and summing every week in the FY made a tile named
+        "Monthly" silently annual while also omitting the PL's own request.
+        """
+        from apps.fund_requests.models import (
+            FundRequest,
+            FundRequestPeriod,
+            FundRequestStatus,
+        )
+
+        team_user_ids = {c["user_id"] for c in pls.cceos if c["user_id"]}
+        team_user_ids.add(pls.user.id)
+        return FundRequest.objects.filter(
+            fy=fy,
+            period=FundRequestPeriod.MONTHLY,
+            period_key=f"{fy}-M{int(month)}",
+            scope="own",
+            submitted_by_user_id__in=team_user_ids,
+        ).exclude(status=FundRequestStatus.REJECTED)
+
+    @staticmethod
+    def _monthly_fund_total(pls, fy, month):
         return int(
-            WeeklyFundRequest.objects.filter(
-                fy=fy, responsible_user__in=cceo_user_ids
+            ProgramLeadDashboardService._monthly_fund_requests(
+                pls, fy, month
             ).aggregate(s=Sum("total_amount"))["s"]
             or 0
         )
+
+    @staticmethod
+    def _monthly_fund_request_rows(pls, fy, month):
+        requests = list(
+            ProgramLeadDashboardService._monthly_fund_requests(pls, fy, month).order_by(
+                "submitted_by_user_id"
+            )
+        )
+        names = {c["user_id"]: c["name"] for c in pls.cceos if c["user_id"]}
+        names[pls.user.id] = getattr(pls.user, "name", None) or "Program Lead"
+        return [
+            {
+                "owner": names.get(request.submitted_by_user_id, "—"),
+                "activities": request.activity_count,
+                "amount": f"UGX {int(request.total_amount):,}",
+                "status": request.get_status_display(),
+            }
+            for request in requests
+        ]
 
     @staticmethod
     def _high_risk_count(pls, fy, acts):
@@ -707,7 +775,7 @@ class ProgramLeadDashboardService:
                 "icon": icon,
                 "done": done,
                 "target": target,
-                "pct": _pct(done, target) if target else 0,
+                "pct": _pct(done, target) if target else None,
                 "has_target": target > 0,
             }
 
@@ -721,7 +789,7 @@ class ProgramLeadDashboardService:
         tot_target = sum(c["target"] for c in cards)
         return {
             "cards": cards,
-            "overall_pct": _pct(tot_done, tot_target) if tot_target else 0,
+            "overall_pct": _pct(tot_done, tot_target) if tot_target else None,
             "has_target": tot_target > 0,
         }
 
@@ -760,7 +828,8 @@ class ProgramLeadDashboardService:
                     "region": district_names.get(r["staff_id"], "—"),
                     "planned": planned,
                     "verified": verified,
-                    "verified_pct": _pct(verified, planned),
+                    "verified_pct": _pct(verified, planned) if planned else None,
+                    "has_planned": planned > 0,
                     "sf_pending": sf_pending,
                     "route_quality": route[0],
                     "route_tone": route[1],
@@ -888,8 +957,10 @@ class ProgramLeadDashboardService:
     # ── 7. Backlog snapshot (6) ──────────────────────────────────────────────
     @staticmethod
     def backlog_snapshot(pls, fy, filters, acts) -> list[dict]:
-        team_pct, on_track = PLAnalyticsService._team_target(pls, fy, None, filters)
-        below = len(pls.cceos) - on_track
+        _team_pct, on_track, measurable_cceos, _target = (
+            PLAnalyticsService._team_target_status(pls, fy, None, filters)
+        )
+        below = max(measurable_cceos - on_track, 0)
         sf_overdue = ProgramLeadDashboardService._sf_overdue_count(acts)
         funded_not_completed = ProgramLeadDashboardService._funded_not_completed(
             pls, fy
@@ -1259,7 +1330,7 @@ class ProgramLeadDashboardService:
 
     # ── Drill-downs (all scoped) ─────────────────────────────────────────────
     @staticmethod
-    def drilldown(user, drill: str, fy=None, filters=None) -> dict:
+    def drilldown(user, drill: str, fy=None, month=None, filters=None) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         pls = resolve_pl_scope(user, filters)
@@ -1367,7 +1438,22 @@ class ProgramLeadDashboardService:
                 "subtitle": f"{qs.count()} scheduled",
                 "activities": ProgramLeadDashboardService._activity_rows(qs[:150], pls),
             }
-        if drill in ("funding", "funded_not_completed"):
+        if drill == "funding":
+            fund_month = ProgramLeadDashboardService._dashboard_month(month)
+            rows = ProgramLeadDashboardService._monthly_fund_request_rows(
+                pls, fy, fund_month
+            )
+            total = ProgramLeadDashboardService._monthly_fund_total(pls, fy, fund_month)
+            month_label = date(2000, fund_month, 1).strftime("%B")
+            return {
+                "kind": "fund_requests",
+                "title": "Monthly Team Fund Requests",
+                "subtitle": (
+                    f"{len(rows)} requests · UGX {total:,}" f" · {month_label} FY {fy}"
+                ),
+                "fund_requests": rows,
+            }
+        if drill == "funded_not_completed":
             qs = (
                 acts.filter(
                     advance_requests__status__in=["disbursed", "accountability_pending"]

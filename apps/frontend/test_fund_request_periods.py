@@ -359,6 +359,138 @@ class ProgrammeAdminBudgetClassificationTest(TestCase):
         )
 
 
+class FundRequestPeriodIntegrityTest(TestCase):
+    """Every finance card must obey the period selected in the URL."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        cls.user = User.objects.create(
+            id="period-integrity-cceo",
+            email="period-integrity@edify.org",
+            name="Period Integrity CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+        )
+        StaffProfile.objects.create(
+            id="period-integrity-sp", user=cls.user, title="CCEO"
+        )
+        cls.july = WeeklyFundRequest.objects.create(
+            fy="2026",
+            week_start_date=date(2026, 7, 6),
+            week_end_date=date(2026, 7, 12),
+            responsible_user=cls.user.id,
+            total_amount=100,
+            status="disbursed",
+        )
+        cls.august = WeeklyFundRequest.objects.create(
+            fy="2026",
+            week_start_date=date(2026, 8, 3),
+            week_end_date=date(2026, 8, 9),
+            responsible_user=cls.user.id,
+            total_amount=150,
+            status="pending_responsible_confirmation",
+        )
+        WeeklyFundRequest.objects.create(
+            fy="2026",
+            week_start_date=date(2026, 9, 7),
+            week_end_date=date(2026, 9, 13),
+            responsible_user=cls.user.id,
+            total_amount=200,
+            status="disbursed",
+        )
+        WeeklyFundRequest.objects.create(
+            fy="2027",
+            week_start_date=date(2026, 10, 5),
+            week_end_date=date(2026, 10, 11),
+            responsible_user=cls.user.id,
+            total_amount=100,
+            status="disbursed",
+        )
+
+    def _context(self, *, fy="2026", month="July", week="2026-07-06"):
+        from django.test import RequestFactory
+
+        from apps.frontend.views.budget_views import _build_fund_requests_context
+
+        request = RequestFactory().get(
+            "/fund-requests/weekly",
+            {"fy": fy, "month": month, "week": week},
+        )
+        request.user = self.user
+        return _build_fund_requests_context(request)
+
+    @staticmethod
+    def _kpi(context, label):
+        return next(
+            item for item in context["kpi_strip_items"] if item["label"] == label
+        )
+
+    def test_zero_previous_month_has_no_fabricated_percentage(self):
+        total = self._kpi(self._context(), "Total Requested This Month")
+        self.assertEqual(total["value"], "UGX 100")
+        self.assertIsNone(total["trend"])
+        self.assertEqual(total["helper"], "No prior-month baseline")
+
+    def test_actual_previous_month_delta_is_deterministic(self):
+        total = self._kpi(
+            self._context(month="August", week="2026-08-03"),
+            "Total Requested This Month",
+        )
+        self.assertEqual(total["trend"], {"direction": "up", "value": "50%"})
+        self.assertEqual(total["helper"], "vs Last Month")
+
+    def test_previous_month_comparison_crosses_the_fy_boundary(self):
+        total = self._kpi(
+            self._context(fy="2027", month="October", week="2026-10-05"),
+            "Total Requested This Month",
+        )
+        self.assertEqual(total["trend"], {"direction": "down", "value": "50%"})
+
+    def test_status_kpis_and_attention_do_not_leak_from_another_period(self):
+        july = self._context()
+        self.assertEqual(self._kpi(july, "Approved")["value"], "UGX 100")
+        self.assertEqual(self._kpi(july, "Awaiting Approval")["value"], "UGX 0")
+        self.assertEqual(july["insights"]["attention_count"], 0)
+
+        august = self._context(month="August", week="2026-08-03")
+        self.assertEqual(self._kpi(august, "Approved")["value"], "UGX 0")
+        self.assertEqual(august["insights"]["attention_count"], 1)
+
+    def test_past_due_date_is_overdue_not_upcoming(self):
+        from unittest.mock import patch
+
+        with patch(
+            "apps.frontend.views.budget_views.timezone.localdate",
+            return_value=date(2026, 8, 3),
+        ):
+            insights = self._context()["insights"]
+        self.assertEqual(insights["due_status"], "overdue")
+        self.assertEqual(insights["due_heading"], "Monthly Submission Overdue")
+        self.assertEqual(insights["due_timing_label"], "9 days overdue")
+
+    def test_due_today_and_future_states_are_explicit(self):
+        from unittest.mock import patch
+
+        with patch(
+            "apps.frontend.views.budget_views.timezone.localdate",
+            return_value=date(2026, 7, 25),
+        ):
+            due_today = self._context()["insights"]
+        self.assertEqual(due_today["due_status"], "due_today")
+        self.assertEqual(due_today["due_timing_label"], "Due today")
+
+        with patch(
+            "apps.frontend.views.budget_views.timezone.localdate",
+            return_value=date(2026, 7, 20),
+        ):
+            upcoming = self._context()["insights"]
+        self.assertEqual(upcoming["due_status"], "upcoming")
+        self.assertEqual(upcoming["due_timing_label"], "5 days remaining")
+
+
 class TwoColumnLayoutTest(TestCase):
     """The 70/30 canvas split must hold structurally, not just textually.
 

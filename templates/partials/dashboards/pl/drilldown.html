@@ -51,6 +51,24 @@
     </div>
   </div>
 
+  {% elif kind == 'fund_requests' %}
+  <div class="rounded-surface border border-slate-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+          <th class="py-2 px-3">Owner</th><th class="py-2 px-3">Activities</th><th class="py-2 px-3">Amount</th><th class="py-2 px-3">Status</th></tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for request in fund_requests %}
+          <tr><td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ request.owner }}</td>
+            <td class="py-2 px-3 edify-text-caption text-slate-500 tabular-nums">{{ request.activities }}</td>
+            <td class="py-2 px-3 edify-text-caption font-semibold text-slate-700 tabular-nums">{{ request.amount }}</td>
+            <td class="py-2 px-3 edify-text-caption text-slate-500">{{ request.status }}</td></tr>
+          {% empty %}<tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">No monthly fund requests for this period.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   {% elif kind == 'approvals' %}
   {% include "partials/dashboards/pl/approval_queue.html" %}
 

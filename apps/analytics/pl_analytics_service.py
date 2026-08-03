@@ -825,11 +825,27 @@ class PLAnalyticsService:
     ) -> tuple[int, int]:
         """Team target achievement % + count of CCEOs at/above the pace
         threshold (design: 'CCEOs On Track')."""
+        pct, on_track, _measurable, _total_target = (
+            PLAnalyticsService._team_target_status(pls, fy, quarter, filters)
+        )
+        return pct or 0, on_track
+
+    @staticmethod
+    def _team_target_status(
+        pls: PLScope, fy: str, quarter=None, filters=None
+    ) -> tuple[int | None, int, int, int]:
+        """Target progress plus its denominator state.
+
+        A CCEO with no configured target is not behind target.  Returning the
+        measurable CCEO count and total target lets dashboards represent the
+        absence of a denominator instead of fabricating a measured 0%.
+        """
         completed_qs = _team_activity_qs(pls, fy, quarter, filters or {}).filter(
             status__in=COMPLETED_STATUSES
         )
         total_target = total_achieved = 0
         on_track = 0
+        measurable = 0
         expected = PLAnalyticsService._expected_pace(fy)
         bulk = PLAnalyticsService._cceo_targets_bulk(
             pls.cceos, completed_qs, fy, quarter
@@ -838,10 +854,12 @@ class PLAnalyticsService:
             pct, ach, tgt = bulk[c["staff_id"]]
             total_target += tgt
             total_achieved += ach
-            if tgt and pct >= expected:
-                on_track += 1
-        team_pct = round(total_achieved / total_target * 100) if total_target else 0
-        return team_pct, on_track
+            if tgt:
+                measurable += 1
+                if pct >= expected:
+                    on_track += 1
+        team_pct = round(total_achieved / total_target * 100) if total_target else None
+        return team_pct, on_track, measurable, total_target
 
     @staticmethod
     def _expected_pace(fy: str) -> int:

@@ -28,7 +28,7 @@
         <td class="px-2.5 py-[7px] text-[12px] edify-text-muted">{{ c.region }}</td>
         <td class="px-2.5 py-[7px] text-center tabular-nums font-semibold edify-text">{{ c.schools_managed }}</td>
         <td class="px-2.5 py-[7px] text-center tabular-nums edify-text">{{ c.planned }}</td>
-        <td class="px-2.5 py-[7px] text-center tabular-nums font-semibold edify-success-text">{{ c.verified }} ({{ c.verified_pct }}%)</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums font-semibold edify-success-text">{% if c.has_planned %}{{ c.verified }} ({{ c.verified_pct }}%){% else %}—{% endif %}</td>
         <td class="px-2.5 py-[7px] text-center tabular-nums" style="color:{% if c.sf_pending %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.sf_pending }}</td>
         <td class="px-2.5 py-[7px] text-center tabular-nums font-bold" style="color:{% if c.backlog >= 4 %}var(--edify-danger){% elif c.backlog >= 2 %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.backlog }}</td>
         <td class="px-2.5 py-[7px] text-center">
