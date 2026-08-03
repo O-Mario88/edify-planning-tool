@@ -993,7 +993,7 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 5687,
+      "bytes": 5788,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1777,7 +1777,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 9974,
+      "bytes": 11939,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -22041,6 +22041,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23609,6 +23610,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23671,6 +23673,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23734,6 +23737,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23795,6 +23799,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23854,6 +23859,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23915,6 +23921,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23981,6 +23988,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -24042,6 +24050,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -24107,6 +24116,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25362,6 +25372,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25429,6 +25440,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25816,6 +25828,56 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.auth_views",
+      "backend_view": "apps.frontend.views.auth_views.reset_password_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Reset password",
+      "permission_key": "",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Render and process the browser password-reset link.",
+      "responsive_state": "manual-review-required",
+      "role_access": [],
+      "route": "/reset-password",
+      "route_name": "reset_password",
+      "secondary_actions": [
+        "{% url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.schools.models",
+        "apps.targets.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/auth/reset_password.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -42423,6 +42485,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.auth_views.reset_password_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/reset-password",
+      "route_name": "reset_password",
+      "templates": [
+        "pages/auth/reset_password.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.rvp_views.rvp_annual_action_view",
       "kind": "page",
       "methods": [
@@ -43468,15 +43545,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 870,
+    "all_routes": 871,
     "api_routes": 293,
     "component_templates": 286,
-    "full_pages": 314,
+    "full_pages": 315,
     "partials_and_drawers": 142,
     "permission_gated": 460,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 469,
+    "routed_surfaces": 470,
     "scheduled_jobs": 16,
     "severity_counts": {
       "critical": 0,
@@ -43484,6 +43561,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 435
+    "test_referenced": 436
   }
 }

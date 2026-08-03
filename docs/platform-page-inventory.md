@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **469**
-- All registered routes: **870**
+- Routed product surfaces: **470**
+- All registered routes: **871**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
 - Scheduled jobs: **16**
 - Activity states: **23**
 - Shared component templates: **286**
-- Full pages: **314**
+- Full pages: **315**
 - Partials and drawers: **142**
 - Permission-gated surfaces: **460**
-- Referenced by automated tests: **435**
+- Referenced by automated tests: **436**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -428,6 +428,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /recovery-plans | Recovery Plans | ADMIN, HR, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /recruitment | Recruitment | ADMIN, CD, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /reports | Reports & Performance | ADMIN, CD, IA, PL, PROJECT_COORDINATOR, RVP | pages/reports/index.html | 9.4 | 0 | referenced by automated test |
+| /reset-password | Reset password | Unmapped | pages/auth/reset_password.html | 9.6 | 0 | referenced by automated test |
 | /rvp/annual/<str:budget_id>/action | Rvp Annual Action | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /rvp/approvals | Rvp Approvals | ADMIN | partials/dashboards/rvp/approvals_drawer.html | 9.6 | 0 | referenced by automated test |
 | /rvp/project/<str:project_id>/decision | Rvp Project Decision | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |

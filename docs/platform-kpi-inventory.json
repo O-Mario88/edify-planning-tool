@@ -387,7 +387,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 63,
+   "line": 65,
    "label": "Programme activities without a strategic rationale",
    "keys": [
     "count",
@@ -401,7 +401,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 69,
+   "line": 71,
    "label": "Programme activities without a planned date",
    "keys": [
     "count",
@@ -415,7 +415,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 75,
+   "line": 77,
    "label": "Activities whose end date precedes their start date",
    "keys": [
     "count",
@@ -429,7 +429,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 81,
+   "line": 83,
    "label": "Staff programme activities without a responsible person",
    "keys": [
     "count",
@@ -443,8 +443,8 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 87,
-   "label": "Scheduled activities without a planning source stamp",
+   "line": 89,
+   "label": "Live activities without a planning source stamp",
    "keys": [
     "count",
     "key",
@@ -457,7 +457,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activities/work_plan_health.py",
-   "line": 93,
+   "line": 95,
    "label": "Cross-month programme cost not allocated per month",
    "keys": [
     "count",
@@ -1407,7 +1407,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 281,
+   "line": 301,
    "label": null,
    "keys": [
     "helper",
@@ -1424,7 +1424,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 685,
+   "line": 705,
    "label": null,
    "keys": [
     "done",
@@ -1440,7 +1440,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 897,
+   "line": 917,
    "label": null,
    "keys": [
     "icon",
@@ -1455,7 +1455,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 1211,
+   "line": 1231,
    "label": null,
    "keys": [
     "amount",
@@ -1813,7 +1813,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1476,
+   "line": 1501,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -1829,7 +1829,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1484,
+   "line": 1509,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -1845,7 +1845,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1492,
+   "line": 1517,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -1861,7 +1861,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1500,
+   "line": 1525,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -1877,7 +1877,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1508,
+   "line": 1533,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -1893,7 +1893,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1516,
+   "line": 1541,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -1909,7 +1909,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1524,
+   "line": 1549,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -1925,7 +1925,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1532,
+   "line": 1557,
    "label": "Pending Activities",
    "keys": [
     "helper",

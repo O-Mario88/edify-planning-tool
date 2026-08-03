@@ -696,7 +696,7 @@ class FieldDebriefService:
         # callers supplied a User id. Resolve either shape before handing the
         # owner to the canonical Planning service, whose Activity attribution
         # is consistently stored in StaffProfile id space.
-        from apps.accounts.models import StaffProfile
+        from apps.accounts.models import StaffProfile, User
 
         def _to_user_id(candidate_id):
             if not candidate_id:
@@ -708,19 +708,33 @@ class FieldDebriefService:
             )
             return resolved or candidate_id
 
-        owner_id = _to_user_id(debrief.follow_up_owner_id) or _to_user_id(
-            debrief.staff_id
+        raw_owner_id = (
+            debrief.follow_up_owner_id
+            or debrief.staff_id
+            or getattr(principal, "staff_profile_id", None)
+            or getattr(principal, "user_id", None)
+            or getattr(principal, "id", None)
         )
+        owner_id = _to_user_id(raw_owner_id)
         # The canonical service stores responsible staff in StaffProfile id
         # space. Resolve a User id back to its profile when callers supplied
         # one; otherwise preserve the already-canonical profile id.
         from apps.core.fy import get_quarter_for_date
 
         owner_profile = (
-            StaffProfile.objects.filter(id=debrief.follow_up_owner_id).first()
-            or StaffProfile.objects.filter(user_id=owner_id).first()
+            StaffProfile.objects.select_related("user").filter(id=raw_owner_id).first()
+            or StaffProfile.objects.select_related("user")
+            .filter(user_id=owner_id)
+            .first()
         )
-        if owner_profile is None:
+        responsible_staff_id = None
+        if owner_profile is not None and owner_profile.user.is_active:
+            responsible_staff_id = owner_profile.id
+        elif owner_id and User.objects.filter(id=owner_id, is_active=True).exists():
+            # The canonical Planning service deliberately accepts an active
+            # User id when older/admin accounts do not have a StaffProfile.
+            responsible_staff_id = owner_id
+        if responsible_staff_id is None:
             raise BadRequest(
                 "Select an active staff member to own the recommended follow-up."
             )
@@ -730,7 +744,7 @@ class FieldDebriefService:
             "fy": debrief.fy,
             "quarter": get_quarter_for_date(debrief.follow_up_date),
             "plannedDate": debrief.follow_up_date,
-            "responsibleStaffId": owner_profile.id,
+            "responsibleStaffId": responsible_staff_id,
             "focusIntervention": debrief.recommended_intervention or None,
             "activityPurposeText": (f"Recommended from Field Debrief: {debrief.title}"),
             "recommendationReason": (
