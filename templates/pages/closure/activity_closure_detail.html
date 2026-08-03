@@ -5,12 +5,15 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ reopenOpen: false, submittingClose: false, submittingReopen: false }">
 
-<!-- Back navigation -->
-<div class="flex items-center justify-between">
+<header class="edify-page-header">
+<div class="edify-page-header__lead">
 {% include "partials/_back_link.html" with back_href="/activities/closure/" back_label="Readiness Workspace" %}
+<h1 class="edify-page-title edify-page-header__title">Closure Workspace</h1>
+<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {{ act.school.name }}{% endif %}. Close it once every readiness check is met.</p>
+</div>
 
 <!-- Status Badge -->
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 {% if act.status == "closed" %}
 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-pill edify-text-caption font-semibold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Closed
@@ -21,7 +24,7 @@ Closed
 </span>
 {% endif %}
 </div>
-</div>
+</header>
 
 <!-- Workspace Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">

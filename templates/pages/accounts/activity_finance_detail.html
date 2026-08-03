@@ -6,12 +6,15 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ currentModal: null }">
 
-<!-- Back navigation -->
-<div class="flex items-center justify-between">
+<header class="edify-page-header">
+<div class="edify-page-header__lead">
 {% include "partials/_back_link.html" with back_href="/accounts/" back_label="Finance Command Center" %}
+<h1 class="edify-page-title edify-page-header__title">Activity Finance Detail</h1>
+<p class="edify-page-header__description">Activity #{{ act.id }} — {{ act.get_activity_type_display }}{% if act.school %} at {{ act.school.name }}{% endif %}. Costs, disbursement and accountability for this one activity.</p>
+</div>
 
 <!-- Status Badge -->
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 <a
 href="/messages?context_type=accountant_disbursement&context_id={{ act.id }}"
 class="inline-flex items-center gap-1.5 h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 hover:text-slate-800 transition-colors shadow-sm"
@@ -29,7 +32,7 @@ Blocked
 {{ act.get_status_display }}
 </span>
 </div>
-</div>
+</header>
 
 <!-- Main Grid Layout -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

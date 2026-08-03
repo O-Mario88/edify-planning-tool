@@ -74,6 +74,7 @@ HEADERLESS_H1_TEMPLATES = {
     "templates/layouts/auth.html": "auth brand panel, not a page header",
     "templates/pages/auth/login.html": "auth card heading",
     "templates/pages/auth/mfa_verify.html": "auth card heading",
+    "templates/pages/auth/reset_password.html": "auth card heading",
     # A shareable document rendered for people outside the app; it carries the
     # document's own masthead, not the platform's page chrome.
     "templates/pages/documents/canonical_document.html": "public document masthead",
@@ -177,6 +178,60 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
             "these page titles are not inside a shared page header — give the "
             "wrapper `edify-page-header` (see templates/components/"
             "page_header.html) or add a reason to HEADERLESS_H1_TEMPLATES",
+        )
+
+    def test_every_shell_page_has_a_header_at_all(self):
+        """The title test above only sees pages that have an `<h1>`.
+
+        A page with no heading whatsoever passes it silently — which is how
+        three drill-down pages (activity finance, closure workspace, completed
+        record) went on opening with a back link and a status pill and no page
+        title at all. This walks the extends/include chain, so a page that gets
+        its header from a layout or a shared partial still counts.
+        """
+        templates = {
+            path: path.read_text(encoding="utf-8")
+            for path in ROOT.glob("templates/**/*.html")
+        }
+        families = tuple(selector.lstrip(".") for selector in NAMED_HERO_FAMILIES)
+
+        def has_header(path, seen=None):
+            seen = seen or set()
+            if path in seen or path not in templates:
+                return False
+            seen.add(path)
+            source = templates[path]
+            if any(family in source for family in families):
+                return True
+            for match in re.finditer(
+                r'{%\s*(?:extends|include)\s+"([^"]+)"', source
+            ):
+                if has_header(ROOT / "templates" / match.group(1), seen):
+                    return True
+            return False
+
+        headerless = []
+        for path, source in sorted(templates.items()):
+            relative = path.relative_to(ROOT).as_posix()
+            if not relative.startswith("templates/pages/"):
+                continue
+            if relative in HEADERLESS_H1_TEMPLATES:
+                continue
+            extends = re.search(r'{%\s*extends\s+"([^"]+)"', source)
+            if extends is None:
+                continue
+            # The sign-in layouts are their own surface, not the app shell.
+            if extends.group(1).startswith(("layouts/auth", "layouts/login")):
+                continue
+            if not has_header(path):
+                headerless.append(relative)
+
+        self.assertEqual(
+            headerless,
+            [],
+            "these pages render with no page header at all — add one (see "
+            "templates/components/page_header.html) or add a reason to "
+            "HEADERLESS_H1_TEMPLATES",
         )
 
     def test_the_header_content_aligns_with_the_rest_of_the_page(self):
