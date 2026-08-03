@@ -9,10 +9,10 @@
 
 <header class="edify-page-header">
 <div class="flex flex-wrap items-start justify-between gap-3">
-<div class="lg:max-w-[560px]">
+<div class="lg:max-w-[560px] edify-page-header__lead">
 <p class="edify-page-eyebrow">SSA assurance</p>
-<h1 class="edify-page-title">Unmatched SSA</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs — {{ records_page.paginator.count }} matching this filter.</p>
+<h1 class="edify-page-title edify-page-header__title">Unmatched SSA</h1>
+<p class="edify-page-header__description">Manually link SSA records that were uploaded with unknown School IDs — {{ records_page.paginator.count }} matching this filter.</p>
 </div>
 {% include "partials/_back_link.html" with back_href="/admin-panel/data-quality-center" back_label="Quality Center" %}
 </div>

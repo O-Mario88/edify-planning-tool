@@ -6,11 +6,11 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Header -->
-<div class="flex items-center justify-between">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Planning</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Group Trainings</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ total }} sessions · {{ completed }} completed</p>
+<h1 class="edify-page-title edify-page-header__title">Group Trainings</h1>
+<p class="edify-page-header__description">{{ total }} sessions · {{ completed }} completed</p>
 </div>
 <a href="/planning/schedule?action=training" class="h-10 px-4 rounded-control bg-violet-600 hover:bg-violet-700 text-white text-[12px] font-semibold flex items-center gap-2 transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>

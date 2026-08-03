@@ -8,19 +8,19 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Breadcrumb & Header -->
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <div class="flex items-center gap-1.5 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
 <span>&bull;</span>
 <span class="text-slate-500">Champion Pipeline</span>
 </div>
 <p class="edify-page-eyebrow">Schools & Field</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Champion Candidate Queue</h1>
-<p class="text-[14px] text-slate-500 font-medium mt-1">Review core schools that have completed their support packages and met the performance benchmarks for graduation.</p>
+<h1 class="edify-page-title edify-page-header__title">Champion Candidate Queue</h1>
+<p class="edify-page-header__description">Review core schools that have completed their support packages and met the performance benchmarks for graduation.</p>
 </div>
 
-<div>
+<div class="edify-page-header__controls">
 <a
 href="{% url 'frontend:champions_list' %}"
 class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border border-transparent rounded-surface px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"

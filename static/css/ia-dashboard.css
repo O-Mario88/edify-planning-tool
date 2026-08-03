@@ -1605,8 +1605,11 @@
 
 @media (max-width: 48rem) {
   .ia-hero {
+    /* Column direction — the shared lead basis is a main-axis size here. */
     align-items: flex-start;
     flex-direction: column;
+    --page-header-lead-basis: auto;
+    --page-header-align: flex-start;
   }
 
   .ia-hero__actions {

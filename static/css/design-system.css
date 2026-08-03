@@ -208,7 +208,10 @@
   --page-header-border: color-mix(in oklab, var(--brand-primary) 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(20, 55, 75, 0.05);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #f2f5f6;
@@ -521,7 +524,10 @@
   --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-canvas-treatment:
@@ -678,7 +684,10 @@ html.theme-blue body {
   --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #000000;

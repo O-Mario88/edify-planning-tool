@@ -11,12 +11,17 @@
 {% include "partials/_back_link.html" with back_href="/disbursements" back_label="Disbursements" %}
 </div>
 
-<div class="edify-surface rounded-surface  p-6 space-y-4 shadow-sm">
-<div class="flex items-center justify-between">
-<h1 class="text-[21px] font-extrabold tracking-tight uppercase edify-page-title">Accountant Evidence Packet View</h1>
+<header class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Finance</p>
+<h1 class="edify-page-title edify-page-header__title">Accountant Evidence Packet View</h1>
+</div>
+<div class="edify-page-header__controls">
 <span class="px-2.5 py-1 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border">{{ act.status|replace_underscore }}</span>
 </div>
+</header>
 
+<div class="edify-surface rounded-surface  p-6 space-y-4 shadow-sm">
 <!-- Meta fields grid -->
 <div class="grid grid-cols-2 gap-4 text-[12px] font-bold bg-slate-50 p-4 rounded-surface">
 <div>

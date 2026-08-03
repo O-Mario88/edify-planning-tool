@@ -15,11 +15,13 @@
   </div>
 </nav>
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-5">
-  <div class="min-w-0">
-    <p class="edify-page-eyebrow">Policy</p>
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Your access is limited while HR reviews this</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">You recorded a disagreement with a required policy. HR and your Country Director have been notified. Nothing has been suspended — you can change your answer at any time.</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">Policy</p>
+      <h1 class="edify-page-title edify-page-header__title">Your access is limited while HR reviews this</h1>
+      <p class="edify-page-header__description">You recorded a disagreement with a required policy. HR and your Country Director have been notified. Nothing has been suspended — you can change your answer at any time.</p>
+    </div>
+  </header>
 
   {% for ack in declined %}
   <section class="card p-4 space-y-3">

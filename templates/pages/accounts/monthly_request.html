@@ -4,12 +4,16 @@
 {% block shell_content %}
 <div class="px-4 py-5 sm:px-6 max-w-[1440px] mx-auto">
   {% if not_program_lead %}
-  <div class="card max-w-2xl p-7">
-    <p class="edify-page-eyebrow">Finance</p>
-    <h1 class="text-[22px] font-semibold text-slate-800 edify-page-title">Monthly Requests</h1>
-    <p class="mt-2 text-[13px] leading-relaxed text-slate-500">Program Leads prepare and submit their team budget here. Country Directors, RVPs, and accountants use the General Budget page to review its progress and approved funds.</p>
-    <a href="/country-budget/" class="mt-5 inline-flex h-9 items-center rounded-control edify-primary-solid px-4 text-[12px] font-bold text-white edify-primary-hover">Open General Budget</a>
-  </div>
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Finance</p>
+      <h1 class="edify-page-title edify-page-header__title">Monthly Requests</h1>
+      <p class="edify-page-header__description">Program Leads prepare and submit their team budget here. Country Directors, RVPs, and accountants use the General Budget page to review its progress and approved funds.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/country-budget/" class="inline-flex h-9 items-center rounded-control edify-primary-solid px-4 text-[12px] font-bold text-white edify-primary-hover">Open General Budget</a>
+    </div>
+  </header>
   {% else %}
   <div id="monthly-request-root">
     {% include "partials/finance/monthly_request/root.html" %}

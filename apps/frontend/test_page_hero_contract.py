@@ -1,5 +1,6 @@
 """Platform-wide page hero surface contract."""
 
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -7,6 +8,7 @@ from django.test import SimpleTestCase
 
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = ROOT / "static" / "css" / "consistency.css"
+COMPONENTS = ROOT / "static" / "css" / "components.css"
 
 LEGACY_HERO_TEMPLATES = (
     "templates/partials/finance/monthly_request/root.html",
@@ -63,6 +65,183 @@ NAMED_HERO_FAMILIES = (
     ".spp-header",
     ".spa-header",
 )
+
+# A page title that is deliberately not a page header. Each of these is a real
+# exception, not a page waiting to be migrated:
+HEADERLESS_H1_TEMPLATES = {
+    # The sign-in split panel: the h1 names the product on a marketing panel,
+    # not a page inside the app shell.
+    "templates/layouts/auth.html": "auth brand panel, not a page header",
+    "templates/pages/auth/login.html": "auth card heading",
+    "templates/pages/auth/mfa_verify.html": "auth card heading",
+    # A shareable document rendered for people outside the app; it carries the
+    # document's own masthead, not the platform's page chrome.
+    "templates/pages/documents/canonical_document.html": "public document masthead",
+    # A visually hidden heading that exists only to give the review workspace a
+    # level-1 outline entry; the visible chrome is a 48px toolbar.
+    "templates/pages/ia/review_workspace.html": "sr-only outline heading",
+    # The component and the back-link's usage example.
+    "templates/components/page_header.html": "the canonical component itself",
+    "templates/partials/_back_link.html": "usage example inside a comment",
+    # Standalone documents: a redirect interstitial and two print/export views.
+    # None of them load the app stylesheet bundle, so a page-header class would
+    # style nothing; they carry their own inline print rules instead.
+    "templates/pages/auth/launch.html": "redirect interstitial, own document",
+    "templates/pages/help/manual_export.html": "print export, own document",
+    "templates/pages/help/print_article.html": "print export, own document",
+}
+
+TAG = re.compile(
+    r"<(/?)([a-zA-Z][\w:-]*)((?:[^<>\"']|\"[^\"]*\"|'[^']*')*?)(/?)>", re.S
+)
+VOID = {
+    "area",
+    "base",
+    "br",
+    "circle",
+    "col",
+    "ellipse",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "line",
+    "link",
+    "meta",
+    "param",
+    "path",
+    "polygon",
+    "polyline",
+    "rect",
+    "source",
+    "stop",
+    "track",
+    "use",
+    "wbr",
+}
+
+
+def _ancestor_classes(source: str, position: int) -> str:
+    """Every class on the open elements enclosing `position`."""
+    stack: list[tuple[str, str]] = []
+    for match in TAG.finditer(source):
+        if match.start() >= position:
+            break
+        closing, name, attrs, self_closing = (
+            bool(match.group(1)),
+            match.group(2).lower(),
+            match.group(3),
+            bool(match.group(4)),
+        )
+        if name in VOID or self_closing:
+            continue
+        if closing:
+            for index in range(len(stack) - 1, -1, -1):
+                if stack[index][0] == name:
+                    del stack[index:]
+                    break
+        else:
+            classes = re.search(r'class\s*=\s*"([^"]*)"', attrs)
+            stack.append((name, classes.group(1) if classes else ""))
+    return " ".join(classes for _, classes in stack)
+
+
+class PageHeaderAnatomyContractTest(SimpleTestCase):
+    """Every page title sits in a shared header, and every header is one row.
+
+    The surface tests below prove the band looks the same everywhere. These
+    prove it is actually *reached* — a page whose title sits in a bare
+    `<div class="flex justify-between">` gets no band at all, which is how a
+    hundred pages drifted away from the Program Lead Dashboard while the CSS
+    that was supposed to unify them looked correct.
+    """
+
+    def test_every_page_title_sits_inside_a_shared_header(self):
+        families = tuple(selector.lstrip(".") for selector in NAMED_HERO_FAMILIES)
+        offenders = []
+
+        for path in sorted(ROOT.glob("templates/**/*.html")):
+            relative = path.relative_to(ROOT).as_posix()
+            if relative in HEADERLESS_H1_TEMPLATES:
+                continue
+            source = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"<h1[\s>]", source):
+                ancestors = " " + _ancestor_classes(source, match.start()) + " "
+                if not any(f" {family} " in ancestors for family in families):
+                    line = source[: match.start()].count("\n") + 1
+                    offenders.append(f"{relative}:{line}")
+
+        self.assertEqual(
+            offenders,
+            [],
+            "these page titles are not inside a shared page header — give the "
+            "wrapper `edify-page-header` (see templates/components/"
+            "page_header.html) or add a reason to HEADERLESS_H1_TEMPLATES",
+        )
+
+    def test_the_header_content_aligns_with_the_rest_of_the_page(self):
+        """The band bleeds outward by its own padding.
+
+        Without it the header is the one block on a page whose text is inset by
+        the band's padding, and it reads as an accidental indent next to the
+        breadcrumb above it and the cards below it.
+        """
+        for stylesheet in (COMPONENTS, BRIDGE):
+            css = stylesheet.read_text(encoding="utf-8")
+            with self.subTest(stylesheet=stylesheet.name):
+                self.assertIn(
+                    "margin-inline: calc(-1 * (var(--page-header-padding-x",
+                    css,
+                )
+
+    def test_the_lead_has_a_flex_basis_so_controls_stay_on_the_title_row(self):
+        """flex-wrap breaks lines on the base size, not the shrunk size.
+
+        A lead left at its max-content width therefore pushes the page's
+        filters and buttons onto a second row however much it could have
+        shrunk — a different header height on every page.
+        """
+        for stylesheet in (COMPONENTS, BRIDGE):
+            css = stylesheet.read_text(encoding="utf-8")
+            with self.subTest(stylesheet=stylesheet.name):
+                self.assertIn("flex: 1 1 var(--page-header-lead-basis, 20rem)", css)
+
+    def test_column_direction_headers_release_the_main_axis_basis(self):
+        """In a column the shared basis is a height, not a width.
+
+        Every family that flips to column at its own breakpoint has to hand the
+        basis back, or its title block becomes a 320px-tall empty band.
+        """
+        rule_pattern = re.compile(
+            r"([^{};]*)\{([^{}]*flex-direction:\s*column[^{}]*)\}", re.S
+        )
+        column_rules = []
+        for path in sorted(ROOT.glob("static/css/**/*.css")):
+            if path.name == "main.css":  # generated bundle
+                continue
+            for rule in rule_pattern.finditer(path.read_text(encoding="utf-8")):
+                selector, body = rule.group(1), rule.group(2)
+                # Whole class tokens: `.ia-hero__actions` is a child of a
+                # header, not a header, and it may legitimately be a column.
+                names = set(re.findall(r"\.([\w-]+)", selector))
+                if names & {family.lstrip(".") for family in NAMED_HERO_FAMILIES}:
+                    column_rules.append((f"{path.name}: {selector.strip()}", body))
+
+        self.assertTrue(column_rules, "expected page-header column rules to exist")
+        for where, body in column_rules:
+            normalised = body.replace(": ", ":")
+            with self.subTest(rule=where):
+                self.assertIn("--page-header-lead-basis:auto", normalised)
+                self.assertIn("--page-header-align:flex-start", normalised)
+
+    def test_the_eyebrow_keeps_its_own_type_inside_a_header(self):
+        """`.edify-page-header p` outranks `.edify-page-eyebrow`.
+
+        One class plus a type beats one class, so without the exclusion every
+        eyebrow in the platform rendered as body copy.
+        """
+        css = COMPONENTS.read_text(encoding="utf-8")
+        self.assertIn(".edify-page-header p:not(.edify-page-eyebrow)", css)
 
 
 class PageHeroSurfaceContractTest(SimpleTestCase):

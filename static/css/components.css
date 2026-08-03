@@ -620,21 +620,42 @@ main .pagination button:hover, main .pagination a:hover {
   justify-content: space-between;
   gap: var(--page-header-gap, 0.75rem);
   margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
-  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem);
+  /* The band bleeds outward by exactly its own inner padding plus its border,
+     so the title starts on the same vertical as the breadcrumb above it and
+     the cards below it. Without this the header is the one block on the page
+     whose text is inset, and it reads as an accidental indent rather than as
+     a band. Kept under the smallest page gutter (px-4 = 16px) so the bleed
+     eats into the gutter without ever reaching the viewport edge. */
+  margin-inline: calc(-1 * (var(--page-header-padding-x, 0.75rem) + 1px));
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 0.75rem);
   border-radius: var(--page-header-radius, 12px);
   background: var(--page-header-surface);
   border: 1px solid var(--page-header-border);
   box-shadow: var(--page-header-shadow);
 }
 
+/* Grows into the space the controls leave and shrinks before wrapping, so the
+   title and the page's filters/actions stay on one line. Without a grow/shrink
+   basis the lead sits at its max-content width, which on any page with a
+   sentence of description pushed the controls onto a second row — a different
+   header height, and a different control position, on every page. The basis is
+   the narrowest a title column may get before wrapping is the better answer. */
 .edify-page-header__lead {
+  flex: 1 1 var(--page-header-lead-basis, 20rem);
   min-inline-size: 0;
 }
 
+/* flex-start, not flex-end: on a wide viewport the controls box is content
+   sized and space-between already parks it on the right, so the only case this
+   decides is the narrow one, where the controls have wrapped onto their own
+   full-width row. There they should start on the page's left edge like every
+   other block, not hang off the right in a ragged column. */
 .edify-page-header__controls {
   display: flex;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
 }
 
@@ -668,8 +689,13 @@ main .pagination button:hover, main .pagination a:hover {
   letter-spacing: -0.01em;
   font-family: var(--edify-font-display-family);
 }
+/* :not(.edify-page-eyebrow) is load-bearing. A bare `.edify-page-header p`
+   outranks `.edify-page-eyebrow` — one class plus a type beats one class — so
+   every eyebrow inside a header rendered as body copy: 15px, weight 400, muted,
+   instead of the 11px uppercase brand label it is. The Program Lead Dashboard
+   has no eyebrow, which is why the reference page never showed the fault. */
 .edify-page-header__description,
-.edify-page-header p {
+.edify-page-header p:not(.edify-page-eyebrow) {
   font-size: var(--edify-text-body-size);
   color: var(--edify-text-muted);
   font-weight: 400;

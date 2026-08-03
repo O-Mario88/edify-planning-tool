@@ -930,7 +930,9 @@
 
 @media (max-width: 720px) {
   .sp-page { padding-top: 16px; }
-  .sp-page-header { align-items: flex-start; flex-direction: column; gap: 12px; }
+  /* Column direction — the shared lead basis is a main-axis size, so it goes
+     back to auto here or the title block becomes a 320px-tall empty band. */
+  .sp-page-header { align-items: flex-start; flex-direction: column; gap: 12px; --page-header-lead-basis: auto; --page-header-align: flex-start; }
   .sp-engine-state { white-space: normal; }
   .sp-filter-grid, .sp-kpis { grid-template-columns: 1fr; }
   .sp-filter-actions { justify-content: stretch; }
@@ -2631,8 +2633,11 @@
   }
 
   .pto-header {
+    /* Column direction — the shared lead basis is a main-axis size here. */
     align-items: stretch;
     flex-direction: column;
+    --page-header-lead-basis: auto;
+    --page-header-align: flex-start;
   }
 
   .pto-header__actions {
@@ -3843,7 +3848,8 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 @media (max-width: 899px) {
   .tt-page { padding: 1rem; }
-  .tt-page-header { align-items: flex-start; flex-direction: column; }
+  /* Column direction — see the note on .sp-page-header above. */
+  .tt-page-header { align-items: flex-start; flex-direction: column; --page-header-lead-basis: auto; --page-header-align: flex-start; }
   .tt-page-header__context { white-space: normal; }
   .tt-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tt-matrix-scroll-guide,
@@ -4373,16 +4379,9 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 /* ─── ACTIVITY DETAIL ────────────────────────────────────────────────────────
    Two columns of cards, each with an icon chip and a subtitle, so the page
    reads as four named panels rather than one long stack of labels. */
-.ad-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-block-end: 14px;
-  border-block-end: 1px solid var(--edify-border);
-}
-
+/* .ad-head is gone: the activity detail page now uses .edify-page-header like
+   every other page, so a private copy of "flex row with an underline" has no
+   reason to exist. Its subtitle class stays — that is content, not a header. */
 .ad-head__sub { margin: 2px 0 0; font-size: var(--edify-text-label-size); font-weight: 600; color: var(--edify-text-muted); }
 .ad-head__sub a { color: var(--edify-accent); font-weight: 700; }
 

@@ -4,10 +4,10 @@
 <div class="space-y-5 print:space-y-3" id="conversation-document">
 
   <div class="edify-page-header print:hidden">
-    <div>
+    <div class="edify-page-header__lead">
       {% include "partials/_back_link.html" with back_href="/my-performance/documents" back_label="Documents" %}
-      <h1 class="edify-page-title">Conversation Record</h1>
-      <p class="edify-page-subtitle">Rendered from the locked snapshot. Use Print to save the locked PDF.</p>
+      <h1 class="edify-page-title edify-page-header__title">Conversation Record</h1>
+      <p class="edify-page-subtitle edify-page-header__description">Rendered from the locked snapshot. Use Print to save the locked PDF.</p>
     </div>
     <button type="button" x-data @click="window.print()" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Print / Save as PDF</button>
   </div>

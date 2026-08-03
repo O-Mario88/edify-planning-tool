@@ -12,9 +12,9 @@
   </nav>
 
   <header class="edify-page-header admin-command__header">
-    <div>
-      <h1 class="edify-page-title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
-      <p>{% if admin_ops %}Full platform authority across programme delivery, finance, HR, verification, users and operations.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-title edify-page-header__title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
+      <p class="edify-page-header__description">{% if admin_ops %}Full platform authority across programme delivery, finance, HR, verification, users and operations.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
     </div>
     <div class="admin-command__actions">
       <a href="{% if admin_ops %}/admin-ops/my-plan{% else %}/my-plan{% endif %}" class="admin-button admin-button--primary">
