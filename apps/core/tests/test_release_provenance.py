@@ -82,6 +82,14 @@ class BuildEndpointTest(TestCase):
         with patch.dict(os.environ, {"RELEASE": "production-a" * 3}):
             self.assertEqual(build_info()["release"], "production-a" * 3)
 
+    def test_commit_is_the_release_when_legacy_platform_spec_has_no_release(self):
+        """A source revision remains an exact immutable release identifier."""
+        build_info.cache_clear()
+        self.addCleanup(build_info.cache_clear)
+        commit = "b" * 40
+        with patch.dict(os.environ, {"GIT_COMMIT": commit}, clear=True):
+            self.assertEqual(build_info()["release"], commit)
+
 
 class ReleaseVerifierUrlSafetyTest(SimpleTestCase):
     def test_it_refuses_non_http_urls_before_opening_them(self):
