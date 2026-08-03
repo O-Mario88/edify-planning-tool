@@ -308,7 +308,11 @@ def _display_rows(lines, year=2026, month=1):
             else getattr(line, "activity_type", "visit")
         )
         delivery_type = activity.delivery_type if activity else "staff"
-        category = _category(activity_type, delivery_type)
+        category = _category(
+            activity_type,
+            delivery_type,
+            activity.programme_activity_type if activity else None,
+        )
         category_totals[category] += int(line.amount or 0)
 
         planned_d = getattr(line, "planned_date", None) or (
@@ -331,7 +335,11 @@ def _display_rows(lines, year=2026, month=1):
         row = {
             "item": getattr(line, "label", None)
             or getattr(line, "cost_setting_key", "").replace("_", " ").title(),
-            "activity": activity.get_activity_type_display()
+            "activity": (
+                activity.activity_name_snapshot
+                or activity.get_programme_activity_type_display()
+                or activity.get_activity_type_display()
+            )
             if activity
             else str(activity_type).replace("_", " ").title(),
             "staff": names.get(owner, "Unassigned"),

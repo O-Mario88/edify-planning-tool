@@ -579,7 +579,11 @@ def _build_fund_requests_context(request):
                 "partner_activity": "Partner Activities",
                 "project_activity": "Partner Activities",
             }
-            source = source_map.get(act_type)
+            source = (
+                "Admin Budget"
+                if act and act.programme_activity_type == "admin"
+                else source_map.get(act_type)
+            )
             if not source:
                 if act_type == "admin_budget" or (
                     line.description and "admin" in line.description.lower()
@@ -619,10 +623,19 @@ def _build_fund_requests_context(request):
         scheduled_date__date__gte=selected_week_start,
         scheduled_date__date__lte=selected_week_end,
     )
-    for act in scoped_acts.select_related("school", "cluster"):
+    for act in scoped_acts.select_related(
+        "school", "school__district", "cluster", "cluster__district", "event_district"
+    ):
         title = ""
         location = ""
-        if act.activity_type in [
+        if act.planning_source == "manual_work_plan" and act.activity_name_snapshot:
+            title = act.activity_name_snapshot
+            location = (
+                f"{act.event_district.name} District"
+                if act.event_district
+                else act.venue or "Programme activity"
+            )
+        elif act.activity_type in [
             "school_visit",
             "follow_up_visit",
             "coaching_visit",

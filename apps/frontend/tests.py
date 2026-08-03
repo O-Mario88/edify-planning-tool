@@ -225,14 +225,58 @@ class FrontendViewsTestCase(TestCase):
         # Prefilled by selecting the option, not by checking a radio in a list
         # of engine-chosen activities.
         self.assertIn("selected", html)
-        # The catalogue link is derived server-side from the purpose, so the
-        # drawer no longer carries a catalogue_item_id the user never chose.
-        self.assertNotContains(response, 'name="catalogue_item_id"', html=False)
+        # The drawer does not expose a raw catalogue picker, but it must submit
+        # the SSA-led recommendation it visibly named. Several approved
+        # activities can share one workflow kind, so deriving from purpose
+        # alone would make the server correctly refuse to guess and leave the
+        # Schedule button as a production dead end.
+        self.assertNotIn('type="radio" name="catalogue_item_id"', html)
+        self.assertContains(response, 'name="catalogue_item_id"', html=False)
         self.assertContains(
             response, 'name="activity_type" :value="activityType"', html=False
         )
         self.assertContains(
             response, "focusIntervention: 'teaching_environment'", html=False
+        )
+
+        # Exercise the exact production failure mode: more than one governed
+        # Activity can share the in-school-training workflow kind. The drawer
+        # must post the visible SSA recommendation so scheduling does not fall
+        # back to the deliberately ambiguity-safe workflow-kind resolver.
+        from datetime import timedelta
+
+        from apps.activities.models import Activity
+
+        scheduled = timezone.localdate() + timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += timedelta(days=1)
+        self._publish_test_catalogue(scheduled.isoformat())
+        selected_item = response.context["selected_catalogue_item"]
+        self.assertIsNotNone(selected_item)
+        scheduled_response = self.client.post(
+            "/planning/schedule-action",
+            {
+                "school_id": self.school.school_id,
+                "require_catalogue": "yes",
+                "catalogue_item_id": selected_item["catalogueItemId"],
+                "activity_type": selected_item["workflowKind"],
+                "purpose_of_visit": "in_school_training",
+                "focus_intervention": "teaching_environment",
+                "scheduled_date": scheduled.isoformat(),
+                "expected_participants": "1",
+                "delivery_type": "staff",
+                "activity_purpose_text": "Verify governed recommendation scheduling",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(
+            scheduled_response.status_code, 200, scheduled_response.content
+        )
+        activity = Activity.objects.get(school=self.school)
+        self.assertEqual(activity.catalogue_item_id, selected_item["catalogueItemId"])
+        self.assertEqual(
+            activity.est_cost_cents,
+            sum(activity.schedule_cost_lines.values_list("amount", flat=True)),
         )
 
     def test_country_director_dashboard_renders(self):

@@ -1660,7 +1660,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1537,
+   "line": 1550,
    "label": null,
    "keys": [
     "amount",
@@ -1735,7 +1735,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1049,
+   "line": 1062,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1752,7 +1752,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1158,
+   "line": 1171,
    "label": null,
    "keys": [
     "activity_count",
@@ -1770,7 +1770,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1100,
+   "line": 1113,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2594,7 +2594,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 676,
+   "line": 689,
    "label": null,
    "keys": [
     "label",
@@ -3994,7 +3994,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 346,
+   "line": 354,
    "label": null,
    "keys": [
     "activity_ids",
@@ -4008,7 +4008,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 361,
+   "line": 369,
    "label": null,
    "keys": [
     "activity_count",
@@ -4023,7 +4023,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 381,
+   "line": 389,
    "label": "Week {\u2026} (Days {\u2026}\u2013{\u2026})",
    "keys": [
     "activity_count",
@@ -4040,7 +4040,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 408,
+   "line": 416,
    "label": null,
    "keys": [
     "label",
@@ -4053,7 +4053,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 399,
+   "line": 403,
    "label": "Total Requested This Month",
    "keys": [
     "helper",
@@ -4068,7 +4068,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 406,
+   "line": 410,
    "label": "Awaiting Approval",
    "keys": [
     "helper",
@@ -4083,7 +4083,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 413,
+   "line": 417,
    "label": "Approved Today",
    "keys": [
     "helper",
@@ -4098,7 +4098,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 420,
+   "line": 424,
    "label": "Returned for Review",
    "keys": [
     "helper",
@@ -4113,7 +4113,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 433,
+   "line": 437,
    "label": "Average Cost per School",
    "keys": [
     "helper",
@@ -4128,7 +4128,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 451,
+   "line": 455,
    "label": null,
    "keys": [
     "amount",

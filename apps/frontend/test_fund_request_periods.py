@@ -254,6 +254,111 @@ class FourPeriodBudgetTest(TestCase):
         self.assertEqual(self._budgets("?period_tab=decade")["active"], "week")
 
 
+class ProgrammeAdminBudgetClassificationTest(TestCase):
+    """A catalogue Admin item must stay Admin across every finance surface."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(
+            id="programme-admin-pl",
+            email="programme-admin-pl@edify.org",
+            name="Programme Admin PL",
+            roles=["Program Lead"],
+            active_role="Program Lead",
+            is_active=True,
+        )
+        StaffProfile.objects.create(
+            id="programme-admin-pl-sp", user=cls.user, title="Program Lead"
+        )
+        cls.when = _monday(0) + timedelta(days=2)
+        cls.activity = Activity.objects.create(
+            activity_type="partner_activity",
+            activity_name_snapshot="Partner Meetings Admin budget",
+            programme_activity_type="admin",
+            programme_delivery_mode="admin",
+            planning_source="manual_work_plan",
+            activity_context_type="organization",
+            delivery_type="staff",
+            status="scheduled",
+            fy=get_operational_fy(cls.when),
+            responsible_staff_id=cls.user.id,
+            planned_date=cls.when,
+            scheduled_date=cls.when,
+            venue="Production QA venue",
+            activity_purpose_text="Verify budget taxonomy",
+            expected_participants=1,
+            planned_school_count=1,
+            est_cost_cents=40_000,
+        )
+        cls.line = ActivityScheduleCostLine.objects.create(
+            activity=cls.activity,
+            responsible_user=cls.user.id,
+            planned_date=cls.when,
+            week_start_date=_monday(0),
+            fiscal_year=cls.activity.fy,
+            month=cls.when.month,
+            label="Partner/project lump sum",
+            description="Partner/project lump sum",
+            cost_setting_key="partner_visit_lump_sum",
+            line_item_type="lump_sum",
+            unit_cost=40_000,
+            quantity=1,
+            amount=40_000,
+        )
+
+        from apps.fund_requests.weekly_service import generate_weekly_fund_request
+
+        generate_weekly_fund_request(cls.user.id, _monday(0).isoformat())
+
+    def _context(self):
+        from django.test import RequestFactory
+
+        from apps.frontend.views.budget_views import _build_fund_requests_context
+
+        query = (
+            f"?fy={self.activity.fy}&month={self.when:%B}"
+            f"&week={_monday(0).isoformat()}"
+        )
+        request = RequestFactory().get("/fund-requests/weekly" + query)
+        request.user = self.user
+        return _build_fund_requests_context(request)
+
+    def test_weekly_request_keeps_the_admin_source_and_catalogue_title(self):
+        context = self._context()
+        self.assertEqual(context["weekly_total"], 40_000)
+        self.assertEqual(len(context["weekly_lines"]), 1)
+        self.assertEqual(context["weekly_lines"][0]["source"], "Admin Budget")
+        self.assertEqual(len(context["source_activities"]), 1)
+        self.assertEqual(
+            context["source_activities"][0]["title"],
+            "Partner Meetings Admin budget",
+        )
+        self.assertEqual(
+            context["source_activities"][0]["location"], "Production QA venue"
+        )
+
+    def test_monthly_summary_and_budget_table_keep_admin_out_of_visits(self):
+        context = self._context()
+        self.assertEqual(context["monthly_totals_by_type"]["admin"], 40_000)
+        self.assertEqual(context["monthly_totals_by_type"]["visits"], 0)
+        self.assertEqual(context["period_budgets"]["total"], 40_000)
+        self.assertEqual(context["period_budgets"]["groups"][0]["label"], "Admin")
+        self.assertEqual(context["period_budgets"]["groups"][0]["table_kind"], "admin")
+
+    def test_monthly_request_uses_admin_category_and_catalogue_title(self):
+        from apps.fund_requests.monthly_request_service import get_monthly_request
+
+        context = get_monthly_request(
+            self.user, {"fy": self.activity.fy, "month": self.when.month}
+        )
+        self.assertEqual(context["shown_total"], 40_000)
+        self.assertEqual(context["cost_groups"][0]["label"], "Admin Budget")
+        self.assertEqual(
+            context["cost_groups"][0]["rows"][0]["activity"],
+            "Partner Meetings Admin budget",
+        )
+
+
 class TwoColumnLayoutTest(TestCase):
     """The 70/30 canvas split must hold structurally, not just textually.
 
