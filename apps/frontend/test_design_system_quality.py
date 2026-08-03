@@ -80,7 +80,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         entry_points = [
             "templates/base.html",
             "templates/layouts/login.html",
-            "templates/pages/auth/launch.html",
             "templates/pages/help/print_article.html",
             "templates/pages/help/manual_export.html",
         ]

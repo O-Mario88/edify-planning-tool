@@ -398,10 +398,7 @@ class DesignSystemContractTest(SimpleTestCase):
         # Pages that render outside the app shell own their own main landmark:
         # `base.html` declares none, so without it these have no main at all.
         # The rule this test enforces is "no *second* main inside the shell's".
-        standalone = {
-            pages / "auth/launch.html",
-            pages / "documents/canonical_document.html",
-        }
+        standalone = {pages / "documents/canonical_document.html"}
 
         for page in pages.rglob("*.html"):
             if page in standalone:

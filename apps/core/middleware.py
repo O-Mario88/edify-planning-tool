@@ -13,7 +13,13 @@ import time
 from typing import Any, Callable
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.request import split_domain_port, validate_host
 
 from .request_context import (
@@ -113,6 +119,75 @@ class HealthProbeHostMiddleware:
                 if validate_host(candidate, settings.ALLOWED_HOSTS):
                     request.META["HTTP_HOST"] = candidate
                     return
+
+
+class CanonicalHostMiddleware:
+    """Send every alternate hostname to the one canonical host, in one hop.
+
+    Set ``CANONICAL_HOST`` to enable; left unset the middleware is a no-op, and
+    that default is deliberate. The apex only becomes reachable once DNS points
+    it at App Platform and a certificate covering it has been issued — turning
+    this on before then would redirect every visitor to a host that does not
+    yet answer. So the code ships dark and is armed with one environment
+    variable after the domain is verified. See
+    docs/incident-2026-08-03-apex-godaddy-lander.md.
+
+    Placed ahead of ``SecurityMiddleware`` so host and scheme are normalised
+    together. Landing on ``http://www`` would otherwise cost two redirects —
+    one to add TLS, another to drop the ``www`` — and the requirement is one.
+    When ``SECURE_SSL_REDIRECT`` is on we emit ``https`` directly, which
+    collapses both into a single response and leaves nothing for
+    ``SecurityMiddleware`` to do.
+
+    Health probes are exempt for the same reason they are exempt from the TLS
+    redirect: the probe arrives on the container's own IP or on localhost, and
+    an orchestrator reads a 301 as "not ready" rather than following it.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+        # Resolved once at startup. This is deployment configuration, not
+        # per-request state, and re-reading it on every request would put a
+        # settings lookup on the hot path of every page in the application.
+        self.canonical_host = (getattr(settings, "CANONICAL_HOST", "") or "").strip()
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        redirect = self._redirect_for(request)
+        if redirect is not None:
+            return redirect
+        return self.get_response(request)
+
+    def _redirect_for(self, request: HttpRequest):
+        if not self.canonical_host:
+            return None
+        if request.path in HealthProbeHostMiddleware.PROBE_PATHS:
+            return None
+
+        # HTTP_HOST directly rather than get_host(): an unknown host must fall
+        # through to Django's own 400 DisallowedHost, not be quietly rewritten
+        # into a redirect to the canonical host. Rewriting it would turn an
+        # attack probe into a 301 and hide it from the logs that matter.
+        raw_host = request.META.get("HTTP_HOST") or request.META.get("SERVER_NAME", "")
+        domain, _port = split_domain_port(raw_host)
+        if not domain:
+            return None
+        if not validate_host(domain, settings.ALLOWED_HOSTS):
+            return None
+
+        host_is_canonical = domain == self.canonical_host
+        https_is_canonical = not settings.SECURE_SSL_REDIRECT or request.is_secure()
+        if host_is_canonical and https_is_canonical:
+            return None
+
+        scheme = "https" if settings.SECURE_SSL_REDIRECT else request.scheme
+        target = f"{scheme}://{self.canonical_host}{request.get_full_path()}"
+
+        # 301 is only safe where the method may be dropped. A permanent
+        # redirect on a POST must be 308, or the browser replays it as GET and
+        # the body is silently lost — a submitted form that vanishes.
+        if request.method in ("GET", "HEAD"):
+            return HttpResponsePermanentRedirect(target)
+        return HttpResponseRedirect(target, status=308)
 
 
 class AllExceptionsMiddleware:

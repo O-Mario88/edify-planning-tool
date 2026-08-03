@@ -29,33 +29,23 @@ alerts:
   - rule: DOMAIN_FAILED
 
 # ── Custom domain ────────────────────────────────────────────────────────────
-# www.edifyplanning.app is the canonical hostname; the apex redirects to it.
+# The desired canonical hostname is the apex, edifyplanning.app. DNS remains at
+# GoDaddy; no nameserver migration or forwarding service is required. App
+# Platform publishes stable ingress records for externally managed DNS:
 #
-# DNS for edifyplanning.app is registered at GoDaddy, so there are two ways to
-# wire this up. Pick one.
+#   A     @     162.159.140.98
+#   A     @     172.66.0.96
+#   CNAME www   edify-planning-app-gu9a6.ondigitalocean.app.
 #
-# A. Keep DNS at GoDaddy (nothing else moves). Leave the `zone` lines commented
-#    out. After the app's first deploy, App Platform shows a CNAME target that
-#    looks like <app-name>-<hash>.ondigitalocean.app. In GoDaddy → Domain →
-#    DNS → Records, add:
+# Attach BOTH names in App Platform before changing the apex records, then wait
+# until its certificate covers both names. Only after that should this spec be
+# changed to apex=PRIMARY, www=ALIAS and CANONICAL_HOST be set in the service
+# environment. See docs/incident-2026-08-03-apex-godaddy-lander.md.
 #
-#      Type   Name   Value                                    TTL
-#      CNAME  www    <that-target>.                           600
-#
-#    GoDaddy cannot CNAME the apex. Use GoDaddy's Forwarding feature to send
-#    edifyplanning.app → https://www.edifyplanning.app (permanent, 301), and
-#    remove the apex entry below.
-#
-# B. Move DNS to DigitalOcean (cleaner; apex works natively). At GoDaddy set
-#    the nameservers to ns1.digitalocean.com, ns2.digitalocean.com,
-#    ns3.digitalocean.com, add edifyplanning.app under DigitalOcean →
-#    Networking → Domains, then uncomment the `zone` lines so App Platform
-#    manages the records itself.
-#
-# Either way DigitalOcean issues and renews a free Let's Encrypt certificate
-# automatically once DNS resolves. Note that .app is on the HSTS preload list:
-# browsers refuse plain HTTP for it, so the site simply will not load until the
-# certificate is issued. That is expected, not a misconfiguration.
+# The current PRIMARY/ALIAS order is deliberately unchanged while the apex
+# still points to GoDaddy's parked-domain service. Flipping it early can disrupt
+# the currently healthy www host. The .app TLD is HSTS-preloaded, so valid TLS
+# on the apex is a hard cutover prerequisite.
 domains:
   - domain: www.edifyplanning.app
     type: PRIMARY

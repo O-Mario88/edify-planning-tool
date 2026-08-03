@@ -2294,28 +2294,30 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.auth_views",
-      "backend_view": "apps.frontend.views.auth_views.splash_view",
+      "backend_view": "apps.frontend.views.auth_views.login_view",
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Opening Edify Planning and Monitoring",
+      "page_title": "Sign in",
       "permission_key": "",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Show the short, branded launch screen before sign-in.",
+      "purpose": "Requires product-purpose documentation",
       "responsive_state": "manual-review-required",
       "role_access": [],
       "route": "/",
       "route_name": "index",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "{% url "
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -2326,13 +2328,13 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
       "tables": false,
       "templates": [
-        "pages/auth/launch.html"
+        "pages/auth/login.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
@@ -30315,17 +30317,18 @@
   "quality_score_note": "Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.",
   "routes": [
     {
-      "callback": "apps.frontend.views.auth_views.splash_view",
+      "callback": "apps.frontend.views.auth_views.login_view",
       "kind": "page",
       "methods": [
-        "GET"
+        "GET",
+        "POST"
       ],
       "page_permission": "",
       "required_permissions": [],
       "route": "/",
       "route_name": "index",
       "templates": [
-        "pages/auth/launch.html"
+        "pages/auth/login.html"
       ]
     },
     {
@@ -40548,6 +40551,23 @@
       "templates": []
     },
     {
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/lander/?",
+      "route_name": "lander-legacy",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.leave_requests_view",
       "kind": "page",
       "methods": [
@@ -43545,7 +43565,7 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 871,
+    "all_routes": 872,
     "api_routes": 293,
     "component_templates": 286,
     "full_pages": 315,
