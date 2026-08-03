@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.http import HttpRequest, JsonResponse
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 
 
 def _liveness(request: HttpRequest) -> JsonResponse:
@@ -209,6 +210,18 @@ urlpatterns = [
     # frontend pattern.
     path("", include("apps.admin_ops.urls")),
     path("", include("apps.documents.urls")),
+    # /lander never belonged to this application. It was GoDaddy's parked-domain
+    # page, reached because the apex A record pointed at GoDaddy Forwarding
+    # rather than at the origin (INC-2026-08-03-01). Once the apex resolves here
+    # the path is ours, and the people who arrive on it are following a bookmark
+    # or a cached link from the outage — so it lands them on the real root
+    # instead of a 404. Ahead of the frontend catch-all, which would otherwise
+    # claim it.
+    re_path(
+        r"^lander/?$",
+        RedirectView.as_view(url="/", permanent=True, query_string=True),
+        name="lander-legacy",
+    ),
     path("", include("apps.frontend.urls")),
 ]
 

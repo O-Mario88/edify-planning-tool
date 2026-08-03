@@ -240,7 +240,6 @@ _EXEMPT_VIEW_NAMES = {
     "service_worker_view",
     "service_worker",
     "offline_view",
-    "splash_view",
     # Mid-authentication surfaces: the user is part-way through signing in, so
     # there is no active role yet to check a page permission against.
     "mfa_verify_view",

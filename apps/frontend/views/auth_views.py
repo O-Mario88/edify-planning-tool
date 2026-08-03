@@ -10,7 +10,6 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.core.cache import cache
 from django.db.models import Sum
-from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -83,20 +82,6 @@ def _login_stats():
     except Exception:  # noqa: BLE001 — losing the memo costs a recompute, nothing more
         pass
     return stats
-
-
-def splash_view(request):
-    """Show the short, branded launch screen before sign-in.
-
-    This route intentionally stays public and carries no operational data.  The
-    browser moves on to the regular login view after the visual hand-off, where
-    authenticated people are still redirected to their dashboard as usual.
-    """
-    return render(
-        request,
-        "pages/auth/launch.html",
-        {"login_url": reverse("frontend:login")},
-    )
 
 
 # Holds only the address someone chose to have prefilled — never a token, never

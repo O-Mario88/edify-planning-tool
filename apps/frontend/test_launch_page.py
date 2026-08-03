@@ -1,14 +1,24 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 
-class LaunchPageTest(TestCase):
-    def test_root_shows_the_branded_launch_screen_before_login(self):
+class RootRouteTest(TestCase):
+    def test_root_renders_login_directly_for_anonymous_users(self):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/auth/launch.html")
-        self.assertContains(response, "data-launch-screen")
-        self.assertContains(response, 'data-login-url="/login"')
-        self.assertContains(response, "Preparing your workspace")
-        self.assertContains(response, "launch.css")
-        self.assertContains(response, "launch.js")
+        self.assertTemplateUsed(response, "pages/auth/login.html")
+        self.assertContains(response, "Access workspace")
+        self.assertNotContains(response, "Preparing your workspace")
+
+    def test_root_sends_authenticated_users_to_dashboard(self):
+        user = get_user_model().objects.create_user(
+            email="root-route@example.com",
+            password="Strong-password-123!",
+            name="Root Route",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/")
+
+        self.assertRedirects(response, "/dashboard", fetch_redirect_response=False)

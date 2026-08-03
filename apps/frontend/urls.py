@@ -1768,6 +1768,7 @@ urlpatterns = [
     path("offboarding", hr_views.offboarding_view, name="offboarding"),
     path("hr-analytics", hr_views.hr_analytics_view, name="hr_analytics"),
     path("hr-audit-log", hr_views.hr_audit_log_view, name="hr_audit_log"),
-    # A brief branded hand-off before the regular login flow.
-    path("", auth_views.splash_view, name="index"),
+    # Render sign-in directly. A former launch screen added a client-side timer
+    # and two extra assets before the first useful interaction.
+    path("", auth_views.login_view, name="index"),
 ]

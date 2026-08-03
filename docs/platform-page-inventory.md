@@ -5,7 +5,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 ## Summary
 
 - Routed product surfaces: **470**
-- All registered routes: **871**
+- All registered routes: **872**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
@@ -24,7 +24,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 | Route | Page | Roles | Template | Automated score | Findings | Test |
 |---|---|---|---|---:|---:|---|
-| / | Opening Edify Planning and Monitoring | Unmapped | pages/auth/launch.html | 9.4 | 0 | referenced by automated test |
+| / | Sign in | Unmapped | pages/auth/login.html | 9.6 | 0 | referenced by automated test |
 | /accounts | Fund Disbursement Dashboard | ACCOUNTANT, ADMIN | pages/accounts/dashboard.html | 9.6 | 0 | referenced by automated test |
 | /accounts/ | Fund Disbursement Dashboard | ACCOUNTANT, ADMIN | pages/accounts/dashboard.html | 9.6 | 0 | referenced by automated test |
 | /accounts/accountability | Accountability Tracking - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/accountability.html | 9.4 | 0 | referenced by automated test |
