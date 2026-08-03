@@ -16,6 +16,7 @@ whatever `risk_level`/restricted-incident implies.
 from __future__ import annotations
 
 
+from django.db import transaction
 from django.db.models import Q, QuerySet
 from django.utils import timezone
 
@@ -639,11 +640,16 @@ class FieldDebriefService:
         return debrief
 
     @staticmethod
+    @transaction.atomic
     def accept_recommendation(principal, debrief_id: str) -> "object":
-        """§13 — accepting a recommended follow-up creates a real, draft
-        Activity (never bypassing costing/scheduling — the responsible
-        staff member still has to schedule and cost it through Planning
-        like any other activity)."""
+        """Accept a recommendation through the canonical Planning gate.
+
+        The resulting Activity is a cost-free draft: it carries Planning
+        provenance and the intended date, but no budget line exists until the
+        owner actually schedules it. Scope, entitlement, duplicate prevention,
+        and audit rules therefore cannot drift from the Planning page.
+        """
+        from apps.activities import services as activity_services
         from apps.activities.models import Activity, ActivityType
 
         debrief = FieldDebriefService.get_one(principal, debrief_id)
@@ -671,16 +677,26 @@ class FieldDebriefService:
             debrief.recommended_next_activity_type, ActivityType.FOLLOW_UP_VISIT
         )
         school_id = debrief.linked_school_ids[0] if debrief.linked_school_ids else None
-        # Activity.responsible_staff_id is a User id everywhere else in the
-        # app (e.g. my_plan_views.py resolves it via User.objects.get(id=...)),
-        # but debrief.staff_id — and, per existing test fixtures, callers'
-        # follow_up_owner_id too — is a StaffProfile id (set from
-        # _staff_profile(principal).id at submission time). Writing that
-        # straight into responsible_staff_id silently orphaned the follow-up
-        # Activity from its intended owner's My Plan. Resolve through
-        # StaffProfile first; if nothing matches, assume the id was already a
-        # User id and pass it through unchanged.
-        from apps.accounts.models import StaffProfile
+        if not school_id:
+            raise BadRequest(
+                "Select the School that the recommended follow-up belongs to."
+            )
+
+        from apps.schools.models import School
+
+        school = School.objects.filter(id=school_id, deleted_at__isnull=True).first()
+        if school is None:
+            raise BadRequest("The recommended follow-up School no longer exists.")
+        if activity_type == ActivityType.PARTNER_ACTIVITY:
+            raise BadRequest(
+                "Assign the School to a Partner in Planning before accepting "
+                "a Partner coaching recommendation."
+            )
+        # Debrief owner fields normally contain a StaffProfile id, but older
+        # callers supplied a User id. Resolve either shape before handing the
+        # owner to the canonical Planning service, whose Activity attribution
+        # is consistently stored in StaffProfile id space.
+        from apps.accounts.models import StaffProfile, User
 
         def _to_user_id(candidate_id):
             if not candidate_id:
@@ -692,27 +708,69 @@ class FieldDebriefService:
             )
             return resolved or candidate_id
 
-        owner_id = _to_user_id(debrief.follow_up_owner_id) or _to_user_id(
-            debrief.staff_id
+        raw_owner_id = (
+            debrief.follow_up_owner_id
+            or debrief.staff_id
+            or getattr(principal, "staff_profile_id", None)
+            or getattr(principal, "user_id", None)
+            or getattr(principal, "id", None)
         )
-        # status="planned" (NOT the model default not_planned): the To-Do
-        # engine excludes not_planned rows, so the default made an accepted
-        # follow-up invisible to its owner. quarter is stamped the same way
-        # the catch-up funnel does — an empty quarter hides the draft from
-        # every quarter-scoped rollup until someone happens to reschedule it.
+        owner_id = _to_user_id(raw_owner_id)
+        # The canonical service stores responsible staff in StaffProfile id
+        # space. Resolve a User id back to its profile when callers supplied
+        # one; otherwise preserve the already-canonical profile id.
         from apps.core.fy import get_quarter_for_date
 
-        activity = Activity.objects.create(
-            fy=debrief.fy,
-            activity_type=activity_type,
-            status="planned",
-            quarter=get_quarter_for_date(debrief.follow_up_date),
-            responsible_staff_id=owner_id,
-            school_id=school_id,
-            focus_intervention=debrief.recommended_intervention or None,
-            planned_date=debrief.follow_up_date,
-            activity_purpose_text=f"Recommended from Field Debrief: {debrief.title}",
+        owner_profile = (
+            StaffProfile.objects.select_related("user").filter(id=raw_owner_id).first()
+            or StaffProfile.objects.select_related("user")
+            .filter(user_id=owner_id)
+            .first()
         )
+        responsible_staff_id = None
+        if owner_profile is not None and owner_profile.user.is_active:
+            responsible_staff_id = owner_profile.id
+        elif owner_id and User.objects.filter(id=owner_id, is_active=True).exists():
+            # The canonical Planning service deliberately accepts an active
+            # User id when older/admin accounts do not have a StaffProfile.
+            responsible_staff_id = owner_id
+        if responsible_staff_id is None:
+            raise BadRequest(
+                "Select an active staff member to own the recommended follow-up."
+            )
+
+        payload = {
+            "activityType": activity_type,
+            "fy": debrief.fy,
+            "quarter": get_quarter_for_date(debrief.follow_up_date),
+            "plannedDate": debrief.follow_up_date,
+            "responsibleStaffId": responsible_staff_id,
+            "focusIntervention": debrief.recommended_intervention or None,
+            "activityPurposeText": (f"Recommended from Field Debrief: {debrief.title}"),
+            "recommendationReason": (
+                f"Accepted Field Debrief recommendation {debrief.id}."
+            ),
+        }
+        if activity_type in (
+            ActivityType.CLUSTER_MEETING,
+            ActivityType.CLUSTER_TRAINING,
+        ):
+            if not school.cluster_id:
+                raise BadRequest(
+                    "Add the School to a Cluster before accepting a Cluster follow-up."
+                )
+            payload["clusterId"] = school.cluster_id
+        else:
+            payload["schoolId"] = school.school_id
+
+        # The recommendation is a dated plan, not a scheduled commitment.
+        # Costing is explicitly deferred until the owner schedules it.
+        created = activity_services.create(
+            payload,
+            principal,
+            skip_cost_snapshot=True,
+        )
+        activity = Activity.objects.get(id=created["id"])
         debrief.recommendation_status = RecommendationStatus.ACCEPTED
         debrief.recommendation_accepted_activity_id = activity.id
         debrief.recommendation_reviewed_by_user_id = principal.user_id

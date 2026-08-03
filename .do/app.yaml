@@ -190,6 +190,13 @@ services:
       - key: GIT_COMMIT
         scope: RUN_TIME
         value: ${_self.COMMIT_HASH}
+      # App Platform does not expose a separate deployment-id bindable to a
+      # Dockerfile build. The immutable source revision is therefore also the
+      # release identifier, which is still exact and comparable across every
+      # process serving the deployment.
+      - key: RELEASE
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
       # Migrations are owned by the PRE_DEPLOY job above. Leaving this true as
       # well would mean every replica migrates on boot.
       - key: RUN_MIGRATIONS

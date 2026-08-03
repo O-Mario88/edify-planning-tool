@@ -738,8 +738,7 @@ def create(
             # preview; this is the number that gets costed and stored.
             data = {
                 **data,
-                "expectedParticipants": participants_per_school
-                * cluster_school_count,
+                "expectedParticipants": participants_per_school * cluster_school_count,
             }
 
     non_school = bool(
@@ -1365,14 +1364,16 @@ def create(
                     )
             if not pooled:
                 _apply_schedule_cost_snapshot(activity, data, principal=principal)
-    # Scheduling is the moment planning becomes money-bearing work — it must
-    # be on the tamper-evident audit chain (previously the single largest
-    # unaudited workflow event; every scheduling path funnels through here).
+    # Planning and scheduling must both be on the tamper-evident audit chain.
+    # An undated draft is a real planning authorization but it is not yet
+    # money-bearing work, so do not mislabel it as scheduled.
     try:
         from apps.audit.services import log as audit_log
 
         audit_log(
-            action="activity.scheduled",
+            action=(
+                "activity.scheduled" if activity.scheduled_date else "activity.planned"
+            ),
             subject_kind="Activity",
             subject_id=activity.id,
             actor_id=getattr(principal, "user_id", None) or "system",
@@ -1385,6 +1386,9 @@ def create(
                 "school_id": activity.school_id,
                 "cluster_id": activity.cluster_id,
                 "fy": activity.fy,
+                "planned_date": (
+                    activity.planned_date.isoformat() if activity.planned_date else None
+                ),
                 "delivery_type": activity.delivery_type,
                 "focus_intervention": activity.focus_intervention or "",
             },
@@ -1427,10 +1431,13 @@ def _schedule_period(
     default week and month views by those fields, so deriving them here keeps
     an activity visible regardless of the screen it was scheduled from.
     """
-    if not scheduled_date:
-        return None, data.get("plannedMonth"), data.get("plannedWeek")
-
-    planned_date = timezone.localtime(scheduled_date).date()
+    if scheduled_date:
+        planned_date = timezone.localtime(scheduled_date).date()
+    else:
+        raw_planned_date = data.get("plannedDate") or data.get("planned_date")
+        if not raw_planned_date:
+            return None, data.get("plannedMonth"), data.get("plannedWeek")
+        planned_date = timezone.localtime(_parse_date(raw_planned_date)).date()
     raw_month = data.get("plannedMonth")
     raw_week = data.get("plannedWeek")
     planned_month = (

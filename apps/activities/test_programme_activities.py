@@ -665,6 +665,30 @@ class ProgrammeWorkPlanHealthTest(_ProgrammeFixture):
         self.assertEqual(check["count"], 1)
         self.assertFalse(health["healthy"])
 
+    def test_health_hard_fails_any_live_activity_without_planning_source(self):
+        Activity.objects.create(
+            activity_type="school_visit",
+            planning_source="",
+            delivery_type="staff",
+            status="planned",
+            school_id=None,
+            fy=FY,
+            quarter="Q4",
+            planned_date=date(2026, 9, 1),
+            responsible_staff_id=self.cceo.staff_profile_id,
+        )
+
+        health = work_plan_health()
+        check = next(
+            c
+            for c in health["checks"]
+            if c["key"] == "activity_without_planning_source"
+        )
+        self.assertEqual(check["status"], "fail")
+        self.assertEqual(check["severity"], "critical")
+        self.assertEqual(check["count"], 1)
+        self.assertFalse(health["healthy"])
+
 
 # ── Concurrency (TransactionTestCase, mirrors test_audit_pipeline) ───────────
 class ProgrammeDoubleClickRaceTest(TransactionTestCase):

@@ -38,11 +38,13 @@ def work_plan_health() -> dict:
     without_owner = programme.filter(
         delivery_type="staff",
     ).filter(Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id=""))
-    unstamped_source = (
-        Activity.objects.filter(deleted_at__isnull=True, planning_source="")
-        .filter(LIVE_STATUSES_Q)
-        .exclude(status="planned")
-    )
+    # Planning provenance is an absolute gate for both cost-free drafts and
+    # scheduled work. Treating an unstamped planned row as acceptable merely
+    # postpones discovery until the row starts carrying money.
+    unstamped_source = Activity.objects.filter(
+        deleted_at__isnull=True,
+        planning_source="",
+    ).filter(LIVE_STATUSES_Q)
     # A multi-day activity that crosses a month boundary must have allocated
     # its cost lines into more than one month (§9); all-in-one-month lines on
     # a cross-month range means the allocation rule was bypassed.
@@ -86,8 +88,8 @@ def work_plan_health() -> dict:
         },
         {
             "key": "activity_without_planning_source",
-            "label": "Scheduled activities without a planning source stamp",
-            "status": "pass" if not unstamped_source.exists() else "warn",
+            "label": "Live activities without a planning source stamp",
+            "status": "pass" if not unstamped_source.exists() else "fail",
             "count": unstamped_source.count(),
         },
         {

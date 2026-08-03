@@ -12,6 +12,7 @@ from django.core.cache import cache
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
 
 
 def _login_stats():
@@ -257,6 +258,52 @@ def login_view(request):
             "remember_me": bool(request.COOKIES.get(REMEMBERED_EMAIL_COOKIE)),
             **_login_stats(),
             **_take_notice(request),
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def reset_password_view(request):
+    """Render and process the browser password-reset link.
+
+    Reset emails have always targeted ``/reset-password``. The API service
+    that validates and consumes the token already existed, but the browser
+    route did not, so every emailed link ended at a production 404. Keep the
+    mutation in the canonical service and use a regular Django POST so CSRF
+    protection and a no-JavaScript fallback are both automatic.
+    """
+    from apps.accounts import auth_services
+    from apps.core.exceptions import BadRequest
+
+    token = (request.POST.get("token") or request.GET.get("token") or "").strip()
+
+    if request.method == "POST":
+        try:
+            auth_services.reset_password(
+                token,
+                request.POST.get("password", ""),
+                request.POST.get("confirm", ""),
+            )
+        except BadRequest as exc:
+            return render(
+                request,
+                "pages/auth/reset_password.html",
+                {"token": token, "error": str(exc.detail)},
+            )
+
+        _flash(
+            request,
+            "Your password has been reset. Sign in with your new password.",
+            ok=True,
+        )
+        return redirect("frontend:login")
+
+    return render(
+        request,
+        "pages/auth/reset_password.html",
+        {
+            "token": token,
+            "invalid_link": not auth_services.password_reset_token_is_valid(token),
         },
     )
 

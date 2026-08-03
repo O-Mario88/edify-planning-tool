@@ -20,8 +20,13 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+from apps.accounts.models import (
+    StaffProfile,
+    StaffSchoolAssignment,
+    StaffSupervisorAssignment,
+)
 from apps.activities.models import Activity
+from apps.audit.models import AuditLog
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole
@@ -142,6 +147,9 @@ class FieldDebriefTestBase(TestCase):
             enrollment=200,
             current_fy_ssa_status="done",
         )
+        StaffSchoolAssignment.objects.create(
+            staff=self.cceo_sp, school_id=self.school.id
+        )
         self.activity = self._activity(self.cceo_sp.id, self.school)
         self.other_teams_activity = self._activity(self.other_cceo_sp.id, self.school)
 
@@ -181,6 +189,11 @@ class FieldDebriefTestBase(TestCase):
         data = {"title": "Test Debrief", "summary": "A summary.", "kind": "activity"}
         data.update(overrides)
         return FieldDebriefService.submit(principal, data)
+
+    def _release_visit_entitlement(self):
+        Activity.objects.filter(
+            id__in=[self.activity.id, self.other_teams_activity.id]
+        ).update(status="cancelled")
 
 
 class ModelTests(FieldDebriefTestBase):
@@ -512,6 +525,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         )
 
     def test_accept_recommendation_creates_a_real_draft_activity(self):
+        self._release_visit_entitlement()
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
@@ -522,16 +536,17 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         self.assertIsNotNone(activity.id)
         self.assertEqual(activity.school_id, self.school.id)
+        self.assertEqual(activity.planning_source, "school_planning")
+        self.assertEqual(activity.status, "planned")
+        self.assertIsNone(activity.scheduled_date)
+        self.assertFalse(activity.schedule_cost_lines.exists())
         d.refresh_from_db()
         self.assertEqual(d.recommendation_status, RecommendationStatus.ACCEPTED)
         self.assertEqual(d.recommendation_accepted_activity_id, activity.id)
 
-    def test_accept_recommendation_resolves_owner_to_real_user_id(self):
-        """Regression: the follow-up Activity's responsible_staff_id used to
-        be written straight from debrief.staff_id/follow_up_owner_id, both of
-        which are StaffProfile ids — but Activity.responsible_staff_id is a
-        User id everywhere else in the app, so the created Activity silently
-        never showed up in the intended owner's My Plan."""
+    def test_accept_recommendation_keeps_owner_in_staff_profile_id_space(self):
+        """The canonical Planning and My Plan scope uses StaffProfile ids."""
+        self._release_visit_entitlement()
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
@@ -539,16 +554,45 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             follow_up_owner_id=self.cceo_sp.id,
         )
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
-        self.assertEqual(activity.responsible_staff_id, self.cceo.id)
+        self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
     def test_accept_recommendation_falls_back_to_submitter_user_id(self):
+        self._release_visit_entitlement()
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
             school_ids=[self.school.id],
         )
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
-        self.assertEqual(activity.responsible_staff_id, self.cceo.id)
+        self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
+
+    def test_accept_recommendation_enforces_existing_visit_entitlement(self):
+        d = self._submit(
+            self.cceo,
+            recommended_next_activity_type="follow_up_visit",
+            school_ids=[self.school.id],
+            follow_up_owner_id=self.cceo_sp.id,
+        )
+        with self.assertRaisesMessage(BadRequest, "entitlement"):
+            FieldDebriefService.accept_recommendation(self.pl, d.id)
+        d.refresh_from_db()
+        self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
+        self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
+
+    def test_accept_recommendation_is_audited_as_planning_not_scheduling(self):
+        self._release_visit_entitlement()
+        d = self._submit(
+            self.cceo,
+            recommended_next_activity_type="follow_up_visit",
+            school_ids=[self.school.id],
+            follow_up_owner_id=self.cceo_sp.id,
+            follow_up_date=date(2026, 8, 10),
+        )
+        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
+        event = AuditLog.objects.get(subject_id=activity.id, action="activity.planned")
+        self.assertEqual(event.action, "activity.planned")
+        self.assertEqual(event.actor_id, self.pl.id)
+        self.assertEqual(event.payload["planned_date"], "2026-08-10")
 
     def test_accept_recommendation_requires_proposed_status(self):
         d = self._submit(self.cceo)  # no recommendation proposed
@@ -566,6 +610,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         self.assertEqual(rejected.recommendation_status, RecommendationStatus.REJECTED)
 
     def test_accept_recommendation_notifies_the_submitter(self):
+        self._release_visit_entitlement()
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
