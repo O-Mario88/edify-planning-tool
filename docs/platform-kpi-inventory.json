@@ -1338,7 +1338,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1610,
+   "line": 1628,
    "label": null,
    "keys": [
     "bar_color",
@@ -1353,7 +1353,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1947,
+   "line": 1965,
    "label": null,
    "keys": [
     "delta_pct",
@@ -1369,7 +1369,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 978,
+   "line": 996,
    "label": null,
    "keys": [
     "band",
@@ -1388,7 +1388,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 938,
+   "line": 956,
    "label": null,
    "keys": [
     "band",
@@ -1407,7 +1407,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 301,
+   "line": 307,
    "label": null,
    "keys": [
     "helper",
@@ -1424,7 +1424,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 705,
+   "line": 773,
    "label": null,
    "keys": [
     "done",
@@ -1440,7 +1440,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 917,
+   "line": 988,
    "label": null,
    "keys": [
     "icon",
@@ -1455,7 +1455,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 1231,
+   "line": 1302,
    "label": null,
    "keys": [
     "amount",
@@ -2503,7 +2503,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 456,
+   "line": 479,
    "label": "Total Requested This Month",
    "keys": [
     "helper",
@@ -2519,7 +2519,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 464,
+   "line": 487,
    "label": "Awaiting Approval",
    "keys": [
     "helper",
@@ -2534,7 +2534,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 471,
+   "line": 494,
    "label": "Approved",
    "keys": [
     "helper",
@@ -2549,7 +2549,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 478,
+   "line": 501,
    "label": "Ready for Disbursement",
    "keys": [
     "helper",
@@ -2564,7 +2564,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 485,
+   "line": 508,
    "label": "Returned for Review",
    "keys": [
     "helper",
@@ -2579,7 +2579,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 492,
+   "line": 515,
    "label": "Accountability Pending",
    "keys": [
     "helper",
@@ -2594,7 +2594,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 689,
+   "line": 712,
    "label": null,
    "keys": [
     "label",

@@ -1136,7 +1136,10 @@ def pl_dashboard_drilldown_view(request):
 
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    payload = ProgramLeadDashboardService.drilldown(request.user, drill, fy=fy)
+    month = (request.GET.get("month") or "").strip() or None
+    payload = ProgramLeadDashboardService.drilldown(
+        request.user, drill, fy=fy, month=month
+    )
     return render(
         request,
         "partials/dashboards/pl/drilldown.html",

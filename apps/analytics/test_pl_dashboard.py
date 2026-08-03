@@ -26,7 +26,7 @@ from apps.activities.models import Activity
 from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService as S
 from apps.core.exceptions import Forbidden
 from apps.core.rbac import EdifyRole
-from apps.fund_requests.models import WeeklyFundRequest
+from apps.fund_requests.models import FundRequest, WeeklyFundRequest
 from apps.fund_requests.weekly_service import approve_weekly_request, request_advance
 from apps.geography.models import District, Region
 from apps.notifications.models import Notification
@@ -234,6 +234,72 @@ class PLDashboardTest(TestCase):
         by = {k["label"]: k["value"] for k in d["kpi_strip_items"]}
         # 2 completed visits/trainings by A1 (B1's excluded); 1 has SF ID → 50%.
         self.assertEqual(by["Activity SF ID Compliance"], "50%")
+
+    def test_missing_target_denominators_are_not_rendered_as_zero_percent(self):
+        dashboard = self._dash(self.pl_a)
+        by_label = {item["label"]: item for item in dashboard["kpi_strip_items"]}
+        self.assertEqual(by_label["Team Execution Progress"]["value"], "Not measured")
+        self.assertEqual(by_label["CCEOs On Track"]["value"], "Not measured")
+
+        supervision = next(
+            card
+            for card in dashboard["personal_targets"]["cards"]
+            if card["label"] == "Supervision Visits"
+        )
+        self.assertFalse(supervision["has_target"])
+        self.assertIsNone(supervision["pct"])
+
+        self.client.force_login(self.pl_a)
+        response = self.client.get("/dashboard", {"fy": FY})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "0/0")
+        self.assertContains(response, "Not measurable")
+
+    def test_monthly_fund_request_uses_exact_month_and_complete_pl_team(self):
+        def monthly(owner, month, amount):
+            return FundRequest.objects.create(
+                fy=FY,
+                period="monthly",
+                period_key=f"{FY}-M{month}",
+                scope="own",
+                submitted_by_user_id=owner.id,
+                submitted_by_role=owner.active_role,
+                total_amount=amount,
+                activity_count=1,
+                status="draft",
+            )
+
+        monthly(self.a1, 8, 90_000)
+        monthly(self.pl_a, 8, 40_000)
+        monthly(self.b1, 8, 500_000)  # another PL's team
+        monthly(self.pl_a, 7, 700_000)  # another month
+
+        dashboard = S.get_dashboard(self.pl_a, fy=FY, month="8")
+        by_label = {item["label"]: item for item in dashboard["kpi_strip_items"]}
+        funding = by_label["Monthly Fund Request"]
+        self.assertEqual(funding["value"], "UGX 130K")
+        self.assertEqual(funding["link"], "?drill=funding&month=8")
+        self.assertIn("August team plan", funding["helper"])
+
+        drilldown = S.drilldown(self.pl_a, "funding", fy=FY, month="8")
+        self.assertEqual(drilldown["kind"], "fund_requests")
+        self.assertEqual(drilldown["title"], "Monthly Team Fund Requests")
+        self.assertEqual(
+            {(row["owner"], row["amount"]) for row in drilldown["fund_requests"]},
+            {("CCEO A1", "UGX 90,000"), ("PL A", "UGX 40,000")},
+        )
+        self.assertIn("UGX 130,000", drilldown["subtitle"])
+
+        self.client.force_login(self.pl_a)
+        response = self.client.get(
+            f"/dashboard/pl-drilldown?drill=funding&fy={FY}&month=8"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Monthly Team Fund Requests")
+        self.assertContains(response, "UGX 130,000")
+        self.assertContains(response, "UGX 90,000")
+        self.assertContains(response, "UGX 40,000")
+        self.assertNotContains(response, "UGX 500,000")
 
     # ── 4. personal vs team targets are separate ─────────────────────────────
     def test_pl_personal_targets_are_separate_from_team_targets(self):
