@@ -65,10 +65,10 @@
       "template": "components/kpi_card.html"
     },
     {
-      "bytes": 5211,
+      "bytes": 5348,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "tables": 0,
       "template": "components/kpi_strip.html"
     },
