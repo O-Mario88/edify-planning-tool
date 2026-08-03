@@ -291,6 +291,18 @@ class PLDashboardTest(TestCase):
         self.assertIn("UGX 130,000", drilldown["subtitle"])
 
         self.client.force_login(self.pl_a)
+        dashboard_response = self.client.get("/dashboard", {"fy": FY})
+        self.assertEqual(dashboard_response.status_code, 200)
+        dashboard_html = dashboard_response.content.decode()
+        funding_link_start = dashboard_html.index(
+            '<a href="/dashboard/pl-drilldown?drill=funding'
+        )
+        funding_link_end = dashboard_html.index(">", funding_link_start)
+        funding_link = dashboard_html[funding_link_start:funding_link_end]
+        self.assertIn('hx-get="/dashboard/pl-drilldown?drill=funding', funding_link)
+        self.assertIn('hx-target="#drawer-container"', funding_link)
+        self.assertIn('hx-swap="innerHTML"', funding_link)
+
         response = self.client.get(
             f"/dashboard/pl-drilldown?drill=funding&fy={FY}&month=8"
         )
