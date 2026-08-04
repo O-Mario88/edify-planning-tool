@@ -73,8 +73,8 @@
 
 .spp-table-wrap { max-width: 100%; overflow: auto; scrollbar-gutter: stable; }
 .spp-table { width: 100%; min-width: 1110px; border-collapse: collapse; }
-.spp-table th, .spp-summary th { padding: 9px 8px; background: var(--edify-surface-muted); color: var(--edify-text-muted); text-align: left; font-size: var(--edify-text-micro-size); line-height: 1.2; font-weight: 800; letter-spacing: .015em; text-transform: uppercase; white-space: nowrap; }
-.spp-table td { padding: 9px 8px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); line-height: 1.35; vertical-align: middle; }
+.spp-table th, .spp-summary th { padding: 9px 8px; background: var(--edify-surface-muted); color: var(--edify-text-muted); text-align: left; font-size: var(--edify-text-table-heading-size); line-height: 1.2; font-weight: 800; letter-spacing: .015em; text-transform: uppercase; white-space: nowrap; }
+.spp-table td { padding: 9px 8px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-table-size); line-height: 1.35; vertical-align: middle; }
 .spp-table tr:hover td, .spp-table tr.is-selected td { background: color-mix(in srgb, var(--edify-accent) 4.5%, var(--edify-surface)); }
 .spp-table td:nth-child(2) { min-width: 155px; } .spp-table td:nth-child(3) { min-width: 145px; } .spp-table td:nth-child(4), .spp-table td:nth-child(5) { min-width: 140px; } .spp-table td:nth-child(6) { min-width: 125px; } .spp-table td:nth-child(7) { min-width: 130px; }
 .spp-check { width: 34px; text-align: center !important; }
@@ -123,7 +123,7 @@
 
 .spp-lower-grid { display: grid; grid-template-columns: .9fr 1.2fr; gap: 13px; align-items: start; margin-top: 13px; }
 .spp-summary table { width: 100%; min-width: 620px; border-collapse: collapse; }
-.spp-summary td { padding: 9px 10px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); text-align: center; font-size: var(--edify-text-micro-size); font-weight: 650; }
+.spp-summary td { padding: 9px 10px; border-top: 1px solid var(--edify-border); color: var(--edify-text-muted); text-align: center; font-size: var(--edify-text-table-size); font-weight: 650; }
 .spp-summary td:first-child, .spp-summary th:first-child { text-align: left; }
 .spp-summary td a { color: var(--edify-text); font-weight: 740; }
 .spp-summary small { color: var(--edify-text-subtle); }

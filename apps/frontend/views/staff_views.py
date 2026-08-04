@@ -1293,7 +1293,7 @@ def _team_member_or_none(request, staff_user_id):
 def team_targets_staff_drawer_view(request):
     from django.http import HttpResponseForbidden
     from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
-    from apps.targets.my_targets import MyTargetQueryService, active_target_areas
+    from apps.targets.my_targets import MyTargetQueryService, priority_target_areas
     from apps.targets.team_targets import PLTeamTargetsService
 
     member_user = _team_member_or_none(
@@ -1309,7 +1309,7 @@ def team_targets_staff_drawer_view(request):
         if raw_month.isdigit() and 1 <= int(raw_month) <= 12
         else (now["month_of_fy"] if fy == now["fy"] else 1)
     )
-    areas = active_target_areas()
+    areas = priority_target_areas(member_user, fy)
     m_start, m_end = Cal.month_range(fy, month)
     member = PLTeamTargetsService._member(
         member_user, areas, fy, month, now["today"], m_start, m_end, fy == now["fy"]

@@ -269,6 +269,13 @@ def agree_priorities(review_id: str, principal, *, note: str = ""):
     review.stage = ReviewStage.PRIORITIES_AGREED
     review.status = "Priorities agreed"
     review.save(update_fields=["stage", "status", "updated_at"])
+    # The agreed PerformancePriority rows are the authority for My Targets and
+    # Team Targets.  Keep their monthly phasing in the existing target ledger
+    # regardless of whether agreement happened through the manager workflow or
+    # the HR console approval path.
+    from apps.hr.performance_engine import sync_targets_from_agreement
+
+    sync_targets_from_agreement(review, principal)
     _audit("hr.priorities_agreed", review, principal, {"note": note})
     return review
 

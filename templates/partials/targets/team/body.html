@@ -8,7 +8,7 @@
         <div>
           <span class="tt-eyebrow">Validated performance</span>
           <h2>Team targets performance</h2>
-          <p>{{ month_label }} · {{ selected_category_label }} · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
+          <p>{{ month_label }} · {{ selected_category_label }} · agreed employee performance priorities · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
         </div>
         <div class="tt-segmented" aria-label="Filter performance status">
           <button type="button" @click="staffFilter='all'" :aria-pressed="staffFilter === 'all'" :class="staffFilter === 'all' && 'is-active'">All</button>
@@ -17,7 +17,7 @@
         </div>
       </header>
 
-      {% if members %}
+      {% if members and areas %}
       <div class="tt-matrix-scroll-guide" aria-hidden="true">
         <span>Period comparison</span>
         <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
@@ -47,7 +47,7 @@
                 x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
               <td>
                 <div class="tt-person">
-                  <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} target areas">
+                  <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} performance priorities">
                     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'"><path d="m7 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   </button>
                   <span class="tt-avatar">{{ member.initials }}</span>
@@ -80,7 +80,7 @@
               <td colspan="{{ matrix_heads|length|add:'2' }}">
                 <div class="tt-area-matrix-shell">
                   <table class="tt-area-matrix">
-                    <caption class="sr-only">{{ member.name }} target-area performance by reporting period</caption>
+                    <caption class="sr-only">{{ member.name }} agreed-priority performance by reporting period</caption>
                     <colgroup>
                       <col class="tt-matrix__member-column">
                       {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
@@ -88,7 +88,7 @@
                     </colgroup>
                     <thead>
                       <tr>
-                        <th scope="col"><span>Target area breakdown</span><small>Validated achievement</small></th>
+                        <th scope="col"><span>Priority breakdown</span><small>Validated achievement</small></th>
                         {% for head in matrix_heads %}
                         <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
                           {% if forloop.first %}<span>Monthly</span><small>{{ head.label }} · selected month</small>{% else %}<span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small>{% endif %}
@@ -165,7 +165,7 @@
                   @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
                   :aria-expanded="expandedStaff === '{{ member.user_id }}'"
                   aria-controls="tt-mobile-areas-{{ member.user_id }}">
-            <span>Target-area breakdown</span>
+            <span>Priority breakdown</span>
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'" aria-hidden="true"><path d="m5 7 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div id="tt-mobile-areas-{{ member.user_id }}" class="tt-mobile-member__areas" @click.stop x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
@@ -192,8 +192,14 @@
 
       <footer class="tt-panel__footer">
         <span>Showing {{ team_size }} of {{ overall_team_size }} supervised team members</span>
-        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">Open detailed target-area matrix</button>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">Open detailed priority matrix</button>
       </footer>
+      {% elif members %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No measurable team priorities agreed for FY {{ fy }}</h3>
+        <p>Team performance rows are populated from each employee’s agreed performance priorities, not from the global activity catalogue.</p>
+      </div>
       {% else %}
       <div class="tt-empty">
         <span class="tt-empty__icon" aria-hidden="true">◎</span>
@@ -295,7 +301,7 @@
   <div class="tt-insights-grid">
     <section class="tt-panel tt-insight-panel">
       <header class="tt-panel__header tt-panel__header--compact">
-        <div><span class="tt-eyebrow">Selected month</span><h2>Target-area progress</h2></div>
+        <div><span class="tt-eyebrow">Selected month</span><h2>Priority progress</h2></div>
       </header>
       <div class="tt-progress-list">
         {% for target in key_progress %}
@@ -305,7 +311,7 @@
           <small>{{ target.achieved|intcomma }} validated of {{ target.target|intcomma }} target · {{ target.status }}</small>
         </button>
         {% empty %}
-        <div class="tt-rail-empty"><strong>No target data</strong><span>No target areas are assigned in this scope.</span></div>
+        <div class="tt-rail-empty"><strong>No priority data</strong><span>No measurable performance priorities are agreed in this scope.</span></div>
         {% endfor %}
       </div>
     </section>
@@ -317,7 +323,8 @@
       </header>
       <figure class="tt-line-chart" aria-labelledby="tt-trend-title tt-trend-description">
         <div class="tt-line-chart__viewport">
-          <svg viewBox="0 0 1200 600" role="img" aria-labelledby="tt-trend-title tt-trend-description">
+          <svg viewBox="0 0 1200 600" data-edify-svg-typography role="img"
+               aria-labelledby="tt-trend-title tt-trend-description">
             <title id="tt-trend-title">Monthly team performance trend for {{ fy_label }}</title>
             <desc id="tt-trend-description">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</desc>
             <defs aria-hidden="true">

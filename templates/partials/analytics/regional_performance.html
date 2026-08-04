@@ -19,13 +19,13 @@
   absent; the numbers live in the labels, the tooltip and the table, where an
   absent value can show as a dash.
 {% endcomment %}
-<div class="edify-surface rounded-surface p-4 shadow-sm space-y-3"
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm space-y-3"
      x-data="subregionMap()" x-init="load()">
 
   <div class="flex flex-col gap-3 border-b border-slate-50 pb-2
               sm:flex-row sm:items-start sm:justify-between">
     <div>
-      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
+      <h3 class="text-card-title flex items-center gap-1.5">
         <span>Performance by Sub-Region</span>
         <span class="edify-text-caption text-slate-400 cursor-help"
               title="Click a district to zoom; Esc or click outside to return">ⓘ</span>
@@ -127,6 +127,8 @@
         <span x-text="`${unmatchedSchoolCount} ${unmatchedSchoolCount === 1 ? 'school needs' : 'schools need'} sub-county mapping`"></span>
       </div>
       <svg x-ref="svg" x-show="ready" viewBox="0 0 620 620"
+           data-edify-svg-typography
+           @edify-svg-typography="refreshMapLabelPlacement()"
            preserveAspectRatio="xMidYMid meet"
            class="w-full h-full select-none" role="group"
            aria-label="Districts of Uganda coloured by sub-region"></svg>
@@ -146,7 +148,7 @@
           <div class="min-w-0">
             <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
                x-text="tip.level"></p>
-            <p class="sr-tip__title truncate text-[15px] font-extrabold leading-tight"
+            <p class="sr-tip__title truncate font-extrabold leading-tight"
                x-text="tip.title"></p>
           </div>
           <p class="max-w-[45%] text-right edify-text-caption font-bold uppercase
@@ -159,7 +161,7 @@
             <div class="flex items-center gap-1.5">
               <span class="h-2 w-2 shrink-0 rounded-pill" :style="`background:${m.colour}`"></span>
               <span class="edify-text-caption font-semibold sr-tip__muted" x-text="m.k"></span>
-              <span class="sr-tip__number ml-auto text-[12px] font-bold tabular-nums"
+              <span class="sr-tip__number ml-auto font-bold tabular-nums"
                     x-text="m.v"></span>
             </div>
           </template>
@@ -170,7 +172,7 @@
             <div>
               <p class="edify-text-caption font-bold uppercase tracking-wider sr-tip__muted"
                  x-text="m.k"></p>
-              <p class="sr-tip__primary text-[15px] font-bold tabular-nums leading-tight"
+              <p class="sr-tip__primary font-bold tabular-nums leading-tight"
                  x-text="m.v"></p>
             </div>
           </template>
@@ -180,7 +182,7 @@
           <template x-for="m in tip.rows" :key="m.k">
             <div class="flex items-baseline justify-between gap-2">
               <span class="edify-text-caption font-semibold sr-tip__muted" x-text="m.k"></span>
-              <span class="sr-tip__number text-[12px] font-bold tabular-nums"
+              <span class="sr-tip__number font-bold tabular-nums"
                     x-text="m.v"></span>
             </div>
           </template>
@@ -211,9 +213,9 @@
         Distribution by Sub-Region
       </p>
       <div class="overflow-x-auto">
-        <table class="w-full text-left">
+        <table class="w-full text-left text-table-cell">
           <thead>
-            <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+            <tr class="text-table-header font-bold uppercase tracking-wider text-slate-400">
               <th class="pb-1.5 pr-1">Sub-region</th>
               <th class="pb-1.5 px-1 text-right">Sch</th>
               <th class="pb-1.5 px-1 text-right">Clu</th>
@@ -222,7 +224,7 @@
           </thead>
           <tbody class="divide-y divide-slate-50">
             {% for s in subregion_performance.subregions %}
-            <tr class="text-[12px] hover:bg-slate-50/70 cursor-pointer" tabindex="0"
+            <tr class="hover:bg-slate-50/70 cursor-pointer" tabindex="0"
                 role="button"
                 aria-label="Focus {{ s.name }} on the map"
                 :aria-pressed="focused === 'sub:{{ s.name|escapejs }}'"
@@ -324,6 +326,13 @@ function subregionMap(){
       return new Intl.NumberFormat('en', {
         notation:'compact', maximumFractionDigits:1,
       }).format(v || 0);
+    },
+    refreshMapLabelPlacement(){
+      requestAnimationFrame(() => {
+        if(!this.cam) return;
+        if(this.subcountyLabelLayer) this.resolveSubcountyLabelCollisions();
+        else if(!this.focused) this.placeDistrictLabels();
+      });
     },
     schoolMix(district){
       return this.metrics[district]?.school_distribution
@@ -1597,18 +1606,21 @@ function subregionMap(){
                stroke:none;transition:opacity .3s}
   /* Boundary labels use the global 12px floor; the collision engine omits a
      low-priority name when the map cannot place it cleanly at that size. */
-  #sr-cam .sr-dl{font-size:var(--edify-text-micro-size);font-weight:650;fill:var(--edify-text-muted);
-                 letter-spacing:.02em}
+  #sr-cam .sr-dl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
+                 font-weight:var(--edify-text-micro-weight);fill:var(--edify-text-muted);
+                 letter-spacing:var(--edify-text-micro-tracking)}
   /* A white halo on each glyph so a sub-region name stays legible wherever it
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline
      eats inward and the text just reads heavier instead of haloed. */
-  #sr-cam .sr-sl{font-size:var(--edify-text-micro-size);font-weight:800;fill:var(--edify-accent);
+  #sr-cam .sr-sl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
+                 font-weight:var(--edify-text-display-weight);fill:var(--edify-accent);
                  letter-spacing:.04em;
-                 stroke:var(--edify-on-accent);stroke-width:2.2px;stroke-linejoin:round;
+                 stroke:var(--edify-on-accent);stroke-width:.16em;stroke-linejoin:round;
                  paint-order:stroke fill}
   #sr-cam .sr-scl{
-    font-size:var(--edify-text-micro-size);font-weight:750;fill:var(--edify-text);
+    font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
+    font-weight:var(--edify-text-title-weight);fill:var(--edify-text);
     letter-spacing:.015em;
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
@@ -1685,7 +1697,7 @@ function subregionMap(){
     border:1px solid rgba(255,255,255,.16);
   }
   .sr-tip .edify-text-caption{font-size:var(--edify-text-micro-size)}
-  .sr-tip__title,.sr-tip__primary{font-size:clamp(12px, 1.15vw, 15px)}
+  .sr-tip__title,.sr-tip__primary{font-size:var(--edify-text-body-size)}
   .sr-tip__number{font-size:var(--edify-text-micro-size)}
   .sr-tip__head{border-bottom:1px solid rgba(255,255,255,.16)}
   .sr-tip__rule{border-top:1px solid rgba(255,255,255,.16)}

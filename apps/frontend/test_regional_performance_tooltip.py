@@ -33,9 +33,10 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("padding:clamp(8px, 1.4vw, 14px);", template)
         self.assertIn(
-            ".sr-tip__title,.sr-tip__primary{font-size:clamp(12px, 1.15vw, 15px)}",
+            ".sr-tip__title,.sr-tip__primary{font-size:var(--edify-text-body-size)}",
             template,
         )
+        self.assertNotIn("font-size:clamp(12px, 1.15vw, 15px)", template)
 
     def test_mobile_summary_metrics_share_one_compact_row(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -150,8 +151,10 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("* 7;", template)
         self.assertIn(
-            "font-size:var(--edify-text-micro-size);font-weight:750", template
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));",
+            template,
         )
+        self.assertIn("font-weight:var(--edify-text-title-weight)", template)
         self.assertIn("stroke:none;transition:opacity .3s", template)
         self.assertNotIn("stroke-width:1.4px", template)
         self.assertLess(
@@ -200,6 +203,22 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertNotIn("declash(){", template)
+
+    def test_map_text_stays_on_the_shared_screen_type_scale(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("data-edify-svg-typography", template)
+        self.assertIn('@edify-svg-typography="refreshMapLabelPlacement()"', template)
+        self.assertIn("refreshMapLabelPlacement(){", template)
+        self.assertIn("if(this.subcountyLabelLayer)", template)
+        self.assertIn("this.resolveSubcountyLabelCollisions();", template)
+        self.assertIn("else if(!this.focused) this.placeDistrictLabels();", template)
+        self.assertIn(
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
+            template,
+        )
+        self.assertIn("stroke-width:.16em", template)
+        self.assertNotIn("stroke-width:2.2px", template)
 
     def test_zoom_does_not_magnify_the_district_focus_stroke(self):
         template = _read("templates/partials/analytics/regional_performance.html")

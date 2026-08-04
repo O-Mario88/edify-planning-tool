@@ -22,7 +22,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.targets.my_targets import IA_VERIFIED_STATUSES
+from apps.targets.my_targets import IA_VERIFIED_STATUSES, PERFORMANCE_METRIC_TO_AREA
 
 
 # ── Canonical metric registry ────────────────────────────────────────────────
@@ -1137,12 +1137,7 @@ def flag_performance_support(review, reason: str, principal):
 # quality are performance priorities without a personal target area, and
 # inventing one for them would create the second target system the mandate
 # forbids.
-_METRIC_TO_AREA = {
-    "direct_visits": "school_visits",
-    "cluster_meetings": "cluster_meetings",
-    "trainings": "cluster_trainings",
-    "ssa_coverage": "ssa_completed",
-}
+_METRIC_TO_AREA = PERFORMANCE_METRIC_TO_AREA
 
 # Default quarterly phasing (§12). Configurable per cycle later; stated here
 # so the split is visible rather than implied by an even division.
@@ -1189,7 +1184,20 @@ def sync_targets_from_agreement(review, principal=None) -> int:
         )
     written = 0
     with transaction.atomic():
-        for p in review.priorities.all():
+        priorities = list(review.priorities.all())
+        assigned_area_keys = {
+            PERFORMANCE_METRIC_TO_AREA.get(priority.metric_key or "")
+            for priority in priorities
+            if (priority.target_number or 0) > 0
+        }
+        assigned_area_keys.discard(None)
+        mapped_area_keys = set(PERFORMANCE_METRIC_TO_AREA.values())
+        MonthlyPersonalTarget.objects.filter(
+            user_id=user_id,
+            fy=review.fy,
+            area__key__in=mapped_area_keys - assigned_area_keys,
+        ).delete()
+        for p in priorities:
             area_key = _METRIC_TO_AREA.get(p.metric_key or "")
             if not area_key or area_key not in areas:
                 continue

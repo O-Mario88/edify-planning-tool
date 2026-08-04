@@ -270,7 +270,7 @@
 /* Table styling inside drawers */
 .drawer-body table { width: 100%; border-collapse: collapse; }
 .drawer-body table thead th {
-  font-size: var(--edify-text-micro-size); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  font-size: var(--edify-text-table-heading-size); font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
   color: var(--edify-text-subtle) !important;
   background: var(--edify-surface-muted) !important;
   border-bottom: 2px solid var(--edify-border) !important;
