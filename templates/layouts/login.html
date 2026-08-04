@@ -3,7 +3,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% comment %}
+  viewport-fit=cover, matching base.html. This layout is a standalone document
+  rather than a child of base.html, so it carries its own head and did not
+  inherit the attribute when base.html gained it — which left login.css's
+  safe-area padding (the `calc(1.5rem + env(safe-area-inset-*))` rules)
+  resolving to 1.5rem flat on every notched iPhone. Sign-in is the first screen
+  a field user sees, so it is the last place that should be wrong.
+  {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="var(--edify-primary-active)">
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
   {% include "partials/pwa_head.html" %}
