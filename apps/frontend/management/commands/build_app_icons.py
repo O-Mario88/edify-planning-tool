@@ -1,15 +1,15 @@
-"""Generate the PWA icon set from one square source image.
+"""Generate the circular PWA icon set from one square source image.
 
 Re-run after replacing ``static/images/app-icon-source.png``:
 
     python manage.py build_app_icons
 
-Why the source is not used as-is: the artwork arrives as a rounded tile with a
-white surround and a drop shadow. Left alone, that surround shows as a white
-box behind the rounded corners. The generator floods it away from the four
-corners and emits two versions of the tile.
+The canonical source is a circular RGBA icon. A legacy opaque rounded-tile
+source is still accepted so the command remains useful with older artwork; in
+either case the exported ``any`` icons and favicons receive a true circular
+alpha silhouette rather than relying on a launcher to round them.
 
-Transparent (icon-*, favicon-*): the rounded silhouette sits on whatever is
+Transparent (icon-*, favicon-*): the circular silhouette sits on whatever is
 behind it, so the icon reads on a light or dark launcher alike.
 
 Opaque (apple-touch-icon, icon-maskable-*): these two must NOT be transparent,
@@ -40,6 +40,10 @@ FAVICONS = [16, 32, 48]
 # Fraction of the frame the artwork occupies in a maskable icon. The spec's
 # safe zone is a circle of 80% diameter; 0.78 keeps a little margin.
 SAFE_ZONE = 0.78
+# Apple and Android require opaque icon canvases. A quiet neutral surround
+# keeps the circular Edify artwork visibly circular even when the operating
+# system applies a square or squircle frame of its own.
+OPAQUE_SURROUND = (240, 246, 249)
 
 
 class Command(BaseCommand):
@@ -64,13 +68,21 @@ class Command(BaseCommand):
                 f"(1024x1024 ideal, 512 minimum) and re-run."
             )
 
-        img = Image.open(src_path).convert("RGB")
-        clear, opaque, bg = self._extract_tile(img)
+        source = Image.open(src_path).convert("RGBA")
+        alpha_min, _alpha_max = source.getchannel("A").getextrema()
+        if alpha_min < 255:
+            clear = self._enforce_circle(source)
+        else:
+            clear, _legacy_opaque, _legacy_bg = self._extract_tile(
+                source.convert("RGB")
+            )
+            clear = self._enforce_circle(clear)
+        opaque = self._opaque(clear, OPAQUE_SURROUND, Image)
         out = static_dir / OUT_DIR
         out.mkdir(parents=True, exist_ok=True)
         written = []
 
-        # Transparent: the rounded silhouette sits on whatever is behind it.
+        # Transparent: the circular silhouette sits on whatever is behind it.
         for size in ANY_SIZES:
             p = out / f"icon-{size}.png"
             clear.resize((size, size), Image.LANCZOS).save(p, optimize=True)
@@ -81,7 +93,7 @@ class Command(BaseCommand):
         # shows the launcher background through the corners of the crop.
         for size in MASKABLE_SIZES:
             p = out / f"icon-maskable-{size}.png"
-            self._maskable(opaque, bg, size, Image).save(p, optimize=True)
+            self._maskable(clear, OPAQUE_SURROUND, size, Image).save(p, optimize=True)
             written.append(p)
 
         # Opaque, deliberately. iOS does not honour alpha in a home-screen
@@ -108,7 +120,9 @@ class Command(BaseCommand):
             )
         self.stdout.write(
             self.style.SUCCESS(
-                f"  {len(written)} icons written · background #{bg[0]:02x}{bg[1]:02x}{bg[2]:02x}"
+                f"  {len(written)} icons written · opaque surround "
+                f"#{OPAQUE_SURROUND[0]:02x}{OPAQUE_SURROUND[1]:02x}"
+                f"{OPAQUE_SURROUND[2]:02x}"
             )
         )
 
@@ -230,11 +244,42 @@ class Command(BaseCommand):
             return px[side // 2, side // 2]
         return counts.most_common(1)[0][0]
 
-    def _maskable(self, tile, bg, size, Image):
-        """Scale the artwork into the adaptive-icon safe zone."""
-        canvas = Image.new("RGB", (size, size), bg)
+    def _enforce_circle(self, image):
+        """Clip the visible artwork to a centred, mathematically round mask."""
+        from PIL import Image, ImageChops, ImageDraw
+
+        clear = image.convert("RGBA")
+        alpha = clear.getchannel("A")
+        bbox = alpha.getbbox()
+        if not bbox:
+            raise CommandError("Source icon contains no visible pixels")
+
+        width = bbox[2] - bbox[0]
+        height = bbox[3] - bbox[1]
+        diameter = min(width, height)
+        center_x = (bbox[0] + bbox[2]) / 2
+        center_y = (bbox[1] + bbox[3]) / 2
+        left = round(center_x - diameter / 2)
+        top = round(center_y - diameter / 2)
+
+        circle = Image.new("L", clear.size, 0)
+        ImageDraw.Draw(circle).ellipse(
+            (left, top, left + diameter - 1, top + diameter - 1), fill=255
+        )
+        clear.putalpha(ImageChops.multiply(alpha, circle))
+        return clear
+
+    def _opaque(self, art, surround, Image):
+        """Composite circular art onto the required opaque platform canvas."""
+        canvas = Image.new("RGB", art.size, surround)
+        canvas.paste(art.convert("RGB"), (0, 0), art.getchannel("A"))
+        return canvas
+
+    def _maskable(self, art, surround, size, Image):
+        """Scale the circular artwork into the adaptive-icon safe zone."""
+        canvas = Image.new("RGB", (size, size), surround)
         inner = max(1, int(size * SAFE_ZONE))
-        art = tile.resize((inner, inner), Image.LANCZOS)
+        scaled = art.resize((inner, inner), Image.LANCZOS)
         off = (size - inner) // 2
-        canvas.paste(art, (off, off))
+        canvas.paste(scaled.convert("RGB"), (off, off), scaled.getchannel("A"))
         return canvas
