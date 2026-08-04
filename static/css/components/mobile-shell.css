@@ -27,7 +27,12 @@
 /* Landscape puts the notch on a side, where the topbar's own controls are. */
 @media (orientation: landscape) {
   .edify-topbar {
-    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+    /* Keep the same content edge as the workspace on ordinary landscape
+       screens. A real side safe-area may enlarge that gutter, but a zero
+       safe-area must never erase it. */
+    padding-inline:
+      max(var(--edify-page-gutter), env(safe-area-inset-left, 0px))
+      max(var(--edify-page-gutter), env(safe-area-inset-right, 0px));
   }
 }
 
