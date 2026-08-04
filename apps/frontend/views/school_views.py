@@ -226,8 +226,12 @@ def school_directory_view(request):
     user = request.user
     scope = resolve_user_scope(user)
 
-    # Scoped base query
-    base_qs = school_queryset(scope).filter(deleted_at__isnull=True)
+    # Directly-assigned schools only. A supervising Program Lead's `school_ids`
+    # unions in their CCEOs' schools, which put 1030 schools this PL does not
+    # own into their directory alongside their own 1141 — with the same edit,
+    # cluster, project and staff-match controls on every one of them.
+    # Supervision is not ownership.
+    base_qs = school_queryset(scope, direct_only=True).filter(deleted_at__isnull=True)
 
     # Input parameters
     q = request.GET.get("q", "").strip()
@@ -1332,7 +1336,7 @@ def bulk_assign_cluster_view(request):
         if school_ids and cluster_id:
             cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
             scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope).filter(
+            schools = school_queryset(scope, direct_only=True).filter(
                 id__in=school_ids, deleted_at__isnull=True
             )
             already_clustered = schools.filter(cluster_status="clustered")
@@ -1391,7 +1395,7 @@ def bulk_assign_project_view(request):
             # project.assignSchool permission gates *whether* the caller may
             # assign, not *which* schools they may reach.
             scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope).filter(
+            schools = school_queryset(scope, direct_only=True).filter(
                 id__in=school_ids, deleted_at__isnull=True
             )
 
@@ -1487,7 +1491,7 @@ def bulk_match_staff_view(request):
             # account ownership is the root of the whole scoping chain: it feeds
             # StaffSchoolAssignment, which feeds planning, targets and budgets.
             scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope).filter(
+            schools = school_queryset(scope, direct_only=True).filter(
                 id__in=school_ids, deleted_at__isnull=True
             )
             for s in schools:

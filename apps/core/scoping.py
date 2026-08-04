@@ -508,11 +508,28 @@ def cluster_in_scope(scope: UserScope, cluster) -> bool:
 
 
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
-def school_queryset(scope: UserScope):
+def school_queryset(scope: UserScope, *, direct_only: bool = False):
     """Return the base queryset for the School model, scope-constrained.
 
     Summary-only roles (RVP) receive NO school-level rows — they use aggregate
     summaries only. Returns None if the schools app isn't installed yet.
+
+    `direct_only` narrows the result to schools assigned to this person, dropping
+    the supervised team's schools that `scope.school_ids` unions in. It exists
+    for the School Directory and its bulk actions, where a supervising Program
+    Lead was operating on CCEO-owned schools as if they were their own: on
+    production a PL's directory listed 2171 schools of which 1030 (47.4%)
+    belonged to two supervised CCEOs, offering the same edit, cluster, project
+    and staff-match controls on all of them. Supervision is not ownership.
+
+    It is deliberately opt-in. The flat own+team scope is correct for the
+    surfaces that read it — team targets, PL analytics, the review queue — and
+    ~15 services depend on it, so this changes the directory alone rather than
+    the meaning of `school_ids`.
+
+    Country-scope roles are unaffected: they hold no per-school assignment rows,
+    so `own_school_ids` is empty for them and narrowing would blank their
+    directory rather than restrict it.
     """
     school_model = _get_school_model()
     if school_model is None:
@@ -527,6 +544,10 @@ def school_queryset(scope: UserScope):
         return qs
     if scope.can_view_summary_only:
         return qs.none()
+    if direct_only:
+        # No own_school_ids means no directly-assigned schools, which is an
+        # empty directory — not a fall-through to the team's.
+        return qs.filter(id__in=scope.own_school_ids)
     if scope.school_ids:
         return qs.filter(id__in=scope.school_ids)
     return qs.none()
