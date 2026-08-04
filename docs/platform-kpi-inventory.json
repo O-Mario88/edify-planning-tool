@@ -3574,7 +3574,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 433,
+   "line": 437,
    "label": "Total Schools",
    "keys": [
     "helper",
@@ -3590,7 +3590,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 441,
+   "line": 445,
    "label": "Client Schools",
    "keys": [
     "helper",
@@ -3606,7 +3606,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 449,
+   "line": 453,
    "label": "Core Schools",
    "keys": [
     "helper",
@@ -3622,7 +3622,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 457,
+   "line": 461,
    "label": "Unclustered",
    "keys": [
     "helper",
@@ -3638,7 +3638,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 465,
+   "line": 469,
    "label": "No SSA",
    "keys": [
     "helper",
@@ -3654,7 +3654,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 473,
+   "line": 477,
    "label": "Staff Required",
    "keys": [
     "helper",
@@ -3670,7 +3670,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 481,
+   "line": 485,
    "label": "Planning Ready",
    "keys": [
     "helper",
@@ -3686,7 +3686,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 489,
+   "line": 493,
    "label": "Duplicates",
    "keys": [
     "helper",
@@ -3702,7 +3702,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 634,
+   "line": 638,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
