@@ -162,9 +162,15 @@ Use this order to avoid a certificate outage:
 
 1. In App Platform, open **Settings → Domains**, add `edifyplanning.app`, and
    select **You manage your domain**.
-2. Keep the existing working `www` domain attached. Wait for App Platform to
-   show the apex domain and its certificate as ready before changing DNS.
-3. Remove GoDaddy Domain Forwarding and its parked apex A records.
+2. Keep the existing working `www` domain attached. The apex will sit in a
+   pending/unverified state — that is expected and is not something to wait
+   out. Certificate issuance validates over the public hostname, so it cannot
+   complete until step 4 makes the apex resolve to App Platform. Waiting for
+   the certificate before changing DNS deadlocks: neither side can go first.
+   Adding the domain here only teaches the shared ingress to answer for this
+   Host; that is the whole prerequisite.
+3. Remove GoDaddy Domain Forwarding and its parked apex A records. Forwarding
+   locks the apex A record, so it has to go before step 4 is possible at all.
 4. In GoDaddy DNS, create the records below. Leave the `zone:` lines in
    `.do/app.yaml` commented because GoDaddy remains authoritative.
 
@@ -172,18 +178,40 @@ Use this order to avoid a certificate outage:
 |---|---|---|---|
 | A | `@` | `162.159.140.98` | 600 |
 | A | `@` | `172.66.0.96` | 600 |
+| AAAA | `@` | `2606:4700:7::60` | 600 |
+| AAAA | `@` | `2a06:98c1:58::60` | 600 |
 | CNAME | `www` | `edify-planning-app-gu9a6.ondigitalocean.app.` | 600 |
 
-DigitalOcean also publishes `2606:4700:7::60` and `2a06:98c1:58::60` for IPv6.
-Add the AAAA records only after the deployment is verified over IPv6; the two A
-records are sufficient for the initial recovery.
+Add the AAAA pair in the same change as the A pair, not later. `www` already
+answers over IPv6 through its CNAME; once the apex becomes canonical, an apex
+with A records only would leave IPv6-first mobile clients unable to reach the
+canonical host — and the redirect from `www` would send them there anyway.
+These are DigitalOcean's published static ingress addresses, the same ingress
+the A records reach, so they add no new failure surface.
 
-5. Verify both hosts serve the same release with valid TLS.
-6. Change `.do/app.yaml` to `edifyplanning.app` = `PRIMARY` and
+5. Watch for the certificate to be issued — this is the step that takes time,
+   typically minutes once resolvers return the new records. Until then the apex
+   is unreachable rather than wrong: `.app` is HSTS-preloaded, so browsers
+   refuse the plain-HTTP fallback. A blank apex during this window is expected.
+
+6. Verify both hosts serve the same release with valid TLS.
+7. Change `.do/app.yaml` to `edifyplanning.app` = `PRIMARY` and
    `www.edifyplanning.app` = `ALIAS`, deploy, then set
    `CANONICAL_HOST=edifyplanning.app` on the web service.
-7. Confirm `https://www.edifyplanning.app/<path>?<query>` reaches the equivalent
+8. Confirm `https://www.edifyplanning.app/<path>?<query>` reaches the equivalent
    apex URL in exactly one permanent redirect.
+
+Verify each stage with:
+
+```bash
+dig +short A edifyplanning.app; dig +short AAAA edifyplanning.app
+curl -sS -I https://edifyplanning.app/
+curl -sS https://edifyplanning.app/ | grep -c lander
+curl -sS -o /dev/null -L --max-redirs 10 -w 'final=%{url_effective} redirects=%{num_redirects}\n' https://www.edifyplanning.app/
+```
+
+Pass: the A/AAAA pairs match the table; the apex returns the Edify application;
+`grep -c lander` prints `0`; `www` reaches the apex in exactly one redirect.
 
 DigitalOcean issues and renews the certificate after domain validation. Because
 `.app` is HSTS-preloaded, there is no usable HTTP fallback while certificate
