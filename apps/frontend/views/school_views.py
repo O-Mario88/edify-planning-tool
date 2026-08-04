@@ -1387,7 +1387,13 @@ def bulk_assign_project_view(request):
                     "schools can be assigned to it.",
                 )
                 return redirect("/schools")
-            schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
+            # Same scope constraint as bulk_match_staff_view above: the
+            # project.assignSchool permission gates *whether* the caller may
+            # assign, not *which* schools they may reach.
+            scope = resolve_user_scope(request.user)
+            schools = school_queryset(scope).filter(
+                id__in=school_ids, deleted_at__isnull=True
+            )
 
             from apps.projects.services import assign_school as assign_project_school
 
@@ -1473,7 +1479,17 @@ def bulk_match_staff_view(request):
             staff = get_object_or_404(
                 StaffProfile, id=staff_id, deleted_at__isnull=True
             )
-            schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
+            # Scope-constrained, like every single-school path in this module and
+            # like bulk_assign_cluster_view. require_page_permission only answers
+            # "may this role open the directory" — it says nothing about *which*
+            # schools, so an unscoped queryset here accepted any id the caller
+            # cared to post. Six roles reach this view, including CCEO, and
+            # account ownership is the root of the whole scoping chain: it feeds
+            # StaffSchoolAssignment, which feeds planning, targets and budgets.
+            scope = resolve_user_scope(request.user)
+            schools = school_queryset(scope).filter(
+                id__in=school_ids, deleted_at__isnull=True
+            )
             for s in schools:
                 s.account_owner_id = staff.id
                 s.account_owner_name_raw = staff.user.name
