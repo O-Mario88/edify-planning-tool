@@ -533,7 +533,10 @@ function subregionMap(){
         t.dataset.labelX = labelX.toFixed(2);
         t.dataset.labelY = labelY.toFixed(2);
         t.dataset.labelPriority = String(this.metrics[p.d]?.schools || 0);
-        t.textContent = p.d.toUpperCase();
+        // Districts are supporting annotations on the national overview, not
+        // headings. Title case keeps their visual weight below the sub-region
+        // labels and materially reduces the width of every name.
+        t.textContent = p.d;
         labels.appendChild(t);
       });
       cam.appendChild(labels);
@@ -979,28 +982,52 @@ function subregionMap(){
         return path.isPointInFill(point);
       }));
     },
-    placeBoundaryLabels({labelLayer, pathLayer, pinLayer, key, scale=1}){
+    overviewDistrictLabelBudget(){
+      const width = this.$refs.svg?.getBoundingClientRect().width || this.W;
+      // A national map cannot legibly carry all 135 district names at the
+      // platform's 12px text floor. Keep a stable, container-aware subset;
+      // every district remains named by its focusable path and hover card.
+      return Math.max(18, Math.min(32, Math.round(width / 24)));
+    },
+    placeBoundaryLabels({
+      labelLayer, pathLayer, pinLayer, key, scale=1, maxLabels=Infinity,
+    }){
       const labels = [...(labelLayer?.querySelectorAll('text') || [])];
       const paths = [...(pathLayer?.querySelectorAll('path:not(.sr-boundary-lift)') || [])];
       if(!labels.length || !paths.length) return;
 
       const pathByName = new Map(paths.map(path => [path.dataset[key], path]));
+      const pathAreaByName = new Map(paths.map(path => {
+        const box = path.getBBox();
+        return [path.dataset[key], box.width * box.height];
+      }));
       const markerRects = this.markerObstacleRects(pinLayer, scale);
       const placed = [];
+      let visibleCount = 0;
       const overlaps = (a, b) =>
         a.left < b.right && a.right > b.left &&
         a.top < b.bottom && a.bottom > b.top;
 
-      // Keep high-value labels closest to their geographic anchor. Only a
-      // lower-priority label moves when two names compete for the same space.
+      // Keep high-value labels closest to their geographic anchor. Geographic
+      // area breaks ties, so a large district is not displaced by a tiny one
+      // merely because their current school totals are equal.
       labels.sort((a, b) =>
         Number(b.dataset.labelPriority || 0) -
           Number(a.dataset.labelPriority || 0) ||
-        b.textContent.length - a.textContent.length
+        Number(pathAreaByName.get(b.dataset[key]) || 0) -
+          Number(pathAreaByName.get(a.dataset[key]) || 0) ||
+        a.textContent.length - b.textContent.length
       );
 
       labels.forEach(label => {
         label.style.opacity = '';
+        if(visibleCount >= maxLabels){
+          label.style.opacity = 0;
+          label.dataset.labelOffset = '0.00,0.00';
+          label.dataset.labelScale = '1.00';
+          label.dataset.labelPlacement = 'density-hidden';
+          return;
+        }
         const path = pathByName.get(label.dataset[key]);
         const baseX = Number(label.dataset.labelX);
         const baseY = Number(label.dataset.labelY);
@@ -1101,6 +1128,7 @@ function subregionMap(){
         label.dataset.labelScale = labelScale.toFixed(2);
         label.dataset.labelPlacement = placement;
         placed.push(rect);
+        visibleCount += 1;
       });
     },
     placeDistrictLabels(){
@@ -1110,6 +1138,7 @@ function subregionMap(){
         pinLayer:this.pinLayer,
         key:'district',
         scale:1,
+        maxLabels:this.overviewDistrictLabelBudget(),
       });
     },
     resolveSubcountyLabelCollisions(){
@@ -1607,8 +1636,8 @@ function subregionMap(){
   /* Boundary labels use the global 12px floor; the collision engine omits a
      low-priority name when the map cannot place it cleanly at that size. */
   #sr-cam .sr-dl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
-                 font-weight:var(--edify-text-micro-weight);fill:var(--edify-text-muted);
-                 letter-spacing:var(--edify-text-micro-tracking)}
+                 font-weight:var(--edify-text-label-weight);fill:var(--edify-text-muted);
+                 letter-spacing:0}
   /* A white halo on each glyph so a sub-region name stays legible wherever it
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline

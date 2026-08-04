@@ -165,7 +165,11 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
     def test_district_and_subcounty_labels_use_empty_space_placement(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn("placeBoundaryLabels({labelLayer, pathLayer", template)
+        self.assertIn("placeBoundaryLabels({", template)
+        self.assertIn(
+            "labelLayer, pathLayer, pinLayer, key, scale=1, maxLabels=Infinity,",
+            template,
+        )
         self.assertIn("placeDistrictLabels(){", template)
         self.assertIn("resolveSubcountyLabelCollisions(){", template)
         self.assertIn(
@@ -203,6 +207,21 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertNotIn("declash(){", template)
+
+    def test_national_overview_caps_district_label_density(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("overviewDistrictLabelBudget(){", template)
+        self.assertIn(
+            "Math.max(18, Math.min(32, Math.round(width / 24)))", template
+        )
+        self.assertIn("maxLabels=Infinity", template)
+        self.assertIn("if(visibleCount >= maxLabels)", template)
+        self.assertIn("label.dataset.labelPlacement = 'density-hidden';", template)
+        self.assertIn("maxLabels:this.overviewDistrictLabelBudget(),", template)
+        self.assertIn("pathAreaByName", template)
+        self.assertIn("t.textContent = p.d;", template)
+        self.assertNotIn("t.textContent = p.d.toUpperCase();", template)
 
     def test_map_text_stays_on_the_shared_screen_type_scale(self):
         template = _read("templates/partials/analytics/regional_performance.html")
