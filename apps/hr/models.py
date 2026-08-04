@@ -989,6 +989,43 @@ class PerformanceCycle(TimeStampedModel):
         db_table = "hr_performance_cycle"
 
 
+class FiscalYearRollover(TimeStampedModel):
+    """One committed, idempotent operational rollover per fiscal year.
+
+    The row is a completion marker, not a container for copied performance
+    data.  Prior-year Activities, target ledgers, agreements, snapshots and
+    allocations stay in their original FY tables; the new FY gets fresh
+    cycles and draft agreements.  A nullable ``completed_at`` lets concurrent
+    callers lock the same marker while the transaction is in progress.
+    """
+
+    id = CuidField()
+    fy = models.CharField(max_length=16, unique=True)
+    previous_fy = models.CharField(max_length=16)
+    initiated_by = models.CharField(max_length=64, default="system")
+    started_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True, blank=True)
+    performance_cycle = models.ForeignKey(
+        PerformanceCycle,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="rollovers",
+    )
+    strategic_priority_cycle = models.ForeignKey(
+        "hr.StrategicPriorityCycle",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="rollovers",
+    )
+    summary = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = "hr_fiscal_year_rollover"
+        ordering = ["-fy"]
+
+
 class RolePriorityTemplate(TimeStampedModel):
     """A role's standard priorities, from which drafts are generated."""
 

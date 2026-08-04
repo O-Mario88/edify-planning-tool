@@ -190,6 +190,46 @@ class CanonicalHostMiddleware:
         return HttpResponseRedirect(target, status=308)
 
 
+class FiscalYearRolloverMiddleware:
+    """Self-heal a missed October 1 rollover on the first signed-in request.
+
+    The dedicated scheduler remains the primary trigger.  This guard matters
+    because a stopped worker must not leave the live website displaying the
+    previous FY indefinitely.  Once successful it is a pure in-process branch
+    for the rest of the FY, with no query on the request hot path.
+    """
+
+    RETRY_SECONDS = 300
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+        self.checked_fy = None
+        self.retry_after = 0.0
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        if not getattr(settings, "FISCAL_YEAR_ROLLOVER_ENABLED", True):
+            return self.get_response(request)
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return self.get_response(request)
+
+        from apps.core.fy import get_operational_fy
+
+        fy = get_operational_fy()
+        now = time.monotonic()
+        if self.checked_fy != fy and now >= self.retry_after:
+            try:
+                from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+
+                ensure_current_fiscal_year(initiated_by="web-self-heal")
+                self.checked_fy = fy
+            except Exception:  # noqa: BLE001 — never take the website down
+                self.retry_after = now + self.RETRY_SECONDS
+                logger.exception("Fiscal-year rollover self-heal failed for FY%s", fy)
+
+        return self.get_response(request)
+
+
 class AllExceptionsMiddleware:
     """Catch-all envelope: clients never see stack traces, DB errors, or
     internal paths. Business 4xx keep their (intentional, safe) messages;

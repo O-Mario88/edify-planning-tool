@@ -166,6 +166,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # The first authenticated request in a new Oct-Sep FY is a deployment-
+    # independent safety net for the annual rollover. The middleware memoizes
+    # success for the process lifetime; normal requests do no database work.
+    "apps.core.middleware.FiscalYearRolloverMiddleware",
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -229,6 +233,7 @@ IS_TESTING = _is_testing
 # detection functions are exercised directly instead. Production and dev keep
 # it on.
 ADMIN_OPS_DETECTION_ENABLED = not _is_testing
+FISCAL_YEAR_ROLLOVER_ENABLED = not _is_testing
 
 # Parse DigitalOcean/Railway DATABASE_URL values, including managed-Postgres
 # query parameters such as sslmode=require. The settings below layer the
