@@ -74,9 +74,17 @@ button {
   height: 100%;
 }
 
+/* Backdrop for the brand panel. A background rather than an <img> so it is not
+   downloaded on the viewports that never show it: .login-brand is display:none
+   below 70rem, and a hidden <img> is still fetched while a background on an
+   unrendered element is not. That is 92 KB off every phone and tablet load.
+   background-size/position replace the object-fit pair this used when it was
+   an element. */
 .login-brand__photo {
-  object-fit: cover;
-  object-position: center;
+  background-image: url("../images/login-classroom-portrait.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   filter: saturate(.88) contrast(1.04);
 }
 

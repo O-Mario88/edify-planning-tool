@@ -130,3 +130,70 @@ class LoginBundleTests(SimpleTestCase):
                         "main.css — a bundle the sign-in layout no longer loads, "
                         "so this class renders as nothing.",
                     )
+
+
+class LoginHeroImageTests(SimpleTestCase):
+    """The brand photo must not be downloaded by viewports that never show it.
+
+    .login-brand is display:none below 70rem, so every phone, every tablet in
+    portrait and plenty of laptops render no brand panel at all. The 92 KB
+    photo behind it was still fetched twice over: once by a preload with
+    fetchpriority="high", competing with the stylesheets that block first
+    paint, and — once that was scoped — again by the <img> itself, because a
+    hidden <img> is still loaded.
+
+    It is a backdrop under a gradient carrying alt="", so it is now a CSS
+    background on a div. Backgrounds on unrendered elements are not fetched.
+    Verified in the browser: absent from the resource list at 390px, present
+    at 1440px.
+    """
+
+    HERO = "login-classroom-portrait"
+    BREAKPOINT = "(min-width: 70.01rem)"
+
+    def test_the_preload_is_scoped_to_the_breakpoint_that_shows_it(self):
+        markup = LOGIN_LAYOUT.read_text()
+        preload = [
+            line
+            for line in markup.splitlines()
+            if 'rel="preload"' in line and self.HERO in line
+        ]
+        self.assertEqual(len(preload), 1, "expected exactly one hero preload")
+        self.assertIn(
+            self.BREAKPOINT,
+            preload[0],
+            "an unscoped preload fetches the photo on phones, at high priority, "
+            "for a panel that is display:none there",
+        )
+
+    def test_the_hero_is_a_background_not_an_img(self):
+        markup = LOGIN_LAYOUT.read_text()
+        img_tags = re.findall(r"<img[^>]*>", markup)
+        self.assertFalse(
+            [tag for tag in img_tags if self.HERO in tag],
+            "the brand photo is back as an <img>; a hidden <img> is still "
+            "downloaded, which is the 92 KB this removed",
+        )
+        self.assertIn(
+            "login-brand__photo",
+            markup,
+            "the decorative div that carries the background is missing",
+        )
+
+    def test_login_css_carries_the_background(self):
+        css = (CSS / "login.css").read_text()
+        rule = css.split(".login-brand__photo {", 1)
+        self.assertGreater(len(rule), 1, ".login-brand__photo rule is missing")
+        block = rule[1].split("}", 1)[0]
+        self.assertIn(self.HERO, block)
+        self.assertIn("background-size: cover", block)
+
+    def test_the_panel_is_still_hidden_below_the_breakpoint(self):
+        # The whole optimisation rests on this. If the panel starts rendering
+        # on small screens the preload scope and the background trick both
+        # become wrong, and mobile silently loses its backdrop instead.
+        css = (CSS / "login.css").read_text()
+        self.assertRegex(
+            css,
+            r"@media \(max-width: 70rem\)[^@]*?\.login-brand \{\s*display: none",
+        )
