@@ -16,16 +16,58 @@
   <link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731geist2">
 
-<link rel="preload" as="image" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
+  {% comment %}
+    The brand panel this image fills is `display: none` below 70rem
+    (static/css/login.css), so on every phone, every tablet in portrait and
+    plenty of laptops it is never rendered — yet this preload fetched it
+    anyway, 94 KB at fetchpriority="high", competing with the stylesheets that
+    actually block first paint. Confirmed in the browser at 390px: one request,
+    initiatorType "link", for an element whose parent computes to display:none.
+
+    A preload honours `media` exactly like any other link, so scoping it to the
+    same breakpoint the panel appears at means mobile never asks for it.
+
+    Scoping the preload alone was not enough: with it silenced the <img> simply
+    fetched the file itself, because an <img> inside a display:none subtree is
+    still loaded. That is why the photo is now a CSS background on a decorative
+    div instead (static/css/login.css) — background images on elements that are
+    not rendered genuinely are not fetched.
+  {% endcomment %}
+  <link rel="preload" as="image" media="(min-width: 70.01rem)" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
   {% comment %}
     The sign-in layout previously loaded login.css alone, so it had no access
     to the design tokens and drifted into its own visual language — nine
     bespoke radii and hand-picked colours on the first screen every user sees.
-    Loading the canonical token layer first (same order as base.html) lets
-    login.css consume var(--radius-*) / var(--edify-*) like every other
-    surface, instead of being a design-system island.
+    Loading the canonical token layer lets login.css consume var(--radius-*) /
+    var(--edify-*) like every other surface, instead of being a design-system
+    island. design-system.css below is what supplies those tokens.
+
+    main.css — the application's 322 KB Tailwind bundle — used to load here, and
+    almost all of it was dead weight. Every class on this layout and on the two
+    pages that render inside it (pages/auth/login.html and
+    pages/auth/reset_password.html) is a bespoke `login-*` rule from login.css;
+    between them they use ZERO Tailwind utilities, and login.css carries its own
+    reset so it never needed the preflight either.
+
+    What it DID need was the five radius custom properties, which login.css
+    consumes as var(--radius-control) and friends in eight places. Those are
+    defined in the Tailwind @theme, so dropping main.css outright collapsed
+    every radius on the page to 0 — caught by diffing computed styles, not by
+    eye, because at a glance the page still looked fine.
+
+    tokens.css is that theme block and nothing else: ~6 KB from the same
+    assets/css/_theme.css the application bundle is built from, so there is
+    still exactly one definition of these values.
+
+    Net: 322 KB to 6 KB on the first thing every user downloads, before they can
+    type a password, on metered mobile data, re-fetched after every release
+    because the filename is content-hashed.
+
+    If a template rendered by this layout ever needs a real Tailwind utility, do
+    not restore main.css for it — add the rule to login.css, or build a
+    login-scoped bundle. apps/core/tests/test_login_bundle.py holds this.
   {% endcomment %}
-  <link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731geist2">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260804tokens1">
   <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731geist2">
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260731geist2">
   <script defer src="{% static 'js/login.js' %}?v=20260714a"></script>
@@ -33,14 +75,14 @@
 <body class="login-page">
   <main class="login-shell">
     <section class="login-brand" aria-label="About Edify Planning and Monitoring">
-      <img
-        class="login-brand__photo"
-        src="{% static 'images/login-classroom-portrait.jpg' %}"
-        alt=""
-        width="570"
-        height="800"
-        fetchpriority="high"
-      >
+      {% comment %}
+      A div, not an <img>, because this is a backdrop rather than content: it
+      carries alt="" and sits under .login-brand__shade's gradient. As an <img>
+      it was downloaded on every phone and tablet — 92 KB for a panel that is
+      display:none below 70rem — since a hidden <img> is still fetched. The
+      same file as a background on a non-rendered element is not.
+      {% endcomment %}
+      <div class="login-brand__photo" aria-hidden="true"></div>
       <div class="login-brand__shade" aria-hidden="true"></div>
       <div class="login-brand__dots login-brand__dots--top" aria-hidden="true"></div>
       <div class="login-brand__dots login-brand__dots--middle" aria-hidden="true"></div>
