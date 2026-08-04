@@ -276,7 +276,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /help/workflows/<slug:workflow_slug> | Help Workflow | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-analytics | People Analytics | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-audit-log | HR Audit Log | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /hr/performance-cycle | Performance Cycle Console | ADMIN, HR | pages/hr/performance_console.html | 9.7 | 0 | referenced by automated test |
+| /hr/performance-cycle | Performance Cycle Console · Edify | ADMIN, HR | pages/hr/performance_console.html | 9.7 | 0 | referenced by automated test |
 | /hr/performance-cycle/action | Hr Performance Action | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /ia/compare/ | Evidence Comparison Workspace - Edify Command Center | ADMIN, IA | pages/ia/compare_evidence.html | 9.6 | 0 | referenced by automated test |
 | /ia/dashboard/ | Impact Assessment Dashboard | ADMIN, IA | pages/ia/analytics_dashboard.html | 9.6 | 0 | referenced by automated test |
@@ -330,10 +330,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /messages/thread/<str:thread_id>/archive | Message Thread Archive | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /messages/thread/<str:thread_id>/reply | Message Thread Reply | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
 | /messages/thread/<str:thread_id>/star | Message Thread Star | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /my-performance | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/development | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/documents | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/values | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/development | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/documents | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/values | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
 | /my-plan | My Plan | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/workspace.html<br>pages/my_plan/index.html | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id> | Activity Details | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/activity_detail_drawer.html<br>pages/my_plan/detail.html | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id>/accountability | Accountability Action | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/accountability_drawer.html | 9.6 | 0 | referenced by automated test |
@@ -380,9 +380,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partners/<str:partner_id> | Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/partners/detail.html | 9.4 | 0 | referenced by automated test |
 | /partners/create | Create Partner | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/partners/create_partner_drawer.html | 9.4 | 0 | referenced by automated test |
 | /payroll-readiness | Payroll Readiness | ACCOUNTANT, ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /performance-conversation | Performance Conversation | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/performance_conversation.html | 9.6 | 0 | referenced by automated test |
+| /performance-conversation | · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/performance_conversation.html | 9.6 | 0 | referenced by automated test |
 | /performance-conversation/<str:review_id>/acknowledge | Performance Acknowledge | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /performance-conversation/<str:review_id>/document/<str:window> | Conversation Record | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/conversation_document.html | 9.4 | 0 | referenced by automated test |
+| /performance-conversation/<str:review_id>/document/<str:window> | Conversation Record · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/conversation_document.html | 9.4 | 0 | referenced by automated test |
 | /performance-conversation/<str:review_id>/sign-off | Performance Signoff | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-conversation/priority/<str:priority_id>/save | Performance Input Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-conversation/value/<str:commitment_id>/save | Performance Value Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
