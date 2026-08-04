@@ -3,7 +3,7 @@
   "private": true,
   "description": "CSS build pipeline: compiles assets/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
   "scripts": {
-    "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css",
+    "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css -o static/css/tokens.css",
     "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch"
   },
   "devDependencies": {

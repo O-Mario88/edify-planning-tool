@@ -102,13 +102,11 @@ class MobileShellCssContractTests(SimpleTestCase):
         )[0]
 
         self.assertIn(
-            "max(var(--edify-page-gutter), "
-            "env(safe-area-inset-left, 0px))",
+            "max(var(--edify-page-gutter), " "env(safe-area-inset-left, 0px))",
             landscape_rule,
         )
         self.assertIn(
-            "max(var(--edify-page-gutter), "
-            "env(safe-area-inset-right, 0px))",
+            "max(var(--edify-page-gutter), " "env(safe-area-inset-right, 0px))",
             landscape_rule,
         )
         self.assertNotIn(
