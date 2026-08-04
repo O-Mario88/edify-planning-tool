@@ -29,3 +29,10 @@ ipdb==0.13.13
 # but had never been installed, so neither had ever actually run.
 bandit==1.9.4
 pip-audit==2.10.1
+
+# Read directly by apps/core/tests/test_deployment_manifests.py, which parses
+# .do/app.yaml to assert the App Platform spec actually runs the scheduler.
+# It resolves anyway as a transitive dependency of drf-spectacular and bandit,
+# which is exactly why it is pinned here: a test that imports a package nobody
+# declared starts failing the day an unrelated dependency drops it.
+PyYAML==6.0.3
