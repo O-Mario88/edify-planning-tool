@@ -39,8 +39,10 @@
               aria-describedby="partner-return-help"
               placeholder="Briefly explain why you cannot take this assignment—for example, distance, schedule conflict, school unavailable or work outside your current capacity."
               class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] font-medium focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
-    {# The counter states the rule the server will actually enforce, so the
-       partner learns the bound before writing a paragraph and losing it. #}
+    {% comment %}
+    The counter states the rule the server will actually enforce, so the partner
+    learns the bound before writing a paragraph and losing it.
+    {% endcomment %}
     <p id="partner-return-help" class="mt-1 edify-text-caption font-medium text-slate-500">
       <span x-text="n">0</span>/{{ reason_max }} characters — at least {{ reason_min }}. Enough for your managing staff to decide what happens next.
     </p>
@@ -48,8 +50,10 @@
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
-    {# Deliberately not styled as destructive: this returns an assignment, it
-       does not delete the school or cancel the school's support. #}
+    {% comment %}
+    Deliberately not styled as destructive: this returns an assignment, it does
+    not delete the school or cancel the school's support.
+    {% endcomment %}
     <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Return to staff</button>
   </div>
 </form>

@@ -1745,6 +1745,14 @@
       "template": "partials/partners/create_partner_drawer.html"
     },
     {
+      "bytes": 3932,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/partners/return_assignment_drawer.html"
+    },
+    {
       "bytes": 4499,
       "findings": [],
       "forms": 1,
@@ -22148,6 +22156,7 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
+        "GET /partner/assignments/{{ assignment.id }}/return-drawer",
         "GET /partner/assignments/{{ assignment.id }}/schedule-drawer"
       ],
       "implementation_status": "existing-routed-surface",
@@ -22191,6 +22200,118 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_return_assignment_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Return Assignment Action",
+      "permission_key": "partner_activities",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PARTNER"
+      ],
+      "route": "/partner/assignments/<str:assignment_id>/return-action",
+      "route_name": "partner_return_assignment_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_return_assignment_drawer",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /partner/assignments/{{ assignment.id }}/return-action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Return Assignment Drawer",
+      "permission_key": "partner_activities",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The Return form. Scoped and state-checked here as well as in the service.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PARTNER"
+      ],
+      "route": "/partner/assignments/<str:assignment_id>/return-drawer",
+      "route_name": "partner_return_assignment_drawer",
+      "secondary_actions": [
+        "/partner/assignments/{{ assignment.id }}/return-action"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/partners/return_assignment_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -41797,6 +41918,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.partner_views.partner_return_assignment_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_activities",
+      "required_permissions": [],
+      "route": "/partner/assignments/<str:assignment_id>/return-action",
+      "route_name": "partner_return_assignment_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_return_assignment_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_activities",
+      "required_permissions": [],
+      "route": "/partner/assignments/<str:assignment_id>/return-drawer",
+      "route_name": "partner_return_assignment_drawer",
+      "templates": [
+        "partials/partners/return_assignment_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.partner_views.partner_schedule_assignment_action",
       "kind": "page",
       "methods": [
@@ -43661,15 +43808,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 873,
+    "all_routes": 875,
     "api_routes": 293,
-    "component_templates": 287,
-    "full_pages": 316,
-    "partials_and_drawers": 142,
-    "permission_gated": 461,
+    "component_templates": 288,
+    "full_pages": 317,
+    "partials_and_drawers": 143,
+    "permission_gated": 463,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 471,
+    "routed_surfaces": 473,
     "scheduled_jobs": 17,
     "severity_counts": {
       "critical": 0,
@@ -43677,6 +43824,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 437
+    "test_referenced": 439
   }
 }

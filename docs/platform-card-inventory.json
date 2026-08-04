@@ -1742,7 +1742,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 178,
+   "line": 172,
    "title": "Agreed Priorities ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -1756,7 +1756,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 271,
+   "line": 265,
    "title": "Targets &amp; Progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -1770,7 +1770,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 299,
+   "line": 293,
    "title": "Development Plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -1784,7 +1784,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 322,
+   "line": 316,
    "title": "Values &amp; Commitments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1798,7 +1798,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 342,
+   "line": 336,
    "title": "Amendments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1812,7 +1812,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 370,
+   "line": 364,
    "title": "Performance Conversations",
    "heading_level": 2,
    "has_card_key": false,
@@ -1826,7 +1826,7 @@
   },
   {
    "template": "templates/pages/hr/performance_console.html",
-   "line": 93,
+   "line": 92,
    "title": "Agreements in scope ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -1835,7 +1835,7 @@
   },
   {
    "template": "templates/pages/hr/performance_conversation.html",
-   "line": 155,
+   "line": 153,
    "title": "Edify Values &amp; Spiritual Formation",
    "heading_level": 2,
    "has_card_key": false,
