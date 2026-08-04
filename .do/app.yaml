@@ -54,19 +54,31 @@ alerts:
 # clients unable to reach the canonical host at all once it becomes canonical.
 #
 # Attach BOTH names in App Platform before changing the apex records, then wait
-# until its certificate covers both names. Only after that should this spec be
-# changed to apex=PRIMARY, www=ALIAS and CANONICAL_HOST be set in the service
-# environment. See docs/incident-2026-08-03-apex-godaddy-lander.md.
+# until its certificate covers both names. See
+# docs/incident-2026-08-03-apex-godaddy-lander.md.
 #
-# The current PRIMARY/ALIAS order is deliberately unchanged while the apex
-# still points to GoDaddy's parked-domain service. Flipping it early can disrupt
-# the currently healthy www host. The .app TLD is HSTS-preloaded, so valid TLS
-# on the apex is a hard cutover prerequisite.
+# CUTOVER COMPLETE, 2026-08-04. The prerequisite this order was waiting on is
+# met and verified from outside:
+#
+#   apex A     162.159.140.98, 172.66.0.96
+#   apex AAAA  2606:4700:7::60, 2a06:98c1:58::60
+#   HTTPS      200 over both IPv4 and IPv6
+#   TLS        CN=edifyplanning.app, valid to 2026-11-02
+#   lander     gone; /lander redirects into the application
+#
+# So the apex is PRIMARY now. PRIMARY is what App Platform treats as the app's
+# own address; www stays attached as an ALIAS so existing links, bookmarks and
+# anything already indexed keep resolving rather than breaking. The redirect
+# from www to here is the application's, via CANONICAL_HOST below — one hop,
+# path and query preserved.
+#
+# The .app TLD is HSTS-preloaded, so valid apex TLS was a hard prerequisite for
+# this flip, not a nicety. Do not reverse it without checking that first.
 domains:
-  - domain: www.edifyplanning.app
+  - domain: edifyplanning.app
     type: PRIMARY
     # zone: edifyplanning.app
-  - domain: edifyplanning.app
+  - domain: www.edifyplanning.app
     type: ALIAS
     # zone: edifyplanning.app
 
@@ -307,9 +319,23 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: https://www.edifyplanning.app,https://edifyplanning.app
       # Absolute links in invitation and password-reset emails are built from
-      # this, so it must be the public hostname rather than the platform one.
+      # this, so it must be the public hostname rather than the platform one —
+      # and now the CANONICAL one. Left on www it would email every new user a
+      # link that immediately redirects, which is a wasted round trip on a
+      # phone and reads as a redirect chain in any link checker.
       - key: APP_BASE_URL
-        value: https://www.edifyplanning.app
+        value: https://edifyplanning.app
+
+      # Arms apps.core.middleware.CanonicalHostMiddleware. Unset, it is a
+      # no-op — deliberately, so the code could ship before the apex resolved.
+      # The apex now serves the application over both IPv4 and IPv6 with a
+      # certificate valid to 2026-11-02, so the precondition is met.
+      #
+      # With this set, www.edifyplanning.app answers ONE permanent redirect to
+      # the apex, preserving path and query, and http://www collapses the TLS
+      # upgrade into that same hop rather than spending a second one.
+      - key: CANONICAL_HOST
+        value: edifyplanning.app
 
       # ── Background jobs ───────────────────────────────────────────────────
       # The eight scheduled jobs run ONLY in a dedicated runscheduler process.
