@@ -137,7 +137,8 @@
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Multi-year progress</span><h2 id="sp-trend-title">SSA performance trend by year</h2></div><span class="sp-target-chip">Target {{ dashboard.engine.target_score }}</span></header>
       {% if dashboard.trend.has_data %}
       <figure>
-        <svg viewBox="0 0 900 220" role="img" aria-labelledby="sp-chart-title sp-chart-desc">
+        <svg viewBox="0 0 900 220" data-edify-svg-typography role="img"
+             aria-labelledby="sp-chart-title sp-chart-desc">
           <title id="sp-chart-title">Annual average SSA performance trend</title>
           <desc id="sp-chart-desc">Annual confirmed SSA averages compared with the target score of {{ dashboard.engine.target_score }}.</desc>
           <g class="sp-chart-grid" aria-hidden="true"><line x1="48" y1="20" x2="852" y2="20"/><line x1="48" y1="59" x2="852" y2="59"/><line x1="48" y1="98" x2="852" y2="98"/><line x1="48" y1="137" x2="852" y2="137"/><line x1="48" y1="176" x2="852" y2="176"/></g>

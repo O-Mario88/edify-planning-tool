@@ -609,7 +609,8 @@ main :where(.overflow-x-auto, .overflow-auto):has(> table) {
   overscroll-behavior-inline: contain;
 }
 
-main table {
+main table,
+.drawer-body table {
   inline-size: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -630,7 +631,8 @@ main table tbody th {
   text-transform: none !important;
 }
 
-main table th {
+main table th,
+.drawer-body table th {
   padding: 0.5625rem 0.6875rem !important;
   border-block-end: 1px solid var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
@@ -646,9 +648,11 @@ main table th {
   white-space: nowrap;
 }
 
-main table td {
+main table td,
+.drawer-body table td {
   padding: 0.5625rem 0.6875rem !important;
   color: var(--edify-text-muted);
+  font-size: var(--edify-text-table-size) !important;
   line-height: 1.4;
   hyphens: manual;
   overflow-wrap: normal;
@@ -1569,7 +1573,7 @@ main .platform-responsive-table [data-priority="low"] {
   main .platform-responsive-table.platform-table-cards td::before {
     content: attr(data-label);
     color: var(--edify-text-subtle);
-    font-size: var(--edify-text-micro-size);
+    font-size: var(--edify-text-table-heading-size);
     font-weight: 600;
   }
 }
@@ -3367,7 +3371,7 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
 
 .edify-report-matrix__table {
   min-inline-size: 70rem !important;
-  font-size: var(--edify-text-micro-size) !important;
+  font-size: var(--edify-text-table-size) !important;
 }
 
 .edify-report-matrix__table :is(th, td) {

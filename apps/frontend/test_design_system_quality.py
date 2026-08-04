@@ -1289,6 +1289,29 @@ class TypeScaleFloorTest(SimpleTestCase):
                     offenders.append(f"{path.relative_to(ROOT)}: fontSize {value}px")
         self.assertEqual(offenders, [], f"chart text below the floor: {offenders}")
 
+    def test_table_structure_does_not_use_micro_typography(self):
+        """Rows and headers are operational data, not badge-sized metadata."""
+        rule_pattern = re.compile(r"([^{}]+)\{([^{}]*)\}", re.S)
+        table_role = re.compile(
+            r"table|(?:^|[\s>+~,])(?:thead|tbody|th|td)(?:\b|[:.#\[])"
+        )
+        compact_metadata = re.compile(
+            r"small|caption|footer|badge|status|overline|eyebrow"
+        )
+        offenders = []
+        for path in self._source_stylesheets():
+            text = path.read_text(encoding="utf-8")
+            for selector, body in rule_pattern.findall(text):
+                if not table_role.search(selector):
+                    continue
+                if compact_metadata.search(selector):
+                    continue
+                if "font-size: var(--edify-text-micro-size)" in body:
+                    offenders.append(
+                        f"{path.name}: {' '.join(selector.split())[-100:]}"
+                    )
+        self.assertEqual(offenders, [], f"micro-sized table structure: {offenders}")
+
     def test_inline_template_css_respects_the_twelve_pixel_floor(self):
         declaration_pattern = re.compile(r"font-size\s*:\s*([^;}{]+)")
         value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
@@ -1354,6 +1377,43 @@ class StableTypographyContractTest(SimpleTestCase):
             consistency,
         )
 
+    def test_responsive_svg_text_uses_screen_stable_typography(self):
+        """A viewBox must not scale the app's semantic font sizes."""
+        offenders = []
+        svg_pattern = re.compile(r"<svg\b(?P<attrs>[^>]*)>(?P<body>.*?)</svg>", re.S)
+        for path in (ROOT / "templates").rglob("*.html"):
+            for match in svg_pattern.finditer(path.read_text(encoding="utf-8")):
+                if "<text" not in match.group("body"):
+                    continue
+                if "data-edify-svg-typography" not in match.group("attrs"):
+                    offenders.append(str(path.relative_to(ROOT)))
+        self.assertEqual(offenders, [], f"responsive SVG text without sizing: {offenders}")
+
+        # The regional map creates its text nodes in JavaScript, so it cannot
+        # be discovered by the literal <text> scan above.
+        map_template = _read("templates/partials/analytics/regional_performance.html")
+        self.assertIn("data-edify-svg-typography", map_template)
+
+    def test_svg_typography_runtime_uses_tokens_and_tracks_layout_changes(self):
+        base = _read("templates/base.html")
+        runtime = _read("static/js/svg-typography.js")
+
+        self.assertIn("js/svg-typography.js", base)
+        self.assertIn("ResizeObserver", runtime)
+        self.assertIn("htmx:afterSwap", runtime)
+        self.assertIn("svg.viewBox.baseVal", runtime)
+        self.assertIn("rect.width / viewBox.width", runtime)
+        self.assertIn("`${size / scale}px`", runtime)
+        self.assertIn("20260804svgtype2", base)
+        for token in (
+            "--edify-text-micro-size",
+            "--edify-text-label-size",
+            "--edify-text-body-size",
+            "--edify-text-title-size",
+        ):
+            self.assertIn(token, runtime)
+        self.assertIn("`--edify-svg-text-${tier}`", runtime)
+
     def test_compact_scale_has_small_caps_without_sub_twelve_pixel_text(self):
         tokens = _read("static/css/design-system.css")
 
@@ -1366,6 +1426,10 @@ class StableTypographyContractTest(SimpleTestCase):
             "--edify-text-micro-size:   var(--edify-text-floor);",
         ):
             self.assertIn(expected, tokens)
+        self.assertIn(
+            "--edify-text-table-heading-size: var(--edify-text-table-size);",
+            tokens,
+        )
 
     def test_metric_labels_yield_columns_instead_of_wrapping(self):
         components = _read("static/css/components.css")
@@ -1398,6 +1462,12 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("--edify-text-table-size", _read("static/css/design-system.css"))
         self.assertIn("container: edify-table / inline-size", platform)
         self.assertIn("font-size: var(--edify-text-table-size) !important", platform)
+        self.assertIn(".drawer-body table th {", platform)
+        self.assertIn(".drawer-body table td {", platform)
+        self.assertNotIn(
+            "--edify-text-table-heading-size: 0.8125rem;",
+            _read("static/css/design-system.css"),
+        )
         self.assertIn("text-wrap: nowrap", platform)
         self.assertIn("white-space: nowrap", platform)
         self.assertIn("overflow-x: auto", platform)

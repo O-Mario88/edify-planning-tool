@@ -37,6 +37,7 @@ from apps.targets.my_targets import (
     TargetAchievementService,
     _user_ids,
     active_target_areas,
+    priority_target_areas_for_users,
     weighted_period_pct,
 )
 
@@ -145,8 +146,8 @@ class PLTeamTargetsService:
         metric_areas=None,
     ):
         TargetAchievementService.rebuild(user, fy)
-        targets = MyTargetQueryService.monthly_targets(user, fy)
-        achieved = MyTargetQueryService.monthly_achievements(user, fy)
+        targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
+        achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
         metric_areas = list(metric_areas or areas)
         pace = (
             Cal.expected_pace_pct(m_start, m_end, today, user) if is_current_fy else 100
@@ -325,6 +326,7 @@ class PLTeamTargetsService:
             "matrix_cells": matrix_cells,
             "mobile_cells": mobile_cells,
             "area_matrix": area_matrix,
+            "metric_areas": metric_areas,
         }
 
     # ── the full page payload ────────────────────────────────────────────────
@@ -343,7 +345,16 @@ class PLTeamTargetsService:
         month_of_fy = month_of_fy or (now["month_of_fy"] if is_current_fy else 1)
         today = now["today"]
         m_start, m_end = Cal.month_range(fy, month_of_fy)
-        areas = active_target_areas()
+        all_team = supervised_users(pl_user)
+        priority_areas_by_user = priority_target_areas_for_users(all_team, fy)
+        areas = []
+        seen_area_keys = set()
+        for user in all_team:
+            for area in priority_areas_by_user.get(str(user.id), []):
+                if area.key in seen_area_keys:
+                    continue
+                seen_area_keys.add(area.key)
+                areas.append(area)
         valid_area_keys = {a.key for a in areas}
         category = category if category in valid_area_keys else "overall"
         metric_areas = (
@@ -355,7 +366,6 @@ class PLTeamTargetsService:
             else metric_areas[0].label
         )
 
-        all_team = supervised_users(pl_user)
         all_staff_ids = [
             u.staff_profile_id for u in all_team if getattr(u, "staff_profile_id", None)
         ]
@@ -412,20 +422,27 @@ class PLTeamTargetsService:
                 continue
             team.append(user)
 
-        members = [
-            PLTeamTargetsService._member(
-                u,
-                areas,
-                fy,
-                month_of_fy,
-                today,
-                m_start,
-                m_end,
-                is_current_fy,
-                metric_areas=metric_areas,
+        members = []
+        for user in team:
+            user_areas = priority_areas_by_user.get(str(user.id), [])
+            user_metric_areas = (
+                user_areas
+                if category == "overall"
+                else [area for area in user_areas if area.key == category]
             )
-            for u in team
-        ]
+            members.append(
+                PLTeamTargetsService._member(
+                    user,
+                    user_areas,
+                    fy,
+                    month_of_fy,
+                    today,
+                    m_start,
+                    m_end,
+                    is_current_fy,
+                    metric_areas=user_metric_areas,
+                )
+            )
         team_ids = [i for m in members for i in _user_ids(m["user"])]
 
         for m in members:
@@ -443,18 +460,35 @@ class PLTeamTargetsService:
             out = {a.key: [0] * 12 for a in areas}
             for m in members:
                 for a in areas:
+                    series = m[field].get(a.key, [0] * 12)
                     for i in range(12):
-                        out[a.key][i] += m[field][a.key][i]
+                        out[a.key][i] += series[i]
             return out
 
         t_targets = team_series("targets")
         t_achieved = team_series("achieved")
 
         def team_wpct(month_list):
-            """Delegates to the canonical weighted_period_pct — the same
-            formula My Targets uses per-user, applied here to the team-summed
-            series. One canonical weighted formula, not a reimplementation."""
-            return weighted_period_pct(metric_areas, t_targets, t_achieved, month_list)
+            """Average each member's priority-weighted result for the period."""
+            pcts = []
+            total_achieved = total_target = 0
+            for member in members:
+                pct, achieved, target = weighted_period_pct(
+                    member["metric_areas"],
+                    member["targets"],
+                    member["achieved"],
+                    month_list,
+                    none_if_unassigned=True,
+                )
+                total_achieved += achieved
+                total_target += target
+                if pct is not None:
+                    pcts.append(pct)
+            return (
+                round(sum(pcts) / len(pcts)) if pcts else 0,
+                total_achieved,
+                total_target,
+            )
 
         def raw_pct(month_list):
             t = sum(
@@ -631,10 +665,11 @@ class PLTeamTargetsService:
         ]
 
         # ── What Needs Attention ─────────────────────────────────────────────
-        ssa_t = t_targets["ssa_completed"][month_of_fy - 1]
-        ssa_a = t_achieved["ssa_completed"][month_of_fy - 1]
-        visit_t = t_targets["school_visits"][month_of_fy - 1]
-        visit_a = t_achieved["school_visits"][month_of_fy - 1]
+        empty_series = [0] * 12
+        ssa_t = t_targets.get("ssa_completed", empty_series)[month_of_fy - 1]
+        ssa_a = t_achieved.get("ssa_completed", empty_series)[month_of_fy - 1]
+        visit_t = t_targets.get("school_visits", empty_series)[month_of_fy - 1]
+        visit_a = t_achieved.get("school_visits", empty_series)[month_of_fy - 1]
 
         ssa_sched = (
             Activity.objects.filter(
@@ -1379,11 +1414,20 @@ class PLTeamTargetsService:
         now = Cal.current()
         fy = fy or now["fy"]
         month_of_fy = month_of_fy or (now["month_of_fy"] if fy == now["fy"] else 1)
-        areas = active_target_areas()
+        team = supervised_users(pl_user)
+        areas_by_user = priority_target_areas_for_users(team, fy)
+        all_areas = []
+        seen_keys = set()
+        for user in team:
+            for item in areas_by_user.get(str(user.id), []):
+                if item.key not in seen_keys:
+                    seen_keys.add(item.key)
+                    all_areas.append(item)
         selected_area_key = (area or "").strip()
-        if selected_area_key:
-            areas = [item for item in areas if item.key == selected_area_key]
-        selected_area_label = areas[0].label if selected_area_key and areas else ""
+        selected_area = next(
+            (item for item in all_areas if item.key == selected_area_key), None
+        )
+        selected_area_label = selected_area.label if selected_area else ""
         current_quarter = Cal.quarter_of_month(month_of_fy)
         heads = (
             [
@@ -1406,10 +1450,13 @@ class PLTeamTargetsService:
             ]
         )
         rows = []
-        for u in supervised_users(pl_user):
+        for u in team:
+            areas = areas_by_user.get(str(u.id), [])
+            if selected_area_key:
+                areas = [item for item in areas if item.key == selected_area_key]
             TargetAchievementService.rebuild(u, fy)
-            targets = MyTargetQueryService.monthly_targets(u, fy)
-            achieved = MyTargetQueryService.monthly_achievements(u, fy)
+            targets = MyTargetQueryService.monthly_targets(u, fy, areas=areas)
+            achieved = MyTargetQueryService.monthly_achievements(u, fy, areas=areas)
             for a in areas:
                 cells = []
                 for period_key, months in zip(
@@ -1440,7 +1487,7 @@ class PLTeamTargetsService:
             "quarter": current_quarter,
             "selected_area_key": selected_area_key,
             "selected_area_label": selected_area_label,
-            "invalid_area": bool(selected_area_key and not areas),
+            "invalid_area": bool(selected_area_key and not selected_area),
         }
 
     @staticmethod
@@ -1461,23 +1508,26 @@ class PLTeamTargetsService:
             team_member=team_member,
         )
         fy = page["fy"]
-        selected_area_keys = (
-            {page["selected_category"]}
-            if page["selected_category"] != "overall"
-            else {area["key"] for area in page["areas"]}
-        )
-        areas = [area for area in page["areas"] if area["key"] in selected_area_keys]
-        rows = [["Staff", "Target Area", "Period", "Target", "Valid Achieved", "%"]]
+        rows = [
+            [
+                "Staff",
+                "Performance Priority",
+                "Period",
+                "Target",
+                "Valid Achieved",
+                "%",
+            ]
+        ]
         for member in page["members"]:
             targets = member["targets"]
             achieved = member["achieved"]
-            for a in areas:
+            for a in member["metric_areas"]:
                 for mm in range(1, 13):
-                    t, ach = targets[a["key"]][mm - 1], achieved[a["key"]][mm - 1]
+                    t, ach = targets[a.key][mm - 1], achieved[a.key][mm - 1]
                     rows.append(
                         [
                             member["name"],
-                            a["label"],
+                            a.label,
                             Cal.month_label(fy, mm),
                             t,
                             ach,
@@ -1486,23 +1536,23 @@ class PLTeamTargetsService:
                     )
                 for q in QUARTERS:
                     months = Cal.months_of_quarter(q)
-                    t = sum(targets[a["key"]][mm - 1] for mm in months)
-                    ach = sum(achieved[a["key"]][mm - 1] for mm in months)
+                    t = sum(targets[a.key][mm - 1] for mm in months)
+                    ach = sum(achieved[a.key][mm - 1] for mm in months)
                     rows.append(
                         [
                             member["name"],
-                            a["label"],
+                            a.label,
                             q,
                             t,
                             ach,
                             round(ach / t * 100) if t else "",
                         ]
                     )
-                t, ach = sum(targets[a["key"]]), sum(achieved[a["key"]])
+                t, ach = sum(targets[a.key]), sum(achieved[a.key])
                 rows.append(
                     [
                         member["name"],
-                        a["label"],
+                        a.label,
                         "FY Cumulative",
                         t,
                         ach,

@@ -256,6 +256,10 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
+<!-- Responsive SVGs use viewBox units internally. Counter their outer scale
+     once so chart and map labels render at the same semantic type sizes as
+     surrounding HTML, including content inserted by HTMX. -->
+<script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

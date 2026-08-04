@@ -11,7 +11,7 @@
   read as "nothing planned", never as 0% — those are different facts.
 {% endcomment %}
 <figure class="admin-line-figure" id="admin-planning-progress-body">
-  <svg class="admin-line-chart" data-admin-progress-chart data-values="{% for point in weekly_progress %}{% if point.measured %}{{ point.percentage }}{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}" viewBox="0 0 640 180" role="img" aria-labelledby="admin-progress-chart-title admin-progress-chart-desc">
+  <svg class="admin-line-chart" data-admin-progress-chart data-edify-svg-typography data-values="{% for point in weekly_progress %}{% if point.measured %}{{ point.percentage }}{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}" viewBox="0 0 640 180" role="img" aria-labelledby="admin-progress-chart-title admin-progress-chart-desc">
     <title id="admin-progress-chart-title">Planning progress by {{ progress_period }}</title>
     <desc id="admin-progress-chart-desc">{{ progress_description }}</desc>
     <defs><linearGradient id="admin-progress-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--edify-accent)" stop-opacity=".18"/><stop offset="1" stop-color="var(--edify-accent)" stop-opacity="0"/></linearGradient></defs>

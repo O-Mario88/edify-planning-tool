@@ -41,6 +41,7 @@ from apps.targets.my_targets import (
     MyTargetQueryService,
     TargetAchievementService,
     active_target_areas,
+    priority_target_areas,
 )
 
 User = get_user_model()
@@ -203,7 +204,7 @@ class MyTargetsPageTest(TestCase):
         for needle in ("Q1", "Q2", "Q3", "Q4", "FY Cumulative"):
             self.assertIn(needle, html)
 
-    def test_only_five_official_target_areas(self):
+    def test_global_target_catalogue_does_not_invent_personal_priority_rows(self):
         self.assertEqual(
             list(
                 TargetArea.objects.filter(active=True)
@@ -221,15 +222,71 @@ class MyTargetsPageTest(TestCase):
         c = Client()
         c.force_login(self.user)
         html = c.get("/my-targets").content.decode()
-        for area in (
-            "School Visits",
-            "Cluster Meetings",
-            "Cluster Trainings",
-            "SSA Completed",
-            "MSCS",
-        ):
-            self.assertIn(area, html)
-        self.assertNotIn("New School", html)  # superseded areas gone
+        self.assertIn("No measurable performance priorities agreed", html)
+        self.assertNotIn("Performance Priorities by Time Period", html)
+
+    def test_my_target_rows_use_the_users_agreed_priority_wording_and_weight(self):
+        from apps.hr.models import PerformancePriority, PerformanceReview
+        from apps.hr.performance_engine import sync_targets_from_agreement
+
+        # A stale legacy target must not add a second hardcoded row once an
+        # agreed performance priority exists.
+        self._monthly("cluster_meetings", JULY, 8)
+        review = PerformanceReview.objects.create(
+            staff=self.sp,
+            fy=FY,
+            period=f"FY{FY}",
+            review_type="annual_priorities",
+            stage="priorities_agreed",
+            status="Priorities agreed",
+            due_date=date(2026, 9, 30),
+        )
+        priority = PerformancePriority.objects.create(
+            review=review,
+            sequence=1,
+            outcome_statement="Complete focused coaching visits for my schools",
+            metric_key="direct_visits",
+            target_number=12,
+            weight=100,
+        )
+        sync_targets_from_agreement(review, self.user)
+
+        page = MyTargetQueryService.get_page(self.user, fy=FY, month_of_fy=JULY)
+
+        self.assertEqual(
+            [(row["label"], row["key"], row["weight"]) for row in page["area_cards"]],
+            [(priority.outcome_statement, "school_visits", 100)],
+        )
+        self.assertEqual(
+            [row["label"] for row in page["matrix_rows"]], [priority.outcome_statement]
+        )
+
+    def test_agreed_review_does_not_revive_stale_unmapped_legacy_rows(self):
+        from apps.hr.models import PerformancePriority, PerformanceReview
+
+        self._monthly("cluster_meetings", JULY, 8)
+        review = PerformanceReview.objects.create(
+            staff=self.sp,
+            fy=FY,
+            period=f"FY{FY}",
+            review_type="annual_priorities",
+            stage="priorities_agreed",
+            status="Priorities agreed",
+            due_date=date(2026, 9, 30),
+        )
+        PerformancePriority.objects.create(
+            review=review,
+            sequence=1,
+            outcome_statement="Grow partner-supported schools",
+            metric_key="partner_supported_schools",
+            target_number=10,
+            weight=100,
+        )
+
+        self.assertEqual(priority_target_areas(self.user, FY), [])
+        self.assertEqual(
+            MyTargetQueryService.get_page(self.user, fy=FY)["area_cards"], []
+        )
 
     # ── 6–10: validity rules per area ────────────────────────────────────────
     def test_visit_counts_only_when_ia_verified(self):
@@ -424,6 +481,7 @@ class MyTargetsPageTest(TestCase):
         self.assertIn("FY Cumulative", body)
 
     def test_area_drawer_explains_missing_sf_id(self):
+        self._monthly("school_visits", JULY, 4)
         self._visit(date(2026, 7, 6), status="completed", sf_id="")
         c = Client()
         c.force_login(self.user)
