@@ -31,6 +31,37 @@ from .request_context import (
 
 logger = logging.getLogger("edify.exceptions")
 
+# How many innermost application frames to keep on a failed request. Three is
+# enough to say "the template tag, called from this view, via this service"
+# without turning an audit row into a stack dump.
+_ORIGIN_FRAMES = 3
+
+
+def _exception_origin(exception: BaseException) -> list[str]:
+    """Innermost `file:line:function` frames from this codebase.
+
+    Deliberately not the formatted traceback. The audit trail is read by
+    administrators through /admin-panel/audit-log, and a rendered traceback
+    carries argument values and local variables — which on this platform means
+    school names, staff identifiers and financial figures ending up in a table
+    that exists to be exported. File, line and function name locate the fault
+    exactly and carry no data.
+
+    Site-packages frames are dropped: a Django or psycopg frame is the same
+    for every error and pushes out the ones that identify this bug.
+    """
+    import traceback
+
+    frames = []
+    for frame in traceback.extract_tb(exception.__traceback__):
+        if "site-packages" in frame.filename or "/python3." in frame.filename:
+            continue
+        path = frame.filename.split("/app/", 1)[-1]
+        frames.append(f"{path}:{frame.lineno}:{frame.name}")
+    # Innermost last in a traceback, and the innermost frames are the ones that
+    # say where it broke — so keep the tail, not the head.
+    return frames[-_ORIGIN_FRAMES:]
+
 
 class RequestContextMiddleware:
     """First-in middleware: open a contextvars scope for the request so the
@@ -350,7 +381,20 @@ class AllExceptionsMiddleware:
                 "method": request.method,
                 "path": request.path,
                 "exception_type": type(exception).__name__,
+                # Where it came from, not just what it was. The container log
+                # holds the full traceback but App Platform keeps no logs for a
+                # superseded deployment, so after the next deploy this row is
+                # the only durable record — and "AttributeError somewhere"
+                # cannot be acted on. Frames are file:line:function from this
+                # codebase only: no locals, no argument values, nothing that
+                # could carry user data into the audit trail.
+                "origin": _exception_origin(exception),
+                # The message the user was shown. Without it the correlation id
+                # a person quotes from a red banner matches nothing once the
+                # deployment that logged it is gone.
+                "message": str(exception)[:300],
             },
+            correlation_id=correlation_id,
         )
         logger.exception(
             "[%s] %s %s -> 500 : %s",
