@@ -97,7 +97,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
     def test_map_renders_toggleable_school_distribution_pins(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn('aria-label="Toggle school distribution pins"', template)
+        self.assertIn(
+            'role="group" aria-labelledby="school-map-legend-title"', template
+        )
         self.assertIn("toggleSchoolType(type.key)", template)
         # The pins read each district's own distribution through schoolMix().
         # This used to assert the literal line inside syncSchoolTotals, which
@@ -119,6 +121,40 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("subregion-school-type-totals", template)
         self.assertNotIn("districts.reduce(", template)
+
+    def test_school_legend_sits_below_the_map_without_outlined_pills(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        map_end = template.index("</svg>")
+        legend_start = template.index('id="school-map-legend-title"')
+        distribution_start = template.index("Distribution by ${distributionLevel()}")
+        self.assertLess(map_end, legend_start)
+        self.assertLess(legend_start, distribution_start)
+        self.assertIn(
+            'role="group" aria-labelledby="school-map-legend-title"', template
+        )
+        legend_controls = template[legend_start:distribution_start]
+        self.assertIn("hover:bg-slate-50", legend_controls)
+        self.assertNotIn("border border-slate-200 edify-surface", legend_controls)
+
+    def test_country_totals_sit_below_the_distribution_heading(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        heading = template.index("Distribution by ${distributionLevel()}")
+        districts = template.index(
+            "{{ subregion_performance.totals.districts }} districts", heading
+        )
+        subregions = template.index(
+            "{{ subregion_performance.totals.subregions }} sub-regions", districts
+        )
+        schools = template.index(
+            "{{ subregion_performance.totals.schools }} schools", subregions
+        )
+        table = template.index('<table class="w-full text-left text-table-cell">')
+        self.assertLess(heading, districts)
+        self.assertLess(districts, subregions)
+        self.assertLess(subregions, schools)
+        self.assertLess(schools, table)
 
     def test_school_pin_colours_match_the_classification_legend(self):
         template = _read("templates/partials/analytics/regional_performance.html")
