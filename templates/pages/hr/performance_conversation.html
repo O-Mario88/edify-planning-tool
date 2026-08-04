@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{# window_label is the h1; it varies per cycle, so the tab follows it. #}
+{% block title %}{{ window_label }} · Edify{% endblock %}
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto">
 
