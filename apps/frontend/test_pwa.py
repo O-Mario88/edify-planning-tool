@@ -201,9 +201,7 @@ class IconAssetTest(SimpleTestCase):
             # Ten percent in on the diagonal is outside a circle; eighteen
             # percent is inside. A rounded square is opaque at both points.
             self.assertLess(alpha.getpixel((round(w * 0.10), round(h * 0.10))), 64)
-            self.assertGreater(
-                alpha.getpixel((round(w * 0.18), round(h * 0.18))), 200
-            )
+            self.assertGreater(alpha.getpixel((round(w * 0.18), round(h * 0.18))), 200)
             for point in (
                 (w // 2, round(h * 0.08)),
                 (w // 2, round(h * 0.92)),
