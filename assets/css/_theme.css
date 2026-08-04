@@ -1,0 +1,81 @@
+/*
+ * The canonical @theme block — the ONE definition of the Edify design tokens
+ * Tailwind knows about. Imported by both bundles so there is exactly one place
+ * these values exist:
+ *
+ *   tailwind.source.css  -> static/css/main.css    (the application bundle)
+ *   tokens.source.css    -> static/css/tokens.css  (tokens only, for sign-in)
+ *
+ * `@theme static` rather than `@theme`: Tailwind tree-shakes theme values whose
+ * utilities are unused, which is right for main.css but wrong for tokens.css —
+ * the sign-in page consumes var(--radius-control) directly from login.css
+ * without ever using a rounded-control utility, so tree-shaking silently
+ * dropped the token and every radius on that page collapsed to 0.
+ *
+ * design-system.css consumes these and deliberately does NOT redeclare them;
+ * see the note at its --edify-radius-* aliases for what happened last time
+ * two definitions existed.
+ */
+@theme static {
+  /* Geist Sans is the single product typeface. Keep Tailwind utilities aligned
+     with the semantic Edify design tokens. */
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Edify brand tokens (referenced by templates as e.g. text-edify-primary,
+     bg-[var(--color-edify-soft)], border-edify-border). */
+  /* The Tailwind aliases resolve at runtime to the same semantic token layer
+     consumed by the component CSS.  Keeping literal values here created a
+     second, stale colour system every time the main bundle was rebuilt. */
+  --color-edify-primary: var(--brand-primary);
+  --color-edify-dark: var(--brand-primary-hover);
+  --color-edify-deep: var(--brand-primary-hover);
+  --color-edify-darker: var(--brand-primary-active);
+  --color-edify-soft: var(--brand-primary-soft);
+  --color-edify-border: var(--brand-primary-border);
+  --color-edify-divider: var(--edify-divider);
+  --color-edify-muted: var(--edify-text-muted);
+  --color-edify-text: var(--edify-text);
+  --color-edify-orange: var(--edify-brand-secondary);
+  --color-page: var(--edify-bg);
+  --color-danger: var(--edify-danger);
+  --color-danger-soft: var(--edify-danger-light);
+  --color-success: var(--edify-success);
+  --color-success-soft: var(--edify-success-light);
+  --color-warn-soft: var(--edify-warning-light);
+
+  /* Templates use non-standard "150" shades (between Tailwind's 100 and 200).
+     Define them so border-rose-150 etc. compile instead of silently no-oping. */
+  --color-rose-150: #fed9dc;
+  --color-emerald-150: #bcf6da;
+  --color-amber-150: #fdeda9;
+  --color-green-150: #ccf9db;
+  --color-indigo-150: #d5dcfb;
+
+  /* Canonical Edify geometry. These generate the only approved radius
+     utilities: rounded-surface, rounded-control, rounded-overlay,
+     rounded-small and rounded-pill.
+
+     Values are fixed by the design-system spec (§11):
+       surface 12px — cards, tiles, KPI cards, chart cards, table wrappers
+       control  8px — buttons, inputs, filters, tabs, navigation controls
+       overlay 16px — large modals, drawers, overlays
+       pill         — status pills, badges, avatars, progress bars
+     The scale previously ran one step large (16/12/20), so every card and
+     control on the platform was rounder than the approved geometry. Because
+     all ~3,300 radius utilities resolve through these tokens, correcting
+     them here brings the whole platform into spec in one place — do not
+     reintroduce per-component radius values. */
+  --radius-surface: 12px;
+  --radius-control: 8px;
+  --radius-overlay: 16px;
+  --radius-small: 6px;
+  --radius-pill: 9999px;
+
+  /* animate-fade-in is used by a few admin/upload templates. */
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
