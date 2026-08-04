@@ -167,7 +167,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("placeBoundaryLabels({", template)
         self.assertIn(
-            "labelLayer, pathLayer, pinLayer, key, scale=1, maxLabels=Infinity,",
+            "labelLayer, pathLayer, pinLayer, key, scale=1,",
             template,
         )
         self.assertIn("placeDistrictLabels(){", template)
@@ -185,7 +185,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             "placed.every(existing => !overlaps(rect, existing)) &&", template
         )
         self.assertIn("markerRects.every(marker => !overlaps(rect, marker))", template)
-        self.assertIn("const labelScales = [1];", template)
+        self.assertIn("labelScales=[1], allowOverlapFallback=false,", template)
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
         self.assertIn("placement = 'open-space';", template)
@@ -208,17 +208,16 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertNotIn("declash(){", template)
 
-    def test_national_overview_caps_district_label_density(self):
+    def test_national_overview_keeps_every_district_label_visible(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn("overviewDistrictLabelBudget(){", template)
-        self.assertIn(
-            "Math.max(18, Math.min(32, Math.round(width / 24)))", template
-        )
-        self.assertIn("maxLabels=Infinity", template)
-        self.assertIn("if(visibleCount >= maxLabels)", template)
-        self.assertIn("label.dataset.labelPlacement = 'density-hidden';", template)
-        self.assertIn("maxLabels:this.overviewDistrictLabelBudget(),", template)
+        self.assertIn("labelScales:[0.82, 0.74, 0.68],", template)
+        self.assertIn("allowOverlapFallback:true,", template)
+        self.assertIn("}else if(allowOverlapFallback){", template)
+        self.assertIn("placement = 'anchor-overlap';", template)
+        self.assertNotIn("density-hidden", template)
+        self.assertNotIn("overviewDistrictLabelBudget", template)
+        self.assertNotIn("visibleCount", template)
         self.assertIn("pathAreaByName", template)
         self.assertIn("t.textContent = p.d;", template)
         self.assertNotIn("t.textContent = p.d.toUpperCase();", template)

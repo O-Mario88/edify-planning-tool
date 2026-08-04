@@ -982,15 +982,9 @@ function subregionMap(){
         return path.isPointInFill(point);
       }));
     },
-    overviewDistrictLabelBudget(){
-      const width = this.$refs.svg?.getBoundingClientRect().width || this.W;
-      // A national map cannot legibly carry all 135 district names at the
-      // platform's 12px text floor. Keep a stable, container-aware subset;
-      // every district remains named by its focusable path and hover card.
-      return Math.max(18, Math.min(32, Math.round(width / 24)));
-    },
     placeBoundaryLabels({
-      labelLayer, pathLayer, pinLayer, key, scale=1, maxLabels=Infinity,
+      labelLayer, pathLayer, pinLayer, key, scale=1,
+      labelScales=[1], allowOverlapFallback=false,
     }){
       const labels = [...(labelLayer?.querySelectorAll('text') || [])];
       const paths = [...(pathLayer?.querySelectorAll('path:not(.sr-boundary-lift)') || [])];
@@ -1003,7 +997,6 @@ function subregionMap(){
       }));
       const markerRects = this.markerObstacleRects(pinLayer, scale);
       const placed = [];
-      let visibleCount = 0;
       const overlaps = (a, b) =>
         a.left < b.right && a.right > b.left &&
         a.top < b.bottom && a.bottom > b.top;
@@ -1021,13 +1014,6 @@ function subregionMap(){
 
       labels.forEach(label => {
         label.style.opacity = '';
-        if(visibleCount >= maxLabels){
-          label.style.opacity = 0;
-          label.dataset.labelOffset = '0.00,0.00';
-          label.dataset.labelScale = '1.00';
-          label.dataset.labelPlacement = 'density-hidden';
-          return;
-        }
         const path = pathByName.get(label.dataset[key]);
         const baseX = Number(label.dataset.labelX);
         const baseY = Number(label.dataset.labelY);
@@ -1053,9 +1039,9 @@ function subregionMap(){
           placed.every(existing => !overlaps(rect, existing)) &&
           this.boundaryContainsLabel(path, rect);
 
-        /* Labels stay at the platform's 12px floor. Density is resolved by
-           priority and omission, never by shrinking text into illegibility. */
-        const labelScales = [1];
+        /* Detailed boundary labels stay at the shared type step. The national
+           overview supplies a short fitting scale so all district names can
+           remain present without returning to the oversized, all-caps map. */
         let labelScale = 1;
         let offset = null;
         let placement = 'clear';
@@ -1102,6 +1088,13 @@ function subregionMap(){
           if(best){
             offset = best.candidate;
             labelScale = best.labelScale;
+          }else if(allowOverlapFallback){
+            // A name is more useful than an unexplained blank district. Tiny,
+            // pin-dense boundaries keep a compact label at their own anchor
+            // when no collision-free candidate exists.
+            offset = [0, 0];
+            labelScale = labelScales[labelScales.length - 1];
+            placement = 'anchor-overlap';
           }else{
             // The accessible boundary and hover snapshot still carry the
             // name. Omit the visual label instead of shrinking or colliding.
@@ -1128,7 +1121,6 @@ function subregionMap(){
         label.dataset.labelScale = labelScale.toFixed(2);
         label.dataset.labelPlacement = placement;
         placed.push(rect);
-        visibleCount += 1;
       });
     },
     placeDistrictLabels(){
@@ -1138,7 +1130,8 @@ function subregionMap(){
         pinLayer:this.pinLayer,
         key:'district',
         scale:1,
-        maxLabels:this.overviewDistrictLabelBudget(),
+        labelScales:[0.82, 0.74, 0.68],
+        allowOverlapFallback:true,
       });
     },
     resolveSubcountyLabelCollisions(){
@@ -1633,8 +1626,9 @@ function subregionMap(){
   }
   #sr-cam text{text-anchor:middle;dominant-baseline:middle;pointer-events:none;
                stroke:none;transition:opacity .3s}
-  /* Boundary labels use the global 12px floor; the collision engine omits a
-     low-priority name when the map cannot place it cleanly at that size. */
+  /* Boundary labels inherit the shared SVG type step. National district
+     labels are fitted by the placement transform; detailed sub-county labels
+     retain the full step because the focused map has substantially more room. */
   #sr-cam .sr-dl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
                  font-weight:var(--edify-text-label-weight);fill:var(--edify-text-muted);
                  letter-spacing:0}
