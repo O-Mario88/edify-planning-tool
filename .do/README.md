@@ -53,7 +53,37 @@ Recorded 2026-08-04 after the spec repair. Treat as documentation, not as input:
   `ENABLE_BACKGROUND_JOBS=true`
 - database `dev-db-315277` (PG, **development tier — no automated failover**)
 - env is set at **app level**, so both components inherit it; the worker
-  overrides only `ENABLE_BACKGROUND_JOBS`, `RUN_MIGRATIONS`, `RUN_SEED`
+  overrides `DATABASE_URL`, `ENABLE_BACKGROUND_JOBS`, `RUN_MIGRATIONS`,
+  `RUN_SEED`
+
+### The `DATABASE_URL` landmine (cost one failed deploy, 2026-08-04)
+
+The app-level `DATABASE_URL` was `${db.DATABASE_URL}`. **There is no database
+named `db`** — it is `dev-db-315277`. That binding resolved to an empty string
+and had been dead for as long as the app existed, invisibly, because the web
+service carries its own component-level override pointing at the real name.
+
+The first attempt to add the scheduler let it inherit the app-level value. It
+crashed on import:
+
+```
+dj_database_url.UnknownSchemeError: Scheme '://' is unknown
+```
+
+App Platform rolled the whole deployment back automatically and production was
+never down — the safety net worked exactly as intended.
+
+Two things follow, and both are now true of the live spec:
+
+1. The app-level binding is repaired to `${dev-db-315277.DATABASE_URL}`, so
+   nothing inherits an empty URL again.
+2. The scheduler still declares `DATABASE_URL` explicitly anyway. A component
+   that must not silently reach the wrong database should name the one it
+   means rather than depend on inheritance being correct.
+
+The general lesson: **app-level env is inherited, not validated.** A binding
+that is broken for every component can look healthy indefinitely if the only
+component that exists happens to override it.
 - `RUN_MIGRATIONS=true` on the web service: migrations run on **container
   boot**, not in a pre-deploy job. That makes `instance_count: 1` load-bearing
   — two web instances would migrate concurrently against one database.
