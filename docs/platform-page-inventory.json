@@ -1225,7 +1225,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 15284,
+      "bytes": 15309,
       "findings": [],
       "forms": 1,
       "htmx_controls": 4,
