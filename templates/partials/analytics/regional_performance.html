@@ -26,7 +26,7 @@
               sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h3 class="text-card-title flex items-center gap-1.5">
-        <span>Performance by Sub-Region</span>
+        <span x-text="`Performance by ${distributionLevel()}`">Performance by Sub-Region</span>
         <span class="edify-text-caption text-slate-400 cursor-help"
               title="Click a district to zoom; Esc or click outside to return">ⓘ</span>
       </h3>
@@ -53,7 +53,9 @@
                        edify-text-caption font-bold text-slate-600 hover:bg-slate-50">
           <span x-text="focusedSubcounty
             ? `Back to ${focusedDistrict}`
-            : `${focused && focused.replace('sub:', '')} · Back`"></span>
+            : districtParentSubregion
+              ? `Back to ${districtParentSubregion}`
+              : `${focused && focused.replace('sub:', '')} · Back`"></span>
           &middot; Esc
         </button>
       </div>
@@ -209,60 +211,61 @@
 
     {# Extreme right on desktop, below the map on mobile. #}
     <div class="w-full lg:w-[286px] lg:shrink-0">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pb-1.5">
-        Distribution by Sub-Region
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pb-1.5"
+         aria-live="polite">
+        <span x-text="`Distribution by ${distributionLevel()}`">Distribution by Sub-Region</span>
       </p>
-      <div class="overflow-x-auto">
+      <div class="max-h-[620px] overflow-auto">
         <table class="w-full text-left text-table-cell">
-          <thead>
+          <thead class="sticky top-0 z-10 edify-surface">
             <tr class="text-table-header font-bold uppercase tracking-wider text-slate-400">
-              <th class="pb-1.5 pr-1">Sub-region</th>
+              <th class="pb-1.5 pr-1" x-text="distributionLevel()">Sub-region</th>
               <th class="pb-1.5 px-1 text-right">Sch</th>
               <th class="pb-1.5 px-1 text-right">Clu</th>
               <th class="pb-1.5 pl-1 text-right">SSA</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            {% for s in subregion_performance.subregions %}
-            <tr class="hover:bg-slate-50/70 cursor-pointer" tabindex="0"
-                role="button"
-                aria-label="Focus {{ s.name }} on the map"
-                :aria-pressed="focused === 'sub:{{ s.name|escapejs }}'"
-                :class="focused === 'sub:{{ s.name|escapejs }}' && 'bg-slate-100/80'"
-                @click.stop="focusSub('{{ s.name|escapejs }}')"
-                @keydown.enter.prevent="focusSub('{{ s.name|escapejs }}')"
-                @keydown.space.prevent="focusSub('{{ s.name|escapejs }}')"
-                @mouseenter="highlight('{{ s.name|escapejs }}')"
-                @mouseleave="highlight(null)"
-                @focus="highlight('{{ s.name|escapejs }}')"
-                @blur="highlight(null)">
-              <td class="py-1.5 pr-1 font-semibold text-slate-700">
-                <span class="inline-flex items-center gap-1.5">
-                  <span class="h-2 w-2 rounded-pill shrink-0"
-                        style="background:{{ s.colour }}"></span>
-                  <span class="truncate">{{ s.name }}</span>
-                </span>
-              </td>
-              <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.schools }}</td>
-              <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600">{{ s.clusters }}</td>
-              <td class="py-1.5 pl-1 text-right font-bold tabular-nums
-                         {% if s.ssa_avg == None %}text-slate-300{% else %}text-slate-800{% endif %}">
-                {% if s.ssa_avg == None %}&mdash;{% else %}{{ s.ssa_avg }}/10{% endif %}
-              </td>
+            <template x-for="row in distributionRows()" :key="`${row.level}:${row.name}`">
+              <tr class="hover:bg-slate-50/70 cursor-pointer" tabindex="0"
+                  role="button"
+                  :aria-label="`Focus ${row.name} ${row.level} on the map`"
+                  :aria-pressed="isDistributionRowActive(row).toString()"
+                  :class="isDistributionRowActive(row) && 'bg-slate-100/80'"
+                  @click.stop="focusDistributionRow(row)"
+                  @keydown.enter.prevent="focusDistributionRow(row)"
+                  @keydown.space.prevent="focusDistributionRow(row)"
+                  @mouseenter="row.level === 'subregion' && highlight(row.name)"
+                  @mouseleave="row.level === 'subregion' && highlight(null)"
+                  @focus="row.level === 'subregion' && highlight(row.name)"
+                  @blur="row.level === 'subregion' && highlight(null)">
+                <td class="py-1.5 pr-1 font-semibold text-slate-700">
+                  <span class="inline-flex min-w-0 items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-pill shrink-0"
+                          :style="`background:${row.colour}`"></span>
+                    <span class="truncate" x-text="row.name"></span>
+                  </span>
+                </td>
+                <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600"
+                    x-text="row.schools"></td>
+                <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600"
+                    x-text="row.clusters"></td>
+                <td class="py-1.5 pl-1 text-right font-bold tabular-nums"
+                    :class="row.ssa_avg == null ? 'text-slate-300' : 'text-slate-800'"
+                    x-text="row.ssa_avg == null ? '—' : `${row.ssa_avg}/10`"></td>
+              </tr>
+            </template>
+            <tr x-show="distributionRows().length === 0" x-cloak>
+              <td colspan="4" class="py-6 text-center edify-text-caption font-semibold text-slate-400"
+                  x-text="`No ${distributionLevel().toLowerCase()} data is available.`"></td>
             </tr>
-            {% empty %}
-            <tr><td colspan="4" class="py-6 text-center edify-text-caption font-semibold text-slate-400">
-              No districts are mapped to a sub-region yet.
-            </td></tr>
-            {% endfor %}
           </tbody>
         </table>
       </div>
       <p class="edify-text-caption text-slate-400 font-semibold leading-relaxed mt-2">
         SSA is the confirmed average, weighted by the assessments behind each
-        district. A dash means no confirmed assessment &mdash; not a score of
-        zero. Coverage: {{ subregion_performance.totals.districts_with_ssa }} of
-        {{ subregion_performance.totals.districts }} districts.
+        boundary. A dash means no confirmed assessment &mdash; not a score of
+        zero. <span x-text="distributionCoverageText()"></span>
       </p>
     </div>
   </div>
@@ -272,6 +275,7 @@
 {{ school_type_totals|json_script:"subregion-school-type-totals" }}
 {{ subcounty_insight|json_script:"subregion-subcounty-metrics" }}
 {{ map_scope|json_script:"subregion-map-scope" }}
+{{ subregion_performance.subregions|json_script:"subregion-distribution-rows" }}
 {{ subregion_performance.colours|json_script:"subregion-colours" }}
 
 <script>
@@ -281,7 +285,8 @@ function subregionMap(){
   return {
     ready:false, failed:false, attempts:0,
     detailLoading:false, detailFailed:false, detailRequest:0,
-    focused:null, focusedDistrict:null, focusedSubcounty:null,
+    focused:null, focusedSubregion:null, focusedDistrict:null, focusedSubcounty:null,
+    districtParentSubregion:null,
     districtCamera:null, cam:null, labels:null, subLabels:null,
     pinLayer:null, subcountyLayer:null, subcountyPinLayer:null, zoomScale:1,
     tip:{
@@ -289,6 +294,7 @@ function subregionMap(){
       level:'District',title:'',eyebrow:'',
     },
     metrics:{}, subcountyMetrics:[], subcountyUnassigned:{}, colours:{},
+    subregionDistributionRows:[], subcountyDistributionRows:[],
     mapFy:'',
     geo:null, subcountyIndex:null, subcountyCache:{},
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
@@ -328,6 +334,79 @@ function subregionMap(){
       return new Intl.NumberFormat('en', {
         notation:'compact', maximumFractionDigits:1,
       }).format(v || 0);
+    },
+    distributionLevel(){
+      if(this.focusedDistrict) return 'Sub-County';
+      if(this.focusedSubregion) return 'District';
+      return 'Sub-Region';
+    },
+    distributionRows(){
+      if(this.focusedDistrict){
+        if(this.subcountyDistributionRows.length){
+          return this.subcountyDistributionRows;
+        }
+        const districtKey = this.districtKey(this.focusedDistrict);
+        return this.subcountyMetrics
+          .filter(metric => this.districtKey(metric.district) === districtKey)
+          .map(metric => ({
+            level:'subcounty', name:metric.subcounty,
+            schools:metric.schools || 0, clusters:metric.clusters || 0,
+            ssa_avg:metric.ssa_avg,
+            colour:this.colourOf(metric.subregion),
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+      if(this.focusedSubregion){
+        return Object.values(this.metrics)
+          .filter(metric => metric.subregion === this.focusedSubregion)
+          .map(metric => ({
+            level:'district', name:metric.district,
+            schools:metric.schools || 0, clusters:metric.clusters || 0,
+            ssa_avg:metric.ssa_avg,
+            colour:this.colourOf(metric.subregion),
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+      return this.subregionDistributionRows.map(row => ({
+        level:'subregion', name:row.name,
+        schools:row.schools || 0, clusters:row.clusters || 0,
+        ssa_avg:row.ssa_avg, colour:row.colour || this.colourOf(row.name),
+      }));
+    },
+    distributionCoverageText(){
+      const rows = this.distributionRows();
+      const assessed = rows.filter(row => row.ssa_avg != null).length;
+      const nouns = {
+        'Sub-Region':['sub-region', 'sub-regions'],
+        'District':['district', 'districts'],
+        'Sub-County':['sub-county', 'sub-counties'],
+      };
+      const names = nouns[this.distributionLevel()];
+      const noun = names[rows.length === 1 ? 0 : 1];
+      return `Coverage: ${assessed} of ${rows.length} ${noun}.`;
+    },
+    isDistributionRowActive(row){
+      if(row.level === 'subregion') return this.focusedSubregion === row.name;
+      if(row.level === 'district') return this.focusedDistrict === row.name;
+      return this.focusedSubcounty === row.name;
+    },
+    focusDistributionRow(row){
+      if(row.level === 'subregion'){
+        this.focusSub(row.name);
+        return;
+      }
+      if(row.level === 'district'){
+        const path = [...(this.districtShapes?.querySelectorAll(
+          'path:not(.sr-boundary-lift)',
+        ) || [])]
+          .find(item => item.dataset.district === row.name);
+        if(path) this.zoom(path);
+        return;
+      }
+      const path = [...(this.subcountyLayer?.querySelectorAll(
+        'path:not(.sr-boundary-lift)',
+      ) || [])].find(item => item.dataset.subcounty === row.name);
+      if(path) this.zoomSubcounty(path);
     },
     refreshMapLabelPlacement(){
       requestAnimationFrame(() => {
@@ -412,6 +491,8 @@ function subregionMap(){
         const mapScope = JSON.parse(
           document.getElementById('subregion-map-scope').textContent) || {};
         this.mapFy = String(mapScope.fy || '');
+        this.subregionDistributionRows = JSON.parse(
+          document.getElementById('subregion-distribution-rows').textContent) || [];
         this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
         this.syncSchoolTotals();
         const indexRequest = fetch("{% static 'geo/uganda_subcounty_index.json' %}")
@@ -954,8 +1035,8 @@ function subregionMap(){
       // or irregular boundaries.
       const boundary = path?.getBBox();
       if(boundary){
-        [0.5, 0.35, 0.65, 0.2, 0.8].forEach(yRatio => {
-          [0.5, 0.35, 0.65, 0.2, 0.8].forEach(xRatio => {
+        [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9].forEach(yRatio => {
+          [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9].forEach(xRatio => {
             const x = boundary.x + boundary.width * xRatio;
             const y = boundary.y + boundary.height * yRatio;
             candidates.push([(x - baseX) * scale, (y - baseY) * scale]);
@@ -997,6 +1078,13 @@ function subregionMap(){
         point.y = y;
         return path.isPointInFill(point);
       }));
+    },
+    boundaryContainsPoint(path, x, y){
+      if(!path?.isPointInFill) return true;
+      const point = this.$refs.svg.createSVGPoint();
+      point.x = x;
+      point.y = y;
+      return path.isPointInFill(point);
     },
     placeBoundaryLabels({
       labelLayer, pathLayer, pinLayer, key, scale=1,
@@ -1072,23 +1160,21 @@ function subregionMap(){
         }
 
         if(!offset){
-          // Tiny or irregular areas cannot always contain their full name.
-          // In that case, keep the label readable in the nearest genuinely
-          // empty space. Marker and label clearance remain hard constraints.
-          placement = 'open-space';
+          // Continue searching inside the actual boundary. A previous version
+          // permitted nearby empty space here, which put compact districts
+          // such as Kampala and Butambala over their neighbours.
+          placement = 'boundary-fit';
           const openOptions = labelScales.flatMap(candidateScale =>
             candidates.map(candidate => {
               const rect = rectFor(candidate, candidateScale);
               const blocked =
                 markerRects.some(marker => overlaps(rect, marker)) ||
                 placed.some(existing => overlaps(rect, existing));
-              if(blocked) return null;
-              const contained = this.boundaryContainsLabel(path, rect);
+              if(blocked || !this.boundaryContainsLabel(path, rect)) return null;
               return {
                 candidate,
                 labelScale:candidateScale,
                 penalty:
-                  (contained ? 0 : 1000) +
                   (1 - candidateScale) * 120 +
                   Math.hypot(candidate[0], candidate[1]) / 100,
               };
@@ -1105,12 +1191,35 @@ function subregionMap(){
             offset = best.candidate;
             labelScale = best.labelScale;
           }else if(allowOverlapFallback){
-            // A name is more useful than an unexplained blank district. Tiny,
-            // pin-dense boundaries keep a compact label at their own anchor
-            // when no collision-free candidate exists.
-            offset = [0, 0];
             labelScale = labelScales[labelScales.length - 1];
-            placement = 'anchor-overlap';
+            const anchor = candidates.map(candidate => {
+              const x = baseX + candidate[0] / scale;
+              const y = baseY + candidate[1] / scale;
+              if(!this.boundaryContainsPoint(path, x, y)) return null;
+              const rect = rectFor(candidate, labelScale);
+              const collisions =
+                markerRects.filter(marker => overlaps(rect, marker)).length +
+                placed.filter(existing => overlaps(rect, existing)).length;
+              return {
+                candidate,
+                fullFit:this.boundaryContainsLabel(path, rect),
+                penalty:collisions * 1000 + Math.hypot(candidate[0], candidate[1]),
+              };
+            }).filter(Boolean).reduce(
+              (current, option) =>
+                !current || Number(option.fullFit) > Number(current.fullFit) ||
+                (option.fullFit === current.fullFit && option.penalty < current.penalty)
+                  ? option
+                  : current,
+              null,
+            );
+            if(!anchor){
+              label.style.opacity = 0;
+              label.dataset.labelPlacement = 'hidden';
+              return;
+            }
+            offset = anchor.candidate;
+            placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';
           }else{
             // The accessible boundary and hover snapshot still carry the
             // name. Omit the visual label instead of shrinking or colliding.
@@ -1170,6 +1279,7 @@ function subregionMap(){
       this.subcountyLayer = null;
       this.subcountyLabelLayer = null;
       this.subcountyPinLayer = null;
+      this.subcountyDistributionRows = [];
       this.unmatchedSchoolCount = 0;
     },
     async loadSubcounties(district, force=false){
@@ -1332,11 +1442,18 @@ function subregionMap(){
       const pinLayer = document.createElementNS(this.NS, 'g');
       pinLayer.setAttribute('class', 'sr-subcounty-pin-layer');
       pinLayer.setAttribute('aria-hidden', 'true');
+      const boundaryRows = [];
 
       features.forEach((feature, featureIndex) => {
         const properties = feature.properties;
         const matchedRows = matching.byFeature.get(feature) || [];
         const metric = this.combineBoundaryMetrics(properties, matchedRows);
+        boundaryRows.push({
+          level:'subcounty', name:properties.n,
+          schools:metric.schools || 0, clusters:metric.clusters || 0,
+          ssa_avg:metric.ssa_avg,
+          colour:this.colourOf(metric.subregion),
+        });
         const path = document.createElementNS(this.NS, 'path');
         path.setAttribute('d', this.geometryPath(feature.geometry));
         path.setAttribute('fill', this.colourOf(metric.subregion));
@@ -1403,6 +1520,9 @@ function subregionMap(){
           featureIndex,
         );
       });
+      this.subcountyDistributionRows = boundaryRows.sort(
+        (a, b) => a.name.localeCompare(b.name),
+      );
 
       const explicitUnassigned = this.unassignedForFocusedDistrict();
       const unmatchedMix = {core:0, client:0, champion:0, core_trained:0};
@@ -1469,13 +1589,14 @@ function subregionMap(){
       this.subcountyLabelLayer?.querySelectorAll('text').forEach(label => {
         const on = !selected || label.dataset.subcounty === selected;
         label.style.opacity = on ? 1 : 0;
+        const fittedScale = Number(label.dataset.labelScale || 1);
         const match = /translate\(([-\d.]+),([-\d.]+)\)/
           .exec(label.getAttribute('transform'));
         if(match){
           label.setAttribute(
             'transform',
             `translate(${match[1]},${match[2]}) ` +
-            `scale(${(1 / scale).toFixed(4)})`,
+            `scale(${(fittedScale / scale).toFixed(4)})`,
           );
         }
       });
@@ -1521,6 +1642,9 @@ function subregionMap(){
     },
 
     zoom(el){
+      const parentSubregion = this.focused?.startsWith('sub:')
+        ? this.focusedSubregion
+        : null;
       if(this.focused) this.reset();
       this.releaseBoundary(el);
       const b = el.getBBox();
@@ -1541,9 +1665,10 @@ function subregionMap(){
       this.labels.querySelectorAll('text').forEach(t => {
         const on = t.dataset.district === el.dataset.district;
         t.style.opacity = on ? 1 : 0;
+        const fittedScale = Number(t.dataset.labelScale || 1);
         const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(t.getAttribute('transform'));
         if(on && m) t.setAttribute('transform',
-          `translate(${m[1]},${m[2]}) scale(${(1/s).toFixed(4)})`);
+          `translate(${m[1]},${m[2]}) scale(${(fittedScale/s).toFixed(4)})`);
       });
       this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
         const on = group.dataset.district === el.dataset.district;
@@ -1553,8 +1678,10 @@ function subregionMap(){
       });
       this.subLabels.style.opacity = 0;
       this.focused = el.dataset.district;
+      this.focusedSubregion = parentSubregion;
       this.focusedDistrict = el.dataset.district;
       this.focusedSubcounty = null;
+      this.districtParentSubregion = parentSubregion;
       this.zoomScale = s;
       this.tip.show = false;
       this.loadSubcounties(el.dataset.district);
@@ -1566,7 +1693,9 @@ function subregionMap(){
 
     back(){
       if(!this.focusedSubcounty){
+        const parentSubregion = this.districtParentSubregion;
         this.reset();
+        if(parentSubregion) this.focusSub(parentSubregion);
         return;
       }
       const camera = this.districtCamera;
@@ -1610,8 +1739,10 @@ function subregionMap(){
       this.subLabels.style.opacity = '';
       requestAnimationFrame(() => this.placeDistrictLabels());
       this.focused = null;
+      this.focusedSubregion = null;
       this.focusedDistrict = null;
       this.focusedSubcounty = null;
+      this.districtParentSubregion = null;
       this.districtCamera = null;
       this.zoomScale = 1;
       this.tip.show = false;
@@ -1657,9 +1788,10 @@ function subregionMap(){
       this.labels.querySelectorAll('text').forEach(t => {
         const on = inSub.has(t.dataset.district);
         t.style.opacity = on ? 1 : 0;
+        const fittedScale = Number(t.dataset.labelScale || 1);
         const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(t.getAttribute('transform'));
         if(m) t.setAttribute('transform', on
-          ? `translate(${m[1]},${m[2]}) scale(${(1/s).toFixed(4)})`
+          ? `translate(${m[1]},${m[2]}) scale(${(fittedScale/s).toFixed(4)})`
           : `translate(${m[1]},${m[2]})`);
       });
       this.pinLayer?.querySelectorAll('.sr-district-pins').forEach(group => {
@@ -1670,6 +1802,7 @@ function subregionMap(){
       });
       this.subLabels.style.opacity = 0;
       this.focused = 'sub:' + name;
+      this.focusedSubregion = name;
       this.tip.show = false;
     },
   };
@@ -1700,8 +1833,8 @@ function subregionMap(){
                  paint-order:stroke fill}
   #sr-cam .sr-scl{
     font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
-    font-weight:var(--edify-text-title-weight);fill:var(--edify-text);
-    letter-spacing:.015em;
+    font-weight:var(--edify-text-label-weight);fill:var(--edify-text);
+    letter-spacing:0;
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
   #sr-cam .sr-boundary-layer > path{

@@ -154,7 +154,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));",
             template,
         )
-        self.assertIn("font-weight:var(--edify-text-title-weight)", template)
+        self.assertIn("font-weight:var(--edify-text-label-weight)", template)
         self.assertIn("stroke:none;transition:opacity .3s", template)
         self.assertNotIn("stroke-width:1.4px", template)
         self.assertLess(
@@ -162,7 +162,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template.index("this.cam.insertBefore(labelLayer, this.labels);"),
         )
 
-    def test_district_and_subcounty_labels_use_empty_space_placement(self):
+    def test_district_and_subcounty_labels_stay_on_their_boundaries(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
         self.assertIn("placeBoundaryLabels({", template)
@@ -179,6 +179,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("for(let step = 0; step < 16; step += 1)", template)
         self.assertIn("markerObstacleRects(layer, scale)", template)
         self.assertIn("boundaryContainsLabel(path, rect)", template)
+        self.assertIn("boundaryContainsPoint(path, x, y)", template)
         self.assertIn("path.isPointInFill(point)", template)
         self.assertIn("const overlaps = (a, b) =>", template)
         self.assertIn(
@@ -190,7 +191,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
-        self.assertIn("placement = 'open-space';", template)
+        self.assertIn("placement = 'boundary-fit';", template)
+        self.assertIn("placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template)
+        self.assertNotIn("placement = 'open-space';", template)
         self.assertIn("const blocked =", template)
         self.assertIn("placed.some(existing => overlaps(rect, existing))", template)
         self.assertIn("dataset.mapAnchorX", template)
@@ -215,7 +218,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("label.textContent = properties.n;", template)
         self.assertNotIn("label.textContent = properties.n.toUpperCase();", template)
-        self.assertIn("placement = 'anchor-overlap';", template)
+        self.assertIn("placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template)
 
     def test_national_overview_keeps_every_district_label_visible(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -223,7 +226,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("labelScales:[0.82, 0.74, 0.68],", template)
         self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("}else if(allowOverlapFallback){", template)
-        self.assertIn("placement = 'anchor-overlap';", template)
+        self.assertNotIn("anchor-overlap", template)
         self.assertNotIn("density-hidden", template)
         self.assertNotIn("overviewDistrictLabelBudget", template)
         self.assertNotIn("visibleCount", template)
@@ -259,6 +262,20 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("await this.refreshSubcountyMetrics(district);", template)
         self.assertIn("document.addEventListener('visibilitychange'", template)
         self.assertIn("delete this.combinedDistrictRequests[districtKey];", template)
+
+    def test_distribution_table_tracks_the_active_map_level(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("distributionLevel(){", template)
+        self.assertIn("distributionRows(){", template)
+        self.assertIn("focusDistributionRow(row){", template)
+        self.assertIn("Distribution by ${distributionLevel()}", template)
+        self.assertIn("row.level === 'subregion'", template)
+        self.assertIn("row.level === 'district'", template)
+        self.assertIn("level:'subcounty'", template)
+        self.assertIn("this.subcountyDistributionRows = boundaryRows.sort(", template)
+        self.assertIn("this.districtParentSubregion = parentSubregion;", template)
+        self.assertIn("if(parentSubregion) this.focusSub(parentSubregion);", template)
 
     def test_zoom_does_not_magnify_the_district_focus_stroke(self):
         template = _read("templates/partials/analytics/regional_performance.html")
