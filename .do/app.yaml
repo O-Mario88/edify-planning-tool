@@ -371,26 +371,131 @@ services:
 #         scope: RUN_TIME
 #         value: ${edify-cache.DATABASE_URL}
 
-# ── Optional: scheduled-jobs worker ──────────────────────────────────────────
-# Uncomment to run the eight scheduled jobs. This is a second billable instance.
-# Keep instance_count at exactly 1 — the scheduler is not designed to be run
-# concurrently, and two replicas would double-fire every job.
+# ── Scheduled-jobs worker ────────────────────────────────────────────────────
+# NOT optional. apps/realtime/registry.py registers 17 scheduled jobs, and every
+# one of them early-returns unless ENABLE_BACKGROUND_JOBS is true in ITS OWN
+# process. The web service sets that flag to false (correctly — jobs must not
+# fire once per web replica), so without this worker the count of scheduled jobs
+# actually running in production is zero.
 #
-# workers:
-#   - name: scheduler
-#     dockerfile_path: Dockerfile
-#     source_dir: /
-#     github:
-#       repo: O-Mario88/edify-planning-tool
-#       branch: main
-#       deploy_on_push: true
-#     instance_count: 1
-#     instance_size_slug: apps-s-1vcpu-1gb
-#     run_command: python manage.py runscheduler
-#     envs:
-#       - key: ENABLE_BACKGROUND_JOBS
-#         value: "true"
-#       - key: RUN_MIGRATIONS
-#         value: "false"
-#       # …plus the same DJANGO_SETTINGS_MODULE, DATABASE_URL, secret, and
-#       # Spaces variables as the web service above.
+# That failure is silent in the places people look. The job functions return
+# rather than raise, so nothing appears in the logs; docker-compose.yml defines
+# a correct worker and apps/core/tests/test_deployment_manifests.py asserts it,
+# so the test suite stays green while App Platform — the deployment that serves
+# real users — runs none of them. The visible symptoms are all absences: weekly
+# fund requests are never generated, monthly work plans never open, notification
+# escalations never fire, the target ledger never syncs, PD and debrief
+# reminders never send. System Health is the one surface that says so, reporting
+# "Disabled (ENABLE_BACKGROUND_JOBS=false)" via apps/realtime/health.py.
+#
+# Keep instance_count at exactly 1. The scheduler takes a database lock per job,
+# but a second replica still doubles every fire attempt and the contention is
+# pointless — this process is not designed to be scaled horizontally.
+#
+# The env below mirrors the web service because config/settings/prod.py runs its
+# fail-closed gate on import, in every process. A worker missing SECRET_KEY,
+# FIELD_ENCRYPTION_KEY, SUPER_ADMIN_PASSWORD, AUTHZ_MODE or the Spaces block
+# exits 1 at boot and crash-loops. The mail variables are here for the same
+# practical reason: the digest, PD-reminder and debrief-report jobs send mail,
+# and without them MailerService falls back to the console provider, which in
+# production withholds the body — so the mail is neither delivered nor
+# recoverable from the logs.
+workers:
+  - name: scheduler
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: python manage.py runscheduler
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      - key: GIT_COMMIT
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      - key: RELEASE
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+
+      # This process is the reason the worker exists.
+      - key: ENABLE_BACKGROUND_JOBS
+        value: "true"
+      # Migrations belong to the PRE_DEPLOY job, and seeding to the first web
+      # boot. A worker doing either would race the web service.
+      - key: RUN_MIGRATIONS
+        value: "false"
+      - key: RUN_SEED
+        value: "false"
+
+      # ── Secrets — same values as the web service ──────────────────────────
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_EMAIL
+        value: edwin.omario@gmail.com
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+
+      # ── Private Spaces object storage ─────────────────────────────────────
+      # Report-generating jobs write renditions here.
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+      # ── Outbound mail ─────────────────────────────────────────────────────
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_resend_api_key
+      - key: EMAIL_FROM
+        value: Edify Planning <domario@edify.org>
+      # Absolute links in job-generated mail are built from this.
+      - key: APP_BASE_URL
+        value: https://edifyplanning.app
+
+      # ── Production safety gates (prod.py refuses to boot on wrong values) ──
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ENABLE_MOCK_DATA
+        value: "false"
+      - key: ENABLE_DEV_ENDPOINTS
+        value: "false"
+      - key: ENABLE_DEV_SEED
+        value: "false"
+      - key: ENABLE_DEV_IMPORTS
+        value: "false"
+      - key: PARTNER_ROLE_BRIDGE
+        value: "false"
+      # No traffic reaches this process, but ALLOWED_HOSTS is still validated at
+      # import and absolute URLs are still built in job output.
+      - key: ALLOWED_HOSTS
+        value: www.edifyplanning.app,edifyplanning.app
