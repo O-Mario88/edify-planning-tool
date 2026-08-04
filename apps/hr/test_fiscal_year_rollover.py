@@ -191,7 +191,9 @@ class FiscalYearRolloverTests(TestCase):
 
 
 class MscsPriorityMetricTests(TestCase):
-    def test_mscs_priority_drives_personal_targets_and_only_approved_stories_count(self):
+    def test_mscs_priority_drives_personal_targets_and_only_approved_stories_count(
+        self,
+    ):
         active_target_areas()
         user = User.objects.create_user(
             email="mscs-priority@example.test",
@@ -230,11 +232,15 @@ class MscsPriorityMetricTests(TestCase):
         areas = MyTargetQueryService.get_page(user, fy="2031", month_of_fy=1)[
             "area_cards"
         ]
-        self.assertEqual([(row["key"], row["achieved"]) for row in areas], [("mscs", 0)])
+        self.assertEqual(
+            [(row["key"], row["achieved"]) for row in areas], [("mscs", 0)]
+        )
 
         story.status = "approved"
         story.save(update_fields=["status", "updated_at"])
         areas = MyTargetQueryService.get_page(user, fy="2031", month_of_fy=1)[
             "area_cards"
         ]
-        self.assertEqual([(row["key"], row["achieved"]) for row in areas], [("mscs", 1)])
+        self.assertEqual(
+            [(row["key"], row["achieved"]) for row in areas], [("mscs", 1)]
+        )

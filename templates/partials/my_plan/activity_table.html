@@ -2,7 +2,7 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto border border-slate-200/60 rounded-surface edify-surface shadow-sm">
 {% paginate activity_list "activity_list_page" as activity_list_pager %}
-<table class="mp-table w-full text-left edify-text-caption border-collapse">
+<table class="edify-record-table mp-table w-full text-left edify-text-caption border-collapse">
 <thead>
 <tr class="bg-slate-50/50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-3 py-2.5">Activity</th>
@@ -18,7 +18,7 @@
 <tr class="hover:bg-slate-50/40 transition-colors">
 
 <!-- Column 1: Details & Context -->
-<td class="mp-cell-wrap px-3 py-2.5">
+<td class="mp-cell-wrap px-3 py-2.5" data-record-title>
 <div class="flex items-center gap-1.5 flex-wrap">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border edify-primary-border-alpha-45">
 {{ act.activity_type_label }}
@@ -83,15 +83,15 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 </td>
 
 <!-- Column 2: Planned Date -->
-<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-700">{{ act.planned_date|date:"j M"|default:"Unscheduled" }}</td>
+<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-700" data-label="Planned">{{ act.planned_date|date:"j M"|default:"Unscheduled" }}</td>
 
 <!-- Column 3: Budget -->
-<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-800">{{ act.budget_total|ugx }}</td>
+<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-800" data-label="Budget">{{ act.budget_total|ugx }}</td>
 
 {% comment %}Status badges on ONE line. Stacked, they gave a four-badge row
 three times the height of a two-badge row and made the table impossible to
 scan. The strip scrolls rather than wrapping.{% endcomment %}
-<td class="px-3 py-2.5">
+<td class="px-3 py-2.5" data-label="Status">
 <div class="mp-badges">
 {% for label, variant in act.badges %}
 <span class="mp-badge mp-badge--{{ variant }}">{{ label }}</span>
@@ -100,7 +100,7 @@ scan. The strip scrolls rather than wrapping.{% endcomment %}
 </td>
 
 <!-- Column 4: Next Action -->
-<td class="px-3 py-2.5 text-right whitespace-nowrap">
+<td class="px-3 py-2.5 text-right whitespace-nowrap" data-label="Next action">
 {% if act.execution_role == 'Partner' and not viewer_is_partner %}
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">Monitoring — partner-owned</span>
 <p class="mt-1">

@@ -3,7 +3,15 @@
 <html lang="en" class="h-full">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% comment %}
+viewport-fit=cover is what makes iOS report real safe-area-inset values.
+Without it every env(safe-area-inset-*) in the stylesheets resolves to 0, and
+the notch handling in components/mobile-shell.css, the IA review workspace's
+decision bar and login.css is all present but inert on hardware. It also
+extends the layout under the status bar and home indicator, so the shell edges
+inset themselves — see components/mobile-shell.css.
+{% endcomment %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color">
 <meta name="csrf-token" content="{{ csrf_token }}">
@@ -74,13 +82,24 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731typefloor1">
     <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260731compactreports1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260804mobileshell1">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260731nowraptiles1">
-<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260731nowraptiles1">
+{% comment %}
+admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
+(17 KB) used to load here, on every authenticated page. Between them they are
+used by the admin dashboard, one HR workspace and the Knowledge Center — so
+every other page in the platform paid 56 KB and three render-blocking requests
+for rules that matched nothing on it.
+
+They now load through `{% templatetag openblock %} block feature_css {% templatetag closeblock %}` in the templates that
+need them. Every selector in all three is scoped under its own prefix
+(.admin-*, .hcos-*, .help-*) — the generic-looking ones are nested, e.g.
+`.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
+other page was relying on them.
+{% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260731reportsalign4">
-    <link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260731readabletype1">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states

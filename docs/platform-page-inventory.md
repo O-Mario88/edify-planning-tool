@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **470**
-- All registered routes: **872**
+- Routed product surfaces: **471**
+- All registered routes: **873**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
-- Scheduled jobs: **16**
+- Scheduled jobs: **17**
 - Activity states: **23**
-- Shared component templates: **286**
-- Full pages: **315**
+- Shared component templates: **287**
+- Full pages: **316**
 - Partials and drawers: **142**
-- Permission-gated surfaces: **460**
-- Referenced by automated tests: **436**
+- Permission-gated surfaces: **461**
+- Referenced by automated tests: **437**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -132,6 +132,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /analytics/schedule-report | Analytics Schedule Report | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/schools/toast_success.html<br>partials/analytics/schedule_report_drawer.html | 9.6 | 0 | referenced by automated test |
 | /analytics/visit-effectiveness | Visit Effectiveness | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/visit_effectiveness_workspace.html<br>pages/analytics/visit_effectiveness.html | 9.6 | 0 | referenced by automated test |
 | /api/analytics/combine-map-boundaries | Combine Map Boundaries | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /api/analytics/map-subcounties | Map Subcounty Metrics | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
 | /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.4 | 0 | referenced by automated test |
@@ -478,7 +479,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /team-targets/catchup/<str:plan_id>/action | Team Targets Catchup Action | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets/day | Team Targets Day | ADMIN, CD, HR, IA, PL | partials/targets/team/day_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/export | Team Targets Export | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /team-targets/matrix | Team Targets Matrix | ADMIN, CD, HR, IA, PL | partials/targets/team/matrix_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-targets/matrix | Team Targets Matrix | ADMIN, CD, HR, IA, PL | partials/targets/team/matrix_drawer.html | 9.6 | 0 | referenced by automated test |
 | /team-targets/recovery | Team Targets Recovery | ADMIN, CD, HR, IA, PL | partials/targets/team/recovery_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/sfid-backlog | Team Targets Sfid Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/sfid_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/staff-drawer | Team Targets Staff Drawer | ADMIN, CD, HR, IA, PL | partials/targets/team/staff_drawer.html | 9.4 | 0 | referenced by automated test |

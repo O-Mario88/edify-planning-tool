@@ -35,7 +35,23 @@ alerts:
 #
 #   A     @     162.159.140.98
 #   A     @     172.66.0.96
+#   AAAA  @     2606:4700:7::60
+#   AAAA  @     2a06:98c1:58::60
 #   CNAME www   edify-planning-app-gu9a6.ondigitalocean.app.
+#
+# Values are DigitalOcean's published static ingress records, shared across App
+# Platform apps and routed by Host header:
+# https://docs.digitalocean.com/products/app-platform/how-to/add-ip-address/
+#
+# NEVER use GoDaddy Domain Forwarding for the apex. An earlier revision of this
+# file recommended it; the entry was created without a destination and the
+# public apex served GoDaddy's parked "/lander" page instead of Edify. That is
+# INC-2026-08-03-01. Forwarding also locks the apex A record, so it has to be
+# removed before these records can be added at all.
+#
+# Add the AAAA pair as well as the A pair. www already resolves over IPv6 today
+# via its CNAME; an apex with A records only would leave IPv6-first mobile
+# clients unable to reach the canonical host at all once it becomes canonical.
 #
 # Attach BOTH names in App Platform before changing the apex records, then wait
 # until its certificate covers both names. Only after that should this spec be

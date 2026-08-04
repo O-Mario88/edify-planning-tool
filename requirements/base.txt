@@ -31,7 +31,17 @@ uvicorn==0.32.1
 gunicorn==23.0.0
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
-cryptography==48.0.1
+#
+# Held at >=50.0.0: 48.0.1 carries CVE-2026-69247, -69248 and -69249, and only
+# 50.0.0 closes all three (49.0.0 leaves -69247 open). pip-audit --strict is a
+# required check, so this is a build gate, not advice.
+cryptography==50.0.0
+
+# Transitive, via Twisted's tls extra for the ASGI stack, and pinned here only
+# because its range decides which cryptography can be installed: 26.2.0 caps at
+# cryptography<49, which pins the CVEs in place. 26.4.0 allows <51 and still
+# satisfies Twisted's own pyopenssl>=25.2.0.
+pyopenssl==26.4.0
 
 # Image / file validation for evidence uploads.
 Pillow==12.3.0

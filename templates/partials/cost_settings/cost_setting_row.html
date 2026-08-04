@@ -39,14 +39,18 @@ Cancel
 </tr>
 {% else %}
 <tr id="cost-setting-row-{{ c.key }}" class="hover:bg-slate-50/60 transition-colors">
-<td class="px-4 py-3 font-bold text-slate-800 align-middle">
+<td class="px-4 py-3 font-bold text-slate-800 align-middle" data-record-title>
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 font-semibold edify-primary-text align-middle">
+{% comment %}
+The rate is the reason this page exists and it was the column that fell off a
+phone screen — labelled explicitly so it can never read as a bare number.
+{% endcomment %}
+<td class="px-4 py-3 font-semibold edify-primary-text align-middle" data-label="Rate">
 UGX {{ c.unit_cost|currency }}
 </td>
-<td class="px-4 py-3 text-right align-middle">
+<td class="px-4 py-3 text-right align-middle" data-record-action>
 <button
 hx-get="/cost-settings/row/{{ c.key }}?mode=edit"
 hx-target="#cost-setting-row-{{ c.key }}"

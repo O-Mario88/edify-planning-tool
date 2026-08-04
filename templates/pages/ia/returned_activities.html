@@ -24,7 +24,7 @@ Compliance loop logs. Review activities returned by Internal Audit for programma
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold">
+<table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -41,30 +41,30 @@ Compliance loop logs. Review activities returned by Internal Audit for programma
 {% for item in returned %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-record-title>
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.id|slice:":8" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ item.activity_type_label }}</div>
 </td>
 <!-- School -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="School / Cluster">
 <div class="font-semibold text-slate-800 text-[12px]">{{ item.school_name }}</div>
 </td>
 <!-- Owner -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="CCEO / Staff">
 <div class="font-semibold text-slate-800">{{ item.responsible_staff_name }}</div>
 </td>
 <!-- Return Reason -->
-<td class="px-6 py-4 max-w-xs">
+<td class="px-6 py-4 max-w-xs" data-label="Return Reason(s)">
 <div class="text-[12px] font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 border border-rose-150 rounded-surface leading-relaxed">
 {{ item.reasons }}
 </div>
 </td>
 <!-- Date Returned -->
-<td class="px-6 py-4 text-slate-500 font-medium">
+<td class="px-6 py-4 text-slate-500 font-medium" data-label="Date Returned">
 {{ item.date_returned|date:"M d, Y H:i" }}
 </td>
 <!-- Resubmitted? -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="Resubmitted?">
 {% if item.resubmitted %}
 <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold edify-text-caption bg-emerald-50 px-2 py-0.5 rounded-pill border border-emerald-200">
 <span class="w-1.5 h-1.5 rounded-pill bg-emerald-500 animate-pulse"></span>
@@ -75,7 +75,7 @@ Resubmitted
 {% endif %}
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
+<td class="px-6 py-4 text-right" data-record-action>
 <div class="flex items-center justify-end gap-2">
 <a href="/ia/verification/{{ item.id }}/" class="h-8 px-3 rounded-control bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 text-[12px] font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
 Inspect

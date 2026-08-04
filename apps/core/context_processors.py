@@ -3,6 +3,7 @@ from datetime import date
 from apps.notifications.models import Notification
 from apps.core.navigation import (
     build_analytics_sections,
+    build_mobile_nav_for_user,
     build_sidebar_for_user,
     build_workspace,
 )
@@ -59,13 +60,20 @@ def sidebar_context(request):
         return {
             "sidebar_sections": [],
             "analytics_sections": [],
+            "mobile_nav": [],
             "in_analytics_workspace": False,
         }
 
     analytics_sections = build_analytics_sections(request.user, request.path)
     workspace = build_workspace(request.user, request.path)
+    sidebar_sections = build_sidebar_for_user(request.user, request.path)
     return {
-        "sidebar_sections": build_sidebar_for_user(request.user, request.path),
+        "sidebar_sections": sidebar_sections,
+        # Phone navigation, resolved from the sections just built rather than
+        # from a second pass over the registry.
+        "mobile_nav": build_mobile_nav_for_user(
+            request.user, request.path, sections=sidebar_sections
+        ),
         "analytics_sections": analytics_sections,
         # The workspace this page belongs to, if any — build_workspace already
         # withholds it when there is nowhere else to switch to, since a

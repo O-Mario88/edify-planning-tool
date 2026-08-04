@@ -121,9 +121,7 @@ def rollover_fiscal_year(
                 previous_snapshots += 1
             previous_cycle.active_window = "none"
             previous_cycle.status = "closed"
-            previous_cycle.save(
-                update_fields=["active_window", "status", "updated_at"]
-            )
+            previous_cycle.save(update_fields=["active_window", "status", "updated_at"])
 
         StrategicPriorityCycle.objects.filter(financial_year=previous_fy).exclude(
             status__in=("closed", "archived")
