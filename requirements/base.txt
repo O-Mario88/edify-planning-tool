@@ -28,7 +28,7 @@ bcrypt==4.2.1
 # ASGI server for streaming SSE + the in-process scheduler.
 daphne==4.2.2
 uvicorn==0.32.1
-gunicorn==23.0.0
+gunicorn==26.0.0
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
 #
