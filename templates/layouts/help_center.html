@@ -1,4 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
+
+{% comment %}
+Declared on the layout so every Knowledge Center page inherits it; no help
+page overrides feature_css.
+{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260731readabletype1">{% endblock %}
 {% comment %}
 The Knowledge Center's two-column documentation shell.
 

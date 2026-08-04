@@ -438,6 +438,15 @@ ICONS = {
     "performance_development": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>',
     "performance_values": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>',
     "performance_documents": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
+    # These four were registered in SIDEBAR_ITEMS with no matching icon, so
+    # ICONS.get(...) returned "" and the sidebar rendered an empty icon slot for
+    # them. Harmless-looking on a 240px sidebar next to a label; fatal in a
+    # bottom navigation tab, where the icon is the primary affordance and the
+    # label is a 11px caption under it.
+    "staff": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m3-2.13a4 4 0 100-8 4 4 0 000 8zm7 0a3 3 0 100-6 3 3 0 000 6z" /></svg>',
+    "leave_approvals": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m-9 9h10a2 2 0 002-2V7a2 2 0 00-2-2h-1V3m-8 2H6a2 2 0 00-2 2v10a2 2 0 002 2zm2-16v4" /></svg>',
+    "admin_support_queue": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-6 0a3 3 0 11-6 0 3 3 0 016 0z" /></svg>',
+    "ssa": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-8m3 8v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
 }
 
 # ── The Analytics workspace ───────────────────────────────────────────────────
@@ -1478,6 +1487,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                         "url": home["url"],
                         "icon": ICONS.get(item["page_key"], ""),
                         "active": any(s["active"] for s in analytics_sections),
+                        "page_key": item["page_key"],
                     }
                 )
                 continue
@@ -1529,6 +1539,10 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                             "",
                         ),
                         "active": is_active,
+                        # Carried so the mobile bottom navigation can select
+                        # destinations by page rather than by matching labels,
+                        # which roles override. Unused by the sidebar template.
+                        "page_key": item["page_key"],
                     }
                 )
 
@@ -1556,3 +1570,163 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             )
 
     return sections
+
+
+# ── Mobile bottom navigation ─────────────────────────────────────────────────
+# A phone gets four primary destinations plus More; five is the ceiling before
+# targets stop being thumb-sized.
+MOBILE_NAV_MAX_PRIMARY = 4
+
+# Destinations a phone needs that no sidebar section offers. Adding them to
+# SIDEBAR_ITEMS instead would put them in every desktop sidebar as a side
+# effect, which is not the intent. Authorization still comes from
+# PAGE_PERMISSIONS, so these can advertise a page but never grant it.
+#
+#   messages — on desktop this is a topbar drawer, so it is a sidebar item
+#     nowhere, yet it is a primary destination for every role on a phone.
+#   ssa — registered in IA_SECTIONS (a workspace registry), so it never
+#     reaches build_sidebar_for_user. §24 makes it IA's second queue.
+_MOBILE_NAV_STANDALONE = {
+    "messages": {"label": "Messages", "url": "/messages", "match": "prefix"},
+    "ssa": {
+        "label": "SSA",
+        "url": "/ssa",
+        "match": "prefix",
+        # IA's SSA work is the verification queue, not the browse page. Every
+        # other authorized role wants the page itself.
+        "role_urls": {IA: "/ssa/verification/"},
+    },
+}
+
+# Preference order per role. These are *requests*, not guarantees: a key is
+# used only when the role can actually reach that page, so this table can never
+# grant access, and §7's "no bottom navigation item for a page the role cannot
+# access" holds by construction. Anything unavailable is skipped and the slot
+# is backfilled from the role's own sidebar order.
+MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
+    # Field execution — the work is a plan and the schools it touches.
+    CCEO: ("dashboard", "my_plan", "schools", "messages"),
+    # A Partner is not authorized for the school directory at all; clusters is
+    # the school-context surface they actually hold.
+    PARTNER: ("dashboard", "my_plan", "clusters", "messages"),
+    # A PL's second surface is the team, not their own plan alone.
+    PL: ("dashboard", "my_plan", "team_targets", "messages"),
+    # Projects lead for the coordinator; their planning is project-scoped.
+    PROJECT_COORDINATOR: ("dashboard", "projects", "my_plan", "messages"),
+    # Verification is the whole job; SSA is its second queue.
+    IA: ("dashboard", "ia_verification_queue", "ssa", "messages"),
+    # Finance operates queues, not dashboards.
+    ACCOUNTANT: ("dashboard", "disbursements", "finance_partner_payments", "messages"),
+    # People work: the directory and the approvals that block others.
+    HR: ("dashboard", "staff", "leave_approvals", "messages"),
+    # Leadership decides on budget and reads the evidence.
+    CD: ("dashboard", "country_budget", "analytics", "messages"),
+    RVP: ("dashboard", "country_budget", "analytics", "messages"),
+    # Platform operations: the incoming queue and the health of the system.
+    ADMIN: ("dashboard", "admin_support_queue", "system_health", "messages"),
+}
+
+# Used for a role with no entry above, and to fill any slot a role's preferred
+# key could not supply.
+_MOBILE_NAV_FALLBACK = ("dashboard", "my_plan", "todos", "messages")
+
+# Sidebar labels are written for a 240px column and truncate to nonsense in a
+# 78px tab — "Disbursement Dashboard" renders as "Disburseme…". These are the
+# same destinations named for the space a phone actually has. Only keys that
+# need shortening appear; anything absent keeps its sidebar label.
+MOBILE_NAV_SHORT_LABELS = {
+    "admin_support_queue": "Support",
+    "country_budget": "Budget",
+    "disbursements": "Disburse",
+    "finance_partner_payments": "Payments",
+    "ia_verification_queue": "Verify",
+    "leave_approvals": "Leave",
+    "my_professional_development": "PD",
+    "staff": "People",
+    "system_health": "Health",
+    "team_targets": "Targets",
+    "weekly_fund_request": "Funds",
+}
+
+
+def build_mobile_nav_for_user(
+    user, current_path: str, sections: list[dict] | None = None
+) -> list[dict]:
+    """Primary phone destinations for this user, in order.
+
+    Derived from ``build_sidebar_for_user`` rather than from a parallel table,
+    so a role can never be offered a destination its sidebar would not show it.
+    Route authorization still runs on the request; this only decides what to
+    advertise.
+
+    Pass ``sections`` when the caller has already built the sidebar for this
+    request — the context processor has — so the registry is not walked twice
+    on every page load. Omit it and the sections are built here, which is what
+    tests and any standalone caller want.
+
+    Returns up to ``MOBILE_NAV_MAX_PRIMARY`` items. The More control that opens
+    the full navigation drawer is part of the template, not this list — it is
+    always present and never role-dependent.
+    """
+    role = get_user_role_slug(user)
+    if not role:
+        return []
+
+    if sections is None:
+        sections = build_sidebar_for_user(user, current_path)
+
+    catalogue: dict[str, dict] = {}
+    order: list[str] = []
+    for section in sections:
+        for item in section["items"]:
+            key = item.get("page_key")
+            # First registration wins. A page listed in two groups resolves to
+            # the same URL either way, and taking the first keeps mobile order
+            # matching the sidebar the user already knows.
+            if key and key not in catalogue:
+                catalogue[key] = item
+                order.append(key)
+
+    for key, spec in _MOBILE_NAV_STANDALONE.items():
+        if role not in PAGE_PERMISSIONS.get(key, set()):
+            continue
+        url = spec.get("role_urls", {}).get(role, spec["url"])
+        catalogue.setdefault(
+            key,
+            {
+                "label": spec["label"],
+                "url": url,
+                "icon": ICONS.get(key, ""),
+                "active": _path_matches(url, current_path, spec["match"]),
+                "page_key": key,
+            },
+        )
+
+    chosen: list[dict] = []
+    seen: set[str] = set()
+
+    def take(key: str) -> None:
+        if len(chosen) >= MOBILE_NAV_MAX_PRIMARY or key in seen:
+            return
+        item = catalogue.get(key)
+        if item is None:
+            return
+        seen.add(key)
+        chosen.append(item)
+
+    for key in MOBILE_NAV_BY_ROLE.get(role, _MOBILE_NAV_FALLBACK):
+        take(key)
+    for key in _MOBILE_NAV_FALLBACK:
+        take(key)
+    # Still short only when the role sees very few pages at all; fill from
+    # whatever its sidebar does offer so the bar never renders half-empty.
+    for key in order:
+        take(key)
+
+    # Copied, never mutated in place: these dicts are the same objects the
+    # sidebar is rendering from, and renaming them here would rename the
+    # sidebar entry too.
+    return [
+        {**item, "label": MOBILE_NAV_SHORT_LABELS.get(item["page_key"], item["label"])}
+        for item in chosen
+    ]

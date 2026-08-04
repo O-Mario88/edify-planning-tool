@@ -1,4 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
+
+{% comment %}
+hcos-workspace.css is used by this workspace alone; it used to load on
+every authenticated page.
+{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260731nowraptiles1">{% endblock %}
 
 {% block title %}{{ title }} · Edify{% endblock %}
 

@@ -69,8 +69,26 @@ class SidebarSettingsMarkupTest(TestCase):
 
     def test_mobile_navigation_restores_focus_and_hides_background(self):
         shell = SHELL.read_text()
+        # Two openers now exist and only one renders at a time: the hamburger
+        # when there is no bottom bar, otherwise the bar's More control. Focus
+        # has to return to whichever one was actually used, so every close path
+        # falls back from the x-ref to the bottom bar's opener.
         self.assertIn('x-ref="mobileSidebarOpen"', shell)
-        self.assertIn("$refs.mobileSidebarOpen?.focus()", shell)
+        self.assertIn(
+            "data-mobile-nav-more",
+            SHELL.parent.parent.joinpath(
+                "components/mobile_bottom_nav.html"
+            ).read_text(),
+        )
+        restore = (
+            "($refs.mobileSidebarOpen || "
+            "document.querySelector('[data-mobile-nav-more]'))?.focus()"
+        )
+        self.assertIn(restore, shell)
+        # Every path that closes the drawer must restore focus: Escape, the
+        # scrim, and the close button. Losing any one of them drops the user
+        # back at the top of the document.
+        self.assertEqual(shell.count(restore), 3)
         self.assertIn(':inert="sidebarOpen"', shell)
         self.assertIn(":aria-hidden=\"sidebarOpen ? 'true' : null\"", shell)
 
