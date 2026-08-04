@@ -104,7 +104,7 @@
  "cards": [
   {
    "template": "templates/layouts/login.html",
-   "line": 66,
+   "line": 108,
    "title": "Built for impact. Designed for results.",
    "heading_level": 2,
    "has_card_key": false,
@@ -113,7 +113,7 @@
   },
   {
    "template": "templates/layouts/login.html",
-   "line": 138,
+   "line": 180,
    "title": "Secure access",
    "heading_level": 2,
    "has_card_key": false,

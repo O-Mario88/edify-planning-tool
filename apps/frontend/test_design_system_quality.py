@@ -225,8 +225,13 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         the same geometry, at values matching nothing in the spec. Every card
         and control on the platform rendered a step rounder than approved.
         """
-        source = _read("assets/css/tailwind.source.css")
+        # The @theme block moved out of tailwind.source.css into _theme.css so
+        # the sign-in page could get the tokens without the 322 KB application
+        # bundle (apps/core/tests/test_login_bundle.py). Still defined ONCE —
+        # both tailwind.source.css and tokens.source.css import that one block.
+        source = _read("assets/css/_theme.css")
         compiled = _read("static/css/main.css")
+        token_bundle = _read("static/css/tokens.css")
         tokens = _read("static/css/design-system.css")
 
         for declaration in (
@@ -235,10 +240,17 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--radius-overlay: 16px",
         ):
             self.assertIn(
-                declaration, source, f"{declaration} missing from Tailwind source"
+                declaration, source, f"{declaration} missing from the shared @theme"
             )
             self.assertIn(
                 declaration, compiled, f"{declaration} missing from compiled main.css"
+            )
+            self.assertIn(
+                declaration,
+                token_bundle,
+                f"{declaration} missing from tokens.css — sign-in reads the radii "
+                "from login.css without using a rounded-* utility, so a non-static "
+                "@theme tree-shakes them away and every radius there renders 0.",
             )
 
         # No second definition anywhere else in the loaded cascade.
@@ -247,7 +259,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 f"{token}:",
                 tokens,
                 f"{token} must not be redefined in design-system.css — it is "
-                "defined once in assets/css/tailwind.source.css.",
+                "defined once in assets/css/_theme.css.",
             )
 
     def test_sign_in_layout_is_not_a_design_system_island(self):
@@ -257,11 +269,18 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         and had drifted to nine bespoke radii (.95rem, .72rem, 1.5rem, .7rem,
         .78rem, .92rem, .75rem, 999px, 50%) on the first screen every user
         sees. That is the "page-specific design language" §1 forbids.
+
+        The token layer arrives as tokens.css rather than main.css now. The
+        requirement was never "load the application bundle" — it was "consume
+        the canonical tokens instead of inventing values", and tokens.css is
+        built from the same assets/css/_theme.css main.css is. Loading the
+        whole bundle for five custom properties cost 322 KB on the first screen
+        every user sees; see apps/core/tests/test_login_bundle.py.
         """
         layout = _read("templates/layouts/login.html")
         login_css = _read("static/css/login.css")
 
-        self.assertIn("css/main.css", layout)
+        self.assertIn("css/tokens.css", layout)
         self.assertIn("css/design-system.css", layout)
 
         # Radii come from the token scale. The only literals allowed are the

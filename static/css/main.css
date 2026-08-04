@@ -181,10 +181,16 @@
     --color-edify-text: var(--edify-text);
     --color-edify-orange: var(--edify-brand-secondary);
     --color-page: var(--edify-bg);
+    --color-danger: var(--edify-danger);
+    --color-danger-soft: var(--edify-danger-light);
+    --color-success: var(--edify-success);
+    --color-success-soft: var(--edify-success-light);
+    --color-warn-soft: var(--edify-warning-light);
     --color-rose-150: #fed9dc;
     --color-emerald-150: #bcf6da;
     --color-amber-150: #fdeda9;
     --color-green-150: #ccf9db;
+    --color-indigo-150: #d5dcfb;
     --radius-surface: 12px;
     --radius-control: 8px;
     --radius-overlay: 16px;
