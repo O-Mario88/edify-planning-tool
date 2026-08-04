@@ -642,3 +642,76 @@ before anything touches this.
 | No physical Android / iPhone / iPad | §42–§44, §50 real-device installation cannot be performed; emulation and iOS Simulator only |
 | No deploy access (`doctl` absent, no CI trigger) | §57 steps 9–16 — build artifact, staging deploy, promotion, cache invalidation — cannot be executed from here |
 | Apex still serving GoDaddy lander | INC-2026-08-03-01 open; all live testing is via `www` |
+
+---
+
+# OPEN DEFECT — CD and PL report different target achievement
+
+Not a mobile issue. Recorded here because
+`apps/analytics/test_target_formula_unification.py` quarantines its guard test
+and points at this section.
+
+| Field | Value |
+|---|---|
+| Severity | **High** — leadership reads a number that the Program Lead's own page contradicts |
+| Test | `test_cd_pl_target_percentage_matches_pl_team_targets` |
+| Status | **Open.** Marked `@unittest.expectedFailure`; fix requires a product decision |
+| Introduced | Predates 2026-08-04. Verified failing on a pristine worktree at `e08ba804` |
+
+## Symptom
+
+`AssertionError: 200 != 0`. A Country Director sees **200%** for a Program
+Lead's team; that Program Lead sees **0%** on their own Team Targets page.
+
+## Cause
+
+The two surfaces measure against different denominators.
+
+| Surface | Areas pooled over |
+|---|---|
+| `CDAnalyticsService._weighted_achievement()` | `active_target_areas()` — the whole `TargetArea` catalogue |
+| `PLTeamTargetsService.get_page()` | `priority_target_areas_for_users()` — areas from an agreed annual performance review |
+
+`cd_analytics_service.py` reads `areas = areas or active_target_areas()`. With
+no signed agreements that is 5 areas against the PL page's 0.
+
+Measured on the fixture:
+
+| Member | Achieved | Target | PL verdict |
+|---|---|---|---|
+| CCEO One | 1 | 1 | 100% |
+| CCEO Two | 1 | **0** | **"Not Assigned"** |
+
+CD pools those to 2 ÷ 1 = 200%, counting CCEO Two's work against a target
+nobody assigned. The PL page correctly refuses to score it.
+
+## Why it is not simply fixed
+
+Both directions were implemented and reverted. Each breaks tests that
+deliberately encode the opposite behaviour.
+
+**PL falls back to the catalogue** — breaks 3, including
+`test_global_target_catalogue_does_not_invent_team_priority_rows`, which
+asserts `page["areas"] == []` and the message "No measurable team priorities
+agreed". That is the honest empty state, and it matches the platform's
+no-fabricated-data rule. The PL's 0% was never a bug.
+
+**CD adopts priority areas** — breaks 6, including all four
+`test_target_percentage_consistent_q*` cases, whose fixtures assume
+catalogue-based CD math. Failures in that one file went from 1 to 6.
+
+## Recommendation
+
+CD is the side inventing a denominator, so `cd_analytics_service.py:810` is
+where the fix belongs — either resolving priority areas, or rendering the same
+"no agreed priorities" state the PL page uses rather than a number. `0%` and
+"no target was ever set" are different facts and a percentage cannot express
+both. Whichever is chosen, the fixtures in
+`test_target_formula_unification.py` need rewriting to match, and CD/RVP
+percentages will fall toward zero wherever agreements are unsigned.
+
+## Why it was masked
+
+`main`'s CI died at the ruff-format step 60 seconds in, before the suite ran.
+The CVE and format failures hid this. Fixing those two made the suite execute
+and surfaced it.
