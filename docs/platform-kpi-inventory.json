@@ -4253,7 +4253,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 311,
+   "line": 323,
    "label": "New schools recruited",
    "keys": [
     "kind",
@@ -4266,7 +4266,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 318,
+   "line": 330,
    "label": "New Core Schools recruited",
    "keys": [
     "kind",
@@ -4279,7 +4279,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 340,
+   "line": 352,
    "label": "Schools activated",
    "keys": [
     "kind",
@@ -4292,7 +4292,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 358,
+   "line": 370,
    "label": "Schools supported through managed partners",
    "keys": [
     "kind",
@@ -4305,7 +4305,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 382,
+   "line": 394,
    "label": "Direct Visit target",
    "keys": [
     "kind",
@@ -4318,7 +4318,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 387,
+   "line": 399,
    "label": "Direct Visits completed",
    "keys": [
     "kind",
@@ -4331,7 +4331,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 388,
+   "line": 400,
    "label": "Core School Visits",
    "keys": [
     "kind",
@@ -4344,7 +4344,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 389,
+   "line": 401,
    "label": "Client School Visits",
    "keys": [
     "kind",
@@ -4357,7 +4357,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 390,
+   "line": 402,
    "label": "Partner Visits supervised",
    "keys": [
     "kind",
@@ -4370,7 +4370,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 395,
+   "line": 407,
    "label": "Visit completion",
    "keys": [
     "kind",
@@ -4383,7 +4383,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 419,
+   "line": 431,
    "label": "Trainings planned",
    "keys": [
     "kind",
@@ -4396,7 +4396,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 424,
+   "line": 436,
    "label": "Trainings completed",
    "keys": [
     "kind",
@@ -4409,7 +4409,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 425,
+   "line": 437,
    "label": "Core trainings",
    "keys": [
     "kind",
@@ -4422,7 +4422,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 426,
+   "line": 438,
    "label": "Client trainings",
    "keys": [
     "kind",
@@ -4435,7 +4435,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 427,
+   "line": 439,
    "label": "Cluster trainings",
    "keys": [
     "kind",
@@ -4448,7 +4448,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 428,
+   "line": 440,
    "label": "Teachers trained",
    "keys": [
     "kind",
@@ -4461,7 +4461,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 429,
+   "line": 441,
    "label": "School leaders trained",
    "keys": [
     "kind",
@@ -4474,7 +4474,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 444,
+   "line": 456,
    "label": "Schools allocated for SSA",
    "keys": [
     "kind",
@@ -4487,7 +4487,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 449,
+   "line": 461,
    "label": "Verified SSA completed",
    "keys": [
     "kind",
@@ -4500,7 +4500,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 450,
+   "line": 462,
    "label": "SSA coverage",
    "keys": [
     "kind",
@@ -4513,7 +4513,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 451,
+   "line": 463,
    "label": "Missing SSA",
    "keys": [
     "kind",
@@ -4526,8 +4526,34 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
-   "line": 452,
+   "line": 464,
    "label": "Core Assessments",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 479,
+   "label": "MSCS target",
+   "keys": [
+    "kind",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/performance_engine.py",
+   "line": 484,
+   "label": "Approved MSCS",
    "keys": [
     "kind",
     "label",
@@ -6422,7 +6448,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 738,
+   "line": 739,
    "label": null,
    "keys": [
     "achieved",
@@ -6443,7 +6469,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 891,
+   "line": 892,
    "label": null,
    "keys": [
     "count",
@@ -6455,7 +6481,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 819,
+   "line": 820,
    "label": null,
    "keys": [
     "achieved",
@@ -6474,7 +6500,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/my_targets.py",
-   "line": 975,
+   "line": 976,
    "label": null,
    "keys": [
     "label",

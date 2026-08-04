@@ -30322,6 +30322,21 @@
         "retryable": true
       },
       {
+        "cron": "daily 00:10 Africa/Kampala",
+        "cron_kwargs": {
+          "hour": 0,
+          "minute": 10
+        },
+        "description": "Ensures the Oct-Sep fiscal year has fresh priority cycles and draft agreements while preserving prior-year history.",
+        "expected_runtime_seconds": 120,
+        "idempotency_note": "hr.FiscalYearRollover is unique by FY; completed reruns are read-only.",
+        "idempotent": true,
+        "max_interval_minutes": 1560,
+        "max_retries": 3,
+        "name": "fiscal_year_rollover",
+        "retryable": true
+      },
+      {
         "cron": "daily 06:45 Africa/Kampala",
         "cron_kwargs": {
           "hour": 6,
@@ -43655,7 +43670,7 @@
     "permission_keys": 66,
     "roles": 11,
     "routed_surfaces": 471,
-    "scheduled_jobs": 16,
+    "scheduled_jobs": 17,
     "severity_counts": {
       "critical": 0,
       "high": 0,
