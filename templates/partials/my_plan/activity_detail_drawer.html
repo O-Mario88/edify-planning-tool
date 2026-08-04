@@ -152,7 +152,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div class=" rounded-surface overflow-hidden">
 {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
 <div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] font-semibold">
+<table class="edify-record-table w-full text-left text-[12px] font-semibold">
 <thead>
 <tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-4 py-2.5">Item</th>
@@ -165,21 +165,21 @@ Evidence & SF ID ({{ evidence_list|length }})
 {% if act.schedule_cost_lines.all %}
 {% for line in act.schedule_cost_lines.all %}
 <tr>
-<td class="px-4 py-2.5 font-bold text-slate-800">
+<td class="px-4 py-2.5 font-bold text-slate-800" data-record-title>
 {{ line.label }}
 {% if line.description %}
 <span class="block edify-text-caption text-slate-400 font-semibold mt-0.5">{{ line.description }}</span>
 {% endif %}
 </td>
-<td class="px-4 py-2.5 text-center text-slate-500 font-bold">
+<td class="px-4 py-2.5 text-center text-slate-500 font-bold" data-label="Qty / Rate">
 {{ line.quantity }} &times; {{ line.unit_cost|ugx }}
 </td>
-<td class="px-4 py-2.5 text-center">
+<td class="px-4 py-2.5 text-center" data-label="Status">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold edify-primary-soft-alpha-50 edify-primary-text border /40">
 {{ line.finance_status }}
 </span>
 </td>
-<td class="px-4 py-2.5 text-right font-semibold text-slate-800">
+<td class="px-4 py-2.5 text-right font-semibold text-slate-800" data-label="Value (UGX)">
 {{ line.amount|ugx }}
 </td>
 </tr>

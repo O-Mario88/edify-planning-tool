@@ -27,7 +27,7 @@
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if cost_items %}
 {% paginate cost_items "cost_items_page" as cost_items_pager %}
-<table class="edify-data-table">
+<table class="edify-data-table edify-record-table">
 <thead>
 <tr>
 <th>Item</th>
@@ -67,8 +67,14 @@
     </div>
     <span class="inline-flex min-h-8 items-center rounded-full bg-[var(--edify-surface-muted)] px-3 edify-text-caption font-extrabold text-[var(--edify-text)]">{{ governed_activity_count }} activities</span>
   </div>
-  <div class="overflow-x-auto overscroll-x-contain">
-    <table class="edify-data-table min-w-[980px]">
+  {% comment %}
+  min-w-[980px] keeps the desktop table readable. Below lg the table becomes
+  one card per activity and .edify-record-table cancels that min-width — left
+  standing it would reintroduce the sideways scroll the cards exist to remove.
+  At 390px this table showed 2 of its 6 columns.
+  {% endcomment %}
+  <div class="overflow-x-auto overscroll-x-contain edify-record-table-wrap">
+    <table class="edify-data-table edify-record-table min-w-[980px]">
       <thead>
         <tr>
           <th>Activity</th>
@@ -82,15 +88,15 @@
       <tbody>
         {% for activity in activity_cost_coverage %}
         <tr>
-          <td><strong class="text-[var(--edify-text)]">{{ activity.name }}</strong></td>
-          <td>{{ activity.activity_type }}</td>
-          <td>{{ activity.delivery_method }}</td>
-          <td>{{ activity.intervention }}</td>
-          <td>
+          <td data-record-title><strong class="text-[var(--edify-text)]">{{ activity.name }}</strong></td>
+          <td data-label="Type">{{ activity.activity_type }}</td>
+          <td data-label="Delivery">{{ activity.delivery_method }}</td>
+          <td data-label="Intervention">{{ activity.intervention }}</td>
+          <td data-label="Cost recipe">
             <span class="block font-bold text-[var(--edify-text)]">{{ activity.costing_profile }}</span>
             <span class="edify-text-caption text-[var(--edify-text-muted)]">{{ activity.components|join:", " }}</span>
           </td>
-          <td>
+          <td data-label="Status">
             {% if activity.ready %}
             <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 edify-text-caption font-extrabold text-emerald-700">Ready</span>
             {% else %}

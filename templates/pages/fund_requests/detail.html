@@ -29,7 +29,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
 </div>
 <div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] border-collapse">
+<table class="edify-record-table w-full text-left text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50/30 border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <th class="px-4 py-2.5">Line Type</th>
@@ -43,11 +43,11 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 {% if req.lines %}
 {% for line in req.lines %}
 <tr class="hover:bg-slate-50/20">
-<td class="px-4 py-3 font-bold text-slate-800">{{ line.line_item_type|title|replace_underscore }}</td>
-<td class="px-4 py-3 text-slate-500 font-semibold leading-normal">{{ line.description }}</td>
-<td class="px-4 py-3 font-bold text-slate-600">{{ line.quantity }}</td>
-<td class="px-4 py-3 text-slate-500">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 text-right font-semibold text-slate-800">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 font-bold text-slate-800" data-record-title>{{ line.line_item_type|title|replace_underscore }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold leading-normal" data-label="Description">{{ line.description }}</td>
+<td class="px-4 py-3 font-bold text-slate-600" data-label="Qty">{{ line.quantity }}</td>
+<td class="px-4 py-3 text-slate-500" data-label="Rate">{{ line.unit_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-slate-800" data-label="Total">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
 {% else %}

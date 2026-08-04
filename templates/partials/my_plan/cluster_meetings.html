@@ -19,9 +19,9 @@ Open Planning
 </div>
 
 <!-- Table Section -->
-<div class="overflow-x-auto">
+<div class="overflow-x-auto edify-record-table-wrap">
 {% if cluster_meetings %}
-<table class="edify-data-table mp-table">
+<table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
 <th>Cluster Name</th>
@@ -34,9 +34,9 @@ Open Planning
 <tbody>
 {% for row in cluster_meetings %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]">{{ row.cluster_name }}</td>
-<td class="font-semibold text-slate-600">{{ row.purpose }}</td>
-<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{{ row.cluster_name }}</td>
+<td class="font-semibold text-slate-600" data-label="Purpose">{{ row.purpose }}</td>
+<td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}

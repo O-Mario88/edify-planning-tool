@@ -94,7 +94,7 @@
       <h2 class="text-[14px] font-bold text-slate-800">Agreements in scope ({{ review_rows|length }})</h2>
     </div>
     <div class="overflow-x-auto">{% paginate review_rows "review_rows_page" as review_rows_pager %}
-<table class="w-full text-[13px]">
+<table class="edify-record-table w-full text-[13px]">
       <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
         <th class="px-5 py-2.5">Employee</th>
         <th class="px-3 py-2.5">Stage</th>
@@ -103,12 +103,12 @@
       <tbody>
       {% for row in review_rows_pager.rows %}
       <tr class="border-t border-slate-50">
-        <td class="px-5 py-3 font-bold text-slate-800">{{ row.name }}</td>
-        <td class="px-3 py-3">
+        <td class="px-5 py-3 font-bold text-slate-800" data-record-title>{{ row.name }}</td>
+        <td class="px-3 py-3" data-label="Stage">
           <span class="edify-badge {% if row.approved %}data-tone-success{% endif %}"
                 {% if row.approved %}data-tone="success"{% endif %}>{{ row.stage_label }}</span>
         </td>
-        <td class="px-3 py-3">
+        <td class="px-3 py-3" data-record-action>
           <div class="flex items-center justify-end gap-2">
             <a href="/performance-conversation?staff={{ row.review.staff_id }}" class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Open conversation</a>
             {% if not row.approved %}

@@ -25,7 +25,7 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 {% paginate requests "requests_page" as requests_pager %}
-<table class="w-full text-[12px] font-semibold">
+<table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Fund Request / ID</th>
@@ -42,34 +42,34 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 {% for req in requests_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-record-title>
 <div class="font-semibold text-slate-900 text-[12px]">Request: {{ req.week_start_date|date:"Y-\WW" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">Amount: {{ req.total_amount }} UGX</div>
 </td>
 <!-- Owner -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="Submitted By">
 <div class="font-semibold text-slate-800">{{ req.responsible_user }}</div>
 </td>
 <!-- PL Approval -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="PL Approval">
 <span class="text-emerald-600 font-bold">Approved</span>
 </td>
 <!-- CD Approval -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="CD Approval">
 <span class="text-emerald-600 font-bold">Approved</span>
 </td>
 <!-- RVP Approval -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="RVP Approval">
 <span class="text-emerald-600 font-bold">Approved</span>
 </td>
 <!-- Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="Status">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white border border-slate-950">
 {{ req.status|title }}
 </span>
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
+<td class="px-6 py-4 text-right" data-record-action>
 <a href="/accounts/weekly-requests/" class="h-8 px-3 rounded-control bg-slate-50 hover:bg-slate-100 hover:text-slate-800 edify-text-caption font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
 Review Request
 </a>

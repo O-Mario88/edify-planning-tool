@@ -49,7 +49,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto"
      :inert="disburseOpen" :aria-hidden="disburseOpen ? 'true' : null">
-<table class="w-full text-[12px] font-semibold max-xl:block">
+<table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
 <tr>
 <th class="px-6 py-4 text-left">Activity / ID</th>
@@ -66,39 +66,39 @@ Process approved fund requests ready for disbursement. These advances are releas
 {% for act in advances %}
 <tr class="hover:bg-slate-50/50 transition-colors max-xl:block max-xl:p-4 max-xl:space-y-1">
 <!-- ID -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2">
+<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-record-title>
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity</span>
 <div class="font-semibold text-slate-900 text-[12px]">#{{ act.id|slice:":8" }}</div>
 </td>
 <!-- Staff -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right">
+<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Staff / CCEO">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Staff / CCEO</span>
 <div class="font-semibold text-slate-800">{{ act.responsible_staff_id|default:"Unassigned" }}</div>
 </td>
 <!-- School -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right">
+<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="School / Cluster">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">School / Cluster</span>
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Type -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2">
+<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Activity Type">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity Type</span>
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.get_activity_type_display }}
 </span>
 </td>
 <!-- Date -->
-<td class="px-6 py-4 text-slate-500 font-medium max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2">
+<td class="px-6 py-4 text-slate-500 font-medium max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Planned Date">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Planned Date</span>
 {{ act.planned_date|date:"M d, Y" }}
 </td>
 <!-- Approved Amount -->
-<td class="px-6 py-4 text-center text-[var(--edify-chart-blue)] font-semibold max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2">
+<td class="px-6 py-4 text-center text-[var(--edify-chart-blue)] font-semibold max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Approved Amount">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Approved Amount</span>
 {% if act.est_cost_cents %}{{ act.est_cost_cents|ugx }}{% else %}&mdash;{% endif %}
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-3 max-xl:border-t max-xl:border-slate-100">
+<td class="px-6 py-4 text-right max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-3 max-xl:border-t max-xl:border-slate-100" data-record-action>
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">Actions</span>
 <div class="flex items-center justify-end gap-2">
 <button

@@ -73,6 +73,14 @@
       "template": "components/kpi_strip.html"
     },
     {
+      "bytes": 3727,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_bottom_nav.html"
+    },
+    {
       "bytes": 1612,
       "findings": [],
       "forms": 0,
@@ -521,7 +529,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 75100,
+      "bytes": 85846,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -713,7 +721,7 @@
       "template": "partials/components/confirm_action.html"
     },
     {
-      "bytes": 3190,
+      "bytes": 3225,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -761,7 +769,7 @@
       "template": "partials/core_schools/filters.html"
     },
     {
-      "bytes": 3596,
+      "bytes": 3777,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -849,7 +857,7 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 2707,
+      "bytes": 2947,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -865,7 +873,7 @@
       "template": "partials/dashboards/admin/_icon.html"
     },
     {
-      "bytes": 2815,
+      "bytes": 2841,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1033,7 +1041,7 @@
       "template": "partials/debriefs/dashboard_body.html"
     },
     {
-      "bytes": 7670,
+      "bytes": 7918,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -1521,7 +1529,7 @@
       "template": "partials/my_plan/accountability_drawer.html"
     },
     {
-      "bytes": 12181,
+      "bytes": 12287,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1529,7 +1537,7 @@
       "template": "partials/my_plan/activity_detail_drawer.html"
     },
     {
-      "bytes": 3437,
+      "bytes": 3758,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -1537,7 +1545,7 @@
       "template": "partials/my_plan/activity_row.html"
     },
     {
-      "bytes": 7417,
+      "bytes": 7540,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1553,7 +1561,7 @@
       "template": "partials/my_plan/attendance_drawer.html"
     },
     {
-      "bytes": 8894,
+      "bytes": 9456,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1561,7 +1569,7 @@
       "template": "partials/my_plan/attention.html"
     },
     {
-      "bytes": 2691,
+      "bytes": 2791,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1569,7 +1577,7 @@
       "template": "partials/my_plan/cluster_meetings.html"
     },
     {
-      "bytes": 3012,
+      "bytes": 3143,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1641,7 +1649,7 @@
       "template": "partials/my_plan/priority_queue.html"
     },
     {
-      "bytes": 2685,
+      "bytes": 2785,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1665,7 +1673,7 @@
       "template": "partials/my_plan/salesforce_id_drawer.html"
     },
     {
-      "bytes": 2726,
+      "bytes": 2872,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1921,7 +1929,7 @@
       "template": "partials/projects/filters_drawer.html"
     },
     {
-      "bytes": 2483,
+      "bytes": 2718,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1945,7 +1953,7 @@
       "template": "partials/projects/my_plan_workspace.html"
     },
     {
-      "bytes": 2753,
+      "bytes": 2913,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1969,7 +1977,7 @@
       "template": "partials/projects/planning_icon.html"
     },
     {
-      "bytes": 15279,
+      "bytes": 15917,
       "findings": [],
       "forms": 1,
       "htmx_controls": 8,
@@ -2137,7 +2145,7 @@
       "template": "partials/schools/toast_success.html"
     },
     {
-      "bytes": 13176,
+      "bytes": 13215,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2161,7 +2169,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 21754,
+      "bytes": 22536,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2193,7 +2201,7 @@
       "template": "partials/targets/team/_area_icon.html"
     },
     {
-      "bytes": 27022,
+      "bytes": 27487,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -2209,7 +2217,7 @@
       "template": "partials/targets/team/day_drawer.html"
     },
     {
-      "bytes": 3692,
+      "bytes": 3677,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2233,7 +2241,7 @@
       "template": "partials/targets/team/sfid_drawer.html"
     },
     {
-      "bytes": 4781,
+      "bytes": 4795,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2241,7 +2249,7 @@
       "template": "partials/targets/team/staff_drawer.html"
     },
     {
-      "bytes": 11318,
+      "bytes": 11328,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -8367,6 +8375,67 @@
       ],
       "route": "/api/analytics/combine-map-boundaries",
       "route_name": "combine_map_boundaries",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.system_health.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_views",
+      "backend_view": "apps.frontend.views.analytics_views.map_subcounty_metrics_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Map Subcounty Metrics",
+      "permission_key": "analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Return fresh marker aggregates for one district map drill-down.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/api/analytics/map-subcounties",
+      "route_name": "map_subcounty_metrics",
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
@@ -28846,7 +28915,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_matrix_view",
       "charts": false,
@@ -28888,7 +28957,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -33881,6 +33950,18 @@
       "required_permissions": [],
       "route": "/api/analytics/combine-map-boundaries",
       "route_name": "combine_map_boundaries",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.analytics_views.map_subcounty_metrics_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "analytics",
+      "required_permissions": [],
+      "route": "/api/analytics/map-subcounties",
+      "route_name": "map_subcounty_metrics",
       "templates": []
     },
     {
@@ -43565,15 +43646,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 872,
+    "all_routes": 873,
     "api_routes": 293,
-    "component_templates": 286,
-    "full_pages": 315,
+    "component_templates": 287,
+    "full_pages": 316,
     "partials_and_drawers": 142,
-    "permission_gated": 460,
+    "permission_gated": 461,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 470,
+    "routed_surfaces": 471,
     "scheduled_jobs": 16,
     "severity_counts": {
       "critical": 0,
@@ -43581,6 +43662,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 436
+    "test_referenced": 437
   }
 }

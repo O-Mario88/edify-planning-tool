@@ -11,7 +11,7 @@ Visit Effectiveness analysis
 </div>
 <div class="overflow-x-auto select-none">
 {% if intervention_impact %}
-<table class="w-full border-collapse text-[12px] text-slate-700">
+<table class="edify-record-table w-full border-collapse text-[12px] text-slate-700">
 <thead>
 <tr class="border-b border-slate-100 bg-slate-50/50 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider text-left">
 <th class="px-4 py-3 font-semibold">Intervention</th>
@@ -26,10 +26,10 @@ Visit Effectiveness analysis
 {% for row in intervention_impact %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <!-- Intervention Label -->
-<td class="px-4 py-3 font-semibold text-slate-800">{{ row.label }}</td>
+<td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.label }}</td>
 
 <!-- Schools Supported Progress Bar -->
-<td class="px-4 py-3 font-semibold text-slate-600">
+<td class="px-4 py-3 font-semibold text-slate-600" data-label="Schools Supported">
 <div class="flex items-center gap-2 max-w-[150px]">
 <div class="flex-1 bg-slate-100 rounded-pill h-1.5 overflow-hidden">
 <div class="edify-primary-solid h-full rounded-pill" style="width: {% widthratio row.supported_count 10 100 %}%;"></div>
@@ -39,12 +39,12 @@ Visit Effectiveness analysis
 </td>
 
 <!-- Avg Improvement delta -->
-<td class="px-4 py-3 text-emerald-600 font-semibold">
+<td class="px-4 py-3 text-emerald-600 font-semibold" data-label="Avg. Improvement">
 {{ row.avg_improvement }}
 </td>
 
 <!-- Top Supporting Owner -->
-<td class="px-4 py-3 font-semibold text-slate-700">
+<td class="px-4 py-3 font-semibold text-slate-700" data-label="Top Supporting Owner">
 <div class="flex items-center gap-1.5">
 <span class="h-5 w-5 rounded-pill bg-slate-100 text-slate-600 flex items-center justify-center edify-text-caption font-semibold">
 {{ row.top_owner|slice:":2" }}
@@ -54,7 +54,7 @@ Visit Effectiveness analysis
 </td>
 
 <!-- Staff vs Partner delta status -->
-<td class="px-4 py-3">
+<td class="px-4 py-3" data-label="Staff vs Partner">
 <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold border
 {% if 'Staff' in row.comparison %}
 bg-emerald-50 text-emerald-700 border-emerald-150/60
@@ -67,7 +67,7 @@ edify-primary-soft edify-primary-text edify-primary-border-alpha-60
 </td>
 
 <!-- Trend Mini-Sparkline (built from real row.trend history) -->
-<td class="px-4 py-3 text-right">
+<td class="px-4 py-3 text-right" data-label="Trend">
 <div class="inline-block h-[20px] w-[60px]">
 {% if row.trend_path %}
 <svg class="h-full w-full" viewBox="0 0 60 20">

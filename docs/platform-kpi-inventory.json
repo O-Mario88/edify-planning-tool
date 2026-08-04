@@ -4539,7 +4539,7 @@
   {
    "kind": "other",
    "module": "apps/hr/performance_service.py",
-   "line": 299,
+   "line": 306,
    "label": null,
    "keys": [
     "label",
@@ -6422,7 +6422,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 571,
+   "line": 738,
    "label": null,
    "keys": [
     "achieved",
@@ -6443,7 +6443,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 724,
+   "line": 891,
    "label": null,
    "keys": [
     "count",
@@ -6455,7 +6455,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 652,
+   "line": 819,
    "label": null,
    "keys": [
     "achieved",
@@ -6474,7 +6474,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/my_targets.py",
-   "line": 808,
+   "line": 975,
    "label": null,
    "keys": [
     "label",
@@ -6486,7 +6486,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 192,
+   "line": 193,
    "label": null,
    "keys": [
     "achieved",
@@ -6504,7 +6504,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 571,
+   "line": 605,
    "label": "Team Target Achievement",
    "keys": [
     "delta",
@@ -6520,7 +6520,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 579,
+   "line": 613,
    "label": "Monthly Targets Achieved",
    "keys": [
     "delta",
@@ -6536,7 +6536,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 587,
+   "line": 621,
    "label": "Quarterly Targets Achieved",
    "keys": [
     "delta",
@@ -6552,7 +6552,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 595,
+   "line": 629,
    "label": "Staff On Track",
    "keys": [
     "delta",
@@ -6568,7 +6568,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 603,
+   "line": 637,
    "label": "High-Risk Staff",
    "keys": [
     "delta",
@@ -6585,7 +6585,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 612,
+   "line": 646,
    "label": "Core Schools On Track",
    "keys": [
     "delta",
@@ -6601,7 +6601,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 622,
+   "line": 656,
    "label": "Activity SF ID Compliance",
    "keys": [
     "delta",
@@ -6618,7 +6618,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 668,
+   "line": 703,
    "label": "Staff Behind Target",
    "keys": [
     "action",
@@ -6635,7 +6635,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 677,
+   "line": 712,
    "label": "Staff at Critical Risk",
    "keys": [
     "action",
@@ -6652,7 +6652,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 686,
+   "line": 721,
    "label": "SSA Target Gap",
    "keys": [
     "action",
@@ -6669,7 +6669,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 695,
+   "line": 730,
    "label": "Valid Visit Gap",
    "keys": [
     "action",
@@ -6686,7 +6686,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 704,
+   "line": 739,
    "label": "Core School Target Gap",
    "keys": [
     "action",
@@ -6703,7 +6703,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 745,
+   "line": 780,
    "label": null,
    "keys": [
     "count",
@@ -6715,7 +6715,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 893,
+   "line": 928,
    "label": "Awaiting IA",
    "keys": [
     "href",
@@ -6729,7 +6729,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 899,
+   "line": 934,
    "label": "Missing SF IDs",
    "keys": [
     "href",
@@ -6743,7 +6743,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 905,
+   "line": 940,
    "label": "Returned by IA",
    "keys": [
     "href",
@@ -6757,7 +6757,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 993,
+   "line": 1028,
    "label": "Team achievement",
    "keys": [
     "key",
@@ -6772,7 +6772,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1004,
+   "line": 1039,
    "label": "Monthly on track",
    "keys": [
     "key",
@@ -6787,7 +6787,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1011,
+   "line": 1046,
    "label": "At-risk staff",
    "keys": [
     "key",
@@ -6802,7 +6802,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1018,
+   "line": 1053,
    "label": "Current quarter",
    "keys": [
     "key",
@@ -6817,7 +6817,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1025,
+   "line": 1060,
    "label": "FY achievement",
    "keys": [
     "key",
@@ -6832,7 +6832,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1032,
+   "line": 1067,
    "label": "Recovery plans",
    "keys": [
     "key",
@@ -6847,7 +6847,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 176,
+   "line": 177,
    "label": null,
    "keys": [
     "achieved",
@@ -6864,7 +6864,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 726,
+   "line": 761,
    "label": null,
    "keys": [
     "achieved",
@@ -6882,7 +6882,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 1092,
+   "line": 1127,
    "label": null,
    "keys": [
     "label",
@@ -6895,7 +6895,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1143,
+   "line": 1178,
    "label": null,
    "keys": [
     "label",
@@ -6907,7 +6907,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 274,
+   "line": 275,
    "label": null,
    "keys": [
     "achieved",
@@ -6926,7 +6926,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1087,
+   "line": 1122,
    "label": "Overall weighted performance",
    "keys": [
     "label",
@@ -6938,7 +6938,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1089,
+   "line": 1124,
    "label": null,
    "keys": [
     "label",
