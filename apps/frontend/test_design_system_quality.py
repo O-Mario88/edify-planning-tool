@@ -1387,7 +1387,9 @@ class StableTypographyContractTest(SimpleTestCase):
                     continue
                 if "data-edify-svg-typography" not in match.group("attrs"):
                     offenders.append(str(path.relative_to(ROOT)))
-        self.assertEqual(offenders, [], f"responsive SVG text without sizing: {offenders}")
+        self.assertEqual(
+            offenders, [], f"responsive SVG text without sizing: {offenders}"
+        )
 
         # The regional map creates its text nodes in JavaScript, so it cannot
         # be discovered by the literal <text> scan above.

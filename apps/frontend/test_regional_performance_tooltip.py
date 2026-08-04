@@ -228,7 +228,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
         self.assertIn("placement = 'boundary-fit';", template)
-        self.assertIn("placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template)
+        self.assertIn(
+            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
+        )
         self.assertNotIn("placement = 'open-space';", template)
         self.assertIn("const blocked =", template)
         self.assertIn("placed.some(existing => overlaps(rect, existing))", template)
@@ -254,7 +256,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("label.textContent = properties.n;", template)
         self.assertNotIn("label.textContent = properties.n.toUpperCase();", template)
-        self.assertIn("placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template)
+        self.assertIn(
+            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
+        )
 
     def test_national_overview_keeps_every_district_label_visible(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -289,9 +293,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
     def test_subcounty_markers_refresh_after_school_geography_changes(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn(
-            '{{ map_scope|json_script:"subregion-map-scope" }}', template
-        )
+        self.assertIn('{{ map_scope|json_script:"subregion-map-scope" }}', template)
         self.assertIn("async refreshSubcountyMetrics(district){", template)
         self.assertIn("/api/analytics/map-subcounties?", template)
         self.assertIn("{cache:'no-store'}", template)
