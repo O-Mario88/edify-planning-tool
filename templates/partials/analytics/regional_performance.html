@@ -271,6 +271,7 @@
 {{ district_insight|json_script:"subregion-district-metrics" }}
 {{ school_type_totals|json_script:"subregion-school-type-totals" }}
 {{ subcounty_insight|json_script:"subregion-subcounty-metrics" }}
+{{ map_scope|json_script:"subregion-map-scope" }}
 {{ subregion_performance.colours|json_script:"subregion-colours" }}
 
 <script>
@@ -288,6 +289,7 @@ function subregionMap(){
       level:'District',title:'',eyebrow:'',
     },
     metrics:{}, subcountyMetrics:[], subcountyUnassigned:{}, colours:{},
+    mapFy:'',
     geo:null, subcountyIndex:null, subcountyCache:{},
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
     boundaryExitHandler:null,
@@ -407,6 +409,9 @@ function subregionMap(){
           document.getElementById('subregion-subcounty-metrics').textContent) || {};
         this.subcountyMetrics = subcountyPayload.entries || [];
         this.subcountyUnassigned = subcountyPayload.unassigned_by_district || {};
+        const mapScope = JSON.parse(
+          document.getElementById('subregion-map-scope').textContent) || {};
+        this.mapFy = String(mapScope.fy || '');
         this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
         this.syncSchoolTotals();
         const indexRequest = fetch("{% static 'geo/uganda_subcounty_index.json' %}")
@@ -433,6 +438,17 @@ function subregionMap(){
         this._pageshowBound = true;
         window.addEventListener('pageshow', (e) => {
           if (e.persisted && !this.ready) { this.attempts = 0; this.load(); }
+        });
+      }
+      // School profiles can be corrected in another tab. Re-entering this tab
+      // refreshes only the focused district's marker aggregates, leaving the
+      // already-cached boundary files untouched.
+      if (!this._visibilityBound) {
+        this._visibilityBound = true;
+        document.addEventListener('visibilitychange', () => {
+          if(document.visibilityState === 'visible' && this.focusedDistrict){
+            this.loadSubcounties(this.focusedDistrict);
+          }
         });
       }
     },
@@ -1141,6 +1157,8 @@ function subregionMap(){
         pinLayer:this.subcountyPinLayer,
         key:'subcounty',
         scale:this.zoomScale || 1,
+        labelScales:[1, 0.9, 0.82],
+        allowOverlapFallback:true,
       });
     },
     clearSubcounties(){
@@ -1181,6 +1199,7 @@ function subregionMap(){
           payload = await response.json();
           this.subcountyCache[entry.file] = payload;
         }
+        await this.refreshSubcountyMetrics(district);
         if(request !== this.detailRequest || this.focusedDistrict !== district){
           return;
         }
@@ -1191,6 +1210,44 @@ function subregionMap(){
         }
       } finally {
         if(request === this.detailRequest) this.detailLoading = false;
+      }
+    },
+    async refreshSubcountyMetrics(district){
+      const districtKey = this.districtKey(district);
+      const districtMetric = Object.values(this.metrics).find(metric =>
+        this.districtKey(metric?.district) === districtKey
+      );
+      if(!districtMetric?.district_id) return;
+      const params = new URLSearchParams({
+        district_id:String(districtMetric.district_id),
+      });
+      if(this.mapFy) params.set('fy', this.mapFy);
+      try {
+        const response = await fetch(
+          `/api/analytics/map-subcounties?${params.toString()}`,
+          {cache:'no-store'},
+        );
+        if(!response.ok) return;
+        const payload = await response.json();
+        this.subcountyMetrics = this.subcountyMetrics.filter(metric =>
+          this.districtKey(metric.district) !== districtKey
+        ).concat(payload.entries || []);
+        this.subcountyUnassigned = Object.fromEntries(
+          Object.entries(this.subcountyUnassigned).filter(([name]) =>
+            this.districtKey(name) !== districtKey
+          )
+        );
+        Object.assign(
+          this.subcountyUnassigned,
+          payload.unassigned_by_district || {},
+        );
+        // Combined tooltip rows are keyed by the previous school assignment;
+        // force the one batched recomputation used by the fresh layer.
+        this.combinedBoundaries = {};
+        delete this.combinedDistrictRequests[districtKey];
+      } catch (error) {
+        // The embedded snapshot remains a safe fallback during a transient
+        // refresh failure; geometry and keyboard interaction still render.
       }
     },
     retrySubcounties(){
@@ -1336,7 +1393,7 @@ function subregionMap(){
         label.dataset.labelX = this.sx(properties.lon).toFixed(2);
         label.dataset.labelY = this.sy(properties.lat).toFixed(2);
         label.dataset.labelPriority = String(metric.schools || 0);
-        label.textContent = properties.n.toUpperCase();
+        label.textContent = properties.n;
         labelLayer.appendChild(label);
 
         this.appendSchoolPins(

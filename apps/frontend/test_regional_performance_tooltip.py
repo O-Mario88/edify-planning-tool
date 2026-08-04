@@ -186,6 +186,8 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("markerRects.every(marker => !overlaps(rect, marker))", template)
         self.assertIn("labelScales=[1], allowOverlapFallback=false,", template)
+        self.assertIn("labelScales:[1, 0.9, 0.82],", template)
+        self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
         self.assertIn("placement = 'open-space';", template)
@@ -207,6 +209,13 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertNotIn("declash(){", template)
+
+    def test_subcounty_labels_are_complete_and_use_compact_title_case(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("label.textContent = properties.n;", template)
+        self.assertNotIn("label.textContent = properties.n.toUpperCase();", template)
+        self.assertIn("placement = 'anchor-overlap';", template)
 
     def test_national_overview_keeps_every_district_label_visible(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -237,6 +246,19 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("stroke-width:.16em", template)
         self.assertNotIn("stroke-width:2.2px", template)
+
+    def test_subcounty_markers_refresh_after_school_geography_changes(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn(
+            '{{ map_scope|json_script:"subregion-map-scope" }}', template
+        )
+        self.assertIn("async refreshSubcountyMetrics(district){", template)
+        self.assertIn("/api/analytics/map-subcounties?", template)
+        self.assertIn("{cache:'no-store'}", template)
+        self.assertIn("await this.refreshSubcountyMetrics(district);", template)
+        self.assertIn("document.addEventListener('visibilitychange'", template)
+        self.assertIn("delete this.combinedDistrictRequests[districtKey];", template)
 
     def test_zoom_does_not_magnify_the_district_focus_stroke(self):
         template = _read("templates/partials/analytics/regional_performance.html")

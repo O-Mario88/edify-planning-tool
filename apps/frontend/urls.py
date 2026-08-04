@@ -413,6 +413,11 @@ urlpatterns = [
         analytics_views.combine_map_boundaries_view,
         name="combine_map_boundaries",
     ),
+    path(
+        "api/analytics/map-subcounties",
+        analytics_views.map_subcounty_metrics_view,
+        name="map_subcounty_metrics",
+    ),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
     path(
         "my-plan/<str:activity_id>",

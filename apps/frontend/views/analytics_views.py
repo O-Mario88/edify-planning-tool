@@ -6,7 +6,7 @@ import json
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from apps.core.permissions import require_export_permission, require_page_permission
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
@@ -827,3 +827,36 @@ def combine_map_boundaries_view(request):
         for feature_id, keys in list(groups.items())[:5000]
     }
     return JsonResponse({"combined": combine_boundaries(cleaned)})
+
+
+@require_GET
+@require_page_permission("analytics")
+def map_subcounty_metrics_view(request):
+    """Return fresh marker aggregates for one district map drill-down.
+
+    Dashboard HTML is deliberately cached, but school geography is mutable.
+    Keeping this small response uncached lets a saved sub-county/parish move a
+    marker immediately without discarding the much larger analytics cache or
+    refetching country-wide boundary geometry.
+    """
+    district_id = (request.GET.get("district_id") or "").strip()
+    district = District.objects.filter(id=district_id).first()
+    if district is None:
+        return JsonResponse({"detail": "District not found."}, status=404)
+
+    fy = (request.GET.get("fy") or get_operational_fy()).strip()
+    if not fy.isdigit():
+        return JsonResponse({"detail": "Fiscal year must be numeric."}, status=400)
+
+    from apps.analytics.subcounty_insight import subcounty_insight
+
+    payload = subcounty_insight(
+        fy,
+        schools=School.objects.filter(
+            deleted_at__isnull=True,
+            district_id=district.id,
+        ),
+    )
+    response = JsonResponse(payload)
+    response["Cache-Control"] = "private, no-store"
+    return response
