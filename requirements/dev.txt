@@ -4,7 +4,7 @@
 # Test runner.
 pytest==9.0.3
 pytest-django==4.9.0
-pytest-cov==6.0.0
+pytest-cov==7.1.0
 factory-boy==3.3.1
 # Frozen-clock test mechanism (REG-02) — pins "today"/"now" for
 # scheduling-policy tests instead of relying on the real wall-clock date.
