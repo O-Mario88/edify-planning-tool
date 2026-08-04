@@ -76,6 +76,7 @@ PERFORMANCE_METRIC_TO_AREA = {
     "cluster_meetings": "cluster_meetings",
     "trainings": "cluster_trainings",
     "ssa_coverage": "ssa_completed",
+    "mscs": "mscs",
 }
 
 

@@ -458,6 +458,7 @@ __all__ = [
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",
+    "fiscal_year_rollover_job",
     "performance_readiness_job",
 ]
 
@@ -473,6 +474,19 @@ def performance_readiness_job():
     if not _enabled():
         return
     run_tracked_job("performance_readiness", _do_performance_readiness)
+
+
+def _do_fiscal_year_rollover() -> int:
+    from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+
+    report = ensure_current_fiscal_year(initiated_by="scheduler")
+    return int(report.get("draftAgreementsCreated", 0))
+
+
+def fiscal_year_rollover_job():
+    if not _enabled():
+        return
+    run_tracked_job("fiscal_year_rollover", _do_fiscal_year_rollover)
 
 
 # ── 13. Spent second-factor challenges ───────────────────────────────────────

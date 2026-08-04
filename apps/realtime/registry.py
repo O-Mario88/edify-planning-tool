@@ -184,6 +184,23 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="fiscal_year_rollover",
+        description=(
+            "Ensures the Oct-Sep fiscal year has fresh priority cycles and "
+            "draft agreements while preserving prior-year history."
+        ),
+        cron="daily 00:10 Africa/Kampala",
+        cron_kwargs={"hour": 0, "minute": 10},
+        expected_runtime_seconds=120,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "hr.FiscalYearRollover is unique by FY; completed reruns are read-only."
+        ),
+        retryable=True,
+        max_retries=3,
+    ),
+    JobSpec(
         name="performance_readiness",
         description="Daily performance-cycle readiness; notifies HR 7 days before quarter end.",
         cron="daily 06:45 Africa/Kampala",
