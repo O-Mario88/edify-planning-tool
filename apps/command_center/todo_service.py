@@ -470,6 +470,67 @@ def _pl_review_todos(principal, role):
     return todos
 
 
+def _returned_assignment_todos(principal, scope, today):
+    """Partner work handed back to me, still undecided.
+
+    A returned assignment is work that will not happen until the staff member
+    who assigned it does something — revise it, give it to another partner,
+    schedule it themselves or cancel it. The notification announces the return
+    once; this is what keeps it in a queue afterwards, and it closes itself as
+    soon as the status moves off `returned_to_staff`.
+    """
+    from apps.partners.models import PartnerAssignment
+
+    owner_ids = _owner_ids(principal, scope)
+    if not owner_ids:
+        return []
+    returned = (
+        PartnerAssignment.objects.filter(
+            status=PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+            assigning_staff_id__in=owner_ids,
+        )
+        .select_related("school", "cluster", "partner")
+        .order_by("-returned_at")[:10]
+    )
+    todos = []
+    for a in returned:
+        where = (
+            a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "an assignment")
+        )
+        label = a.get_return_reason_category_display() or "no category"
+        days = (today - a.returned_at.date()).days if a.returned_at else 0
+        todos.append(
+            {
+                "id": f"pret-{a.id}",
+                "title": "Reassign Returned Partner Work",
+                "description": (
+                    f"{a.partner.name} returned {where} — {label}. "
+                    f"{(a.return_reason or '')[:120]}"
+                ),
+                "category": "Partner",
+                "priority": "high",
+                "status_key": "returned",
+                "status_label": "Returned to you",
+                "status_tone": "warning",
+                "due_label": (
+                    f"Waiting {days} day{'s' if days != 1 else ''}"
+                    if days
+                    else "Returned today"
+                ),
+                "due_tone": "warning" if days < 3 else "danger",
+                "linked": f"{where} · {a.partner.name}",
+                "action_label": "Review",
+                "action_url": "/partners",
+                "actionable": True,
+                "source": "Partner workflow",
+                "_due_sort": a.returned_at.date() if a.returned_at else date.max,
+            }
+        )
+    return todos
+
+
 def _partner_delay_todos(principal, scope, today):
     """Partner work I own that is past its date.
 
@@ -1865,6 +1926,7 @@ def get_todos(principal) -> dict:
     todos += _activity_todos(principal, scope, today, fy)
     todos += _pl_review_todos(principal, role)
     todos += _partner_delay_todos(principal, scope, today)
+    todos += _returned_assignment_todos(principal, scope, today)
     todos += _fund_request_todos(principal, role)
     todos += _school_quality_todos(scope)
     todos += _ia_todos(principal, role)

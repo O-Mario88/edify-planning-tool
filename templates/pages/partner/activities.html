@@ -35,8 +35,17 @@
           <div>
             <p class="font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
             <p class="mt-1 edify-text-caption text-slate-500">{% if assignment.school %}{{ assignment.school.name }}{% else %}{{ assignment.cluster.name }}{% endif %}{% if assignment.focus_intervention %} · {{ assignment.focus_intervention|cut:"_"|title }}{% endif %}</p>
+            <p class="mt-1 edify-text-caption font-bold text-amber-700">Yet to Schedule</p>
           </div>
-          <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/schedule-drawer" hx-target="#drawer-root" class="min-h-10 rounded-control bg-[var(--color-edify-primary)] px-4 font-bold text-white hover:bg-[var(--color-edify-dark)]">Schedule</button>
+          {# Two actions, because a partner who cannot take the work previously
+             had neither: the only ways out were to schedule a visit that would
+             not happen, or leave the row here while the staff member wondered.
+             Return is secondary and deliberately not styled as destructive —
+             it returns the assignment, not the school. #}
+          <div class="flex shrink-0 gap-2">
+            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/return-drawer" hx-target="#drawer-root" class="edify-surface min-h-10 rounded-control border border-[var(--border-strong)] px-4 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Return</button>
+            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/schedule-drawer" hx-target="#drawer-root" class="min-h-10 rounded-control bg-[var(--color-edify-primary)] px-4 font-bold text-white hover:bg-[var(--color-edify-dark)]">Schedule</button>
+          </div>
         </div>
         {% endfor %}
       </div>
