@@ -6,6 +6,8 @@ second table of destinations would drift the first time a permission changed,
 and the drift would present as a role tapping a tab into a 403.
 """
 
+from pathlib import Path
+
 from django.test import SimpleTestCase
 
 from apps.core.navigation import (
@@ -27,6 +29,9 @@ from apps.core.navigation import (
     build_mobile_nav_for_user,
     build_sidebar_for_user,
 )
+
+ROOT = Path(__file__).resolve().parents[3]
+MOBILE_SHELL_CSS = ROOT / "static" / "css" / "components" / "mobile-shell.css"
 
 # The label each role constant arrives as on user.active_role.
 ROLE_LABELS = {
@@ -87,6 +92,29 @@ class MobileNavShapeTests(SimpleTestCase):
 
     def test_role_with_no_recognised_active_role_gets_nothing(self):
         self.assertEqual(build_mobile_nav_for_user(_User(None), "/"), [])
+
+
+class MobileShellCssContractTests(SimpleTestCase):
+    def test_landscape_safe_area_never_erases_the_workspace_gutter(self):
+        css = MOBILE_SHELL_CSS.read_text(encoding="utf-8")
+        landscape_rule = css.split("@media (orientation: landscape)", 1)[1].split(
+            "/* The off-canvas drawer", 1
+        )[0]
+
+        self.assertIn(
+            "max(var(--edify-page-gutter), "
+            "env(safe-area-inset-left, 0px))",
+            landscape_rule,
+        )
+        self.assertIn(
+            "max(var(--edify-page-gutter), "
+            "env(safe-area-inset-right, 0px))",
+            landscape_rule,
+        )
+        self.assertNotIn(
+            "padding-inline: env(safe-area-inset-left, 0px)",
+            landscape_rule,
+        )
 
 
 class MobileNavAuthorizationTests(SimpleTestCase):
