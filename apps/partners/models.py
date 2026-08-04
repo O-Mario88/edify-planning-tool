@@ -66,8 +66,40 @@ class Partner(SoftDeleteModel):
             return self.ssa_intervention.replace("_", " ").title()
 
 
+class PartnerReturnReason(models.TextChoices):
+    """Why a partner cannot take an assignment.
+
+    Deliberately short and closed. The point of the category is to let staff
+    triage a queue of returns without reading every explanation — "school
+    unavailable" and "outside agreed scope" need different responses from the
+    managing staff, and free text alone does not sort.
+    """
+
+    SCHEDULE_CONFLICT = "schedule_conflict", "Schedule conflict"
+    DISTANCE = "distance", "Distance or travel constraint"
+    SCHOOL_UNAVAILABLE = "school_unavailable", "School unavailable"
+    CAPACITY = "capacity", "Insufficient capacity"
+    OUT_OF_SCOPE = "out_of_scope", "Assignment outside agreed scope"
+    DUPLICATE = "duplicate", "Duplicate assignment"
+    INCORRECT_DETAILS = "incorrect_details", "Incorrect school or activity"
+    SAFETY = "safety", "Safety or access concern"
+    OTHER = "other", "Other"
+
+
 class PartnerAssignment(TimeStampedModel):
     """Tracks assignment of a school or cluster to a partner organization for interventions."""
+
+    # The states an assignment moves through. `status` was a bare CharField and
+    # four spellings of the same idea reached the database from different
+    # creation sites — "assigned", "pending_scheduling", "assigned_to_partner",
+    # "partner_assigned". Both unscheduled spellings are kept because both are
+    # live in production data; UNSCHEDULED_STATUSES is the one place that
+    # decides what "not yet scheduled" means, so callers stop re-listing them.
+    STATUS_ASSIGNED = "assigned"
+    STATUS_PENDING_SCHEDULING = "pending_scheduling"
+    STATUS_SCHEDULED = "scheduled"
+    STATUS_RETURNED_TO_STAFF = "returned_to_staff"
+    UNSCHEDULED_STATUSES = (STATUS_ASSIGNED, STATUS_PENDING_SCHEDULING)
 
     id = CuidField()
     school = models.ForeignKey(
@@ -142,6 +174,28 @@ class PartnerAssignment(TimeStampedModel):
     scheduled_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=32, default="assigned")
     notes = models.TextField(null=True, blank=True)
+
+    # ── Return to staff ──────────────────────────────────────────────────────
+    # A partner who cannot take an assignment could previously do nothing with
+    # it: the queue offered Schedule and nothing else, so the only ways out
+    # were to schedule work that would not happen, or to leave the row sitting
+    # there. Staff learnt about it by noticing the silence.
+    #
+    # These stay on the assignment rather than moving to a separate table: the
+    # return is a state of the assignment, and staff triaging the queue need
+    # the reason on the row they are looking at. Reassignment creates a new
+    # assignment, so the returned one keeps its reason as history.
+    return_reason_category = models.CharField(
+        max_length=32,
+        choices=PartnerReturnReason.choices,
+        null=True,
+        blank=True,
+    )
+    return_reason = models.TextField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+    # User id of the partner user who returned it, matching the CharField
+    # convention already used by assigning_staff_id rather than a FK.
+    returned_by = models.CharField(max_length=30, null=True, blank=True)
 
     # Core Schools tracking fields
     visit_number = models.CharField(max_length=16, null=True, blank=True)

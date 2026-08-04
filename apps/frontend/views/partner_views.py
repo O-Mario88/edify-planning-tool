@@ -747,6 +747,68 @@ def partner_schedule_assignment_action(request, assignment_id):
         return error_fragment(exc, status=400)
 
 
+@require_page_permission("partner_activities")
+def partner_return_assignment_drawer(request, assignment_id):
+    """The Return form. Scoped and state-checked here as well as in the service.
+
+    The status filter is not decoration: without it the drawer would open for
+    an already-scheduled assignment and offer an action the service will
+    refuse, which reads to the partner as a broken button rather than a rule.
+    """
+    from apps.partners.models import PartnerAssignment, PartnerReturnReason
+    from apps.partners.services import (
+        RETURN_REASON_MAX_LENGTH,
+        RETURN_REASON_MIN_LENGTH,
+    )
+
+    partner_ids = resolve_partner_ids(request.user)
+    assignment = get_object_or_404(
+        PartnerAssignment.objects.select_related("school", "cluster", "catalogue_item"),
+        id=assignment_id,
+        partner_id__in=partner_ids,
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+    )
+    return render(
+        request,
+        "partials/partners/return_assignment_drawer.html",
+        {
+            "assignment": assignment,
+            "reason_categories": PartnerReturnReason.choices,
+            "reason_min": RETURN_REASON_MIN_LENGTH,
+            "reason_max": RETURN_REASON_MAX_LENGTH,
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("partner_activities")
+def partner_return_assignment_action(request, assignment_id):
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    try:
+        from apps.partners.services import return_assignment
+
+        return_assignment(
+            assignment_id,
+            {
+                "reason_category": request.POST.get("reason_category"),
+                "reason": request.POST.get("reason"),
+            },
+            request.user,
+        )
+        response = HttpResponse(
+            '<script>window.location.href="/partner/activities";</script>'
+        )
+        response["HX-Trigger"] = "close-drawer"
+        return response
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(
+            exc, action="Could not return this assignment", status=400
+        )
+
+
 @require_page_permission("partner_evidence")
 def partner_evidence_view(request):
     """Partner evidence upload list."""

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **471**
-- All registered routes: **873**
+- Routed product surfaces: **473**
+- All registered routes: **875**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
 - Scheduled jobs: **17**
 - Activity states: **23**
-- Shared component templates: **287**
-- Full pages: **316**
-- Partials and drawers: **142**
-- Permission-gated surfaces: **461**
-- Referenced by automated tests: **437**
+- Shared component templates: **288**
+- Full pages: **317**
+- Partials and drawers: **143**
+- Permission-gated surfaces: **463**
+- Referenced by automated tests: **439**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -370,6 +370,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_schools_table.html | 9.6 | 0 | referenced by automated test |
 | /partials/costing/preview | Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
+| /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/schedule-action | Partner Schedule Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/schedule-drawer | Partner Schedule Assignment Drawer | ADMIN, PARTNER | partials/partners/schedule_assignment_drawer.html | 9.8 | 0 | referenced by automated test |
 | /partner/evidence | Evidence · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/evidence.html | 9.4 | 0 | referenced by automated test |

@@ -1295,6 +1295,16 @@ urlpatterns = [
         name="partner_schedule_assignment_action",
     ),
     path(
+        "partner/assignments/<str:assignment_id>/return-drawer",
+        partner_views.partner_return_assignment_drawer,
+        name="partner_return_assignment_drawer",
+    ),
+    path(
+        "partner/assignments/<str:assignment_id>/return-action",
+        partner_views.partner_return_assignment_action,
+        name="partner_return_assignment_action",
+    ),
+    path(
         "partner/evidence", partner_views.partner_evidence_view, name="partner_evidence"
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
