@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
-{# Without this the page inherited the shell's default, so /my-performance was
-   the one route in the sidebar whose browser tab, history entry and bookmark
-   all read "Edify School Improvement Planning". Matches the h1 below rather
-   than the sidebar's "My Performance" label — the two disagree, and a title
-   that contradicts the heading on screen would be the worse of the two. #}
+{% comment %}
+Without this the page inherited the shell's default, so /my-performance was the
+one route in the sidebar whose browser tab, history entry and bookmark all read
+"Edify School Improvement Planning". Matches the h1 below rather than the
+sidebar's "My Performance" label — the two disagree, and a title contradicting
+the heading on screen would be the worse of the two.
+{% endcomment %}
 {% block title %}Priority Setting Dashboard · Edify{% endblock %}
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" x-data="{ tab: '{{ tab|escapejs }}' }">
