@@ -8,17 +8,21 @@ live app. That worked because the bug was still reproducible. A one-off — a
 race, a bad row since corrected, an error a user hit on Tuesday — would have
 left nothing.
 
-`AllExceptionsMiddleware` already wrote a `request_failed` audit row, which
-does survive deploys. Two things were missing from it:
+`AllExceptionsMiddleware` already wrote a `request_failed` audit row, and that
+row does survive deploys. It already carried the correlation id too —
+`audit.services.log` fills it from the request context, so a user quoting the
+code from an error banner could always be matched. One thing was missing:
+**where the exception came from.** The row named the exception type and the
+path, which does not distinguish one bug from another.
 
-* the **correlation id**, so the code a user quotes from the error banner
-  matched nothing in the durable record, only in logs that had since rotated;
-* **where the exception came from** — the row said `AttributeError` and the
-  path, which does not distinguish one bug from another.
+What is deliberately *not* stored is the formatted traceback, or the exception
+message. Audit rows are read and exported by administrators; a traceback
+carries locals and arguments, and a message routinely carries data — an
+IntegrityError names the conflicting key and its value.
+`test_error_observability` asserts that boundary with `RuntimeError("secret")`
+and exact payload equality, and it is what caught a `message` field added
+during this work.
 
-What is deliberately *not* stored is the formatted traceback. Audit rows are
-read by administrators and are exportable, and a rendered traceback carries
-locals and arguments — school names, staff identifiers, financial figures.
 `file:line:function` locates the fault exactly and carries none of that.
 """
 
@@ -50,18 +54,21 @@ class RequestFailureAuditTest(TestCase):
         self._trigger()
         self.assertTrue(AuditLog.objects.filter(action="request_failed").exists())
 
-    def test_it_records_the_correlation_id_the_user_was_shown(self):
-        response = self._trigger()
-        import json
+    def test_the_exception_message_never_reaches_the_audit_row(self):
+        """The one field that routinely carries data.
 
-        shown = json.loads(response.content)["correlationId"]
+        An IntegrityError names the conflicting key and its value; a
+        ValidationError quotes the input. Audit rows are read and exported by
+        administrators, so the message stays in the container log and out of
+        here. test_error_observability guards the same boundary with
+        RuntimeError("secret") — this is the same rule stated from the other
+        side, because I added a `message` field during this work and that test
+        is what caught it.
+        """
+        self._trigger()
         row = AuditLog.objects.filter(action="request_failed").latest("id")
-        self.assertEqual(
-            row.correlation_id,
-            shown,
-            "the id in the error banner must match the durable row, or a user "
-            "quoting it has nothing to look up",
-        )
+        self.assertNotIn("message", row.payload)
+        self.assertNotIn("FundRequest", str(row.payload))
 
     def test_it_records_where_the_exception_came_from(self):
         self._trigger()

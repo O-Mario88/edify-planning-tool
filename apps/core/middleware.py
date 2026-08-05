@@ -388,13 +388,14 @@ class AllExceptionsMiddleware:
                 # cannot be acted on. Frames are file:line:function from this
                 # codebase only: no locals, no argument values, nothing that
                 # could carry user data into the audit trail.
+                #
+                # The exception *message* deliberately stays out. It is the one
+                # field that routinely carries data — an IntegrityError names
+                # the conflicting key and its value — and audit rows are read
+                # and exported by administrators.
+                # test_error_observability guards this with RuntimeError("secret").
                 "origin": _exception_origin(exception),
-                # The message the user was shown. Without it the correlation id
-                # a person quotes from a red banner matches nothing once the
-                # deployment that logged it is gone.
-                "message": str(exception)[:300],
             },
-            correlation_id=correlation_id,
         )
         logger.exception(
             "[%s] %s %s -> 500 : %s",
