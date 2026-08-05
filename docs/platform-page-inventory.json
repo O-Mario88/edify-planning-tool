@@ -161,6 +161,14 @@
       "template": "partials/_section_nav.html"
     },
     {
+      "bytes": 7319,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/actions/table.html"
+    },
+    {
       "bytes": 4355,
       "findings": [],
       "forms": 0,
@@ -977,7 +985,15 @@
       "template": "partials/dashboards/pl/team_performance.html"
     },
     {
-      "bytes": 422,
+      "bytes": 841,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/dashboards/pl/urgent_action_error.html"
+    },
+    {
+      "bytes": 797,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -4369,6 +4385,174 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.action_transition_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Action Transition",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Apply one lifecycle transition and re-render the row's workspace.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.my_actions_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "My Actions",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have been handed, and by when.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.actions_sent_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Actions Sent",
+      "permission_key": "actions_sent",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have delegated, and whether it is moving.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -11911,7 +12095,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
@@ -11996,7 +12180,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view",
@@ -12053,7 +12237,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
@@ -12114,7 +12298,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_approve_view",
@@ -12179,7 +12363,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_drilldown_view",
@@ -12242,8 +12426,8 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
+      "audit_events": true,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
       "charts": false,
@@ -12259,7 +12443,7 @@
       "permission_key": "dashboard",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Delegate one currently urgent team school to its supervised CCEO.",
+      "purpose": "Delegate one currently urgent school to the staff member who owns it.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -12290,12 +12474,13 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
       "tables": false,
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -12305,7 +12490,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_urgent_schools_page_view",
@@ -12371,7 +12556,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.planning_progress_fragment_view",
@@ -30427,6 +30612,20 @@
         "retryable": true
       },
       {
+        "cron": "hourly :20 Africa/Kampala",
+        "cron_kwargs": {
+          "minute": 20
+        },
+        "description": "Closes delegated school actions whose underlying condition has cleared, and marks past-due ones overdue.",
+        "expected_runtime_seconds": 45,
+        "idempotency_note": "Resolution re-reads the source condition, so a second run finds nothing left to close; overdue marking is a state filter that excludes rows already OVERDUE.",
+        "idempotent": true,
+        "max_interval_minutes": 180,
+        "max_retries": 2,
+        "name": "school_action_sweep",
+        "retryable": true
+      },
+      {
         "cron": "daily 07:00 Africa/Kampala",
         "cron_kwargs": {
           "hour": 7,
@@ -31115,6 +31314,50 @@
       "route_name": "",
       "templates": [
         "pages/accounts/weekly_requests.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.action_transition_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "templates": [
+        "partials/actions/table.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.my_actions_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.actions_sent_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "actions_sent",
+      "required_permissions": [],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
       ]
     },
     {
@@ -39531,6 +39774,7 @@
       "route": "/dashboard/pl-send-urgent-action",
       "route_name": "pl_send_urgent_action",
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ]
     },
@@ -43881,22 +44125,22 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 876,
+    "all_routes": 879,
     "api_routes": 293,
-    "component_templates": 288,
+    "component_templates": 290,
     "full_pages": 317,
-    "partials_and_drawers": 144,
-    "permission_gated": 464,
+    "partials_and_drawers": 147,
+    "permission_gated": 467,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 474,
-    "scheduled_jobs": 17,
+    "routed_surfaces": 477,
+    "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 440
+    "test_referenced": 443
   }
 }

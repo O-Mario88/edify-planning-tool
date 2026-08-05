@@ -425,6 +425,29 @@ def escalation_sla_sweep_job():
     run_tracked_job("escalation_sla_sweep", _do_escalation_sla_sweep)
 
 
+# ── School action queue ──────────────────────────────────────────────────────
+def _do_school_action_sweep() -> int:
+    """Close delegated school actions whose condition has genuinely cleared,
+    and flag the ones that have run past their due date.
+
+    This is what makes the urgent queue self-maintaining. Without it, an
+    action stays open until somebody notices the SSA landed — and a school
+    whose problem is fixed keeps occupying a slot that a school with a real
+    problem needs.
+    """
+    from apps.planning.action_service import mark_overdue_actions, resolve_due_actions
+
+    resolved = resolve_due_actions()
+    overdue = mark_overdue_actions()
+    return int(resolved["resolved"]) + int(overdue["overdue"])
+
+
+def school_action_sweep_job():
+    if not _enabled():
+        return
+    run_tracked_job("school_action_sweep", _do_school_action_sweep)
+
+
 def _system_principal():
     """A minimal stand-in principal for system-initiated jobs."""
     from apps.accounts.jwt import AuthPrincipal
@@ -458,6 +481,7 @@ __all__ = [
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",
+    "school_action_sweep_job",
     "fiscal_year_rollover_job",
     "performance_readiness_job",
 ]

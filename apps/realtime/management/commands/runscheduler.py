@@ -68,6 +68,7 @@ class Command(BaseCommand):
             "admin_maintenance_generation": jobs.admin_maintenance_generation_job,
             "document_lifecycle": jobs.document_lifecycle_job,
             "escalation_sla_sweep": jobs.escalation_sla_sweep_job,
+            "school_action_sweep": jobs.school_action_sweep_job,
             "performance_readiness": jobs.performance_readiness_job,
             "fiscal_year_rollover": jobs.fiscal_year_rollover_job,
             "mfa_challenge_purge": jobs.mfa_challenge_purge_job,

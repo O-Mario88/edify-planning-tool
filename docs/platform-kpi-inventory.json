@@ -1353,7 +1353,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1991,
+   "line": 2032,
    "label": null,
    "keys": [
     "delta_pct",

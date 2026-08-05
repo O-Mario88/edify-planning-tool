@@ -1,0 +1,39 @@
+{% extends "layouts/shell.html" %}
+
+{% comment %}
+One template for both surfaces. "Actions Sent" and "My Actions" are the same
+rows read from opposite ends, and the view supplies which end via
+`perspective`; giving them separate templates would guarantee they drifted
+apart on the details that matter (state labels, due-date tone, tab counts).
+{% endcomment %}
+
+{% block title %}{{ page_title }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+
+  {% include "components/page_header.html" with title=page_title description=page_intro eyebrow=page_eyebrow %}
+
+  {% comment %}
+  There is deliberately no KPI strip here. Open / Overdue / Resolved / All are
+  already on the tab bar below, and a strip repeating them would be five cards
+  of nothing new — 600px of preamble on a phone, where the platform's mobile
+  rule stacks KPI cards one per row, before the queue itself came into view.
+
+  The one number the tabs cannot show is provenance: of the actions that
+  closed, how many did the RECORD confirm, versus how many somebody closed by
+  hand. A queue draining by hand is being cleared, not worked. That is a
+  sentence, not a KPI card.
+  {% endcomment %}
+  {% if counts.resolved %}
+  <p class="text-[12px] font-semibold edify-text-subtle -mt-2">
+    {{ counts.auto_resolved }} of {{ counts.resolved }} resolved action{{ counts.resolved|pluralize }}
+    confirmed by the record{% if counts.auto_resolved < counts.resolved %}; the rest were closed manually{% endif %}.
+  </p>
+  {% endif %}
+
+  <div id="actions-workspace">
+    {% include "partials/actions/table.html" %}
+  </div>
+</div>
+{% endblock %}

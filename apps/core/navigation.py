@@ -63,6 +63,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Main sidebar routes
     "dashboard": ALL_ROLES,
     "todos": ALL_ROLES,
+    # Anyone can be handed a school action, so everyone can read their own
+    # queue. Both views filter to the signed-in user's rows, so there is no
+    # wider set for a permissive gate to expose.
+    "my_actions": ALL_ROLES,
+    "actions_sent": {PL, IA, CD, RVP, ADMIN},
     "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN},
     # Supervised-team target oversight. `supervised_users` resolves a team only
     # for the PL (their supervisees) and the CD (country lens); every other
@@ -846,6 +851,22 @@ SIDEBAR_ITEMS = [
                 "label": "To-Do",
                 "url": "/todos",
                 "page_key": "todos",
+            },
+            {
+                # Sits under My Work, beside To-Do, because that is what it
+                # is: work someone handed you by name. Every role can be sent
+                # a school action, so it is not restricted.
+                "label": "My Actions",
+                "url": "/actions/mine",
+                "page_key": "my_actions",
+            },
+            {
+                # The other end of the same rows. Only the roles that can send
+                # — PL supervises, IA assures — have anything to monitor here.
+                "label": "Actions Sent",
+                "url": "/actions/sent",
+                "page_key": "actions_sent",
+                "visible_to": {PL, IA, CD, RVP},
             },
             {
                 "label": "Upload Center",

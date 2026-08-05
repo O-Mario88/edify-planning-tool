@@ -124,6 +124,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="school_action_sweep",
+        description=(
+            "Closes delegated school actions whose underlying condition has "
+            "cleared, and marks past-due ones overdue."
+        ),
+        cron="hourly :20 Africa/Kampala",
+        cron_kwargs={"minute": 20},
+        expected_runtime_seconds=45,
+        max_interval_minutes=180,
+        idempotent=True,
+        idempotency_note=(
+            "Resolution re-reads the source condition, so a second run finds "
+            "nothing left to close; overdue marking is a state filter that "
+            "excludes rows already OVERDUE."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="escalation_sla_sweep",
         description="Re-notifies the RVP about CD escalations past their severity SLA.",
         cron="daily 07:00 Africa/Kampala",

@@ -62,6 +62,7 @@ def report() -> dict:
     data["adminOps"] = _admin_ops()
     data["documents"] = _documents()
     data["unmatchedSsa"] = _unmatched_ssa()
+    data["schoolActions"] = _school_actions()
     data["financeIntegrity"] = _finance_integrity()
     data["evidenceStorage"] = _evidence_storage()
     data["documentationCoverage"] = _documentation_coverage()
@@ -231,6 +232,18 @@ def _unmatched_ssa() -> dict:
         from apps.ssa.health import unmatched_ssa_health
 
         return unmatched_ssa_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": []}
+
+
+def _school_actions() -> dict:
+    """The unassigned-action queue: is the sweep running, is the backlog being
+    chased, and is the queue draining because work got done or because rows
+    were closed by hand?"""
+    try:
+        from apps.planning.action_health import school_action_health
+
+        return school_action_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": []}
 
