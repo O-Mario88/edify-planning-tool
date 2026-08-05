@@ -224,3 +224,54 @@ class SsaHeatmapSubRegionRouteTest(TestCase):
         self.assertNotIn("region", CDAnalyticsService.HEATMAP_LEVELS)
         self.assertTrue(hasattr(CDAnalyticsService, "_drill_region"))
         self.assertTrue(hasattr(CDAnalyticsService, "_drill_sub_region"))
+
+
+class SsaHeatmapTabsTest(TestCase):
+    """Every level in HEATMAP_LEVELS must appear as a tab.
+
+    The tab list used to be a second hardcoded order filtered by
+    `if key in levels`, so a level in one and not the other disappeared without
+    a word: renaming `region` to `sub_region` left `region` in the order (gone,
+    no longer a level) and `sub_region` out of it (gone, not in the order). The
+    level still answered when requested by URL, so every service-level test
+    passed while the heatmap quietly lost a tab.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth import get_user_model
+
+        cls.cd = get_user_model().objects.create(
+            id="tab-cd",
+            email="tab-cd@edify.org",
+            name="Tab CD",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+            is_active=True,
+        )
+
+    def test_the_tab_list_is_exactly_the_level_list(self):
+        from apps.frontend.views.analytics_views import _heatmap_level_choices
+
+        self.assertEqual(
+            [key for key, _label in _heatmap_level_choices()],
+            list(CDAnalyticsService.HEATMAP_LEVELS),
+            "the tabs and the levels have drifted — every level must be "
+            "reachable, and a tab must not point at a level that is gone",
+        )
+
+    def test_sub_region_is_offered_as_a_tab(self):
+        from apps.frontend.views.analytics_views import _heatmap_level_choices
+
+        self.assertIn(("sub_region", "Sub-Region"), _heatmap_level_choices())
+
+    def test_every_level_renders_a_tab_for_every_other_level(self):
+        """Whichever level you are on, you can still reach the others."""
+        self.client.force_login(self.cd)
+        for level in CDAnalyticsService.HEATMAP_LEVELS:
+            with self.subTest(level=level):
+                html = self.client.get(
+                    f"/analytics/country-director/ssa-heatmap?level={level}"
+                ).content.decode()
+                for other in CDAnalyticsService.HEATMAP_LEVELS:
+                    self.assertIn(f"level={other}", html)

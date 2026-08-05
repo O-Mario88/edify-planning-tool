@@ -756,14 +756,21 @@ def _heatmap_level_choices():
     """(value, label) for the SSA heatmap's level tabs, in geographic order.
 
     Ordered widest-first because that is how somebody reads down to a problem —
-    region to district to sub-county — with cluster last since it cuts across
-    geography rather than nesting inside it.
+    sub-region to district to sub-county — with cluster last since it cuts
+    across geography rather than nesting inside it. HEATMAP_LEVELS is declared
+    in that order, so it is the order.
+
+    Derived from HEATMAP_LEVELS rather than repeated here. This used to hold
+    its own `order` list filtered by `if key in levels`, which meant a level
+    present in one and absent from the other vanished in silence: renaming
+    `region` to `sub_region` left `region` in the order (dropped, no longer a
+    level) and `sub_region` out of it (dropped, not in the order), so the
+    heatmap lost a tab while every level still worked when requested by URL.
+    A list that must agree with another list eventually will not.
     """
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
-    order = ["region", "district", "sub_county", "cluster"]
-    levels = CDAnalyticsService.HEATMAP_LEVELS
-    return [(key, levels[key][2]) for key in order if key in levels]
+    return [(key, spec[2]) for key, spec in CDAnalyticsService.HEATMAP_LEVELS.items()]
 
 
 @require_page_permission("cd_analytics")
