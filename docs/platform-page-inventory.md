@@ -114,7 +114,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /admin-panel/school-upload-history | Upload History | ADMIN, IA | pages/admin/school_upload_history.html | 9.7 | 0 | referenced by automated test |
 | /admin-panel/staff-setup-queue | Staff Setup Queue | ADMIN, CD, HR | pages/admin/staff_setup_queue.html | 9.6 | 0 | referenced by automated test |
 | /admin-panel/users | User Management | ADMIN, CD, HR | pages/admin/users.html | 9.8 | 0 | referenced by automated test |
-| /admin-panel/users/<str:user_id> | Manage User: | ADMIN, CD, HR | pages/admin/user_detail.html | 9.8 | 0 | referenced by automated test |
+| /admin-panel/users/<str:user_id> | Manage User: | ADMIN, CD, HR | pages/admin/user_detail.html | 9.7 | 0 | referenced by automated test |
 | /admin-panel/workflow-rules | Workflow Rules | ADMIN | pages/admin/workflow_rules.html | 9.4 | 0 | referenced by automated test |
 | /analytics | Overview | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/kpi_cards.html<br>pages/analytics/index.html | 9.4 | 0 | referenced by automated test |
 | /analytics/ | Overview | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/kpi_cards.html<br>pages/analytics/index.html | 9.4 | 0 | referenced by automated test |

@@ -2882,7 +2882,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1773,
+   "line": 1740,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2897,7 +2897,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2413,
+   "line": 2380,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -2913,7 +2913,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2421,
+   "line": 2388,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -2929,7 +2929,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2680,
+   "line": 2647,
    "label": null,
    "keys": [
     "label",
@@ -2941,7 +2941,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2852,
+   "line": 2819,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -2956,7 +2956,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2859,
+   "line": 2826,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -2971,7 +2971,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2866,
+   "line": 2833,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -2986,7 +2986,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2873,
+   "line": 2840,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3001,7 +3001,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2880,
+   "line": 2847,
    "label": "Missing Critical Data",
    "keys": [
     "helper",

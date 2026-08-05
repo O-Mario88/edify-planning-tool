@@ -471,21 +471,21 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 200,
+   "line": 195,
    "title": "People Managed",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-overlay border border-[var(--border-card)] shadow-sm p-6",
    "branch_path": [
     [
-     9,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 278,
+   "line": 273,
    "title": "Account Lifecycle",
    "heading_level": 3,
    "has_card_key": false,
@@ -494,7 +494,7 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 355,
+   "line": 350,
    "title": "Password Management",
    "heading_level": 3,
    "has_card_key": false,
@@ -503,14 +503,14 @@
   },
   {
    "template": "templates/pages/admin/user_detail.html",
-   "line": 402,
+   "line": 397,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     23,
+     22,
      0
     ]
    ]

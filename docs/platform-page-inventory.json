@@ -7322,7 +7322,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.admin_user_detail_view",
       "charts": false,
@@ -7379,7 +7379,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
