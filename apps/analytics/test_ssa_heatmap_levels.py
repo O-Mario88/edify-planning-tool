@@ -56,7 +56,7 @@ class SsaHeatmapLevelsTest(TestCase):
         return CDAnalyticsService.ssa_heatmap(resolve_cd_scope("2026"), level)
 
     def test_every_level_is_reachable(self):
-        for level in ("region", "district", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "district", "sub_county", "cluster"):
             with self.subTest(level=level):
                 self.assertEqual(self._heatmap(level)["level"], level)
 
@@ -98,10 +98,57 @@ class SsaHeatmapLevelsTest(TestCase):
     def test_the_intervention_columns_are_the_same_eight_everywhere(self):
         """The grid is the SSA framework; only the row grouping changes."""
         district = self._heatmap("district")
-        for level in ("region", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "sub_county", "cluster"):
             with self.subTest(level=level):
                 self.assertEqual(self._heatmap(level)["codes"], district["codes"])
                 self.assertEqual(len(district["codes"]), 8)
+
+    def test_sub_region_is_reached_through_the_district(self):
+        """Not through School.sub_region_id, which is empty on every row.
+
+        The real hierarchy is SubCounty -> District -> SubRegion -> Region.
+        Reading the denormalised column instead would report every school as
+        unassigned and the level would look broken rather than useful.
+
+        `District.sub_region` is nullable, so "has a district" does not imply
+        "has a sub-region" — it only happens to hold in the current data (136
+        districts, none without one). The guaranteed relation is the weaker
+        one: a school with no district certainly has no sub-region, so
+        sub-region can never be the better-covered of the two.
+        """
+        self.assertGreaterEqual(
+            self._heatmap("sub_region")["unassigned"],
+            self._heatmap("district")["unassigned"],
+        )
+
+    def test_a_district_with_a_sub_region_reaches_the_sub_region_level(self):
+        """The join actually resolves — the assertion above passes trivially
+        if sub-region simply counted everything as unassigned."""
+        from apps.geography.models import SubRegion
+
+        sub_region = SubRegion.objects.create(name="HM SubRegion", region=self.region)
+        self.district.sub_region = sub_region
+        self.district.save(update_fields=["sub_region"])
+
+        # Asserted on `unassigned` rather than on rows: with no confirmed SSA
+        # in the fixture the service returns before building any, but coverage
+        # is computed first — and it is coverage that proves the join resolved.
+        self.assertEqual(self._heatmap("sub_region")["unassigned"], 0)
+        self.assertEqual(self._heatmap("district")["unassigned"], 0)
+
+    def test_sub_region_groups_more_coarsely_than_district(self):
+        # Guards against the join silently falling back to district grouping.
+        self.assertLessEqual(
+            len(self._heatmap("sub_region")["rows"]),
+            len(self._heatmap("district")["rows"]),
+        )
+
+    def test_sub_region_rows_are_not_drillable(self):
+        """`drilldown` has no sub_region branch, same as sub_county."""
+        self.assertFalse(self._heatmap("sub_region")["drillable"])
+
+    def test_sub_region_carries_its_own_header(self):
+        self.assertEqual(self._heatmap("sub_region")["level_label"], "Sub-Region")
 
     def test_district_heatmap_still_works_for_existing_callers(self):
         # The CD body, export and drilldown all call the old name.
@@ -143,7 +190,7 @@ class SsaHeatmapEndpointTest(TestCase):
         )
 
     def test_every_level_renders_over_http(self):
-        for level in ("region", "district", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "district", "sub_county", "cluster"):
             with self.subTest(level=level):
                 response = self.client.get(
                     f"/analytics/country-director/ssa-heatmap?level={level}"

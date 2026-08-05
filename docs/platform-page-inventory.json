@@ -865,11 +865,11 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 2947,
+      "bytes": 5413,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
-      "tables": 0,
+      "tables": 1,
       "template": "partials/cost_settings/cost_setting_row.html"
     },
     {
@@ -11372,7 +11372,7 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "tables": false,
+      "tables": true,
       "templates": [
         "partials/cost_settings/cost_setting_row.html"
       ],
