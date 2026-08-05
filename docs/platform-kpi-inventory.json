@@ -3092,7 +3092,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1035,
+   "line": 1058,
    "label": "Search planned activities by item or responsible staff",
    "keys": [
     "action",
@@ -3108,7 +3108,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1102,
+   "line": 1125,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
