@@ -217,7 +217,7 @@
       "template": "partials/analytics/cd/cluster_performance.html"
     },
     {
-      "bytes": 6171,
+      "bytes": 6232,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
