@@ -1,10 +1,26 @@
 # DigitalOcean App Platform specification — Edify Planning Tool
 #
-# Import this from the App Platform console (Create App → "Import from App Spec")
-# or apply it with:
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ DO NOT APPLY THIS FILE TO THE RUNNING APP.                               │
+# │                                                                          │
+# │   doctl apps update <APP_ID> --spec .do/app.yaml     ← would break prod  │
+# │                                                                          │
+# │ This is a REFERENCE for creating a NEW app from scratch. The running app │
+# │ was created separately and has never been configured from this file, so  │
+# │ the two disagree about names, secrets and structure. `--spec` REPLACES   │
+# │ the whole spec rather than merging, so applying this to the live app      │
+# │ deletes every app-level env (all secrets), renames the database out from │
+# │ under ${db.DATABASE_URL}, and recreates the service under a new name.    │
+# │ The container then refuses to boot, because prod.py rejects the          │
+# │ REPLACE_ME placeholders below — which is the safest of those outcomes.   │
+# │                                                                          │
+# │ To change the running app, read .do/README.md: export the live spec,     │
+# │ edit a copy, diff it with scripts/do_spec_diff.py, then apply that.      │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# For a genuinely new app, this file is still the right starting point:
 #
 #   doctl apps create --spec .do/app.yaml
-#   doctl apps update <APP_ID> --spec .do/app.yaml
 #
 # ── Before you deploy ────────────────────────────────────────────────────────
 # Every value below marked REPLACE_ME must be filled in. Production settings
