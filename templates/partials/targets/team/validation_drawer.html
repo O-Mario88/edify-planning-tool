@@ -1,0 +1,28 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}{{ title }}{% endblock %}
+{% block drawer_subtitle %}{{ subtitle }}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-3 text-slate-700">
+  {% if rows %}
+  <div class="divide-y divide-slate-50 rounded-surface border border-slate-100 bg-slate-50/30">
+    {% for r in rows %}
+    <div class="px-3 py-2 flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p>
+        <p class="edify-text-caption text-slate-400">{{ r.staff }} · {{ r.what }} · {{ r.date|date:"d M Y" }}</p>
+      </div>
+      <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold shrink-0" data-tone="{{ tone }}">{{ badge }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="edify-text-caption text-slate-400 font-medium">{{ helper }}</p>
+  {% else %}
+  <div class="rounded-surface border border-slate-100 bg-emerald-50/40 p-4 text-center">
+    <p class="text-[12px] font-semibold text-emerald-700">{{ empty_message }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

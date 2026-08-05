@@ -79,11 +79,23 @@ def _with_relations(qs):
 
 
 def get_one(school_id: str, principal):
-    """Single school detail, scope-constrained + relations eager-loaded."""
+    """Single school detail, scope-constrained + relations eager-loaded.
+
+    Accepts either identifier a school has: the official `school_id` from the
+    directory, or the primary key. Both name exactly one school, and pages hold
+    whichever one their data source carried — several link with `school.id`
+    while this resolved only `school_id`, so those links 404'd on a school that
+    exists and the user is entitled to see. Which column a template happened to
+    interpolate is not a meaningful access decision, and scoping below is
+    unchanged either way.
+
+    Ordered, not OR'd: `school_id` is the identifier people type and quote, so
+    it wins if a value could somehow be both.
+    """
     scope = resolve_user_scope(principal)
     base = school_queryset(scope)
-    qs = base if base is not None else School.objects.all()
-    school = _with_relations(qs).filter(school_id=school_id).first()
+    qs = _with_relations(base if base is not None else School.objects.all())
+    school = qs.filter(school_id=school_id).first() or qs.filter(id=school_id).first()
     if not school:
         raise NotFoundError("School not found.")
     return school
