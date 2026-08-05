@@ -11,12 +11,19 @@ from __future__ import annotations
 from apps.core.exceptions import BadRequest
 
 
-# Delivery partners only receive the three forms of support that Edify can
-# delegate to them.  These values are deliberately stable database values.
+# The forms of support Edify can delegate to a delivery partner. These values
+# are deliberately stable database values — the LABEL may be reworded, the
+# left-hand value may not.
+#
+# `story_gathering` reads as "Content Gathering" because that is the term the
+# programme actually uses for it. It is one purpose under one name rather than
+# two near-identical entries, which is why the value was not renamed alongside
+# the label: existing rows keep resolving.
 PARTNER_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("in_school_training", "In-school Training"),
     ("training_follow_up", "Training Follow Up"),
     ("ssa_support", "SSA Support"),
+    ("story_gathering", "Content Gathering"),
 )
 
 # Staff may deliver the delegated support above, as well as the operational
@@ -24,7 +31,6 @@ PARTNER_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
 STAFF_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     *PARTNER_VISIT_PURPOSES,
     ("donor_visit", "Donor Visit"),
-    ("story_gathering", "Story Gathering"),
     ("school_invitation", "School Invitation"),
     ("social_visit", "Social Visit"),
     ("in_school_coaching", "In-school Coaching Visit"),
