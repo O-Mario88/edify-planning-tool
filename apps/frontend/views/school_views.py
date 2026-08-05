@@ -370,9 +370,21 @@ def school_directory_view(request):
                 school.current_fy_ssa_status or "",
                 school.planning_readiness or "",
             ]
-            for school in schools_qs.select_related("district", "sub_county", "region")[
-                :5000
-            ]
+            # No cap. This used to be [:5000], which silently truncated: a
+            # country-scope export of 16,274 schools returned 5,000 rows with
+            # no warning anywhere, and a truncated file that looks complete is
+            # worse than a refused one — it gets used as a reconciliation
+            # source. Scoped roles never hit the limit, so it only ever
+            # misinformed the people looking at the whole country.
+            #
+            # iterator() rather than a plain queryset so the rows stream from a
+            # server-side cursor instead of materialising every School with its
+            # three joined rows before the first byte is written. export_rows is
+            # already a generator and the xlsx writer is write-only, so the
+            # whole path stays constant-memory.
+            for school in schools_qs.select_related(
+                "district", "sub_county", "region"
+            ).iterator(chunk_size=1000)
         )
 
         if export_format == "xlsx":
