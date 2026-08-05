@@ -921,6 +921,10 @@ def cost_setting_row_view(request, key):
 
     if request.method == "POST":
         new_cost_str = request.POST.get("unit_cost", "").strip()
+        # The drawer had no reason input, so every rate change in the audit
+        # trail read "Updated via CD Dashboard" — a history row that records
+        # who and when but not why, which is the only part anyone asks about
+        # six months later. The fallback stays for API callers that omit it.
         reason = request.POST.get("reason", "").strip() or "Updated via CD Dashboard"
         try:
             new_cost = int(new_cost_str.replace(",", ""))
@@ -939,9 +943,28 @@ def cost_setting_row_view(request, key):
         except ValueError:
             return HttpResponse("Invalid cost value", status=400)
 
+    # `cost_setting_history` has existed since the register was built and was
+    # never surfaced anywhere. A rate is the input to every activity budget in
+    # the country; "what was it before, and why did it move" is the question
+    # the history table exists to answer, so it is loaded with the row rather
+    # than hidden behind another click.
+    history = []
+    if mode in ("edit", "history"):
+        history = budget_services.cost_setting_history(setting.key, request.user)
+        actor_ids = {h["changedByUserId"] for h in history if h.get("changedByUserId")}
+        if actor_ids:
+            from apps.accounts.models import User
+
+            names = dict(
+                User.objects.filter(id__in=actor_ids).values_list("id", "name")
+            )
+            for row in history:
+                row["changedByName"] = names.get(row.get("changedByUserId"))
+
     context = {
         "c": setting,
         "mode": mode,
+        "history": history,
     }
     return render(request, "partials/cost_settings/cost_setting_row.html", context)
 
