@@ -1120,6 +1120,17 @@ class CDAnalyticsService:
     # rounding error. The template states the coverage next to the number.
     HEATMAP_LEVELS = {
         "region": ("region_id", "region__name", "Region"),
+        # Reached through the district rather than School.sub_region_id, which
+        # is a denormalised CharField that is empty on every row. The real
+        # hierarchy is SubCounty -> District -> SubRegion -> Region, so joining
+        # gives sub-region the same coverage as district (52 of 16,974 missing)
+        # instead of the 100% gap the column would report. subregion_analytics
+        # resolves it the same way.
+        "sub_region": (
+            "district__sub_region_id",
+            "district__sub_region__name",
+            "Sub-Region",
+        ),
         "district": ("district_id", "district__name", "District"),
         "sub_county": ("sub_county_id", "sub_county__name", "Sub-County"),
         "cluster": ("cluster_id", None, "Cluster"),
