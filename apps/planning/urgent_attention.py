@@ -44,6 +44,25 @@ _TRAINING_TYPES = (
 _LIVE = ("cancelled", "rejected", "deferred")
 
 
+def condition_key(school_id: str, issue_key: str, fy: str, area: str = "") -> str:
+    """The stable identity of a *condition* — what dedup, To-Dos and
+    auto-resolution all key off.
+
+    Deliberately excludes the assignee. The condition "school 184 has no SSA in
+    FY2026" is the same condition whoever happens to own the school, so if
+    ownership changes mid-flight a staff-keyed identity would let a second
+    action open against a problem that is already assigned. Who owns it is a
+    column on TeamAction; what is wrong is this key.
+
+    `area` distinguishes intervention issues from each other: a school can be
+    Critical in two areas and those are two conditions, not one.
+    """
+    parts = [f"school:{school_id}", f"issue:{issue_key}", f"fy:{fy}"]
+    if area:
+        parts.append(f"area:{area}")
+    return "|".join(parts)
+
+
 def _month_bounds(fy: str, month: int) -> tuple[date, date]:
     year = int(fy) - 1 if month >= 10 else int(fy)
     start = date(year, month, 1)
@@ -64,7 +83,20 @@ def _schedule_context(month_activities, kinds) -> str | None:
 
 
 def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
-    """The mandate's decision logic, verbatim in precedence."""
+    """The mandate's decision logic, verbatim in precedence.
+
+    Stamps every issue with its `condition_key` so callers never have to
+    reconstruct one — a key built in two places is a key that drifts, and a
+    drifted key silently defeats both deduplication and auto-resolution.
+    """
+    issue = _resolve_issue(school, fy, month_activities)
+    issue["condition_key"] = condition_key(
+        school.id, issue["key"], fy, issue.get("intervention", "")
+    )
+    return issue
+
+
+def _resolve_issue(school, fy: str, month_activities: list) -> dict:
     from apps.ssa.models import SsaRecord
 
     has_current_ssa = SsaRecord.objects.filter(
@@ -168,6 +200,10 @@ def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
     label = dict(SsaIntervention.choices).get(top["intervention"], top["intervention"])
     return {
         "key": key,
+        # Carried so the condition key can distinguish two Critical areas at
+        # one school. Without it they collapse into a single condition and
+        # fixing one would resolve an action raised about the other.
+        "intervention": top["intervention"],
         "label": f"{label} · {score} {band}".strip(),
         "severity": "critical" if key == "intervention_critical" else "warning",
         "detail": None,
@@ -185,6 +221,7 @@ def monthly_urgent_schools(
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
     from apps.core.scoping import resolve_user_scope, school_queryset
+    from apps.planning.action_models import ACTIVE_STATES, TeamAction
 
     fy = fy or get_operational_fy()
     today = date.today()
@@ -245,9 +282,26 @@ def monthly_urgent_schools(
         for r in rows
         if r["key"] != "intervention_follow_up" or r["severity"] != "normal"
     ]
+
+    # This card is now an UNASSIGNED queue. A condition someone already owns
+    # has left the queue — it has not gone away, it has moved to Actions Sent,
+    # and showing it here would invite a second person to send it again. One
+    # indexed query for the whole page rather than one per row.
+    assigned = set(
+        TeamAction.objects.filter(
+            condition_key__in=[r["condition_key"] for r in rows],
+            state__in=ACTIVE_STATES,
+        ).values_list("condition_key", flat=True)
+    )
+    unassigned = [r for r in rows if r["condition_key"] not in assigned]
+
     return {
-        "rows": rows[:limit],
-        "total_schools": len(rows),
+        "rows": unassigned[:limit],
+        # The count now means "unassigned", matching what the card shows. The
+        # assigned tally is returned alongside so the card can say where the
+        # rest went instead of appearing to have silently lost schools.
+        "total_schools": len(unassigned),
+        "assigned_count": len(assigned),
         "month": month,
         "fy": fy,
     }
