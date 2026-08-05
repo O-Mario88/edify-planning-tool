@@ -11,9 +11,11 @@ drilldown for no gain.
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · scores on the 0–10 scale · click a row for the performance drawer</p>
   </div>
 
-  {# Links, not role=tab: each one fetches a different dataset from the server
-     rather than revealing a hidden panel, and the platform's tab contract is
-     for client-side panels. #}
+  {% comment %}
+  Links, not role=tab: each one fetches a different dataset from the server
+  rather than revealing a hidden panel, and the platform's tab contract is for
+  client-side panels.
+  {% endcomment %}
   <div class="flex flex-wrap items-center gap-1" role="group" aria-label="Heatmap level">
     {% for lvl, lbl in heatmap_levels %}
     <button type="button"
@@ -50,8 +52,10 @@ drilldown for no gain.
       </thead>
       <tbody>
         {% for row in district_heatmap.rows %}
-        {# Only levels with a drilldown branch get a click target. Sub-county
-           has none, so its rows are plain instead of dead. #}
+        {% comment %}
+        Only levels with a drilldown branch get a click target. Sub-county has
+        none, so its rows are plain instead of dead.
+        {% endcomment %}
         <tr {% if district_heatmap.drillable %}class="cursor-pointer"
             hx-get="/analytics/country-director/drilldown?drill={{ district_heatmap.level }}&id={{ row.id }}&fy={{ fy }}"
             hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>
