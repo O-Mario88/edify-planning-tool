@@ -1,24 +1,64 @@
 {% load frontend_filters %}
-<div class="edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+{% comment %}
+Swapped whole by the level tabs below, so the wrapper carries the id and every
+level renders through this one template. `district_heatmap` is the context key
+at every level — renaming it would touch the CD body, the export and the
+drilldown for no gain.
+{% endcomment %}
+<div id="cd-ssa-heatmap" class="edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <div>
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. District SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
-    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · scores shown on the 0–10 scale · click a district for the performance drawer</p>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · scores on the 0–10 scale · click a row for the performance drawer</p>
   </div>
+
+  {% comment %}
+  Links, not role=tab: each one fetches a different dataset from the server
+  rather than revealing a hidden panel, and the platform's tab contract is for
+  client-side panels.
+  {% endcomment %}
+  <div class="flex flex-wrap items-center gap-1" role="group" aria-label="Heatmap level">
+    {% for lvl, lbl in heatmap_levels %}
+    <button type="button"
+            hx-get="/analytics/country-director/ssa-heatmap?level={{ lvl }}&fy={{ fy }}&quarter={{ quarter }}&month={{ month }}"
+            hx-target="#cd-ssa-heatmap" hx-swap="outerHTML"
+            aria-current="{% if district_heatmap.level == lvl %}true{% else %}false{% endif %}"
+            class="min-h-8 rounded-control px-3 edify-text-caption font-bold transition-colors
+              {% if district_heatmap.level == lvl %}edify-primary-solid edify-primary-on-solid{% else %}border border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+      {{ lbl }}
+    </button>
+    {% endfor %}
+  </div>
+
+  {% comment %}
+  Coverage, stated rather than implied. Sub-county is unset on ~96% of schools
+  and cluster on ~95%, so an average over the assigned few would read as a
+  national figure. A number without its denominator is the thing that gets
+  quoted in a meeting.
+  {% endcomment %}
+  {% if district_heatmap.unassigned %}
+  <p class="edify-text-caption font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-control px-2.5 py-1.5">
+    {{ district_heatmap.unassigned|intcomma }} of {{ district_heatmap.total_schools|intcomma }} schools have no {{ district_heatmap.level_label|lower }} assigned and are not counted below.
+  </p>
+  {% endif %}
 
   <div class="overflow-x-auto -mx-1">
     <table class="w-full edify-text-caption border-separate border-spacing-y-1">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-          <th class="text-left font-bold pl-1 pb-1">District</th>
+          <th class="text-left font-bold pl-1 pb-1">{{ district_heatmap.level_label }}</th>
           {% for c in district_heatmap.codes %}<th class="text-center font-bold pb-1 px-1">{{ c }}</th>{% endfor %}
           <th class="text-center font-bold pb-1 pr-1">Avg</th>
         </tr>
       </thead>
       <tbody>
         {% for row in district_heatmap.rows %}
-        <tr class="cursor-pointer"
-            hx-get="/analytics/country-director/drilldown?drill=district&id={{ row.id }}&fy={{ fy }}"
-            hx-target="#drawer-container" hx-swap="innerHTML">
+        {% comment %}
+        Only levels with a drilldown branch get a click target. Sub-county has
+        none, so its rows are plain instead of dead.
+        {% endcomment %}
+        <tr {% if district_heatmap.drillable %}class="cursor-pointer"
+            hx-get="/analytics/country-director/drilldown?drill={{ district_heatmap.level }}&id={{ row.id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>
           <td class="text-left pl-1 whitespace-nowrap max-w-[130px]">
             <span class="block font-semibold text-slate-700 truncate">{{ row.name }}</span>
             <span class="block edify-text-caption font-semibold {% if row.low_coverage %}text-amber-500{% else %}text-slate-300{% endif %}">cov {{ row.coverage }}{% if row.low_coverage %} · low{% endif %}</span>
@@ -43,7 +83,9 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="10" class="text-center text-[12px] text-slate-400 font-medium py-6">No verified annual SSA in scope yet.</td></tr>
+        <tr><td colspan="10" class="text-center text-[12px] text-slate-400 font-medium py-6">
+          {% if district_heatmap.unassigned == district_heatmap.total_schools %}No school has a {{ district_heatmap.level_label|lower }} assigned yet, so there is nothing to compare at this level.{% else %}No verified annual SSA in scope yet.{% endif %}
+        </td></tr>
         {% endfor %}
       </tbody>
     </table>

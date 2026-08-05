@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **473**
-- All registered routes: **875**
+- Routed product surfaces: **474**
+- All registered routes: **876**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **23**
 - Shared component templates: **288**
 - Full pages: **317**
-- Partials and drawers: **143**
-- Permission-gated surfaces: **463**
-- Referenced by automated tests: **439**
+- Partials and drawers: **144**
+- Permission-gated surfaces: **464**
+- Referenced by automated tests: **440**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -121,6 +121,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /analytics/country-director | Overview | ADMIN, CD | partials/analytics/cd/body.html<br>pages/analytics/cd_analytics.html | 9.4 | 0 | referenced by automated test |
 | /analytics/country-director/drilldown | Cd Analytics Drilldown | ADMIN, CD | partials/analytics/cd/drilldown.html | 9.6 | 0 | referenced by automated test |
 | /analytics/country-director/export | Cd Analytics Export | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /analytics/country-director/ssa-heatmap | Cd Ssa Heatmap | ADMIN, CD | partials/analytics/cd/district_heatmap.html | 9.6 | 0 | referenced by automated test |
 | /analytics/customize-dashboard | Analytics Customize Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/schools/toast_success.html<br>partials/analytics/customize_dashboard_drawer.html | 9.6 | 0 | referenced by automated test |
 | /analytics/drilldown | Analytics Drilldown | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/drilldown_drawer.html | 9.4 | 0 | referenced by automated test |
 | /analytics/export | Analytics Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

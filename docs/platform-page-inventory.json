@@ -217,10 +217,10 @@
       "template": "partials/analytics/cd/cluster_performance.html"
     },
     {
-      "bytes": 3802,
+      "bytes": 6232,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "tables": 1,
       "template": "partials/analytics/cd/district_heatmap.html"
     },
@@ -7761,6 +7761,65 @@
       "surface_kind": "export",
       "tables": false,
       "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.analytics_views",
+      "backend_view": "apps.frontend.views.analytics_views.cd_ssa_heatmap_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET /analytics/country-director/ssa-heatmap?level={{ lvl }}&fy={{ fy }}&quarter={{ quarter }}&month={{ month }}",
+        "GET /analytics/country-director/drilldown?drill={{ district_heatmap.level }}&id={{ row.id }}&fy={{ fy }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Cd Ssa Heatmap",
+      "permission_key": "cd_analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "One level of the SSA heatmap, fetched on demand by the card's tabs.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/analytics/country-director/ssa-heatmap",
+      "route_name": "cd_ssa_heatmap",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.system_health.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/analytics/cd/district_heatmap.html"
+      ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -32987,6 +33046,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.analytics_views.cd_ssa_heatmap_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cd_analytics",
+      "required_permissions": [],
+      "route": "/analytics/country-director/ssa-heatmap",
+      "route_name": "cd_ssa_heatmap",
+      "templates": [
+        "partials/analytics/cd/district_heatmap.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
       "kind": "drawer",
       "methods": [
@@ -43808,15 +43881,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 875,
+    "all_routes": 876,
     "api_routes": 293,
     "component_templates": 288,
     "full_pages": 317,
-    "partials_and_drawers": 143,
-    "permission_gated": 463,
+    "partials_and_drawers": 144,
+    "permission_gated": 464,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 473,
+    "routed_surfaces": 474,
     "scheduled_jobs": 17,
     "severity_counts": {
       "critical": 0,
@@ -43824,6 +43897,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 439
+    "test_referenced": 440
   }
 }

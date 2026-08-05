@@ -709,11 +709,61 @@ def cd_analytics_view(request):
         **data,
         "month_options": month_options,
         "month": (month or ""),
+        # The heatmap ships rendered at district and swaps level on demand; the
+        # tabs need their labels on the first paint too.
+        "heatmap_levels": _heatmap_level_choices(),
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/analytics/cd/body.html", context)
     return render(request, "pages/analytics/cd_analytics.html", context)
+
+
+@require_page_permission("cd_analytics")
+def cd_ssa_heatmap_view(request):
+    """One level of the SSA heatmap, fetched on demand by the card's tabs.
+
+    Separate from the page so switching level costs one small partial rather
+    than rebuilding the whole CD cockpit — and so the three levels nobody is
+    looking at are never computed. The page ships with district rendered; the
+    rest arrive when asked for.
+    """
+    from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
+
+    level = (request.GET.get("level") or "district").strip()
+    # `get_dashboard` normalises this before resolving scope; calling
+    # resolve_cd_scope directly does not, and a None fy reaches a queryset as
+    # `fy=None` — "Cannot use None as a query value", a 500 on a bare GET.
+    # The route crawl caught it.
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    month = (request.GET.get("month") or "").strip() or None
+    cd = resolve_cd_scope(fy, quarter=quarter, month=month)
+    return render(
+        request,
+        "partials/analytics/cd/district_heatmap.html",
+        {
+            "district_heatmap": CDAnalyticsService.ssa_heatmap(cd, level),
+            "heatmap_levels": _heatmap_level_choices(),
+            "fy": fy,
+            "quarter": quarter or "",
+            "month": month or "",
+        },
+    )
+
+
+def _heatmap_level_choices():
+    """(value, label) for the SSA heatmap's level tabs, in geographic order.
+
+    Ordered widest-first because that is how somebody reads down to a problem —
+    region to district to sub-county — with cluster last since it cuts across
+    geography rather than nesting inside it.
+    """
+    from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+    order = ["region", "district", "sub_county", "cluster"]
+    levels = CDAnalyticsService.HEATMAP_LEVELS
+    return [(key, levels[key][2]) for key in order if key in levels]
 
 
 @require_page_permission("cd_analytics")
