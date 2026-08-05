@@ -58,6 +58,12 @@ class CDScope:
     month: int | None = None
     filters: dict = field(default_factory=dict)
     school_ids: list = field(default_factory=list)  # all in-scope schools
+    # What goes into `school_id__in=` filters. Same membership as school_ids,
+    # but unevaluated: at 17,000 schools binding the materialised id list costs
+    # ~80-160ms per query, the semi-join under 10ms. Python-side code (len, set
+    # membership) must keep using school_ids. Defaults to the literal list, so a
+    # CDScope built by hand behaves exactly as it did before this existed.
+    school_ref: object = None
     cceo_user_ids: list = field(default_factory=list)  # scoped CCEO User ids
     cceo_staff_ids: list = field(default_factory=list)
     responsible_ids: set = field(default_factory=set)
@@ -68,6 +74,10 @@ class CDScope:
     # query pair once per PL row AND again once per CCEO row.
     areas: list = field(default_factory=list)
     per_user_series: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.school_ref is None:
+            self.school_ref = self.school_ids
 
 
 def _initials(name):
@@ -133,6 +143,8 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
         month=month or None,
         filters=filters,
         school_ids=school_ids,
+        # The same queryset that produced school_ids, left unevaluated.
+        school_ref=schools.values("id"),
         cceo_user_ids=cceo_users,
         cceo_staff_ids=cceo_sps,
         responsible_ids=responsible,
@@ -149,7 +161,7 @@ def _country_activities(cd: CDScope):
         or cd.filters.get("cluster")
     ):
         qs = qs.filter(
-            Q(school_id__in=cd.school_ids)
+            Q(school_id__in=cd.school_ref)
             | Q(responsible_staff_id__in=cd.responsible_ids)
         )
     if cd.quarter:
@@ -167,19 +179,24 @@ def _country_activities(cd: CDScope):
 
 
 # ── SSA annual-cycle helpers (country-wide) ──────────────────────────────────
-def _cycle_fys(school_ids, fy):
+def _cycle_fys(school_ids, fy, school_ref=None):
     """Latest + previous confirmed SSA FY for a school set. Memoized per
     request — the CD dashboard asks four times for the same country-wide set,
     and each call drags the whole id list into a DISTINCT query (~350ms at
-    15,000 schools)."""
+    15,000 schools).
+
+    `school_ids` identifies the set (it is the cache key); `school_ref` is what
+    the query filters on. They describe the same schools, but the ref may be an
+    unevaluated subquery, which a dict key cannot be."""
     from apps.core.request_cache import memoize
 
     ids = school_ids if isinstance(school_ids, (list, set, frozenset)) else None
+    ref = school_ids if school_ref is None else school_ref
     if ids is None:
-        return _cycle_fys_uncached(school_ids, fy)
+        return _cycle_fys_uncached(ref, fy)
     return memoize(
         ("cd_cycle_fys", len(ids), hash(frozenset(ids)), fy),
-        lambda: _cycle_fys_uncached(school_ids, fy),
+        lambda: _cycle_fys_uncached(ref, fy),
     )
 
 
@@ -213,8 +230,9 @@ def _refresh_target_ledger(cd: CDScope) -> None:
 
     if not cd.cceo_user_ids:
         return
-    for u in User.objects.filter(id__in=cd.cceo_user_ids):
-        TargetAchievementService.rebuild(u, cd.fy)
+    TargetAchievementService.rebuild_many(
+        User.objects.filter(id__in=cd.cceo_user_ids), cd.fy
+    )
 
 
 def _prime_target_series(cd: CDScope) -> None:
@@ -420,7 +438,7 @@ class CDAnalyticsService:
     @staticmethod
     def kpis(cd, acts):
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
 
         # Overall target achievement — weighted across the five official
         # target areas from the validated achievement ledger (mandate §6):
@@ -458,12 +476,12 @@ class CDAnalyticsService:
         )
         total_cceos = len(cd.cceo_user_ids)
 
-        latest_fy, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest_fy, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         avg_ssa = None
         if latest_fy:
             avg_ssa = _ssa_score(
                 SsaRecord.objects.filter(
-                    school_id__in=cd.school_ids,
+                    school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=latest_fy,
                 ).aggregate(a=Avg("average_score"))["a"]
@@ -920,7 +938,7 @@ class CDAnalyticsService:
             or cd.filters.get("cluster")
         ):
             qs = qs.filter(
-                Q(activity__school_id__in=cd.school_ids)
+                Q(activity__school_id__in=cd.school_ref)
                 | Q(responsible_user_id__in=cd.responsible_ids)
             )
         if cd.quarter:
@@ -945,6 +963,7 @@ class CDAnalyticsService:
                 fy=cd.fy,
                 filters=cd.filters,
                 school_ids=cd.school_ids,
+                school_ref=cd.school_ref,
                 cceo_user_ids=cd.cceo_user_ids,
                 cceo_staff_ids=cd.cceo_staff_ids,
                 responsible_ids=cd.responsible_ids,
@@ -1011,7 +1030,7 @@ class CDAnalyticsService:
     # ── 2. SSA by intervention (annual) ──────────────────────────────────────
     @staticmethod
     def ssa_interventions(cd):
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
         if not latest:
             for v, label, code in SSA_INTERVENTIONS:
@@ -1033,7 +1052,7 @@ class CDAnalyticsService:
 
         def by_int(cfy):
             rids = SsaRecord.objects.filter(
-                school_id__in=cd.school_ids, verification_status="confirmed", fy=cfy
+                school_id__in=cd.school_ref, verification_status="confirmed", fy=cfy
             ).values_list("id", flat=True)
             return {
                 r["intervention"]: r["a"]
@@ -1149,10 +1168,13 @@ class CDAnalyticsService:
         if level not in CDAnalyticsService.HEATMAP_LEVELS:
             level = "district"
         group_field, name_field, label = CDAnalyticsService.HEATMAP_LEVELS[level]
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
-        schools = School.objects.filter(id__in=cd.school_ids)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
+        schools = School.objects.filter(id__in=cd.school_ref)
         cols = SSA_INTERVENTIONS  # all 8
-        total_schools = schools.count()
+        # `school_ids` is the materialised form of this very queryset, so the
+        # total is already in hand — counting it again is a full scan for a
+        # number we are holding.
+        total_schools = len(cd.school_ids)
         unassigned = schools.filter(**{f"{group_field}__isnull": True}).count()
         empty = {
             "rows": [],
@@ -1167,10 +1189,6 @@ class CDAnalyticsService:
         if not latest:
             return empty
 
-        # Batch-fetch every ingredient ONCE instead of once per group (this used
-        # to run ~5 queries per district — up to ~680 queries at scale).
-        # School->group, every confirmed SSA record for the latest cycle, and
-        # every intervention score on those records, then group in Python.
         assigned = schools.exclude(**{f"{group_field}__isnull": True})
         if name_field:
             districts = list(
@@ -1193,59 +1211,65 @@ class CDAnalyticsService:
             )
             for d in districts:
                 d[name_field or "name"] = names.get(d[group_field]) or "Unnamed cluster"
-        school_district = dict(assigned.values_list("id", group_field))
 
-        records = list(
-            SsaRecord.objects.filter(
-                school_id__in=cd.school_ids,
+        # The grouping is the database's job. This used to fetch the school→group
+        # map, every confirmed record and every intervention score for the whole
+        # country and group them in Python — 176,000 rows transferred to produce
+        # 100 rows of 8 means, and that transfer was most of the page's time.
+        # Two GROUP BYs return the same numbers in at most `groups × 8` rows.
+        #
+        # `deleted_at__isnull=True` is spelled out on the score query because a
+        # join through `ssa_record__` does NOT apply SsaRecord's default manager.
+        # Without it a tombstoned assessment would silently re-enter the mean,
+        # which the record query above excludes.
+        record_group = f"school__{group_field}"
+        by_group = {
+            r[record_group]: r
+            for r in SsaRecord.objects.filter(
+                school_id__in=cd.school_ref,
                 verification_status="confirmed",
                 fy=latest,
-            ).values("id", "school_id", "average_score")
-        )
-        record_district = {}
-        district_scores: dict = {}  # district_id -> [average_score, ...]
-        district_covered_schools: dict = {}  # district_id -> {school_id, ...}
-        for r in records:
-            did = school_district.get(r["school_id"])
-            if did is None:
-                continue
-            record_district[r["id"]] = did
-            district_scores.setdefault(did, []).append(r["average_score"])
-            district_covered_schools.setdefault(did, set()).add(r["school_id"])
+            )
+            .values(record_group)
+            .annotate(
+                avg=Avg("average_score"),
+                # Distinct: a school assessed twice in a cycle is one school
+                # covered, not two.
+                covered=Count("school_id", distinct=True),
+            )
+            if r[record_group] is not None
+        }
 
-        scores = list(
+        score_group = f"ssa_record__school__{group_field}"
+        group_intervention: dict = {}  # group_id -> {intervention: mean}
+        for s in (
             SsaScore.objects.filter(
-                ssa_record_id__in=list(record_district.keys())
-            ).values("ssa_record_id", "intervention", "score")
-        )
-        district_intervention_scores: dict = {}  # district_id -> {intervention: [score, ...]}
-        for s in scores:
-            did = record_district.get(s["ssa_record_id"])
-            if did is None:
+                ssa_record__school_id__in=cd.school_ref,
+                ssa_record__verification_status="confirmed",
+                ssa_record__fy=latest,
+                ssa_record__deleted_at__isnull=True,
+            )
+            .values(score_group, "intervention")
+            .annotate(mean=Avg("score"))
+        ):
+            gid = s[score_group]
+            if gid is None:
                 continue
-            district_intervention_scores.setdefault(did, {}).setdefault(
-                s["intervention"], []
-            ).append(s["score"])
-
-        def _mean(values):
-            values = [v for v in values if v is not None]
-            return (sum(values) / len(values)) if values else None
+            group_intervention.setdefault(gid, {})[s["intervention"]] = s["mean"]
 
         rows = []
         for d in districts:
             did = d[group_field]
-            by = {
-                k: _mean(v)
-                for k, v in district_intervention_scores.get(did, {}).items()
-            }
+            by = group_intervention.get(did, {})
             cells = []
             # `col_label` rather than `label` — the outer `label` is the level's
             # own name and shadowing it here would title every tab "Enrolment".
             for v, col_label, code in cols:
                 score = _ssa_score(by.get(v))
                 cells.append({"score": score, "tone": ssa_band(score)[2]})
-            avg = _ssa_score(_mean(district_scores.get(did, [])))
-            covered = len(district_covered_schools.get(did, set()))
+            group_totals = by_group.get(did) or {}
+            avg = _ssa_score(group_totals.get("avg"))
+            covered = group_totals.get("covered") or 0
             n_schools = d["n"]
             rows.append(
                 {
@@ -1283,7 +1307,7 @@ class CDAnalyticsService:
     def partner_performance(cd, acts):
         from apps.partners.models import Partner, PartnerAssignment
 
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
         for p in Partner.objects.all().order_by("name"):
             assignments = PartnerAssignment.objects.filter(partner=p)
@@ -1353,7 +1377,7 @@ class CDAnalyticsService:
     # ── 6. Cluster performance ───────────────────────────────────────────────
     @staticmethod
     def cluster_performance(cd, acts):
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         names, cluster_school = CDAnalyticsService._cluster_membership(cd, acts)
 
         # Training and visit counts were two COUNTs per cluster inside the loop
@@ -1439,7 +1463,7 @@ class CDAnalyticsService:
             )
         rows.sort(key=lambda r: (r["avg_ssa"] is None, r["avg_ssa"] or 0))
         unclustered = School.objects.filter(
-            id__in=cd.school_ids, cluster_status="unclustered"
+            id__in=cd.school_ref, cluster_status="unclustered"
         ).count()
         return {"rows": rows, "unclustered": unclustered}
 
@@ -1469,7 +1493,7 @@ class CDAnalyticsService:
         ):
             cluster_school.setdefault(cid, set()).add(sid)
         for sid, cid in (
-            School.objects.filter(id__in=cd.school_ids)
+            School.objects.filter(id__in=cd.school_ref)
             .exclude(cluster_id__isnull=True)
             .exclude(cluster_id="")
             .values_list("id", "cluster_id")
@@ -1502,9 +1526,9 @@ class CDAnalyticsService:
         (get_dashboard) has already run them — avoids fully re-running those
         two expensive scans a second time just to derive two counts from
         them. Omit to compute fresh (e.g. a standalone caller)."""
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
         no_ssa = schools.exclude(current_fy_ssa_status="done").count()
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
 
         # Batch-fetch once instead of ~2 queries per district (school-scoped
         # district list, one confirmed-SSA query, one leadership-score query
@@ -1516,7 +1540,7 @@ class CDAnalyticsService:
             )
             record_district = {}
             for sid, rec_id in SsaRecord.objects.filter(
-                school_id__in=cd.school_ids,
+                school_id__in=cd.school_ref,
                 verification_status="confirmed",
                 fy=latest,
             ).values_list("school_id", "id"):
@@ -1593,7 +1617,7 @@ class CDAnalyticsService:
     # ── 8. PL oversight summary ──────────────────────────────────────────────
     @staticmethod
     def pl_oversight(cd, acts):
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
         for pl in CDAnalyticsService._pls():
             cceos = CDAnalyticsService._pl_cceos(pl, cd)
@@ -1700,7 +1724,7 @@ class CDAnalyticsService:
     def cceo_snapshot(cd, acts):
         from collections import defaultdict
 
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         pls = CDAnalyticsService._pls()
         pl_cceos = {pl.id: CDAnalyticsService._pl_cceos(pl, cd) for pl in pls}
         overdue_statuses = (
@@ -1841,19 +1865,19 @@ class CDAnalyticsService:
 
     @staticmethod
     def _improved_and_champions(cd):
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         if not latest:
             return 0, 0
         cur = dict(
             SsaRecord.objects.filter(
-                school_id__in=cd.school_ids, verification_status="confirmed", fy=latest
+                school_id__in=cd.school_ref, verification_status="confirmed", fy=latest
             ).values_list("school_id", "average_score")
         )
         improved = 0
         if prev:
             old = dict(
                 SsaRecord.objects.filter(
-                    school_id__in=cd.school_ids,
+                    school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=prev,
                 ).values_list("school_id", "average_score")
@@ -1871,7 +1895,7 @@ class CDAnalyticsService:
         old = (
             dict(
                 SsaRecord.objects.filter(
-                    school_id__in=cd.school_ids,
+                    school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=prev,
                 ).values_list("school_id", "average_score")
@@ -1893,8 +1917,8 @@ class CDAnalyticsService:
     def regional_summary(cd):
         from apps.geography.models import Region
 
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
-        schools = School.objects.filter(id__in=cd.school_ids)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
+        schools = School.objects.filter(id__in=cd.school_ref)
         region_ids = list(
             schools.exclude(region__isnull=True)
             .order_by("region_id")
@@ -1922,7 +1946,7 @@ class CDAnalyticsService:
         if latest:
             fys = [latest] if not prev else [latest, prev]
             for sid, fy, score in SsaRecord.objects.filter(
-                school_id__in=cd.school_ids,
+                school_id__in=cd.school_ref,
                 verification_status="confirmed",
                 fy__in=fys,
             ).values_list("school_id", "fy", "average_score"):
@@ -2014,9 +2038,9 @@ class CDAnalyticsService:
     # ── 13. Operational risk ─────────────────────────────────────────────────
     @staticmethod
     def operational_risk(cd, acts):
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         date.today()
 
         no_ssa = schools.exclude(current_fy_ssa_status="done").count()
@@ -2037,7 +2061,7 @@ class CDAnalyticsService:
         if latest:
             low_ssa = (
                 SsaRecord.objects.filter(
-                    school_id__in=cd.school_ids,
+                    school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=latest,
                     average_score__lt=5.0,
@@ -2440,7 +2464,7 @@ class CDAnalyticsService:
             return {"title": "PL", "subtitle": "Not found", "kind": "pl", "cceos": []}
         cceos = CDAnalyticsService._pl_cceos(pl, cd)
         acts.filter(status__in=COMPLETED_STATUSES)
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
         all_school_ids = set()
         for c in cceos:
@@ -2545,10 +2569,10 @@ class CDAnalyticsService:
         d = District.objects.filter(id=district_id).first()
         d_school_ids = list(
             School.objects.filter(
-                id__in=cd.school_ids, district_id=district_id
+                id__in=cd.school_ref, district_id=district_id
             ).values_list("id", flat=True)
         )
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         cells = []
         if latest:
             rids = list(
@@ -2595,10 +2619,10 @@ class CDAnalyticsService:
         r = Region.objects.filter(id=region_id).first()
         r_school_ids = list(
             School.objects.filter(
-                id__in=cd.school_ids, region_id=region_id
+                id__in=cd.school_ref, region_id=region_id
             ).values_list("id", flat=True)
         )
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         avg = (
             _ssa_score(
                 SsaRecord.objects.filter(
@@ -2648,7 +2672,7 @@ class CDAnalyticsService:
 
         _, cluster_school = CDAnalyticsService._cluster_membership(cd, acts)
         c_ids = list(cluster_school.get(cluster_id, set()))
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         cells = []
         if latest and c_ids:
             rids = list(
@@ -2691,13 +2715,13 @@ class CDAnalyticsService:
 
     @staticmethod
     def _drill_ssa(cd, intervention):
-        latest, prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         label = _INTERVENTION_LABELS.get(
             intervention, (intervention or "Intervention", "")
         )[0]
         rows = []
         if latest and intervention:
-            schools = School.objects.filter(id__in=cd.school_ids)
+            schools = School.objects.filter(id__in=cd.school_ref)
             for d in (
                 schools.exclude(district__isnull=True)
                 .order_by("district_id")
@@ -2734,9 +2758,9 @@ class CDAnalyticsService:
 
     @staticmethod
     def _drill_risk(cd, acts, issue):
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        latest, _ = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         title = {
             "no_ssa": "Schools without SSA",
             "no_visit": "Schools with No Visit",
@@ -2763,7 +2787,7 @@ class CDAnalyticsService:
             ]
         elif issue == "low_ssa" and latest:
             low_ids = SsaRecord.objects.filter(
-                school_id__in=cd.school_ids,
+                school_id__in=cd.school_ref,
                 verification_status="confirmed",
                 fy=latest,
                 average_score__lt=5.0,
