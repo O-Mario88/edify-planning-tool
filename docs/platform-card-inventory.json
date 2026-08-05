@@ -3466,8 +3466,8 @@
   },
   {
    "template": "templates/partials/analytics/cd/district_heatmap.html",
-   "line": 2,
-   "title": "5. District SSA Heatmap (Average SSA Score by Intervention)",
+   "line": 8,
+   "title": "5. SSA Heatmap (Average SSA Score by Intervention)",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
