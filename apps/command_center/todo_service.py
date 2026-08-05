@@ -440,6 +440,11 @@ def _school_action_todos(principal):
     todos = []
     for a in actions:
         school_name = school_names.get(a.school_id, "School")
+        # _due returns (label, tone, sort_key) — the same triple every other
+        # derivation here unpacks, so the due column reads and sorts
+        # identically whether a row came from an activity or an action.
+        due_label, due_tone, due_sort = _due(a.due_date, today)
+
         if a.due_date and a.due_date < today:
             status_key, status_label, status_tone = "overdue", "Overdue", "danger"
         elif a.due_date == today:
@@ -465,8 +470,8 @@ def _school_action_todos(principal):
                 "status_key": status_key,
                 "status_label": status_label,
                 "status_tone": status_tone,
-                "due_label": _due(a.due_date, today) if a.due_date else "—",
-                "due_tone": "danger" if status_key == "overdue" else "neutral",
+                "due_label": due_label,
+                "due_tone": due_tone,
                 "linked": school_name,
                 "action_label": "Open",
                 # The route recorded when the action was sent — straight to the
@@ -474,7 +479,7 @@ def _school_action_todos(principal):
                 "action_url": a.workflow_route,
                 "actionable": True,
                 "source": f"Sent by {sender_names.get(a.sender_id, 'your lead')}",
-                "_due_sort": a.due_date or date.max,
+                "_due_sort": due_sort,
             }
         )
     return todos

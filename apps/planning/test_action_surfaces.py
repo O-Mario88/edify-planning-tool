@@ -115,6 +115,17 @@ class DerivedTodoTests(SurfaceFixture):
         todo = self._todos(self.cceo)[0]
         self.assertEqual(todo["status_key"], "overdue")
         self.assertEqual(todo["due_tone"], "danger")
+        self.assertEqual(todo["due_label"], "Overdue")
+
+    def test_the_due_column_renders_as_text_not_a_python_tuple(self):
+        """_due returns (label, tone, sort_key). Passing the whole triple
+        through as due_label printed "('Aug 8', 'info', datetime.date(...))"
+        on the page — the template renders whatever it is handed."""
+        school = self._school("SF-T7")
+        todo = self._todos(self.cceo)[0] if self._send(school) else None
+        self.assertIsInstance(todo["due_label"], str)
+        self.assertNotIn("datetime", todo["due_label"])
+        self.assertIsInstance(todo["due_tone"], str)
 
     def test_nothing_is_stored_beyond_the_team_action(self):
         """A second persisted To-Do row would need its own sync to disappear.
