@@ -289,7 +289,7 @@
       "template": "partials/analytics/cd/regional_summary.html"
     },
     {
-      "bytes": 2634,
+      "bytes": 2648,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -625,7 +625,7 @@
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 7423,
+      "bytes": 7747,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -2209,7 +2209,7 @@
       "template": "partials/targets/team/_area_icon.html"
     },
     {
-      "bytes": 27487,
+      "bytes": 27858,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -2255,6 +2255,14 @@
       "htmx_controls": 0,
       "tables": 1,
       "template": "partials/targets/team/staff_drawer.html"
+    },
+    {
+      "bytes": 1168,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/targets/team/validation_drawer.html"
     },
     {
       "bytes": 11328,
@@ -29335,6 +29343,65 @@
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
+      "backend_view": "apps.frontend.views.staff_views.team_targets_validation_backlog_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Targets Validation Backlog",
+      "permission_key": "team_targets",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The team's activities in one workflow state, behind a Validation tile.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR",
+        "IA",
+        "PL"
+      ],
+      "route": "/team-targets/validation-backlog",
+      "route_name": "team_targets_validation_backlog",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.schools.models",
+        "apps.ssa.services",
+        "apps.targets.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/targets/team/validation_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.today_view",
       "charts": false,
       "drawers": false,
@@ -43658,6 +43725,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.staff_views.team_targets_validation_backlog_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_targets",
+      "required_permissions": [],
+      "route": "/team-targets/validation-backlog",
+      "route_name": "team_targets_validation_backlog",
+      "templates": [
+        "partials/targets/team/validation_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.staff_views.today_view",
       "kind": "page",
       "methods": [
@@ -43881,15 +43962,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 876,
+    "all_routes": 877,
     "api_routes": 293,
-    "component_templates": 288,
+    "component_templates": 289,
     "full_pages": 317,
-    "partials_and_drawers": 144,
-    "permission_gated": 464,
+    "partials_and_drawers": 145,
+    "permission_gated": 465,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 474,
+    "routed_surfaces": 475,
     "scheduled_jobs": 17,
     "severity_counts": {
       "critical": 0,
@@ -43897,6 +43978,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 440
+    "test_referenced": 441
   }
 }
