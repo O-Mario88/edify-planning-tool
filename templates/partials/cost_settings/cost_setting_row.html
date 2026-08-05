@@ -35,7 +35,7 @@ required
 minlength="5"
 maxlength="512"
 placeholder="Why is this rate changing?"
-class="block h-8 flex-1 min-w-[190px] px-2.5 rounded-control border border-[var(--border-card)] text-[12px] font-medium focus:outline-none focus:ring-1 edify-primary-focus"
+class="block h-8 flex-1 min-w-0 px-2.5 rounded-control border border-[var(--border-card)] text-[12px] font-medium focus:outline-none focus:ring-1 edify-primary-focus"
 >
 <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Save
@@ -62,7 +62,7 @@ it before and why did it move", had no answer in the interface.
 Change history{% if history %} · {{ history|length }}{% endif %}
 </summary>
 {% if history %}
-<div class="max-h-44 overflow-y-auto px-2.5 pb-2">
+<div class="max-h-48 overflow-y-auto px-2.5 pb-2">
 <table class="w-full edify-text-caption">
 <thead>
 <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 text-left">

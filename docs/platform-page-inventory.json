@@ -857,7 +857,7 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 5419,
+      "bytes": 5413,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
