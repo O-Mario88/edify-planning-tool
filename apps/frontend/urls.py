@@ -1,6 +1,7 @@
 from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
+    action_views,
     work_plan_views,
     visit_effectiveness_views,
     pwa_views,
@@ -126,6 +127,22 @@ urlpatterns = [
         "dashboard/pl-send-urgent-action",
         dashboard_views.pl_send_urgent_action_view,
         name="pl_send_urgent_action",
+    ),
+    # School actions: the sender's monitoring board and the recipient's queue.
+    path(
+        "actions/sent",
+        action_views.actions_sent_view,
+        name="actions_sent",
+    ),
+    path(
+        "actions/mine",
+        action_views.my_actions_view,
+        name="my_actions",
+    ),
+    path(
+        "actions/<str:action_id>/<str:transition>",
+        action_views.action_transition_view,
+        name="action_transition",
     ),
     path(
         "dashboard/cd-approve",

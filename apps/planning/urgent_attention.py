@@ -283,17 +283,25 @@ def monthly_urgent_schools(
         if r["key"] != "intervention_follow_up" or r["severity"] != "normal"
     ]
 
-    # This card is now an UNASSIGNED queue. A condition someone already owns
-    # has left the queue — it has not gone away, it has moved to Actions Sent,
-    # and showing it here would invite a second person to send it again. One
-    # indexed query for the whole page rather than one per row.
+    # This card is now an UNASSIGNED queue. A school someone already owns has
+    # left the queue — it has not gone away, it has moved to Actions Sent, and
+    # showing it here would invite a second person to send it again.
+    #
+    # Excluded per school rather than per condition key, matching the PL card
+    # in apps/analytics/pl_analytics_service.py. One row here is one school
+    # under its highest issue, so once that school has an owner it is not
+    # unassigned — and two cards using two different exclusion rules would be
+    # a drift waiting to happen. Dedup of the ACTIONS themselves still uses
+    # the precise condition key, so two genuinely distinct problems at one
+    # school remain two separate tracked responsibilities.
     assigned = set(
         TeamAction.objects.filter(
-            condition_key__in=[r["condition_key"] for r in rows],
+            school_id__in=[r["school_id"] for r in rows],
+            fy=fy,
             state__in=ACTIVE_STATES,
-        ).values_list("condition_key", flat=True)
+        ).values_list("school_id", flat=True)
     )
-    unassigned = [r for r in rows if r["condition_key"] not in assigned]
+    unassigned = [r for r in rows if r["school_id"] not in assigned]
 
     return {
         "rows": unassigned[:limit],

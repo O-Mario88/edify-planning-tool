@@ -394,6 +394,92 @@ def _school_quality_todos(scope):
     return todos
 
 
+def _school_action_todos(principal):
+    """A school issue delegated to me by my PL or IA.
+
+    Derived rather than stored, like every other To-Do here. A TeamAction is
+    already a persistent, auto-closing record of the responsibility — writing a
+    second row alongside it would need its own sync to disappear when the
+    action resolves, which is precisely the drift this module avoids. The
+    TeamAction IS the durable record; this is its view in the operating queue.
+
+    Escalated actions still appear: escalation adds an observer, it does not
+    move the work off the recipient's desk.
+    """
+    from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+    user_id = getattr(principal, "id", None)
+    if not user_id:
+        return []
+
+    actions = list(
+        TeamAction.objects.filter(
+            recipient_id=user_id, state__in=ACTIVE_STATES
+        ).order_by("due_date", "created_at")[:25]
+    )
+    if not actions:
+        return []
+
+    # Two small lookups scoped to this page's rows. Loading every school name
+    # would be 15k rows to label at most 25.
+    from apps.accounts.models import User
+    from apps.schools.models import School
+
+    school_names = dict(
+        School.objects.filter(id__in={a.school_id for a in actions}).values_list(
+            "id", "name"
+        )
+    )
+    sender_names = dict(
+        User.objects.filter(id__in={a.sender_id for a in actions}).values_list(
+            "id", "name"
+        )
+    )
+
+    today = date.today()
+    todos = []
+    for a in actions:
+        school_name = school_names.get(a.school_id, "School")
+        if a.due_date and a.due_date < today:
+            status_key, status_label, status_tone = "overdue", "Overdue", "danger"
+        elif a.due_date == today:
+            status_key, status_label, status_tone = "due_today", "Due Today", "warning"
+        elif a.state == "blocked":
+            status_key, status_label, status_tone = "blocked", "Blocked", "neutral"
+        else:
+            status_key, status_label, status_tone = (
+                "waiting_me",
+                "Waiting on Me",
+                "info",
+            )
+
+        todos.append(
+            {
+                # Keyed by action id so the row is stable across refreshes and
+                # cannot collide with the activity-derived To-Dos above.
+                "id": f"tact-{a.id}",
+                "title": a.requested_action,
+                "description": school_name,
+                "category": "Urgent Attention",
+                "priority": "critical" if a.severity == "critical" else "high",
+                "status_key": status_key,
+                "status_label": status_label,
+                "status_tone": status_tone,
+                "due_label": _due(a.due_date, today) if a.due_date else "—",
+                "due_tone": "danger" if status_key == "overdue" else "neutral",
+                "linked": school_name,
+                "action_label": "Open",
+                # The route recorded when the action was sent — straight to the
+                # work rather than to a dashboard to search from.
+                "action_url": a.workflow_route,
+                "actionable": True,
+                "source": f"Sent by {sender_names.get(a.sender_id, 'your lead')}",
+                "_due_sort": a.due_date or date.max,
+            }
+        )
+    return todos
+
+
 def _ia_todos(principal, role):
     if role not in ("ImpactAssessment", "Admin"):
         return []
@@ -1924,6 +2010,9 @@ def get_todos(principal) -> dict:
 
     todos = []
     todos += _activity_todos(principal, scope, today, fy)
+    # Delegated urgent-school issues. Ahead of the rest because a school
+    # someone escalated to you by name outranks routine queue work.
+    todos += _school_action_todos(principal)
     todos += _pl_review_todos(principal, role)
     todos += _partner_delay_todos(principal, scope, today)
     todos += _returned_assignment_todos(principal, scope, today)
