@@ -638,6 +638,11 @@ urlpatterns = [
         name="cd_analytics_drilldown",
     ),
     path(
+        "analytics/country-director/ssa-heatmap",
+        analytics_views.cd_ssa_heatmap_view,
+        name="cd_ssa_heatmap",
+    ),
+    path(
         "analytics/country-director/export",
         analytics_views.cd_analytics_export_view,
         name="cd_analytics_export",
