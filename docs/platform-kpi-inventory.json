@@ -1084,7 +1084,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2076,
+   "line": 2099,
    "label": null,
    "keys": [
     "aging",
@@ -1136,7 +1136,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1994,
+   "line": 2017,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1149,7 +1149,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1995,
+   "line": 2018,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1162,7 +1162,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1996,
+   "line": 2019,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1175,7 +1175,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1997,
+   "line": 2020,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1188,7 +1188,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1998,
+   "line": 2021,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1201,7 +1201,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1999,
+   "line": 2022,
    "label": "Returned",
    "keys": [
     "amount",
