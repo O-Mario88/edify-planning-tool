@@ -30,7 +30,9 @@ class AnalyticsDashboardService:
         fy = filters.get("fy") or get_operational_fy()
         quarter = filters.get("quarter") or "Q2"
         region_id = filters.get("region")
+        sub_region_id = filters.get("sub_region")
         district_id = filters.get("district")
+        sub_county_id = filters.get("sub_county")
         cluster_id = filters.get("cluster")
         staff_id = filters.get("staff")
         partner_id = filters.get("partner")
@@ -87,11 +89,35 @@ class AnalyticsDashboardService:
             schools_qs = schools_qs.filter(region_id=region_id)
             activities_qs = activities_qs.filter(school__region_id=region_id)
             ssa_qs = ssa_qs.filter(school__region_id=region_id)
+        # Sub-Region
+        #
+        # Joined through the district, never through School.sub_region_id. That
+        # column exists and is populated on no school at all, so filtering by it
+        # would return an empty page that reads as "no data for this area"
+        # rather than as a broken filter. This is the same route
+        # apps/analytics/subregion_analytics.py and the SSA heatmap take.
+        if sub_region_id:
+            schools_qs = schools_qs.filter(district__sub_region_id=sub_region_id)
+            activities_qs = activities_qs.filter(
+                school__district__sub_region_id=sub_region_id
+            )
+            ssa_qs = ssa_qs.filter(school__district__sub_region_id=sub_region_id)
         # District
         if district_id:
             schools_qs = schools_qs.filter(district_id=district_id)
             activities_qs = activities_qs.filter(school__district_id=district_id)
             ssa_qs = ssa_qs.filter(school__district_id=district_id)
+        # Sub-County
+        #
+        # School.sub_county is the assignment the map's subcounty_insight also
+        # groups by, so a filtered page and the map agree about which schools
+        # sit in a sub-county. Note the map draws sub-county BOUNDARIES for the
+        # whole country from static GeoJSON — that is geometry, not assignment,
+        # and it makes coverage look far higher than it is.
+        if sub_county_id:
+            schools_qs = schools_qs.filter(sub_county_id=sub_county_id)
+            activities_qs = activities_qs.filter(school__sub_county_id=sub_county_id)
+            ssa_qs = ssa_qs.filter(school__sub_county_id=sub_county_id)
         # Cluster
         if cluster_id:
             schools_qs = schools_qs.filter(cluster_id=cluster_id)
@@ -1027,7 +1053,9 @@ class AnalyticsDashboardService:
                 "selected_fy": fy,
                 "selected_quarter": quarter,
                 "selected_region": region_id,
+                "selected_sub_region": sub_region_id,
                 "selected_district": district_id,
+                "selected_sub_county": sub_county_id,
                 "selected_cluster": cluster_id,
                 "selected_staff": staff_id,
                 "selected_partner": partner_id,

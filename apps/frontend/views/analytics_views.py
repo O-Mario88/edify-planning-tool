@@ -11,7 +11,7 @@ from apps.core.permissions import require_export_permission, require_page_permis
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
-from apps.geography.models import Region, District
+from apps.geography.models import Region, District, SubRegion, SubCounty
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner
 from apps.accounts.models import StaffProfile
@@ -26,7 +26,9 @@ def _analytics_filters(request):
     return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
+        "sub_region": request.GET.get("sub_region"),
         "district": request.GET.get("district"),
+        "sub_county": request.GET.get("sub_county"),
         "cluster": request.GET.get("cluster"),
         "staff": request.GET.get("staff"),
         "partner": request.GET.get("partner"),
@@ -90,6 +92,26 @@ def analytics_dashboard_view(request):
         .distinct()
         .order_by("name")
     )
+    # Sub-region reaches schools through the district, matching the SSA heatmap
+    # and the map. School.sub_region_id is a CharField populated on no school,
+    # so scoping through it would offer an empty list.
+    sub_regions = (
+        SubRegion.objects.filter(districts__in=_scoped_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
+    # Scoped to the sub-counties schools are ACTUALLY assigned to, not to every
+    # sub-county in the country. The map draws boundaries for all of them from
+    # static GeoJSON, which makes coverage look complete; the assignment on
+    # School.sub_county is what a filter can actually return rows for, and it
+    # is set on a small minority of schools today. Listing the rest would be
+    # thousands of options that all return nothing.
+    sub_counties = (
+        SubCounty.objects.filter(id__in=_scoped_schools.values("sub_county_id"))
+        .distinct()
+        .select_related("district")
+        .order_by("district__name", "name")
+    )
     # Cluster carries its own district, so it scopes through the same set
     # rather than through School.cluster_id, which is a CharField.
     clusters = (
@@ -108,7 +130,9 @@ def analytics_dashboard_view(request):
     context = {
         **data,
         "regions": regions,
+        "sub_regions": sub_regions,
         "districts": districts,
+        "sub_counties": sub_counties,
         "clusters": clusters,
         "staff_profiles": staff_profiles,
         "partners": partners,

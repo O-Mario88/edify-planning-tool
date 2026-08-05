@@ -821,7 +821,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 376,
+   "line": 402,
    "label": "Overall Target Achievement",
    "keys": [
     "helper",
@@ -838,7 +838,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 398,
+   "line": 424,
    "label": "Teachers Trained",
    "keys": [
     "helper",
@@ -855,7 +855,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 414,
+   "line": 440,
    "label": "School Leaders Trained",
    "keys": [
     "helper",
@@ -872,7 +872,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 430,
+   "line": 456,
    "label": "Students Impacted",
    "keys": [
     "helper",
@@ -889,7 +889,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 446,
+   "line": 472,
    "label": "Schools Impacted",
    "keys": [
     "helper",
@@ -906,7 +906,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 462,
+   "line": 488,
    "label": "Districts Covered",
    "keys": [
     "helper",
@@ -923,7 +923,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 478,
+   "line": 504,
    "label": "Clusters Covered",
    "keys": [
     "helper",
@@ -940,7 +940,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 494,
+   "line": 520,
    "label": "Total Activities Completed",
    "keys": [
     "helper",
@@ -957,7 +957,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 510,
+   "line": 536,
    "label": "SSA Average",
    "keys": [
     "helper",
@@ -974,7 +974,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 983,
+   "line": 1009,
    "label": "Schools without SSA",
    "keys": [
     "color",
@@ -990,7 +990,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 991,
+   "line": 1017,
    "label": "Schools not visited",
    "keys": [
     "color",
@@ -1006,7 +1006,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 999,
+   "line": 1025,
    "label": "Schools not trained",
    "keys": [
     "color",
@@ -1022,7 +1022,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1007,
+   "line": 1033,
    "label": "High-risk districts",
    "keys": [
     "color",
@@ -1038,7 +1038,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1015,
+   "line": 1041,
    "label": "Clusters needing attention",
    "keys": [
     "color",
@@ -1054,7 +1054,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 594,
+   "line": 620,
    "label": null,
    "keys": [
     "code",
@@ -2485,7 +2485,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 124,
+   "line": 148,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",
