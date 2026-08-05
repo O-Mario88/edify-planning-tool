@@ -7,8 +7,9 @@
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
 <td class="px-4 py-3 align-middle" colspan="2">
-<form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 flex items-center gap-2">
+<form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 space-y-2">
 {% csrf_token %}
+<div class="flex flex-wrap items-center gap-2">
 <div class="relative rounded-surface shadow-sm max-w-[155px]">
 <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
 <span class="edify-text-caption font-bold text-slate-400">UGX</span>
@@ -21,7 +22,21 @@ required
 class="block w-full h-8 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold edify-primary-text focus:outline-none focus:ring-1 edify-primary-focus edify-primary-focus"
 >
 </div>
-
+{% comment %}
+Required, and deliberately so. This rate is an input to every activity budget
+in the country; the history row already captured who and when, and without
+this it recorded the reason as the literal string "Updated via CD Dashboard"
+for every change ever made.
+{% endcomment %}
+<input aria-label="Reason for this rate change"
+type="text"
+name="reason"
+required
+minlength="5"
+maxlength="512"
+placeholder="Why is this rate changing?"
+class="block h-8 flex-1 min-w-[190px] px-2.5 rounded-control border border-[var(--border-card)] text-[12px] font-medium focus:outline-none focus:ring-1 edify-primary-focus"
+>
 <button type="submit" class="h-8 px-3 rounded-control edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold flex items-center justify-center transition-colors">
 Save
 </button>
@@ -34,6 +49,48 @@ class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-s
 >
 Cancel
 </button>
+</div>
+
+{% comment %}
+The change history, loaded with the row rather than behind another click.
+`cost_setting_history` has existed since this register was built and was never
+rendered anywhere — so the one question a rate change raises later, "what was
+it before and why did it move", had no answer in the interface.
+{% endcomment %}
+<details class="rounded-control border border-slate-200 bg-slate-50/60" {% if history %}open{% endif %}>
+<summary class="cursor-pointer px-2.5 py-1.5 edify-text-caption font-bold text-slate-600">
+Change history{% if history %} · {{ history|length }}{% endif %}
+</summary>
+{% if history %}
+<div class="max-h-44 overflow-y-auto px-2.5 pb-2">
+<table class="w-full edify-text-caption">
+<thead>
+<tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 text-left">
+<th class="py-1 pr-2 font-bold">When</th>
+<th class="py-1 pr-2 font-bold">Change</th>
+<th class="py-1 pr-2 font-bold">By</th>
+<th class="py-1 font-bold">Reason</th>
+</tr>
+</thead>
+<tbody class="align-top">
+{% for h in history %}
+<tr class="border-t border-slate-100">
+<td class="py-1 pr-2 tabular-nums text-slate-500 whitespace-nowrap">{{ h.changedAt|slice:":10" }}</td>
+<td class="py-1 pr-2 tabular-nums font-semibold text-slate-700 whitespace-nowrap">
+{% if h.oldUnitCost is not None %}{{ h.oldUnitCost|currency }} →{% endif %} {{ h.newUnitCost|currency }}
+<span class="text-slate-400 font-medium">v{{ h.version }}</span>
+</td>
+<td class="py-1 pr-2 text-slate-500">{{ h.changedByName|default:"—" }}</td>
+<td class="py-1 font-medium text-slate-600">{{ h.reason|default:"—" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="px-2.5 pb-2 edify-text-caption font-medium text-slate-400">No recorded change yet — this rate is at its original value.</p>
+{% endif %}
+</details>
 </form>
 </td>
 </tr>
