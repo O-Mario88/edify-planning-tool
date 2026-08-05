@@ -108,3 +108,50 @@ class SsaHeatmapLevelsTest(TestCase):
         legacy = CDAnalyticsService.district_heatmap(resolve_cd_scope("2026"))
         self.assertEqual(legacy["level"], "district")
         self.assertEqual(legacy["rows"], self._heatmap("district")["rows"])
+
+
+class SsaHeatmapEndpointTest(TestCase):
+    """The tab endpoint is reachable with no query string at all.
+
+    It shipped 500ing on a bare GET: `resolve_cd_scope` is called directly here
+    rather than through `get_dashboard`, which is what normally defaults the
+    fiscal year, and a None fy reaches a queryset as `fy=None` —
+    "Cannot use None as a query value". The route crawl caught it, which is the
+    right outcome but the slow one; this pins it at the unit level.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from django.contrib.auth import get_user_model
+
+        cls.cd = get_user_model().objects.create(
+            id="hm-cd",
+            email="hm-cd@edify.org",
+            name="HM CD",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+            is_active=True,
+        )
+
+    def setUp(self):
+        self.client.force_login(self.cd)
+
+    def test_a_bare_get_does_not_error(self):
+        self.assertEqual(
+            self.client.get("/analytics/country-director/ssa-heatmap").status_code,
+            200,
+        )
+
+    def test_every_level_renders_over_http(self):
+        for level in ("region", "district", "sub_county", "cluster"):
+            with self.subTest(level=level):
+                response = self.client.get(
+                    f"/analytics/country-director/ssa-heatmap?level={level}"
+                )
+                self.assertEqual(response.status_code, 200)
+
+    def test_a_junk_level_from_the_query_string_is_survivable(self):
+        response = self.client.get(
+            "/analytics/country-director/ssa-heatmap?level=../../etc/passwd"
+        )
+        self.assertEqual(response.status_code, 200)

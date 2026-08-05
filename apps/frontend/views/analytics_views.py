@@ -731,7 +731,11 @@ def cd_ssa_heatmap_view(request):
     from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
 
     level = (request.GET.get("level") or "district").strip()
-    fy = (request.GET.get("fy") or "").strip() or None
+    # `get_dashboard` normalises this before resolving scope; calling
+    # resolve_cd_scope directly does not, and a None fy reaches a queryset as
+    # `fy=None` — "Cannot use None as a query value", a 500 on a bare GET.
+    # The route crawl caught it.
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
     cd = resolve_cd_scope(fy, quarter=quarter, month=month)
@@ -741,7 +745,7 @@ def cd_ssa_heatmap_view(request):
         {
             "district_heatmap": CDAnalyticsService.ssa_heatmap(cd, level),
             "heatmap_levels": _heatmap_level_choices(),
-            "fy": fy or "",
+            "fy": fy,
             "quarter": quarter or "",
             "month": month or "",
         },
