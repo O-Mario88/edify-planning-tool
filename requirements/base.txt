@@ -2,20 +2,20 @@
 # Pin to known-good versions for reproducible builds.
 
 Django==5.2.16
-djangorestframework==3.16.0
+djangorestframework==3.17.1
 django-filter==26.1
-django-cors-headers==4.6.0
-django-environ==0.11.2
+django-cors-headers==4.9.0
+django-environ==0.14.0
 dj-database-url==3.1.2
-whitenoise==6.8.2
+whitenoise==6.12.0
 django-storages[s3]==1.14.6
-boto3==1.43.51
-drf-spectacular==0.29.0
+boto3==1.43.57
+drf-spectacular==0.30.0
 drf-nested-routers==0.95.0
 django-apscheduler==0.7.0
 
 # Postgres driver (the NestJS backend ran on Postgres via Prisma).
-psycopg[binary]==3.2.3
+psycopg[binary]==3.3.4
 
 # JWT auth — access tokens signed with JWT_SECRET + rotating refresh tokens.
 # We use PyJWT directly (custom issuance) for parity with NestJS @nestjs/jwt.
@@ -26,8 +26,8 @@ PyJWT==2.13.0
 bcrypt==5.0.0
 
 # ASGI server for streaming SSE + the in-process scheduler.
-daphne==4.2.2
-uvicorn==0.32.1
+daphne==4.2.3
+uvicorn==0.51.0
 gunicorn==26.0.0
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
@@ -61,6 +61,6 @@ python-dateutil==2.9.0.post0
 # significance testing, cost-effectiveness. Batch/service-layer only — the
 # request path stays on ORM aggregation.
 numpy==2.5.1
-pandas==3.0.3
+pandas==3.0.5
 scipy==1.18.0
 fpdf2==2.8.7
