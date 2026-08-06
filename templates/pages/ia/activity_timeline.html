@@ -6,10 +6,10 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Header -->
 {% include "partials/_back_link.html" with back_href="/ia/verification/" back_label="Verification Queue" %}
-<div class="flex items-center gap-3">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Activity Execution Timeline</h1>
-<p class="text-[12px] text-slate-500 mt-1.5 font-semibold">Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">Activity Execution Timeline</h1>
+<p class="edify-page-header__description">Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).</p>
 </div>
 </div>
 

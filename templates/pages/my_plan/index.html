@@ -7,15 +7,15 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Header & Actions -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">My Work</p>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-tight edify-page-title">My Plan</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">View and manage all scheduled activities by week, month, quarter, and fiscal year.</p>
+<h1 class="edify-page-title edify-page-header__title">My Plan</h1>
+<p class="edify-page-header__description">View and manage all scheduled activities by week, month, quarter, and fiscal year.</p>
 </div>
 
 <!-- Top Right actions -->
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 <!-- Export button (Exports CSV of currently filtered feed) -->
 <a
 href="{% querystring export='csv' %}"

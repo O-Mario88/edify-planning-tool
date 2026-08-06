@@ -601,8 +601,11 @@ a.calendar-event:focus-visible {
 @media (max-width: 52rem) {
   .calendar-workspace__header,
   .calendar-month__toolbar {
+    /* Column direction — the shared lead basis is a main-axis size here. */
     align-items: stretch;
     flex-direction: column;
+    --page-header-lead-basis: auto;
+    --page-header-align: flex-start;
   }
 
   .calendar-workspace__leave-action {

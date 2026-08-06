@@ -14,10 +14,10 @@
 <div class="space-y-4">
   <section class="edify-page-header edify-page-hero">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-      <div>
+      <div class="edify-page-header__lead">
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Team funding workspace</p>
-        <h1 class="mt-1 text-[24px] font-bold tracking-tight">Monthly Team Budget Request</h1>
-        <p class="mt-1 text-[13px] font-medium text-slate-300">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
+        <h1 class="edify-page-title edify-page-header__title">Monthly Team Budget Request</h1>
+        <p class="edify-page-header__description">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
       </div>
       <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="edify-filter-bar grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
         <label class="block min-w-0">

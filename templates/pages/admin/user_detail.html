@@ -7,19 +7,19 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto">
 
 <!-- Breadcrumbs & Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <div class="flex items-center gap-1.5 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
 <a href="{% url 'frontend:admin_users' %}" class="hover:text-slate-600 transition-colors">User Management</a>
 <span>&bull;</span>
 <span class="text-slate-500">Edit Profile</span>
 </div>
 <p class="edify-page-eyebrow">Administration</p>
-<h1 class="text-[21px] font-extrabold tracking-tight mt-1 edify-page-title">{{ member.name }}</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, reporting teams, credentials, and account lifecycle status.</p>
+<h1 class="edify-page-title edify-page-header__title">{{ member.name }}</h1>
+<p class="edify-page-header__description">Configure roles, reporting teams, credentials, and account lifecycle status.</p>
 </div>
 
-<div class="flex gap-2">
+<div class="edify-page-header__controls">
 <!-- Status Badge -->
 {% if member.is_active %}
 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">

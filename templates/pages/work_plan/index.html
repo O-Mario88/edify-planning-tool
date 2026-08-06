@@ -8,13 +8,13 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Page header -->
-<header class="edify-page-header flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
+<header class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Planning &amp; Execution</p>
-<h1 class="edify-page-title text-[21px] font-extrabold tracking-tight">Work Plan</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold max-w-[640px]">Review all planned Activities, responsible staff, execution status and plan-derived costs across the selected period.</p>
+<h1 class="edify-page-title edify-page-header__title">Work Plan</h1>
+<p class="max-w-[640px] edify-page-header__description">Review all planned Activities, responsible staff, execution status and plan-derived costs across the selected period.</p>
 </div>
-<div class="shrink-0 flex flex-wrap items-center gap-2">
+<div class="edify-page-header__controls">
 {% if can_export %}
 <a href="/work-plan/export.xlsx?{{ request.GET.urlencode }}"
    class="btn btn-secondary h-10">

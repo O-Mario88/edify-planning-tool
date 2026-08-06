@@ -5,15 +5,15 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 select-none max-w-[1500px] mx-auto">
   <!-- Header with Title & Summary -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <div>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Communication</p>
-      <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Notifications Center</h1>
-      <p class="text-[12px] text-slate-500 mt-1 font-semibold">Edify Alert Operations · Keep Track of Actionable Tasks</p>
+      <h1 class="edify-page-title edify-page-header__title">Notifications Center</h1>
+      <p class="edify-page-header__description">Edify Alert Operations · Keep Track of Actionable Tasks</p>
     </div>
 
     <!-- Bulk Actions -->
-    <div class="flex items-center gap-2">
+    <div class="edify-page-header__controls">
       <form method="post" action="/notifications" class="inline">
         {% csrf_token %}
         <input type="hidden" name="action" value="mark_all_read">

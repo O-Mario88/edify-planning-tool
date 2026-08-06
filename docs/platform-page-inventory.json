@@ -1105,7 +1105,7 @@
       "template": "partials/disbursements/return_drawer.html"
     },
     {
-      "bytes": 19016,
+      "bytes": 18996,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1193,7 +1193,7 @@
       "template": "partials/finance/country_budget/return_drawer.html"
     },
     {
-      "bytes": 27977,
+      "bytes": 27957,
       "findings": [],
       "forms": 3,
       "htmx_controls": 7,
@@ -1241,7 +1241,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 15309,
+      "bytes": 15328,
       "findings": [],
       "forms": 1,
       "htmx_controls": 4,
@@ -1265,7 +1265,7 @@
       "template": "partials/fund_approvals/return_drawer.html"
     },
     {
-      "bytes": 8762,
+      "bytes": 8689,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1329,7 +1329,7 @@
       "template": "partials/fund_requests/period_budget_tabs.html"
     },
     {
-      "bytes": 14764,
+      "bytes": 14682,
       "findings": [],
       "forms": 2,
       "htmx_controls": 2,
@@ -1769,7 +1769,7 @@
       "template": "partials/partners/return_assignment_drawer.html"
     },
     {
-      "bytes": 4499,
+      "bytes": 4648,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1777,7 +1777,7 @@
       "template": "partials/partners/schedule_assignment_drawer.html"
     },
     {
-      "bytes": 13625,
+      "bytes": 7203,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -24202,7 +24202,7 @@
         "partials/planning/assign_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {

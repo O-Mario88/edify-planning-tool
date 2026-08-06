@@ -1803,19 +1803,80 @@ main :is(
 
 /* The legacy and feature-specific heroes supplied their spacing from the
    removed card. Their page wrappers already own the layout gutters and rhythm,
-   so reset only those card-derived headers to the same content edge. */
+   so reset every one of them to the same content edge.
+
+   Padding and bleed are on the whole family, not just the four card-derived
+   heroes: sixteen headers sharing one surface but keeping sixteen paddings
+   still put the title on a different vertical on every page, which is the
+   thing a shared header is for. The bleed is the padding plus the border, so
+   the title lines up with the breadcrumb above it and the cards below it
+   instead of sitting one indent to their right. */
 main :is(
   .edify-page-hero,
+  .edify-page-header,
+  .platform-page-header,
   .platform-hero,
   .ia-hero,
-  .help-center-hero
+  .help-center-hero,
+  .help-shell__header,
+  .hcos-hero,
+  .sp-page-header,
+  .pto-header,
+  .tt-page-header,
+  .calendar-workspace__header,
+  .partner-workspace__header,
+  .admin-command__header,
+  .pd-page-header,
+  .sp-plan__header,
+  .spp-header,
+  .spa-header
 ) {
-  /* Canonical padding, not zero. These four had their padding removed along
-     with their card; now that they carry the tonal surface again, zero would
-     put the title hard against the surface edge. */
-  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem) !important;
+  /* Canonical padding, not zero. Zero would put the title hard against the
+     surface edge now that these carry the tonal surface again. */
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 0.75rem) !important;
+  margin-inline: calc(-1 * (var(--page-header-padding-x, 0.75rem) + 1px)) !important;
+  /* Through a variable, because the families that turn the header into a
+     column at their own breakpoint need flex-start there — and centring a
+     column is what indented their titles into the middle of the band. Those
+     breakpoints live in each family's own stylesheet, which loads before this
+     bridge and so cannot win on the property itself; setting the variable is
+     how they still decide. */
+  align-items: var(--page-header-align, center) !important;
   overflow: visible !important;
   isolation: auto !important;
+}
+
+/* One row: title on the left, filters and actions on the right. Each family
+   named its lead and its actions differently, so the shared rule targets
+   position — first child leads, everything after it is controls — and the
+   canonical class names are listed for the markup that already uses them. */
+main :is(
+  .edify-page-hero,
+  .edify-page-header,
+  .platform-page-header,
+  .platform-hero,
+  .ia-hero,
+  .help-center-hero,
+  .help-shell__header,
+  .hcos-hero,
+  .sp-page-header,
+  .pto-header,
+  .tt-page-header,
+  .calendar-workspace__header,
+  .partner-workspace__header,
+  .admin-command__header,
+  .pd-page-header,
+  .sp-plan__header,
+  .spp-header,
+  .spa-header
+) > :first-child {
+  /* A basis, not just grow: flex-wrap breaks lines using the base size, so a
+     lead sitting at its max-content width pushes the controls to a second row
+     however much it could have shrunk. The basis is a variable because three
+     of these families turn the header into a column at their own breakpoint,
+     where a main-axis basis is a height — they set it back to auto there. */
+  flex: 1 1 var(--page-header-lead-basis, 20rem);
+  min-inline-size: 0;
 }
 
 /* Decorative glow orbs belonged to the removed hero card and have no visual

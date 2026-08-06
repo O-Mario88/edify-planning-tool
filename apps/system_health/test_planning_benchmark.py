@@ -150,15 +150,25 @@ class DrawerLabelTests(SimpleTestCase):
     # on the platform and nothing left to keep consistent. Superseded by
     # OneWayToHandWorkToAPartnerTests below.
 
-    def test_the_free_text_goal_reads_the_same_in_both_drawers(self):
-        """PartnerAssignment.purpose becomes Activity.activity_purpose_text
-        verbatim, so they are one field asked at two moments."""
-        schedule = dict(self._labels(self.SCHEDULE))
+    def test_the_partner_drawer_does_not_ask_for_a_goal_at_all(self):
+        """It used to, and the answer was almost always the catalogue item's
+        own name typed back in.
+
+        There was a test here asserting the goal read identically in both
+        drawers, on the grounds that PartnerAssignment.purpose becomes
+        Activity.activity_purpose_text verbatim — one field asked at two
+        moments. The field is now asked at ONE moment: the handoff derives it
+        from the chosen catalogue item (`purpose or catalogue_item.display_name`)
+        and the schedule drawer still asks for it in the person's own words.
+
+        Keeping the label-matching assertion would have forced the question
+        back into a drawer whose whole point was to stop asking it.
+        """
         partner = dict(self._labels(self.PARTNER))
-        self.assertEqual(
-            schedule["activity_purpose_text"].strip(),
-            partner["purpose"].strip(),
-        )
+        self.assertNotIn("purpose", partner)
+        self.assertNotIn("notes", partner)
+        # The schedule drawer still asks, and still owns the wording.
+        self.assertIn("activity_purpose_text", dict(self._labels(self.SCHEDULE)))
 
     def test_no_drawer_gives_two_fields_the_same_label(self):
         for relative in (self.SCHEDULE, self.PARTNER):

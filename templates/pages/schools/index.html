@@ -15,15 +15,15 @@ addSchoolOpen: false
 }"
 >
 <!-- Page Header -->
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Schools & Field</p>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-none edify-page-title">School Directory</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-2 font-semibold ">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+<h1 class="edify-page-title edify-page-header__title">School Directory</h1>
+<p class="edify-page-header__description">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
 </div>
 
 <!-- Action buttons -->
-<div class="flex flex-wrap items-center gap-2 ">
+<div class="edify-page-header__controls">
 {% if can_upload_schools or can_add_ssa %}
 <a href="/uploads" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

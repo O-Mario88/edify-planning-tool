@@ -14,15 +14,15 @@
 {% endcomment %}
 
 <!-- ============================ PAGE HEADER ============================ -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4 border-b border-slate-100">
-  <div class="min-w-0">
+<div class="edify-page-header">
+  <div class="min-w-0 edify-page-header__lead">
     <p class="edify-page-eyebrow">Special Projects</p>
-    <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Projects</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1 max-w-2xl">Track the Projects assigned to you, enrolled schools, intervention focus, delivery progress, budget and upcoming follow-ups.</p>
+    <h1 class="edify-page-title edify-page-header__title">Projects</h1>
+    <p class="max-w-2xl edify-page-header__description">Track the Projects assigned to you, enrolled schools, intervention focus, delivery progress, budget and upcoming follow-ups.</p>
   </div>
 
   <!-- Right-side controls: FY · Type · Status · Filters · primary action -->
-  <div class="flex flex-wrap items-center gap-2 shrink-0">
+  <div class="edify-page-header__controls">
 
     {% comment %}Live filter form — on the page background (platform-filter-bar
        contract). Targets #project-list so a change swaps only the table+cards,
