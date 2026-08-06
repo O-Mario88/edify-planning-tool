@@ -57,6 +57,9 @@ INTENTIONALLY_UNGATED_PAGES = {
     "computing any metric",
     "dashboard": "role-routed inside the view",
     "todos": "derived from the caller's own workflow state",
+    "my_actions": "filtered to TeamActions where the caller IS the recipient; "
+    "anyone can be handed a school action, and there is no wider set of rows "
+    "for the open gate to expose",
     "search": "each result section is scope-constrained in the view",
     "calendar": "view applies its own role-to-staff audience rule",
     "partners": "partner rows filtered by scope.can_view_partner_data",

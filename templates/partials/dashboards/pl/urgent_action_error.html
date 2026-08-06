@@ -1,0 +1,15 @@
+{% comment %}
+A refusal from send_action — most often "already sent by someone else", or a
+school with nobody assigned to it. These are answers, not failures, so they
+render in place of the button rather than as an error page: the sender needs
+to read why and what to do, without losing the card they were working through.
+{% endcomment %}
+<span class="inline-flex min-h-7 max-w-full flex-wrap items-center gap-1.5 rounded-control px-2.5 py-1 text-[12px] font-semibold edify-warning-text edify-warning-soft border edify-warning-border"
+      role="status"
+      aria-live="polite">
+  <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+    <path d="M10 6v5M10 14h.01"/>
+    <circle cx="10" cy="10" r="8"/>
+  </svg>
+  <span class="min-w-0">{{ error }}</span>
+</span>

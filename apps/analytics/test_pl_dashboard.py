@@ -202,7 +202,14 @@ class PLDashboardTest(TestCase):
             {row["id"] for row in first_page["rows"] + second_page["rows"]},
         )
 
-    def test_pl_can_send_urgent_school_to_its_supervised_cceo_idempotently(self):
+    def test_pl_send_creates_one_tracked_action_and_a_second_send_is_refused(self):
+        """Sending used to write a notification and nothing else, so it was
+        "idempotent" only in the sense that a retry re-marked the same
+        notification unread — there was no record to duplicate. It now commits
+        a TeamAction, and the second attempt is refused with a reason rather
+        than silently repeating."""
+        from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
         self.client.force_login(self.pl_a)
         url = f"/dashboard/pl-send-urgent-action?school_id={self.sch_a2.id}&fy={FY}"
 
@@ -211,14 +218,44 @@ class PLDashboardTest(TestCase):
 
         self.assertEqual(first.status_code, 200)
         self.assertContains(first, "Sent to CCEO A1")
+
+        actions = TeamAction.objects.filter(school_id=self.sch_a2.id)
+        self.assertEqual(actions.count(), 1)
+        action = actions.get()
+        self.assertEqual(action.recipient_id, self.a1.id)
+        self.assertIn(action.state, ACTIVE_STATES)
+        self.assertIsNotNone(action.due_date)
+
         self.assertEqual(second.status_code, 200)
-        notifications = Notification.objects.filter(
+        self.assertContains(second, "Already sent")
+        self.assertEqual(TeamAction.objects.filter(school_id=self.sch_a2.id).count(), 1)
+
+        note = Notification.objects.get(
             recipient_id=self.a1.id,
-            context_id=self.sch_a2.id,
-            source_event_type="urgent_school_delegated",
+            context_id=action.id,
+            source_event_type="school_action_assigned",
         )
-        self.assertEqual(notifications.count(), 1)
-        self.assertTrue(notifications.get().action_required)
+        self.assertTrue(note.action_required)
+        # The notification routes to the work, not to a dashboard to search.
+        self.assertEqual(note.target_route, action.workflow_route)
+
+    def test_a_sent_school_leaves_the_pl_urgent_queue(self):
+        """The point of the whole change: the card is an UNASSIGNED queue."""
+        from apps.analytics.pl_analytics_service import resolve_pl_scope
+
+        pls = resolve_pl_scope(self.pl_a)
+
+        def on_card():
+            rows = S.urgent_schools(self.pl_a, pls, FY, {}, limit=5000)
+            return any(r["id"] == self.sch_a2.id for r in rows)
+
+        self.assertTrue(on_card())
+        self.client.force_login(self.pl_a)
+        self.client.post(
+            f"/dashboard/pl-send-urgent-action?school_id={self.sch_a2.id}&fy={FY}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertFalse(on_card())
 
     def test_pl_cannot_delegate_another_program_leads_school(self):
         self.client.force_login(self.pl_a)

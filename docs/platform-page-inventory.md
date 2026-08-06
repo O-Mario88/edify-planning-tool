@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **475**
-- All registered routes: **877**
+- Routed product surfaces: **478**
+- All registered routes: **880**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
-- Scheduled jobs: **17**
+- Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **289**
+- Shared component templates: **291**
 - Full pages: **317**
-- Partials and drawers: **145**
-- Permission-gated surfaces: **465**
-- Referenced by automated tests: **441**
+- Partials and drawers: **148**
+- Permission-gated surfaces: **468**
+- Referenced by automated tests: **444**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -63,6 +63,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /accounts/variance-review/ | Variance Review - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/variance_review.html | 9.6 | 0 | referenced by automated test |
 | /accounts/weekly-requests | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
 | /accounts/weekly-requests/ | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
+| /actions/<str:action_id>/<str:transition> | Action Transition | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html | 9.6 | 0 | referenced by automated test |
+| /actions/mine | My Actions | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
+| /actions/sent | Actions Sent | ADMIN, CD, IA, PL, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
 | /activities/<str:activity_id> | Activity Details | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/activity_detail_drawer.html<br>pages/my_plan/detail.html | 9.4 | 0 | referenced by automated test |
 | /activities/<str:activity_id>/attendance | Attendance Upload Drawer | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/attendance_drawer.html | 9.6 | 0 | referenced by automated test |
 | /activities/<str:activity_id>/attendance/action | Attendance Upload Action | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -197,7 +200,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /dashboard/pl | Pl Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /dashboard/pl-approve | Pl Dashboard Approve | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/body.html | 9.4 | 0 | referenced by automated test |
 | /dashboard/pl-drilldown | Pl Dashboard Drilldown | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/drilldown.html | 9.6 | 0 | referenced by automated test |
-| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_sent.html | 9.4 | 0 | referenced by automated test |
+| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_error.html<br>partials/dashboards/pl/urgent_action_sent.html | 9.6 | 0 | referenced by automated test |
 | /dashboard/pl-urgent-schools | Pl Urgent Schools Page | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_schools_page.html | 9.4 | 0 | referenced by automated test |
 | /dashboard/planning-progress | Planning Progress Fragment | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/admin/_planning_progress_body.html | 9.4 | 0 | referenced by automated test |
 | /data-quality/duplicates | Duplicate Review | ADMIN, IA | pages/admin/duplicate_review.html | 9.6 | 0 | referenced by automated test |
