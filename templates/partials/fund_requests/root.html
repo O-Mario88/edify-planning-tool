@@ -41,14 +41,14 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 {% endif %}
 
 <!-- Page Header Row -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
-<p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-header__title edify-page-title">Fund Requests</h1>
+<p class="edify-page-header__description">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
 </div>
 
 <!-- Action buttons -->
-<div class="flex flex-wrap items-center gap-2">
+<div class="edify-page-header__controls">
 {% if can_add_non_school_activity %}
 <button
   type="button"

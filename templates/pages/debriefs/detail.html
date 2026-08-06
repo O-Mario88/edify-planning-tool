@@ -25,18 +25,20 @@
   {% endif %}
 
   <!-- Header -->
-  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <div class="flex items-start justify-between gap-3">
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">My Work</p>
-      <h1 class="text-[19px] font-extrabold tracking-tight edify-text edify-page-title">{{ debrief.title }}</h1>
+      <h1 class="edify-page-title edify-page-header__title">{{ debrief.title }}</h1>
+      <p class="edify-page-header__description">{{ debrief.submitted_by_role }} · {{ debrief.date|date:"d M Y, H:i" }} · Risk: {{ debrief.get_risk_level_display }}</p>
+      {% if debrief.summary %}<p class="text-[12.5px] edify-text">{{ debrief.summary }}</p>{% endif %}
+    </div>
+    <div class="edify-page-header__controls">
       <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
         {% if debrief.status == 'resolved' or debrief.status == 'closed' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
         {% elif debrief.status == 'action_required' or debrief.status == 'escalated' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
         {% else %}edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20{% endif %}">{{ debrief.get_status_display }}</span>
     </div>
-    <p class="edify-text-caption text-slate-400">{{ debrief.submitted_by_role }} · {{ debrief.date|date:"d M Y, H:i" }} · Risk: {{ debrief.get_risk_level_display }}</p>
-    {% if debrief.summary %}<p class="text-[12.5px] edify-text">{{ debrief.summary }}</p>{% endif %}
-  </div>
+  </header>
 
   <!-- Linked activities -->
   {% if activity_links %}

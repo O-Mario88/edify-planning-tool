@@ -5,12 +5,12 @@
 {% block shell_content %}
 <section class="sp-page edify-page-canvas" aria-labelledby="ssa-performance-title">
   <header class="edify-page-header sp-page-header">
-    <div>
+    <div class="edify-page-header__lead">
       <span class="sp-eyebrow">School intelligence</span>
-      <h1 id="ssa-performance-title" class="edify-page-title">SSA Performance</h1>
-      <p>Track confirmed school self-assessment performance across all eight interventions and act on the highest-priority gaps.</p>
+      <h1 id="ssa-performance-title" class="edify-page-title edify-page-header__title">SSA Performance</h1>
+      <p class="edify-page-header__description">Track confirmed school self-assessment performance across all eight interventions and act on the highest-priority gaps.</p>
     </div>
-    <div class="flex flex-wrap items-center justify-end gap-2">
+    <div class="edify-page-header__controls">
       {% if can_add_ssa %}
       <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
         Add SSA Score

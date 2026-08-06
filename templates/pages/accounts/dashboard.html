@@ -34,11 +34,11 @@ return matchesStatus && (!query || haystack.includes(query));
 }">
 
 <!-- ================= TOP HEADER BAR ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <div class="flex items-center gap-2">
 <p class="edify-page-eyebrow">Finance</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Fund Disbursement Dashboard</h1>
+<h1 class="edify-page-title edify-page-header__title">Fund Disbursement Dashboard</h1>
 <span class="inline-flex h-4 w-4 items-center justify-center text-slate-400 cursor-help" title="Reconcile and disburse funds" aria-label="Fund disbursement information">
   <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
     <circle cx="12" cy="12" r="9"></circle>
@@ -46,11 +46,11 @@ return matchesStatus && (!query || haystack.includes(query));
   </svg>
 </span>
 </div>
-<p class="text-[12px] text-slate-500 font-bold mt-1.5">Monitor all approved funds, disbursements, balances, and reconciliation across the organization.</p>
+<p class="edify-page-header__description">Monitor all approved funds, disbursements, balances, and reconciliation across the organization.</p>
 </div>
 
 <!-- Filters & Create button -->
-<div class="flex flex-wrap items-center gap-2">
+<div class="edify-page-header__controls">
 <span class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-600">
 FY {{ fy }} · Live workflow data
 </span>

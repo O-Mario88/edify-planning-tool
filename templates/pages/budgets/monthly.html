@@ -8,11 +8,11 @@
 <div class="px-4 py-5 space-y-4 sm:px-6 max-w-[1500px] mx-auto">
   <div class="edify-page-header edify-page-hero">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div>
+      <div class="edify-page-header__lead">
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} funding workspace</p>
         <p class="edify-page-eyebrow">Finance</p>
-        <h1 class="mt-1 text-[24px] font-bold tracking-tight edify-page-title">{{ workspace_title }}</h1>
-        <p class="mt-1 text-[13px] font-medium text-slate-300">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
+        <h1 class="edify-page-title edify-page-header__title">{{ workspace_title }}</h1>
+        <p class="edify-page-header__description">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
       </div>
       <div class="rounded-control border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200">
         {% if workspace_kind == "admin" %}

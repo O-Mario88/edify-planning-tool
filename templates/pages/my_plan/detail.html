@@ -6,11 +6,11 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
 
-  <div class="ad-head">
-    <div class="min-w-0">
+  <div class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
       {% include "partials/_back_link.html" with back_href="/my-plan" back_label="My Plan" %}
-      <h1 class="edify-page-title capitalize">{{ act.activity_type|title|replace_underscore }}</h1>
-      <p class="ad-head__sub">
+      <h1 class="edify-page-title capitalize edify-page-header__title">{{ act.activity_type|title|replace_underscore }}</h1>
+      <p class="ad-head__sub edify-page-header__description">
         {% if act.school %}
         School: <a href="/schools/{{ act.school.school_id }}">{{ act.school.name }}</a>
         {% elif act.cluster %}

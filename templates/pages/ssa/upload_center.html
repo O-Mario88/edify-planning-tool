@@ -7,13 +7,13 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-  <div>
+<div class="edify-page-header">
+  <div class="edify-page-header__lead">
     <p class="edify-page-eyebrow">Quality & Insights</p>
-    <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Upload SSA Scores</h1>
-    <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of initial and monitoring SSA scores to map directly to school records.</p>
+    <h1 class="edify-page-title edify-page-header__title">Upload SSA Scores</h1>
+    <p class="edify-page-header__description">Upload a sheet of initial and monitoring SSA scores to map directly to school records.</p>
   </div>
-  <div class="flex flex-wrap items-center justify-end gap-2">
+  <div class="edify-page-header__controls">
     {% if can_add_ssa %}
     <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
       Add SSA Score

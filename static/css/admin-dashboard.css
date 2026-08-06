@@ -455,7 +455,8 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 @container admin-command (max-width: 48rem) {
   .admin-command { padding: 1rem; }
-  .admin-command__header { align-items: flex-start; flex-direction: column; }
+  /* Column direction — the shared lead basis is a main-axis size here. */
+  .admin-command__header { align-items: flex-start; flex-direction: column; --page-header-lead-basis: auto; --page-header-align: flex-start; }
   .admin-command__actions { width: 100%; }
   .admin-command__actions .admin-button { flex: 1; }
   .admin-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }

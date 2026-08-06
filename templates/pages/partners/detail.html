@@ -6,10 +6,10 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/partners" back_label="Partners" %}
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ partner.name }}</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Partner organisation profile</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">{{ partner.name }}</h1>
+<p class="edify-page-header__description">Partner organisation profile</p>
 </div>
 </div>
 

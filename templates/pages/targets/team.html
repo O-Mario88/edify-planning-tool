@@ -8,10 +8,10 @@
       x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all', expandedStaff: '' }"
       @click.window="if (expandedStaff && !$event.target.closest('.tt-member-row, .tt-area-row, .tt-mobile-member')) expandedStaff = ''">
   <header class="edify-page-header tt-page-header">
-    <div>
+    <div class="edify-page-header__lead">
       <div class="tt-eyebrow">Performance intelligence</div>
-      <h1 class="edify-page-title">Team Targets</h1>
-      <p>Track validated team performance across the selected month, quarters, and full fiscal year.</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Targets</h1>
+      <p class="edify-page-header__description">Track validated team performance across the selected month, quarters, and full fiscal year.</p>
     </div>
     <div class="tt-page-header__context" aria-label="Current reporting context">
       <span class="tt-context-dot" aria-hidden="true"></span>

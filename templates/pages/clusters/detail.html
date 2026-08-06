@@ -9,16 +9,16 @@
 <!-- Back Nav & Header -->
 <div>
 {% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
-<div>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ cluster.name }}</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
+<div class="mt-2 edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">{{ cluster.name }}</h1>
+<p class="edify-page-header__description">
 District: {% firstof cluster.district.name cluster.district %} &bull; Sub-county: {% firstof cluster.subCounty.name cluster.subCounty %}
 </p>
 </div>
 
 <!-- Actions buttons -->
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 {% if can_edit_cluster %}
 {% comment %}
 A cluster profile is editable for the same reason a school profile is: the

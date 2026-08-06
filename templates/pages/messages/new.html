@@ -14,11 +14,13 @@
      @toggle-linked.window="toggleLinked($event.detail)">
 
   <!-- Header -->
-  <div>
-    <p class="edify-page-eyebrow">Communication</p>
-    <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">New Message</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">Compose a context-based message to registered users.</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Communication</p>
+      <h1 class="edify-page-title edify-page-header__title">New Message</h1>
+      <p class="edify-page-header__description">Compose a context-based message to registered users.</p>
+    </div>
+  </header>
 
   <form method="post" action="/messages/new/" enctype="multipart/form-data" id="compose-form">
     {% csrf_token %}

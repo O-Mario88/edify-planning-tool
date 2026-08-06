@@ -5,19 +5,21 @@
 {% block shell_content %}
 {# A div on purpose: layouts/shell.html already provides this page's single main landmark, and a second one leaves screen readers with two "main content" targets. #}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-  <div class="mb-6">
-    <a href="/ssa" class="inline-flex min-h-11 items-center gap-2 text-[13px] font-bold text-[var(--edify-accent)] hover:underline">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-      </svg>
-      Back to SSA Performance
-    </a>
-    <p class="edify-page-eyebrow mt-3">Manual entry</p>
-    <h1 class="text-[24px] font-extrabold tracking-tight edify-page-title">Add SSA Score</h1>
-    <p class="mt-2 max-w-2xl text-[13px] font-semibold leading-6 text-[var(--edify-text-muted)]">
-      Save one School Self-Assessment directly to the SSA database. All eight intervention scores are required.
-    </p>
-  </div>
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <a href="/ssa" class="inline-flex min-h-11 items-center gap-2 text-[13px] font-bold text-[var(--edify-accent)] hover:underline">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to SSA Performance
+      </a>
+      <p class="edify-page-eyebrow mt-3">Manual entry</p>
+      <h1 class="edify-page-title edify-page-header__title">Add SSA Score</h1>
+      <p class="max-w-2xl edify-page-header__description">
+        Save one School Self-Assessment directly to the SSA database. All eight intervention scores are required.
+      </p>
+    </div>
+  </header>
 
   <form method="post" action="/ssa/manual/" class="space-y-6">
     {% csrf_token %}

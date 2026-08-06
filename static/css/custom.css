@@ -3886,7 +3886,9 @@ html, body {
 .partner-empty-state { padding: 46px 20px; color: var(--text-secondary); text-align: center; }.partner-empty-state svg { width: 33px; height: 33px; color: var(--brand-primary); }.partner-empty-state h2 { margin: 10px 0 4px; color: var(--text-primary); font-size: 15px; }.partner-empty-state p { margin: 0; font-size: var(--edify-text-label-size); }
 
 @media (max-width: 1500px) {
-  .partner-workspace__header { align-items: flex-start; flex-direction: column; }
+  /* Column direction: the shared lead basis is a main-axis size, so leaving it
+     at 20rem would give the title block a 320px-tall empty band. */
+  .partner-workspace__header { align-items: flex-start; flex-direction: column; --page-header-lead-basis: auto; --page-header-align: flex-start; }
   .partner-workspace__filters { width: 100%; }
 }
 @media (max-width: 1240px) {
