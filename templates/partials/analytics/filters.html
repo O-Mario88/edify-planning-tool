@@ -32,6 +32,22 @@ Region is deliberately absent. It asked the same question as District on a
 coarser grain, while a user's region is already fixed by their scope before
 any dropdown applies — the drilldown endpoints never accepted it either.
 {% endcomment %}
+{% comment %}
+Sub-Region sits above District because that is the order somebody narrows in —
+and because it is the SSA heatmap's top level, so the two read the same way.
+It joins through the district; School.sub_region_id is empty on every school.
+{% endcomment %}
+<!-- Sub-Region filter -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
+<span>Sub-Region:</span>
+<select aria-label="Sub-Region" name="sub_region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
+<option value="">All</option>
+{% for sr in sub_regions %}
+<option value="{{ sr.id }}" {% if filters.selected_sub_region == sr.id %}selected{% endif %}>{{ sr.name }}</option>
+{% endfor %}
+</select>
+</div>
+
 <!-- District filter -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
 <span>District:</span>
@@ -39,6 +55,25 @@ any dropdown applies — the drilldown endpoints never accepted it either.
 <option value="">All</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if filters.selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+{% comment %}
+Only the sub-counties schools are actually assigned to are listed, so every
+option returns rows. The map draws sub-county boundaries for the whole country
+from static GeoJSON, which makes coverage look complete — assignment on
+School.sub_county is a different thing and is set on far fewer schools. The
+option is prefixed with its district because sub-county names repeat across
+districts ("Central Division" exists in many).
+{% endcomment %}
+<!-- Sub-County filter -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
+<span>Sub-County:</span>
+<select aria-label="Sub-County" name="sub_county" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
+<option value="">All</option>
+{% for sc in sub_counties %}
+<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>
 {% endfor %}
 </select>
 </div>
