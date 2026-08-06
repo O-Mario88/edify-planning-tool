@@ -83,6 +83,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # write access to the work it shows.
     "team_planning_oversight": {PL, ADMIN},
     "country_planning_oversight": {CD, ADMIN},
+    # Partner-delivered work, grouped by partner. The PL owns team-level
+    # monitoring of it and the CD sees the country picture; the CCEO reaches
+    # the same records through the school they manage, so they do not need a
+    # partner-shaped page and are not given one.
+    #
+    # Impact Assessment and the Accountant are here because they are IN this
+    # chain, not observing it: verification gates payment and payment closes
+    # the partner's work, and both were previously named as responsible on a
+    # page neither could open. Their lens is country-wide, matching the queues
+    # they already work from.
+    "partner_oversight": {PL, CD, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -841,6 +852,11 @@ SIDEBAR_ITEMS = [
                 "label": "Country Planning",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
+            },
+            {
+                "label": "Partner Oversight",
+                "url": "/partner-oversight/",
+                "page_key": "partner_oversight",
             },
             {
                 "label": "My Plan",

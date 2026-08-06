@@ -534,6 +534,62 @@ def require_page_permission(page_name: str):
     return decorator
 
 
+def require_any_page_permission(*page_names: str):
+    """Gate a view on holding ANY ONE of several page permissions.
+
+    For surfaces two roles reach for the same reason. The planning-oversight
+    drawer is the case: "what is this piece of work and where has it been" is
+    the same question for a Program Lead and a Country Director, and each holds
+    a different page permission that entitles them to ask it.
+
+    Written as a decorator rather than as a check inside the view so the
+    production-readiness scanner can see the guard. It reads the attributes
+    this sets, and an in-body check — however correct — reads to it as an
+    ungated page, which is the same signal an actually ungated one gives.
+    """
+    if not page_names:  # pragma: no cover — programming error
+        raise ValueError("require_any_page_permission needs at least one page")
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                from django.contrib.auth.views import redirect_to_login
+
+                return redirect_to_login(request.get_full_path(), login_url="/login")
+            if not any(
+                RolePermissionService.can_view_page(request.user, page)
+                for page in page_names
+            ):
+                from apps.audit.services import log as audit_log
+
+                audit_log(
+                    action="unauthorized_page_access",
+                    subject_kind="Page",
+                    subject_id=" or ".join(page_names),
+                    actor_id=str(request.user.id),
+                    actor_role=getattr(request.user, "active_role", None),
+                    success=False,
+                    reason=(
+                        f"Role '{getattr(request.user, 'active_role', None)}' "
+                        f"attempted to access page: {' or '.join(page_names)}"
+                    ),
+                )
+                return render_access_denied(
+                    request,
+                    "Access Denied: Your active role does not have permission to "
+                    f"view {page_names[0].replace('_', ' ').title()}.",
+                )
+            return view_func(request, *args, **kwargs)
+
+        _wrapped_view.has_permission_guard = True
+        _wrapped_view.page_permission = page_names[0]
+        _wrapped_view.page_permissions = page_names
+        return _wrapped_view
+
+    return decorator
+
+
 def get_scoped_object_or_404(model, user, *args, **kwargs):
     """Fetch an object by kwargs and verify backend-enforced role and scope access."""
     from django.shortcuts import get_object_or_404

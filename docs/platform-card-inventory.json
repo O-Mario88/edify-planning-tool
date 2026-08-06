@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 551,
+  "titled_cards": 552,
   "templates": 192,
-  "distinct_titles": 525,
+  "distinct_titles": 526,
   "with_card_key": 13,
-  "untitled_surfaces": 1016,
-  "untitled_chrome": 228,
+  "untitled_surfaces": 1022,
+  "untitled_chrome": 231,
   "untitled_nested": 378,
-  "untitled_headless": 410,
+  "untitled_headless": 413,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 20,
   "ambiguous_titles": 0
@@ -2887,7 +2887,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 227,
+   "line": 233,
+   "title": "Partner Support",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/schools/detail.html",
+   "line": 271,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2896,7 +2910,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 267,
+   "line": 311,
    "title": "Current SSA Assessment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2905,42 +2919,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 301,
+   "line": 345,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     16,
+     21,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 321,
+   "line": 365,
    "title": "Historical Averages",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     17,
+     22,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 343,
+   "line": 387,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     18,
+     23,
      0
     ]
    ]

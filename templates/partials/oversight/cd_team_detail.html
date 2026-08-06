@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 One Program Lead's team, expanded: level 2 (the CCEOs and the PL's own work)
 and level 3 (staff versus partner execution) of the country hierarchy.
@@ -22,6 +22,7 @@ reschedules or cancels field work.
         UGX {{ group.summary.planned_budget|intcomma }}
       </p>
     </header>
+    {% paginate group.items group.page_param as owner_page %}
     <div class="overflow-x-auto">
       <table class="w-full text-left">
         <caption class="sr-only">Planned work owned by {{ group.name }}</caption>
@@ -36,7 +37,7 @@ reschedules or cancels field work.
           </tr>
         </thead>
         <tbody>
-          {% for item in group.items %}
+          {% for item in owner_page.rows %}
           <tr class="border-t edify-border">
             <td class="px-3 py-2">
               {% if item.activity_id %}
@@ -70,11 +71,15 @@ reschedules or cancels field work.
               {% else %}
               <span class="pill">{{ item.activity_status|replace_underscore|title }}</span>
               {% endif %}
+              {% if item.next_action_owner_name %}
+              <span class="block edify-text-caption edify-text-muted">Waiting on {{ item.next_action_owner_name }}</span>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+      {% include "components/table_pager.html" with pager=owner_page param=group.page_param %}
     </div>
   </section>
   {% endfor %}

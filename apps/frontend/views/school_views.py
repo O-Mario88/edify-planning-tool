@@ -1304,9 +1304,17 @@ def school_detail_view(request, school_id):
     )
 
     from apps.core.navigation import get_user_role_slug
+    from apps.planning import partner_oversight_service
+
+    # Partner-delivered work at this school. Read-only, and read from the same
+    # service the Partner Oversight page uses, so the CCEO's school view and
+    # the Program Lead's partner view cannot tell different stories about the
+    # same handover.
+    partner_support = partner_oversight_service.build_items_for_school(school.id)
 
     context = {
         "school": school,
+        "partner_support": partner_support,
         "latest_ssa": latest_ssa,
         "ssa_scores": ssa_scores_list,
         "historical_ssas": historical_ssas,

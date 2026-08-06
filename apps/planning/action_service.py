@@ -135,6 +135,36 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "route": "/my-plan",
         "why": "The activity has been rescheduled repeatedly.",
     },
+    # ── Partner-delivery conditions ─────────────────────────────────────────
+    # Only the ones a member of staff can actually resolve are registered.
+    # Where the partner is the responsible actor the ask goes to the partner
+    # over the notification channel instead — a TeamAction is a staff
+    # accountability record, and manufacturing one against a CCEO for work a
+    # partner has not done would hold the wrong person to it.
+    "assignment_returned": {
+        "action": "Decide what happens to the returned assignment",
+        "route": "/partner-oversight/",
+        "why": "The partner handed this assignment back, so the school still "
+        "needs the support arranged another way.",
+    },
+    "cceo_review_overdue": {
+        "action": "Review the partner's evidence",
+        "route": "/my-plan",
+        "why": "The partner uploaded evidence and it is waiting on the "
+        "managing CCEO's review.",
+    },
+    "partner_salesforce_overdue": {
+        "action": "Enter the Salesforce Activity ID for the partner's work",
+        "route": "/my-plan",
+        "why": "The partner's evidence is accepted but the activity has no "
+        "Salesforce Activity ID, so it cannot be paid.",
+    },
+    "partner_delivery_escalation": {
+        "action": "Intervene on stalled partner delivery",
+        "route": "/partner-oversight/",
+        "why": "Partner-delivered work has stalled and asking the partner "
+        "directly has not moved it.",
+    },
     # Team-level asks a Country Director sends to a Program Lead. These name a
     # team condition rather than one record, so they route to the PL's own
     # oversight page where the detail lives.
@@ -173,16 +203,32 @@ OVERSIGHT_RISK_KEYS = frozenset(
     }
 )
 
+# The same arrangement for partner-delivered work, kept as its own set because
+# the sweep has to ask a different detector: these are conditions on a
+# PartnerAssignment, and `partner_risk_service` is the only thing that can say
+# whether one still holds.
+PARTNER_OVERSIGHT_RISK_KEYS = frozenset(
+    {"assignment_returned", "cceo_review_overdue", "partner_salesforce_overdue"}
+)
+
 # Team-level asks. "The backlog is cleared" is a judgement about a body of
 # work rather than a fact about one record, so a human closes these and the
-# audit trail records that they did.
+# audit trail records that they did. A PL's escalation of stalled partner
+# delivery is the same kind of thing: what settles it is somebody deciding the
+# intervention worked, which no query can observe.
 TEAM_OVERSIGHT_KEYS = frozenset(
-    {"team_partner_backlog", "team_costing_backlog", "team_execution_risk"}
+    {
+        "team_partner_backlog",
+        "team_costing_backlog",
+        "team_execution_risk",
+        "partner_delivery_escalation",
+    }
 )
 
 # The condition key for a risk carries the record it was raised against, so
 # the sweep can find it again without a schema change.
 OVERSIGHT_KEY_PREFIX = "oversight"
+PARTNER_OVERSIGHT_KEY_PREFIX = "partner_oversight"
 
 
 def oversight_condition_key(
@@ -200,10 +246,23 @@ def oversight_condition_key(
     return f"{OVERSIGHT_KEY_PREFIX}|{risk_key}|{kind}|{ref}"
 
 
+def partner_oversight_condition_key(risk_key: str, *, assignment_id: str) -> str:
+    """`partner_oversight|<risk>|assignment|<id>`.
+
+    A separate prefix from the staff one so the sweep knows which detector to
+    re-run. The handover, not the activity, is the identity: the activity may
+    not exist yet, and when it does it is still the same piece of work.
+    """
+    return f"{PARTNER_OVERSIGHT_KEY_PREFIX}|{risk_key}|assignment|{assignment_id}"
+
+
 def parse_oversight_condition_key(key: str) -> tuple[str, str] | None:
     """(kind, id) from a key this module wrote, or None if it did not."""
     parts = (key or "").split("|")
-    if len(parts) != 4 or parts[0] != OVERSIGHT_KEY_PREFIX:
+    if len(parts) != 4 or parts[0] not in (
+        OVERSIGHT_KEY_PREFIX,
+        PARTNER_OVERSIGHT_KEY_PREFIX,
+    ):
         return None
     return parts[2], parts[3]
 
@@ -455,6 +514,121 @@ def _name_of(user_id: str) -> str:
     )
 
 
+# ── Asking a role queue ──────────────────────────────────────────────────────
+# Impact Assessment and the Accountant are queue functions: the work arrives in
+# a shared queue and whoever is free takes it. Nobody is *assigned* the
+# verification of a particular activity, so there is no individual for a
+# TeamAction to name.
+#
+# That matters, because TeamAction is an accountability record. Picking one of
+# three IA officers to hold responsible for a queue item nobody gave them is
+# the same fabrication ResponsibleActorService refuses to commit for an
+# unassigned school — it would just be quieter, because the person picked has a
+# plausible-looking reason to be there.
+#
+# So a supervisor's ask to these two is a *nudge to the queue*: every active
+# holder is notified, the audit records who asked and why, and no individual
+# acquires an obligation the roster never gave them. The same shape as the
+# partner reminder, and for the same reason.
+ROLE_QUEUES = {
+    "ImpactAssessment": "Impact Assessment",
+    "Accountant": "Accountant",
+}
+
+
+@transaction.atomic
+def notify_role_queue(
+    *,
+    sender,
+    role: str,
+    subject: str,
+    body: str,
+    context_type: str,
+    context_id: str,
+    event_key: str,
+    route: str,
+    action_label: str,
+    priority: str = "normal",
+) -> list[str]:
+    """Nudge every active holder of a role. Returns the ids notified.
+
+    Raises ActionError when the role has no active holder, rather than
+    succeeding silently: a supervisor who is told "sent" and reached nobody
+    will wait on a queue that never heard the ask.
+
+    Atomic for the same reason `send_action` is: a half-written ask — three of
+    five officers notified, or notified with no audit entry — is worse than
+    none, because the supervisor believes it landed and there is no record to
+    check.
+    """
+    if role not in ROLE_QUEUES:
+        raise ActionError(f"'{role}' is not a queue this platform can ask.")
+
+    from apps.accounts.models import User
+    from apps.audit.services import log
+    from apps.messaging.services import workflow_message
+    from apps.notifications.models import Notification
+
+    recipient_ids = list(
+        User.objects.filter(
+            roles__contains=[role], status="active", deleted_at__isnull=True
+        ).values_list("id", flat=True)
+    )
+    if not recipient_ids:
+        raise ActionError(
+            f"There is no active {ROLE_QUEUES[role]} on the system, so this "
+            "cannot be asked of anyone here."
+        )
+
+    for recipient_id in recipient_ids:
+        # update_or_create per recipient: a second nudge about the same record
+        # refreshes the one notification rather than stacking, which is what
+        # keeps the queue's unread count meaningful.
+        Notification.objects.update_or_create(
+            recipient_id=recipient_id,
+            context_type=context_type,
+            context_id=context_id,
+            source_event_type=event_key,
+            defaults={
+                "recipient_role": role,
+                "title": subject,
+                "body": body,
+                "category": "planning",
+                "target_route": route,
+                "action_label": action_label,
+                "action_required": True,
+                "priority": priority,
+                "status": "unread",
+                "read_at": None,
+            },
+        )
+
+    workflow_message(
+        context_type=context_type,
+        context_id=context_id,
+        subject=subject,
+        body=body,
+        recipient_ids=recipient_ids,
+        category="planning",
+        priority=priority,
+        sender_id=getattr(sender, "id", None),
+    )
+
+    log(
+        action="oversight.role_queue_nudged",
+        subject_kind=context_type,
+        subject_id=context_id,
+        actor_id=getattr(sender, "id", None),
+        actor_role=getattr(sender, "active_role", None),
+        payload={
+            "role": role,
+            "event": event_key,
+            "recipients": len(recipient_ids),
+        },
+    )
+    return recipient_ids
+
+
 # ── Lifecycle ────────────────────────────────────────────────────────────────
 
 
@@ -663,6 +837,9 @@ def condition_still_holds(action: TeamAction) -> bool:
     if action.issue_type in OVERSIGHT_RISK_KEYS:
         return _oversight_risk_still_holds(action)
 
+    if action.issue_type in PARTNER_OVERSIGHT_RISK_KEYS:
+        return _partner_risk_still_holds(action)
+
     has_ssa = SsaRecord.objects.filter(
         school_id=action.school_id,
         fy=action.fy,
@@ -725,6 +902,30 @@ def _oversight_risk_still_holds(action: TeamAction) -> bool:
     if item is None:
         return False
     return any(risk["key"] == action.issue_type for risk in item.risks)
+
+
+def _partner_risk_still_holds(action: TeamAction) -> bool:
+    """Ask the partner detector again about the handover this action names.
+
+    The condition that closes an action is the same condition that opened it:
+    `build_item_by_assignment` annotates the item through the same detector
+    the page ran, so the sweep cannot settle on a different reading than the
+    supervisor saw.
+    """
+    from apps.planning import partner_oversight_service
+
+    reference = parse_oversight_condition_key(action.condition_key)
+    if reference is None:
+        return True
+    _, assignment_id = reference
+
+    item = partner_oversight_service.build_item_by_assignment(assignment_id)
+    if item is None:
+        return False
+    # The detector names the risk `salesforce_overdue`; the playbook key is
+    # prefixed to keep it distinct from the staff condition of the same name.
+    detector_key = action.issue_type.removeprefix("partner_")
+    return any(risk["key"] in (action.issue_type, detector_key) for risk in item.risks)
 
 
 def _intervention_still_weak(action: TeamAction) -> bool:

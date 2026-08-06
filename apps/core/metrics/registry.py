@@ -1177,6 +1177,349 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         filter_behaviour=FilterBehaviour.FIXED_CONTEXT,
         drilldown="/admin-ops/maintenance",
     ),
+    # ── Planning oversight: the supervision lenses ───────────────────────────
+    # Team and country are separate entries rather than one metric with two
+    # labels, because they are different numbers over different scopes. One
+    # spec with a scope that changes per caller is how "planned activities"
+    # came to mean three things.
+    MetricSpec(
+        key="oversight_team_activities_planned",
+        label="Team Activities Planned",
+        definition=(
+            "Every activity planned in the period by the Program Lead or any "
+            "CCEO they supervise, plus every partner handover their team owns "
+            "that no partner has scheduled yet."
+        ),
+        question="What has my team committed to this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Planned activities plus unscheduled partner handovers in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The Program Lead's own work and their supervisees'",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/",
+        refresh_events=("activity_scheduled", "partner_assignment_created"),
+    ),
+    MetricSpec(
+        key="oversight_country_activities_planned",
+        label="Country Planned Activities",
+        definition=(
+            "Every activity planned in the period anywhere in the country, "
+            "plus every partner handover no partner has scheduled yet."
+        ),
+        question="What has the country committed to this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Planned activities plus unscheduled partner handovers, country-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="Whole country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/",
+        refresh_events=("activity_scheduled", "partner_assignment_created"),
+    ),
+    MetricSpec(
+        key="oversight_partner_awaiting_schedule",
+        label="Partner Awaiting Schedule",
+        definition=(
+            "Handovers a partner has accepted and not yet put a date on. These "
+            "carry no cost, and contribute UGX 0 to the planned budget until "
+            "the partner schedules."
+        ),
+        question="How much work is sitting with partners, undated?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("partners.PartnerAssignment",),
+        numerator="Partner assignments in an unscheduled status",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_scheduled",),
+    ),
+    MetricSpec(
+        key="oversight_team_work_needing_attention",
+        label="Team Work Needing Attention",
+        definition=(
+            "Planned work on which at least one risk condition currently holds "
+            "— an overdue activity, an unscheduled handover past its date, "
+            "outstanding evidence, a missing Salesforce id, an IA return."
+        ),
+        question="Where must I intervene in my team's plan?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.risk_service.annotate",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Items with one or more live risk conditions",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The Program Lead's own work and their supervisees'",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?tab=attention",
+        refresh_events=("activity_rescheduled", "evidence_uploaded"),
+    ),
+    MetricSpec(
+        key="oversight_country_activities_at_risk",
+        label="Country Activities At Risk",
+        definition=(
+            "The same risk conditions as the team lens, measured across the "
+            "whole country rather than one team."
+        ),
+        question="Which teams are carrying the country's planning risk?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.risk_service.annotate",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Items with one or more live risk conditions, country-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="Whole country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/",
+        refresh_events=("activity_rescheduled", "evidence_uploaded"),
+    ),
+    MetricSpec(
+        key="oversight_team_planned_budget",
+        label="Planned Team Budget",
+        definition=(
+            "The sum of the cost lines on the team's scheduled activities. "
+            "Unscheduled partner handovers contribute nothing, because no cost "
+            "exists for work with no date."
+        ),
+        question="What has my team's plan committed financially?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Sum of cost lines on scheduled activities in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The Program Lead's own work and their supervisees'",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/",
+        refresh_events=("activity_scheduled", "activity_costed"),
+    ),
+    MetricSpec(
+        key="oversight_country_planned_budget",
+        label="Planned Country Budget",
+        definition=(
+            "The sum of the cost lines on every scheduled activity in the "
+            "country, on the same basis as the team figure."
+        ),
+        question="What has the country's plan committed financially?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Sum of cost lines on scheduled activities, country-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="Whole country",
+        owner_page="country_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/country-planning-oversight/",
+        refresh_events=("activity_scheduled", "activity_costed"),
+    ),
+    MetricSpec(
+        key="oversight_execution_progress",
+        label="Plan Execution Progress",
+        definition=(
+            "Completed work as a share of work whose planned date has passed. "
+            "Measured against what is due rather than against the whole plan, "
+            "so a plan that is entirely in the future reads as 'nothing due "
+            "yet' rather than as 0% delivered."
+        ),
+        question="Is the plan being delivered on time?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Activities whose planned date has passed",
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.Activity",),
+        numerator="Activities in a completed status",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/?tab=completed",
+        refresh_events=("activity_completed", "activity_verified"),
+    ),
+    # ── Partner oversight ────────────────────────────────────────────────────
+    MetricSpec(
+        key="oversight_awaiting_verification",
+        label="Awaiting Verification",
+        definition=(
+            "Completions that entered the Impact Assessment queue and are "
+            "still unverified. Measured from submitted_to_ia_at, the field the "
+            "activity model keeps apart from updated_at for exactly this."
+        ),
+        question="What has been delivered but not yet earns credit?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.Activity",),
+        numerator="Activities submitted to IA with verification still pending",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="team_planning_oversight",
+        secondary_pages=("country_planning_oversight",),
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/ia/verification-queue",
+        refresh_events=("activity_submitted_for_review", "activity_verified"),
+        notes=(
+            "The actor is a queue, not a person: no officer is assigned a "
+            "particular verification, so the oversight pages nudge the whole "
+            "queue rather than opening a TeamAction against an individual."
+        ),
+    ),
+    MetricSpec(
+        key="partner_oversight_active_partners",
+        label="Active Partners",
+        definition=(
+            "Distinct partners holding at least one assignment in the period, "
+            "at any stage from handover to payment."
+        ),
+        question="How many partners am I relying on this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.partner_oversight_service.summarize",
+        source_models=("partners.PartnerAssignment",),
+        numerator="Distinct partners on assignments in scope",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_created",),
+    ),
+    MetricSpec(
+        key="partner_oversight_yet_to_schedule",
+        label="Handovers Yet To Schedule",
+        definition=(
+            "Assignments a partner holds and has not put a date on. No cost "
+            "exists for these — not zero, absent — because pricing happens at "
+            "scheduling."
+        ),
+        question="Which partners are holding work without committing to it?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.planning.partner_oversight_service.summarize",
+        source_models=("partners.PartnerAssignment",),
+        numerator="Assignments in an unscheduled status",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_scheduled",),
+    ),
+    MetricSpec(
+        key="partner_oversight_scheduled",
+        label="Partner Work Scheduled",
+        definition=(
+            "Assignments a partner has put a date on, at any point from "
+            "scheduled through delivery, verification and payment."
+        ),
+        question="How much partner work is actually under way?",
+        category=Category.PROGRESS,
+        unit=Unit.COUNT,
+        service="apps.planning.partner_oversight_service.summarize",
+        source_models=("partners.PartnerAssignment", "activities.Activity"),
+        numerator="Assignments linked to a scheduled activity",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_scheduled",),
+    ),
+    MetricSpec(
+        key="partner_oversight_needing_attention",
+        label="Partner Work Needing Attention",
+        definition=(
+            "Handovers on which at least one partner risk condition holds — "
+            "nobody has scheduled, delivery is past its date with no evidence, "
+            "the managing CCEO has not reviewed, the payment is overdue."
+        ),
+        question="Where is partner delivery stuck, and with whom?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.partner_risk_service.annotate",
+        source_models=("partners.PartnerAssignment", "activities.Activity"),
+        numerator="Handovers with one or more live partner risk conditions",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_scheduled", "evidence_uploaded"),
+    ),
+    MetricSpec(
+        key="partner_oversight_scheduled_budget",
+        label="Scheduled Partner Budget",
+        definition=(
+            "The sum of the cost lines on partner activities the partner has "
+            "scheduled. Handovers with no date are excluded entirely, because "
+            "no rate has been applied to them."
+        ),
+        question="What has partner delivery committed financially?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.partner_oversight_service.summarize",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Sum of cost lines on scheduled partner activities",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/partner-oversight/",
+        refresh_events=("partner_assignment_scheduled", "activity_costed"),
+    ),
+    MetricSpec(
+        key="partner_oversight_payment_pending",
+        label="Partner Payments Pending",
+        definition=(
+            "Partner work Impact Assessment has verified that the accountant "
+            "has not yet paid."
+        ),
+        question="What do we owe partners for work already verified?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.planning.partner_oversight_service.summarize",
+        source_models=("activities.Activity",),
+        numerator="Verified partner activities with no completed payment",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The reader's oversight scope — team for a PL, country for a CD",
+        owner_page="partner_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/accounts/partner-payments",
+        refresh_events=("activity_verified", "partner_paid"),
+    ),
 )
 
 

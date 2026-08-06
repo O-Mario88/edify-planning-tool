@@ -374,6 +374,28 @@ urlpatterns = [
         oversight_views.country_planning_export_view,
         name="country_planning_oversight_export",
     ),
+    # Partner oversight — the same read-only posture, organised by partner
+    # rather than by staff member.
+    path(
+        "partner-oversight/",
+        oversight_views.partner_oversight_view,
+        name="partner_oversight",
+    ),
+    path(
+        "partner-oversight/detail",
+        oversight_views.partner_oversight_detail_view,
+        name="partner_oversight_detail",
+    ),
+    path(
+        "partner-oversight/send",
+        oversight_views.partner_oversight_send_action_view,
+        name="partner_oversight_send",
+    ),
+    path(
+        "partner-oversight/export",
+        oversight_views.partner_oversight_export_view,
+        name="partner_oversight_export",
+    ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
     path(

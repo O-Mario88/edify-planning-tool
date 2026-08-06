@@ -35,6 +35,55 @@ EVIDENCE_GRACE_DAYS = 3
 # A third date change is a planning problem rather than a scheduling one.
 RESCHEDULE_LIMIT = 2
 
+# How long a completion may sit in the Impact Assessment queue, and how long a
+# verified activity may go unpaid. Both are the tail of the same chain: work
+# that is finished in the field but not yet finished on the platform. A
+# supervision page that stops at "delivered" cannot see the half of the
+# pipeline where money and credit actually land.
+IA_VERIFICATION_GRACE_DAYS = 5
+PAYMENT_GRACE_DAYS = 14
+
+# What to call a role queue in a sentence. The queue is the actor, so the tile
+# says "Impact Assessment" rather than naming whoever happens to be on shift.
+ROLE_LABELS = {
+    "ImpactAssessment": "Impact Assessment",
+    "Accountant": "Accountant",
+}
+
+# Statuses that mean Impact Assessment has finished with the record, whichever
+# way they ruled. A returned activity is the field staff member's problem
+# again, and `_returned_by_ia` already reports it — so only `pending` leaves a
+# record genuinely sitting in IA's queue. `flagged` counts as settled: IA has
+# looked and raised something, which is a different condition from not looking.
+_IA_SETTLED_STATUSES = ("confirmed", "returned", "flagged")
+
+# The record has left the field: delivered, and now moving through evidence,
+# verification and payment. `_overdue` must not fire on these — the planned
+# date has passed, but the thing it asks for has already been done, and asking
+# a CCEO to "complete or reschedule" work they finished a fortnight ago is how
+# a supervision page loses its credibility. What is actually outstanding on
+# these is verification or payment, and those have their own detectors naming
+# their own actors.
+_POST_FIELD_STATUSES = (
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "submitted_to_pl",
+    "awaiting_ia_verification",
+    "ia_verified",
+    "accountant_confirmed",
+)
+
+# Payment states in which the money has moved or the record has left finance.
+# Everything before `paid` is still owed to somebody.
+_PAYMENT_SETTLED_STATUSES = (
+    "paid",
+    "disbursed",
+    "netsuite_accountability",
+    "closed",
+    "rejected",
+)
+
 # The states in which evidence is genuinely outstanding: delivery has begun or
 # been sent back, and the record is still moving. Terminal states are excluded
 # because the verification chain has already ruled on them.
@@ -64,6 +113,11 @@ class PlanningRisk:
     owner_id: str | None = None
     owner_name: str = ""
     due_date: date | None = None
+    # Set when the actor is a role queue rather than a named person — Impact
+    # Assessment and the Accountant, whose work arrives in a shared queue with
+    # no per-record assignee. The send path reads this to decide whether to
+    # open a TeamAction against somebody or nudge the queue.
+    responsible_role: str = ""
 
     def as_dict(self) -> dict:
         return {
@@ -75,6 +129,7 @@ class PlanningRisk:
             "owner_id": self.owner_id,
             "owner_name": self.owner_name,
             "due_date": self.due_date,
+            "responsible_role": self.responsible_role,
         }
 
 
@@ -107,6 +162,8 @@ def risks_for(item, today: date) -> list[PlanningRisk]:
             _salesforce_missing,
             _returned_by_ia,
             _rescheduled_repeatedly,
+            _ia_verification_overdue,
+            _payment_overdue,
         )
     ]
     risks = [r for r in found if r is not None]
@@ -121,10 +178,22 @@ def _set_next_action_owner(item) -> None:
     member of staff answerable for it. Naming the wrong one turns a supervision
     page into a source of misdirected chasing.
     """
-    if item.risks and item.is_awaiting_partner_schedule:
+    if not item.risks:
+        return
+    # The most severe risk names the actor, because that is the one a
+    # supervisor is going to chase. Once work leaves the field the actor stops
+    # being the field staff member: verification sits with Impact Assessment
+    # and payment with the Accountant, and telling a Program Lead to chase
+    # their CCEO about an unpaid partner invoice is how a supervision page
+    # trains people to ignore it.
+    leading = item.risks[0]
+    if leading.get("responsible_role"):
+        item.next_action_owner_id = None
+        item.next_action_owner_name = ROLE_LABELS[leading["responsible_role"]]
+    elif item.is_awaiting_partner_schedule:
         item.next_action_owner_id = item.partner_id
         item.next_action_owner_name = item.partner_name or "Partner"
-    elif item.risks:
+    else:
         item.next_action_owner_id = item.operational_owner_id
         item.next_action_owner_name = item.operational_owner_name
 
@@ -188,10 +257,16 @@ def _scheduled_without_cost(item, today: date) -> PlanningRisk | None:
 
 
 def _overdue(item, today: date) -> PlanningRisk | None:
-    """Its date has passed and the work has not finished."""
+    """Its date has passed and the work has not been delivered.
+
+    Delivered-but-unverified is deliberately excluded: see
+    `_POST_FIELD_STATUSES`.
+    """
     if item.is_awaiting_partner_schedule or not item.planned_date:
         return None
     if item.planned_date >= today or item.is_completed:
+        return None
+    if item.activity_status in _POST_FIELD_STATUSES or item.submitted_to_ia_at:
         return None
     days = (today - item.planned_date).days
     return PlanningRisk(
@@ -280,4 +355,77 @@ def _rescheduled_repeatedly(item, today: date) -> PlanningRisk | None:
         route=f"/activities/{item.activity_id}",
         owner_id=item.operational_owner_id,
         owner_name=item.operational_owner_name,
+    )
+
+
+def _ia_verification_overdue(item, today: date) -> PlanningRisk | None:
+    """A completion that entered the Impact Assessment queue and stayed there.
+
+    Measured from `submitted_to_ia_at`, which exists to be exactly this clock —
+    the field's own comment says it is kept apart from `updated_at` so the SLA
+    is reproducible rather than inferred from a timestamp that moves whenever
+    anyone touches the record.
+
+    The actor is the queue, not a person: nobody is assigned the verification
+    of a particular activity, so `responsible_role` is set and the send path
+    nudges Impact Assessment rather than manufacturing an obligation for
+    whichever officer happens to be named first.
+    """
+    if not item.submitted_to_ia_at:
+        return None
+    if (item.ia_status or "pending") in _IA_SETTLED_STATUSES:
+        return None
+
+    due = item.submitted_to_ia_at + timedelta(days=IA_VERIFICATION_GRACE_DAYS)
+    if today <= due:
+        return None
+
+    waiting = (today - item.submitted_to_ia_at).days
+    return PlanningRisk(
+        key="ia_verification_overdue",
+        severity=HIGH if waiting > 2 * IA_VERIFICATION_GRACE_DAYS else WARNING,
+        reason=(
+            f"Submitted for verification {waiting} day(s) ago and still "
+            "unverified, so the work earns no credit and cannot be paid."
+        ),
+        recommended_action="Verify the submission",
+        route="/ia/verification-queue",
+        responsible_role="ImpactAssessment",
+        owner_name=ROLE_LABELS["ImpactAssessment"],
+        due_date=due,
+    )
+
+
+def _payment_overdue(item, today: date) -> PlanningRisk | None:
+    """Work Impact Assessment has verified that nobody has paid.
+
+    The last link in the chain and the easiest one to lose: the field is
+    finished, the supervisor's own page looks complete, and a partner or a
+    staff advance is still outstanding. Reported here so "delivered" and
+    "settled" stop looking like the same state.
+    """
+    if item.ia_status != "confirmed":
+        return None
+    if (item.finance_status or "none") in _PAYMENT_SETTLED_STATUSES:
+        return None
+
+    reference = item.planned_date
+    if not reference:
+        return None
+    due = reference + timedelta(days=PAYMENT_GRACE_DAYS)
+    if today <= due:
+        return None
+
+    return PlanningRisk(
+        key="payment_overdue",
+        severity=HIGH,
+        reason=(
+            f"Verified by Impact Assessment and unpaid {(today - due).days} "
+            "day(s) past the settlement window."
+        ),
+        recommended_action="Settle the payment",
+        route="/accounts/partner-payments",
+        responsible_role="Accountant",
+        owner_name=ROLE_LABELS["Accountant"],
+        due_date=due,
     )

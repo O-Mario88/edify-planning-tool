@@ -25,6 +25,8 @@ EMPTY_SUMMARY = {
     "due_count": 0,
     "execution_progress": None,
     "cost_missing": 0,
+    "awaiting_verification": 0,
+    "awaiting_payment": 0,
 }
 
 
@@ -41,14 +43,37 @@ class ZeroRendersTest(SimpleTestCase):
         tiles = {t["label"]: t for t in _kpi_items(EMPTY_SUMMARY, country=True)}
 
         self.assertEqual(tiles["Partner Awaiting Schedule"]["display_value"], "0")
-        self.assertEqual(tiles["Activities at Risk"]["display_value"], "0")
+        self.assertEqual(tiles["Country Activities At Risk"]["display_value"], "0")
         self.assertEqual(tiles["Country Planned Activities"]["display_value"], "0")
 
-    def test_an_unmeasurable_progress_reads_as_a_dash_not_zero(self):
-        """Nothing due yet is not 0% executed — they mean different things."""
-        tiles = {t["label"]: t for t in _kpi_items(EMPTY_SUMMARY, country=False)}
+    def test_a_measured_zero_says_it_was_measured(self):
+        """The distinction the tile has to carry, now in the payload itself.
 
-        self.assertEqual(tiles["Execution Progress"]["display_value"], "—")
+        Since these are built through the metric registry the state travels
+        with the number, so "we looked and found none" is a fact about the
+        tile rather than an inference from how it happens to render.
+        """
+        for tile in _kpi_items(EMPTY_SUMMARY, country=True):
+            if tile["label"] == "Plan Execution Progress":
+                continue  # genuinely unmeasurable here; asserted below
+            with self.subTest(tile=tile["label"]):
+                self.assertEqual(tile["data_state"], "measured")
+                self.assertEqual(tile["value"], 0)
+
+    def test_an_unmeasurable_progress_never_reads_as_zero(self):
+        """Nothing due yet is not 0% executed — they mean different things.
+
+        The registry states the reason rather than a bare dash: a dash says
+        "no number", the note says why there is no number, and the reader is
+        the one who has to tell those apart.
+        """
+        tiles = {t["label"]: t for t in _kpi_items(EMPTY_SUMMARY, country=False)}
+        progress = tiles["Plan Execution Progress"]
+
+        self.assertEqual(progress["data_state"], "not_yet_measurable")
+        self.assertIsNone(progress["value"])
+        self.assertNotIn("0", progress["display_value"])
+        self.assertEqual(progress["display_value"], "Nothing due yet")
 
     def test_large_numbers_are_grouped_for_reading(self):
         summary = {**EMPTY_SUMMARY, "total_planned": 12345, "planned_budget": 33856000}
@@ -58,3 +83,24 @@ class ZeroRendersTest(SimpleTestCase):
         self.assertEqual(
             tiles["Planned Country Budget"]["display_value"], "UGX 33,856,000"
         )
+
+    def test_the_partner_strip_prints_its_zeros_too(self):
+        """The same failure mode, on the page where zero is the common case."""
+        from apps.frontend.views.oversight_views import _partner_kpis
+
+        empty = {
+            "active_partners": 0,
+            "schools_assigned": 0,
+            "awaiting_schedule": 0,
+            "scheduled": 0,
+            "in_progress": 0,
+            "returned": 0,
+            "at_risk": 0,
+            "scheduled_budget": 0,
+            "payment_pending": 0,
+        }
+
+        for tile in _partner_kpis(empty):
+            with self.subTest(tile=tile["label"]):
+                self.assertEqual(tile["data_state"], "measured")
+                self.assertIn("0", tile["display_value"])

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 The Program Lead's workspace. Every number here is folded from the rows below
 it by oversight_service.summarize, so a KPI and its table cannot disagree.
@@ -62,6 +62,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
         <p class="edify-text-caption font-semibold whitespace-nowrap">UGX {{ group.summary.planned_budget|intcomma }}</p>
       </header>
 
+      {% paginate group.items group.page_param as owner_page %}
       <div class="overflow-x-auto max-md:hidden">
         <table class="w-full text-left">
           <caption class="sr-only">Planned work owned by {{ group.name }}</caption>
@@ -77,7 +78,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
             </tr>
           </thead>
           <tbody>
-            {% for item in group.items %}
+            {% for item in owner_page.rows %}
             <tr class="border-t edify-border">
               <td class="px-4 py-2.5">
                 <span class="font-semibold">{{ item.activity_type|replace_underscore|title }}</span>
@@ -114,6 +115,9 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
                 <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
+                {% if item.next_action_owner_name %}
+                <span class="block edify-text-caption edify-text-muted">Waiting on {{ item.next_action_owner_name }}</span>
+                {% endif %}
               </td>
               <td class="px-4 py-2.5 whitespace-nowrap">
                 <button type="button"
@@ -129,6 +133,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
           </tbody>
         </table>
       </div>
+      {% include "components/table_pager.html" with pager=owner_page param=group.page_param %}
 
       {% comment %}
       Phone: the same rows as cards. A ten-column table on a 375px screen is a
@@ -139,7 +144,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
       a multi-line one renders its tail as visible page text.
       {% endcomment %}
       <ul class="md:hidden divide-y edify-border">
-        {% for item in group.items %}
+        {% for item in owner_page.rows %}
         <li class="p-4 space-y-1.5">
           <div class="flex items-start justify-between gap-2">
             <p class="font-semibold text-sm">{{ item.activity_type|replace_underscore|title|default:"Partner assignment" }}</p>
@@ -163,6 +168,9 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
             <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
+          {% if item.next_action_owner_name %}
+          <p class="edify-text-caption edify-text-muted">Waiting on {{ item.next_action_owner_name }}</p>
+          {% endif %}
           <button type="button"
                   class="text-sm font-semibold hover:underline edify-primary-text min-h-11"
                   hx-get="/team-planning-oversight/detail?{% if item.activity_id %}activity_id={{ item.activity_id }}{% else %}assignment_id={{ item.partner_assignment_id }}{% endif %}"

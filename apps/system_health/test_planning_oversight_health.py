@@ -250,3 +250,75 @@ class AuditCommandTest(HealthFixture):
         self.assertTrue(
             PartnerAssignment.objects.filter(scheduled_activity__isnull=True).exists()
         )
+
+
+class RoleQueueHealthTest(HealthFixture):
+    """A queue the oversight pages name has to have somebody in it.
+
+    Only once there is work in it, though: an unstaffed queue with nothing
+    behind it is a staffing decision, and a check that fires on a half-built
+    system teaches its reader to scroll past the whole report.
+    """
+
+    def _check(self):
+        return next(
+            c
+            for c in health.report()["checks"]
+            if c["key"] == "role_queue_without_holder"
+        )
+
+    def _submitted_for_verification(self):
+        from django.utils import timezone
+
+        Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            quarter="Q1",
+            planned_date=date.today() - timedelta(days=10),
+            planned_month=(date.today() - timedelta(days=10)).month,
+            status="awaiting_ia_verification",
+            responsible_staff_id=self.cceo.id,
+            ia_verification_status="pending",
+            submitted_to_ia_at=timezone.now() - timedelta(days=9),
+        )
+
+    def test_an_empty_queue_with_no_work_behind_it_is_not_a_finding(self):
+        self.assertEqual(self._check()["count"], 0)
+
+    def test_work_waiting_on_a_queue_nobody_staffs_is_an_error(self):
+        self._submitted_for_verification()
+
+        finding = self._check()
+
+        self.assertEqual(finding["count"], 1)
+        self.assertEqual(finding["severity"], "error")
+        self.assertEqual(finding["examples"][0]["staff"], "Impact Assessment")
+        self.assertIn("1 activity(s) waiting", finding["examples"][0]["actual"])
+
+    def test_staffing_the_queue_clears_the_finding(self):
+        self._submitted_for_verification()
+        User.objects.create(
+            email="ia@h.test",
+            name="Verifier",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            status="active",
+            is_active=True,
+        )
+
+        self.assertEqual(self._check()["count"], 0)
+
+    def test_a_deactivated_holder_does_not_count_as_staffing_it(self):
+        """The queue needs somebody who can sign in, not somebody on the list."""
+        self._submitted_for_verification()
+        User.objects.create(
+            email="gone@h.test",
+            name="Former Verifier",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            status="pending_invited",
+            is_active=False,
+        )
+
+        self.assertEqual(self._check()["count"], 1)

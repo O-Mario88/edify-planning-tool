@@ -15,73 +15,93 @@ from django.utils.html import escape
 from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
-from apps.core.permissions import require_page_permission
+from apps.core.metrics import DataState, MetricValue, render_kpi_item
+from apps.core.permissions import require_any_page_permission, require_page_permission
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
 
 
 def _kpi_items(summary, *, country: bool) -> list[dict]:
-    """The headline tiles, in the shape components/kpi_strip.html expects.
+    """The headline tiles, built through the metric registry.
 
-    Built here rather than assembled in the template so both pages state the
-    same seven numbers the same way, and so every one of them is a field of the
-    fold in `summarize()` — a tile cannot show a number the table disagrees
-    with, because there is no second calculation for it to come from.
+    Every one is a field of the fold in `summarize()`, so a tile cannot show a
+    number the table disagrees with — there is no second calculation for it to
+    come from. Going through `render_kpi_item` adds the other half: the label,
+    the definition, the period and the formatting come from one registry entry
+    rather than from whichever view happened to draw the tile, so the team page
+    and the country page cannot drift into naming the same thing differently.
+
+    Execution progress carries its denominator because it is a share: a plan
+    entirely in the future has nothing due, which is NOT 0% delivered, and
+    MetricValue is where that distinction is made rather than in the template.
     """
-    execution = summary["execution_progress"]
-    # display_value is set on every tile, including the ones whose value is a
-    # plain integer. The strip renders `{% firstof item.display_value
-    # item.value %}`, and firstof treats 0 as falsy — so a measured zero came
-    # out as an empty tile, which reads as "not measured" rather than "none".
-    # A zero here is a finding, and it has to be legible as one.
     return [
-        {
-            "label": "Country Planned Activities"
+        render_kpi_item(
+            "oversight_country_activities_planned"
             if country
-            else "Team Activities Planned",
-            "value": summary["total_planned"],
-            "display_value": f"{summary['total_planned']:,}",
-            "icon": "calendar",
-            "meta": f"{summary['staff_scheduled']} staff · {summary['partner_scheduled']} partner",
-        },
-        {
-            "label": "Partner Awaiting Schedule",
-            "value": summary["partner_awaiting_schedule"],
-            "display_value": f"{summary['partner_awaiting_schedule']:,}",
-            "icon": "handshake",
-            "tone": "warning" if summary["partner_awaiting_schedule"] else "neutral",
-            "meta": "No cost until the partner schedules",
-        },
-        {
-            # Measured by PlanningRiskService against the current state of each
-            # record, so a zero here means "no condition is currently true",
-            # not "nothing has looked".
-            "label": "Activities at Risk" if country else "Needs Attention",
-            "value": summary["at_risk"],
-            "display_value": f"{summary['at_risk']:,}",
-            "icon": "warning",
-            "tone": "danger" if summary["at_risk"] else "neutral",
-            "meta": f"{summary['cost_missing']} scheduled without a cost",
-        },
-        {
-            "label": "Planned Country Budget" if country else "Planned Team Budget",
-            "display_value": f"UGX {summary['planned_budget']:,}",
-            "value": summary["planned_budget"],
-            "icon": "currency",
-            "meta": f"From {summary['scheduled_total']} scheduled",
-        },
-        {
-            "label": "Execution Progress",
-            "display_value": "—" if execution is None else f"{execution}%",
-            "value": execution,
-            "icon": "chart",
-            "meta": (
+            else "oversight_team_activities_planned",
+            MetricValue.measured(summary["total_planned"]),
+            helper=(
+                f"{summary['staff_scheduled']} staff · "
+                f"{summary['partner_scheduled']} partner"
+            ),
+            icon="calendar",
+        ),
+        render_kpi_item(
+            "oversight_partner_awaiting_schedule",
+            MetricValue.measured(summary["partner_awaiting_schedule"]),
+            helper="No cost until the partner schedules",
+            tone="warning" if summary["partner_awaiting_schedule"] else "neutral",
+            icon="handshake",
+        ),
+        render_kpi_item(
+            "oversight_country_activities_at_risk"
+            if country
+            else "oversight_team_work_needing_attention",
+            MetricValue.measured(summary["at_risk"]),
+            helper=f"{summary['cost_missing']} scheduled without a cost",
+            tone="danger" if summary["at_risk"] else "neutral",
+            icon="warning",
+        ),
+        render_kpi_item(
+            "oversight_country_planned_budget"
+            if country
+            else "oversight_team_planned_budget",
+            MetricValue.measured(summary["planned_budget"]),
+            helper=f"From {summary['scheduled_total']} scheduled",
+            icon="currency",
+        ),
+        render_kpi_item(
+            "oversight_execution_progress",
+            (
+                MetricValue.ratio(
+                    summary["completed"],
+                    summary["due_count"],
+                )
+                if summary["due_count"]
+                else MetricValue.absent(
+                    DataState.NOT_YET_MEASURABLE, note="Nothing due yet"
+                )
+            ),
+            helper=(
                 f"{summary['completed']} of {summary['due_count']} due"
                 if summary["due_count"]
                 else "Nothing due yet"
             ),
-        },
+            icon="chart",
+        ),
+        # The tail of the chain, which the strip previously stopped short of.
+        # A plan can be fully delivered and still be earning no credit and
+        # paying nobody, and a supervisor who cannot see that has no way to
+        # know the work is stuck somewhere they do not control.
+        render_kpi_item(
+            "oversight_awaiting_verification",
+            MetricValue.measured(summary["awaiting_verification"]),
+            helper=f"{summary['awaiting_payment']} verified and unpaid",
+            tone="warning" if summary["awaiting_verification"] else "neutral",
+            icon="clipboard",
+        ),
     ]
 
 
@@ -394,6 +414,7 @@ def country_planning_export_view(request):
     return _export_response(items, f"country-planning-oversight-{period['fy']}.csv")
 
 
+@require_any_page_permission("team_planning_oversight", "country_planning_oversight")
 def oversight_detail_view(request):
     """One item's full Planning-to-Closure lineage, read-only.
 
@@ -403,18 +424,6 @@ def oversight_detail_view(request):
     the record, not the route: the item is rebuilt and then checked against the
     caller's own lens, so an id belonging to another team resolves to nothing.
     """
-    from apps.core.permissions import RolePermissionService, render_access_denied
-
-    if not (
-        RolePermissionService.can_view_page(request.user, "team_planning_oversight")
-        or RolePermissionService.can_view_page(
-            request.user, "country_planning_oversight"
-        )
-    ):
-        return render_access_denied(
-            request, "Access Denied: this page needs a planning-oversight role."
-        )
-
     scope = oversight.resolve_oversight_scope(request.user)
     item = _item_in_scope(
         request.user,
@@ -502,7 +511,7 @@ def team_planning_send_action_view(request):
         return _action_response(request, "That record is not in your team.", ok=False)
 
     try:
-        action = oversight_actions.send_risk_to_owner(
+        result = oversight_actions.send_risk_to_owner(
             sender=request.user,
             item=item,
             risk_key=risk_key,
@@ -512,8 +521,17 @@ def team_planning_send_action_view(request):
     except ActionError as exc:
         return _action_response(request, str(exc), ok=False)
 
+    # Two shapes, because there are two kinds of ask. A named delegation
+    # returns the TeamAction it opened and is tracked under Actions Sent; a
+    # queue nudge returns the ids it reached and is tracked nowhere, because
+    # nobody personally acquired the obligation. Saying "tracked under Actions
+    # Sent" for the second would send the supervisor to an empty list.
+    if isinstance(result, list):
+        return _action_response(
+            request, f"Sent to {len(result)} colleague(s) in that queue."
+        )
     return _action_response(
-        request, f"Sent to {_recipient_name(action)}. Tracked under Actions Sent."
+        request, f"Sent to {_recipient_name(result)}. Tracked under Actions Sent."
     )
 
 
@@ -579,3 +597,277 @@ def country_planning_team_view(request, staff_id: str):
             "owner_groups": oversight.group_by_owner(items),
         },
     )
+
+
+# ── Partner oversight ────────────────────────────────────────────────────────
+# The Program Lead's lens on partner-delivered work. Organised by partner
+# because that is the unit a supervisor chases: "has Partner X scheduled the
+# four schools we gave them" is one question, not four.
+@require_page_permission("partner_oversight")
+def partner_oversight_view(request):
+    """Which schools are with partners, who has scheduled, and what it costs."""
+    from apps.planning import partner_oversight_service as partner_oversight
+
+    period = _period_filters(request)
+    partner_id = (request.GET.get("partner") or "").strip() or None
+
+    # Built for the whole period, then narrowed in Python. The dropdown's
+    # options have to come from the unfiltered set: derived from the filtered
+    # one, choosing a partner would collapse the list to that partner and
+    # leave no way back to any other.
+    all_items = partner_oversight.build_items(
+        request.user, fy=period["fy"], month=period["month"]
+    )
+    items = (
+        [i for i in all_items if i.partner_id == partner_id]
+        if partner_id
+        else all_items
+    )
+    summary = partner_oversight.summarize(items)
+
+    context = {
+        **period,
+        "partner": partner_id,
+        "summary": summary,
+        "kpis": _partner_kpis(summary),
+        "groups": partner_oversight.group_by_partner(items),
+        "partners": sorted(
+            {(i.partner_id, i.partner_name) for i in all_items if i.partner_id},
+            key=lambda pair: pair[1],
+        ),
+        "fy_options": fy_options(),
+    }
+
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/oversight/partner_workspace.html", context)
+    return render(request, "pages/oversight/partner_oversight.html", context)
+
+
+def _partner_kpis(summary) -> list[dict]:
+    """Headline tiles, each a field of the same fold the lists are built from.
+
+    Built through the metric registry for the same reason the planning tiles
+    are: "Scheduled Partner Budget" has to mean one thing, and a second view
+    that computes it its own way is how a platform ends up with two correct
+    numbers under one word.
+    """
+    return [
+        render_kpi_item(
+            "partner_oversight_active_partners",
+            MetricValue.measured(summary["active_partners"]),
+            helper=f"{summary['schools_assigned']} schools assigned",
+            icon="handshake",
+        ),
+        render_kpi_item(
+            "partner_oversight_yet_to_schedule",
+            MetricValue.measured(summary["awaiting_schedule"]),
+            helper="No cost until a partner schedules",
+            tone="warning" if summary["awaiting_schedule"] else "neutral",
+            icon="clock",
+        ),
+        render_kpi_item(
+            "partner_oversight_scheduled",
+            MetricValue.measured(summary["scheduled"]),
+            helper=f"{summary['in_progress']} in progress",
+            icon="calendar",
+        ),
+        render_kpi_item(
+            "partner_oversight_needing_attention",
+            MetricValue.measured(summary["at_risk"]),
+            helper=f"{summary['returned']} returned to staff",
+            tone="danger" if summary["at_risk"] else "neutral",
+            icon="warning",
+        ),
+        render_kpi_item(
+            "partner_oversight_scheduled_budget",
+            MetricValue.measured(summary["scheduled_budget"]),
+            helper="Scheduled work only",
+            icon="currency",
+        ),
+        render_kpi_item(
+            "partner_oversight_payment_pending",
+            MetricValue.measured(summary["payment_pending"]),
+            helper="Verified and awaiting payment",
+            tone="warning" if summary["payment_pending"] else "neutral",
+            icon="expense",
+        ),
+    ]
+
+
+@require_page_permission("partner_oversight")
+def partner_oversight_detail_view(request):
+    """One handover's full record — handover, schedule, evidence, money.
+
+    Scope is enforced on the record rather than the URL, the same way the
+    planning drawer does it: the item is rebuilt and then checked against the
+    caller's own lens, so an id belonging to another team resolves to nothing.
+    """
+
+    item = _partner_item_in_scope(
+        request.user, (request.GET.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return render(
+            request,
+            "partials/oversight/partner_detail_drawer.html",
+            {"item": None},
+            status=404,
+        )
+
+    from apps.planning.action_service import ROLE_QUEUES
+    from apps.planning.partner_oversight_actions import (
+        CCEO_ADDRESSED_RISKS,
+        PARTNER_ADDRESSED_RISKS,
+    )
+
+    # Which send each risk offers is decided here, from who the risk names as
+    # responsible — never from what the reader would like to be able to do.
+    # A risk naming a role queue takes precedence: verification and payment
+    # belong to Impact Assessment and the Accountant no matter which staff
+    # member is nearest the record.
+    for risk in item.risks:
+        role = risk.get("responsible_role") or ""
+        if role in ROLE_QUEUES:
+            risk["send"] = "queue"
+            risk["send_label"] = f"Ask {ROLE_QUEUES[role]}"
+        elif risk["key"] in PARTNER_ADDRESSED_RISKS:
+            risk["send"] = "partner"
+            risk["send_label"] = f"Remind {item.partner_name or 'the partner'}"
+        elif risk["key"] in CCEO_ADDRESSED_RISKS:
+            risk["send"] = "cceo"
+            risk["send_label"] = f"Send to {item.responsible_cceo_name or 'the CCEO'}"
+        else:
+            risk["send"] = ""
+
+    return render(
+        request,
+        "partials/oversight/partner_detail_drawer.html",
+        {
+            "item": item,
+            "lineage": _partner_lineage(item),
+            "can_act": _partner_scope(request.user)["kind"] == "team",
+        },
+    )
+
+
+def _partner_scope(user) -> dict:
+    from apps.planning.partner_oversight_service import _resolve_scope
+
+    return _resolve_scope(user)
+
+
+def _partner_item_in_scope(user, assignment_id: str):
+    """The one handover, only if this principal may see it."""
+    from apps.planning import partner_oversight_service as partner_oversight
+
+    if not assignment_id:
+        return None
+    item = partner_oversight.build_item_by_assignment(assignment_id)
+    if item is None:
+        return None
+    scope = _partner_scope(user)
+    if scope["is_country"]:
+        return item
+    owners = {item.responsible_cceo_id, item.supervising_pl_id}
+    return item if owners & scope["staff_ids"] else None
+
+
+def _partner_lineage(item) -> dict:
+    """The canonical records behind one handover, each read from its source."""
+    from apps.activities.models import ActivityScheduleCostLine
+
+    cost_lines = []
+    if item.partner_activity_id:
+        cost_lines = list(
+            ActivityScheduleCostLine.objects.filter(
+                activity_id=item.partner_activity_id
+            ).order_by("created_at")
+        )
+    return {
+        "cost_lines": cost_lines,
+        "cost_total": sum(line.amount or 0 for line in cost_lines),
+    }
+
+
+@require_page_permission("partner_oversight")
+@require_POST
+def partner_oversight_send_action_view(request):
+    """Remind the partner, ask the CCEO, or escalate — one of exactly three.
+
+    Which one is legitimate is not the caller's to choose: the posted intent is
+    checked against who the risk names as responsible, so a form edited in the
+    browser cannot open a TeamAction against a CCEO for a partner's delay.
+    """
+    from apps.planning import partner_oversight_actions as actions
+
+    intent = (request.POST.get("intent") or "").strip()
+    risk_key = (request.POST.get("risk") or "").strip()
+    note = (request.POST.get("note") or "").strip()
+
+    item = _partner_item_in_scope(
+        request.user, (request.POST.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return _action_response(
+            request, "That assignment is not in your team.", ok=False
+        )
+
+    try:
+        if intent == "nudge_queue":
+            notified = actions.nudge_role_queue(
+                sender=request.user, item=item, risk_key=risk_key, note=note
+            )
+            message = f"Sent to {len(notified)} colleague(s) in that queue."
+        elif intent == "remind_partner":
+            actions.remind_partner(
+                sender=request.user, item=item, risk_key=risk_key, note=note
+            )
+            message = f"Reminder sent to {item.partner_name or 'the partner'}."
+        elif intent == "send_to_cceo":
+            action = actions.send_to_managing_cceo(
+                sender=request.user, item=item, risk_key=risk_key, note=note
+            )
+            message = f"Sent to {_recipient_name(action)}. Tracked under Actions Sent."
+        elif intent == "escalate":
+            action = actions.escalate_to_country_director(
+                sender=request.user, item=item, note=note
+            )
+            message = f"Escalated to {_recipient_name(action)}."
+        else:
+            return _action_response(request, "Unknown action.", ok=False)
+    except ActionError as exc:
+        return _action_response(request, str(exc), ok=False)
+
+    return _action_response(request, message)
+
+
+@require_page_permission("partner_oversight")
+def partner_oversight_export_view(request):
+    """The current partner view, as CSV. Same scope, same period, same rows."""
+    import csv
+
+    from django.http import StreamingHttpResponse
+
+    from apps.planning import partner_oversight_service as partner_oversight
+
+    period = _period_filters(request)
+    items = partner_oversight.build_items(
+        request.user,
+        fy=period["fy"],
+        month=period["month"],
+        partner_id=(request.GET.get("partner") or "").strip() or None,
+    )
+
+    class _Echo:
+        def write(self, value):
+            return value
+
+    writer = csv.writer(_Echo())
+    response = StreamingHttpResponse(
+        (writer.writerow(row) for row in partner_oversight.export_rows(items)),
+        content_type="text/csv",
+    )
+    response["Content-Disposition"] = (
+        f'attachment; filename="partner-oversight-{period["fy"]}.csv"'
+    )
+    return response

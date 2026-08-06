@@ -3013,3 +3013,20 @@ search:has(.edify-search-submit) input[type="search"] {
     transform: scaleX(0.9);
   }
 }
+
+/* ── Drawer body scroll and inline note fields ───────────────────────────────
+   Two sizes the oversight drawers need that no compiled Tailwind utility
+   covers. Written here rather than as `max-h-[72vh]` / `min-w-[12rem]`
+   because an arbitrary-value utility only exists if a Tailwind build has
+   scanned the template that uses it — and rather than as an inline `style=`,
+   because that is exactly what the design-system scan flags: a value nobody
+   can restyle from one place. */
+.edify-drawer-scroll {
+  max-block-size: 72vh;
+  overflow-y: auto;
+}
+
+.edify-note-field {
+  flex: 1 1 auto;
+  min-inline-size: 12rem;
+}

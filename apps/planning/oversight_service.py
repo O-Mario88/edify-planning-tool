@@ -131,6 +131,11 @@ class PlanningOversightItem:
     salesforce_status: str = ""
     ia_status: str = ""
     finance_status: str = ""
+    # The moment the completion entered the Impact Assessment queue. Carried
+    # rather than derived from updated_at, because the model keeps it distinct
+    # for exactly this purpose: an SLA measured from a mutable timestamp resets
+    # itself every time somebody opens the record.
+    submitted_to_ia_at: date | None = None
 
     # Money — always from ActivityScheduleCostLine, never recomputed here.
     planned_cost: int = 0
@@ -357,6 +362,10 @@ def _activities_in_scope(scope: OversightScope, *, fy, month, quarter):
             "evidence_status",
             "ia_verification_status",
             "payment_status",
+            # The IA queue clock. Without it in `.only()` the detector would
+            # trigger a deferred field load per activity — a per-row query on
+            # the page whose whole point is a fixed query cost.
+            "submitted_to_ia_at",
             "salesforce_activity_id",
             "planned_date",
             "fy",
@@ -609,6 +618,9 @@ def _activity_item(
         salesforce_status="recorded" if activity.salesforce_activity_id else "missing",
         ia_status=activity.ia_verification_status or "",
         finance_status=activity.payment_status or "",
+        submitted_to_ia_at=(
+            activity.submitted_to_ia_at.date() if activity.submitted_to_ia_at else None
+        ),
         planned_cost=int(costs.get(activity.id, 0)),
         cost_missing=bool(activity.cost_missing),
         reschedule_count=int(activity.reschedule_count or 0),
@@ -805,6 +817,28 @@ def summarize(items) -> dict:
             round(len(completed_due) * 100 / len(due)) if due else None
         ),
         "cost_missing": len([i for i in scheduled if i.cost_missing]),
+        # The tail of the chain. Folded from the same items, so these agree
+        # with the rows like every other number here. They exist because a
+        # plan that is 100% delivered and 0% verified is not a finished plan,
+        # and a page that stops at "completed" says it is.
+        "awaiting_verification": len(
+            [i for i in items if i.submitted_to_ia_at and i.ia_status == "pending"]
+        ),
+        "awaiting_payment": len(
+            [
+                i
+                for i in items
+                if i.ia_status == "confirmed"
+                and (i.finance_status or "none")
+                not in (
+                    "paid",
+                    "disbursed",
+                    "netsuite_accountability",
+                    "closed",
+                    "rejected",
+                )
+            ]
+        ),
     }
 
 
@@ -836,6 +870,12 @@ def _group(items, *, key) -> list[dict]:
             }
         )
     groups.sort(key=lambda g: (g["name"] == "Unassigned", g["name"]))
+    # Each group's table pages independently, so paging one person's work does
+    # not move everybody else's. The key is positional rather than the owner id
+    # because it ends up in a URL, and an id there would leak who is on the
+    # page to anyone the link is forwarded to.
+    for index, group in enumerate(groups, start=1):
+        group["page_param"] = f"g{index}_page"
     return groups
 
 

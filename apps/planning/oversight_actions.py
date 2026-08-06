@@ -13,7 +13,9 @@ from __future__ import annotations
 from apps.planning.action_service import (
     ActionError,
     OVERSIGHT_RISK_KEYS,
+    ROLE_QUEUES,
     TEAM_OVERSIGHT_KEYS,
+    notify_role_queue,
     oversight_condition_key,
     send_action,
 )
@@ -22,23 +24,35 @@ from apps.planning.action_service import (
 def send_risk_to_owner(
     *, sender, item, risk_key: str, note: str = "", within_staff_ids=None
 ):
-    """Ask the person answerable for one record to resolve one risk on it.
+    """Ask whoever is answerable for one record to resolve one risk on it.
 
-    The recipient is resolved from the school's assignment inside the sender's
-    own span of control, so a Program Lead always delegates to a member of
-    their own team. Where the item has no school — cluster and programme work —
-    the send is refused rather than guessing at an owner, which is the same
-    rule the school cards follow.
+    Two kinds of recipient, and the *risk* decides which — never the reader:
+
+    * a named person, resolved from the school's assignment inside the sender's
+      own span of control, so a Program Lead always delegates to their own
+      team. Where the item has no school — cluster and programme work — the
+      send is refused rather than guessing, the same rule the school cards
+      follow.
+    * a role queue, when the risk sets `responsible_role`. Verification and
+      payment sit with Impact Assessment and the Accountant, who hold no
+      per-record assignment, so those go to the queue instead.
+
+    Without the second branch a supervision page can name Impact Assessment as
+    responsible and then offer no way to reach them, which is how work stalls
+    in the tail of the chain where nobody is looking.
     """
-    if risk_key not in OVERSIGHT_RISK_KEYS:
-        raise ActionError(f"'{risk_key}' is not a planning-oversight risk.")
-
     risk = next((r for r in item.risks if r["key"] == risk_key), None)
     if risk is None:
         raise ActionError(
             "That condition is no longer true of this record, so there is "
             "nothing to send."
         )
+
+    if risk.get("responsible_role"):
+        return nudge_role_queue(sender=sender, item=item, risk=risk, note=note)
+
+    if risk_key not in OVERSIGHT_RISK_KEYS:
+        raise ActionError(f"'{risk_key}' is not a planning-oversight risk.")
 
     if not item.school_id:
         raise ActionError(
@@ -112,4 +126,36 @@ def send_team_action_to_program_lead(
         fy=fy,
         recipient_staff=program_lead_staff,
         note=note,
+    )
+
+
+def nudge_role_queue(*, sender, item, risk: dict, note: str = ""):
+    """Ask Impact Assessment or the Accountant to clear one record.
+
+    Returns the ids notified. No TeamAction: see the note on
+    `action_service.notify_role_queue` for why a queue function must not be
+    handed an individual accountability record it never accepted.
+    """
+    role = risk.get("responsible_role") or ""
+    if role not in ROLE_QUEUES:
+        raise ActionError(f"'{role}' is not a queue this platform can ask.")
+
+    where = getattr(item, "context_label", "") or "an activity"
+    asker = getattr(sender, "name", None) or "A supervisor"
+    body = f"{asker} asked about {where}: {risk['reason']}"
+    if note.strip():
+        body = f"{body}\n\n{note.strip()}"
+
+    reference = item.activity_id or item.partner_assignment_id
+    return notify_role_queue(
+        sender=sender,
+        role=role,
+        subject=f"{risk['recommended_action']} — {where}",
+        body=body,
+        context_type="Activity" if item.activity_id else "PartnerAssignment",
+        context_id=reference,
+        event_key=f"oversight_nudge.{risk['key']}",
+        route=risk.get("route") or "/dashboard",
+        action_label=risk["recommended_action"],
+        priority="high" if risk.get("severity") == "critical" else "normal",
     )

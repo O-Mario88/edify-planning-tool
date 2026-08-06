@@ -1753,6 +1753,70 @@
       "template": "partials/notifications/notification_drawer_list.html"
     },
     {
+      "bytes": 540,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/oversight/_partner_view_button.html"
+    },
+    {
+      "bytes": 4372,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 1,
+      "template": "partials/oversight/cd_team_detail.html"
+    },
+    {
+      "bytes": 8048,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/oversight/cd_workspace.html"
+    },
+    {
+      "bytes": 9789,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 1,
+      "template": "partials/oversight/detail_drawer.html"
+    },
+    {
+      "bytes": 4417,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/oversight/filter_drawer.html"
+    },
+    {
+      "bytes": 10786,
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 2,
+      "tables": 1,
+      "template": "partials/oversight/partner_detail_drawer.html"
+    },
+    {
+      "bytes": 13524,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 2,
+      "template": "partials/oversight/partner_workspace.html"
+    },
+    {
+      "bytes": 10468,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/oversight/pl_workspace.html"
+    },
+    {
       "bytes": 4941,
       "findings": [],
       "forms": 1,
@@ -11805,6 +11869,213 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": true
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.country_planning_oversight_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /country-planning-oversight/team/{{ group.id }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}",
+        "POST /country-planning-oversight/send",
+        "GET /country-planning-oversight/"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Country Planning",
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What the country has planned, how it is distributed, and who must act.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/country-planning-oversight/",
+      "route_name": "country_planning_oversight",
+      "secondary_actions": [
+        "/country-planning-oversight/send"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/oversight/cd_workspace.html",
+        "pages/oversight/country_planning.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.country_planning_export_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Country Planning Oversight Export",
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The country plan, as CSV, honouring the current filters.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/country-planning-oversight/export",
+      "route_name": "country_planning_oversight_export",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.country_planning_send_action_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Country Planning Oversight Send",
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "\"Send to <PL>\" \u2014 a team-level ask, delegated to the Program Lead.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/country-planning-oversight/send",
+      "route_name": "country_planning_oversight_send",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.country_planning_team_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Country Planning Oversight Team",
+      "permission_key": "country_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "One Program Lead's team, expanded \u2014 the CD page's level 2 and 3.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/country-planning-oversight/team/<str:staff_id>",
+      "route_name": "country_planning_oversight_team",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/oversight/cd_team_detail.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "migration-required",
+      "todos": false
     },
     {
       "api_endpoints": [],
@@ -22401,6 +22672,225 @@
       "app": "frontend",
       "audit_events": false,
       "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_oversight_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /partner-oversight/"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Oversight",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Which schools are with partners, who has scheduled, and what it costs.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/",
+      "route_name": "partner_oversight",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/oversight/partner_workspace.html",
+        "pages/oversight/partner_oversight.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_oversight_detail_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /partner-oversight/send"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": true,
+      "page_title": "Partner Oversight Detail",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "One handover's full record \u2014 handover, schedule, evidence, money.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/detail",
+      "route_name": "partner_oversight_detail",
+      "secondary_actions": [
+        "/partner-oversight/send"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": true,
+      "templates": [
+        "partials/oversight/partner_detail_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_oversight_export_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Oversight Export",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The current partner view, as CSV. Same scope, same period, same rows.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/export",
+      "route_name": "partner_oversight_export",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_oversight_send_action_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Oversight Send",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Remind the partner, ask the CCEO, or escalate \u2014 one of exactly three.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/send",
+      "route_name": "partner_oversight_send",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_activities_view",
       "charts": false,
@@ -28920,6 +29410,215 @@
       "templates": [
         "pages/system_health/index.html"
       ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.team_planning_oversight_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /team-planning-oversight/?tab={{ entry.key }}&fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if team_member %}&team_member={{ team_member }}{% endif %}",
+        "GET /team-planning-oversight/detail?{% if item.activity_id %}activity_id={{ item.activity_id }}{% else %}assignment_id={{ item.partner_assignment_id }}{% endif %}",
+        "GET /team-planning-oversight/"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Planning",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What my team has planned, who executes it, and where I must intervene.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/team-planning-oversight/",
+      "route_name": "team_planning_oversight",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/oversight/pl_workspace.html",
+        "pages/oversight/team_planning.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.oversight_detail_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /team-planning-oversight/send"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Planning Oversight Detail",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Send to",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "One item's full Planning-to-Closure lineage, read-only.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/team-planning-oversight/detail",
+      "route_name": "team_planning_oversight_detail",
+      "secondary_actions": [
+        "/team-planning-oversight/send"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": true,
+      "templates": [
+        "partials/oversight/detail_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.team_planning_export_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Planning Oversight Export",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The Program Lead's current view, as CSV. Same scope, same filters.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/team-planning-oversight/export",
+      "route_name": "team_planning_oversight_export",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.team_planning_send_action_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Planning Oversight Send",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "\"Send to <CCEO>\" \u2014 one risk, delegated to the person answerable for it.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/team-planning-oversight/send",
+      "route_name": "team_planning_oversight_send",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -39686,6 +40385,59 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.country_planning_oversight_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/",
+      "route_name": "country_planning_oversight",
+      "templates": [
+        "partials/oversight/cd_workspace.html",
+        "pages/oversight/country_planning.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.country_planning_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/export",
+      "route_name": "country_planning_oversight_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.country_planning_send_action_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/send",
+      "route_name": "country_planning_oversight_send",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.country_planning_team_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "country_planning_oversight",
+      "required_permissions": [],
+      "route": "/country-planning-oversight/team/<str:staff_id>",
+      "route_name": "country_planning_oversight_team",
+      "templates": [
+        "partials/oversight/cd_team_detail.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.coverage_view",
       "kind": "page",
       "methods": [
@@ -42288,6 +43040,59 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.partner_oversight_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/",
+      "route_name": "partner_oversight",
+      "templates": [
+        "partials/oversight/partner_workspace.html",
+        "pages/oversight/partner_oversight.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_oversight_detail_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/detail",
+      "route_name": "partner_oversight_detail",
+      "templates": [
+        "partials/oversight/partner_detail_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_oversight_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/export",
+      "route_name": "partner_oversight_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_oversight_send_action_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/send",
+      "route_name": "partner_oversight_send",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.partner_views.partner_activities_view",
       "kind": "page",
       "methods": [
@@ -43833,6 +44638,59 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.oversight_views.team_planning_oversight_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/",
+      "route_name": "team_planning_oversight",
+      "templates": [
+        "partials/oversight/pl_workspace.html",
+        "pages/oversight/team_planning.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.oversight_detail_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/detail",
+      "route_name": "team_planning_oversight_detail",
+      "templates": [
+        "partials/oversight/detail_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.team_planning_export_view",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/export",
+      "route_name": "team_planning_oversight_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.team_planning_send_action_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-planning-oversight/send",
+      "route_name": "team_planning_oversight_send",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.staff_views.team_targets_view",
       "kind": "partial",
       "methods": [
@@ -44206,15 +45064,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 880,
+    "all_routes": 892,
     "api_routes": 293,
-    "component_templates": 291,
-    "full_pages": 317,
-    "partials_and_drawers": 148,
-    "permission_gated": 468,
+    "component_templates": 299,
+    "full_pages": 320,
+    "partials_and_drawers": 154,
+    "permission_gated": 480,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 478,
+    "routed_surfaces": 490,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -44222,6 +45080,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 444
+    "test_referenced": 453
   }
 }

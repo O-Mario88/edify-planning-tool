@@ -262,3 +262,184 @@ class RiskAnnotationTest(SendActionFixture):
         keys = {r["key"] for i in items for r in i.risks}
         self.assertIn("activity_overdue", keys)
         self.assertIn("scheduled_without_cost", keys)
+
+
+class RoleQueueOnStaffWorkTest(SendActionFixture):
+    """The tail of the chain — verification and payment — has actors too.
+
+    A supervision page that stops naming anybody once work leaves the field is
+    where activities go to sit: delivered, unverified, unpaid, and on nobody's
+    list because the page said the CCEO was responsible and the CCEO had
+    already done their part.
+    """
+
+    def _ia_officer(self, email="ia@a.test"):
+        return self._staff(email, "Verifier", EdifyRole.IMPACT_ASSESSMENT)[0]
+
+    def _submitted_long_ago(self, days=21, *, priced=True):
+        """Delivered, evidence in, and sitting in the verification queue.
+
+        Priced by default so the assertions isolate the verification delay. An
+        unpriced activity is a real and *separate* condition owned by the field
+        team — IA cannot add a cost line — and the two must not be conflated.
+        """
+        from django.utils import timezone
+
+        from apps.activities.models import ActivityScheduleCostLine
+
+        self.activity.status = "awaiting_ia_verification"
+        self.activity.evidence_status = "uploaded"
+        self.activity.ia_verification_status = "pending"
+        self.activity.submitted_to_ia_at = timezone.now() - timedelta(days=days)
+        self.activity.cost_missing = False
+        self.activity.save()
+        if (
+            priced
+            and not ActivityScheduleCostLine.objects.filter(
+                activity=self.activity
+            ).exists()
+        ):
+            ActivityScheduleCostLine.objects.create(
+                activity=self.activity,
+                cost_setting_key="school_visit_transport",
+                label="Transport",
+                unit_cost=12_000,
+                quantity=1,
+                amount=12_000,
+            )
+
+    def _item(self):
+        return oversight.build_item_by_reference(activity_id=self.activity.id)
+
+    def test_a_stalled_verification_is_a_risk_owned_by_impact_assessment(self):
+        self._submitted_long_ago()
+
+        item = self._item()
+
+        risk = next(r for r in item.risks if r["key"] == "ia_verification_overdue")
+        self.assertEqual(risk["responsible_role"], "ImpactAssessment")
+        self.assertEqual(risk["owner_name"], "Impact Assessment")
+
+    def test_the_next_action_owner_follows_the_work_past_the_field(self):
+        """Not the CCEO — they submitted it, and the queue has it now."""
+        self._submitted_long_ago()
+
+        item = self._item()
+
+        self.assertEqual(item.next_action_owner_name, "Impact Assessment")
+        self.assertIsNone(item.next_action_owner_id)
+
+    def test_a_costing_gap_still_belongs_to_the_field_team(self):
+        """Concurrent conditions keep their own owners.
+
+        Impact Assessment cannot add a cost line, so an unpriced activity in
+        their queue is two problems for two people — and the field-owned one
+        must not be relabelled as theirs just because the record has moved on.
+        """
+        self._submitted_long_ago(priced=False)
+
+        item = self._item()
+
+        keys = {r["key"] for r in item.risks}
+        self.assertIn("scheduled_without_cost", keys)
+        self.assertIn("ia_verification_overdue", keys)
+        costing = next(r for r in item.risks if r["key"] == "scheduled_without_cost")
+        self.assertEqual(costing["owner_name"], "James")
+        self.assertEqual(costing["responsible_role"], "")
+
+    def test_delivered_work_awaiting_verification_is_not_called_overdue(self):
+        """It asks the CCEO to do a thing they already did.
+
+        Before the verification detectors existed, the only risk on a
+        delivered-but-unverified activity was `activity_overdue` — "complete
+        the activity or reschedule it", addressed to the person who completed
+        it a fortnight ago.
+        """
+        self._submitted_long_ago()
+
+        item = self._item()
+
+        self.assertNotIn("activity_overdue", [r["key"] for r in item.risks])
+
+    def test_a_fresh_submission_is_not_yet_a_risk(self):
+        self._submitted_long_ago(days=1)
+
+        item = self._item()
+
+        self.assertNotIn("ia_verification_overdue", [r["key"] for r in item.risks])
+
+    def test_a_verified_submission_stops_being_a_risk(self):
+        self._submitted_long_ago()
+        self.activity.ia_verification_status = "confirmed"
+        self.activity.save()
+
+        item = self._item()
+
+        self.assertNotIn("ia_verification_overdue", [r["key"] for r in item.risks])
+
+    def test_the_program_lead_can_ask_the_queue_and_no_team_action_is_opened(self):
+        officer = self._ia_officer()
+        self._submitted_long_ago()
+
+        from apps.planning import oversight_actions
+
+        notified = oversight_actions.send_risk_to_owner(
+            sender=self.pl_user,
+            item=self._item(),
+            risk_key="ia_verification_overdue",
+            note="Two schools are waiting on this",
+        )
+
+        self.assertEqual(notified, [officer.id])
+        self.assertFalse(TeamAction.objects.exists())
+        note = Notification.objects.get(
+            recipient_id=officer.id,
+            source_event_type="oversight_nudge.ia_verification_overdue",
+        )
+        self.assertIn("Two schools are waiting on this", note.body)
+
+    def test_the_send_endpoint_routes_a_queue_risk_to_the_queue(self):
+        officer = self._ia_officer()
+        self._submitted_long_ago()
+
+        response = self.as_pl().post(
+            "/team-planning-oversight/send",
+            {"risk": "ia_verification_overdue", "activity_id": self.activity.id},
+            headers={"HX-Request": "true"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Notification.objects.filter(recipient_id=officer.id).exists())
+        self.assertFalse(TeamAction.objects.exists())
+
+    def test_unpaid_verified_work_is_a_risk_owned_by_the_accountant(self):
+        accountant = self._staff("acc@a.test", "Cashier", EdifyRole.PROGRAM_ACCOUNTANT)[
+            0
+        ]
+        self.activity.status = "ia_verified"
+        self.activity.ia_verification_status = "confirmed"
+        self.activity.payment_status = "pending"
+        self.activity.cost_missing = False
+        self.activity.save()
+
+        item = self._item()
+        risk = next(r for r in item.risks if r["key"] == "payment_overdue")
+        self.assertEqual(risk["responsible_role"], "Accountant")
+
+        from apps.planning import oversight_actions
+
+        notified = oversight_actions.send_risk_to_owner(
+            sender=self.pl_user, item=item, risk_key="payment_overdue"
+        )
+        self.assertEqual(notified, [accountant.id])
+
+    def test_paid_work_is_not_reported_as_unpaid(self):
+        self.activity.status = "ia_verified"
+        self.activity.ia_verification_status = "confirmed"
+        self.activity.payment_status = "paid"
+        self.activity.cost_missing = False
+        self.activity.save()
+
+        item = self._item()
+
+        self.assertNotIn("payment_overdue", [r["key"] for r in item.risks])

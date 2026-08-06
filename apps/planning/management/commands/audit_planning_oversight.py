@@ -96,5 +96,10 @@ class Command(BaseCommand):
     @staticmethod
     def _classify(check) -> str:
         """Whether a command can settle this without a judgement call."""
+        # Only the assignment side is mechanical. An activity that no
+        # assignment claims looks like the same defect from the other end, but
+        # it is not repairable the same way: where no unlinked assignment
+        # exists to pair it with, settling it would mean inventing a handover —
+        # an assigner, a date, a reason — that nobody performed.
         mechanical = {"assignment_missing_scheduled_activity"}
         return "repairable" if check["key"] in mechanical else "manual review required"

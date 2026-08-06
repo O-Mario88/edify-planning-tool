@@ -1,5 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 One item's full lineage: planning source, ownership, cost, funding, execution
 and verification. Read-only by design — a supervisor opens this to understand
@@ -12,7 +12,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
 
 {% block drawer_body %}
 {% if item %}
-<div class="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+<div class="space-y-4 pr-1 edify-drawer-scroll">
   {% if item.risks %}
   <section aria-labelledby="detail-risks">
     <h3 id="detail-risks" class="text-sm font-semibold mb-2">Needs attention</h3>
@@ -25,7 +25,14 @@ here sends a corrective action, which writes a TeamAction and nothing else.
           Owner: {{ risk.owner_name|default:"Unassigned" }}
           {% if risk.due_date %} · Due {{ risk.due_date|date:"j M Y" }}{% endif %}
         </p>
-        {% if can_send and item.school_id %}
+        {% comment %}
+        A school is required to send to a person, because TeamAction is
+        school-scoped and the recipient is resolved from the school's
+        assignment. A role queue needs none: Impact Assessment and the
+        Accountant are reached as a queue, so cluster and programme work can
+        be asked of them too.
+        {% endcomment %}
+        {% if can_send and item.school_id or can_send and risk.responsible_role %}
         <form hx-post="/team-planning-oversight/send"
               hx-target="#oversight-send-result"
               hx-swap="innerHTML"
@@ -36,7 +43,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
           {% if item.partner_assignment_id %}<input type="hidden" name="assignment_id" value="{{ item.partner_assignment_id }}">{% endif %}
           <label class="sr-only" for="note-{{ forloop.counter }}">Note for the recipient</label>
           <input id="note-{{ forloop.counter }}" name="note" type="text"
-                 class="h-9 px-3 rounded-control border edify-border flex-1 min-w-[12rem] text-sm"
+                 class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
                  placeholder="Add a note (optional)">
           <button type="submit" class="btn btn-primary h-9">
             Send to {{ risk.owner_name|default:"the owner" }}
@@ -94,6 +101,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
       contributes UGX 0 to the plan. A cost appears when the partner schedules.
     </p>
     {% elif lineage.cost_lines %}
+    {% paginate lineage.cost_lines "cost_page" as cost_page %}
     <table class="w-full text-left text-sm">
       <caption class="sr-only">Cost lines for this activity</caption>
       <thead>
@@ -105,7 +113,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
         </tr>
       </thead>
       <tbody>
-        {% for line in lineage.cost_lines %}
+        {% for line in cost_page.rows %}
         <tr class="border-t edify-border">
           <td class="py-1.5">{{ line.label }}
             {% if line.cost_setting_version %}<span class="edify-text-caption edify-text-muted">v{{ line.cost_setting_version }}</span>{% endif %}
@@ -123,6 +131,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
         </tr>
       </tfoot>
     </table>
+    {% include "components/table_pager.html" with pager=cost_page param="cost_page" %}
     {% else %}
     <p class="text-sm edify-text-muted">
       No cost lines. This activity cannot enter a fund request until it is priced.

@@ -24,6 +24,13 @@ def report() -> dict:
         _work_owned_by_staff_who_never_onboarded(),
         _activities_without_a_supervising_program_lead(),
         _scheduled_activities_without_a_cost(),
+        # Partner oversight rests on the same records, so its invariants are
+        # reported in the same place rather than in a second report somebody
+        # has to remember to read.
+        _handovers_with_no_managing_cceo(),
+        _partner_activities_no_assignment_claims(),
+        _partners_holding_work_with_no_login_account(),
+        _role_queues_with_no_active_holder(),
     ]
     issues = sum(check["count"] for check in checks)
     return {
@@ -352,4 +359,195 @@ def _scheduled_activities_without_a_cost() -> dict:
             for row in missing[:10]
         ],
         route="/team-planning-oversight/?risk=scheduled_without_cost",
+    )
+
+
+# ── Partner oversight ────────────────────────────────────────────────────────
+def _handovers_with_no_managing_cceo() -> dict:
+    """A school given to a partner with nobody keeping the school context.
+
+    The responsibility model says the CCEO retains school-context visibility
+    and owns the evidence and Salesforce handoff. A handover with no managing
+    staff member has nobody to do either, and no supervisor's page will show
+    it, because the Program Lead lens is resolved through the CCEO.
+    """
+    from apps.partners.models import PartnerAssignment
+
+    orphans = PartnerAssignment.objects.filter(
+        Q(monitoring_staff_id__isnull=True) | Q(monitoring_staff_id=""),
+        Q(assigning_staff_id__isnull=True) | Q(assigning_staff_id=""),
+    )
+
+    return _finding(
+        key="handover_without_managing_cceo",
+        label="Partner assignments with no managing CCEO",
+        severity="error",
+        expected="Every handover names the staff member who keeps the school context",
+        count=orphans.count(),
+        examples=[
+            {
+                "id": row["id"],
+                "school": row["school__name"],
+                "partner": row["partner__name"],
+                "actual": "no monitoring or assigning staff member",
+            }
+            for row in orphans.values("id", "school__name", "partner__name")[:10]
+        ],
+        route="/partner-oversight/",
+    )
+
+
+def _partner_activities_no_assignment_claims() -> dict:
+    """Partner-delivered work that reached no handover record.
+
+    Partner Oversight is driven by PartnerAssignment, so an activity marked
+    partner-delivered that no assignment points at appears on that page
+    nowhere at all — the work is real, its cost is real, and the supervisor
+    responsible for partner delivery cannot see either.
+    """
+    from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+
+    claimed = set(
+        PartnerAssignment.objects.filter(scheduled_activity__isnull=False).values_list(
+            "scheduled_activity_id", flat=True
+        )
+    )
+    partner_work = Activity.objects.filter(
+        deleted_at__isnull=True, delivery_type="partner"
+    ).exclude(status__in=("cancelled", "draft"))
+    unclaimed = [
+        row
+        for row in partner_work.values("id", "school__name", "status")[:2000]
+        if row["id"] not in claimed
+    ]
+
+    return _finding(
+        key="partner_activity_without_assignment",
+        label="Partner activities no handover claims",
+        severity="warning",
+        expected="Every partner-delivered activity traces back to its assignment",
+        count=len(unclaimed),
+        examples=[
+            {
+                "id": row["id"],
+                "school": row["school__name"],
+                "actual": f"{row['status']}, but no assignment records it",
+            }
+            for row in unclaimed[:10]
+        ],
+        route=(
+            "manage.py repair_partner_assignment_links where an unlinked "
+            "assignment exists; otherwise the handover was never recorded and "
+            "only a person can say what it was"
+        ),
+    )
+
+
+def _partners_holding_work_with_no_login_account() -> dict:
+    """Open work with a partner who cannot be reached through the system.
+
+    A Program Lead's only instrument on partner delay is a reminder, and a
+    reminder needs somewhere to land. Where it does not, the page still shows
+    the delay honestly — it just cannot offer the one action that would move
+    it, and somebody should know that before the schedule-by date passes.
+    """
+    from apps.partners.models import Partner, PartnerAssignment
+
+    open_partner_ids = set(
+        PartnerAssignment.objects.filter(
+            status__in=PartnerAssignment.UNSCHEDULED_STATUSES
+        )
+        .exclude(partner_id__isnull=True)
+        .values_list("partner_id", flat=True)
+        .distinct()
+    )
+    unreachable = Partner.objects.filter(
+        id__in=open_partner_ids, user__isnull=True
+    ).values("id", "name", "email")
+
+    return _finding(
+        key="partner_without_login_account",
+        label="Partners holding unscheduled work with no login account",
+        severity="warning",
+        expected="A partner holding open work can be reminded through the system",
+        count=len(unreachable),
+        examples=[
+            {
+                "id": row["id"],
+                "partner": row["name"],
+                "actual": (
+                    "no linked user; reminders must go by "
+                    + (row["email"] or "another channel")
+                ),
+            }
+            for row in unreachable[:10]
+        ],
+        route="/partners",
+    )
+
+
+def _role_queues_with_no_active_holder() -> dict:
+    """A queue with work in it and nobody to do that work.
+
+    Verification and payment are the last two links in the chain, and both are
+    role queues rather than assignments. If a queue has no active holder the
+    pages still report the delay honestly — they just cannot offer the one
+    action that would move it, and every completion behind it silently stops
+    earning credit or getting paid.
+
+    Reported only when work is actually waiting. An empty queue with nothing
+    behind it is a staffing decision, not an incident, and a health check that
+    fires on a system nobody has finished setting up teaches its reader to
+    scroll past it. Same rule as the partner-without-a-login check above.
+
+    An error rather than a warning, because no amount of fieldwork clears it:
+    it is a roster problem, and only somebody with the user admin can fix it.
+    """
+    from apps.accounts.models import User
+    from apps.activities.models import Activity
+    from apps.planning.action_service import ROLE_QUEUES
+    from apps.planning.risk_service import _PAYMENT_SETTLED_STATUSES
+
+    waiting = {
+        "ImpactAssessment": Activity.objects.filter(
+            deleted_at__isnull=True,
+            submitted_to_ia_at__isnull=False,
+            ia_verification_status="pending",
+        ).count(),
+        "Accountant": Activity.objects.filter(
+            deleted_at__isnull=True, ia_verification_status="confirmed"
+        )
+        .exclude(payment_status__in=_PAYMENT_SETTLED_STATUSES)
+        .count(),
+    }
+
+    empty = []
+    for role, label in ROLE_QUEUES.items():
+        if not waiting.get(role):
+            continue
+        holders = User.objects.filter(
+            roles__contains=[role], status="active", deleted_at__isnull=True
+        ).count()
+        if not holders:
+            empty.append(
+                {
+                    "id": role,
+                    "staff": label,
+                    "actual": (
+                        f"{waiting[role]} activity(s) waiting and no active "
+                        f"{label} to clear them, so no oversight page can "
+                        "chase this"
+                    ),
+                }
+            )
+
+    return _finding(
+        key="role_queue_without_holder",
+        label="Verification or payment queues with work and nobody in them",
+        severity="error",
+        expected="Every queue holding work has someone who can clear it",
+        count=len(empty),
+        examples=empty,
+        route="/admin-panel/users",
     )
