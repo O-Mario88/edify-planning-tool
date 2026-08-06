@@ -1,0 +1,50 @@
+{% load frontend_filters %}
+{% comment %}
+A heatmap, not a table of highlighted numbers. Every cell used to carry a
+coloured pill, which put eight badges on every row and made the eye read
+badges rather than the pattern across a row or down a column. Colour belongs
+to the cell here: the value is the surface, and the number sits on it.
+
+The ramp is per-point (0-10) rather than per-band. Four bands paint 5.0 and
+6.9 identically, and on a matrix whose entire purpose is comparison that hides
+the differences a reader is scanning for.
+{% endcomment %}
+<div class="pl-ssa-matrix-scroll overflow-x-auto flex-1">
+  {% if ssa_matrix.rows %}
+  <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap">
+    <caption class="sr-only">
+      Average SSA score out of 10 for each intervention, by cluster. Cells are
+      shaded from red at 0 to green at 10; the score is stated in every cell,
+      so the colour is never the only carrier of the value.
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col" class="px-2.5 py-2 text-left">Cluster</th>
+        {% for code in ssa_matrix.codes %}
+        <th scope="col" class="px-1.5 py-2 text-center">{{ code }}</th>
+        {% endfor %}
+        <th scope="col" class="px-1.5 py-2 text-center">Overall</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in ssa_matrix.rows %}
+      <tr>
+        <th scope="row" class="px-2.5 py-[7px] text-left">{{ r.name }}</th>
+        {% for cell in r.cells %}
+        <td class="pl-ssa-heat px-1.5 py-[7px] text-center" data-heat="{{ cell.heat|default_if_none:'none' }}">
+          {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}
+        </td>
+        {% endfor %}
+        <td class="pl-ssa-heat pl-ssa-heat--overall px-1.5 py-[7px] text-center" data-heat="{{ r.overall_heat|default_if_none:'none' }}">
+          {% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="flex items-center justify-center py-8">
+    <p class="edify-text-subtle text-[12px] font-semibold">No verified SSA in your clusters yet.</p>
+  </div>
+  {% endif %}
+</div>

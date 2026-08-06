@@ -1,0 +1,136 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Assign Core Support to Partner{% endblock %}
+{% block drawer_subtitle %}Hand off visit or training delivery for this core school to a certified partner.{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="/core-schools/assign-partner/action"
+hx-target="#partner-form-errors"
+class="space-y-4 text-[12px] font-bold text-slate-600 "
+x-data="{
+  sourceActivityId: '{% if catalogue_items %}{{ catalogue_items.0.sourceActivityId|default:'' }}{% endif %}',
+  recommendationReason: '{% if catalogue_items %}{{ catalogue_items.0.recommendationReason|escapejs }}{% endif %}',
+  focusIntervention: '{% if catalogue_items %}{{ catalogue_items.0.targetIntervention|default:'' }}{% endif %}',
+  supportType: '{% if catalogue_items and catalogue_items.0.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'
+}"
+>
+{% csrf_token %}
+<input type="hidden" name="school_id" value="{{ school.school_id }}">
+<input type="hidden" name="source_activity_id" :value="sourceActivityId">
+<input type="hidden" name="recommendation_reason" :value="recommendationReason">
+
+<!-- Form Error Container -->
+<div id="partner-form-errors"></div>
+
+<fieldset class="space-y-2">
+  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Partner Activity</legend>
+  {% for item in catalogue_items %}
+  <label class="edify-surface block cursor-pointer rounded-control border border-slate-200 p-3">
+    <span class="flex items-start gap-3">
+      <input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %} @change="sourceActivityId='{{ item.sourceActivityId|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; supportType='{% if item.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'">
+      <span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span>
+    </span>
+  </label>
+  {% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Partner-deliverable Catalogue Activity is currently eligible.</div>{% endfor %}
+</fieldset>
+
+<!-- Core School Name (Read Only) -->
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
+<input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
+</div>
+
+<div
+  class="grid grid-cols-2 gap-4"
+  x-data="{
+    visitSlots: [{% for slot in available_visit_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}],
+    trainingSlots: [{% for slot in available_training_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}]
+  }"
+>
+<!-- Support Type -->
+<div>
+<label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
+<input type="hidden" name="support_type" :value="supportType">
+<select id="support_type" x-model="supportType" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
+<option value="Visit">Core Visit</option>
+<option value="Training">Core Training</option>
+</select>
+</div>
+
+<!-- Sequence Number -->
+<div>
+<label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Available Slot</label>
+<select name="visit_training_number" id="visit_training_number" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<template x-for="slot in (supportType === 'Visit' ? visitSlots : trainingSlots)" :key="slot.sequence">
+  <option :value="slot.sequence" x-text="slot.label"></option>
+</template>
+<option value="" x-show="(supportType === 'Visit' ? visitSlots : trainingSlots).length === 0">No slots available</option>
+</select>
+</div>
+</div>
+
+<!-- Partner Selection -->
+<div>
+<label for="partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Select Partner Agency</label>
+<select name="partner_id" id="partner_id" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Focus Intervention -->
+<div>
+<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</label>
+<input type="hidden" name="focus_intervention" :value="focusIntervention">
+<select id="focus_intervention" x-model="focusIntervention" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
+<option value="">Select Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Purpose of Visit -->
+<div>
+<label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Purpose of Visit</label>
+<select name="purpose_of_visit" id="purpose_of_visit" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select purpose...</option>
+{% for value, label in partner_visit_purposes %}
+<option value="{{ value }}">{{ label }}</option>
+{% endfor %}
+</select>
+<p class="mt-1.5 edify-text-caption font-medium text-slate-400">Partners may deliver In-school Training, Training Follow Up, or SSA Support only.</p>
+</div>
+
+<!-- Notes -->
+<div>
+<label for="notes" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Assignment Notes &amp; Guidelines</label>
+<textarea name="notes" id="notes" rows="3.5" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Provide instructions, timelines, or focus details for the partner..."></textarea>
+</div>
+
+<!-- Notice -->
+<div class="p-4 rounded-surface bg-slate-50  edify-text-caption text-slate-400 font-semibold leading-normal">
+Assigning this slot will remove it from internal staff active queue and notify the partner. The activity moves to the Partner scheduling queue.
+</div>
+
+<!-- Actions -->
+<div class="drawer-footer">
+<button
+type="button"
+@click="$dispatch('close-drawer')"
+class="px-5 h-9 rounded-control btn-premium-secondary font-bold text-[12px]"
+>
+Cancel
+</button>
+<button
+type="submit"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
+>
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Confirm &amp; Assign
+</button>
+</div>
+</form>
+{% endblock %}

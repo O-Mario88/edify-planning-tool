@@ -1,0 +1,255 @@
+from rest_framework.test import APITestCase
+from django.utils import timezone
+from apps.geography.models import Region, District
+from apps.schools.models import School
+from apps.ssa.models import SsaRecord, SsaScore
+from apps.accounts.models import User
+from apps.core.exceptions import BadRequest
+from apps.ssa import services as ssa_services
+from apps.ssa.services import get_ssa_progress_by_fy
+
+
+class SsaSequentialValidationTest(APITestCase):
+    def setUp(self):
+        self.region = Region.objects.create(name="Central Region")
+        self.district = District.objects.create(
+            name="Kampala District", region=self.region
+        )
+        self.school = School.objects.create(
+            school_id="SCH-VAL-99",
+            name="Validation Academy",
+            region=self.region,
+            district=self.district,
+            current_fy_ssa_status="not_done",
+        )
+        self.user = User.objects.create_user(
+            email="tester.val@edify.test",
+            name="Val Tester",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            password="pwd",
+            is_active=True,
+        )
+        import os
+
+        os.environ["ENFORCE_SSA_SEQUENCE"] = "true"
+
+    def tearDown(self):
+        import os
+
+        if "ENFORCE_SSA_SEQUENCE" in os.environ:
+            del os.environ["ENFORCE_SSA_SEQUENCE"]
+
+    def test_date_only_input_is_normalized_to_an_aware_datetime(self):
+        """All SSA ingestion paths must persist a timezone-aware assessment date."""
+        parsed = ssa_services._parse_date("2026-06-15")
+        self.assertTrue(timezone.is_aware(parsed))
+        self.assertEqual(parsed.date().isoformat(), "2026-06-15")
+
+    def test_current_fy_ssa_allowed_as_first_upload(self):
+        """Uploading the first-ever SSA for a school should succeed even for
+        current FY — the rule only blocks if a previous-FY record exists but
+        is unverified. First upload is the baseline."""
+        data = {
+            "schoolId": "SCH-VAL-99",
+            "dateOfSsa": "2026-06-15T00:00:00Z",
+            "scores": [
+                {"intervention": "teaching_environment", "score": 8.0},
+                {"intervention": "financial_health", "score": 7.0},
+                {"intervention": "christlike_behaviour", "score": 9.0},
+                {"intervention": "exposure_to_word_of_god", "score": 8.0},
+                {"intervention": "government_requirement", "score": 6.0},
+                {"intervention": "leadership", "score": 7.0},
+                {"intervention": "enrolment", "score": 5.0},
+                {"intervention": "learning_environment", "score": 8.0},
+            ],
+        }
+
+        # Should succeed — no previous FY record exists, so this is the baseline
+        result = ssa_services.upload(data, self.user)
+        self.assertEqual(result["fy"], "2026")
+
+    def test_ssa_service_rejects_pupil_headcount(self):
+        data = {
+            "schoolId": "SCH-VAL-99",
+            "dateOfSsa": "2026-06-15T00:00:00Z",
+            "newEnrollment": 450,
+            "scores": [
+                {"intervention": intervention, "score": 7.0}
+                for intervention in (
+                    "teaching_environment",
+                    "financial_health",
+                    "christlike_behaviour",
+                    "exposure_to_word_of_god",
+                    "government_requirement",
+                    "leadership",
+                    "enrolment",
+                    "learning_environment",
+                )
+            ],
+        }
+
+        with self.assertRaisesMessage(
+            BadRequest, "Update pupil headcount through the School Upload file"
+        ):
+            ssa_services.upload(data, self.user)
+        self.assertFalse(SsaRecord.objects.exists())
+
+    def test_current_fy_ssa_succeeds_when_previous_fy_exists(self):
+        """Uploading current FY assessment succeeds when the previous year's SSA exists and is confirmed."""
+        # 1. Create previous FY SSA (FY 2025, let's use 2025-06-15)
+        prev_record = SsaRecord.objects.create(
+            school=self.school,
+            date_of_ssa="2025-06-15T00:00:00Z",
+            fy="2025",
+            quarter="Q3",
+            average_score=7.0,
+            verification_status="confirmed",
+            uploaded_by=self.user.user_id,
+        )
+        for intervention in [
+            "teaching_environment",
+            "financial_health",
+            "christlike_behaviour",
+            "exposure_to_word_of_god",
+            "government_requirement",
+            "leadership",
+            "enrolment",
+            "learning_environment",
+        ]:
+            SsaScore.objects.create(
+                ssa_record=prev_record, intervention=intervention, score=7.0
+            )
+
+        # 2. Upload current FY SSA (FY 2026)
+        data = {
+            "schoolId": "SCH-VAL-99",
+            "dateOfSsa": "2026-06-15T00:00:00Z",
+            "scores": [
+                {"intervention": "teaching_environment", "score": 8.0},
+                {"intervention": "financial_health", "score": 7.0},
+                {"intervention": "christlike_behaviour", "score": 9.0},
+                {"intervention": "exposure_to_word_of_god", "score": 8.0},
+                {"intervention": "government_requirement", "score": 6.0},
+                {"intervention": "leadership", "score": 7.0},
+                {"intervention": "enrolment", "score": 5.0},
+                {"intervention": "learning_environment", "score": 8.0},
+            ],
+        }
+
+        result = ssa_services.upload(data, self.user)
+        self.assertIsNotNone(result["id"])
+        self.assertEqual(result["fy"], "2026")
+
+        # 3. Verify get_ssa_progress_by_fy tracks correct progression
+        progress = get_ssa_progress_by_fy(School.objects.filter(id=self.school.id))
+        self.assertEqual(len(progress), 2)
+        self.assertEqual(progress[0]["fy"], "2025")
+        self.assertEqual(progress[0]["avg_score"], 7.0)
+        self.assertEqual(progress[1]["fy"], "2026")
+        # Average is (8+7+9+8+6+7+5+8)/8 = 58/8 = 7.25 -> rounds to 7.2 in Python round-to-even
+        self.assertEqual(progress[1]["avg_score"], 7.2)
+
+
+class AttendanceUploadActionTest(APITestCase):
+    def setUp(self):
+        from apps.clusters.models import Cluster
+        from apps.geography.models import Region, District
+
+        self.region = Region.objects.create(name="East Region")
+        self.district = District.objects.create(
+            name="Jinja District", region=self.region
+        )
+        self.cluster = Cluster.objects.create(
+            name="Test Cluster Jinja",
+            region=self.region,
+            district=self.district,
+        )
+        self.school1 = School.objects.create(
+            school_id="SCH-ATT-1",
+            name="Jinja Academy 1",
+            region=self.region,
+            district=self.district,
+        )
+        self.school2 = School.objects.create(
+            school_id="SCH-ATT-2",
+            name="Jinja Academy 2",
+            region=self.region,
+            district=self.district,
+        )
+        from apps.clusters.models import SchoolClusterAssignment
+
+        SchoolClusterAssignment.objects.create(
+            school=self.school1, cluster=self.cluster, assigned_by="test-user"
+        )
+        SchoolClusterAssignment.objects.create(
+            school=self.school2, cluster=self.cluster, assigned_by="test-user"
+        )
+        # School.cluster_id is the canonical membership source; the join rows
+        # above are its compatibility projection.
+        School.objects.filter(id__in=[self.school1.id, self.school2.id]).update(
+            cluster_id=self.cluster.id, cluster_status="clustered"
+        )
+
+        from apps.activities.models import Activity
+
+        self.activity = Activity.objects.create(
+            activity_type="cluster_meeting",
+            cluster=self.cluster,
+            fy="2026",
+            quarter="Q3",
+            status="scheduled",
+        )
+        # The activity had no owner, which only worked while the actor held
+        # every permission. Attendance belongs to whoever ran the meeting.
+        # Recording who attended a cluster meeting is execution detail, so the
+        # actor is the CCEO who ran the session. This fixture used an Admin as a
+        # "can do anything" stand-in, which stopped being true when Admin became
+        # Platform Operations: Admin uploads school and SSA data, and executes
+        # no field activity.
+        self.user = User.objects.create_user(
+            email="tester.att@edify.test",
+            name="Att Tester",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="pwd",
+            is_active=True,
+        )
+        from apps.accounts.models import StaffProfile
+
+        self.staff = StaffProfile.objects.create(
+            id="att-cceo-sp", user=self.user, title="CCEO"
+        )
+        self.activity.responsible_staff_id = self.staff.id
+        self.activity.save(update_fields=["responsible_staff_id"])
+        self.client.force_login(self.user)
+
+    def test_attendance_upload_drawer_context(self):
+        """Attendance drawer context returns cluster_schools."""
+        response = self.client.get(f"/activities/{self.activity.id}/attendance")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("cluster_schools", response.context)
+        self.assertEqual(len(response.context["cluster_schools"]), 2)
+
+    def test_attendance_upload_action_saves_attended_school_ids(self):
+        """Posting to attendance_upload_action saves checked school IDs."""
+        post_data = {
+            "teachers_attended": 5,
+            "leaders_attended": 2,
+            "attended_schools": [self.school1.id],
+            "notes": "Good session",
+        }
+        response = self.client.post(
+            f"/activities/{self.activity.id}/attendance/action",
+            post_data,
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, 302)
+
+        self.activity.refresh_from_db()
+        # Attendance records execution detail; it does not bypass evidence,
+        # Salesforce-ID and review gates by completing the activity itself.
+        self.assertEqual(self.activity.status, "completion_started")
+        self.assertEqual(self.activity.teachers_attended, 5)
+        self.assertEqual(self.activity.leaders_attended, 2)
+        self.assertEqual(self.activity.attended_school_ids, [self.school1.id])

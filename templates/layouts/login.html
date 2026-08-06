@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  {% comment %}
+  viewport-fit=cover, matching base.html. This layout is a standalone document
+  rather than a child of base.html, so it carries its own head and did not
+  inherit the attribute when base.html gained it — which left login.css's
+  safe-area padding (the `calc(1.5rem + env(safe-area-inset-*))` rules)
+  resolving to 1.5rem flat on every notched iPhone. Sign-in is the first screen
+  a field user sees, so it is the last place that should be wrong.
+  {% endcomment %}
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="var(--edify-primary-active)">
+  <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
+  {% include "partials/pwa_head.html" %}
+  {% comment %}
+    Geist is served from this origin — see the @font-face block in
+    css/fonts.css. Preloaded here because that stylesheet has to download and
+    parse before the browser would otherwise discover the font file, and the
+    sign-in page is the first impression.
+  {% endcomment %}
+  <link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731geist2">
+
+  {% comment %}
+    The brand panel this image fills is `display: none` below 70rem
+    (static/css/login.css), so on every phone, every tablet in portrait and
+    plenty of laptops it is never rendered — yet this preload fetched it
+    anyway, 94 KB at fetchpriority="high", competing with the stylesheets that
+    actually block first paint. Confirmed in the browser at 390px: one request,
+    initiatorType "link", for an element whose parent computes to display:none.
+
+    A preload honours `media` exactly like any other link, so scoping it to the
+    same breakpoint the panel appears at means mobile never asks for it.
+
+    Scoping the preload alone was not enough: with it silenced the <img> simply
+    fetched the file itself, because an <img> inside a display:none subtree is
+    still loaded. That is why the photo is now a CSS background on a decorative
+    div instead (static/css/login.css) — background images on elements that are
+    not rendered genuinely are not fetched.
+  {% endcomment %}
+  <link rel="preload" as="image" media="(min-width: 70.01rem)" href="{% static 'images/login-classroom-portrait.jpg' %}" fetchpriority="high">
+  {% comment %}
+    The sign-in layout previously loaded login.css alone, so it had no access
+    to the design tokens and drifted into its own visual language — nine
+    bespoke radii and hand-picked colours on the first screen every user sees.
+    Loading the canonical token layer lets login.css consume var(--radius-*) /
+    var(--edify-*) like every other surface, instead of being a design-system
+    island. design-system.css below is what supplies those tokens.
+
+    main.css — the application's 322 KB Tailwind bundle — used to load here, and
+    almost all of it was dead weight. Every class on this layout and on the two
+    pages that render inside it (pages/auth/login.html and
+    pages/auth/reset_password.html) is a bespoke `login-*` rule from login.css;
+    between them they use ZERO Tailwind utilities, and login.css carries its own
+    reset so it never needed the preflight either.
+
+    What it DID need was the five radius custom properties, which login.css
+    consumes as var(--radius-control) and friends in eight places. Those are
+    defined in the Tailwind @theme, so dropping main.css outright collapsed
+    every radius on the page to 0 — caught by diffing computed styles, not by
+    eye, because at a glance the page still looked fine.
+
+    tokens.css is that theme block and nothing else: ~6 KB from the same
+    assets/css/_theme.css the application bundle is built from, so there is
+    still exactly one definition of these values.
+
+    Net: 322 KB to 6 KB on the first thing every user downloads, before they can
+    type a password, on metered mobile data, re-fetched after every release
+    because the filename is content-hashed.
+
+    If a template rendered by this layout ever needs a real Tailwind utility, do
+    not restore main.css for it — add the rule to login.css, or build a
+    login-scoped bundle. apps/core/tests/test_login_bundle.py holds this.
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260804tokens1">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731geist2">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260731geist2">
+  <script defer src="{% static 'js/login.js' %}?v=20260714a"></script>
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-brand" aria-label="About Edify Planning and Monitoring">
+      {% comment %}
+      A div, not an <img>, because this is a backdrop rather than content: it
+      carries alt="" and sits under .login-brand__shade's gradient. As an <img>
+      it was downloaded on every phone and tablet — 92 KB for a panel that is
+      display:none below 70rem — since a hidden <img> is still fetched. The
+      same file as a background on a non-rendered element is not.
+      {% endcomment %}
+      <div class="login-brand__photo" aria-hidden="true"></div>
+      <div class="login-brand__shade" aria-hidden="true"></div>
+      <div class="login-brand__dots login-brand__dots--top" aria-hidden="true"></div>
+      <div class="login-brand__dots login-brand__dots--middle" aria-hidden="true"></div>
+
+      <div class="login-brand__content">
+        <header class="login-brand__header">
+          <img class="login-brand__logo" src="{% static 'images/logo.png' %}" alt="Edify">
+          <span class="login-brand__divider" aria-hidden="true"></span>
+          <span class="login-brand__product">Planning &amp;<br>Monitoring</span>
+        </header>
+
+        <div class="login-brand__story">
+          <p class="login-brand__eyebrow">Welcome back to</p>
+          <p class="login-brand__title">Edify Planning &amp;<br>Monitoring</p>
+          <span class="login-brand__rule" aria-hidden="true"></span>
+          <p class="login-brand__summary">
+            Plan smarter. Track field work. Drive accountability.<br>
+            Together, we’re building stronger schools<br>
+            and better futures.
+          </p>
+        </div>
+
+        <section class="impact-card" aria-labelledby="impact-card-title">
+          <h2 id="impact-card-title" class="impact-card__title">Built for impact. Designed for results.</h2>
+          <div class="impact-card__grid">
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
+              </span>
+              <h3>Plan with clarity</h3>
+              <p>Align activities, budgets,<br>and targets with<br>confidence.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+              </span>
+              <h3>Track in real time</h3>
+              <p>Monitor visits, tasks,<br>and outcomes from<br>the field.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V14M16 20V7M22 20V4"></path><path d="m4 7 5-4 5 3 7-5M17 1h4v4"></path></svg>
+              </span>
+              <h3>Improve outcomes</h3>
+              <p>Use data insights to<br>drive decisions that<br>improve learning.</p>
+            </article>
+            <article class="impact-item">
+              <span class="impact-item__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              </span>
+              <h3>Ensure accountability</h3>
+              <p>Promote transparency<br>and performance<br>at every level.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="login-stats" aria-label="Live Edify operational statistics">
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 21V9l4-3v15M9 21V3l6 4v14M17 21v-8h4v8M1 21h22M11 8h2M11 12h2M11 16h2"></path></svg>
+            <div>
+              <p class="login-stat__label">Schools reached</p>
+              <p class="login-stat__value">{{ stat_schools_reached|default:"0" }}</p>
+              <p class="login-stat__meta">↗ Live system data</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <div>
+              <p class="login-stat__label">Field visits</p>
+              <p class="login-stat__value">{{ stat_field_visits|default:"0" }}</p>
+              <p class="login-stat__meta">↗ Current FY</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>
+            <div>
+              <p class="login-stat__label">Tasks completed</p>
+              <p class="login-stat__value">{{ stat_tasks_completed|default:"0%" }}</p>
+              <p class="login-stat__meta">↗ Current FY</p>
+            </div>
+          </article>
+          <article class="login-stat">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle><path d="m15 9 5-5M17 4h3v3"></path></svg>
+            <div>
+              <p class="login-stat__label">Target progress</p>
+              <p class="login-stat__value">{{ stat_target_progress|default:"0%" }}</p>
+              <p class="login-stat__meta">↗ Validated results</p>
+            </div>
+          </article>
+        </section>
+      </div>
+    </section>
+
+    <section class="login-access" aria-label="Secure sign in">
+      <div class="login-card">
+        <div class="login-card__inner">
+          <img class="login-card__logo" src="{% static 'images/logo.png' %}" alt="Edify">
+          {% block auth_content %}{% endblock %}
+
+          <aside class="secure-card" aria-label="Security information">
+            <span class="secure-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </span>
+            <div>
+              <h2>Secure access</h2>
+              <p>Your data is encrypted and protected by<br class="secure-card__desktop-break"> enterprise-grade security.</p>
+            </div>
+          </aside>
+
+          <p class="login-card__footer">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-3 8-9V5l-8-3-8 3v8c0 6 8 9 8 9Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            <span>Protected access for country teams, CCEOs, finance,<br class="login-card__desktop-break"> and leadership.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

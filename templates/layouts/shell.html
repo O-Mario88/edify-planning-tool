@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% load static %}
+{% load frontend_filters %}
+
+{% block content %}
+<a href="#main-content" class="edify-skip-link">Skip to main content</a>
+<div
+x-data="{ sidebarOpen: false, collapsed: false }"
+@keydown.escape.window="if (sidebarOpen) { sidebarOpen = false; $nextTick(() => ($refs.mobileSidebarOpen || document.querySelector('[data-mobile-nav-more]'))?.focus()) }"
+class="edify-shell h-full flex overflow-hidden{% if mobile_nav %} edify-shell-has-bottom-nav{% endif %}"
+>
+<!-- Off-canvas mobile menu -->
+<div
+x-show="sidebarOpen"
+class="lg:hidden fixed inset-0 flex z-40"
+style="display: none;"
+role="dialog"
+aria-modal="true"
+aria-label="Primary navigation"
+>
+<div
+x-show="sidebarOpen"
+x-transition:enter="transition-opacity ease-linear duration-300"
+x-transition:enter-start="opacity-0"
+x-transition:enter-end="opacity-100"
+x-transition:leave="transition-opacity ease-linear duration-300"
+x-transition:leave-start="opacity-100"
+x-transition:leave-end="opacity-0"
+class="fixed inset-0 bg-slate-600/75 backdrop-blur-sm"
+@click="sidebarOpen = false; $nextTick(() => ($refs.mobileSidebarOpen || document.querySelector('[data-mobile-nav-more]'))?.focus())"
+aria-hidden="true"
+></div>
+
+<div
+x-show="sidebarOpen"
+x-transition:enter="transition ease-in-out duration-300 transform"
+x-transition:enter-start="-translate-x-full"
+x-transition:enter-end="translate-x-0"
+x-transition:leave="transition ease-in-out duration-300 transform"
+x-transition:leave-start="translate-x-0"
+x-transition:leave-end="-translate-x-full"
+class="app-sidebar relative flex h-full max-w-xs w-full flex-1 flex-col text-slate-100"
+>
+<div class="absolute top-0 right-0 -mr-12 pt-2">
+<button
+type="button"
+x-ref="mobileSidebarClose"
+class="ml-1 flex items-center justify-center h-10 w-10 rounded-pill focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+@click="sidebarOpen = false; $nextTick(() => ($refs.mobileSidebarOpen || document.querySelector('[data-mobile-nav-more]'))?.focus())"
+>
+<span class="sr-only">Close sidebar</span>
+<svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+</svg>
+</button>
+</div>
+
+<!-- Mobile Sidebar Nav Content -->
+{% include "components/sidebar.html" %}
+</div>
+</div>
+
+<!-- Desktop Static Sidebar -->
+<aside
+class="app-sidebar hidden lg:flex"
+:class="collapsed ? 'app-sidebar--collapsed' : ''"
+>
+{% include "components/sidebar.html" %}
+</aside>
+
+<!-- Main container -->
+<div
+class="flex-1 flex flex-col min-w-0 overflow-hidden"
+:inert="sidebarOpen"
+:aria-hidden="sidebarOpen ? 'true' : null"
+>
+<!-- Topbar -->
+<header class="edify-topbar shrink-0 relative z-10">
+<div class="flex items-center gap-4 flex-1 min-w-0">
+{% comment %}
+The hamburger is rendered only when the bottom bar is not. Below lg the bar's
+More control opens this same drawer, so keeping both put two openers for one
+drawer on a 390px row — and the topbar row is the one already short of space
+for search. Kept as the fallback for the case where `mobile_nav` resolves
+empty, so the drawer is never unreachable.
+{% endcomment %}
+{% if not mobile_nav %}
+<button
+type="button"
+x-ref="mobileSidebarOpen"
+class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:outline-none edify-text-muted"
+@click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
+>
+<span class="sr-only">Open sidebar</span>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+</svg>
+</button>
+{% endif %}
+
+{% comment %}
+Visible at every width. This was `hidden sm:block`, so the platform's search
+simply did not exist below 640px — and once the top bar became the single
+canonical control and the duplicate page-body forms came out, that left a
+phone with no way to search those pages at all. The date block beside it is
+already `hidden md:flex`, so the room this needs is room the row was giving
+away.
+{% endcomment %}
+<search class="max-w-md w-full min-w-0 relative block">
+{% comment %}
+The magnifier is a submit control, not an ornament. It used to be a
+pointer-events-none div, so the only way to run a search anywhere in the
+platform was to know that Enter was the trigger. It sits outside the form
+elements below and reaches whichever one is rendered through form=, so
+clicking it submits exactly the same form Enter does — one request, not two.
+{% endcomment %}
+{% comment %}Context-aware topbar search. A page opts in by passing a `topbar_search`
+context dict (placeholder, value, name, input_id, action, method, hx_get,
+hx_target, hx_trigger, hx_include, hidden, attach_to, autosubmit). Without it
+we fall back to the global /search form. Pages with their own inline filter set
+topbar_search.hide. Use attach_to to bind the input to a page-level filter form
+by id via the HTML5 form= attribute (one visible search, no behavior change),
+and autosubmit to submit that form on keyup via Alpine.
+{% endcomment %}
+{% if topbar_search and not topbar_search.hide %}
+{% if topbar_search.attach_to %}
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{% firstof topbar_search.label topbar_search.placeholder 'Search' %}</label>
+<input
+type="search"
+form="{{ topbar_search.attach_to }}"
+id="{{ topbar_search.input_id|default:'page-search-input' }}"
+name="{{ topbar_search.name|default:'q' }}"
+value="{{ topbar_search.value|default:'' }}"
+placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+{% if topbar_search.autosubmit %}x-data="{ t: null }" @input.debounce.300ms="$el.form ? $el.form.requestSubmit() : null"{% endif %}
+>
+<button type="submit" form="{{ topbar_search.attach_to }}" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
+{% else %}
+<form
+  method="{{ topbar_search.method|default:'get' }}"
+  {% if topbar_search.hx_get %}{% else %}action="{{ topbar_search.action|default:'/search' }}"{% endif %}
+  {% if topbar_search.hx_get %}
+  hx-get="{{ topbar_search.hx_get }}"
+  hx-target="{{ topbar_search.hx_target }}"
+  {% comment %}
+  submit is appended to whatever the page asked for, never left to the caller.
+  Every hx_trigger in the codebase listed only keyup and search, so a click on
+  the magnifier fired a native submit that htmx ignored — the browser then did
+  a full-page GET and the partial swap was lost. Enter already worked through
+  the `search` event; this is what makes the icon its equal.
+  {% endcomment %}
+  hx-trigger="{{ topbar_search.hx_trigger|default:'keyup delay:300ms, search' }}, submit"
+  hx-push-url="true"
+  {% if topbar_search.hx_include %}hx-include="{{ topbar_search.hx_include }}"{% endif %}
+  {% endif %}
+>
+<label class="sr-only" for="{{ topbar_search.input_id|default:'page-search-input' }}">{% firstof topbar_search.label topbar_search.placeholder 'Search' %}</label>
+{% for hidden in topbar_search.hidden|default:'' %}<input type="hidden" name="{{ hidden.name }}" value="{{ hidden.value }}">{% endfor %}
+<input
+type="search"
+id="{{ topbar_search.input_id|default:'page-search-input' }}"
+name="{{ topbar_search.name|default:'q' }}"
+value="{{ topbar_search.value|default:'' }}"
+placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, districts…' }}"
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+@input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
+>
+<button type="submit" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
+</form>
+{% endif %}
+{% elif not topbar_search or not topbar_search.hide %}
+<form method="get" action="/search">
+<label class="sr-only" for="global-search-input">Search schools, staff and districts</label>
+<input
+type="search"
+id="global-search-input"
+name="q"
+value="{{ request.GET.q|default:'' }}"
+placeholder="Search schools, staff, districts..."
+class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
+@input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
+>
+<button type="submit" aria-label="Search" class="edify-search-submit">
+{% include "partials/_search_icon.html" %}
+</button>
+</form>
+{% endif %}
+</search>
+</div>
+
+<!-- Header Right Utilities -->
+<div class="flex items-center gap-2 shrink-0">
+<!-- Today's date + ISO week (shown on every page) -->
+<div class="hidden md:flex shrink-0 items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+<span class="xl:hidden whitespace-nowrap">{{ today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
+<span class="hidden xl:inline whitespace-nowrap">{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
+</div>
+<!-- Messages drawer — recent threads, each linking to the full thread page. -->
+<button
+hx-get="/messages/drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
+title="Messages"
+aria-label="Messages"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+</svg>
+{% if unread_messages_count > 0 %}
+<span class="notification-badge absolute top-1 right-1">{{ unread_messages_count }}</span>
+{% endif %}
+</button>
+
+<button
+hx-get="/notifications/drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
+title="Notifications"
+aria-label="Notifications"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+</svg>
+<div id="notification-badge-container">
+{% if unread_notifications_count > 0 %}
+<span id="notification-badge-count" class="notification-badge absolute top-1 right-1">
+{{ unread_notifications_count }}
+</span>
+{% endif %}
+</div>
+</button>
+
+<!-- Contextual Help navigates directly to the full Knowledge Center article for
+the current page. The server resolves the route to a reviewed, role-aware article. -->
+{% comment %}
+Hidden on phones so the search field keeps a usable width. Seven controls
+shared a 375px row and squeezed search to about 100px; contextual help is the
+one of them reachable another way — the Knowledge Center is in the sidebar —
+so it yields its space rather than the control every page depends on.
+{% endcomment %}
+<a
+href="/help/context?for={{ request.path|urlencode }}"
+class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
+title="Help for this page"
+aria-label="Help for this page"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+</a>
+
+{% comment %}
+Report a Problem. Every user request for platform help must enter the canonical
+Support Ticket workflow rather than reaching an Admin by message or corridor,
+so the entry point lives beside contextual help on every page and carries the
+route it was raised from. Same phone-width reasoning as the help control above.
+{% endcomment %}
+<a
+href="/support?route={{ request.path|urlencode }}"
+class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
+title="Report a problem with this page"
+aria-label="Report a problem with this page"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
+</svg>
+</a>
+
+<!-- Quick night-mode control. Settings remains the full appearance picker. -->
+<button
+type="button"
+@click="$store.theme.toggleNight()"
+:aria-pressed="$store.theme.actualTheme === 'dark'"
+:aria-label="$store.theme.actualTheme === 'dark' ? 'Turn off night black mode' : 'Turn on night black mode'"
+:title="$store.theme.actualTheme === 'dark' ? 'Use daytime workspace' : 'Use night black workspace'"
+class="h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+>
+<svg x-show="$store.theme.actualTheme !== 'dark'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+</svg>
+<svg x-show="$store.theme.actualTheme === 'dark'" x-cloak class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 3V1m0 22v-2m9-9h2M1 12h2m15.364-6.364 1.414-1.414M4.222 19.778l1.414-1.414m12.728 0 1.414 1.414M4.222 4.222l1.414 1.414M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+</svg>
+</button>
+
+<!-- Initials User Avatar Dropdown -->
+<div class="relative" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+<button
+type="button"
+@click="open = !open"
+aria-label="Account menu"
+:aria-expanded="open"
+class="h-9 w-9 rounded-pill text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors edify-primary-solid"
+>
+<span>{{ request.user.name|avatar_initials }}</span>
+</button>
+
+<div
+x-show="open"
+x-cloak
+x-transition.opacity.duration.120ms
+class="absolute right-0 mt-2 w-56 rounded-surface shadow-lg py-1.5 text-[12px] z-50 overflow-hidden edify-surface border edify-border"
+style="display: none"
+>
+<div class="px-4 py-2 border-b edify-border-bottom">
+<p class="font-semibold edify-text">{{ request.user.name|default:"District Admin" }}</p>
+<p class="edify-text-caption font-semibold edify-text-muted">{{ request.user.active_role|default:"Team member" }}</p>
+<p class="edify-text-caption truncate edify-text-subtle mt-0.5">{{ request.user.email|default:"admin@district.edify.org" }}</p>
+</div>
+
+{% if request.user.role_enums|length > 1 %}
+<div class="px-3 py-1 edify-text-caption font-bold uppercase tracking-wider edify-surface-muted edify-text-subtle">Switch Active Role</div>
+{% for r in request.user.role_enums %}
+<form action="/auth/switch-role" method="post" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="role" value="{{ r.value }}">
+<button
+type="submit"
+class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold {% if request.user.active_role == r.value %}font-semibold{% else %}{% endif %}"
+{% if request.user.active_role == r.value %}style="color:var(--edify-accent);"{% else %}style="color:var(--edify-text-muted);"{% endif %}
+>
+{{ r.value }}
+</button>
+</form>
+{% endfor %}
+<div class="my-1.5 border-t edify-border-top"></div>
+{% endif %}
+
+<a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">My Profile</a>
+<form action="/logout" method="post" class="m-0 mt-1 border-t edify-border-top">
+{% csrf_token %}
+<button
+type="submit"
+class="account-menu__signout w-full text-left px-4 py-2 font-semibold"
+>
+Log out
+</button>
+</form>
+</div>
+</div>
+</div>
+</header>
+
+<!-- Main Content Area -->
+<main
+id="main-content"
+tabindex="-1"
+class="edify-workspace flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]"
+data-density="compact"
+data-analytics-engine="edify-python-1.0"
+>
+{% block shell_content %}{% endblock %}
+</main>
+
+{% comment %}
+Inside the main container on purpose: that element carries :inert="sidebarOpen",
+so opening the More drawer takes the bar out of the tab order with everything
+else behind the overlay. A bottom bar that stayed focusable would let the user
+tab straight out of an open modal dialog.
+{% endcomment %}
+{% include "components/mobile_bottom_nav.html" %}
+</div>
+
+<!-- Global Drawer Interaction System Container -->
+<div id="drawer-container"></div>
+</div>
+{% endblock %}

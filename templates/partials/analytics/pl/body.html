@@ -1,0 +1,42 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── Team KPI strip; linked metrics retain HTMX drill-downs ──────────── #}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead" %}
+
+  {# Shared country geography; role-independent while PL decision cards stay scoped. #}
+  {% include "partials/analytics/regional_performance.html" %}
+
+  {# ── Row A | B ─────────────────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/pl/team_performance.html" %}
+    {% include "partials/analytics/pl/ssa_interventions.html" %}
+  </div>
+
+  {# ── Row C | D ─────────────────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5">
+    <div class="lg:col-span-2">{% include "partials/analytics/pl/district_performance.html" %}</div>
+    <div class="lg:col-span-3">{% include "partials/analytics/pl/cluster_performance.html" %}</div>
+  </div>
+
+  {# ── Row E | F | G ─────────────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-3">{% include "partials/analytics/pl/impact_summary.html" %}</div>
+    <div class="lg:col-span-5">{% include "partials/analytics/pl/cceo_performance.html" %}</div>
+    <div class="lg:col-span-4">{% include "partials/analytics/pl/insights.html" %}</div>
+  </div>
+
+  {# ── Row H | I | J ─────────────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-5">{% include "partials/analytics/pl/activity_tracking.html" %}</div>
+    <div class="lg:col-span-3">{% include "partials/analytics/pl/staff_partner.html" %}</div>
+    <div class="lg:col-span-4">{% include "partials/analytics/pl/core_champion.html" %}</div>
+  </div>
+
+  {# ── Row K | L ─────────────────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div class="lg:col-span-2">{% include "partials/analytics/pl/risk_list.html" %}</div>
+    <div class="lg:col-span-1">{% include "partials/analytics/pl/donor_snapshot.html" %}</div>
+  </div>
+
+</div>

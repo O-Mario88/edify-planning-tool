@@ -1,0 +1,33 @@
+{% load frontend_filters %}
+<div class="pl-funding-summary">
+  <div class="pl-funding-donut" role="img" aria-label="{{ funding_execution.utilization_pct }} percent of approved funding utilized">
+    <div class="absolute inset-0 rounded-pill" style="background:conic-gradient(var(--edify-success) {{ funding_execution.utilization_pct }}%, var(--edify-border) 0);"></div>
+    <div class="absolute inset-[7px] rounded-pill flex flex-col items-center justify-center edify-surface edify-shadow-sm">
+      <span class="pl-funding-donut__value">{{ funding_execution.utilization_pct }}%</span>
+      <span class="pl-funding-donut__label">Utilized</span>
+    </div>
+  </div>
+  <div class="pl-funding-summary__copy">
+    <strong>Budget utilization</strong>
+    <span>{{ funding_execution.disbursed_total }} disbursed</span>
+  </div>
+</div>
+
+<div class="pl-funding-statuses" aria-label="Funding execution status details">
+  {% for b in funding_execution.statuses %}
+  <div class="pl-funding-status">
+    <span class="pl-funding-status__label">
+      <span class="pl-funding-status__dot"
+            style="background:{% if b.tone == 'success' %}var(--edify-success){% elif b.tone == 'info' %}var(--edify-info){% elif b.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};"></span>
+      {{ b.label }}
+    </span>
+    <span class="pl-funding-status__value">{{ b.count }}</span>
+    <span class="pl-funding-status__amount">{{ b.amount }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pl-funding-footer">
+  <p><span>Approved</span><strong>{{ funding_execution.approved_total }}</strong></p>
+  <a href="/disbursements">Open finance <span aria-hidden="true">&rarr;</span></a>
+</div>

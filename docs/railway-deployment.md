@@ -1,5 +1,11 @@
 # Edify Planning — Railway Deployment Plan
 
+> **STALE**: this document describes the retired NestJS+Next.js split-service
+> architecture. The current deployment is a single Django monolith (see
+> `Dockerfile` at the repo root). For the current, accurate deployment setup
+> — including the background-job scheduler worker service — see
+> `docs/scheduler-deployment.md`.
+
 The production deployment target. One Railway project, two app services that stay
 **independent** but present as **one product** to users. The frontend and backend
 are separate so either can redeploy/scale/fail without taking the other down — the
@@ -155,3 +161,51 @@ Honest gaps to close while wiring Railway (so the doc isn't aspirational):
   (see edify-api). A real launch onboards users via the Super Admin instead.
 - **DEMO_LOGIN_PASSWORD must match** on both services (API hashes users with it; the
   web bridge logs in with it) — a mismatch = 502s.
+
+## Background jobs / scheduler — open ops decision (2026-07 audit)
+
+**This section reflects the current Django backend, not the NestJS/Next.js split
+described above** — the codebase migrated to a single Django + DRF service
+(`Dockerfile` builds one image, `CMD daphne -b 0.0.0.0 -p ${PORT:-4000}
+config.asgi:application`; there is no separate `edify-web`/`edify-api` split or
+`Worker/Cron` service actually provisioned in `railway.json` today).
+
+**Status: `ENABLE_BACKGROUND_JOBS` is `False` everywhere, including production.**
+- Read/set in `config/settings/base.py` (`ENABLE_BACKGROUND_JOBS = _truthy(os.environ.get("ENABLE_BACKGROUND_JOBS"), fallback=False)`).
+  `config/settings/prod.py` does not override it — it falls through to the same
+  `False` default unless an operator sets the env var.
+- No deployment config sets it: not in `railway.json`, not in `Dockerfile`/
+  `docker-entrypoint.sh`, not in `.env.example`.
+- Effect: `apps/realtime/apps.py`'s `AppConfig.ready()` never registers the
+  django-apscheduler jobs, and each job function in `apps/realtime/jobs.py`
+  early-returns via `_enabled()` even if called directly. **None of the 4 jobs
+  run automatically**: `weekly_fund_request_job`, `monthly_work_plan_job`,
+  `notification_escalation_job`, `daily_digest_job`.
+- Separately, two management commands are explicitly documented as
+  cron-only-by-design and are **not** gated by `ENABLE_BACKGROUND_JOBS` at all —
+  they simply have no scheduler calling them: `python manage.py
+  send_pd_reminders` (`apps/professional_development/management/commands/
+  send_pd_reminders.py`) and `python manage.py detect_field_debrief_insights`
+  (`apps/debriefs/management/commands/detect_field_debrief_insights.py`).
+
+**This needs a human/ops decision, not a code fix.** Turning this on requires an
+actual process that stays alive to run a scheduler (or an external cron caller) —
+that's an infrastructure choice, not something to flip silently in shared
+production settings. Two viable options once decided:
+1. Add a second Railway service (a "Worker" process, `CMD python manage.py
+   runworker` equivalent or just a long-lived process with
+   `ENABLE_BACKGROUND_JOBS=true` set) that runs the in-process apscheduler from
+   `apps/realtime/apps.py`, **and** add a Railway Cron Job (or external cron)
+   that calls `send_pd_reminders` and `detect_field_debrief_insights` daily.
+2. Skip in-process apscheduler entirely and drive all 4 jobs + the 2 commands
+   from Railway Cron Jobs / an external scheduler hitting `python manage.py
+   <command>` directly (would need small wrapper commands for the 4
+   apscheduler-only jobs, which currently only exist as importable functions,
+   not management commands).
+
+Until one of these is provisioned, weekly fund-request generation, monthly
+work-plan envelope generation, notification escalation, daily digests, PD
+reminders, and field-debrief recurring-issue detection are all **manual-only**
+in production. See `apps/realtime/tests.py` for regression coverage of the
+`ENABLE_BACKGROUND_JOBS` gate itself (so a future change can't silently start
+these jobs without an explicit env flip).

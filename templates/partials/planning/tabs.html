@@ -1,0 +1,72 @@
+<nav
+id="planning-tabs-header"
+class="edify-tab-container"
+role="tablist"
+aria-label="Planning views"
+{% if planning_tabs_oob %}hx-swap-oob="outerHTML"{% endif %}
+>
+<button
+type="button"
+id="planning-tab-client"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'client' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'client' %}0{% else %}-1{% endif %}"
+@click="document.querySelector('#filters-form [name=tab]').value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+class="edify-tab-btn {% if active_tab == 'client' %}active{% endif %}"
+>
+Client Schools
+</button>
+
+<button
+type="button"
+id="planning-tab-core"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'core' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'core' %}0{% else %}-1{% endif %}"
+@click="document.querySelector('#filters-form [name=tab]').value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+class="edify-tab-btn {% if active_tab == 'core' %}active{% endif %}"
+>
+Core Schools
+</button>
+
+<button
+type="button"
+id="planning-tab-clusters"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'clusters' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'clusters' %}0{% else %}-1{% endif %}"
+@click="document.querySelector('#filters-form [name=tab]').value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+class="edify-tab-btn {% if active_tab == 'clusters' %}active{% endif %}"
+>
+Clusters
+</button>
+
+<button
+type="button"
+id="planning-tab-partner"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'partner' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'partner' %}0{% else %}-1{% endif %}"
+@click="document.querySelector('#filters-form [name=tab]').value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+class="edify-tab-btn {% if active_tab == 'partner' %}active{% endif %}"
+>
+Assigned to Partner
+</button>
+
+<button
+type="button"
+id="planning-tab-scheduled"
+role="tab"
+aria-controls="schools-table-container"
+aria-selected="{% if active_tab == 'scheduled' %}true{% else %}false{% endif %}"
+tabindex="{% if active_tab == 'scheduled' %}0{% else %}-1{% endif %}"
+@click="document.querySelector('#filters-form [name=tab]').value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change', { bubbles: true }))"
+class="edify-tab-btn {% if active_tab == 'scheduled' %}active{% endif %}"
+>
+Scheduled / In My Plan
+</button>
+</nav>

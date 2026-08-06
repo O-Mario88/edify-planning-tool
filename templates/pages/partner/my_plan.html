@@ -1,0 +1,24 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Partner My Plan — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Partner Portal</p>
+<h1 class="edify-page-title edify-page-header__title">Partner My Plan</h1>
+<p class="edify-page-header__description">Manage and execute all partner-owned scheduled activities.</p>
+</div>
+</div>
+
+<!-- Dynamic workspace feed -->
+<div id="my-plan-workspace" class="space-y-6">
+{% include "partials/my_plan/workspace.html" %}
+</div>
+
+</div>
+{% endblock %}

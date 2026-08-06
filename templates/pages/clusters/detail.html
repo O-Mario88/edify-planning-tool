@@ -1,0 +1,218 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% load frontend_filters %}
+
+{% block title %}{{ cluster.name }} - Cluster details{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<!-- Back Nav & Header -->
+<div>
+{% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}
+<div class="mt-2 edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">{{ cluster.name }}</h1>
+<p class="edify-page-header__description">
+District: {% firstof cluster.district.name cluster.district %} &bull; Sub-county: {% firstof cluster.subCounty.name cluster.subCounty %}
+</p>
+</div>
+
+<!-- Actions buttons -->
+<div class="edify-page-header__controls">
+{% if can_edit_cluster %}
+{% comment %}
+A cluster profile is editable for the same reason a school profile is: the
+record has a name, a type, boundaries and a responsible person, and all of
+them change. The drawer already existed at /clusters/<id>/edit-drawer with
+nothing on this page opening it.
+
+Gated on can_edit_cluster — the permission the drawer itself enforces —
+rather than on a role string, so the button cannot offer what the endpoint
+would refuse.
+{% endcomment %}
+<button
+type="button"
+hx-get="/clusters/{{ cluster.id }}/edit-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+aria-label="Edit {{ cluster.name }} cluster details"
+class="flex items-center gap-1.5 px-3 py-1.5 edify-primary-solid edify-primary-hover text-white edify-text-caption font-bold rounded-control shadow-sm transition-all focus:outline-none"
+>
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5h-6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-6m-1.4-9.4a2 2 0 112.8 2.8L11 15l-4 1 1-4 8.6-8.4z"/></svg> Edit Details
+</button>
+{% endif %}
+{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+<a href="/planning?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
+Schedule Group Training
+</a>
+<a href="/planning?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
+Schedule Cluster Meeting
+</a>
+{% endif %}
+</div>
+</div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+<!-- Left Column: Cluster Information & Schools -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Cluster Info Card -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Cluster Type</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Status</p>
+<p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ cluster.status }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Cluster Leader</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderName|default:"None assigned" }}</p>
+</div>
+<div>
+<p class="edify-text-caption uppercase font-bold text-slate-400">Leader Phone</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
+</div>
+</div>
+</div>
+
+<!-- Schools in Cluster Table -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)] flex items-center justify-between">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Assigned Roster</h3>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
+</div>
+<div class="overflow-x-auto">
+{% paginate schools "schools_page" as schools_pager %}
+<table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider text-left">
+<th class="px-4 py-2.5">School ID</th>
+<th class="px-4 py-2.5">School Name</th>
+<th class="px-4 py-2.5">SSA Average</th>
+<th class="px-4 py-2.5">Last Visit</th>
+<th class="px-4 py-2.5">Last Training</th>
+<th class="px-4 py-2.5">Readiness</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[var(--edify-border)]">
+{% if schools %}
+{% for s in schools_pager.rows %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-4 py-3 font-bold text-[var(--edify-accent)]" data-record-title>{{ s.schoolId }}</td>
+<td class="px-4 py-3" data-label="School Name">
+<a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
+</td>
+<td class="px-4 py-3 font-semibold text-slate-800" data-label="SSA Average">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Visit">{{ s.last_visit_date }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Training">{{ s.last_training_date }}</td>
+<td class="px-4 py-3" data-label="Readiness">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+{{ s.planning_status }}
+</span>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="6" class="px-4 py-8 text-center text-slate-400 font-semibold">No schools in this cluster.</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
+</div>
+</div>
+
+<!-- Activity and Impact History -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
+</div>
+<div class="divide-y divide-[var(--edify-border)] text-[12px]">
+{% if activity_impact %}
+{% for act in activity_impact %}
+<div class="p-4 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
+<div>
+<h4 class="font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
+</div>
+<div class="text-right flex items-center gap-4">
+<div class="text-[12px] font-semibold">
+<span class="text-slate-400">Delta:</span>
+<span class="font-semibold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+{% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
+</span>
+</div>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+{{ act.impact.status }}
+</span>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="p-8 text-center text-slate-400 font-semibold">No activity impact logs recorded.</div>
+{% endif %}
+</div>
+</div>
+</div>
+
+<!-- Right Column: Weakest interventions and scorecard -->
+<div class="space-y-6">
+<!-- Weakest 4 Interventions -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
+<div class="space-y-3">
+{% if weakest_interventions %}
+{% for item in weakest_interventions|slice:":4" %}
+{% comment %} cluster_weakest_interventions() returns `avg`, not `score` — this panel
+   read `item.score` and so rendered a blank value and a neutral dot for
+   every intervention, on every cluster, since it was written. {% endcomment %}
+<div class="flex items-center justify-between text-[12px] font-semibold">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-pill {% if item.avg < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
+<span class="truncate">{{ item.label }}</span>
+</div>
+<span class="font-semibold text-slate-800">{{ item.avg|floatformat:1 }}</span>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-[12px] text-slate-400 font-semibold">No confirmed SSA scores for this cluster yet.</p>
+{% endif %}
+</div>
+</div>
+
+<!-- Full Intervention Scorecard -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
+<div class="space-y-3.5">
+{% if intervention_summary %}
+{% for item in intervention_summary %}
+{% comment %} cluster_intervention_summary() returns `avg`, not `score` — this panel
+   read `item.score`, so every intervention showed a blank score and a
+   0%-width bar. `avg` is None when no confirmed SSA covers the
+   intervention; show an explicit dash rather than a misleading 0. {% endcomment %}
+<div>
+<div class="flex items-center justify-between text-[12px] font-semibold">
+<span class="truncate">{{ item.label }}</span>
+<span class="font-semibold {% if item.avg == None %}text-slate-300{% endif %}">{% if item.avg == None %}—{% else %}{{ item.avg|floatformat:1 }}{% endif %}</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-pill mt-1 overflow-hidden">
+{% if item.avg != None %}
+<div class="h-full bg-[var(--edify-accent)] rounded-pill" style="width: {{ item.avg|multiply:10 }}%"></div>
+{% endif %}
+</div>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-[12px] text-slate-400 font-semibold">No scores recorded.</p>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}

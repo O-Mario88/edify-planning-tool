@@ -1,0 +1,85 @@
+/*
+ * Analytics card bands
+ *
+ * Cards are grouped by comparable content scale instead of being packed into
+ * one mixed-height grid. The container queries respond to the workspace width
+ * after the sidebar takes its share, which keeps the grouping stable whether
+ * navigation is expanded or collapsed.
+ */
+
+.analytics-dashboard-stack {
+  container: analytics-dashboard / inline-size;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.analytics-layout-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.analytics-card-slot {
+  min-inline-size: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.analytics-card-slot > * {
+  min-inline-size: 0;
+  flex: 1 1 auto;
+}
+
+.analytics-card-slot > .edify-surface {
+  align-self: stretch;
+  block-size: auto;
+}
+
+.analytics-impact-card {
+  container: analytics-impact / inline-size;
+}
+
+.analytics-impact-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container analytics-impact (min-width: 44rem) {
+  .analytics-impact-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container analytics-dashboard (min-width: 42rem) {
+  .analytics-row--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container analytics-dashboard (min-width: 52rem) {
+  .analytics-row--overview {
+    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+  }
+
+  .analytics-row--decision {
+    grid-template-columns: minmax(0, 7fr) minmax(20rem, 5fr);
+  }
+
+  .analytics-row--diagnostics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-row--diagnostics > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@container analytics-dashboard (min-width: 60rem) {
+  .analytics-row--diagnostics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .analytics-row--diagnostics > :last-child {
+    grid-column: auto;
+  }
+}

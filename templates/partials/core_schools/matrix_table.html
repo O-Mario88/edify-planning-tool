@@ -1,0 +1,88 @@
+<input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
+<div class="core-school-matrix__header px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
+  <div class="flex items-center gap-2">
+    <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">{% comment %}
+paginator.count, not the length of matrix_rows — the same defect the School
+Directory had. matrix_rows is one page, so this reported the page size rather
+than what the filters and the query actually matched.
+{% endcomment %}Core Schools Matrix ({{ page_obj.paginator.count }} School{{ page_obj.paginator.count|pluralize }})</span>
+  </div>
+  <div class="core-school-matrix__helper edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
+    Click a school to view SSA scores and live support counts
+  </div>
+</div>
+
+<div class="rounded-b-xl border border-slate-100" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+  {% if matrix_rows %}
+    <ul class="core-school-list school-record-list" role="list">
+      {% for r in matrix_rows %}
+        {% include "partials/core_schools/school_row.html" with school=r %}
+      {% endfor %}
+    </ul>
+
+    <!-- Pagination controls -->
+    {% if page_obj.has_other_pages %}
+      <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-xl">
+        <div class="text-[12px] text-slate-500 font-semibold whitespace-nowrap">
+          Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} core schools
+        </div>
+
+        <div class="flex items-center gap-1.5 font-bold text-slate-600">
+          <!-- Rows per page selector -->
+          <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
+            <span>Rows per page:</span>
+            <select aria-label="Rows per page" class="h-7 px-1 rounded-control border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
+              <option>10</option>
+            </select>
+          </div>
+
+          {% if page_obj.has_previous %}
+            <button
+              type="button"
+              @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+            >
+              Previous
+            </button>
+          {% endif %}
+
+          <!-- List page numbers -->
+          <div class="flex items-center gap-1 text-[12px]">
+            {% for num in pages_list %}
+              {% if num == "..." %}
+                <span class="w-8 text-center text-slate-400 font-bold">...</span>
+              {% elif num == page_obj.number %}
+                <span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm select-none edify-primary-solid">{{ num }}</span>
+              {% else %}
+                <button
+                  type="button"
+                  @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+                  class="h-8 w-8 rounded-control hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  {{ num }}
+                </button>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {% if page_obj.has_next %}
+            <button
+              type="button"
+              @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
+            >
+              Next
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="p-10 text-center select-none edify-surface rounded-surface">
+      <span class="text-[32px] block mb-2">⭐</span>
+      <p class="text-[14px] font-semibold text-[var(--edify-primary)]">No Core Schools Found</p>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>
+    </div>
+  {% endif %}
+</div>

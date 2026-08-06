@@ -1,0 +1,353 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% comment %}
+Scoped here rather than loaded platform-wide: admin-dashboard.css is 29 KB
+and only this page and its own partials use it.
+{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260731readabletype1">{% endblock %}
+
+{% block title %}Main Dashboard — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="admin-command edify-page-canvas" id="main-dashboard-container">
+  <nav class="admin-command__breadcrumbs" aria-label="Breadcrumb">
+    <a href="/dashboard">Home</a>
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m7 4 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span aria-current="page">Main Dashboard</span>
+  </nav>
+
+  <header class="edify-page-header admin-command__header">
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-title edify-page-header__title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
+      <p class="edify-page-header__description">{% if admin_ops %}Full platform authority across programme delivery, finance, HR, verification, users and operations.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
+    </div>
+    <div class="admin-command__actions">
+      <a href="{% if admin_ops %}/admin-ops/my-plan{% else %}/my-plan{% endif %}" class="admin-button admin-button--primary">
+        {% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}
+        <span>{% if admin_ops %}Open Admin My Plan{% else %}Open My Plan{% endif %}</span>
+      </a>
+      <a href="/analytics" class="admin-button admin-button--secondary">
+        {% include "partials/dashboards/admin/_icon.html" with name="analytics" only %}
+        <span>View Analytics</span>
+      </a>
+    </div>
+  </header>
+
+{% if admin_ops %}
+  {% include "partials/dashboards/admin/_platform_operations.html" %}
+  <h2 class="admin-command__section-heading">Platform Business Overview</h2>
+  <p class="admin-command__section-note">Use the business workspaces in the sidebar to read, write and execute actions across the platform.</p>
+{% endif %}
+
+  {% include "components/kpi_strip.html" with items=country_kpi_items title="Country operational summary" %}
+
+  <div class="admin-workspace">
+    <div class="admin-workspace__main">
+      <div class="admin-grid admin-grid--top">
+        <section class="admin-panel admin-priorities"
+                 {% include "components/registered_card_attrs.html" with card=cards.todays_priorities %} aria-labelledby="admin-priorities-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-priorities-title">Today’s Priorities <span class="admin-count">{{ priorities|length }}</span></h2>
+            <a href="/calendar">View Calendar</a>
+          </header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--priorities">
+              <caption class="sr-only">Activities prioritized for today</caption>
+              <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
+              <tbody>
+                {% for item in priorities %}
+                <tr>
+                  <td data-label="Activity"><strong>{{ item.activity }}</strong></td>
+                  <td data-label="Time">{{ item.time }}</td>
+                  <td data-label="Related to">{{ item.related_to }}</td>
+                  <td data-label="Status"><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td>
+                </tr>
+                {% empty %}
+                <tr class="admin-table__empty-row"><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <a class="admin-panel__footer-link" href="/planning">View all priorities ({{ priorities|length }}) <span aria-hidden="true">→</span></a>
+        </section>
+
+        <section class="admin-panel admin-planning-progress"
+                 {% include "components/registered_card_attrs.html" with card=cards.planning_progress %} aria-labelledby="admin-planning-title">
+          <header class="admin-panel__header">
+            <h2 id="admin-planning-title">Planning Progress</h2>
+            <a href="/planning">View Details</a>
+          </header>
+          {% comment %}
+            These were four <span>s with no href, no handler and no target --
+            they could not be clicked, and the chart drew the same five weeks
+            whichever one looked active. They are real links now: the period
+            lives in the query string, so it survives a reload and a shared
+            link, and the page works with or without htmx.
+          {% endcomment %}
+          <div class="admin-period-switch" role="group" aria-label="Planning progress reporting period">
+            {% for tab in progress_tabs %}
+            <a href="?progress_period={{ tab.period }}"
+               hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
+               hx-target="#admin-planning-progress-body"
+               hx-swap="outerHTML"
+               hx-push-url="true"
+               class="{% if tab.active %}is-active{% endif %}"
+               {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
+            {% endfor %}
+          </div>
+          {% include "partials/dashboards/admin/_planning_progress_body.html" %}
+        </section>
+      </div>
+
+      <div class="admin-grid admin-grid--middle">
+        <section class="admin-panel admin-ssa"
+                 {% include "components/registered_card_attrs.html" with card=cards.ssa_snapshot %} aria-labelledby="admin-ssa-title">
+          <header class="admin-panel__header"><h2 id="admin-ssa-title">SSA Performance Snapshot</h2><a href="/reports">View Report</a></header>
+          <div class="admin-intervention-group">
+            <h3>Best performing interventions</h3>
+            {% for item in best_interventions %}
+            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="success" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+            {% empty %}<div class="admin-empty admin-empty--compact"><span>No verified SSA scores yet.</span></div>{% endfor %}
+          </div>
+          <div class="admin-intervention-group">
+            <h3>Weakest interventions</h3>
+            {% for item in weakest_interventions %}
+            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="warning" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+            {% empty %}<div class="admin-empty admin-empty--compact"><span>No low-performing interventions identified.</span></div>{% endfor %}
+          </div>
+        </section>
+
+        {% comment %}
+          Team Target Progress lives in the action rail, below Quick Actions —
+          moved there by request. Still the card's only appearance on the page;
+          .admin-grid--middle is tuned for the two panels that remain.
+        {% endcomment %}
+        <section class="admin-panel admin-priority-schools"
+                 {% include "components/registered_card_attrs.html" with card=cards.priority_schools %} aria-labelledby="admin-priority-schools-title">
+          <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
+          <div class="admin-table-wrap">
+            <table class="admin-table admin-table--schools">
+              <caption class="sr-only">Schools requiring priority action</caption>
+              <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
+              <tbody>{% for school in priority_schools %}<tr><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Upload SSA' %}/uploads{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
+            </table>
+          </div>
+          <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>
+        </section>
+      </div>
+
+      <div class="admin-grid admin-grid--lower">
+        <section class="admin-panel admin-clusters"
+                 {% include "components/registered_card_attrs.html" with card=cards.cluster_performance %} aria-labelledby="admin-clusters-title">
+          <header class="admin-panel__header"><h2 id="admin-clusters-title">Cluster Performance</h2><a href="/clusters">View All</a></header>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <caption class="sr-only">Cluster performance by average SSA score</caption>
+              <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
+              <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa }}/10{% else %}—{% endif %}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="admin-stack">
+          <section class="admin-panel admin-partners"
+                 {% include "components/registered_card_attrs.html" with card=cards.partner_support %} aria-labelledby="admin-partners-title">
+            <header class="admin-panel__header"><h2 id="admin-partners-title">Partner Support Overview</h2><a href="/partners">View All</a></header>
+            <div class="admin-mini-grid">
+              <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+              <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+            </div>
+          </section>
+
+          <section class="admin-panel admin-budget"
+                 {% include "components/registered_card_attrs.html" with card=cards.budget_snapshot %} aria-labelledby="admin-budget-title">
+            <header class="admin-panel__header"><h2 id="admin-budget-title">Budget &amp; Fund Request Snapshot</h2><a href="/finance/fund-allocation">View Details</a></header>
+            <div class="admin-budget-grid">
+              <article><span>This Week</span><strong>{{ budget_snapshot.week }}</strong><small>Planned value</small></article>
+              <article><span>This Month</span><strong>{{ budget_snapshot.month }}</strong><small>Planned value</small></article>
+              <article><span>This Quarter</span><strong>{{ budget_snapshot.quarter }}</strong><small>Planned value</small></article>
+              <article><span>This FY</span><strong>{{ budget_snapshot.fy }}</strong><small>Planned value</small></article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <aside class="admin-rail" aria-label="Operational action rail">
+      <section class="admin-panel admin-rail-card" aria-labelledby="admin-upcoming-title"
+                 {% include "components/registered_card_attrs.html" with card=cards.upcoming_today %}>
+        <header class="admin-panel__header"><h2 id="admin-upcoming-title">Upcoming Today <span class="admin-count">{{ upcoming_today|length }}</span></h2></header>
+        <div class="admin-upcoming-list">
+          {% for item in upcoming_today %}
+          <article class="admin-upcoming"><span class="admin-upcoming__icon" data-tone="{% if item.type == 'school' %}info{% else %}purple{% endif %}">{% if item.type == 'school' %}{% include "partials/dashboards/admin/_icon.html" with name="school" only %}{% else %}{% include "partials/dashboards/admin/_icon.html" with name="users" only %}{% endif %}</span><div><time>{{ item.time }}</time><strong>{{ item.title }}</strong><span>{{ item.desc }}</span><small>{{ item.info }}</small></div></article>
+          {% empty %}<div class="admin-empty admin-empty--compact"><span>Nothing scheduled for today.</span></div>{% endfor %}
+        </div>
+        <a class="admin-panel__footer-link" href="/planning">View all today’s activities <span aria-hidden="true">→</span></a>
+      </section>
+
+      <section class="admin-panel admin-rail-card admin-attention"
+                 {% include "components/registered_card_attrs.html" with card=cards.attention_needed %} aria-labelledby="admin-attention-title">
+        <header class="admin-panel__header"><h2 id="admin-attention-title">Attention Needed <span class="admin-count">{{ attention_items|length }}</span></h2></header>
+        <div class="admin-attention-list">
+          {% for item in attention_items %}
+          <a href="{{ item.href|default:'/system-health' }}"><span class="admin-attention__icon" data-tone="{% if item.cls == 'red-bg' %}danger{% elif item.cls == 'orange-bg' %}warning{% else %}purple{% endif %}">{% if item.cls == 'red-bg' %}{% include "partials/dashboards/admin/_icon.html" with name="warning" only %}{% else %}{% include "partials/dashboards/admin/_icon.html" with name="evidence" only %}{% endif %}</span><span><strong>{{ item.title }}</strong><small>{{ item.detail }}</small></span><span aria-hidden="true">›</span></a>
+          {% empty %}<div class="admin-empty admin-empty--compact"><span>Nothing needs attention right now.</span></div>{% endfor %}
+        </div>
+      </section>
+
+      {% comment %}
+        A second "Team Target Progress" card lived here, rendering the same
+        `team_targets` loop, the same rows and the same numbers as the card in
+        the main column above. It was an exact mirror, not a summary of it, so
+        the page said one thing twice and a screen reader read the whole list
+        out twice. The main-column card owns this information.
+      {% endcomment %}
+
+      <section class="admin-panel admin-recommendation"
+                 {% include "components/registered_card_attrs.html" with card=cards.recommended_action %} aria-labelledby="admin-recommendation-title">
+        <span class="admin-recommendation__icon">{% include "partials/dashboards/admin/_icon.html" with name="target" only %}</span>
+        <div><h2 id="admin-recommendation-title">Next Recommended Action</h2>{% if recommended_action %}<strong>{{ recommended_action.title }}</strong><p>{{ recommended_action.detail }}</p>{% else %}<strong>All critical queues are clear</strong><p>Nothing needs action right now.</p>{% endif %}</div>
+        {% if recommended_action %}<a href="{{ recommended_action.cta_href }}">{{ recommended_action.cta_label }} <span aria-hidden="true">→</span></a>{% else %}<a href="/system-health">Review system health <span aria-hidden="true">→</span></a>{% endif %}
+      </section>
+
+      <section class="admin-panel admin-rail-card" aria-labelledby="admin-quick-title"
+                 {% include "components/registered_card_attrs.html" with card=cards.quick_actions %}>
+        <header class="admin-panel__header"><h2 id="admin-quick-title">Quick Actions</h2></header>
+        <ul class="admin-quick-grid" role="list">
+          {% comment %}
+            "Add School Visit" sat here pointing at /planning -- the same
+            destination as "Schedule Activity" beside it. Two labels promised
+            two different flows and opened the same page, and /planning takes
+            no activity-type parameter that could tell them apart. One link,
+            named for what it actually does.
+          {% endcomment %}
+          <li><a href="/planning"><span>{% include "partials/dashboards/admin/_icon.html" with name="calendar" only %}</span><small>Schedule Activity</small></a></li>
+          <li><a href="/clusters"><span>{% include "partials/dashboards/admin/_icon.html" with name="cluster" only %}</span><small>Create Cluster</small></a></li>
+          <li><a href="/fund-requests/weekly"><span>{% include "partials/dashboards/admin/_icon.html" with name="plus" only %}</span><small>New Request</small></a></li>
+        </ul>
+      </section>
+
+      {% comment %}
+        Moved here from the middle grid by request — below Quick Actions, and
+        still the page's only Team Target Progress card. The --rail list
+        modifier keeps the three-cell row layout the rail's narrow column
+        needs; its CSS remained from the duplicate this card replaces.
+      {% endcomment %}
+      <section class="admin-panel admin-rail-card admin-team-targets"
+                 {% include "components/registered_card_attrs.html" with card=cards.team_targets %} aria-labelledby="admin-team-targets-title">
+        <header class="admin-panel__header"><h2 id="admin-team-targets-title">Team Target Progress</h2></header>
+        <div class="admin-target-list admin-target-list--rail">
+          {% for target in team_targets %}
+          <div class="admin-target-row"><span>{{ target.name }}</span><strong>{{ target.percentage }}%</strong><span class="admin-status {{ target.class }}">{{ target.status }}</span></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="admin-panel admin-execution"
+                 {% include "components/registered_card_attrs.html" with card=cards.execution_summary %} aria-labelledby="admin-execution-title">
+        <h2 id="admin-execution-title" class="sr-only">Execution Summary</h2>
+        <div><span>This Week</span><strong>{{ execution_summary.week }}</strong><small>scheduled</small></div>
+        <div><span>This Month</span><strong>{{ execution_summary.month }}</strong><small>scheduled</small></div>
+        <div><span>This Quarter</span><strong>{{ execution_summary.quarter }}</strong><small>scheduled</small></div>
+        <div><span>This FY</span><strong>{{ execution_summary.fy }}</strong><small>scheduled</small></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const ns = 'http://www.w3.org/2000/svg';
+
+    /* Draw the planning-progress line.
+     *
+     * Two things this has to get right, both of which the first version did
+     * not, because the chart only ever had one period and never re-rendered:
+     *
+     * 1. A bucket with nothing planned is an empty slot, not a missing point.
+     *    Dropping empties with .filter(Boolean) shifted every later point one
+     *    place left, so the line silently stopped matching the labels beneath
+     *    it. Points are positioned by their bucket index, and a gap breaks the
+     *    line into segments rather than being drawn through.
+     * 2. The period tabs swap this figure via htmx, so the drawing has to run
+     *    again afterwards or the new chart renders blank.
+     */
+    const draw = (chart) => {
+      if (chart.dataset.drawn === '1') return;
+      const raw = (chart.dataset.values || '').split(',');
+      const values = raw.map((value) => (value === '' ? null : Number(value)));
+      const measured = values.filter((value) => value !== null);
+      if (!measured.length) return;
+
+      const left = 42;
+      const right = 620;
+      const top = 20;
+      const bottom = 136;
+      const step = values.length > 1 ? (right - left) / (values.length - 1) : 0;
+      const coordinate = (value, index) => [
+        left + (step * index),
+        bottom - ((Math.max(0, Math.min(100, value)) / 100) * (bottom - top)),
+      ];
+
+      const series = chart.querySelector('[data-admin-progress-series]');
+      const area = chart.querySelector('[data-admin-progress-area]');
+      const pointGroup = chart.querySelector('[data-admin-progress-points]');
+      series.textContent = '';
+      pointGroup.textContent = '';
+
+      /* Contiguous runs of measured buckets — one polyline each, so the line
+       * never spans a period nobody planned anything in. */
+      let run = [];
+      const flush = () => {
+        if (run.length > 1) {
+          const line = document.createElementNS(ns, 'polyline');
+          line.setAttribute('class', 'admin-line-chart__series');
+          line.setAttribute('points', run.map((point) => point.join(',')).join(' '));
+          series.appendChild(line);
+        }
+        run = [];
+      };
+
+      values.forEach((value, index) => {
+        if (value === null) { flush(); return; }
+        run.push(coordinate(value, index));
+      });
+      const lastRun = run.slice();
+      flush();
+
+      /* The filled area follows the longest leading run; with gaps present it
+       * is decoration, so it simply spans whatever the final run covers. */
+      const areaRun = lastRun.length > 1 ? lastRun : null;
+      if (areaRun) {
+        area.setAttribute(
+          'd',
+          `M ${areaRun[0][0]} ${bottom} L ${areaRun.map((point) => point.join(' ')).join(' L ')} L ${areaRun[areaRun.length - 1][0]} ${bottom} Z`
+        );
+      } else {
+        area.removeAttribute('d');
+      }
+
+      values.forEach((value, index) => {
+        if (value === null) return;
+        const [cx, cy] = coordinate(value, index);
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('cx', cx);
+        circle.setAttribute('cy', cy);
+        circle.setAttribute('r', '3.5');
+        pointGroup.appendChild(circle);
+      });
+
+      chart.dataset.drawn = '1';
+    };
+
+    const drawAll = (root) =>
+      (root || document).querySelectorAll('[data-admin-progress-chart]').forEach(draw);
+
+    drawAll();
+    document.body.addEventListener('htmx:afterSettle', (event) => drawAll(event.target));
+  })();
+</script>
+{% endblock %}

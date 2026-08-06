@@ -3,9 +3,28 @@
   "configurations": [
     {
       "name": "edify-web",
-      "runtimeExecutable": "/Users/omario/.nvm/versions/node/v24.14.0/bin/node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
-      "port": 3000,
+      "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
+      "runtimeArgs": [
+        "manage.py",
+        "runserver",
+        "--noasgi",
+        "--skip-checks",
+        "0.0.0.0:8000"
+      ],
+      "port": 8000,
+      "autoPort": true
+    },
+    {
+      "name": "edify-cascade",
+      "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
+      "runtimeArgs": [
+        "/Users/omario/Developer/edify-target-cascade/manage.py",
+        "runserver",
+        "--noasgi",
+        "--skip-checks",
+        "0.0.0.0:8010"
+      ],
+      "port": 8010,
       "autoPort": true
     }
   ]

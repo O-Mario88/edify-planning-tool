@@ -1,0 +1,652 @@
+"""
+Data-access scope resolution — faithful port of ScopeService.resolveUserScope.
+
+EVERY query that returns operational records must be constrained by the resolved
+scope — never return all rows and filter on the client. The scope captures the
+role's reach:
+
+  • Country roles (CD, IA, Accountant, Admin) → whole country.
+  • RVP → summary-only, scoped to assigned region(s); NO school-level rows.
+  • CCEO/PL → own assigned schools (+, for PL, the supervised-staff team lens).
+  • Partner → only their own partner.
+
+The capability flags (canViewFinancialData, canApprove, …) gate feature
+surfaces. `school_queryset` / `aggregate_school_filter` produce the ORM
+constraints matching the legacy schoolWhere / aggregateSchoolWhere.
+"""
+
+from __future__ import annotations
+
+import logging
+
+from dataclasses import dataclass, field
+from typing import Iterable
+
+from django.db.models import Q
+
+from apps.core.rbac import EdifyRole, Permission, permissions_for_role
+
+logger = logging.getLogger(__name__)
+
+
+COUNTRY_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.PROGRAM_ACCOUNTANT.value,
+    EdifyRole.ADMIN.value,
+}
+SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
+
+
+@dataclass
+class UserScope:
+    """The resolved data-access scope for a user + active role."""
+
+    user_id: str
+    active_role: str
+    permissions: list[str] = field(default_factory=list)
+    country_scope: bool = False
+    region_ids: list[str] = field(default_factory=list)
+    district_ids: list[str] = field(default_factory=list)
+    cluster_ids: list[str] = field(default_factory=list)
+    school_ids: list[str] = field(default_factory=list)  # union own + team
+    own_school_ids: list[str] = field(default_factory=list)
+    team_school_ids: list[str] = field(default_factory=list)
+    core_school_ids: list[str] = field(default_factory=list)
+    staff_ids: list[str] = field(default_factory=list)
+    supervised_staff_ids: list[str] = field(default_factory=list)
+    managed_staff_ids: list[str] = field(default_factory=list)
+    # Every staff id whose StaffSchoolAssignment rows produced school_ids —
+    # self + active coverage + supervisees. Lets consumers rebuild the school
+    # set as a subquery instead of shipping thousands of literal ids.
+    assignment_staff_ids: list[str] = field(default_factory=list)
+    partner_ids: list[str] = field(default_factory=list)
+
+    # Capability flags.
+    can_view_summary_only: bool = False
+    # True when a summary-only role (RVP) has real geography assigned and its
+    # queries should be narrowed to `region_ids`. False means "no geography
+    # configured — oversee the whole deployment". Consumers must branch on this
+    # instead of testing `region_ids` for emptiness, which conflated
+    # "unassigned" with "assigned to nothing" and emptied the RVP's pages.
+    rvp_region_scoped: bool = False
+    can_view_school_level_detail: bool = True
+    can_view_partner_data: bool = False
+    can_view_financial_data: bool = False
+    can_view_own: bool = False
+    can_view_team: bool = False
+    can_view_country: bool = False
+    can_approve: bool = False
+    can_assign: bool = False
+    can_export: bool = False
+
+
+# Sentinel meaning "no rows match" — matches the legacy `['__none__']` idiom.
+_NONE = ["__none__"]
+
+
+def _uniq(items: Iterable[str]) -> list[str]:
+    seen: dict[str, None] = {}
+    for x in items:
+        if x and x not in seen:
+            seen[x] = None
+    return list(seen.keys())
+
+
+def resolve_user_scope(user) -> UserScope:
+    """Resolve the scope for an AuthPrincipal. Defensive about missing apps —
+    schools/partners/staff may not exist yet during the build; return an empty
+    scope of the right shape so the country/summary-only paths keep working.
+
+    Memoized per request (apps.core.request_cache): a Program Lead dashboard
+    resolves scope five times, and at 15,000 schools each resolution walks the
+    full assignment tree. Scope inputs (role, assignments, geography) cannot
+    change mid-request; outside a request there is no cache."""
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("user_scope", getattr(user, "pk", None), user.active_role),
+        lambda: _resolve_user_scope_uncached(user),
+    )
+
+
+def _resolve_user_scope_uncached(user) -> UserScope:
+    role = user.active_role
+    perms = permissions_for_role(role)
+    has = lambda p: p in perms  # noqa: E731
+
+    country_scope = role in COUNTRY_ROLES
+    summary_only = role in SUMMARY_ONLY_ROLES
+
+    region_ids: list[str] = []
+    district_ids: list[str] = []
+    cluster_ids: list[str] = []
+    school_ids: list[str] = []
+    own_school_ids: list[str] = []
+    team_school_ids: list[str] = []
+    assignment_staff_ids: list[str] = []
+    core_school_ids: list[str] = []
+    supervised_staff_ids: list[str] = []
+    managed_staff_ids: list[str] = []
+    partner_ids: list[str] = []
+
+    staff_id = user.staff_profile_id
+
+    try:
+        from apps.accounts.models import (
+            StaffGeographyAssignment,
+            StaffProfile,
+            StaffSchoolAssignment,
+            StaffSupervisorAssignment,
+        )
+    except Exception:  # noqa: BLE001 - accounts may not be ready in some unit contexts
+        StaffGeographyAssignment = None  # type: ignore
+        StaffProfile = None  # type: ignore
+        StaffSchoolAssignment = None  # type: ignore
+        StaffSupervisorAssignment = None  # type: ignore
+
+    # Impact Assessment officers normally operate at country scope.  An IA
+    # staff member with an explicit school portfolio is different: that is a
+    # field/assistant assignment and the uploaded portfolio is the access
+    # boundary.  Keeping the distinction data-driven lets the country IA
+    # officer (no direct schools) retain oversight while an IA assistant sees
+    # only the schools assigned to them.
+    if (
+        role == EdifyRole.IMPACT_ASSESSMENT.value
+        and staff_id
+        and StaffSchoolAssignment
+        and StaffSchoolAssignment.objects.filter(staff_id=staff_id).exists()
+    ):
+        country_scope = False
+
+    if summary_only and staff_id and StaffGeographyAssignment:
+        # RVP sees summary performance — scope to assigned region(s). No
+        # school-level rows (see school_queryset); analytics get country counts.
+        #
+        # An RVP with no region assignment oversees the whole deployment rather
+        # than nothing: region rows are optional (the staff-setup UI writes
+        # district assignments, and the seed writes none), and treating an
+        # empty list as "no data" silently emptied /analytics, /impact and /ssa
+        # for the very role those pages are built for. `rvp_region_scoped`
+        # records which of the two applies so callers never have to re-derive
+        # it from an empty list.
+        geo = StaffGeographyAssignment.objects.filter(
+            staff_id=staff_id, region_id__isnull=False
+        ).values_list("region_id", flat=True)
+        region_ids = _uniq(geo)
+        # Fall back to any region reachable through assigned districts before
+        # concluding this RVP has no geography at all — the staff-setup UI
+        # writes district rows, not region rows.
+        if not region_ids:
+            district_ids_assigned = _uniq(
+                StaffGeographyAssignment.objects.filter(
+                    staff_id=staff_id, district_id__isnull=False
+                ).values_list("district_id", flat=True)
+            )
+            if district_ids_assigned:
+                try:
+                    from apps.geography.models import District
+
+                    region_ids = _uniq(
+                        District.objects.filter(
+                            id__in=district_ids_assigned
+                        ).values_list("region_id", flat=True)
+                    )
+                except Exception:  # noqa: BLE001 - geography may not be ready
+                    region_ids = []
+    elif country_scope:
+        # Country roles are not row-constrained by geography here.
+        pass
+    elif (
+        role
+        in (
+            EdifyRole.CCEO.value,
+            EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            EdifyRole.IMPACT_ASSESSMENT.value,
+        )
+        and staff_id
+        and StaffSchoolAssignment
+    ):
+        from django.utils import timezone
+        from apps.accounts.models import TemporaryCoverageAssignment
+
+        now = timezone.now()
+        active_coverages = TemporaryCoverageAssignment.objects.filter(
+            covering_staff_id=staff_id,
+            start_datetime__lte=now,
+            end_datetime__gte=now,
+            status="active",
+        )
+        covered_staff_ids = list(
+            active_coverages.values_list("original_staff_id", flat=True)
+        )
+
+        own_query = Q(staff_id=staff_id)
+        if covered_staff_ids:
+            own_query |= Q(staff_id__in=covered_staff_ids)
+
+        # Own assigned schools (personal field work).
+        own = StaffSchoolAssignment.objects.filter(own_query).values_list(
+            "school_id", flat=True
+        )
+        own_school_ids = _uniq(own)
+
+        # PL also supervises CCEOs — their schools form the TEAM lens (distinct
+        # from own, so the three PL layers — own / team / combined — are real).
+        has_pl_coverage = False
+        if covered_staff_ids:
+            from apps.accounts.models import StaffProfile
+
+            has_pl_coverage = StaffProfile.objects.filter(
+                id__in=covered_staff_ids,
+                user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            ).exists()
+
+        if (
+            role == EdifyRole.COUNTRY_PROGRAM_LEAD.value or has_pl_coverage
+        ) and StaffSupervisorAssignment:
+            supervisor_query = Q(supervisor_id=staff_id)
+            if covered_staff_ids:
+                supervisor_query |= Q(supervisor_id__in=covered_staff_ids)
+
+            # Departed staff are not supervisees. Offboarding soft-deletes the
+            # profile but leaves the supervisor link standing, and this query
+            # had no `deleted_at` filter — so `supervised_staff_ids` kept
+            # returning people who had left. That set is consumed by ~15
+            # services including `can_view_record`, which meant a live Program
+            # Lead retained access to a departed employee's records, and every
+            # team headline (span of control, team targets) counted them.
+            supervisees = StaffSupervisorAssignment.objects.filter(
+                supervisor_query, supervisee__deleted_at__isnull=True
+            ).values_list("supervisee_id", flat=True)
+            supervised_staff_ids = _uniq(supervisees)
+            if supervised_staff_ids and StaffSchoolAssignment:
+                team = StaffSchoolAssignment.objects.filter(
+                    staff_id__in=supervised_staff_ids
+                ).values_list("school_id", flat=True)
+                team_school_ids = [s for s in _uniq(team) if s not in own_school_ids]
+
+        school_ids = _uniq([*own_school_ids, *team_school_ids])
+        assignment_staff_ids = _uniq(
+            [staff_id, *covered_staff_ids, *supervised_staff_ids]
+        )
+
+        # Derive geography + clusters + core subset from the in-scope schools.
+        if school_ids:
+            school_model = _get_school_model()
+            if school_model is not None:
+                schools = school_model.objects.filter(id__in=school_ids).values(
+                    "id", "district_id", "region_id", "cluster_id", "school_type"
+                )
+                district_ids = _uniq([s["district_id"] for s in schools])
+                region_ids = _uniq([s["region_id"] for s in schools])
+                cluster_ids = _uniq(
+                    [s["cluster_id"] for s in schools if s["cluster_id"]]
+                )
+                core_school_ids = [
+                    s["id"] for s in schools if s["school_type"] == "core"
+                ]
+    elif role == EdifyRole.PROJECT_COORDINATOR.value and staff_id:
+        try:
+            from apps.projects.models import Project, ProjectSchoolAssignment
+
+            project_ids = list(
+                Project.objects.filter(
+                    Q(manager_staff_id=staff_id)
+                    | Q(
+                        staff_assignments__staff_id=staff_id,
+                        staff_assignments__is_active=True,
+                    )
+                )
+                .distinct()
+                .values_list("id", flat=True)
+            )
+            own_school_ids = list(
+                ProjectSchoolAssignment.objects.filter(
+                    project_id__in=project_ids
+                ).values_list("school_id", flat=True)
+            )
+            school_ids = _uniq(own_school_ids)
+            if school_ids:
+                school_model = _get_school_model()
+                if school_model is not None:
+                    schools = school_model.objects.filter(id__in=school_ids).values(
+                        "id", "district_id", "region_id", "cluster_id", "school_type"
+                    )
+                    district_ids = _uniq([s["district_id"] for s in schools])
+                    region_ids = _uniq([s["region_id"] for s in schools])
+                    cluster_ids = _uniq(
+                        [s["cluster_id"] for s in schools if s["cluster_id"]]
+                    )
+                    core_school_ids = [
+                        s["id"] for s in schools if s["school_type"] == "core"
+                    ]
+        except Exception:
+            # Logged, not swallowed. A scope that fails to compute falls
+            # through to an empty one, and an empty scope is indistinguishable
+            # from "this coordinator manages nothing" — the page renders 200
+            # with no schools and nobody is told why. The fall-through is the
+            # safe behaviour (no data beats wrong data); the silence was not.
+            logger.exception(
+                "Project Coordinator scope computation failed for user %s; "
+                "falling back to an empty scope",
+                getattr(user, "user_id", None),
+            )
+    elif role in (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value):
+        # Partner users see ONLY their own partner's activities.
+        partner_ids = resolve_partner_ids(user)
+        if partner_ids:
+            try:
+                from apps.partners.models import PartnerAssignment
+
+                assigned_schools = list(
+                    PartnerAssignment.objects.filter(
+                        partner_id__in=partner_ids
+                    ).values_list("school_id", flat=True)
+                )
+                school_ids = _uniq(assigned_schools)
+                if school_ids:
+                    school_model = _get_school_model()
+                    if school_model is not None:
+                        schools = school_model.objects.filter(id__in=school_ids).values(
+                            "id",
+                            "district_id",
+                            "region_id",
+                            "cluster_id",
+                            "school_type",
+                        )
+                        district_ids = _uniq([s["district_id"] for s in schools])
+                        region_ids = _uniq([s["region_id"] for s in schools])
+                        cluster_ids = _uniq(
+                            [s["cluster_id"] for s in schools if s["cluster_id"]]
+                        )
+                        core_school_ids = [
+                            s["id"] for s in schools if s["school_type"] == "core"
+                        ]
+            except Exception:
+                # Same reasoning as the coordinator branch above: a partner
+                # seeing an empty workspace and a partner whose scope query
+                # blew up look identical from the outside.
+                logger.exception(
+                    "Partner scope computation failed for user %s; falling "
+                    "back to an empty scope",
+                    getattr(user, "user_id", None),
+                )
+
+    # Organisational management can overlap a direct reporting line. Program
+    # Leads keep `supervised_staff_ids` for approvals and school scope, while
+    # this list also represents IA/RVP oversight and the CD's automatic
+    # country-wide management responsibility.
+    management_roles = {
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+    }
+    if staff_id and role in management_roles and StaffProfile:
+        if role == EdifyRole.COUNTRY_DIRECTOR.value:
+            manager_country = (
+                StaffProfile.objects.filter(id=staff_id)
+                .values_list("country", flat=True)
+                .first()
+            )
+            country_team_roles = [
+                EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                EdifyRole.IMPACT_ASSESSMENT.value,
+                EdifyRole.PROGRAM_ACCOUNTANT.value,
+                EdifyRole.CCEO.value,
+            ]
+            if manager_country:
+                managed_staff_ids = _uniq(
+                    StaffProfile.objects.filter(
+                        country=manager_country,
+                        deleted_at__isnull=True,
+                        user__deleted_at__isnull=True,
+                    )
+                    .exclude(id=staff_id)
+                    .filter(
+                        Q(user__active_role__in=country_team_roles)
+                        | Q(user__roles__overlap=country_team_roles)
+                    )
+                    .values_list("id", flat=True)
+                )
+        elif StaffSupervisorAssignment:
+            managed_staff_ids = _uniq(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisor_id=staff_id,
+                    supervisee__deleted_at__isnull=True,
+                    supervisee__user__deleted_at__isnull=True,
+                ).values_list("supervisee_id", flat=True)
+            )
+            if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+                managed_staff_ids = _uniq([*managed_staff_ids, *supervised_staff_ids])
+
+    return UserScope(
+        user_id=user.user_id,
+        active_role=role,
+        permissions=perms,
+        country_scope=country_scope,
+        region_ids=region_ids,
+        district_ids=district_ids,
+        cluster_ids=cluster_ids,
+        school_ids=school_ids,
+        own_school_ids=own_school_ids,
+        team_school_ids=team_school_ids,
+        assignment_staff_ids=assignment_staff_ids,
+        core_school_ids=core_school_ids,
+        staff_ids=[staff_id] if staff_id else [],
+        supervised_staff_ids=supervised_staff_ids,
+        managed_staff_ids=managed_staff_ids,
+        partner_ids=partner_ids,
+        can_view_summary_only=summary_only,
+        rvp_region_scoped=bool(summary_only and region_ids),
+        can_view_school_level_detail=not summary_only,
+        can_view_partner_data=has(Permission.PARTNER_VIEW.value),
+        can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
+        or has(Permission.PAYMENT_ACT.value),
+        can_view_own=bool(own_school_ids) or (not country_scope and not summary_only),
+        can_view_team=bool(managed_staff_ids)
+        or (role == EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        or country_scope,
+        can_view_country=country_scope,
+        can_approve=has(Permission.BUDGET_APPROVE.value)
+        or has(Permission.IA_VERIFY.value),
+        can_assign=has(Permission.ACTIVITY_ASSIGN.value),
+        can_export=has(Permission.EXPORT.value),
+    )
+
+
+def resolve_partner_ids(user) -> list[str]:
+    """Resolve the partner id(s) a partner user acts as.
+
+    1) canonical FK — a partner field officer authenticates as Partner.userId.
+    2) demo role-bridge fallback — the seed never sets Partner.userId, and the
+       FE partner demo user maps by ROLE; pin to the first active partner.
+       Disable in production once real linkage exists (PARTNER_ROLE_BRIDGE=false).
+    """
+    from django.conf import settings
+
+    partner_model = _get_partner_model()
+    if partner_model is None:
+        return []
+    linked = (
+        partner_model.objects.filter(user_id=user.user_id, active_status=True)
+        .order_by("created_at")
+        .first()
+    )
+    if linked:
+        return [linked.id]
+    if getattr(settings, "PARTNER_ROLE_BRIDGE", True):
+        first = (
+            partner_model.objects.filter(active_status=True)
+            .order_by("created_at")
+            .first()
+        )
+        if first:
+            return [first.id]
+    return []
+
+
+def cluster_in_scope(scope: UserScope, cluster) -> bool:
+    """Return whether a cluster is inside an operational user's scope.
+
+    Clusters are assigned and managed at district level.  A CCEO or Program
+    Lead who has an assigned school in a district can work the district's
+    clusters, even before one of their individual schools has been added to a
+    particular cluster.  This mirrors the cluster list and assignment rules;
+    keeping the rule here prevents a drawer from offering a cluster that the
+    activity service later rejects.
+    """
+    if scope.country_scope:
+        return True
+    if getattr(cluster, "id", None) in scope.cluster_ids:
+        return True
+    return bool(
+        getattr(cluster, "district_id", None)
+        and cluster.district_id in scope.district_ids
+    )
+
+
+# ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
+def school_queryset(scope: UserScope, *, direct_only: bool = False):
+    """Return the base queryset for the School model, scope-constrained.
+
+    Summary-only roles (RVP) receive NO school-level rows — they use aggregate
+    summaries only. Returns None if the schools app isn't installed yet.
+
+    `direct_only` narrows the result to schools assigned to this person, dropping
+    the supervised team's schools that `scope.school_ids` unions in. It exists
+    for the School Directory and its bulk actions, where a supervising Program
+    Lead was operating on CCEO-owned schools as if they were their own: on
+    production a PL's directory listed 2171 schools of which 1030 (47.4%)
+    belonged to two supervised CCEOs, offering the same edit, cluster, project
+    and staff-match controls on all of them. Supervision is not ownership.
+
+    It is deliberately opt-in. The flat own+team scope is correct for the
+    surfaces that read it — team targets, PL analytics, the review queue — and
+    ~15 services depend on it, so this changes the directory alone rather than
+    the meaning of `school_ids`.
+
+    Country-scope roles are unaffected: they hold no per-school assignment rows,
+    so `own_school_ids` is empty for them and narrowing would blank their
+    directory rather than restrict it.
+    """
+    school_model = _get_school_model()
+    if school_model is None:
+        return None
+    qs = school_model.objects.all()
+    if scope.active_role == "CountryDirector":
+        from django.conf import settings
+
+        if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
+            return qs.none()
+    if scope.country_scope:
+        return qs
+    if scope.can_view_summary_only:
+        return qs.none()
+    if direct_only:
+        # No own_school_ids means no directly-assigned schools, which is an
+        # empty directory — not a fall-through to the team's.
+        return qs.filter(id__in=scope.own_school_ids)
+    if scope.school_ids:
+        return qs.filter(id__in=scope.school_ids)
+    return qs.none()
+
+
+def owner_ids(principal) -> list[str]:
+    """Both identifiers a person's work can be attributed to.
+
+    `Activity.responsible_staff_id` holds a StaffProfile id when the row was
+    written through `activities.services.create`, and a User id when it came
+    from the seeder or an older path. Both exist in live data, so any check
+    that compares against only one of them silently disowns most of a field
+    worker's activities — which is exactly what `can_upload_evidence` and
+    `can_view_record` did, refusing the CCEO access to ~94% of their own work.
+
+    One helper, used everywhere, so the two id spaces stop being a per-module
+    guess.
+    """
+    return [
+        i
+        for i in (
+            getattr(principal, "user_id", None) or getattr(principal, "id", None),
+            getattr(principal, "staff_profile_id", None),
+        )
+        if i
+    ]
+
+
+def scoped_school_queryset(scope: UserScope, base=None):
+    """The school rows an *analytics* surface may aggregate over.
+
+    One rule, used by every intelligence surface (SSA performance, impact
+    analytics, leadership boards) so a role means the same thing everywhere:
+
+      • country roles → the whole country;
+      • summary-only (RVP) with geography → its assigned regions;
+      • summary-only without geography → the whole deployment (it oversees
+        everything; see `rvp_region_scoped`). Row *identity* is still withheld
+        separately via `can_view_school_level_detail`.
+      • everyone else → their assigned schools, else nothing.
+
+    Note this is deliberately distinct from `school_queryset`, which governs
+    the *operational* directory and returns nothing for CD/RVP by design.
+    """
+    school_model = _get_school_model()
+    if school_model is None:
+        return None
+    qs = (
+        base
+        if base is not None
+        else school_model.objects.filter(deleted_at__isnull=True)
+    )
+    if scope.country_scope:
+        return qs
+    if scope.can_view_summary_only:
+        if scope.rvp_region_scoped:
+            return qs.filter(region_id__in=scope.region_ids)
+        return qs
+    if scope.school_ids:
+        return qs.filter(id__in=scope.school_ids)
+    return qs.none()
+
+
+def aggregate_school_filter(scope: UserScope) -> Q:
+    """An ORM Q to apply to aggregate analytics. Summary-only roles see
+    country-wide counts (their purpose) but never row-level detail."""
+    if scope.country_scope or scope.can_view_summary_only:
+        return Q()
+    if scope.school_ids:
+        return Q(id__in=scope.school_ids)
+    return Q(id__in=_NONE)
+
+
+# ── Lazy model accessors (apps may not be installed during the build) ────────
+def _get_school_model():
+    try:
+        from apps.schools.models import School  # type: ignore
+
+        return School
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _get_partner_model():
+    try:
+        from apps.partners.models import Partner  # type: ignore
+
+        return Partner
+    except Exception:  # noqa: BLE001
+        return None
+
+
+__all__ = [
+    "UserScope",
+    "resolve_user_scope",
+    "cluster_in_scope",
+    "resolve_partner_ids",
+    "school_queryset",
+    "scoped_school_queryset",
+    "aggregate_school_filter",
+    "owner_ids",
+]

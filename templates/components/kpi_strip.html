@@ -1,0 +1,103 @@
+{% if items %}
+<section class="kpi-strip {% if variant %}kpi-strip--{{ variant }}{% endif %}"
+         aria-label="{{ title|default:'Key performance indicators' }}">
+  {% if title %}
+  <header class="kpi-strip__header">
+    <h4 class="kpi-strip__title">{{ title }}</h4>
+    {% if subtitle %}<p class="kpi-strip__subtitle">{{ subtitle }}</p>{% endif %}
+  </header>
+  {% endif %}
+
+  <div class="kpi-strip__grid" role="list" tabindex="0">
+    {% for item in items %}
+    {% comment %}
+      `metric_key` and friends are present on items built through
+      apps.core.metrics.render_metric and absent on the legacy dicts that still
+      pass a bare label/value. The data-* attributes are what the duplication
+      guard greps for, so they appear only when the item actually carries a
+      registered identity -- stamping a placeholder would make an unregistered
+      tile look audited.
+    {% endcomment %}
+    <div class="kpi-strip__item {% if item.variant %}kpi-strip__item--{{ item.variant }}{% elif item.tone %}kpi-strip__item--{{ item.tone }}{% endif %}{% if item.data_state and not item.is_measured %} kpi-strip__item--absent{% endif %}"
+         role="listitem"
+         data-component="kpi-card"
+         {% if item.metric_key %}data-metric-key="{{ item.metric_key }}"{% endif %}
+         {% if item.period %}data-metric-period="{{ item.period }}"{% endif %}
+         {% if item.scope %}data-metric-scope="{{ item.scope }}"{% endif %}
+         {% if item.data_state %}data-metric-state="{{ item.data_state }}"{% endif %}
+         {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% endif %}>
+      {% if drilldown_mode == "program_lead" and item.link %}
+      <button type="button"
+              hx-get="/analytics/program-lead/drilldown{{ item.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
+      <a href="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}"
+         hx-get="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}"
+         hx-target="#drawer-container"
+         hx-swap="innerHTML"
+         class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% comment %}
+        Separate branches rather than `default:item.link` -- filter arguments
+        are resolved eagerly, so a registry-built item (which has no `link`
+        key) raised VariableDoesNotExist instead of falling back. `{% if %}`
+        tolerates the missing key; a filter argument does not.
+      {% endcomment %}
+      {% elif item.drilldown_url %}
+      <a href="{{ item.drilldown_url }}" class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% elif item.link %}
+      <a href="{{ item.link }}" class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% else %}
+      <div class="kpi-strip__item-body">
+      {% endif %}
+
+        <span class="kpi-strip__icon-container kpi-strip__icon-container--{% if item.variant %}{{ item.variant }}{% elif item.tone %}{{ item.tone }}{% else %}neutral{% endif %}"
+              aria-hidden="true">
+          {% include "partials/analytics/pl/_icon.html" with name=item.icon %}
+        </span>
+
+        <span class="kpi-strip__item-details">
+          {% if item.accessible_description %}
+            {% comment %}
+              A screen reader hearing only "82%" learns the number and nothing
+              about what it measures. The registry sentence carries label,
+              value and denominator, so it replaces -- rather than repeats --
+              the split label/value pair for assistive tech.
+            {% endcomment %}
+            <span class="sr-only">{{ item.accessible_description }}</span>
+            <span class="kpi-strip__label" aria-hidden="true" title="{{ item.label }}">{{ item.label }}</span>
+            <span class="kpi-strip__value" aria-hidden="true">{% firstof item.display_value item.value %}</span>
+          {% else %}
+            <span class="kpi-strip__label" title="{{ item.label }}">{{ item.label }}</span>
+            <span class="kpi-strip__value">{% firstof item.display_value item.value %}</span>
+          {% endif %}
+          {% if item.trend or item.helper or item.meta %}
+          <span class="kpi-strip__meta">
+            {% if item.trend and item.trend.value %}
+            <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
+              {% if item.trend.direction == 'up' %}↗{% elif item.trend.direction == 'down' %}↘{% endif %}
+              {{ item.trend.value }}
+            </span>
+            {% endif %}
+            {% if item.helper %}<span class="kpi-strip__helper">{{ item.helper }}</span>{% elif item.meta %}<span class="kpi-strip__helper">{{ item.meta }}</span>{% endif %}
+          </span>
+          {% endif %}
+        </span>
+
+      {% if drilldown_mode == "program_lead" and item.link %}
+      </button>
+      {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
+      </a>
+      {% elif item.drilldown_url %}
+      </a>
+      {% elif item.link %}
+      </a>
+      {% else %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

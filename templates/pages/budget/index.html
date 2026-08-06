@@ -1,0 +1,102 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% load frontend_filters %}
+
+{% block title %}Budget Overview — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">Budget Overview</h1>
+<p class="edify-page-header__description">FY{{ fy }} budget performance across all requests</p>
+</div>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Budget</p>
+<p class="text-[24px] font-semibold text-[var(--edify-primary)] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requested Budget</p>
+<p class="text-[24px] font-semibold edify-primary-text mt-1">{{ fy_data.requestedBudget|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Approved Budget</p>
+<p class="text-[24px] font-semibold text-emerald-600 mt-1">{{ fy_data.approvedBudget|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Disbursed Amount</p>
+<p class="text-[24px] font-semibold text-violet-600 mt-1">{{ fy_data.disbursedAmount|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Cleared Amount</p>
+<p class="text-[24px] font-semibold text-teal-600 mt-1">{{ fy_data.clearedAmount|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Pending Amount</p>
+<p class="text-[24px] font-semibold text-amber-600 mt-1">{{ fy_data.pendingAmount|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Variance</p>
+<p class="text-[24px] font-semibold text-rose-600 mt-1">{{ fy_data.variance|ugx }}</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Scheduled Activities</p>
+<p class="text-[24px] font-semibold mt-1">{{ fy_data.activity_count }}</p>
+</div>
+</div>
+
+{% if pending_approvals %}
+<div class="bg-amber-50 border border-amber-200 rounded-surface p-4 flex items-center gap-3">
+<span class="text-[20px]">⏳</span>
+<p class="text-[12px] font-bold text-amber-800">{{ pending_approvals }} Weekly Request{{ pending_approvals|pluralize }} awaiting approval</p>
+<a href="/fund-requests" class="edify-text-caption font-bold text-amber-700 hover:underline ml-auto">Review Requests →</a>
+</div>
+{% endif %}
+
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold">Monthly Breakdown</h2></div>
+{% if monthly_data %}
+<div class="overflow-x-auto">
+{% paginate monthly_data "monthly_data_page" as monthly_data_pager %}
+<table class="w-full min-w-[720px] text-[12px] font-semibold text-slate-600">
+<thead>
+<tr class="bg-slate-50 edify-text-caption font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+<th class="text-left px-5 py-3">Month</th>
+<th class="text-right px-4 py-3">Planned</th>
+<th class="text-right px-4 py-3">Requested</th>
+<th class="text-right px-4 py-3">Approved</th>
+<th class="text-right px-4 py-3">Disbursed</th>
+<th class="text-right px-4 py-3">Cleared</th>
+<th class="text-right px-4 py-3">Pending</th>
+<th class="text-right px-4 py-3">Variance</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for m in monthly_data_pager.rows %}
+<tr class="hover:bg-slate-50/50">
+<td class="px-5 py-3.5 font-bold text-slate-800">{{ m.display_name }}</td>
+<td class="px-4 py-3.5 text-right font-bold text-[var(--edify-primary)]">{{ m.plannedBudget|ugx }}</td>
+<td class="px-4 py-3.5 text-right edify-primary-text">{{ m.requestedBudget|ugx }}</td>
+<td class="px-4 py-3.5 text-right text-emerald-700">{{ m.approvedBudget|ugx }}</td>
+<td class="px-4 py-3.5 text-right text-violet-600">{{ m.disbursedAmount|ugx }}</td>
+<td class="px-4 py-3.5 text-right text-teal-700">{{ m.clearedAmount|ugx }}</td>
+<td class="px-4 py-3.5 text-right text-amber-700 font-bold">{{ m.pendingAmount|ugx }}</td>
+<td class="px-4 py-3.5 text-right text-rose-700 font-bold">{{ m.variance|ugx }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=monthly_data_pager param="monthly_data_page" %}
+</div>
+{% else %}
+<div class="p-12 text-center">
+<p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 4-5M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></p>
+<p class="text-[14px] font-bold text-slate-500">No budget data found for this FY</p>
+</div>
+{% endif %}
+</div>
+</div>
+{% endblock %}

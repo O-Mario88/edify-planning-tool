@@ -1,0 +1,206 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Schedule Activity - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<!-- Header -->
+<header class="edify-page-header">
+  <div class="edify-page-header__lead">
+  {% include "partials/_back_link.html" with back_href="/planning" back_label="Planning" %}
+  <h1 class="edify-page-title edify-page-header__title">
+  {% if action == 'visit' %}Schedule School Visit
+  {% elif action == 'training' %}Schedule Group Training
+  {% else %}Schedule Cluster Meeting{% endif %}
+  </h1>
+  <p class="edify-page-header__description">
+  Configure activity logistics, purpose, and target interventions. Cost is computed from active CD catalogue.
+  </p>
+  </div>
+</header>
+
+<div class="grid md:grid-cols-3 gap-6 items-start">
+<!-- Form Panel -->
+<div class="md:col-span-2 edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm">
+<form
+method="POST"
+class="space-y-4"
+hx-post="/partials/costing/preview"
+hx-target="#cost-preview-output"
+hx-trigger="change, keyup delay:400ms"
+>
+{% csrf_token %}
+<input type="hidden" name="activity_type" value="{% if action == 'visit' %}school_visit{% elif action == 'training' %}cluster_training{% else %}cluster_meeting{% endif %}">
+
+<!-- Target Target Selector -->
+{% if action == 'visit' %}
+<div>
+<label for="school_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target School</label>
+<select
+name="school_id"
+id="school_id"
+required
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
+>
+<option value="">Select School...</option>
+{% for s in schools %}
+<option value="{{ s.school_id }}" {% if selected_school.school_id == s.school_id %}selected{% endif %}>{{ s.name }} ({{ s.school_id }})</option>
+{% endfor %}
+</select>
+</div>
+{% else %}
+<div>
+<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target Cluster</label>
+<select
+name="cluster_id"
+id="cluster_id"
+required
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
+>
+<option value="">Select Cluster...</option>
+{% for c in clusters %}
+<option value="{{ c.id }}" {% if selected_cluster.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
+
+<!-- Date -->
+<div>
+<label for="scheduled_date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Scheduled Date</label>
+<input
+type="date"
+name="scheduled_date"
+id="scheduled_date"
+required
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+>
+</div>
+
+<!-- Focus SSA Intervention -->
+<div>
+<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+<select
+name="focus_intervention"
+id="focus_intervention"
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
+>
+<option value="">Select Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+{% if recommendations %}
+<div class="mt-2 p-2.5 bg-amber-50/50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-semibold space-y-1">
+<p class="font-semibold">Recommended focus areas based on latest SSA:</p>
+{% for r in recommendations %}
+<p>&bull; {{ r.label }} (Score: {{ r.score|floatformat:1 }})</p>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+{% if action == 'meeting' %}
+<div>
+<label for="purpose_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Meeting Purpose Category</label>
+<select
+name="purpose_type"
+id="purpose_type"
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+>
+<option value="focus_intervention" selected>Focus Intervention</option>
+<option value="planning_meeting">Planning Meeting</option>
+<option value="operational_admin">Operational / Administration</option>
+<option value="other_admin">Other Admin</option>
+</select>
+</div>
+{% endif %}
+
+{% if action == 'training' or action == 'meeting' %}
+<div>
+<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
+<input
+type="number"
+name="expected_participants"
+id="expected_participants"
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+>
+</div>
+{% endif %}
+
+{% if action == 'visit' %}
+<div x-data="{ delivery: 'staff' }">
+<label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
+<select
+name="delivery_type"
+id="delivery_type"
+x-model="delivery"
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+>
+<option value="staff">Internal Field Staff (CCEO)</option>
+<option value="partner">Certified Partner Agency</option>
+</select>
+
+<div x-show="delivery === 'partner'" class="mt-3">
+<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assigned Partner Agency</label>
+<select
+name="assigned_partner_id"
+id="assigned_partner_id"
+class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+>
+<option value="">Select Partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+{% endif %}
+
+<!-- Purpose Text -->
+<div>
+<label for="activity_purpose_text" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose Description</label>
+<textarea
+name="activity_purpose_text"
+id="activity_purpose_text"
+rows="2"
+placeholder="What needs to be achieved in this activity?"
+class="w-full p-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
+></textarea>
+</div>
+
+<!-- Expected Outcome -->
+<div>
+<label for="expected_outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Outcome / Goal</label>
+<textarea
+name="expected_outcome"
+id="expected_outcome"
+rows="2"
+placeholder="Target delta or specific checklist outcome..."
+class="w-full p-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
+></textarea>
+</div>
+
+<!-- Form submit -->
+<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+<button
+type="submit"
+hx-post="/planning/schedule?action={{ action }}"
+hx-target="body"
+class="h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors"
+>
+Confirm &amp; Schedule Activity
+</button>
+</div>
+</form>
+</div>
+
+<!-- Live Costing Preview Column -->
+<div id="cost-preview-output" class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800">Live Costing Breakdown</h3>
+<p class="text-[12px] text-slate-400 font-semibold leading-relaxed">Fill out target, date, and participants to see itemized UGX rates fetch live from CD catalogue.</p>
+</div>
+</div>
+</div>
+{% endblock %}

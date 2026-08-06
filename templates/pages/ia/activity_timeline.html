@@ -1,0 +1,61 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Activity Timeline - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<!-- Header -->
+{% include "partials/_back_link.html" with back_href="/ia/verification/" back_label="Verification Queue" %}
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">Activity Execution Timeline</h1>
+<p class="edify-page-header__description">Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).</p>
+</div>
+</div>
+
+<!-- Stepper Card -->
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-8 relative">
+
+<!-- Left connecting vertical bar -->
+<div class="absolute left-[39px] top-12 bottom-12 w-0.5 bg-slate-100"></div>
+
+<div class="space-y-8 relative">
+{% for event in timeline %}
+<div class="flex items-start gap-6 group">
+
+<!-- Event Icon Dot -->
+<div class="z-10 shrink-0 w-8 h-8 rounded-pill border-4 border-white flex items-center justify-center bg-[var(--edify-chart-blue)] text-white shadow-md transition-transform group-hover:scale-110 duration-200">
+<span class="w-1.5 h-1.5 rounded-pill edify-surface"></span>
+</div>
+
+<!-- Stepper card detail -->
+<div class="flex-1 space-y-2 bg-slate-50/50 hover:bg-slate-50  p-5 rounded-surface transition-all duration-200">
+<div class="flex items-center justify-between border-b border-slate-100 pb-2">
+<span class="font-semibold text-[14px] text-slate-800 tracking-tight">{{ event.state }}</span>
+<span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider">{{ event.date|date:"M d, Y H:i" }}</span>
+</div>
+
+<div class="flex items-center gap-3 text-[12px] font-bold">
+<span class="text-slate-400">Actor Profile:</span>
+<!-- Role Badge -->
+<span class="px-2 py-0.5 rounded-pill edify-primary-soft text-[var(--edify-chart-blue)] border edify-primary-border edify-text-caption font-semibold tracking-wider">
+{{ event.actor }}
+</span>
+</div>
+
+{% if event.details %}
+<div class="text-[12px] text-slate-500 leading-relaxed font-semibold edify-surface p-3 rounded-surface border border-slate-100/60 mt-1 shadow-sm">
+{{ event.details }}
+</div>
+{% endif %}
+</div>
+
+</div>
+{% empty %}
+<div class="text-center text-slate-400 font-semibold py-12">No event records found.</div>
+{% endfor %}
+</div>
+
+</div>
+</div>
+{% endblock %}

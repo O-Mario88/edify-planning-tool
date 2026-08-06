@@ -1,0 +1,18 @@
+{% comment %}
+Status strip for a My Plan row (expects `row`).
+
+One line, always. These used to wrap inside a 220px box, so a row carrying four
+badges stood three times the height of a row carrying one and the table could
+not be scanned down. The strip scrolls sideways instead.
+
+No outlines either: eight bordered pills across a row read as a fence. Colour
+alone carries the state, and a finished stage takes the light green.
+{% endcomment %}
+<div class="mp-badges">
+  {% if row.status_label %}
+  <span class="mp-badge mp-badge--{{ row.status_tone|default:'slate' }}">{{ row.status_label }}</span>
+  {% endif %}
+  {% for label, variant in row.badges %}
+  <span class="mp-badge mp-badge--{{ variant }}">{{ label }}</span>
+  {% endfor %}
+</div>

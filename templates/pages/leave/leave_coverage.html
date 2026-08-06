@@ -1,0 +1,107 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Delegated Coverage Access — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <!-- Header -->
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title edify-page-header__title">Temporary Leave Coverage Assignments</h1>
+      <p class="edify-page-header__description">Audit temporary delegated permissions and revoke access windows manually</p>
+    </div>
+  </header>
+
+  {% include "partials/_section_nav.html" %}
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for msg in messages %}
+    <div class="p-4 rounded-surface border font-semibold text-[13px] flex items-center justify-between shadow-sm
+      {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+      {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-100
+      {% else %}bg-rose-50 text-rose-700 border-rose-100{% endif %}"
+    >
+      <span>{{ msg }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Coverage Assignments List -->
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+    <div class="p-5 border-b border-slate-100">
+      <h3 class="text-[15px] font-bold text-slate-800">Coverage Assignments & Auditing</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+      {% paginate coverages "coverages_page" as coverages_pager %}
+<table class="w-full text-[12px] border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-left">
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Covering Staff</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Acting For (Absent)</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Start Time</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">End Time</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Permission Scope</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider">Status</th>
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase text-slate-400 tracking-wider text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium">
+          {% for cov in coverages_pager.rows %}
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-5 py-4">
+              <span class="font-bold text-slate-800 block text-[13px]">{{ cov.covering_staff.user.name }}</span>
+              <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ cov.covering_staff.user.active_role }}</span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="font-bold text-slate-800 block text-[13px]">{{ cov.original_staff.user.name }}</span>
+              <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ cov.original_staff.user.active_role }}</span>
+            </td>
+            <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.start_datetime|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-4 text-slate-600 font-bold">{{ cov.end_datetime|date:"Y-m-d H:i" }}</td>
+            <td class="px-4 py-4">
+              <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-pill edify-text-caption font-bold tracking-wider">
+                {{ cov.scope }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold border tracking-wider
+                {% if cov.is_live %}edify-primary-soft edify-primary-text edify-primary-border
+                {% elif cov.revoked_at %}bg-rose-50 text-rose-700 border-rose-250
+                {% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
+                {% if cov.is_live %}active{% elif cov.revoked_at %}revoked{% else %}expired{% endif %}
+              </span>
+            </td>
+            <td class="px-5 py-4 text-right">
+              {% if cov.is_live %}
+              <form action="{% url 'frontend:revoke_coverage_action' cov.id %}" method="POST" class="inline">
+                {% csrf_token %}
+                {% include "partials/components/confirm_action.html" with uid=cov.id trigger_label="Revoke" trigger_class="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-600 hover:text-white rounded-control edify-text-caption font-bold uppercase transition" title="Revoke this delegated access?" body="It ends immediately. Anything the coverer has already done stays as it is, and they lose access to the work from now on." confirm_label="Revoke access" %}
+              </form>
+              {% else %}
+              <span class="text-slate-400 font-bold edify-text-caption">No actions</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-5 py-12 text-center text-slate-400">
+              <p class="text-[36px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></p>
+              <p class="font-bold text-[14px]">No coverage assignments configured.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=coverages_pager param="coverages_page" %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

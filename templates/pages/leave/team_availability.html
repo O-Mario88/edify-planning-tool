@@ -1,0 +1,133 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Team Availability Heatmap — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <!-- Header -->
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Availability Heatmap</h1>
+      <p class="edify-page-header__description">Workload, approved leave and calendar blocks for your team over the next {{ week_count }} weeks</p>
+    </div>
+
+    <div class="edify-page-header__controls">
+      <form method="GET" class="flex items-center gap-2">
+        <label class="sr-only" for="weeks-select">Window</label>
+        {% comment %}@change rather than an inline onchange: the handler moves
+        into the Alpine layer the rest of the app uses, and requestSubmit()
+        runs the form's own validation where submit() skips it.{% endcomment %}
+        <select id="weeks-select" name="weeks" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-1.5 text-[12px] font-semibold">
+          {% for w in week_options %}<option value="{{ w }}" {% if w == week_count %}selected{% endif %}>Next {{ w }} weeks</option>{% endfor %}
+        </select>
+      </form>
+      <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-surface">
+        <span>Scoping: {{ role }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if collisions.visits_at_risk %}
+  <div class="edify-surface rounded-surface border border-rose-200 bg-rose-50/40 shadow-sm">
+    <div class="px-5 py-3.5 border-b border-rose-200/70">
+      <h2 class="text-[13px] font-extrabold text-rose-800">{{ collisions.visits_at_risk }} school visit{{ collisions.visits_at_risk|pluralize }} scheduled against absent staff</h2>
+      <p class="edify-text-caption text-rose-700/80 font-semibold mt-0.5">{{ collisions.people_affected }} staff member{{ collisions.people_affected|pluralize }} have field work booked in a week they are away. Reassign the visit or arrange cover.</p>
+    </div>
+    <ul class="divide-y divide-rose-200/50">
+      {% for r in collisions.rows %}
+      <li class="px-5 py-3 flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+          <p class="text-[13px] font-bold text-slate-800">{{ r.staff_name }} <span class="edify-text-caption font-semibold text-slate-500">· {{ r.role }}</span></p>
+          <p class="edify-text-caption text-slate-600 font-semibold mt-0.5">
+            {% for w in r.weeks %}{{ w.start }} → {{ w.end }}: {{ w.stranded_visits }} visit{{ w.stranded_visits|pluralize }} ({{ w.status }}){% if not forloop.last %} · {% endif %}{% endfor %}
+          </p>
+        </div>
+        <span class="shrink-0 edify-text-caption font-extrabold px-2.5 py-1 rounded-pill bg-rose-600 text-white tabular-nums">{{ r.stranded_total }} at risk</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Legend & Overview -->
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
+    <h3 class="text-[14px] font-bold text-slate-850">Availability Status Legend</h3>
+    <div class="flex flex-wrap gap-4 text-[12px] font-semibold">
+      <div class="flex items-center gap-2">
+        <span class="w-4.5 h-4.5 rounded-pill bg-emerald-500 inline-block shadow-sm"></span>
+        <span class="text-slate-700">Available</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-4.5 h-4.5 rounded-pill edify-primary-solid inline-block shadow-sm"></span>
+        <span class="text-slate-700">On Leave (Approved)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-4.5 h-4.5 rounded-pill bg-purple-500 inline-block shadow-sm"></span>
+        <span class="text-slate-700">Staff Conference Week</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-4.5 h-4.5 rounded-pill bg-slate-600 inline-block shadow-sm"></span>
+        <span class="text-slate-700">Blocked (Blackout Date)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-4.5 h-4.5 rounded-pill bg-amber-500 inline-block shadow-sm"></span>
+        <span class="text-slate-700">High Workload (5+ Activities)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap Matrix Grid -->
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100">
+      <h3 class="text-[16px] font-bold text-slate-850">4-Week Heatmap Matrix</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+      {% paginate weeks_headers "weeks_headers_page" as weeks_headers_pager %}
+<table class="w-full text-[12px] border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-left text-slate-400">
+            <th class="px-6 py-4 edify-text-caption font-bold uppercase tracking-wider w-1/3">Staff Member & Role</th>
+            {% for header in weeks_headers_pager.rows %}
+            <th class="px-4 py-4 edify-text-caption font-bold uppercase tracking-wider text-center w-1/6">{{ header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium">
+          {% for row in matrix %}
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-6 py-4">
+              <span class="font-bold text-slate-800 block text-[13px]">{{ row.staff_name }}</span>
+              <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ row.role }}</span>
+            </td>
+
+            {% for wk in row.weeks %}
+            <td class="px-4 py-4 text-center">
+              <div
+                class="inline-flex flex-col items-center justify-center p-3 rounded-surface text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
+                style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
+              >
+                <span class="text-[12px] font-extrabold">{{ wk.status }}</span>
+                <span class="edify-text-caption opacity-90 font-bold mt-1">{{ wk.act_count }} activities</span>
+              </div>
+            </td>
+            {% endfor %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-slate-400 font-bold text-[14px]">
+              No team members found under your supervisor scope.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=weeks_headers_pager param="weeks_headers_page" %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

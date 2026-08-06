@@ -1,0 +1,388 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}{% if reschedule_mode %}Reschedule {{ recommended_activity_label|default:"Activity" }}{% else %}Schedule {{ recommended_activity_label|default:"School Visit" }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if reschedule_mode %}Update the planned date for {{ schedule_subject_name }} without creating another activity.{% else %}Configure activity details for {{ school.name }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="{% if reschedule_mode %}{{ reschedule_action_url }}{% else %}/planning/schedule-action{% endif %}"
+hx-target="#form-errors"
+class="space-y-4 text-[12px] font-bold text-slate-600"
+x-data="{
+delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
+ssa_expected: 'yes',
+activityType: '{{ recommended_activity_type|default:'school_visit' }}',
+purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
+partnerPurposes: [{% for value, label in partner_visit_purposes %}'{{ value }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
+recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
+alternative: false
+}"
+>
+{% csrf_token %}
+{% if not reschedule_mode %}
+<input type="hidden" name="school_id" value="{{ school.school_id }}">
+{% if project_id %}<input type="hidden" name="project_id" value="{{ project_id }}">{% endif %}
+{% endif %}
+
+<!-- Form Error Messages container -->
+<div id="form-errors"></div>
+
+{% if not reschedule_mode %}
+<input type="hidden" name="require_catalogue" value="yes">
+{% comment %}
+  The user chooses the purpose, while the SSA-led recommendation displayed in
+  this drawer identifies the governed Catalogue Activity that will deliver it.
+  Preserve that already-visible recommendation in the POST. Deriving only from
+  workflow_kind fails whenever several approved activities share the same kind
+  (for example multiple in-school trainings), because the server correctly
+  refuses to guess between them.
+{% endcomment %}
+{% if selected_catalogue_item %}<input type="hidden" name="catalogue_item_id" value="{{ selected_catalogue_item.catalogueItemId }}">{% endif %}
+<input type="hidden" name="activity_type" :value="activityType">
+<input type="hidden" name="recommendation_reason" :value="recommendationReason">
+
+{% if not catalogue_recommendations.hasApplicableSsa %}
+<div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-surface text-[12px] leading-normal shadow-sm" role="status">
+  <p class="font-bold">Top Priority: Complete SSA</p>
+  <p class="mt-1 font-medium">No intervention score is shown because this School has no applicable verified SSA. Complete the assessment, then regenerate support recommendations.</p>
+</div>
+{% else %}
+<div class="rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA intelligence</p>
+  <div class="mt-2 flex items-center justify-between gap-3">
+    <div>
+      <p class="font-bold text-slate-800">{{ catalogue_recommendations.priority.label }}</p>
+      <p class="font-medium text-slate-500">{{ catalogue_recommendations.ssaDate }} · {{ catalogue_recommendations.verificationState|title }}</p>
+    </div>
+    <span class="rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800">{{ catalogue_recommendations.priority.band }} · {{ catalogue_recommendations.priority.score }}/10</span>
+  </div>
+</div>
+{% if catalogue_recommendations.unmetPriority %}
+{% comment %}
+The weakest intervention has no response that can be delivered here. Say so,
+rather than letting the activities below read as the answer to the score
+above -- they address a lower-ranked need.
+{% endcomment %}
+<div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3.5 text-[12px] leading-normal text-amber-900 shadow-sm" role="status">
+  <p class="font-bold">No activity below addresses {{ catalogue_recommendations.unmetPriority.need.label }}</p>
+  <p class="mt-1 font-medium">This School&rsquo;s most urgent need is {{ catalogue_recommendations.unmetPriority.need.label }} at {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). The activities listed answer the next needs down.</p>
+  {% if catalogue_recommendations.unmetPriority.blockedBy %}
+  <ul class="mt-1.5 space-y-0.5 font-medium">
+    {% for blocked in catalogue_recommendations.unmetPriority.blockedBy %}
+    <li>&middot; <strong>{{ blocked.displayName }}</strong> {{ blocked.reason }}. {{ blocked.route }}.</li>
+    {% endfor %}
+  </ul>
+  <p class="mt-1.5 font-medium">It is costed from the same CD Cost Catalogue wherever it is scheduled.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}
+
+{% comment %}
+The drawer asks what this visit is FOR, and shows the SSA evidence that should
+inform that choice. It used to lead with a list of Recommended Activities: the
+engine chose the activity and the SSA score appeared only as a badge on it,
+which inverted the judgement. A field officer knows the school; what they need
+from the system is which interventions are struggling, not an instruction.
+
+Purpose of Visit is the operational spine. It drives activity_type through
+PURPOSE_ACTIVITY_TYPES, and activity_type is what the CD cost catalogue keys
+its costing on, so the costing link is derived server-side and never asked for.
+{% endcomment %}
+
+{% if recommendations %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3" role="status">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-800">SSA interventions performing poorly</p>
+  <p class="mt-0.5 font-medium text-amber-900">Latest verified SSA for {{ school.name }}. Lowest scores first — these are the needs a visit can address.</p>
+  <ul class="mt-2 space-y-1">
+    {% for r in recommendations %}
+    <li class="flex items-center justify-between gap-3 rounded-control bg-white/70 px-2.5 py-1.5">
+      <span class="font-bold text-slate-800">{{ r.label }}</span>
+      <span class="shrink-0 rounded-pill border border-amber-300 px-2 py-0.5 edify-text-caption font-bold text-amber-900">{{ r.band }} · {{ r.score }}/10</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div>
+  <label for="purpose_of_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Purpose of Visit <span class="text-rose-500">*</span></label>
+  <select
+    name="purpose_of_visit"
+    id="purpose_of_visit"
+    required
+    x-model="purposeOfVisit"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
+  >
+    <option value="">Select the purpose of this visit…</option>
+    {% for value, label in staff_visit_purposes %}
+    <option value="{{ value }}"
+      {% if value == recommended_visit_purpose %}selected{% endif %}
+      :disabled="delivery === 'partner' && !partnerPurposes.includes('{{ value }}')">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
+</div>
+
+<div>
+  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+  <select
+    name="focus_intervention"
+    id="focus_intervention"
+    x-model="focusIntervention"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
+  >
+    <option value="">Select Focus Intervention…</option>
+    {% for code, label in interventions %}
+    <option value="{{ code }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
+</div>
+{% else %}
+<div class="edify-primary-soft border edify-primary-border rounded-surface p-3 text-[12px] font-semibold">
+<span class="edify-text-caption uppercase tracking-wider edify-primary-text font-bold">Scheduled activity</span>
+<p class="mt-1 text-slate-700">{{ recommended_activity_label }} for {{ schedule_subject_name }}</p>
+{% if assigning_staff_name %}<p class="mt-1 edify-text-caption text-slate-600">Monitored by: <strong>{{ assigning_staff_name }}</strong></p>{% endif %}
+</div>
+{% endif %}
+
+<!-- Date -->
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Scheduled Date</label>
+<div
+x-data="{
+open: false,
+selectedDate: '{% if reschedule_mode %}{{ reschedule_activity.planned_date|date:"Y-m-d" }}{% endif %}',
+currentYear: new Date().getFullYear(),
+currentMonth: new Date().getMonth(),
+months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+days: [],
+init() {
+if (this.selectedDate) {
+let d = new Date(this.selectedDate);
+if (!isNaN(d.getTime())) {
+this.currentYear = d.getFullYear();
+this.currentMonth = d.getMonth();
+}
+}
+this.getDays();
+},
+getDays() {
+let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+this.days = [];
+for (let i = 0; i < firstDay; i++) {
+this.days.push(null);
+}
+for (let d = 1; d <= lastDate; d++) {
+this.days.push(d);
+}
+},
+prevMonth() {
+if (this.currentMonth === 0) {
+this.currentMonth = 11;
+this.currentYear--;
+} else {
+this.currentMonth--;
+}
+this.getDays();
+},
+nextMonth() {
+if (this.currentMonth === 11) {
+this.currentMonth = 0;
+this.currentYear++;
+} else {
+this.currentMonth++;
+}
+this.getDays();
+},
+selectDay(day) {
+if (day === null) return;
+let monthStr = String(this.currentMonth + 1).padStart(2, '0');
+let dayStr = String(day).padStart(2, '0');
+this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
+this.open = false;
+},
+formatDate(dateStr) {
+if (!dateStr) return 'Select Date';
+let parts = dateStr.split('-');
+if (parts.length !== 3) return dateStr;
+let d = new Date(parts[0], parts[1] - 1, parts[2]);
+return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+},
+isSelected(day) {
+if (!day || !this.selectedDate) return false;
+let parts = this.selectedDate.split('-');
+return parseInt(parts[0]) === this.currentYear &&
+(parseInt(parts[1]) - 1) === this.currentMonth &&
+parseInt(parts[2]) === day;
+}
+}"
+class="relative "
+>
+<!-- Dropdown Trigger button -->
+<button
+type="button"
+@click="open = !open"
+class="w-full h-10 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+>
+<div class="flex items-center gap-2">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+</svg>
+<span x-text="formatDate(selectedDate)"></span>
+</div>
+<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+</svg>
+</button>
+
+<input type="hidden" name="scheduled_date" :value="selectedDate" required>
+
+<!-- Calendar Popover Card -->
+<div
+x-show="open"
+@click.outside="open = false"
+class="absolute left-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
+style="display: none;"
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="opacity-0 transform scale-95"
+x-transition:enter-end="opacity-100 transform scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="opacity-100 transform scale-100"
+x-transition:leave-end="opacity-0 transform scale-95"
+>
+<!-- Header -->
+<div class="flex items-center justify-between px-1">
+<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+</button>
+<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+</button>
+</div>
+
+<!-- Weekdays Header -->
+<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
+<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+</div>
+
+<!-- Days Grid -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
+<template x-for="(day, index) in days" :key="index">
+<div>
+<button
+type="button"
+x-show="day !== null"
+@click="selectDay(day)"
+class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+x-text="day"
+></button>
+</div>
+</template>
+</div>
+</div>
+</div>
+</div>
+
+{% if not reschedule_mode %}
+<!-- Participant numbers improve the estimate but are optional. -->
+<div x-show="['training', 'in_school_training', 'school_improvement_training'].includes(activityType)" style="display: none;">
+<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
+<input
+type="number"
+name="expected_participants"
+id="expected_participants"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+>
+</div>
+
+{% comment %}
+  No manual Focus Intervention select. It is chosen by the SSA-led catalogue
+  recommendation and travels in the hidden focus_intervention input near the
+  top of this form — a hand-picked intervention here would contradict the
+  recommendation the drawer just explained.
+
+  The legacy select used to sit here wrapped in {% if reschedule_mode %},
+  which inside this {% if not reschedule_mode %} branch could never be true —
+  but its closing </div> was left OUTSIDE the condition. That orphan close made
+  the browser's parser pop the open-element stack past the <form>, so in the
+  DOM every field and button from this point down sat outside the form: Alpine
+  then threw ReferenceError on the delivery binding (INC-000003, "JavaScript
+  exception on /planning"), delivery_type and the goal never submitted, and
+  the Schedule button had no form owner — a dead end dressed as a working
+  drawer. The regression test renders this modal and walks div depth inside
+  the form so an orphan close can never ship again.
+{% endcomment %}
+
+{% comment %}
+  No delivery-type choice here, and no partner picker.
+
+  Handing a school to a partner is its own workflow with its own drawer, and
+  that path creates the PartnerAssignment record the handoff is tracked by.
+  This drawer used to offer a second route to the same outcome that skipped
+  that record — so partner work scheduled here was invisible to everything
+  that reads assignments.
+
+  This drawer schedules the work of whoever is using it. Delivery type is
+  therefore who they are, not a question: staff scheduling produces staff
+  delivery, and a partner self-scheduling an assigned activity goes through
+  apps.partners.services.schedule_activity.
+{% endcomment %}
+{% comment %}
+    Bound, not hard-coded. `delivery` starts at 'staff' for new work, but a
+    reschedule initialises it from the activity being moved -- so an existing
+    partner-delivered activity keeps its delivery type instead of being
+    silently converted to staff.
+  {% endcomment %}
+  <input type="hidden" name="delivery_type" :value="delivery">
+
+<!-- Activity Goal -->
+<div>
+<label for="activity_purpose_text" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Goal</label>
+<textarea
+name="activity_purpose_text"
+id="activity_purpose_text"
+rows="2"
+placeholder="What needs to be achieved in this activity?"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+></textarea>
+</div>
+{% else %}
+<div>
+<label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for changing the date</label>
+<textarea
+name="reason"
+id="reason"
+required
+rows="3"
+placeholder="Briefly explain why this activity needs a new date."
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+></textarea>
+</div>
+{% endif %}
+
+<!-- Drawer Footer (Sticky Actions) -->
+<div class="drawer-footer">
+<button
+type="button"
+@click="
+requestClose()
+"
+class="px-5 h-9 rounded-control btn-premium-secondary font-bold text-[12px]"
+>
+Cancel
+</button>
+<button
+type="submit"
+class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
+>
+{% if reschedule_mode %}Save new date{% else %}<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule{% endif %}
+</button>
+</div>
+</form>
+{% endblock %}

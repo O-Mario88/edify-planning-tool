@@ -1,0 +1,403 @@
+{% extends "layouts/shell.html" %}
+{% comment %}
+Without this the page inherited the shell's default, so /my-performance was the
+one route in the sidebar whose browser tab, history entry and bookmark all read
+"Edify School Improvement Planning". Matches the h1 below rather than the
+sidebar's "My Performance" label — the two disagree, and a title contradicting
+the heading on screen would be the worse of the two.
+{% endcomment %}
+{% block title %}Priority Setting Dashboard · Edify{% endblock %}
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" x-data="{ tab: '{{ tab|escapejs }}' }">
+
+  {% comment %}
+  .edify-page-header is a plain block, so the flex row goes on the header
+  itself — title left, controls opposite. The title and control groups stay its
+  DIRECT children because platform.css sets flex-wrap:wrap on the last child of
+  any header holding an h1: that should be the control group, so the badges
+  wrap among themselves. Put a wrapper around both instead and the rule lands
+  on the wrapper, dropping the controls onto their own line — and it outranks a
+  plain flex-nowrap utility on specificity, so it cannot be undone from here.
+
+  md: not lg: — with the sidebar expanded the content column is ~963px on a
+  1280px screen, so an lg: (1024px) rule would never fire for the people who
+  actually use this page.
+  {% endcomment %}
+  <div class="edify-page-header">
+      <div class="min-w-0 edify-page-header__lead">
+        <p class="edify-page-eyebrow">People & Culture</p>
+        <h1 class="edify-page-title edify-page-header__title">Priority Setting Dashboard</h1>
+        <p class="edify-page-subtitle edify-page-header__description">
+          Your agreed priorities drive your targets, allocations and performance
+          conversations — progress is computed from verified work, never typed.
+        </p>
+      </div>
+      <div class="edify-page-header__controls">
+        {% if cycle %}
+        <span class="edify-badge">FY{{ cycle.fy }} Performance Cycle</span>
+        {% if cycle.status == "active" %}<span class="edify-badge" data-tone="success">Active</span>{% endif %}
+        {% if active_window_label %}<span class="edify-badge" data-tone="info">{{ active_window_label }} window open</span>{% endif %}
+        {% endif %}
+        {% comment %}
+        Only HR opens and closes the conversation window — performance_engine's
+        activate_window/close_window both assert it. The control used to vanish
+        whenever the window was shut, which left the staff member with no way
+        to tell the difference between "not my turn yet" and "this feature does
+        not exist". It stays visible and goes inert instead, so HR opening a
+        window is what activates it and HR closing one is what disables it.
+        {% endcomment %}
+        {% if review %}
+        {% if show_open_conversation %}
+        {% if active_window_label %}
+        <a data-control="open-conversation" href="/performance-conversation"
+           class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">Open conversation</a>
+        {% else %}
+        <span data-control="open-conversation" role="button" aria-disabled="true" tabindex="-1"
+              class="rounded-md px-3.5 py-2 text-[13px] font-bold"
+              aria-label="Open conversation — unavailable until HR opens a conversation window"
+              title="HR opens and closes the performance conversation window. No window is open right now.">Open conversation</span>
+        {% endif %}
+        {% endif %}
+
+        {% if show_priority_button %}
+        {% if active_window_label %}
+        <a data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" href="/performance-conversation"
+           class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">{{ priority_button_label }}</a>
+        {% else %}
+        <span data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" role="button" aria-disabled="true" tabindex="-1"
+              class="rounded-md px-3.5 py-2 text-[13px] font-bold"
+              aria-label="{{ priority_button_label }} — unavailable until HR opens a conversation window"
+              title="HR opens and closes the performance conversation window. No window is open right now.">{{ priority_button_label }}</span>
+        {% endif %}
+        {% endif %}
+        {% endif %}
+      </div>
+  </div>
+
+  {% if not review %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center text-slate-400">
+    <p class="font-bold text-[13px]">No performance cycle is open for this year yet.</p>
+    <p class="edify-text-caption mt-1">HR opens the cycle; your draft agreement is generated from your role and portfolio.</p>
+  </div>
+  {% else %}
+
+  {# ── KPI strip ─────────────────────────────────────────────────────── #}
+  {% comment %} Each card carries an icon badge; the tints use /10 opacity so
+  they read correctly in both light and the blue dark theme. {% endcomment %}
+  <section class="legacy-kpi-strip grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Performance cycle summary">
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Agreement Status</p>
+        {% if review.stage == "approved" or review.stage == "signed_off" %}
+        <p class="mt-0.5 text-[15px] font-bold text-emerald-600">Approved</p>
+        {% elif review.stage == "returned" %}
+        <p class="mt-0.5 text-[15px] font-bold text-amber-600">Returned</p>
+        {% else %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ stage_label }}</p>
+        {% endif %}
+        <p class="edify-text-caption text-slate-400">{{ review.updated_at|date:"j M Y" }}</p>
+      </div>
+    </article>
+
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-3m-1 0h-2M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Direct Schools Allocated</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ allocation.total }}</p>
+        <p class="edify-text-caption text-slate-400">{{ allocation.core }} Core · {{ allocation.client }} Client{% if allocation.champion %} · {{ allocation.champion }} Champion{% endif %}</p>
+      </div>
+    </article>
+
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Key Priorities</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ priorities|length }}</p>
+        <p class="edify-text-caption text-slate-400">{{ layers.organizational }} Org · {{ layers.role }} Role{% if layers.personal %} · {{ layers.personal }} Personal{% endif %}</p>
+      </div>
+    </article>
+
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-center gap-3">
+      {% if overall_pct is not None %}
+      <span class="shrink-0" style="--edify-donut-gauge-size: 2.75rem; --edify-donut-gauge-headline: 0.6875rem">
+        {% include "partials/components/donut_rings.html" with donut=overall_gauge donut_class="edify-donut--gauge" donut_label="Overall weighted progress" headline=overall_pct %}
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
+        <p class="mt-0.5 text-[15px] font-bold {% if overall_pct >= 70 %}text-emerald-600{% elif overall_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ overall_pct }}% weighted</p>
+        <p class="edify-text-caption text-slate-400">{% if overall_pct >= 70 %}On track{% elif overall_pct >= 40 %}Watch{% else %}Behind{% endif %}</p>
+      </div>
+      {% else %}
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-400">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
+        <p class="mt-0.5 text-[15px] font-bold text-slate-400">—</p>
+        <p class="edify-text-caption text-slate-400">No verified work yet</p>
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
+      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="edify-text-caption uppercase text-slate-400">Conversation Window</p>
+        {% if active_window_label %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ active_window_label }}</p>
+        <p class="edify-text-caption text-slate-400">{% if cycle.window_deadline %}until {{ cycle.window_deadline|date:"j M Y" }}{% else %}open now{% endif %}</p>
+        {% else %}
+        <p class="mt-0.5 text-[15px] font-bold text-slate-400">None open</p>
+        <p class="edify-text-caption text-slate-400">HR schedules the next window</p>
+        {% endif %}
+      </div>
+    </article>
+  </section>
+
+  {# ── Tabs ──────────────────────────────────────────────────────────── #}
+  <nav class="flex flex-wrap gap-1 border-b border-slate-100" aria-label="Performance sections">
+    {% for key, label in tab_defs %}
+    <button type="button" @click="tab = '{{ key }}'"
+            :class="tab === '{{ key }}' ? 'edify-primary-border edify-primary-text font-bold' : 'border-transparent text-slate-400 hover:text-slate-600'"
+            class="px-3.5 py-2.5 text-[13px] border-b-2 -mb-px transition-colors">{{ label }}</button>
+    {% endfor %}
+  </nav>
+
+  {# ── Agreed Priorities ─────────────────────────────────────────────── #}
+  <section x-show="tab === 'priorities'" x-cloak>
+    <div class="mb-4">
+      {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="performance-project-priorities" only %}
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-[14px] font-bold text-slate-800">Agreed Priorities ({{ priorities|length }})</h2>
+        <span class="edify-text-caption text-slate-400">Weights total 100 · progress from verified work</span>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-[13px]">
+        <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
+          <th class="px-5 py-2.5 w-10">#</th>
+          <th class="px-3 py-2.5">Priority</th>
+          <th class="px-3 py-2.5">Milestones (key)</th>
+          <th class="px-3 py-2.5">Target</th>
+          <th class="px-3 py-2.5 w-44">Progress</th>
+          <th class="px-3 py-2.5">Status</th>
+          <th class="px-3 py-2.5">Weight</th>
+        </tr></thead>
+        <tbody>
+        {% for row in priorities|slice:":60" %}
+        <tr class="border-t border-slate-50 align-top">
+          <td class="px-5 py-3 font-bold text-slate-400">{{ row.p.sequence }}</td>
+          <td class="px-3 py-3">
+            <p class="font-bold text-slate-800">{{ row.p.outcome_statement }}</p>
+            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}edify-primary-text{% endif %}">
+              {{ row.p.priority_layer|capfirst }} Priority</p>
+          </td>
+          <td class="px-3 py-3">
+            {% if row.auto_milestones %}
+            <ul class="space-y-0.5 text-slate-500">
+              {% for m in row.auto_milestones %}
+              <li class="flex items-center justify-between gap-3">
+                <span class="flex items-center gap-1.5">
+                  {{ m.label }}
+                  {% if m.kind == "auto" %}<span class="edify-text-caption text-slate-300" title="Derived from verified records — cannot be typed">auto</span>{% endif %}
+                </span>
+                <span class="font-bold text-slate-700 tabular-nums">
+                  {% if m.value is None %}—{% elif m.kind == "calc" %}{{ m.value }}%{% else %}{{ m.value }}{% endif %}
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% for m in row.milestones %}
+            <div class="mt-1 flex items-start gap-1.5 text-slate-500">
+              <span class="mt-0.5 {% if m.is_complete %}text-emerald-500{% else %}text-slate-300{% endif %}">•</span>
+              <span {% if m.is_complete %}class="line-through text-slate-400"{% endif %}>{{ m.description }}</span>
+            </div>
+            {% endfor %}
+            {% if not row.auto_milestones and not row.milestones %}<span class="text-slate-300">—</span>{% endif %}
+          </td>
+          <td class="px-3 py-3 font-bold text-slate-700">
+            {{ row.p.target|default:"—" }}
+            {% if row.p.denominator_note %}<p class="edify-text-caption font-normal text-slate-400">{{ row.p.denominator_note }}</p>{% endif %}
+          </td>
+          <td class="px-3 py-3">
+            {% if row.progress.actual is not None %}
+            <p class="font-bold text-slate-800">{{ row.progress.actual }}{% if row.progress.target %} / {{ row.progress.target }}{% endif %}</p>
+            {% if row.progress.pct is not None %}
+            <div class="mt-1 flex items-center gap-2">
+              <div class="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}edify-primary-solid{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                     style="width: {% if row.progress.pct > 100 %}100{% else %}{{ row.progress.pct }}{% endif %}%"></div>
+              </div>
+              <span class="edify-text-caption text-slate-500">{{ row.progress.pct }}%</span>
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="edify-text-caption text-slate-400">Conversational — discussed, not counted</span>
+            {% endif %}
+          </td>
+          <td class="px-3 py-3">
+            {% if row.progress.pct is None %}
+            <span class="edify-badge">Qualitative</span>
+            {% elif row.progress.pct >= 100 %}
+            <span class="edify-badge" data-tone="success">Achieved</span>
+            {% elif row.progress.pct >= 60 %}
+            <span class="edify-badge" data-tone="success">On Track</span>
+            {% elif row.progress.pct >= 30 %}
+            <span class="edify-badge" data-tone="warning">Watch</span>
+            {% else %}
+            <span class="edify-badge" data-tone="danger">Behind</span>
+            {% endif %}
+          </td>
+          <td class="px-3 py-3 font-bold text-slate-700">{{ row.p.weight }}%</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">No priorities on this agreement yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  {# ── Targets & Progress ────────────────────────────────────────────── #}
+  <section x-show="tab === 'targets'" x-cloak>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="text-[14px] font-bold text-slate-800">Targets &amp; Progress</h2>
+        <p class="edify-text-caption text-slate-400">Metric priorities feed My Targets on approval; each figure below is the live verified count.</p>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-[13px]">
+        <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
+          <th class="px-5 py-2.5">Priority</th><th class="px-3 py-2.5">Metric</th>
+          <th class="px-3 py-2.5">FY Target</th><th class="px-3 py-2.5">Verified Actual</th>
+          <th class="px-3 py-2.5">Achievement</th>
+        </tr></thead>
+        <tbody>
+        {% for row in priorities|slice:":60" %}{% if row.p.metric_key %}
+        <tr class="border-t border-slate-50">
+          <td class="px-5 py-3 font-bold text-slate-800">{{ row.p.outcome_statement|truncatechars:64 }}</td>
+          <td class="px-3 py-3 text-slate-500">{{ row.p.metric_key }}</td>
+          <td class="px-3 py-3 font-bold">{{ row.progress.target|default:"—" }}</td>
+          <td class="px-3 py-3 font-bold">{{ row.progress.actual }}</td>
+          <td class="px-3 py-3">{% if row.progress.pct is not None %}{{ row.progress.pct }}%{% else %}—{% endif %}</td>
+        </tr>
+        {% endif %}{% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  {# ── Development Plans ─────────────────────────────────────────────── #}
+  <section x-show="tab === 'development'" x-cloak>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="text-[14px] font-bold text-slate-800">Development Plan</h2>
+        <p class="edify-text-caption text-slate-400">PD-workflow items appear automatically; manual items are added in the conversation form.</p>
+      </div>
+      <ul class="divide-y divide-slate-50">
+        {% for d in development %}
+        <li class="px-5 py-3.5 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[13px] font-bold text-slate-800">{{ d.description }}</p>
+            {% if d.expected_impact %}<p class="edify-text-caption text-slate-400">{{ d.expected_impact }}</p>{% endif %}
+          </div>
+          <span class="edify-badge shrink-0">{% if d.source == "pd_workflow" %}PD Workflow{% else %}Added by me{% endif %}</span>
+        </li>
+        {% empty %}
+        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">PD-workflow courses appear here automatically; you can add your own items.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# ── Values & Commitments ──────────────────────────────────────────── #}
+  <section x-show="tab === 'values'" x-cloak>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="text-[14px] font-bold text-slate-800">Values &amp; Commitments</h2>
+        <p class="edify-text-caption text-slate-400">Entered manually and agreed in conversation — never rated from activity counts.</p>
+      </div>
+      <ul class="divide-y divide-slate-50">
+        {% for v in values %}
+        <li class="px-5 py-3.5">
+          <p class="text-[13px] font-bold text-slate-800">{{ v.value_name }}</p>
+          {% if v.agreed_behaviour %}<p class="edify-text-caption text-slate-500 mt-0.5">{{ v.agreed_behaviour }}</p>{% endif %}
+        </li>
+        {% empty %}
+        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No value commitments recorded yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# ── Amendments ────────────────────────────────────────────────────── #}
+  <section x-show="tab === 'amendments'" x-cloak>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="text-[14px] font-bold text-slate-800">Amendments</h2>
+        <p class="edify-text-caption text-slate-400">Signed history is immutable — amendments change future periods only.</p>
+      </div>
+      <ul class="divide-y divide-slate-50">
+        {% for a in amendments %}
+        <li class="px-5 py-3.5 flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[13px] font-bold text-slate-800">{{ a.priority.outcome_statement|truncatechars:70 }}</p>
+            <p class="edify-text-caption text-slate-500">{{ a.reason }}</p>
+            <p class="edify-text-caption text-slate-400 mt-0.5">
+              {% if a.changed_target %}New target: {{ a.changed_target }} · {% endif %}{{ a.created_at|date:"j M Y" }}
+            </p>
+          </div>
+          <span class="edify-badge shrink-0"
+                {% if a.status == "approved" %}data-tone="success"{% elif a.status == "rejected" %}data-tone="danger"{% endif %}>
+            {{ a.status|capfirst }}</span>
+        </li>
+        {% empty %}
+        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No amendments requested.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {# ── Conversations ─────────────────────────────────────────────────── #}
+  <section x-show="tab === 'conversations'" x-cloak>
+    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="text-[14px] font-bold text-slate-800">Performance Conversations</h2>
+        <p class="edify-text-caption text-slate-400">Each conversation is held against a frozen snapshot; after sign-off it is locked permanently.</p>
+      </div>
+      <ul class="divide-y divide-slate-50">
+        {% for row in snapshots %}
+        <li class="px-5 py-3.5 flex items-center justify-between gap-4">
+          <div>
+            <p class="text-[13px] font-bold text-slate-800">{{ row.label }}</p>
+            <p class="edify-text-caption text-slate-400">Snapshot taken {{ row.snap.taken_at|date:"j M Y" }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="/performance-conversation/{{ review.id }}/document/{{ row.snap.window }}"
+               class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Record</a>
+            {% if row.snap.signed_off_at %}
+            <span class="edify-badge" data-tone="success">Signed off {{ row.snap.signed_off_at|date:"j M" }}</span>
+            {% else %}
+            <span class="edify-badge" data-tone="info">In progress</span>
+            {% endif %}
+          </div>
+        </li>
+        {% empty %}
+        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No conversations held yet — the first snapshot is taken when HR opens a window.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  {% endif %}
+</div>
+{% endblock %}

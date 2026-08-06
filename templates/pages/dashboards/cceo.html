@@ -1,0 +1,191 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Today's Tasks Console — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- ================= TOP HEADER BAR ================= -->
+<div class="edify-page-header">
+  <div class="edify-page-header__lead">
+    <h1 class="edify-page-title edify-page-header__title">Good morning, {{ user_name }} <span class="inline-block"></span></h1>
+    <p class="edify-page-header__description">Here's your plan for today. Stay focused, drive impact.</p>
+  </div>
+
+  <!-- Controls (date, notifications, avatar) now live in the shared topbar —
+       removed the per-page duplicates that rendered alongside the shell's own. -->
+</div>
+
+
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Owner-scoped urgent-school decisions -->
+<section id="urgent-schools" class="card overflow-hidden scroll-mt-20" aria-labelledby="urgent-schools-title">
+  <div class="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between border-b edify-border-bottom">
+    <div>
+      <h2 id="urgent-schools-title" class="text-[15px] font-semibold edify-text">Schools Needing Urgent Attention</h2>
+      <p class="mt-0.5 text-[12px] edify-text-muted">Choose direct support or assign the response to a partner.</p>
+    </div>
+    <span class="inline-flex w-fit items-center rounded-pill px-2.5 py-1 text-[12px] font-semibold edify-danger-text edify-danger-soft border edify-danger-border">
+      {{ urgent_schools|length }} urgent
+    </span>
+  </div>
+  {% include "partials/dashboards/urgent_schools_table.html" with urgent_action_mode="cceo" %}
+</section>
+
+
+<!-- ================= MAIN DASHBOARD CONTENT ================= -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+  <!-- THIS WEEK'S PLAN (Col Span 8) -->
+  <div class="lg:col-span-12 space-y-5">
+    <div class="flex items-center justify-between">
+      <h2 class="text-[21px] font-extrabold tracking-tight">This Week's Plan</h2>
+      <a href="/calendar" class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        View Calendar
+      </a>
+    </div>
+
+    <!-- 1) Overdue From Last Week -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <h3 class="text-[15px] font-bold text-rose-600 tracking-tight">Overdue From Last Week</h3>
+          <span class="bg-rose-50 text-rose-600 font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ overdue_last_week|length }}</span>
+        </div>
+        <a href="/my-plan" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+            <th class="px-5 py-2.5">Activity</th><th class="px-3 py-2.5">School / Cluster</th><th class="px-3 py-2.5">Due Date</th><th class="px-3 py-2.5">Status</th><th class="px-3 py-2.5 text-right">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for r in overdue_last_week %}
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-5 py-3"><span class="inline-flex items-center gap-2"><span class="h-8 w-8 rounded-pill bg-slate-50 flex items-center justify-center text-[15px] shrink-0">{{ r.icon }}</span><span class="text-[12.5px] font-bold text-slate-800">{{ r.activity }}</span></span></td>
+              <td class="px-3 py-3 text-[12px] font-semibold text-slate-600">{{ r.where }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.due }}</td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wide {% if r.status_tone == 'danger' %}bg-rose-50 text-rose-600{% else %}bg-amber-50 text-amber-700{% endif %}">{{ r.status }}</span></td>
+              {% comment %}An overdue activity has three honest ways out —
+              finish it, move it, or talk about it — and a single Reschedule
+              button offered only the middle one. Complete and Reschedule open
+              their drawers in place; Discuss opens the daily debrief with this
+              activity carried in as its subject.{% endcomment %}
+              <td class="px-3 py-3 text-right">
+                <div class="row-menu" x-data="rowMenu"
+                     @keydown.escape.window="close()" @click.outside="close()"
+                     @scroll.window.capture.passive="reposition()" @resize.window="reposition()">
+                  <button type="button" class="row-menu__trigger" x-ref="trigger"
+                          @click="toggle()"
+                          :aria-expanded="open ? 'true' : 'false'"
+                          aria-haspopup="true"
+                          aria-label="Actions for {{ r.activity }} at {{ r.where }}">
+                    Actions
+                    <svg class="row-menu__caret" :class="open ? 'is-open' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="row-menu__list" x-ref="list" x-show="open"
+                         :style="`left:${x}px; top:${y}px`" x-cloak x-transition.opacity.duration.120ms role="menu">
+                    <button type="button" class="row-menu__item" role="menuitem"
+                            hx-get="{{ r.complete_url }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                            @click="close()">Complete</button>
+                    <button type="button" class="row-menu__item" role="menuitem"
+                            hx-get="{{ r.reschedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                            @click="close()">Reschedule</button>
+                    <a class="row-menu__item" role="menuitem" href="{{ r.discuss_url }}">Discuss this activity</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">Nothing overdue — you're on track. <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4m3 8l2.3-6L15 13l6 2.3-6 2.3L12.7 23l-2.4-5.4L4 15l6-2zM19 3l.9 2.1L22 6l-2.1.9L19 9l-.9-2.1L16 6l2.1-.9L19 3z"/></svg></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2) School Visits -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">School Visits</h3>
+          <span class="edify-primary-soft edify-primary-text font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ school_visits_week|length }}</span>
+        </div>
+        <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+            <th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">District</th><th class="px-3 py-2.5">Visit Purpose</th><th class="px-3 py-2.5">Planned Date</th><th class="px-3 py-2.5 text-right">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for r in school_visits_week %}
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-5 py-3 text-[12.5px] font-bold text-slate-800">{{ r.school }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.district }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.purpose|truncatechars:32 }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No school visits scheduled this week.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3) Cluster Activities This Week -->
+    <div class="card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activities This Week</h3>
+          <span class="edify-primary-soft edify-primary-text font-bold rounded-pill px-2 py-0.5 edify-text-caption tabular-nums">{{ cluster_activities_week|length }}</span>
+        </div>
+        <a href="/planning" class="text-[12px] font-bold edify-primary-text hover:underline">View all →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+            <th class="px-5 py-2.5">Cluster</th><th class="px-3 py-2.5">Activity Type</th><th class="px-3 py-2.5">Intervention Focus</th><th class="px-3 py-2.5">Date</th><th class="px-3 py-2.5 text-right">Action</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for r in cluster_activities_week %}
+            <tr class="hover:bg-slate-50/50">
+              <td class="px-5 py-3 text-[12.5px] font-bold text-slate-800">{{ r.cluster }}</td>
+              <td class="px-3 py-3"><span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold {% if r.type_tone == 'success' %}bg-emerald-50 text-emerald-700{% else %}edify-primary-soft edify-primary-text{% endif %}">{{ r.type_label }}</span></td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.focus }}</td>
+              <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
+              <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">No cluster activities scheduled this week.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  {% comment %}
+    The right sidebar and the bottom Quick Actions row used to live here:
+    a To-Do queue, an At-a-Glance donut, an Upcoming This Week list, Pending
+    Approvals, and navigation shortcuts.
+
+    Removed at the owner's request. This dashboard answers three questions and
+    no others -- what is on this week, what slipped, and which schools need
+    attention. The To-Do queue has its own page, approvals have theirs, and
+    Upcoming This Week restated the plan already shown to its left.
+  {% endcomment %}
+
+</div>
+
+
+
+</div>
+{% endblock %}

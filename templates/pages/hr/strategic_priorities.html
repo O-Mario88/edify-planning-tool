@@ -1,0 +1,239 @@
+{% extends "layouts/shell.html" %}
+{% block title %}Strategic Priorities · Edify{% endblock %}
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Strategy</p>
+      <h1 class="edify-page-title edify-page-header__title">Strategic Priorities</h1>
+      <p class="edify-page-subtitle edify-page-header__description">
+        The top of the cascade. Leadership sets direction here — purpose,
+        expected result and a weighting range — and each role is given its own
+        way of carrying it. Nobody writes an individual's milestones on this
+        page; those belong to the employee and their manager.
+      </p>
+    </div>
+    <span class="edify-badge">FY{{ fy }}</span>
+  </div>
+
+  {% if messages %}
+  {% for m in messages %}
+  <div class="rounded-surface border px-4 py-2.5 text-[13px] {% if m.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ m }}</div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── Coverage: the one thing you cannot see by reading a priority ──── #}
+  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Cascade coverage">
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Priorities this year</p>
+      <p class="mt-1 text-[15px] font-bold text-slate-800">{{ rows|length }}</p>
+      <p class="edify-text-caption text-slate-400">drafted and published</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Published but inert</p>
+      <p class="mt-1 text-[15px] font-bold {% if inert_count %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ inert_count }}</p>
+      <p class="edify-text-caption text-slate-400">reached nobody's agreement</p>
+    </article>
+    <article class="edify-surface rounded-surface border border-slate-100 p-4">
+      <p class="edify-text-caption uppercase text-slate-400">Your authority</p>
+      <p class="mt-1 text-[15px] font-bold text-slate-800">{% if can_author %}Author{% else %}Validate{% endif %}</p>
+      <p class="edify-text-caption text-slate-400">{% if can_author %}you may draft and publish{% else %}read-only; HR validates coverage{% endif %}</p>
+    </article>
+  </section>
+
+  {% if can_author %}
+  {# ── Author direction ───────────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 p-5">
+    <h2 class="text-[14px] font-bold text-slate-800">Draft a strategic priority</h2>
+    <p class="edify-text-caption text-slate-500 mt-1">
+      A priority is not bindable until every role that carries it names the
+      metric its progress comes from. Draft freely; publication is the gate.
+    </p>
+    <form method="post" action="/strategic-priorities/action" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="create_priority">
+      <input type="hidden" name="fy" value="{{ fy }}">
+      <label class="text-[12px] text-slate-500 lg:col-span-2">Title
+        <input aria-label="Title" name="title" required maxlength="255" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <label class="text-[12px] text-slate-500">Level
+        <select aria-label="Level" name="level" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          {% for level in authorable_levels %}<option value="{{ level }}">{{ level|capfirst }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="text-[12px] text-slate-500 lg:col-span-3">Strategic purpose
+        <textarea aria-label="Strategic purpose" name="strategic_purpose" required rows="2" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]"></textarea>
+      </label>
+      <label class="text-[12px] text-slate-500">Target guidance
+        <input aria-label="Target guidance" name="target_guidance" maxlength="255" placeholder="e.g. 100% of assigned schools" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <label class="text-[12px] text-slate-500">Minimum standard
+        <input aria-label="Minimum standard" name="minimum_standard" maxlength="255" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <label class="text-[12px] text-slate-500">Translates (regional parent)
+        <select aria-label="Regional parent" name="parent" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+          <option value="">— none —</option>
+          {% for p in published_parents %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="text-[12px] text-slate-500">Weight range — minimum
+        <input aria-label="Weight minimum" type="number" name="weight_min" min="0" max="100" value="10" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <label class="text-[12px] text-slate-500">Weight range — maximum
+        <input aria-label="Weight maximum" type="number" name="weight_max" min="0" max="100" value="30" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <label class="flex items-center gap-2 text-[12px] text-slate-500 self-end pb-1.5">
+        <input aria-label="Mandatory" type="checkbox" name="is_mandatory" checked class="rounded border-slate-300">
+        Mandatory — employees may not remove it
+      </label>
+      <div class="lg:col-span-3">
+        <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Draft priority</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  {# ── The priorities and their role translations ─────────────────────── #}
+  {% for row in rows %}
+  <section class="edify-surface rounded-surface border border-slate-100 p-5 space-y-4">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="edify-text-caption uppercase text-slate-400">{{ row.priority.get_level_display }}{% if row.priority.parent %} · translates “{{ row.priority.parent.title }}”{% endif %}</p>
+        <h2 class="text-[14px] font-bold text-slate-800">{{ row.priority.title }}</h2>
+        <p class="text-[13px] text-slate-600 mt-1">{{ row.priority.strategic_purpose }}</p>
+        <p class="edify-text-caption text-slate-400 mt-1">
+          Weight {{ row.priority.weight_min }}–{{ row.priority.weight_max }}% ·
+          {% if row.priority.is_mandatory %}Mandatory{% else %}Optional{% endif %}
+          {% if row.priority.target_guidance %} · {{ row.priority.target_guidance }}{% endif %}
+        </p>
+      </div>
+      <div class="text-right space-y-1">
+        <span class="edify-badge">{{ row.priority.get_status_display }}</span>
+        {% if row.priority.status == "published" %}
+        <p class="edify-text-caption {% if row.inert %}text-amber-600{% else %}text-emerald-600{% endif %}">
+          {% if row.inert %}Reached no agreements yet{% else %}On {{ row.staff_reached }} agreement{{ row.staff_reached|pluralize }}{% endif %}
+        </p>
+        {% endif %}
+        <p class="edify-text-caption text-slate-400">{{ row.distinct_metrics }} distinct measure{{ row.distinct_metrics|pluralize }} across {{ row.carried_roles }} role{{ row.carried_roles|pluralize }}</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-[13px]">
+        <caption class="sr-only">How each role carries {{ row.priority.title }}</caption>
+        <thead>
+          <tr class="text-left edify-text-caption uppercase text-slate-400">
+            <th scope="col" class="py-1.5 pr-3 font-semibold">Role</th>
+            <th scope="col" class="py-1.5 pr-3 font-semibold">Accountability</th>
+            <th scope="col" class="py-1.5 pr-3 font-semibold">Measure</th>
+            <th scope="col" class="py-1.5 pr-3 font-semibold">Outcome for that role</th>
+            <th scope="col" class="py-1.5 font-semibold">Sets priorities with</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rule in row.rules %}
+          <tr class="border-t border-slate-100">
+            <td class="py-1.5 pr-3 font-semibold text-slate-700">{{ rule.role }}</td>
+            <td class="py-1.5 pr-3 text-slate-600">{{ rule.get_accountability_display }}</td>
+            <td class="py-1.5 pr-3 text-slate-600">{% if rule.metric_key %}<code class="text-[12px]">{{ rule.metric_key }}</code>{% else %}<span class="text-slate-400">— not applicable —</span>{% endif %}</td>
+            <td class="py-1.5 pr-3 text-slate-600">{{ rule.outcome_statement|default:"—" }}</td>
+            <td class="py-1.5 text-slate-500">{{ rule.priority_manager|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="py-3 text-slate-400">No role carries this priority yet, so it reaches nobody.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if row.editable and row.priority.status != "retired" %}
+    <div class="border-t border-slate-100 pt-4 space-y-3">
+      <form method="post" action="/strategic-priorities/action" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-5 items-end">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="set_role_rule">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="priority" value="{{ row.priority.id }}">
+        <label class="text-[12px] text-slate-500">Role
+          <select aria-label="Role for {{ row.priority.title }}" name="role" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            {% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="text-[12px] text-slate-500">Accountability
+          <select aria-label="Accountability for {{ row.priority.title }}" name="accountability" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            {% for val, label in accountabilities %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="text-[12px] text-slate-500">Measure
+          <select aria-label="Measure for {{ row.priority.title }}" name="metric_key" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+            <option value="">— none (not applicable) —</option>
+            {% for key, label in metric_choices %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="text-[12px] text-slate-500">Outcome for that role
+          <input aria-label="Outcome statement for {{ row.priority.title }}" name="outcome_statement" class="mt-1 block w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+        </label>
+        <button type="submit" class="edify-primary-soft rounded-md px-3 py-2 text-[13px] font-bold">Save translation</button>
+      </form>
+
+      {% if row.priority.status == "draft" %}
+      <form method="post" action="/strategic-priorities/action" class="flex flex-wrap items-center gap-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="publish">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="priority" value="{{ row.priority.id }}">
+        <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Publish &amp; cascade</button>
+        {% if not row.publishable %}
+        <span class="text-[12px] text-amber-600">A carrying role still has no measure — publishing will be refused until every one names it.</span>
+        {% endif %}
+      </form>
+      {% endif %}
+    </div>
+    {% elif can_author %}
+    <p class="border-t border-slate-100 pt-3 edify-text-caption text-slate-400">
+      {{ row.priority.get_level_display }} priorities are authored at that
+      level. You can see how it was translated; you cannot rewrite it here.
+    </p>
+    {% endif %}
+  </section>
+  {% empty %}
+  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center">
+    <p class="text-[14px] font-semibold text-slate-700">No strategic priorities for FY{{ fy }}.</p>
+    <p class="edify-text-caption text-slate-500 mt-1">
+      Until leadership publishes one, the new-year agreement stays empty and
+      asks the employee and manager to set priorities. No activity target is
+      invented from a hardcoded table.
+    </p>
+  </div>
+  {% endfor %}
+
+  {# ── Who holds the conversation ─────────────────────────────────────── #}
+  <section class="edify-surface rounded-surface border border-slate-100 p-5">
+    <h2 class="text-[14px] font-bold text-slate-800">Who sets priorities with whom</h2>
+    <p class="edify-text-caption text-slate-500 mt-1">
+      Deliberately separate from who authors strategy: changing a reporting
+      line must not silently re-author direction.
+    </p>
+    <div class="mt-3 overflow-x-auto">
+      <table class="w-full text-[13px]">
+        <caption class="sr-only">Priority-setting conversation routing by role</caption>
+        <thead>
+          <tr class="text-left edify-text-caption uppercase text-slate-400">
+            <th scope="col" class="py-1.5 pr-3 font-semibold">Role</th>
+            <th scope="col" class="py-1.5 font-semibold">Sets priorities with</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for role, manager in manager_routing %}
+          <tr class="border-t border-slate-100">
+            <td class="py-1.5 pr-3 font-semibold text-slate-700">{{ role }}</td>
+            <td class="py-1.5 text-slate-600">{{ manager }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

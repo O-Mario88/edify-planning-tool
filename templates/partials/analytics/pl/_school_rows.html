@@ -1,0 +1,31 @@
+{% load table_pagination %}
+{% load frontend_filters %}
+<div class="rounded-surface border border-slate-100 overflow-hidden">
+  <div class="overflow-x-auto">
+  {% paginate schools "schools_page" as schools_pager %}
+<table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+        <th class="py-2 px-3">School</th><th class="py-2 px-3">District</th><th class="py-2 px-3">SSA Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-50">
+      {% for s in schools_pager.rows %}
+      <tr>
+        <td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ s.name }}</td>
+        <td class="py-2 px-3 edify-text-caption text-slate-500">{% if s.district_id %}{{ s.district.name }}{% else %}—{% endif %}</td>
+        <td class="py-2 px-3">
+          <span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
+            {% if s.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-600{% else %}bg-amber-50 text-amber-600{% endif %}">
+            {{ s.current_fy_ssa_status|replace_underscore|title|default:"Not Done" }}
+          </span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="py-6 text-center text-[12px] text-slate-400 font-semibold">No schools in this view.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
+  </div>
+</div>

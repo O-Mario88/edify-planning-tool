@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ document.title }} — Edify{% endblock %}
+
+{% block feature_css %}
+<style>
+  :root {
+    --agreement-paper: var(--edify-surface);
+    --agreement-ink: var(--edify-text);
+    --agreement-muted: var(--edify-text-muted);
+    --agreement-navy: var(--edify-primary);
+    --agreement-blue: var(--edify-accent);
+    --agreement-rule: var(--edify-border);
+    --agreement-supporting-ink: var(--edify-text-secondary, var(--edify-text));
+  }
+  body {
+    background: var(--agreement-paper);
+  }
+  .agreement-page {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(23, 105, 170, .055), transparent 28rem),
+      var(--agreement-paper);
+    color: var(--agreement-ink);
+  }
+  .agreement-masthead {
+    background: linear-gradient(115deg, var(--edify-primary) 0%, var(--edify-primary-strong, var(--edify-primary)) 58%, var(--edify-accent) 100%);
+  }
+  .agreement-logo {
+    filter: brightness(0) invert(1);
+  }
+  .agreement-document {
+    color: var(--agreement-ink);
+    font-family: var(--edify-font-sans);
+    font-size: clamp(1rem, .97rem + .12vw, 1.08rem);
+    line-height: 1.76;
+  }
+  .agreement-document > div {
+    display: grid;
+    gap: 1.3rem;
+  }
+  .agreement-document h2 {
+    margin-top: 2.7rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--agreement-rule);
+    color: var(--agreement-navy) !important;
+    font-family: var(--edify-font-sans);
+    font-size: clamp(1.25rem, 1.15rem + .35vw, 1.55rem) !important;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.25;
+  }
+  .agreement-document section:first-child h2 {
+    margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
+  }
+  .agreement-document p,
+  .agreement-document li {
+    color: var(--agreement-ink);
+    overflow-wrap: anywhere;
+  }
+  .agreement-document ol li {
+    border: 0 !important;
+    border-left: 2px solid var(--agreement-blue) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: .35rem 0 .35rem 1.25rem !important;
+  }
+  .agreement-document ol p {
+    font-family: var(--edify-font-sans);
+    font-size: .9rem;
+    line-height: 1.65;
+  }
+  .agreement-creed {
+    font-family: var(--edify-font-sans);
+  }
+  .agreement-creed__text {
+    color: var(--agreement-ink);
+    font-size: clamp(1.22rem, 1.1rem + .55vw, 1.62rem);
+    line-height: 1.82;
+  }
+  .agreement-page .agreement-document .safeguarding-policy {
+    display: block;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section {
+    margin: 3.25rem 0 1.15rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--agreement-rule);
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section > h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--agreement-navy) !important;
+    font-size: clamp(1.25rem, 1.16rem + .3vw, 1.5rem) !important;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.3;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > p {
+    margin: 0 0 1.05rem;
+    color: var(--agreement-supporting-ink);
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:first-child + p {
+    color: var(--agreement-navy);
+    font-size: clamp(1.06rem, 1.01rem + .16vw, 1.16rem);
+    font-weight: 560;
+    line-height: 1.78;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > p.pl-5 {
+    position: relative;
+    margin-bottom: .7rem;
+    padding-left: 1.4rem;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:last-child {
+    margin-top: 3.75rem;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol {
+    counter-reset: safeguarding-step;
+    margin-top: 1.75rem;
+    padding-left: 0;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li {
+    counter-increment: safeguarding-step;
+    position: relative;
+    margin-left: .95rem;
+    padding: .25rem 0 1.55rem 2.25rem !important;
+    border-left: 1px solid var(--agreement-rule) !important;
+    background: transparent !important;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li:last-child {
+    padding-bottom: .25rem !important;
+    border-left-color: transparent !important;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li::before {
+    content: counter(safeguarding-step);
+    position: absolute;
+    top: .1rem;
+    left: -.9rem;
+    display: flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--agreement-rule);
+    border-radius: 999px;
+    background: var(--agreement-paper);
+    color: var(--agreement-blue);
+    font-size: .75rem;
+    font-weight: 800;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li p:first-child {
+    margin-top: .1rem;
+    color: var(--agreement-blue) !important;
+    font-size: .75rem;
+    line-height: 1.4;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li p:last-child {
+    margin-top: .45rem;
+    color: var(--agreement-supporting-ink);
+    font-size: .94rem;
+    line-height: 1.68;
+  }
+  .agreement-decision {
+    background: linear-gradient(135deg, var(--edify-primary) 0%, var(--edify-accent) 100%);
+  }
+  .agreement-action {
+    min-height: 3.25rem;
+    border-radius: .7rem;
+    font-size: .875rem;
+    font-weight: 800;
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+  .agreement-action:hover {
+    transform: translateY(-1px);
+  }
+  .agreement-action--primary {
+    background: var(--edify-surface);
+    color: var(--edify-primary);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+  }
+  .agreement-action--primary:hover {
+    background: var(--edify-surface-muted);
+  }
+  .agreement-action--danger {
+    border: 1px solid rgba(255,255,255,.35);
+    color: var(--edify-on-accent);
+  }
+  .agreement-progress__step--active {
+    background: var(--edify-surface);
+    color: var(--edify-primary);
+  }
+  .agreement-kicker {
+    color: var(--agreement-blue);
+  }
+  .agreement-rule {
+    background: var(--agreement-rule);
+  }
+  .agreement-rule__diamond {
+    background: var(--agreement-blue);
+  }
+  .agreement-quote {
+    border-color: var(--agreement-blue);
+    color: var(--agreement-supporting-ink);
+  }
+  .agreement-response-control {
+    background: var(--edify-surface);
+    color: var(--agreement-ink);
+  }
+  @media print {
+    .agreement-masthead nav,
+    .agreement-progress,
+    .agreement-decision {
+      display: none !important;
+    }
+    .agreement-page {
+      background: var(--edify-surface);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agreement-page">
+  <header class="agreement-masthead edify-inverse-surface text-white">
+    <nav class="border-b border-white/15 px-4 py-4 sm:px-6" aria-label="Agreement navigation">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <img src="{% static 'images/logo.png' %}" alt="Edify" class="agreement-logo h-8 w-auto">
+          <span class="hidden h-7 w-px bg-white/25 sm:block"></span>
+          <span class="hidden text-[12px] font-semibold tracking-wide text-white/75 sm:block">Planning &amp; Monitoring</span>
+        </div>
+        <form method="post" action="/logout">
+          {% csrf_token %}
+          <button type="submit" class="min-h-10 rounded-control px-3 text-[12px] font-bold text-white/80 hover:bg-white/10 hover:text-white">Sign out</button>
+        </form>
+      </div>
+    </nav>
+
+    <div class="mx-auto max-w-4xl px-5 pb-12 pt-10 text-center sm:px-8 sm:pb-16 sm:pt-14">
+      <div class="agreement-progress mx-auto mb-8 flex max-w-md items-center justify-center gap-3" aria-label="Agreement progress">
+        <span class="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-extrabold {% if canonical.kind == 'safeguarding' %}agreement-progress__step--active{% else %}bg-white/15 text-white/70{% endif %}">1</span>
+        <span class="h-px w-16 bg-white/30"></span>
+        <span class="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-extrabold {% if canonical.kind == 'creed' %}agreement-progress__step--active{% else %}bg-white/15 text-white/70{% endif %}">2</span>
+      </div>
+      <p class="text-[12px] font-extrabold uppercase tracking-[.2em] text-sky-200">
+        {% if canonical.kind == "creed" %}Step 2 of 2 · Our shared belief{% else %}Step 1 of 2 · Safeguarding commitment{% endif %}
+      </p>
+      <h1 class="edify-inverse-heading mx-auto mt-4 max-w-3xl text-[34px] font-extrabold leading-[1.08] tracking-[-.035em] text-white sm:text-[48px] edify-page-title">{{ document.title }}</h1>
+      <p class="mx-auto mt-5 max-w-2xl text-[14px] font-medium leading-7 text-slate-100">{{ document.description }}</p>
+      <div class="mt-6 flex items-center justify-center gap-3 text-[12px] font-bold text-white/65">
+        <span>Version {{ version.version_number }}</span>
+        <span aria-hidden="true">•</span>
+        <span>Required before workspace access</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <article class="agreement-document mx-auto max-w-[780px] px-5 py-12 sm:px-8 sm:py-16">
+      {% if canonical.kind == "creed" %}
+      <div class="agreement-creed">
+        <div class="mb-14 text-center">
+          <p class="agreement-kicker text-[12px] font-extrabold uppercase tracking-[.2em]">We Believe</p>
+          <div class="agreement-rule__diamond mx-auto mt-4 h-1 w-12 rounded-full"></div>
+        </div>
+        <div class="space-y-10">
+          {% for verse in canonical.scripture %}
+          <blockquote class="agreement-quote border-l-2 pl-6 sm:pl-8">
+            <p class="text-[1.15rem] italic leading-8 sm:text-[1.28rem]">{{ verse.text }}</p>
+            <cite class="mt-3 block font-sans text-[12px] font-extrabold uppercase tracking-[.14em] text-[var(--agreement-muted)]">{{ verse.reference }}</cite>
+          </blockquote>
+          {% endfor %}
+        </div>
+        <div class="my-14 flex items-center gap-4" aria-hidden="true">
+          <span class="agreement-rule h-px flex-1"></span>
+          <span class="agreement-rule__diamond h-2 w-2 rotate-45"></span>
+          <span class="agreement-rule h-px flex-1"></span>
+        </div>
+        <section>
+          <p class="agreement-kicker font-sans text-[12px] font-extrabold uppercase tracking-[.2em]">The Apostles’ Creed</p>
+          <h2 class="mt-3 !border-0 !p-0 text-[30px] !text-[var(--agreement-navy)] sm:text-[38px]">I Believe</h2>
+          <p class="agreement-creed__text mt-7">{{ canonical.creed }}</p>
+        </section>
+      </div>
+      {% else %}
+        {% include "pages/documents/_safeguarding_policy_source.html" %}
+      {% endif %}
+    </article>
+
+    {% if acknowledgement and acknowledgement.state == "pending" %}
+    <section class="agreement-decision edify-inverse-surface mt-4 px-5 py-12 text-white sm:px-8 sm:py-14" aria-labelledby="agreement-response-title">
+      <div class="mx-auto max-w-[780px]">
+        <p class="text-[12px] font-extrabold uppercase tracking-[.18em] text-sky-200">
+          {% if canonical.kind == "creed" %}Final step{% else %}Your safeguarding commitment{% endif %}
+        </p>
+        <h2 id="agreement-response-title" class="edify-inverse-heading mt-3 max-w-2xl text-[24px] font-extrabold leading-tight tracking-[-.025em] text-white sm:text-[30px]">
+          {% if canonical.kind == "creed" %}Do you affirm this shared belief?{% else %}{{ document.agreement_statement }}{% endif %}
+        </h2>
+        <p class="mt-3 max-w-2xl text-[13px] font-medium leading-6 text-white/70">
+          {% if canonical.kind == "creed" %}Selecting “I Believe” completes your first-time agreement and opens your Edify dashboard.{% else %}Accepting continues to the Apostles’ Creed. If you do not accept, the next step remains locked.{% endif %}
+        </p>
+
+        <form method="post" action="/api/documents/acknowledge/{{ acknowledgement.id }}" class="mt-7">
+          {% csrf_token %}
+          <button type="submit" name="choice" value="agree" class="agreement-action agreement-action--primary inline-flex w-full items-center justify-center gap-2 px-6 sm:w-auto">
+            {% if canonical.kind == "creed" %}
+              I Believe <span aria-hidden="true">→</span> Enter Edify
+            {% else %}
+              I Accept <span aria-hidden="true">→</span> Continue
+            {% endif %}
+          </button>
+        </form>
+
+        <details class="mt-5 max-w-2xl border-t border-white/15 pt-5">
+          <summary class="cursor-pointer text-[12px] font-bold text-white/70 hover:text-white">
+            {% if canonical.kind == "creed" %}I do not believe this statement{% else %}I cannot accept this policy{% endif %}
+          </summary>
+          <form method="post" action="/api/documents/acknowledge/{{ acknowledgement.id }}" class="mt-4 space-y-3">
+            {% csrf_token %}
+            <label class="block">
+              <span class="text-[12px] font-extrabold uppercase tracking-wider text-white/60">Tell HR what needs clarification</span>
+              <textarea name="comment" rows="3" required placeholder="A reason is required when you do not accept."
+                        class="agreement-response-control mt-2 w-full rounded-control border border-white/25 px-3 py-2.5 text-[13px] font-medium placeholder:text-slate-400"></textarea>
+            </label>
+            <button type="submit" name="choice" value="disagree" class="agreement-action agreement-action--danger inline-flex w-full items-center justify-center px-5 sm:w-auto">
+              Submit without proceeding
+            </button>
+          </form>
+        </details>
+      </div>
+    </section>
+    {% elif acknowledgement and acknowledgement.state == "disagreed" %}
+    <section class="agreement-decision edify-inverse-surface mt-4 px-5 py-12 text-white sm:px-8">
+      <div class="mx-auto max-w-[780px]">
+        <p class="text-[12px] font-extrabold uppercase tracking-[.18em] text-amber-200">Access remains locked</p>
+        <h2 class="edify-inverse-heading mt-3 text-[25px] font-extrabold text-white">You have not accepted this document.</h2>
+        <p class="mt-2 text-[13px] font-medium text-white/70">You cannot continue to the next agreement or enter Edify until all required documents are accepted.</p>
+        <a href="/policy-agreement/restricted" class="agreement-action agreement-action--primary mt-5 inline-flex min-h-11 items-center rounded-control px-5 text-[13px] font-extrabold">Review and change my response</a>
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

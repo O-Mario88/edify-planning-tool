@@ -1,0 +1,162 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Settings · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[900px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Account</p>
+      <h1 class="edify-page-title">Settings</h1>
+      <p>Your account, security and appearance preferences.</p>
+    </div>
+  </div>
+
+  {# Identity is shown in the top-right avatar; Settings keeps account actions. #}
+  <section class="card p-5 space-y-3" aria-labelledby="settings-account-title">
+    <h2 id="settings-account-title" class="text-sm font-semibold">Account security</h2>
+    <div class="grid grid-cols-1 gap-3">
+      <div class="settings-detail-tile">
+        <p class="settings-detail-tile__label">Email</p>
+        <p class="settings-detail-tile__value truncate">{{ user.email }}</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2 pt-1">
+      <a href="/profile" class="btn h-9 inline-flex items-center">View profile</a>
+      <a href="/change-password" class="btn btn-primary h-9 inline-flex items-center">Change password</a>
+    </div>
+  </section>
+
+  <section class="card p-5 space-y-3" aria-labelledby="settings-catalogue-title">
+    <h2 id="settings-catalogue-title" class="text-sm font-semibold">Programme master data</h2>
+    <p class="text-sm text-[var(--edify-text-muted)]">Review the governed Activities used by SSA-led Planning, scheduling, evidence and analytics.</p>
+    <a href="/settings/activity-catalogue/" class="btn h-9 inline-flex items-center">Open Activity Catalogue</a>
+  </section>
+
+  {# ── Two-step verification ─────────────────────────────────────────────── #}
+  <section class="card p-5 space-y-3" aria-labelledby="settings-2sv-title">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h2 id="settings-2sv-title" class="text-sm font-semibold">Two-step verification</h2>
+        <p class="text-sm text-[var(--edify-text-muted)] mt-1">
+          After your password, we send a single-use code to confirm it is you. It means a
+          stolen password on its own is not enough to reach your workspace.
+        </p>
+      </div>
+      <span class="pill {% if mfa_in_force %}pill-success{% else %}pill-neutral{% endif %} shrink-0">
+        {% if mfa_in_force %}On{% else %}Off{% endif %}
+      </span>
+    </div>
+
+    <form method="post" action="{% url 'frontend:mfa_settings' %}" class="space-y-3"
+          x-data="{ enabled: {{ mfa_in_force|yesno:'true,false' }} }">
+      {% csrf_token %}
+
+      <label class="flex items-center gap-2.5">
+        <input type="checkbox" name="mfa_enabled" x-model="enabled"
+               {% if mfa_required_by_policy %}disabled{% endif %}
+               {% if mfa_in_force %}checked{% endif %}>
+        <span class="text-sm">Ask for a code when I sign in</span>
+      </label>
+
+      {% if mfa_required_by_policy %}
+        {% comment %}
+          The checkbox above is disabled, so the browser will not submit it —
+          this keeps the posted state honest rather than silently turning the
+          factor off for anyone who saves this form.
+        {% endcomment %}
+        <input type="hidden" name="mfa_enabled" value="on">
+        <p class="text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
+          Your organisation requires two-step verification, so this cannot be turned off.
+          You can still choose where the code is sent.
+        </p>
+      {% endif %}
+
+      <fieldset class="space-y-2" x-show="enabled" x-cloak>
+        <legend class="text-[length:var(--edify-text-label-size)] font-semibold">Send my code by</legend>
+
+        <label class="flex items-start gap-2.5">
+          <input type="radio" name="mfa_channel" value="email" class="mt-0.5"
+                 {% if mfa_channel != 'sms' %}checked{% endif %}>
+          <span class="text-sm">
+            Email
+            <span class="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">{{ mfa_email_hint }}</span>
+          </span>
+        </label>
+
+        <label class="flex items-start gap-2.5 {% if not mfa_sms_available %}opacity-60{% endif %}">
+          <input type="radio" name="mfa_channel" value="sms" class="mt-0.5"
+                 {% if not mfa_sms_available %}disabled{% endif %}
+                 {% if mfa_channel == 'sms' %}checked{% endif %}>
+          <span class="text-sm">
+            Text message
+            <span class="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
+              {% if mfa_sms_available %}{{ mfa_phone_hint }}{% else %}{{ mfa_sms_blocked_reason }}{% endif %}
+            </span>
+          </span>
+        </label>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary h-9 inline-flex items-center">Save</button>
+    </form>
+  </section>
+
+  {# ── Appearance (drives the real edify_theme preference in base.html) ──── #}
+  <section class="card p-5 space-y-3" aria-labelledby="settings-appearance-title">
+    <h2 id="settings-appearance-title" class="text-sm font-semibold">Appearance</h2>
+    <p class="text-sm text-[var(--edify-text-muted)]">Choose the workspace that best suits your environment. Your preference is stored on this device.</p>
+    <div class="appearance-theme-grid" role="group" aria-label="Workspace color theme">
+      <button type="button" @click="$store.theme.setTheme('system')"
+              :aria-pressed="$store.theme.preference === 'system'"
+              :class="$store.theme.preference === 'system' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--system" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">System</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Matches your device appearance</span>
+      </button>
+      <button type="button" @click="$store.theme.setTheme('light')"
+              :aria-pressed="$store.theme.preference === 'light'"
+              :class="$store.theme.preference === 'light' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--light" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Light</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Clean and focused</span>
+      </button>
+      <button type="button" @click="$store.theme.setTheme('blue')"
+              :aria-pressed="$store.theme.preference === 'blue'"
+              :class="$store.theme.preference === 'blue' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--blue" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Edify Blue</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">Image-backed glass workspace</span>
+      </button>
+      <button type="button" @click="$store.theme.setTheme('dark')"
+              :aria-pressed="$store.theme.preference === 'dark'"
+              :class="$store.theme.preference === 'dark' ? 'is-active' : ''"
+              class="appearance-theme-option">
+        <span class="appearance-theme-preview appearance-theme-preview--dark" aria-hidden="true"></span>
+        <span class="text-sm font-semibold">Night black</span>
+        <span class="block text-xs text-[var(--edify-text-muted)] mt-0.5">True-black, low-glare and OLED-friendly</span>
+      </button>
+    </div>
+  </section>
+
+  {# ── Notifications & session ───────────────────────────────────────────── #}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Notifications</h2>
+      <p class="edify-text-caption text-slate-500">In-app notifications are generated automatically by workflow events — approvals, returns, escalations and To-Dos.</p>
+      <a href="/notifications" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover inline-block pt-1">Open notification center →</a>
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Session</h2>
+      <p class="edify-text-caption text-slate-500">Signed in as {{ user.email }}.</p>
+      <p class="edify-text-caption text-slate-500">You stay signed in while you are working. After {{ session_idle_minutes }} minutes without activity you will be signed out.</p>
+      <p class="edify-text-caption text-slate-500">Use the avatar in the upper-right corner to log out.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

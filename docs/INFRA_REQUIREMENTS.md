@@ -1,5 +1,9 @@
 # Phase 12 — Infrastructure Requirements
 
+> **STALE — do not use for deployment.** This document describes the retired
+> NestJS/Next.js stack (Prisma, S3 evidence, Twilio). The current Django
+> deployment path is **DEPLOY.md** + `docs/scheduler-deployment.md`.
+
 This document is the bill-of-materials for the real backend that the
 in-memory action layer will swap onto. Every item lists:
 

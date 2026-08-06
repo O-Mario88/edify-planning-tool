@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Dashboard — Redesign Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+  html, body { font-family: 'Outfit', sans-serif; }
+  :root {
+    --bg-page: #f8fafc;
+    --bg-sidebar: #0f172a;
+    --bg-sidebar-active: #1e293b;
+    --border: #e2e8f0;
+  }
+  body { background: var(--bg-page); }
+  .app-sidebar { background: var(--bg-sidebar); }
+  .edify-topbar { background: #ffffff; border-bottom: 1px solid var(--border); }
+  /* ---- TYPE SCALE (the fix): only 6 sizes ----
+     caption 11px | body-sm 12px | body 13px | h3 15px | stat 22px | h1 24px   */
+  .t-caption { font-size: 11px; }
+  .t-body-sm { font-size: 12px; }
+  .t-body    { font-size: 13px; }
+  .t-h3      { font-size: 15px; }
+  .t-stat    { font-size: 22px; }
+  .t-h1      { font-size: 24px; }
+  /* micro scrollbars */
+  ::-webkit-scrollbar { height: 6px; width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body class="h-full text-slate-700">
+<div x-data="{ sidebarOpen:false, tab:'performance' }" class="edify-shell h-full flex overflow-hidden">
+
+  <!-- ============ SIDEBAR (faux) ============ -->
+  <aside class="app-sidebar hidden md:flex flex-col w-60 shrink-0 text-slate-300">
+    <div class="h-16 flex items-center gap-2.5 px-5 border-b border-white/5">
+      <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-bold t-body">E</div>
+      <span class="text-white font-semibold t-body tracking-tight">Edify</span>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5 t-body-sm">
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10 text-white font-semibold"><span class="h-4 w-4">▣</span>Dashboard</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">⌖</span>My Plan</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">◎</span>Activities</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">◇</span>Schools</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">⬡</span>Clusters</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">≣</span>Planning</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">$</span>Budget</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">⛁</span>Reports</a>
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5"><span class="h-4 w-4">⊚</span>Staff</a>
+    </nav>
+    <div class="p-3 border-t border-white/5 t-body-sm">
+      <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-400"><span>⚙</span>Settings</a>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Topbar -->
+    <header class="edify-topbar shrink-0 h-16 flex items-center gap-4 px-6">
+      <div class="relative max-w-md w-full hidden sm:block">
+        <input placeholder="Search schools, staff, districts…" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 t-body-sm focus:bg-white focus:outline-none" style="padding-left:36px">
+        <svg class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <div class="flex items-center gap-3 shrink-0 ml-auto">
+        <button class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center relative">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14v-3a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+          <span class="absolute top-1 right-1 h-4 w-4 bg-blue-600 text-white t-caption rounded-full flex items-center justify-center">3</span>
+        </button>
+        <div class="h-9 w-9 rounded-full bg-slate-800 text-white t-body-sm font-semibold flex items-center justify-center">PL</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto bg-[var(--bg-page)]">
+      <div class="p-6 max-w-[1500px] mx-auto space-y-6">
+
+        <!-- ================= HEADER ================= -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <h1 class="t-h1 font-semibold text-slate-800 tracking-tight leading-none">Program Lead Dashboard</h1>
+            <p class="t-body-sm text-slate-500 mt-1.5">Team execution, approvals, targets, and operational performance.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 t-body-sm font-bold text-slate-500">
+              <span class="t-caption uppercase tracking-wider">FY</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer text-slate-700 font-semibold"><option>FY 2025</option><option selected>FY 2026</option></select>
+            </div>
+            <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg border border-slate-200 t-body-sm font-bold text-slate-500">
+              <span class="t-caption uppercase tracking-wider">Activity</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer text-slate-700 font-semibold"><option>All</option><option>School Visits</option><option>Trainings</option></select>
+            </div>
+            <span class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 t-body-sm font-semibold text-slate-500">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>24 CCEOs · 700 schools
+            </span>
+          </div>
+        </div>
+
+        <!-- ================= KPI STRIP ================= -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- KPI card template (×4) -->
+          <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 hover:shadow transition-all cursor-pointer">
+            <div class="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg>
+            </div>
+            <p class="t-caption font-bold uppercase tracking-wider text-slate-400 mt-3 leading-tight">Verified Activities</p>
+            <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">186</p>
+            <p class="t-caption font-semibold text-slate-400 mt-1">of 240 planned</p>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 hover:shadow transition-all cursor-pointer">
+            <div class="h-9 w-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg>
+            </div>
+            <p class="t-caption font-bold uppercase tracking-wider text-slate-400 mt-3 leading-tight">Awaiting Approval</p>
+            <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">7</p>
+            <p class="t-caption font-semibold text-slate-400 mt-1">2 weekly funds · 5 plans</p>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 hover:shadow transition-all cursor-pointer">
+            <div class="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg>
+            </div>
+            <p class="t-caption font-bold uppercase tracking-wider text-slate-400 mt-3 leading-tight">At-Risk Schools</p>
+            <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">12</p>
+            <p class="t-caption font-semibold text-slate-400 mt-1">↑ 3 since last week</p>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 hover:shadow transition-all cursor-pointer">
+            <div class="h-9 w-9 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1"/></svg>
+            </div>
+            <p class="t-caption font-bold uppercase tracking-wider text-slate-400 mt-3 leading-tight">Fund Utilization</p>
+            <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">68%</p>
+            <p class="t-caption font-semibold text-slate-400 mt-1">₵186K of ₵273K</p>
+          </div>
+        </div>
+
+        <!-- ================= LEADERSHIP ATTENTION ================= -->
+        <div>
+          <h2 class="t-h3 font-bold text-slate-700 tracking-tight mb-3">Leadership Attention</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="rounded-xl border bg-rose-50/50 border-rose-100 p-4">
+              <div class="flex items-start gap-3">
+                <span class="h-9 w-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg>
+                </span>
+                <div>
+                  <p class="t-body font-bold text-rose-700">3 CCEOs behind on Q3 target</p>
+                  <p class="t-body-sm text-slate-600 mt-1 leading-snug">Grace A., John M., and Sarah K. are under 60% verified activities for the quarter.</p>
+                  <button class="inline-flex items-center gap-1 t-body-sm font-bold mt-2.5 text-rose-600 hover:underline">Review coaching plan →</button>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border bg-amber-50/50 border-amber-100 p-4">
+              <div class="flex items-start gap-3">
+                <span class="h-9 w-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1"/></svg>
+                </span>
+                <div>
+                  <p class="t-body font-bold text-amber-700">Fund request bottleneck</p>
+                  <p class="t-body-sm text-slate-600 mt-1 leading-snug">7 requests aged 5+ days. Field staff may delay activities waiting on approval.</p>
+                  <button class="inline-flex items-center gap-1 t-body-sm font-bold mt-2.5 text-amber-600 hover:underline">Open approval queue →</button>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border bg-amber-50/50 border-amber-100 p-4">
+              <div class="flex items-start gap-3">
+                <span class="h-9 w-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0 10 10 0 003.4 6.6L12 22z"/><circle cx="12" cy="10" r="2.4"/></svg>
+                </span>
+                <div>
+                  <p class="t-body font-bold text-amber-700">Route conflicts this week</p>
+                  <p class="t-body-sm text-slate-600 mt-1 leading-snug">2 CCEOs have overlapping visits in Mukono district on Thursday — capacity overload risk.</p>
+                  <button class="inline-flex items-center gap-1 t-body-sm font-bold mt-2.5 text-amber-600 hover:underline">Resolve conflicts →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= TABBED SECTION (THE FIX) ================= -->
+        <div x-data="{ tab: 'performance' }">
+          <!-- Tab bar -->
+          <div class="flex items-center gap-1 border-b border-slate-200 mb-5">
+            <button @click="tab='performance'" :class="tab==='performance' ? 'border-emerald-500 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-2.5 t-body font-bold border-b-2 transition-colors">Performance</button>
+            <button @click="tab='operations'" :class="tab==='operations' ? 'border-emerald-500 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-2.5 t-body font-bold border-b-2 transition-colors">Operations</button>
+            <button @click="tab='finance'" :class="tab==='finance' ? 'border-emerald-500 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'" class="px-4 py-2.5 t-body font-bold border-b-2 transition-colors">Finance</button>
+          </div>
+
+          <!-- ====== TAB 1: PERFORMANCE ====== -->
+          <div x-show="tab==='performance'" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <!-- Team Performance Chart (wider: 7 cols) -->
+            <div class="lg:col-span-7 bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">Team Performance Overview</h2>
+                <span class="t-body-sm font-semibold text-slate-400">FY 2026</span>
+              </div>
+              <div id="perfChart" class="h-[300px] w-full"></div>
+            </div>
+            <!-- Personal Targets (5 cols) -->
+            <div class="lg:col-span-5 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
+              <h2 class="t-h3 font-bold text-slate-800 tracking-tight">My Personal Targets</h2>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-xl border border-slate-100 p-3.5 flex items-center justify-between">
+                  <div>
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">School Visits</p>
+                    <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">42</p>
+                    <p class="t-caption font-semibold text-slate-400">of 60</p>
+                  </div>
+                  <div class="relative h-12 w-12 shrink-0">
+                    <div class="absolute inset-0 rounded-full" style="background: conic-gradient(#10b981 70%, #e5e7eb 0);"></div>
+                    <div class="absolute inset-[3px] rounded-full bg-white flex items-center justify-center t-caption font-bold text-emerald-700">70%</div>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-slate-100 p-3.5 flex items-center justify-between">
+                  <div>
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Trainings</p>
+                    <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">8</p>
+                    <p class="t-caption font-semibold text-slate-400">of 12</p>
+                  </div>
+                  <div class="relative h-12 w-12 shrink-0">
+                    <div class="absolute inset-0 rounded-full" style="background: conic-gradient(#10b981 67%, #e5e7eb 0);"></div>
+                    <div class="absolute inset-[3px] rounded-full bg-white flex items-center justify-center t-caption font-bold text-emerald-700">67%</div>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-slate-100 p-3.5 flex items-center justify-between">
+                  <div>
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Cluster Mtgs</p>
+                    <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">15</p>
+                    <p class="t-caption font-semibold text-slate-400">of 20</p>
+                  </div>
+                  <div class="relative h-12 w-12 shrink-0">
+                    <div class="absolute inset-0 rounded-full" style="background: conic-gradient(#f59e0b 75%, #e5e7eb 0);"></div>
+                    <div class="absolute inset-[3px] rounded-full bg-white flex items-center justify-center t-caption font-bold text-amber-700">75%</div>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-slate-100 p-3.5 flex items-center justify-between">
+                  <div>
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Partner Acts</p>
+                    <p class="t-stat font-bold text-slate-800 tabular-nums leading-none mt-1">3</p>
+                    <p class="t-caption font-semibold text-slate-400">of 8</p>
+                  </div>
+                  <div class="relative h-12 w-12 shrink-0">
+                    <div class="absolute inset-0 rounded-full" style="background: conic-gradient(#f43f5e 38%, #e5e7eb 0);"></div>
+                    <div class="absolute inset-[3px] rounded-full bg-white flex items-center justify-center t-caption font-bold text-rose-700">38%</div>
+                  </div>
+                </div>
+              </div>
+              <div class="pt-3 border-t border-slate-50">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="t-body-sm font-bold text-slate-500">Overall Achievement</span>
+                  <span class="t-body font-bold text-emerald-700 tabular-nums">68%</span>
+                </div>
+                <div class="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-emerald-500" style="width: 68%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== TAB 2: OPERATIONS ====== -->
+          <div x-show="tab==='operations'" x-transition style="display:none">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <!-- CCEO Performance (wider now: 7 cols) -->
+              <div class="lg:col-span-7 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">CCEO Performance</h2>
+                <div class="overflow-x-auto">
+                  <!-- dropped from 9 → 6 columns: removed Route, Risk-color, Verified-% -->
+                  <table class="w-full text-left border-collapse min-w-[520px]">
+                    <thead>
+                      <tr class="t-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                        <th class="py-2 px-2">CCEO</th>
+                        <th class="py-2 px-2">Region</th>
+                        <th class="py-2 px-2 text-center">Schools</th>
+                        <th class="py-2 px-2 text-center">Verified</th>
+                        <th class="py-2 px-2 text-center">Backlog</th>
+                        <th class="py-2 px-2 text-center">Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                      <tr class="hover:bg-slate-50/60 cursor-pointer">
+                        <td class="py-3 px-2"><div class="flex items-center gap-2"><span class="h-7 w-7 rounded-full bg-slate-800 text-white t-caption font-bold flex items-center justify-center">GA</span><span class="t-body-sm font-semibold text-slate-700">Grace Acen</span></div></td>
+                        <td class="py-3 px-2 t-body-sm text-slate-500">Mukono</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-slate-600 tabular-nums">42</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-emerald-600 tabular-nums">38</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-bold text-slate-500 tabular-nums">2</td>
+                        <td class="py-3 px-2 text-center"><span class="t-caption font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Low</span></td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/60 cursor-pointer">
+                        <td class="py-3 px-2"><div class="flex items-center gap-2"><span class="h-7 w-7 rounded-full bg-slate-800 text-white t-caption font-bold flex items-center justify-center">JM</span><span class="t-body-sm font-semibold text-slate-700">John Mukasa</span></div></td>
+                        <td class="py-3 px-2 t-body-sm text-slate-500">Wakiso</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-slate-600 tabular-nums">38</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-amber-600 tabular-nums">19</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-bold text-rose-500 tabular-nums">6</td>
+                        <td class="py-3 px-2 text-center"><span class="t-caption font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">High</span></td>
+                      </tr>
+                      <tr class="hover:bg-slate-50/60 cursor-pointer">
+                        <td class="py-3 px-2"><div class="flex items-center gap-2"><span class="h-7 w-7 rounded-full bg-slate-800 text-white t-caption font-bold flex items-center justify-center">SK</span><span class="t-body-sm font-semibold text-slate-700">Sarah K.</span></div></td>
+                        <td class="py-3 px-2 t-body-sm text-slate-500">Jinja</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-slate-600 tabular-nums">35</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-semibold text-amber-600 tabular-nums">21</td>
+                        <td class="py-3 px-2 text-center t-body-sm font-bold text-amber-600 tabular-nums">4</td>
+                        <td class="py-3 px-2 text-center"><span class="t-caption font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Medium</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Approval Queue (5 cols) -->
+              <div class="lg:col-span-5 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h2 class="t-h3 font-bold text-slate-800 tracking-tight">Approval Queue</h2>
+                  <span class="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-amber-100 text-amber-600 t-caption font-bold">7</span>
+                </div>
+                <div class="space-y-2">
+                  <div class="rounded-lg border border-slate-100 p-3">
+                    <div class="flex items-center justify-between">
+                      <div><p class="t-body-sm font-bold text-slate-700">John Mukasa</p><p class="t-caption font-semibold text-slate-400">Weekly fund · Jul 10</p></div>
+                      <span class="t-caption font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5">Urgent</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-2.5">
+                      <button class="flex-1 h-8 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white t-body-sm font-bold transition-colors">Approve</button>
+                      <a class="h-8 px-3 rounded-md border border-slate-200 text-slate-500 t-body-sm font-bold hover:bg-slate-50 inline-flex items-center">Review</a>
+                    </div>
+                  </div>
+                  <div class="rounded-lg border border-slate-100 p-3">
+                    <div class="flex items-center justify-between">
+                      <div><p class="t-body-sm font-bold text-slate-700">Grace Acen</p><p class="t-caption font-semibold text-slate-400">Monthly plan · Jul 09</p></div>
+                    </div>
+                    <a class="mt-2.5 inline-flex h-8 px-3 rounded-md border border-slate-200 text-slate-600 t-body-sm font-bold hover:bg-slate-50 items-center">Review Plan</a>
+                  </div>
+                </div>
+                <a class="t-body-sm font-bold text-blue-600 hover:text-blue-700 inline-block">View all pending approvals →</a>
+              </div>
+            </div>
+
+            <!-- SSA Intelligence + Route (full-width, more room now) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
+              <div class="lg:col-span-7 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">School & SSA Intelligence</h2>
+                <p class="t-caption font-semibold text-slate-400">Intervention performance by cluster (SSA %)</p>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left border-collapse min-w-[560px]">
+                    <thead>
+                      <tr class="t-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                        <th class="py-2 px-2">Cluster</th>
+                        <th class="py-2 px-2 text-center">LIT</th>
+                        <th class="py-2 px-2 text-center">NUM</th>
+                        <th class="py-2 px-2 text-center">ENG</th>
+                        <th class="py-2 px-2 text-center">SCI</th>
+                        <th class="py-2 px-2 text-center">Overall</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                      <tr>
+                        <td class="py-2.5 px-2 t-body-sm font-semibold text-slate-700">Mukono Central</td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">82</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-lime-100 text-lime-700">74</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">88</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-amber-100 text-amber-700">61</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">76</span></td>
+                      </tr>
+                      <tr>
+                        <td class="py-2.5 px-2 t-body-sm font-semibold text-slate-700">Wakiso North</td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-amber-100 text-amber-700">58</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-rose-100 text-rose-700">42</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-amber-100 text-amber-700">64</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-amber-100 text-amber-700">59</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-amber-100 text-amber-700">56</span></td>
+                      </tr>
+                      <tr>
+                        <td class="py-2.5 px-2 t-body-sm font-semibold text-slate-700">Jinja East</td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-lime-100 text-lime-700">71</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">79</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-lime-100 text-lime-700">73</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">85</span></td>
+                        <td class="py-2.5 px-2 text-center"><span class="inline-block w-10 py-0.5 rounded t-caption font-bold bg-emerald-100 text-emerald-700">77</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="lg:col-span-5 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">Smart Route & Capacity</h2>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl border border-slate-100 p-3.5">
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Route Quality</p>
+                    <p class="t-h3 font-bold tabular-nums mt-1 text-emerald-600">84%</p>
+                    <p class="t-caption font-semibold text-slate-400">Healthy</p>
+                  </div>
+                  <div class="rounded-xl border border-slate-100 p-3.5">
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Overloaded Staff</p>
+                    <p class="t-h3 font-bold tabular-nums mt-1 text-amber-600">2</p>
+                    <p class="t-caption font-semibold text-slate-400">&gt;120% capacity</p>
+                  </div>
+                  <div class="rounded-xl border border-slate-100 p-3.5">
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Leave Conflicts</p>
+                    <p class="t-h3 font-bold tabular-nums mt-1 text-slate-700">1</p>
+                    <p class="t-caption font-semibold text-slate-400">This week</p>
+                  </div>
+                  <div class="rounded-xl border border-slate-100 p-3.5">
+                    <p class="t-caption font-bold uppercase tracking-wider text-slate-400">Travel Efficiency</p>
+                    <p class="t-h3 font-bold tabular-nums mt-1 text-slate-700">91%</p>
+                    <p class="t-caption font-semibold text-slate-400">vs plan</p>
+                  </div>
+                </div>
+                <a class="t-body-sm font-bold text-blue-600 hover:text-blue-700 inline-block">View route planner →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== TAB 3: FINANCE ====== -->
+          <div x-show="tab==='finance'" x-transition style="display:none">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <!-- Funding donut + status (wider: 7 cols, more room to breathe) -->
+              <div class="lg:col-span-7 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">Funding & Execution</h2>
+                <div class="flex items-center gap-8">
+                  <div class="relative h-32 w-32 shrink-0">
+                    <div class="absolute inset-0 rounded-full" style="background: conic-gradient(#10b981 68%, #e5e7eb 0);"></div>
+                    <div class="absolute inset-[10px] rounded-full bg-white flex flex-col items-center justify-center">
+                      <span class="t-stat font-bold text-slate-800 tabular-nums leading-none">68%</span>
+                      <span class="t-caption font-semibold text-slate-400 mt-0.5">Utilized</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 space-y-2.5">
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-2 t-body-sm font-semibold text-slate-600"><span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>Approved</span><span class="t-body-sm font-bold text-slate-700 tabular-nums">₵186,400</span></div>
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-2 t-body-sm font-semibold text-slate-600"><span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>Pending</span><span class="t-body-sm font-bold text-slate-700 tabular-nums">₵54,200</span></div>
+                    <div class="flex items-center justify-between"><span class="inline-flex items-center gap-2 t-body-sm font-semibold text-slate-600"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>Flagged</span><span class="t-body-sm font-bold text-slate-700 tabular-nums">₵12,800</span></div>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-50"><span class="t-body-sm font-bold text-slate-500">Total Budget</span><span class="t-body font-bold text-slate-800 tabular-nums">₵273,400</span></div>
+                  </div>
+                </div>
+                <a class="t-body-sm font-bold text-blue-600 hover:text-blue-700 inline-block">View finance dashboard →</a>
+              </div>
+              <!-- Backlog snapshot (5 cols) -->
+              <div class="lg:col-span-5 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+                <h2 class="t-h3 font-bold text-slate-800 tracking-tight">Team Targets & Backlog</h2>
+                <div class="grid grid-cols-1 gap-2.5">
+                  <div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50/60">
+                    <span class="h-9 w-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg></span>
+                    <div class="flex-1"><p class="t-h3 font-bold text-slate-800 tabular-nums leading-none">186</p><p class="t-caption font-semibold text-slate-500 mt-0.5">Verified this quarter</p></div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50/60">
+                    <span class="h-9 w-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg></span>
+                    <div class="flex-1"><p class="t-h3 font-bold text-slate-800 tabular-nums leading-none">54</p><p class="t-caption font-semibold text-slate-500 mt-0.5">Planned, not yet verified</p></div>
+                  </div>
+                  <div class="flex items-center gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50/60">
+                    <span class="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+                    <div class="flex-1"><p class="t-h3 font-bold text-slate-800 tabular-nums leading-none">12</p><p class="t-caption font-semibold text-slate-500 mt-0.5">Overdue (&gt;30 days)</p></div>
+                  </div>
+                </div>
+                <a class="t-body-sm font-bold text-blue-600 hover:text-blue-700 inline-block">View backlog analytics →</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= QUICK ACTIONS (promoted, kept at bottom but tighter) ================= -->
+        <div>
+          <h2 class="t-h3 font-bold text-slate-700 tracking-tight mb-3">Quick Actions</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Plan Activity</p><p class="t-caption font-semibold text-slate-400">New fieldwork</p></div>
+            </a>
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Approve</p><p class="t-caption font-semibold text-slate-400">7 pending</p></div>
+            </a>
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-6m3 6v-2"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Reports</p><p class="t-caption font-semibold text-slate-400">Export</p></div>
+            </a>
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Staff</p><p class="t-caption font-semibold text-slate-400">24 CCEOs</p></div>
+            </a>
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Funds</p><p class="t-caption font-semibold text-slate-400">Request</p></div>
+            </a>
+            <a class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:border-emerald-200 hover:shadow transition-all group">
+              <span class="h-9 w-9 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-500 group-hover:text-emerald-600 flex items-center justify-center transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
+              <div><p class="t-body-sm font-bold text-slate-700">Calendar</p><p class="t-caption font-semibold text-slate-400">Schedule</p></div>
+            </a>
+          </div>
+        </div>
+
+        <p class="text-center t-caption text-slate-300 font-semibold pt-4">Mockup — not live data. Original dashboard is safe.</p>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // Team performance chart (matches original series)
+  const perfChart = new ApexCharts(document.querySelector('#perfChart'), {
+    series: [
+      { name: 'Planned', type: 'column', data: [22, 25, 20, 28, 24, 26, 23, 28, 24, 21, 25, 24] },
+      { name: 'Completed', type: 'column', data: [18, 21, 19, 24, 20, 22, 19, 23, 20, 18, 21, 21] },
+      { name: 'Verified', type: 'column', data: [15, 19, 16, 21, 18, 19, 17, 20, 18, 16, 18, 19] },
+      { name: 'Target %', type: 'line', data: [68, 76, 80, 75, 75, 73, 74, 72, 75, 76, 72, 79] }
+    ],
+    chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+    stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
+    colors: ['#0f766e', '#0d9488', '#5eead4', '#f59e0b'],
+    plotOptions: { bar: { columnWidth: '62%', borderRadius: 2 } },
+    dataLabels: { enabled: false },
+    labels: ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600 } } },
+    yaxis: [
+      { seriesName: 'Planned', title: { text: 'Activities', style: { color: '#94a3b8', fontSize: '11px' } }, labels: { style: { colors: '#94a3b8', fontSize: '11px' } } },
+      { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
+      { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '11px' } } }
+    ],
+    grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+    legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+    tooltip: { theme: 'dark', shared: true, intersect: false }
+  });
+  perfChart.render();
+</script>
+</body>
+</html>

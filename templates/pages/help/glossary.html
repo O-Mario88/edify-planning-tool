@@ -1,0 +1,10 @@
+{% extends "layouts/help_center.html" %}
+{% block title %}Glossary · Knowledge Center{% endblock %}
+{% block help_title %}Edify glossary{% endblock %}
+{% block help_lede %}Search identifiers, roles, terms and live workflow statuses.{% endblock %}
+{% block help_content %}
+<section aria-label="Edify glossary"><nav class="text-sm mb-4" aria-label="Breadcrumb"><a href="/help" class="hover:underline edify-primary-text">Knowledge Center</a><span aria-hidden="true"> / </span><span>Glossary</span></nav>{% comment %}No title here: layouts/help_center.html renders the page header, and now that the header is a visible band, repeating the title and lede printed both of them twice on the page.{% endcomment %}{% comment %}
+The glossary's own search box is gone: it submitted the same q to the same
+page the top bar does, so the page carried two persistent inputs for one
+dataset. The view binds the top bar to the glossary instead.
+{% endcomment %}{% if query %}<p class="mt-3 edify-text-caption font-semibold edify-text-muted">Showing terms matching <span class="font-bold edify-text">{{ query }}</span></p>{% endif %}<dl class="mt-5 grid md:grid-cols-2 gap-3">{% for term in terms %}<div id="{{ term.slug }}" class="edify-surface rounded-surface border p-4 edify-border"><dt class="font-extrabold">{{ term.term }}</dt><dd class="mt-1 text-sm leading-6 edify-text-muted">{{ term.definition }}</dd>{% if term.used_in %}<dd class="mt-2 text-xs font-bold edify-text-subtle">Used in: {{ term.used_in }}</dd>{% endif %}{% if term.article %}<dd class="mt-2"><a class="text-sm font-bold hover:underline edify-primary-text" href="/help/articles/{{ term.article.slug }}">Open related guide →</a></dd>{% endif %}</div>{% empty %}<p>No glossary entries match your search.</p>{% endfor %}</dl></section>{% endblock %}

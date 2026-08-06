@@ -1,0 +1,283 @@
+{% load table_pagination %}
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {% comment %}A Professional Development allocation belongs to a staff
+  profile, and not every signed-in account has one — an Admin, or anyone
+  invited before HR has finished setting them up. Without this the page showed
+  four zeroes with no explanation; before that it raised outright.{% endcomment %}
+  {% if balances.has_staff_profile is False %}
+  <div class="edify-surface rounded-surface border border-amber-200 bg-amber-50 p-4"
+       role="status">
+    <p class="text-[13px] font-bold text-amber-900">Your staff profile is not set up yet</p>
+    <p class="text-[12px] font-semibold text-amber-800 mt-1">
+      Professional Development runs off your staff record — allocation, supervisor
+      and department all come from it. HR creates that record; until it exists there
+      is nothing to allocate and no course you can request. The figures below are
+      genuinely zero rather than unavailable.
+    </p>
+  </div>
+  {% endif %}
+
+  {# ── KPI strip ─────────────────────────────────────────────────────────── #}
+  {% include "components/kpi_strip.html" with items=kpis %}
+
+  {# ── My Current Course + Progress Tracker ─────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <div class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Current Course</h2>
+        {% if current_course %}
+        <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
+          {% if current_course.status_key == 'in_progress' %}edify-primary-soft edify-primary-text
+          {% elif current_course.status_key == 'ended' or current_course.status_key == 'marked_complete' %}bg-amber-50 text-amber-700
+          {% else %}bg-slate-100 text-slate-500{% endif %}">{{ current_course.status }}</span>
+        {% endif %}
+      </div>
+
+      {% if current_course %}
+      <div>
+        <p class="text-[15px] font-bold text-slate-800 leading-snug">{{ current_course.course_name }}</p>
+        <p class="edify-text-caption text-slate-500 font-medium mt-0.5">{{ current_course.institution }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ current_course.course_type }}</span>
+        <span class="px-1.5 py-0.5 rounded-pill bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ current_course.category }}</span>
+      </div>
+      <p class="edify-text-caption text-slate-500 font-medium">{{ current_course.start_date|date:"d M Y" }} – {{ current_course.end_date|date:"d M Y" }} · {{ current_course.duration_days }} days</p>
+
+      <div>
+        <div class="flex items-center justify-between edify-text-caption font-bold text-slate-500 mb-1">
+          <span>Progress</span><span class="tabular-nums">{{ current_course.pct }}%</span>
+        </div>
+        <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden">
+          <div class="h-full rounded-pill edify-primary-solid" style="width: {{ current_course.pct }}%"></div>
+        </div>
+      </div>
+
+      {% include "partials/professional_development/completion_upload.html" with course=current_course %}
+
+      {% if current_course.next_action_label %}
+      <div class="rounded-surface edify-primary-soft-alpha-60 border edify-primary-border p-3 flex items-start gap-2">
+        <svg class="h-4 w-4 edify-primary-text shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div class="min-w-0 flex-1">
+          <p class="edify-text-caption edify-primary-text font-semibold leading-snug">Next: {{ current_course.next_action_label }}</p>
+          <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                  class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-1">Open course →</button>
+        </div>
+      </div>
+      {% else %}
+      <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View details →</button>
+      {% endif %}
+      {% else %}
+      <div class="flex flex-col items-center justify-center text-center py-8 px-4">
+        <div class="w-12 h-12 rounded-pill flex items-center justify-center mb-3 bg-slate-100 text-slate-400">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        </div>
+        <h4 class="text-[14px] font-semibold text-slate-700 leading-snug">No active course</h4>
+        <p class="text-[12px] text-slate-500 font-medium mt-1 max-w-xs leading-relaxed">Request Professional Development support to start tracking a course here.</p>
+        <button type="button" hx-get="/my-professional-development/request" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="mt-4 btn btn-primary h-9 inline-flex items-center gap-1.5">Request Professional Development</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="lg:col-span-7 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Course Progress Tracker</h2>
+        {% if current_course %}
+        <button type="button" hx-get="/my-professional-development/request?id={{ current_course.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">View Full Timeline →</button>
+        {% endif %}
+      </div>
+      {% if timeline %}
+      <div class="space-y-0 max-h-[360px] overflow-y-auto pr-1">
+        {% for step in timeline.steps %}
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <span class="h-5 w-5 rounded-pill flex items-center justify-center shrink-0
+              {% if step.state == 'done' %}bg-emerald-500 text-white
+              {% elif step.state == 'active' %}edify-primary-solid text-white ring-4 edify-primary-ring
+              {% elif step.state == 'blocked' %}bg-rose-100 text-rose-500
+              {% else %}bg-slate-100 text-slate-400{% endif %}">
+              {% if step.state == 'done' %}
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              {% else %}<span class="h-1.5 w-1.5 rounded-pill bg-current"></span>{% endif %}
+            </span>
+            {% if not forloop.last %}<span class="w-px flex-1 min-h-[20px] {% if step.state == 'done' %}bg-emerald-200{% else %}bg-slate-100{% endif %}"></span>{% endif %}
+          </div>
+          <div class="pb-4 min-w-0 flex-1">
+            <p class="text-[12px] font-semibold {% if step.state == 'pending' %}text-slate-400{% elif step.state == 'blocked' %}text-rose-500{% else %}text-slate-700{% endif %}">{{ step.label }}</p>
+            {% if step.date %}<p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ step.date|date:"d M Y" }}</p>
+            {% elif step.state == 'active' %}<p class="edify-text-caption edify-primary-text font-bold mt-0.5">In progress</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      {% include "components/empty_state.html" with title="No timeline yet" message="Your course progress tracker appears once you submit a Professional Development request." compact="true" %}
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Next Actions ──────────────────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Next Actions</h2>
+    {% if next_actions %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {% for a in next_actions %}
+      <div class="relative rounded-surface border border-slate-100 p-3.5 hover:border-slate-200 hover:shadow-sm transition-all">
+        <span class="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-pill bg-rose-500 text-white edify-text-caption font-bold flex items-center justify-center">1</span>
+        <div class="h-8 w-8 rounded-surface bg-slate-100 text-slate-500 flex items-center justify-center mb-2">
+          {% include "partials/analytics/pl/_icon.html" with name=a.icon %}
+        </div>
+        <p class="text-[12px] font-bold text-slate-800">{{ a.title }}</p>
+        <p class="edify-text-caption text-slate-500 font-medium mt-0.5 leading-snug">{{ a.description }}</p>
+        <button type="button" hx-get="/my-professional-development/request?id={{ a.request_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="mt-2.5 h-7 px-2.5 rounded-control bg-slate-800 hover:bg-slate-700 text-white edify-text-caption font-bold transition-colors">{{ a.button }}</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="Nothing needs your attention" message="You're fully up to date on certificates, BambooHR uploads and accountability." tone="success" compact="true" %}
+    {% endif %}
+  </div>
+
+  {# ── Reminders · Messages from HR · Quick Actions ──────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-2">Upcoming Reminders</h2>
+      {% if reminders %}
+      <div class="divide-y divide-slate-50">
+        {% for r in reminders %}
+        <button type="button" hx-get="/my-professional-development/request?id={{ r.id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="w-full text-left py-2.5 flex items-start gap-2.5">
+          <span class="h-2 w-2 rounded-pill mt-1.5 shrink-0
+            {% if r.tone == 'danger' %}bg-rose-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'info' %}edify-primary-solid{% else %}bg-slate-300{% endif %}"></span>
+          <div class="min-w-0 flex-1">
+            <p class="edify-text-caption font-semibold text-slate-700 leading-snug">{{ r.label }}</p>
+            <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ r.date|date:"d M Y" }}</p>
+          </div>
+        </button>
+        {% endfor %}
+      </div>
+      {% else %}
+      {% include "components/empty_state.html" with title="No reminders due" message="You'll see start dates, certificate and accountability deadlines here as they approach." tone="success" compact="true" %}
+      {% endif %}
+    </div>
+
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-1">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Messages from HR</h2>
+        <a href="/messages" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all →</a>
+      </div>
+      {% if hr_messages %}
+      <div class="divide-y divide-slate-50">
+        {% for m in hr_messages %}
+        <a href="/messages{% if m.context_id %}?thread={{ m.context_id }}{% endif %}" class="py-2.5 flex items-start gap-2.5 group">
+          <span class="h-7 w-7 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ m.sender_name|avatar_initials }}</span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="edify-text-caption font-bold text-slate-600 truncate">{{ m.sender_name }}</span>
+              {% if m.unread %}<span class="h-2 w-2 rounded-pill edify-primary-solid shrink-0"></span>{% endif %}
+            </div>
+            <p class="edify-text-caption text-slate-500 font-medium truncate mt-0.5">{{ m.body }}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      {% include "components/empty_state.html" with title="No messages yet" message="Messages from HR about your Professional Development requests will appear here." compact="true" %}
+      {% endif %}
+    </div>
+
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-1">Quick Actions</h2>
+      <button type="button" @click="showPolicy = true"
+              class="w-full flex items-center gap-2.5 p-2.5 rounded-control border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+        <span class="text-[12px] font-bold text-slate-700">View PD Policy &amp; Guidelines</span>
+      </button>
+      <button type="button" hx-get="/my-professional-development/allocation-history" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="w-full flex items-center gap-2.5 p-2.5 rounded-control border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+        <span class="text-[12px] font-bold text-slate-700">My PD Allocation History</span>
+      </button>
+      <a href="/my-professional-development/export?fy={{ fy }}"
+         class="w-full flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
+        <span class="text-[12px] font-bold text-slate-700">Download PD Report</span>
+      </a>
+      <a href="/messages?context_type=professional_development{% if current_course %}&context_id={{ current_course.id }}{% endif %}"
+         class="w-full flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-100 hover:bg-slate-50 transition-colors text-left">
+        <span class="h-7 w-7 rounded-pill bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></span>
+        <span class="text-[12px] font-bold text-slate-700">Message HR</span>
+      </a>
+    </div>
+  </div>
+
+  {# ── My Courses ────────────────────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" x-data="{ tab: 'all' }">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Courses</h2>
+      <div class="flex items-center gap-1 bg-slate-100 rounded-surface p-1">
+        <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">All ({{ courses|length }})</button>
+        <button type="button" @click="tab = 'in_progress'" :class="tab === 'in_progress' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">In Progress ({{ in_progress_count }})</button>
+        <button type="button" @click="tab = 'completed'" :class="tab === 'completed' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Completed ({{ completed_count }})</button>
+        <button type="button" @click="tab = 'cancelled'" :class="tab === 'cancelled' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Cancelled ({{ cancelled_count }})</button>
+      </div>
+    </div>
+    {% if courses %}
+    <div class="overflow-x-auto">
+      {% paginate courses "courses_page" as courses_pager %}
+<table class="w-full text-left edify-text-caption border-collapse min-w-[760px]">
+        <thead>
+          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
+            <th class="py-2 px-3">Course</th>
+            <th class="py-2 px-3">Institution</th>
+            <th class="py-2 px-3">Type</th>
+            <th class="py-2 px-3">Start</th>
+            <th class="py-2 px-3">End</th>
+            <th class="py-2 px-3">Status</th>
+            <th class="py-2 px-3">Funding Used</th>
+            <th class="py-2 px-3 text-right">Next Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+          {% for c in courses_pager.rows %}
+          <tr x-show="tab === 'all' || tab === '{{ c.bucket }}'" class="hover:bg-slate-50/50 cursor-pointer"
+              hx-get="/my-professional-development/request?id={{ c.id }}" hx-target="#drawer-container" hx-swap="innerHTML">
+            <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.course_name }}</td>
+            <td class="py-2.5 px-3 text-slate-500 font-medium max-w-[160px] truncate">{{ c.institution }}</td>
+            <td class="py-2.5 px-3 text-slate-500 font-medium">{{ c.course_type }}</td>
+            <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.start_date|date:"d M Y" }}</td>
+            <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.end_date|date:"d M Y" }}</td>
+            <td class="py-2.5 px-3">
+              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
+                {% if c.bucket == 'completed' %}bg-emerald-50 text-emerald-700
+                {% elif c.bucket == 'cancelled' %}bg-slate-100 text-slate-500
+                {% elif 'returned' in c.status_key or c.status_key == 'rejected' %}bg-rose-50 text-rose-700
+                {% else %}edify-primary-soft edify-primary-text{% endif %}">{{ c.status }}</span>
+            </td>
+            <td class="py-2.5 px-3 text-slate-500 font-medium tabular-nums">{{ c.funding_used }}</td>
+            <td class="py-2.5 px-3 text-right">
+              {% if c.next_action_label %}<span class="edify-text-caption font-bold edify-primary-text">{{ c.next_action_label }} →</span>
+              {% else %}<span class="edify-text-caption text-slate-300">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=courses_pager param="courses_page" %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No Professional Development requests yet" message="Use Request Professional Development above to submit your first course for this financial year." %}
+    {% endif %}
+  </div>
+
+  <p class="edify-text-caption text-slate-400 font-medium text-right">Last refreshed {{ last_refreshed|date:"d M Y H:i" }}</p>
+</div>

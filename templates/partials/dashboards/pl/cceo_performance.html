@@ -1,0 +1,50 @@
+{% load frontend_filters %}
+<div class="overflow-x-auto">
+  <table class="w-full border-collapse whitespace-nowrap text-[12px]">
+    <thead>
+      <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted text-left text-[12px] font-bold uppercase tracking-[.06em]">
+        <th class="px-2.5 py-2">CCEO</th>
+        <th class="px-2.5 py-2">Region</th>
+        <th class="px-2.5 py-2 text-center">Sch</th>
+        <th class="px-2.5 py-2 text-center">Pln</th>
+        <th class="px-2.5 py-2 text-center">Verified</th>
+        <th class="px-2.5 py-2 text-center">SF</th>
+        <th class="px-2.5 py-2 text-center">Bklg</th>
+        <th class="px-2.5 py-2 text-center">Route</th>
+        <th class="px-2.5 py-2 text-center">Risk</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in cceo_performance.rows %}
+      <tr class="edify-data-row cursor-pointer border-b edify-border-bottom"
+          hx-get="/analytics/program-lead/drilldown?drill=cceo&id={{ c.staff_id }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+          tabindex="0">
+        <td class="px-2.5 py-[7px]">
+          <div class="flex items-center gap-1.5">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-pill text-[12px] font-bold shrink-0 edify-primary-solid edify-on-accent">{{ c.initials }}</span>
+            <span class="font-semibold edify-text">{{ c.name }}</span>
+          </div>
+        </td>
+        <td class="px-2.5 py-[7px] text-[12px] edify-text-muted">{{ c.region }}</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums font-semibold edify-text">{{ c.schools_managed }}</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums edify-text">{{ c.planned }}</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums font-semibold edify-success-text">{% if c.has_planned %}{{ c.verified }} ({{ c.verified_pct }}%){% else %}—{% endif %}</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums" style="color:{% if c.sf_pending %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.sf_pending }}</td>
+        <td class="px-2.5 py-[7px] text-center tabular-nums font-bold" style="color:{% if c.backlog >= 4 %}var(--edify-danger){% elif c.backlog >= 2 %}var(--edify-warning){% else %}var(--edify-text-muted){% endif %};">{{ c.backlog }}</td>
+        <td class="px-2.5 py-[7px] text-center">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
+                style="background:{% if c.route_tone == 'success' %}var(--edify-success-light){% elif c.route_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
+                       color:{% if c.route_tone == 'success' %}var(--edify-success){% elif c.route_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.route_quality }}</span>
+        </td>
+        <td class="px-2.5 py-[7px] text-center">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold"
+                style="background:{% if c.risk_tone == 'success' %}var(--edify-success-light){% elif c.risk_tone == 'amber' %}var(--edify-warning-light){% elif c.risk_tone == 'warning' %}var(--edify-warning-light){% else %}var(--edify-danger-light){% endif %};
+                       color:{% if c.risk_tone == 'success' %}var(--edify-success){% elif c.risk_tone == 'amber' %}var(--edify-warning){% elif c.risk_tone == 'warning' %}var(--edify-warning){% else %}var(--edify-danger){% endif %};">{{ c.risk }}</span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="p-5 text-center text-[12px] font-semibold edify-text-subtle">No supervised CCEOs.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

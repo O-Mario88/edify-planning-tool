@@ -1,0 +1,60 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Import Results — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto">
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Schools & Field</p>
+<h1 class="edify-page-title edify-page-header__title">Import Summary</h1>
+<p class="edify-page-header__description">Successful records committed to the active directory and routed issues.</p>
+</div>
+
+<div class="edify-page-header__controls">
+<a href="/schools" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold rounded-surface transition-all">
+Go to Directory
+</a>
+<a href="/admin-panel/data-quality-center" class="px-4 py-2 edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold rounded-surface shadow-sm transition-all">
+Resolve Data Quality Issues
+</a>
+</div>
+</div>
+
+<!-- Status card -->
+<div class="bg-emerald-50/40 border border-emerald-100 rounded-surface p-6 flex items-start gap-4">
+<div class="h-10 w-10 rounded-pill bg-emerald-100 flex items-center justify-center shrink-0">
+<svg class="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+</svg>
+</div>
+<div class="space-y-1">
+<h3 class="text-[15px] font-semibold text-emerald-800">Successfully Imported</h3>
+<p class="text-[12px] text-emerald-700/80 font-medium">Staged rows have been processed. New schools were added, and existing schools updated. Some records with validation gaps have been routed to the Data Quality Center for post-import cleanup.</p>
+</div>
+</div>
+
+<!-- Metrics overview cards -->
+<div class="grid grid-cols-2 gap-4">
+<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Created (New)</span>
+<p class="text-[21px] font-extrabold tracking-tight">{{ stats.created }}</p>
+</div>
+<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Updated (Upserts)</span>
+<p class="text-[21px] font-extrabold tracking-tight">{{ stats.updated }}</p>
+</div>
+<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Clean Records</span>
+<p class="text-[28px] font-semibold text-emerald-600">{{ stats.clean }}</p>
+</div>
+<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
+<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Blocked / Ignored</span>
+<p class="text-[28px] font-semibold text-slate-400">{{ stats.blocked }}</p>
+</div>
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Create Special Project{% endblock %}
+{% block drawer_subtitle %}Declare the Project need, approved delivery Catalogue, measurement window and budget boundary.{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/projects/create/action" hx-post="/projects/create/action" hx-target="#project-create-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 text-sm">
+  {% csrf_token %}
+  <div id="project-create-errors" aria-live="polite"></div>
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="font-semibold">Project name<input name="name" required maxlength="255" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Stable project code<input name="code" maxlength="64" placeholder="SP-…" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Category<select name="category" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"><option value="">Choose…</option>{% for value, label in categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+    <label class="font-semibold">School focus<select name="schoolFocus" required class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">{% for value, label in school_focuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+    <label class="font-semibold">Budget ceiling (UGX)<input name="budgetCeilingUgx" type="number" min="0" step="1" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Measurement start FY<input name="measurementStartFy" placeholder="2027" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+    <label class="font-semibold">Measurement end FY<input name="measurementEndFy" placeholder="2028" class="mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"></label>
+  </div>
+  <fieldset class="rounded-control border border-[var(--border-card)] p-3">
+    <legend class="px-1 font-semibold">Target SSA interventions</legend>
+    <div class="mt-2 grid gap-2 sm:grid-cols-2">{% for value, label in interventions %}<label class="flex items-center gap-2"><input type="checkbox" name="targetInterventions" value="{{ value }}" class="h-4 w-4"><span>{{ label }}</span></label>{% endfor %}</div>
+  </fieldset>
+  <fieldset class="rounded-control border border-[var(--border-card)] p-3">
+    <legend class="px-1 font-semibold">Approved Activity Catalogue items</legend>
+    <p class="text-xs text-[var(--edify-text-muted)]">Only these Activities will be available in Project Planning.</p>
+    <div class="mt-2 max-h-72 space-y-2 overflow-y-auto">{% for item in catalogue_items %}<label class="flex items-start gap-2 rounded-control border border-slate-100 p-2"><input type="checkbox" name="catalogueItemIds" value="{{ item.id }}" class="mt-1 h-4 w-4"><span><strong>{{ item.display_name }}</strong><span class="block text-xs text-[var(--edify-text-muted)]">{{ item.stable_code }} · {{ item.get_delivery_method_display }}</span></span></label>{% endfor %}</div>
+  </fieldset>
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn">Cancel</button>
+    <button type="submit" class="btn btn-primary">Create proposed Project</button>
+  </div>
+</form>
+{% endblock %}

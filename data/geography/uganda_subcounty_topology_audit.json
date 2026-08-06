@@ -1,0 +1,53 @@
+{
+  "status": "pass",
+  "generated_on": "2026-07-26",
+  "source": {
+    "dataset": "Uganda - Subnational Administrative Boundaries",
+    "layer": "uga_admin4.geojson",
+    "publisher": "Humanitarian Data Exchange (HDX)",
+    "source_organisation": "Uganda Bureau of Statistics (UBOS), with support from WHO",
+    "resource_last_modified": "2026-01-26",
+    "valid_on": "2020-08-24",
+    "sha256": "55c281baf34755746b5f7250ec27b6a96fc2d5b655da9ec487e8f622e5aa8d06"
+  },
+  "master": {
+    "path": "data/geography/uganda_subcounties_2020.geojson",
+    "sha256": "479e349ef1e7d056ccf2eebb1755f273f055e7ff4f84732df4bbda763c570a05",
+    "feature_count": 1520,
+    "district_count": 135,
+    "unique_pcode_count": 1520,
+    "geometry_valid_count": 1520,
+    "geometry_invalid_count": 0,
+    "coverage_valid": true,
+    "features_with_invalid_shared_edges": 0,
+    "intersecting_neighbour_pairs_checked": 4375,
+    "positive_area_overlap_conflicts": 0
+  },
+  "repair": {
+    "source_invalid_geometry_count": 1,
+    "repaired_geometry_count": 1,
+    "feature_pcode": "UG10140207",
+    "feature_name": "Nyimbwa",
+    "reason": "Ring self-intersection",
+    "absolute_area_change_m2": 0.00000005960464477539063
+  },
+  "district_reconciliation": {
+    "official_parent_districts": 135,
+    "subcounty_district_groups": 135,
+    "exact_parent_matches": 135,
+    "missing_area_m2": 0,
+    "spillover_area_m2": 0
+  },
+  "directory_reconciliation": {
+    "source_pairs_matched": 1520,
+    "source_pairs_unmatched": 0,
+    "directory_only_records": 171,
+    "directory_only_records_classified_as_counties": 171
+  },
+  "merged_outline": {
+    "path": "data/geography/uganda_subcounties_merged_outline.geojson",
+    "sha256": "2640fef6d5810516e7d4688a6a0da6252778ecb8eb0696b8cdc3d5a394889d2a",
+    "geometry_type": "Polygon",
+    "geometry_valid": true
+  }
+}

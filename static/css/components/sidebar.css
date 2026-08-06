@@ -1,0 +1,575 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY SIDEBAR — calm, refined, premium
+   ════════════════════════════════════════════════════════════════════════════ */
+
+.app-sidebar {
+  background: var(--edify-sidebar-bg) !important;
+  width: 260px;
+  height: 100dvh;
+  flex-direction: column;
+  border-right: 1px solid var(--edify-border);
+  padding: 18px 14px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  z-index: 40;
+  transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Desktop only. This unlayered rule would otherwise beat Tailwind's layered
+   `hidden md:flex` utilities on the <aside>, forcing the sidebar open on
+   smaller screens. The off-canvas menu (shell.html) owns the sidebar below
+   1024px, preserving useful workspace width on portrait tablets. */
+@media (min-width: 1024px) {
+  .app-sidebar {
+    display: flex;
+  }
+}
+
+/* Scrollbar */
+.app-sidebar__nav-container {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 20px;
+  padding-bottom: 16px;
+  padding-right: 4px;
+}
+.app-sidebar__nav-container::-webkit-scrollbar { width: 4px; }
+.app-sidebar__nav-container::-webkit-scrollbar-track { background: transparent; }
+.app-sidebar__nav-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+}
+.app-sidebar__nav-container::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* Brand */
+.app-sidebar__brand {
+  margin-bottom: 8px;
+  padding: 4px 8px;
+}
+
+.app-sidebar__wordmark {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 54px;
+}
+
+.app-sidebar .app-sidebar__brand-logo {
+  display: block;
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+  height: auto;
+  max-height: 46px;
+  flex: 0 0 110px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.app-sidebar__brand-divider {
+  width: 1px;
+  height: 42px;
+  flex: 0 0 1px;
+  background: rgba(189, 216, 233, 0.72);
+}
+
+.app-sidebar__brand-product {
+  color: rgba(215, 230, 239, 0.88);
+  font-size: var(--edify-text-label-size);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.app-sidebar__brand-logo-compact {
+  display: block;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: var(--radius-small);
+}
+
+.app-sidebar__brand-logo-compact img {
+  display: block;
+  width: auto;
+  max-width: none;
+  height: 36px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.app-sidebar__brand-mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
+  font-family: var(--edify-font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-sidebar__brand-name {
+  min-width: 0;
+  color: #edf0eb;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.app-sidebar__logo {
+  font-family: var(--edify-font-sans);
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+  display: block;
+}
+
+.app-sidebar__subtitle {
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  color: rgba(189, 216, 233, 0.68);
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  line-height: 1.4;
+  margin-top: 0;
+  display: block;
+}
+
+/* Section groups */
+.app-sidebar__section {
+  margin-top: 10px;
+}
+
+.app-sidebar__section-title {
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(189, 216, 233, 0.50);
+  margin: 0;
+  padding: 0;
+}
+
+.app-sidebar__section-header {
+  padding: 6px 10px 4px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.app-sidebar__section-toggle {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 10px 4px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(189, 216, 233, 0.50);
+  cursor: pointer;
+}
+
+.app-sidebar__section-toggle:hover {
+  color: rgba(221, 237, 247, 0.82);
+  background: rgba(123, 189, 232, 0.055);
+}
+
+.app-sidebar__section-chevron {
+  width: 13px;
+  height: 13px;
+  transition: transform var(--edify-transition-fast);
+}
+
+.app-sidebar__section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 3px;
+}
+
+/* Nav list */
+.app-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Nav items — shorter (40px), lighter at rest, refined hover */
+.app-sidebar__item {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: rgba(221, 237, 247, 0.76) !important;
+  text-decoration: none !important;
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+  /* Anchor for the --active::before indicator bar. */
+  position: relative;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-sidebar__item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff !important;
+}
+
+/* Icon container — smaller, no box */
+.app-sidebar__item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.app-sidebar__item:hover .app-sidebar__item-icon {
+  color: #ffffff;
+}
+
+.app-sidebar__item-icon-svg {
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+.app-sidebar__item-label {
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Count badge inside a nav item */
+.app-sidebar__item-badge {
+  margin-left: auto;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+.app-sidebar__item-badge--blue {
+  background: color-mix(in srgb, var(--brand-primary-soft) 24%, transparent);
+  color: var(--brand-primary-soft);
+}
+.app-sidebar__item-badge--amber {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+}
+.app-sidebar__item-badge--red {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+/* Active item — subtle pill, no heavy border */
+.app-sidebar__item--active {
+  background-color: var(--brand-primary) !important;
+  border: 1px solid var(--brand-primary-border);
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.app-sidebar__item--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--brand-primary-soft);
+}
+
+.app-sidebar__item--active .app-sidebar__item-icon {
+  color: var(--brand-primary-soft);
+}
+
+/* Divider between sections */
+.app-sidebar__section-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 14px 12px;
+  border: 0;
+}
+
+/* Footer / user */
+.app-sidebar__footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.app-sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.app-sidebar__user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(123, 189, 232, 0.18);
+  color: #bdd8e9;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Settings control (bottom-left) ─────────────────────────────────────── */
+.app-sidebar__settings {
+  position: relative;
+}
+
+.app-sidebar__settings-trigger {
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color .15s ease;
+}
+
+.app-sidebar__settings-trigger:hover,
+.app-sidebar__settings-trigger[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-sidebar__settings-trigger:focus-visible {
+  outline: 2px solid rgba(123, 189, 232, 0.75);
+  outline-offset: 2px;
+}
+
+/* The gear replaces the initials that used to sit here, so it keeps the
+   avatar's footprint and the row's rhythm is unchanged. */
+.app-sidebar__settings-trigger .app-sidebar__user-avatar svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* Opens upward: this control sits on the bottom edge, so a downward menu
+   would open off-screen. */
+.app-sidebar__settings-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #12203a;
+  box-shadow: 0 18px 38px -12px rgba(0, 0, 0, 0.65);
+}
+
+.theme-dark .app-sidebar__settings-menu {
+  background: var(--edify-surface-raised);
+  border-color: var(--edify-border);
+}
+
+.app-sidebar__settings-heading {
+  margin: 2px 6px 6px;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.app-sidebar__theme-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.app-sidebar__theme {
+  min-height: 30px;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #cbd5e1;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.app-sidebar__theme:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}
+
+.app-sidebar__theme.is-active {
+  background: rgba(123, 189, 232, 0.18);
+  border-color: rgba(123, 189, 232, 0.45);
+  color: #dbeafe;
+}
+
+.app-sidebar__theme:focus-visible,
+.app-sidebar__settings-item:focus-visible {
+  outline: 2px solid rgba(123, 189, 232, 0.75);
+  outline-offset: -2px;
+}
+
+.app-sidebar__settings-divider {
+  height: 1px;
+  margin: 8px 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar__settings-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.app-sidebar__settings-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.app-sidebar__settings-item svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  flex: 0 0 auto;
+  transition: transform .15s ease;
+}
+
+/* Collapsed to the 72px rail the menu cannot fit inside it, so it flies out
+   alongside the rail rather than covering the nav icons behind it. */
+.app-sidebar--collapsed .app-sidebar__settings-menu {
+  bottom: 0;
+  left: calc(100% + 10px);
+  right: auto;
+  width: 212px;
+}
+
+.app-sidebar--collapsed .app-sidebar__settings-trigger {
+  margin-inline: auto;
+}
+
+/* ── Collapsed state ───────────────────────────────────────────────────── */
+.app-sidebar--collapsed {
+  width: 72px;
+  padding: 18px 8px;
+}
+.app-sidebar--collapsed .app-sidebar__logo,
+.app-sidebar--collapsed .app-sidebar__subtitle,
+.app-sidebar--collapsed .app-sidebar__brand-name,
+.app-sidebar--collapsed .app-sidebar__section-title,
+.app-sidebar--collapsed .app-sidebar__item-label,
+.app-sidebar--collapsed .app-sidebar__item-badge {
+  display: none;
+}
+
+.theme-dark .app-sidebar {
+  width: 272px;
+  padding: 22px 16px 18px;
+}
+
+.theme-dark .app-sidebar--collapsed {
+  width: 72px;
+  padding: 18px 8px;
+}
+
+.theme-dark .app-sidebar__section-title {
+  color: var(--edify-text-subtle);
+  font-weight: 600;
+  letter-spacing: .105em;
+}
+
+.theme-dark .app-sidebar__item {
+  color: var(--edify-text-muted) !important;
+}
+
+.theme-dark .app-sidebar__item:hover {
+  color: var(--edify-text) !important;
+  background: rgba(255, 255, 255, .045) !important;
+}
+
+.theme-dark .app-sidebar__item--active {
+  color: var(--edify-text) !important;
+  background: var(--brand-primary) !important;
+  border-color: var(--brand-primary-border);
+  box-shadow: none;
+}
+
+.theme-dark .app-sidebar__item--active::before {
+  background: var(--brand-primary-soft);
+}
+
+.theme-dark .app-sidebar__item--active .app-sidebar__item-icon {
+  color: var(--brand-primary-soft);
+}
+
+.theme-dark .app-sidebar__brand-divider {
+  background: rgba(255, 255, 255, .16);
+}
+
+.theme-dark .app-sidebar__brand-product {
+  color: var(--edify-text-muted);
+}
+.app-sidebar--collapsed .app-sidebar__item {
+  justify-content: center;
+  padding: 4px;
+}
+.app-sidebar--collapsed .app-sidebar__item-icon {
+  width: 24px;
+  height: 24px;
+}
+.app-sidebar--collapsed .app-sidebar__item-icon-svg {
+  width: 20px;
+  height: 20px;
+}
+.app-sidebar--collapsed .app-sidebar__user {
+  justify-content: center;
+}
+.app-sidebar--collapsed .app-sidebar__item--active::before {
+  left: -8px;
+}

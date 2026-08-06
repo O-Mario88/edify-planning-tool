@@ -1,0 +1,28 @@
+/*
+ * Tailwind v4 source for the compiled bundle at static/css/main.css.
+ *
+ * Rebuild with:  npm run build:css   (see package.json at the repo root)
+ *
+ * IMPORTANT: never edit static/css/main.css by hand — it is generated from
+ * this file. Utility classes used anywhere in templates/ or apps/ (Python
+ * views also emit class strings, e.g. status_class) are picked up by the
+ * @source globs below.
+ *
+ * source(none) turns off Tailwind's automatic content detection, so the two
+ * globs below are the whole of it. Without it the scan reaches every file in
+ * the repository that is not gitignored — and a class name written in a
+ * markdown document was enough to put that utility back into the bundle. A
+ * stylesheet whose contents depend on prose is a stylesheet nobody can
+ * reproduce; it also made the drift gate fail on a commit that only edited
+ * docs.
+ */
+@import "tailwindcss" source(none);
+
+@source "../../templates";
+@source "../../apps";
+
+@import "./_theme.css";
+
+/* Hand-written component/page CSS that historically shipped inside main.css
+   (pills, chips, btn system, workflow/mfr styles, motion, dark/glass themes). */
+@import "../../static/css/custom.css";

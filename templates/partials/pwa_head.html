@@ -1,0 +1,35 @@
+{% load static %}
+{% comment %}
+  Everything needed to install the app, in one place so the signed-in shell and
+  the sign-in layout cannot drift apart. Installability is judged per-page, and
+  sign-in is the first page a new user sees -- omitting it there is how an app
+  becomes installable only after you log in.
+
+  The manifest and worker are Django routes, not static files. See
+  apps/frontend/views/pwa_views.py for why.
+{% endcomment %}
+<link rel="manifest" href="/manifest.webmanifest">
+
+{# iOS ignores the manifest icons and reads this instead. #}
+<link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Edify">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Edify">
+
+<link rel="icon" type="image/png" sizes="32x32" href="{% static 'icons/favicon-32.png' %}">
+<link rel="icon" type="image/png" sizes="16x16" href="{% static 'icons/favicon-16.png' %}">
+<link rel="shortcut icon" href="{% static 'icons/favicon.ico' %}">
+
+<script>
+  // Registered on load rather than inline so the worker never competes with
+  // first paint. Failure is logged, not surfaced: the app works fine
+  // uninstalled, and a worker error is not something a user can act on.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .catch(function (err) { console.warn('Service worker registration failed:', err); });
+    });
+  }
+</script>

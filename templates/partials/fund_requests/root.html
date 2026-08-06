@@ -1,0 +1,299 @@
+{% comment %}Fund Requests page root — re-rendered by HTMX on filter/action.
+Staff schedule activities; the system generates the budget and fund request
+automatically. There is no manual "enter an amount" step anywhere here.{% endcomment %}
+<div
+id="fund-requests-page-root"
+x-data="{
+activeTab: '{{ active_tab }}',
+selectedWeek: '{{ selected_week }}'
+}"
+class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
+>
+
+{% if action_error %}
+<div class="p-3.5 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700">{{ action_error }}</div>
+{% elif action_ok %}
+<div class="p-3.5 rounded-surface bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
+{% endif %}
+
+{% if receipt_pending_plans %}
+<div class="space-y-2">
+  {% for p in receipt_pending_plans %}
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-surface bg-emerald-50 border border-emerald-200">
+    <div class="flex items-center gap-3 min-w-0">
+      <span class="h-9 w-9 rounded-pill bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="text-[13px] font-bold text-emerald-900">Funds disbursed for your {{ p.period_key }} fund plan{% if p.disburse_method %} via {{ p.disburse_method }}{% endif %}{% if p.disburse_reference %} (Ref {{ p.disburse_reference }}){% endif %}.</p>
+        <p class="edify-text-caption font-semibold text-emerald-700">Check your account and confirm receipt — execution and accountability follow.</p>
+      </div>
+    </div>
+    <form method="post" action="/fund-requests/receipt-confirm" class="shrink-0">
+      {% csrf_token %}
+      <input type="hidden" name="fund_request_id" value="{{ p.id }}">
+      <input type="hidden" name="next" value="/fund-requests/weekly">
+      <button type="submit" class="h-10 px-5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Page Header Row -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-header__title edify-page-title">Fund Requests</h1>
+<p class="edify-page-header__description">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
+</div>
+
+<!-- Action buttons -->
+<div class="edify-page-header__controls">
+{% if can_add_non_school_activity %}
+<button
+  type="button"
+  class="btn btn-primary h-9 shadow-sm"
+  hx-get="/work-plan/add"
+  hx-target="#drawer-root"
+  hx-swap="innerHTML"
+>
+  Add Non-School Activity
+</button>
+{% endif %}
+<!-- Export button -->
+<a
+href="{% querystring export='csv' %}"
+class="btn btn-ghost h-9 shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
+
+<!-- Open My Plan -->
+<a
+href="/my-plan"
+class="flex items-center gap-1.5 h-9 px-4 edify-surface border border-slate-200 text-[var(--edify-primary)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+>
+Open My Plan
+<svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+</a>
+</div>
+</div>
+
+<!-- Messages notifications -->
+{% if messages %}
+<div class="space-y-2">
+{% for message in messages %}
+<div class="p-3.5 rounded-surface border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+<span>{{ message }}</span>
+<button type="button" @click="$el.parentElement.remove()" class="text-slate-400 hover:text-slate-600" aria-label="Dismiss notification">&times;</button>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Workflow Strip -->
+<div class="space-y-2">
+{% include "partials/fund_requests/workflow_strip.html" %}
+</div>
+
+<!-- Filters Bar -->
+<form
+id="filters-form"
+hx-get="/fund-requests/weekly"
+hx-trigger="change"
+hx-target="#fund-requests-page-root"
+hx-swap="innerHTML"
+hx-push-url="true"
+class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
+>
+<input type="hidden" name="tab" :value="activeTab">
+
+<!-- Fiscal Year -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+<span class="edify-filter-label">Fiscal year</span>
+<select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+</select>
+</div>
+
+<!-- Quarter -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Quarter</span>
+<select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Q1</option>
+<option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Q2</option>
+<option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Q3</option>
+<option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Q4</option>
+</select>
+</div>
+
+<!-- Month -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Month</span>
+<select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="October" {% if selected_month == 'October' %}selected{% endif %}>October</option>
+<option value="November" {% if selected_month == 'November' %}selected{% endif %}>November</option>
+<option value="December" {% if selected_month == 'December' %}selected{% endif %}>December</option>
+<option value="January" {% if selected_month == 'January' %}selected{% endif %}>January</option>
+<option value="February" {% if selected_month == 'February' %}selected{% endif %}>February</option>
+<option value="March" {% if selected_month == 'March' %}selected{% endif %}>March</option>
+<option value="April" {% if selected_month == 'April' %}selected{% endif %}>April</option>
+<option value="May" {% if selected_month == 'May' %}selected{% endif %}>May</option>
+<option value="June" {% if selected_month == 'June' %}selected{% endif %}>June</option>
+<option value="July" {% if selected_month == 'July' %}selected{% endif %}>July</option>
+<option value="August" {% if selected_month == 'August' %}selected{% endif %}>August</option>
+<option value="September" {% if selected_month == 'September' %}selected{% endif %}>September</option>
+</select>
+</div>
+
+<!-- Week -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Week</span>
+<select aria-label="Week" name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
+{% for wk in dropdown_weeks %}
+<option value="{{ wk.val }}">{{ wk.label }}</option>
+{% endfor %}
+</select>
+</div>
+
+{% if show_team_filters %}
+<!-- District -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">District</span>
+<select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">All districts</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Staff -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Staff</span>
+<select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">All staff</option>
+{% for p in staff_profiles %}
+<option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
+
+<!-- Request Type -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Request type</span>
+<select aria-label="Request type" name="request_type" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">All types</option>
+<option value="school visits" {% if selected_request_type == 'school visits' %}selected{% endif %}>School Visits</option>
+<option value="cluster training" {% if selected_request_type == 'cluster training' %}selected{% endif %}>Cluster Training</option>
+<option value="cluster meetings" {% if selected_request_type == 'cluster meetings' %}selected{% endif %}>Cluster Meetings</option>
+<option value="core visits" {% if selected_request_type == 'core visits' %}selected{% endif %}>Core Visits</option>
+<option value="core trainings" {% if selected_request_type == 'core trainings' %}selected{% endif %}>Core Trainings</option>
+<option value="ssa support" {% if selected_request_type == 'ssa support' %}selected{% endif %}>SSA Support</option>
+<option value="partner activities" {% if selected_request_type == 'partner activities' %}selected{% endif %}>Partner Activities</option>
+<option value="admin budget" {% if selected_request_type == 'admin budget' %}selected{% endif %}>Admin Budget</option>
+</select>
+</div>
+
+<!-- Status -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
+<span class="edify-filter-label">Status</span>
+<select aria-label="Status" name="status" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">All statuses</option>
+<option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
+<option value="confirmed_for_advance" {% if selected_status == 'confirmed_for_advance' %}selected{% endif %}>Ready</option>
+<option value="self_funded" {% if selected_status == 'self_funded' %}selected{% endif %}>Self-funded</option>
+<option value="disbursed" {% if selected_status == 'disbursed' %}selected{% endif %}>Disbursed</option>
+</select>
+</div>
+
+<!-- Clear Filters -->
+<button
+type="button"
+@click="$el.form.reset(); $el.form.dispatchEvent(new Event('change', { bubbles: true }))"
+class="ml-auto text-slate-400 hover:text-[var(--edify-chart-blue)] text-[12px] font-semibold flex items-center gap-1 transition-colors"
+>
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+Clear Filters
+</button>
+</form>
+
+<!-- KPIs -->
+<div id="fund-requests-kpis">
+{% include "partials/fund_requests/kpis.html" %}
+</div>
+
+<!-- Budget period tabs. These replaced three links to OTHER pages (Weekly
+     Fund Request / Monthly Request / General Budget) at the owner's request:
+     one set of tabs, on this page, showing this person's budget at the four
+     horizons. Monthly Request and the country budget remain reachable from
+     the sidebar. Real links, not an ARIA tablist -- each navigates and the
+     server renders the panel. -->
+<div class="flex border-b border-slate-100 pb-3">
+  <nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Budget period">
+    {% for t in period_budgets.tabs %}
+    <a
+      href="?{{ period_tab_query }}period_tab={{ t.key }}"
+      {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
+      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap {% if t.key == period_budgets.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
+    >
+      {% if t.key == "week" %}Week{% elif t.key == "month" %}Month{% elif t.key == "quarter" %}Quarter{% else %}FY{% endif %}
+    </a>
+    {% endfor %}
+  </nav>
+</div>
+
+<!-- The auto-generation note lives once now, as the budget card's footer,
+     instead of a banner here AND a caption under the workflow strip both
+     saying the same thing. -->
+
+<!-- Main Canvas split: the budget/request work takes 70%, the reference
+     panels take 30%. A ten-column grid rather than a fixed-width sidebar, so
+     the ratio holds as the viewport grows instead of the sidebar staying
+     384px while the canvas absorbs everything. Below lg the columns stack,
+     work first. -->
+<div class="grid grid-cols-1 lg:grid-cols-10 gap-5 items-start">
+<!-- Left panel (70%) -->
+<div class="lg:col-span-7 space-y-5 min-w-0">
+
+<!-- Weekly Request Card -->
+<div id="weekly-request-card-container">
+{% include "partials/fund_requests/period_budget_tabs.html" %}
+</div>
+
+</div>
+
+<!-- Right panel (30%) -->
+<div class="lg:col-span-3 space-y-5 min-w-0">
+
+<!-- Source Activities Card -->
+<div id="fund-requests-source-activities">
+{% include "partials/fund_requests/source_activities.html" %}
+</div>
+
+<!-- Insights Panel -->
+<div id="fund-requests-insights">
+{% include "partials/fund_requests/insights_panel.html" %}
+</div>
+
+</div>
+</div>
+
+<!-- Monthly summary tiles — full width, like the KPI strip above. The
+     "Monthly Fund Request" preview card that used to render with them was
+     removed; the My Budget card's Week and Month tabs carry that story. -->
+<div id="fund-requests-monthly-preview">
+{% include "partials/fund_requests/monthly_preview.html" %}
+</div>
+
+<!-- Breakdown Strip -->
+<div id="fund-requests-breakdown">
+{% include "partials/fund_requests/breakdown_by_period.html" %}
+</div>
+
+<div id="drawer-root"></div>
+</div>

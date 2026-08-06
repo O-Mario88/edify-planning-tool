@@ -1,0 +1,146 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}My Profile — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<!-- Page hero -->
+<div class="edify-page-header edify-page-hero">
+<div class="flex items-start gap-5">
+<div class="h-16 w-16 rounded-surface edify-primary-soft edify-primary-text font-semibold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
+<div class="flex-1 edify-page-header__lead">
+<p class="edify-page-eyebrow">Account</p>
+<h1 class="edify-page-title edify-page-header__title">{{ member.name }}</h1>
+<p class="edify-primary-on-solid edify-page-header__description">{{ member.email }}</p>
+<div class="flex flex-wrap gap-2 mt-3">
+{% for role in member.roles %}
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ role }}</span>
+{% endfor %}
+</div>
+</div>
+<div class="text-right">
+<p class="edify-text-caption font-bold uppercase tracking-wider edify-primary-on-solid">Active Role</p>
+<p class="text-[14px] font-semibold mt-0.5">{{ member.active_role }}</p>
+<p class="edify-text-caption edify-primary-on-solid mt-1">FY{{ fy }}</p>
+</div>
+</div>
+</div>
+
+<!-- Stats Strip -->
+<div class="grid grid-cols-3 gap-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<p class="text-[28px] font-semibold edify-primary-text">{{ total_activities }}</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
+<p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p>
+<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
+</div>
+</div>
+
+<!-- Account Details -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-4 border-b border-slate-100">
+<h2 class="text-[14px] font-semibold">Account Details</h2>
+<p class="mt-1 edify-text-caption font-medium text-slate-500">Your name and phone number are yours to change. Email, status and roles are set by an administrator.</p>
+</div>
+<form method="post" action="{% url 'frontend:profile' %}" class="px-5 py-4 space-y-4">
+{% csrf_token %}
+<div class="py-2 border-b border-slate-50">
+<label for="profile-name" class="block text-[12px] font-semibold text-slate-500">Full Name</label>
+<input
+id="profile-name"
+name="name"
+type="text"
+value="{{ member.name }}"
+maxlength="255"
+required
+autocomplete="name"
+class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<div class="py-2 border-b border-slate-50">
+<label for="profile-phone" class="block text-[12px] font-semibold text-slate-500">Phone Number</label>
+<input
+id="profile-phone"
+name="phone"
+type="tel"
+value="{{ member.phone|default:'' }}"
+maxlength="64"
+autocomplete="tel"
+inputmode="tel"
+placeholder="Not set"
+class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+>
+</div>
+<div class="flex justify-end pt-1">
+<button type="submit" class="min-h-11 rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">Save Changes</button>
+</div>
+</form>
+<div class="px-5 pb-4 space-y-4">
+<div class="flex items-center justify-between py-2 border-b border-slate-50">
+<span class="text-[12px] font-semibold text-slate-500">Email</span>
+<span class="text-[14px] font-bold text-slate-800">{{ member.email }}</span>
+</div>
+<div class="flex items-center justify-between py-2 border-b border-slate-50">
+<span class="text-[12px] font-semibold text-slate-500">Status</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill bg-emerald-50 text-emerald-700 edify-text-caption font-bold">
+<span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
+{{ member.status|title }}
+</span>
+</div>
+<div class="flex items-center justify-between py-2">
+<span class="text-[12px] font-semibold text-slate-500">Roles</span>
+<div class="flex gap-1.5">
+{% for role in member.roles %}
+<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ role }}</span>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+
+<!-- Recent Activity -->
+{% if recent %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-4 border-b border-slate-100">
+<h2 class="text-[14px] font-semibold">Recent Activity</h2>
+</div>
+<ul class="divide-y divide-slate-100">
+{% for act in recent %}
+<li class="px-5 py-3.5 flex items-center justify-between">
+<div>
+<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="edify-text-caption text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status }}</p>
+</div>
+<a href="/my-plan/{{ act.id }}" class="edify-text-caption text-slate-400 edify-primary-text-hover transition-colors">→</a>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<!-- Switch Role -->
+{% if request.user.roles|length > 1 %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5">
+<h2 class="text-[14px] font-semibold mb-3">Switch Active Role</h2>
+<div class="flex flex-wrap gap-2">
+{% for role in request.user.role_enums %}
+<form action="/auth/switch-role" method="post" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="role" value="{{ role.value }}">
+<button type="submit" class="px-3 py-2 rounded-control text-[12px] font-bold transition-all
+{% if request.user.active_role == role.value %}edify-primary-solid text-white{% else %}bg-slate-100 text-slate-600 edify-primary-soft-hover edify-primary-text-hover{% endif %}">
+{{ role.value }}
+</button>
+</form>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

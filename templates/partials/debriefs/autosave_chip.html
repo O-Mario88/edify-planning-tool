@@ -1,0 +1,8 @@
+{% if error %}
+<span class="font-semibold" style="color: var(--edify-danger-text)">{{ error }}</span>
+{% else %}
+<span class="inline-flex items-center gap-1">
+  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true" style="color: var(--edify-success-text)"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+  Saved {{ saved_at|date:"g:i A" }}
+</span>
+{% endif %}

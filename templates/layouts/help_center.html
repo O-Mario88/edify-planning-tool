@@ -1,0 +1,48 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% comment %}
+Declared on the layout so every Knowledge Center page inherits it; no help
+page overrides feature_css.
+{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/help-center.css' %}?v=20260731readabletype1">{% endblock %}
+{% comment %}
+The Knowledge Center's two-column documentation shell.
+
+Left: the hierarchical, sticky, role-aware Table of Contents.
+Right: the selected article or landing content.
+
+Every Help page extends this, so the manual reads as one continuous document
+rather than a set of disconnected pages. The contents remain visible above
+the article on smaller screens and become a sticky left rail on desktop.
+{% endcomment %}
+{% block shell_content %}
+<div class="help-shell">
+
+  <header class="edify-page-header help-shell__header">
+    {% comment %}The lead wrapper is required, not decorative: the header is a
+    flex row, so an eyebrow, a title and a lede left as direct children become
+    three flex items and space-between throws the title to the far right.
+    {% endcomment %}
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Documentation</p>
+      <h1 class="edify-page-title">{% block help_title %}Help &amp; Knowledge Center{% endblock %}</h1>
+      <p class="help-shell__lede">{% block help_lede %}Learn how every Edify feature, workflow, role and automated process works.{% endblock %}</p>
+    </div>
+    {% block help_header_actions %}{% endblock %}
+  </header>
+
+  <div class="help-shell__body">
+    <aside class="help-shell__rail" aria-label="Knowledge Center navigation">
+      {% include "partials/help/toc.html" %}
+    </aside>
+
+    {% comment %}A div, not <main>: layouts/shell.html already renders the one
+    <main id="main-content"> this content sits inside.{% endcomment %}
+    <div class="help-shell__main">
+      {% block help_content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

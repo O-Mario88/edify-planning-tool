@@ -1,0 +1,32 @@
+{% comment %}
+The Knowledge Center's Table of Contents. Rendered by every Help page so the
+reader always knows where they are in the manual and can reach any other
+article without going back to a landing page.
+
+Role-aware by construction: `knowledge_tree` is built from visible_articles,
+so a category with nothing this role may read is not drawn at all.
+
+Rendered once as an inline rail at every viewport.
+{% endcomment %}
+<nav class="help-toc" aria-label="Knowledge Center contents">
+  <p class="help-toc__eyebrow">Table of contents</p>
+  {% for group in knowledge_tree %}
+  <details class="help-toc__group" {% if group.expanded %}open{% endif %}>
+    <summary class="help-toc__summary">
+      <span class="help-toc__category">{{ group.category.name }}</span>
+      {% comment %}aria-label is ignored on a plain span, so the unit is real
+      text held off-screen instead.{% endcomment %}
+      <span class="help-toc__count">{{ group.count }}<span class="sr-only"> {{ group.count_label }}</span></span>
+    </summary>
+    <ul class="help-toc__list" role="list">
+      {% for entry in group.articles %}
+      <li>
+        <a class="help-toc__link{% if entry.active %} help-toc__link--active{% endif %}"
+           href="{{ entry.url }}"
+           {% if entry.active %}aria-current="page"{% endif %}>{{ entry.title }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
+</nav>

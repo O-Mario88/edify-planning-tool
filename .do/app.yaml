@@ -1,0 +1,517 @@
+# DigitalOcean App Platform specification — Edify Planning Tool
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ DO NOT APPLY THIS FILE TO THE RUNNING APP.                               │
+# │                                                                          │
+# │   doctl apps update <APP_ID> --spec .do/app.yaml     ← would break prod  │
+# │                                                                          │
+# │ This is a REFERENCE for creating a NEW app from scratch. The running app │
+# │ was created separately and has never been configured from this file, so  │
+# │ the two disagree about names, secrets and structure. `--spec` REPLACES   │
+# │ the whole spec rather than merging, so applying this to the live app      │
+# │ deletes every app-level env (all secrets), renames the database out from │
+# │ under ${db.DATABASE_URL}, and recreates the service under a new name.    │
+# │ The container then refuses to boot, because prod.py rejects the          │
+# │ REPLACE_ME placeholders below — which is the safest of those outcomes.   │
+# │                                                                          │
+# │ To change the running app, read .do/README.md: export the live spec,     │
+# │ edit a copy, diff it with scripts/do_spec_diff.py, then apply that.      │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# For a genuinely new app, this file is still the right starting point:
+#
+#   doctl apps create --spec .do/app.yaml
+#
+# ── Before you deploy ────────────────────────────────────────────────────────
+# Every value below marked REPLACE_ME must be filled in. Production settings
+# (config/settings/prod.py) fail CLOSED: the container refuses to boot if a
+# secret is weak, a Spaces setting is missing, or a dev flag is on. That is the
+# intended behaviour — an app that will not start is safer than one that starts
+# with a placeholder signing key.
+#
+# The secrets below are deliberately NOT real values. Fill them in the console's
+# environment-variable editor (or with `doctl`) so they are stored encrypted and
+# never committed to git.
+
+name: edify-planning-tool
+
+# Frankfurt is the closest App Platform region to Uganda. Change if you prefer
+# another; keep SPACES_REGION in the same region so uploads stay on-continent.
+region: fra
+
+# Only pushes to main trigger a build.
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+# ── Custom domain ────────────────────────────────────────────────────────────
+# The desired canonical hostname is the apex, edifyplanning.app. DNS remains at
+# GoDaddy; no nameserver migration or forwarding service is required. App
+# Platform publishes stable ingress records for externally managed DNS:
+#
+#   A     @     162.159.140.98
+#   A     @     172.66.0.96
+#   AAAA  @     2606:4700:7::60
+#   AAAA  @     2a06:98c1:58::60
+#   CNAME www   edify-planning-app-gu9a6.ondigitalocean.app.
+#
+# Values are DigitalOcean's published static ingress records, shared across App
+# Platform apps and routed by Host header:
+# https://docs.digitalocean.com/products/app-platform/how-to/add-ip-address/
+#
+# NEVER use GoDaddy Domain Forwarding for the apex. An earlier revision of this
+# file recommended it; the entry was created without a destination and the
+# public apex served GoDaddy's parked "/lander" page instead of Edify. That is
+# INC-2026-08-03-01. Forwarding also locks the apex A record, so it has to be
+# removed before these records can be added at all.
+#
+# Add the AAAA pair as well as the A pair. www already resolves over IPv6 today
+# via its CNAME; an apex with A records only would leave IPv6-first mobile
+# clients unable to reach the canonical host at all once it becomes canonical.
+#
+# Attach BOTH names in App Platform before changing the apex records, then wait
+# until its certificate covers both names. See
+# docs/incident-2026-08-03-apex-godaddy-lander.md.
+#
+# CUTOVER COMPLETE, 2026-08-04. The prerequisite this order was waiting on is
+# met and verified from outside:
+#
+#   apex A     162.159.140.98, 172.66.0.96
+#   apex AAAA  2606:4700:7::60, 2a06:98c1:58::60
+#   HTTPS      200 over both IPv4 and IPv6
+#   TLS        CN=edifyplanning.app, valid to 2026-11-02
+#   lander     gone; /lander redirects into the application
+#
+# So the apex is PRIMARY now. PRIMARY is what App Platform treats as the app's
+# own address; www stays attached as an ALIAS so existing links, bookmarks and
+# anything already indexed keep resolving rather than breaking. The redirect
+# from www to here is the application's, via CANONICAL_HOST below — one hop,
+# path and query preserved.
+#
+# The .app TLD is HSTS-preloaded, so valid apex TLS was a hard prerequisite for
+# this flip, not a nicety. Do not reverse it without checking that first.
+domains:
+  - domain: edifyplanning.app
+    type: PRIMARY
+    # zone: edifyplanning.app
+  - domain: www.edifyplanning.app
+    type: ALIAS
+    # zone: edifyplanning.app
+
+databases:
+  # App Platform's development database. Cheaper than a managed cluster and
+  # fine to launch on, with two things to know: no automated failover, and no
+  # private VPC networking, so DATABASE_URL is the public host over TLS.
+  #
+  # To move to a managed cluster later, replace this block with:
+  #   production: true
+  #   cluster_name: edify-db
+  #   size: db-s-1vcpu-1gb
+  #   num_nodes: 1
+  # and switch the web service's DATABASE_URL to ${db.DATABASE_PRIVATE_URL},
+  # which only exists on a production cluster. Take a dump first — swapping the
+  # database resource does not migrate the data.
+  - name: db
+    engine: PG
+    version: "16"
+    production: false
+
+# ── Migrations ───────────────────────────────────────────────────────────────
+# Migrations run here, once, before the new web containers take traffic. The web
+# service sets RUN_MIGRATIONS=false so that scaling to more than one instance can
+# never run concurrent migrations against the same database.
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: python manage.py migrate --noinput
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: RUN_MIGRATIONS
+        value: "false"
+      # The prod settings gate runs on import, so the job needs the same
+      # environment as the web service.
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ALLOWED_HOSTS
+        value: ${APP_DOMAIN}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+
+    # numpy/pandas/scipy plus headless LibreOffice need real memory. 2 GB is the
+    # smallest size this image runs comfortably in; 1 GB risks OOM during a
+    # DOCX→PDF rendition.
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-2gb
+
+    # App Platform routes public traffic to this port and injects it as $PORT,
+    # which the image's CMD binds Daphne to.
+    http_port: 8080
+
+    # Liveness vs readiness matters here: /api/health/live answers without
+    # touching the database, /api/health/ready checks dependencies. App Platform
+    # uses this to decide when an instance may receive traffic, so readiness is
+    # the correct endpoint.
+    health_check:
+      http_path: /api/health/ready
+      initial_delay_seconds: 60
+      period_seconds: 15
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 5
+
+    envs:
+      # ── Platform wiring ────────────────────────────────────────────────────
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        # On a `production: true` cluster you can switch this to
+        # ${db.DATABASE_PRIVATE_URL} to keep database traffic inside the VPC and
+        # off your bandwidth bill. DATABASE_URL works in both cases.
+        value: ${db.DATABASE_URL}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      # Dockerfile builds cannot consume bindable variables at build time.
+      # App Platform does expose the exact deployed source revision at runtime,
+      # so the public build-provenance endpoint can still identify the commit.
+      - key: GIT_COMMIT
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      # App Platform does not expose a separate deployment-id bindable to a
+      # Dockerfile build. The immutable source revision is therefore also the
+      # release identifier, which is still exact and comparable across every
+      # process serving the deployment.
+      - key: RELEASE
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      # Migrations are owned by the PRE_DEPLOY job above. Leaving this true as
+      # well would mean every replica migrates on boot.
+      - key: RUN_MIGRATIONS
+        value: "false"
+      # Reference-data seeding is idempotent and creates the super-admin account.
+      # Set to "true" for the FIRST deploy only, then set it back to "false".
+      - key: RUN_SEED
+        value: "false"
+
+      # ── Secrets — replace every one of these ───────────────────────────────
+      # Generate with: openssl rand -hex 32
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      # Generate with: openssl rand -hex 32
+      # WARNING: rotating this key makes existing encrypted field data
+      # unreadable. Set it once, before real data exists, and keep a backup.
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_EMAIL
+        value: edwin.omario@gmail.com
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+
+      # ── Private Spaces object storage ─────────────────────────────────────
+      # Bucket must be PRIVATE with a bucket-scoped Read/Write/Delete key.
+      # Do not enable the CDN — these are access-controlled files.
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+      # ── Outbound mail ─────────────────────────────────────────────────────
+      # MailerService.provider requires BOTH of the next two, or it falls back
+      # to the console provider — and in production that provider withholds the
+      # body, because it would otherwise write live invitation and reset tokens
+      # to the log. The visible symptom is the one that matters: "Send
+      # Invitation Link" reports success, nothing is delivered, and the link is
+      # not even recoverable from the logs.
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_resend_api_key
+      # The From address on invitations, password resets and reports.
+      #
+      # Resend refuses to send from a domain that is not verified in the Resend
+      # account, and rejects the whole send rather than rewriting the address —
+      # so an unverified domain here is the same silent non-delivery as leaving
+      # RESEND_API_KEY unset. edify.org must be verified (SPF/DKIM records) for
+      # this value. edifyplanning.app is the domain already being set up for
+      # this app, so it is the cheaper one to verify if edify.org's DNS is not
+      # yours to change.
+      - key: EMAIL_FROM
+        value: Edify Planning <domario@edify.org>
+
+      # ── Production safety gates (prod.py refuses to boot on wrong values) ──
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ENABLE_MOCK_DATA
+        value: "false"
+      - key: ENABLE_DEV_ENDPOINTS
+        value: "false"
+      - key: ENABLE_DEV_SEED
+        value: "false"
+      - key: ENABLE_DEV_IMPORTS
+        value: "false"
+      - key: PARTNER_ROLE_BRIDGE
+        value: "false"
+
+      # ── Transport security ────────────────────────────────────────────────
+      - key: SECURE_SSL_REDIRECT
+        value: "true"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: CSRF_COOKIE_SECURE
+        value: "true"
+      # The App Platform *.ondigitalocean.app hostname is added automatically
+      # from DIGITALOCEAN_APP_DOMAIN. These are the custom domains, which
+      # Django would otherwise reject with DisallowedHost.
+      - key: ALLOWED_HOSTS
+        value: www.edifyplanning.app,edifyplanning.app
+      # Scheme included, or Django rejects every POST from the custom domain
+      # with a CSRF failure — which shows up as "login does not work" rather
+      # than as anything mentioning CSRF.
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://www.edifyplanning.app,https://edifyplanning.app
+      # Absolute links in invitation and password-reset emails are built from
+      # this, so it must be the public hostname rather than the platform one —
+      # and now the CANONICAL one. Left on www it would email every new user a
+      # link that immediately redirects, which is a wasted round trip on a
+      # phone and reads as a redirect chain in any link checker.
+      - key: APP_BASE_URL
+        value: https://edifyplanning.app
+
+      # Arms apps.core.middleware.CanonicalHostMiddleware. Unset, it is a
+      # no-op — deliberately, so the code could ship before the apex resolved.
+      # The apex now serves the application over both IPv4 and IPv6 with a
+      # certificate valid to 2026-11-02, so the precondition is met.
+      #
+      # With this set, www.edifyplanning.app answers ONE permanent redirect to
+      # the apex, preserving path and query, and http://www collapses the TLS
+      # upgrade into that same hop rather than spending a second one.
+      - key: CANONICAL_HOST
+        value: edifyplanning.app
+
+      # ── Background jobs ───────────────────────────────────────────────────
+      # The eight scheduled jobs run ONLY in a dedicated runscheduler process.
+      # Keep this false on the web service.
+      - key: ENABLE_BACKGROUND_JOBS
+        value: "false"
+
+# ── Required before raising any instance_count above 1 ───────────────────────
+# REDIS_URL is deliberately unset, so the app falls back to LocMemCache. That
+# is correct at one instance and wrong at two, in ways that do not announce
+# themselves:
+#
+#   * cached figures are per-process, so the same page can show two answers
+#     depending on which worker served it;
+#   * the login rate limit (RATE_LIMIT_LOGIN_PER_MIN, default 10/min) is
+#     counted per worker, so N instances allow N x 10 attempts per minute.
+#
+# Per-account brute force stays bounded either way — AuthenticationLockoutService
+# counts in the database — but the per-address limit does not. System Health
+# reports "Cache" as a warning while this is the case; it is not silent, but it
+# is easy to scale past without reading.
+#
+# Add a managed cache and wire it in before scaling:
+#
+# databases:
+#   - name: edify-cache
+#     engine: REDIS
+#     production: true
+#
+# then add to BOTH the web service and the scheduler worker:
+#
+#       - key: REDIS_URL
+#         scope: RUN_TIME
+#         value: ${edify-cache.DATABASE_URL}
+
+# ── Scheduled-jobs worker ────────────────────────────────────────────────────
+# NOT optional. apps/realtime/registry.py registers 17 scheduled jobs, and every
+# one of them early-returns unless ENABLE_BACKGROUND_JOBS is true in ITS OWN
+# process. The web service sets that flag to false (correctly — jobs must not
+# fire once per web replica), so without this worker the count of scheduled jobs
+# actually running in production is zero.
+#
+# That failure is silent in the places people look. The job functions return
+# rather than raise, so nothing appears in the logs; docker-compose.yml defines
+# a correct worker and apps/core/tests/test_deployment_manifests.py asserts it,
+# so the test suite stays green while App Platform — the deployment that serves
+# real users — runs none of them. The visible symptoms are all absences: weekly
+# fund requests are never generated, monthly work plans never open, notification
+# escalations never fire, the target ledger never syncs, PD and debrief
+# reminders never send. System Health is the one surface that says so, reporting
+# "Disabled (ENABLE_BACKGROUND_JOBS=false)" via apps/realtime/health.py.
+#
+# Keep instance_count at exactly 1. The scheduler takes a database lock per job,
+# but a second replica still doubles every fire attempt and the contention is
+# pointless — this process is not designed to be scaled horizontally.
+#
+# The env below mirrors the web service because config/settings/prod.py runs its
+# fail-closed gate on import, in every process. A worker missing SECRET_KEY,
+# FIELD_ENCRYPTION_KEY, SUPER_ADMIN_PASSWORD, AUTHZ_MODE or the Spaces block
+# exits 1 at boot and crash-loops. The mail variables are here for the same
+# practical reason: the digest, PD-reminder and debrief-report jobs send mail,
+# and without them MailerService falls back to the console provider, which in
+# production withholds the body — so the mail is neither delivered nor
+# recoverable from the logs.
+workers:
+  - name: scheduler
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: O-Mario88/edify-planning-tool
+      branch: main
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: python manage.py runscheduler
+    envs:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: DIGITALOCEAN_APP_DOMAIN
+        value: ${APP_DOMAIN}
+      - key: GIT_COMMIT
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      - key: RELEASE
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+
+      # This process is the reason the worker exists.
+      - key: ENABLE_BACKGROUND_JOBS
+        value: "true"
+      # Migrations belong to the PRE_DEPLOY job, and seeding to the first web
+      # boot. A worker doing either would race the web service.
+      - key: RUN_MIGRATIONS
+        value: "false"
+      - key: RUN_SEED
+        value: "false"
+
+      # ── Secrets — same values as the web service ──────────────────────────
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: FIELD_ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_openssl_rand_hex_32
+      - key: SUPER_ADMIN_EMAIL
+        value: edwin.omario@gmail.com
+      - key: SUPER_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_strong_password
+
+      # ── Private Spaces object storage ─────────────────────────────────────
+      # Report-generating jobs write renditions here.
+      - key: SPACES_BUCKET_NAME
+        value: REPLACE_ME_bucket_name
+      - key: SPACES_REGION
+        value: fra1
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_key_id
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_spaces_secret
+      - key: SPACES_PREFIX
+        value: edify-production
+
+      # ── Outbound mail ─────────────────────────────────────────────────────
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: REPLACE_ME_resend_api_key
+      - key: EMAIL_FROM
+        value: Edify Planning <domario@edify.org>
+      # Absolute links in job-generated mail are built from this.
+      - key: APP_BASE_URL
+        value: https://edifyplanning.app
+
+      # ── Production safety gates (prod.py refuses to boot on wrong values) ──
+      - key: AUTHZ_MODE
+        value: enforce
+      - key: ENABLE_MOCK_DATA
+        value: "false"
+      - key: ENABLE_DEV_ENDPOINTS
+        value: "false"
+      - key: ENABLE_DEV_SEED
+        value: "false"
+      - key: ENABLE_DEV_IMPORTS
+        value: "false"
+      - key: PARTNER_ROLE_BRIDGE
+        value: "false"
+      # No traffic reaches this process, but ALLOWED_HOSTS is still validated at
+      # import and absolute URLs are still built in job output.
+      - key: ALLOWED_HOSTS
+        value: www.edifyplanning.app,edifyplanning.app

@@ -1,0 +1,58 @@
+<!-- Cluster Meetings Card -->
+<div class="card overflow-hidden">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+Cluster Meetings Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
+</h2>
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] border border-[var(--edify-primary)]/20">
+{{ cluster_meetings|length }}
+</span>
+</div>
+
+<a href="/planning" class="btn btn-ghost h-8 edify-text-caption shadow-sm">
+Open Planning
+</a>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto edify-record-table-wrap">
+{% if cluster_meetings %}
+<table class="edify-data-table mp-table edify-record-table">
+<thead>
+<tr>
+<th>Cluster Name</th>
+<th>Purpose for Meeting</th>
+<th>Date</th>
+<th>Status</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for row in cluster_meetings %}
+<tr>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{{ row.cluster_name }}</td>
+<td class="font-semibold text-slate-600" data-label="Purpose">{{ row.purpose }}</td>
+<td class="font-bold text-slate-700" data-label="Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td>{% include "partials/my_plan/row_badges.html" %}</td>
+<!-- Include more action menu -->
+{% include "partials/my_plan/activity_row.html" %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="edify-empty-state py-12 flex flex-col items-center justify-center">
+<p class="text-[32px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></p>
+<p class="text-[14px] font-bold text-slate-500">No cluster meetings planned for this period.</p>
+<a href="/planning" class="btn btn-primary h-9 mt-3 shadow-sm text-[12px]">Open Planning</a>
+</div>
+{% endif %}
+</div>
+
+
+{% include "partials/my_plan/_pager.html" with pager=cluster_meetings_pager param="cluster_meetings_page" label="Cluster meetings" base_query=my_plan_base_query %}
+</div>

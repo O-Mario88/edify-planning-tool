@@ -1,0 +1,75 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Data Quality Center — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<header class="edify-page-header">
+<div class="flex flex-wrap items-start justify-between gap-3">
+<div class="lg:max-w-[560px] edify-page-header__lead">
+<p class="edify-page-eyebrow">Data assurance</p>
+<h1 class="edify-page-title edify-page-header__title">Data Quality</h1>
+<p class="edify-page-header__description">Resolve coverage gaps, invalid relationships, duplicate risks and records that cannot yet support operational decisions.</p>
+</div>
+</div>
+</header>
+
+{% include "partials/_section_nav.html" %}
+
+<!-- Quality Metrics KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Resolution Guides Callout -->
+<div class="bg-slate-50 border border-slate-200 rounded-surface p-5 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800">Quality Actions Needed</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div>
+<h4 class="text-[12px] font-semibold text-slate-800">Link Raw Staff Names</h4>
+<p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Match schools imported via CSV with active staff profiles in the staff setup queue.</p>
+</div>
+<a href="/admin-panel/staff-setup-queue" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open setup queue &rarr;</a>
+</div>
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div>
+<h4 class="text-[12px] font-semibold text-slate-800">Cluster Client Schools</h4>
+<p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Every client school must belong to a cluster group before scheduling training or meetings.</p>
+</div>
+<a href="/schools?filter=unclustered" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open school directory &rarr;</a>
+</div>
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div>
+<h4 class="text-[12px] font-semibold text-slate-800">Resolve Duplicate Risks</h4>
+<p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Review name and location duplicate risk flags to ensure directory accuracy.</p>
+</div>
+<a href="/data-quality/duplicates" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open duplicate review &rarr;</a>
+</div>
+<div class="edify-surface rounded-surface border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
+<div>
+<h4 class="text-[12px] font-semibold text-slate-800 flex items-center justify-between">
+<span>Link Unmatched SSAs</span>
+{% if unmatched_ssa_count > 0 %}
+<span class="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded-pill edify-text-caption font-semibold">{{ unmatched_ssa_count }}</span>
+{% endif %}
+</h4>
+<p class="edify-text-caption text-slate-400 leading-normal font-semibold mt-1">Resolve SSA uploads mapped to nonexistent School IDs by linking them manually.</p>
+</div>
+<a href="/ssa/unmatched" class="inline-block edify-text-caption font-semibold uppercase edify-primary-text edify-primary-text-hover tracking-wider mt-3">Open unmatched queue &rarr;</a>
+</div>
+</div>
+</div>
+
+<!-- Open Issues Queues -->
+<div class="space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 pt-2">Open Data Quality Issues</h3>
+{% include "partials/data_quality/issue_section.html" with title="Missing Phone Numbers" issues=missing_phone %}
+{% include "partials/data_quality/issue_section.html" with title="Missing Primary Contact" issues=missing_contact %}
+{% include "partials/data_quality/issue_section.html" with title="Missing Enrollment Data" issues=missing_enrollment %}
+{% include "partials/data_quality/issue_section.html" with title="Schools Without a Cluster" issues=no_cluster %}
+{% include "partials/data_quality/issue_section.html" with title="Unmatched Staff Owners" issues=unmatched_staff %}
+{% include "partials/data_quality/issue_section.html" with title="Schools Missing SSA" issues=no_ssa %}
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,495 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+{% comment %}
+viewport-fit=cover is what makes iOS report real safe-area-inset values.
+Without it every env(safe-area-inset-*) in the stylesheets resolves to 0, and
+the notch handling in components/mobile-shell.css, the IA review workspace's
+decision bar and login.css is all present but inert on hardware. It also
+extends the layout under the status bar and home indicator, so the shell edges
+inset themselves — see components/mobile-shell.css.
+{% endcomment %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
+{% include "partials/pwa_head.html" %}
+
+<!-- Apply the saved theme before CSS renders to prevent an unthemed flash. -->
+<script>
+  (function() {
+    var html = document.documentElement;
+    var allowed = ['system', 'light', 'blue', 'dark'];
+    var pref = 'system';
+
+    function resolveSystemTheme() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    }
+
+    try {
+      var saved = localStorage.getItem('edify_theme');
+      if (allowed.indexOf(saved) !== -1) pref = saved;
+    } catch (error) {
+      pref = 'system';
+    }
+
+    var actual = pref === 'system' ? resolveSystemTheme() : pref;
+
+    html.classList.remove('light', 'theme-blue', 'theme-dark', 'dark');
+    if (actual === 'blue') html.classList.add('dark', 'theme-blue');
+    if (actual === 'dark') html.classList.add('dark', 'theme-dark');
+    if (actual === 'light') html.classList.add('light');
+    html.dataset.theme = actual;
+    html.dataset.themePref = pref;
+
+    var schemeMeta = document.querySelector('meta[name="color-scheme"]');
+    var themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (schemeMeta) schemeMeta.content = pref === 'system' ? 'light dark' : (actual === 'light' ? 'light' : 'dark');
+    if (themeMeta) {
+      requestAnimationFrame(function() {
+        themeMeta.content = getComputedStyle(html)
+          .getPropertyValue('--edify-bg').trim();
+      });
+    }
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { html.classList.add('theme-fade'); });
+    });
+  })();
+</script>
+
+<!-- Typography: Geist Sans — the platform typeface, served from this origin.
+     It came from Google Fonts until the type tokens, all measured against
+     Geist, were rendering in ui-sans-serif whenever that request was slow or
+     blocked. Preloaded because the @font-face lives in css/fonts.css, so the
+     browser would otherwise not discover the file until that stylesheet had
+     downloaded and parsed. -->
+<link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731geist2">
+
+<!-- Compiled Tailwind Styling -->
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731geist2">
+
+<!-- Edify Design System — the SINGLE source of truth for tokens.
+All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
+live here. Templates consume tokens via var(--edify-*). -->
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260805barrow1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260731compactreports1">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260804mobileshell2">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260731nowraptiles1">
+{% comment %}
+admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
+(17 KB) used to load here, on every authenticated page. Between them they are
+used by the admin dashboard, one HR workspace and the Knowledge Center — so
+every other page in the platform paid 56 KB and three render-blocking requests
+for rules that matched nothing on it.
+
+They now load through `{% templatetag openblock %} block feature_css {% templatetag closeblock %}` in the templates that
+need them. Every selector in all three is scoped under its own prefix
+(.admin-*, .hcos-*, .help-*) — the generic-looking ones are nested, e.g.
+`.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
+other page was relying on them.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260731reportsalign4">
+{% block feature_css %}{% endblock %}
+<!-- Feature styles load before this final bridge, so individual workspaces
+     retain their layout while shared tokens, controls and accessibility states
+     always win across the platform. -->
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260731compactreports1">
+
+<style>
+/* All design tokens live in design-system.css. This block only consumes them.
+   Card elevation, topbar glass, and component styling live in components.css. */
+
+/* Alpine: hide x-cloak elements until Alpine initializes. */
+[x-cloak] { display: none !important; }
+
+/* Body — token-driven, adapts to light/dark automatically. */
+body {
+  font-family: var(--edify-font-sans);
+  font-size-adjust: from-font;
+  background-color: var(--edify-bg);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 28%;
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  line-height: var(--edify-text-body-leading);
+  letter-spacing: var(--edify-text-body-tracking);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbars — token-driven */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--edify-scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--edify-scrollbar-thumb); border-radius: var(--edify-radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
+
+/* Hover-revealed row actions stay reachable on touch + keyboard. */
+@media (hover: none) {
+  .group .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
+}
+.opacity-0.group-hover\:opacity-100:focus-visible,
+.group:focus-within .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
+
+/* Primary buttons map to the accent blue. */
+button.edify-primary-solid, a.edify-primary-solid,
+button.edify-primary-solid, a.edify-primary-solid,
+button.edify-primary-solid, a.edify-primary-solid {
+  background-color: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font-weight: var(--edify-text-title-weight);
+  border-radius: var(--edify-radius-md);
+  transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
+}
+button.edify-primary-solid:hover, a.edify-primary-solid:hover,
+button.edify-primary-solid:hover, a.edify-primary-solid:hover,
+button.edify-primary-solid:hover, a.edify-primary-solid:hover {
+  background-color: var(--edify-accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Secondary/outline buttons. */
+button.border-slate-200, a.border-slate-200,
+button.border-slate-300, a.border-slate-300 {
+  background-color: var(--edify-surface);
+  border: 1px solid var(--edify-border-strong);
+  color: var(--edify-accent);
+  border-radius: var(--edify-radius-md);
+}
+button.border-slate-200:hover, a.border-slate-200:hover,
+button.border-slate-300:hover, a.border-slate-300:hover {
+  background-color: var(--edify-accent-light);
+}
+
+/* Table headers. */
+table th {
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-label-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--edify-text-micro-tracking);
+  font-size: var(--edify-text-micro-size);
+}
+table tbody tr:hover { background-color: var(--edify-accent-light); }
+
+/* Form fields — :where() keeps specificity zero so Tailwind utilities win. */
+:where(input[type="text"], input[type="search"], input[type="number"],
+input[type="email"], input[type="password"], input[type="tel"],
+input[type="date"], input[type="datetime-local"], select, textarea) {
+  border: 1px solid var(--edify-border);
+  background-color: var(--edify-surface);
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  font-family: var(--edify-font-sans);
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+:where(input[type="text"], input[type="search"], input[type="number"],
+input[type="email"], input[type="password"], input[type="tel"],
+input[type="date"], input[type="datetime-local"], select, textarea):focus-visible {
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring);
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  :where(input, select, textarea) {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}
+
+/* Transitions on interactive elements live in components.css (INTERACTION
+   LAYER), which owns hover, press and reduced-motion together.
+
+   What was here did nothing, and was the larger half of why controls felt
+   stiff. `--edify-transition-fast` is a full shorthand — "150ms cubic-bezier(
+   0.4, 0, 0.2, 1)" — so feeding it to `transition-duration` produced an
+   invalid declaration that the parser drops, leaving the initial 0s. Every
+   button and link on the platform changed state instantaneously, with no
+   transition at all, while looking in the stylesheet as though it had one.
+   Element-level specificity meant it also silently outranked any zero
+   specificity rule that tried to supply one. */
+</style>
+
+<!-- HTMX (for fast server-driven partial updates) — served from this origin.
+
+     It came from unpkg. htmx is not a progressive enhancement here: every
+     drawer, table refresh and form on the platform is an hx-* attribute, so a
+     CDN request that is slow or blocked does not degrade the page, it removes
+     the application. The integrity hash guarded against the CDN serving
+     something else; it could do nothing about the CDN serving nothing, which
+     is the failure that actually reaches users on a constrained network.
+     Same-origin removes both concerns — the file is in the image we built. -->
+<script src="{% static 'js/vendor/htmx-1.9.12.min.js' %}"></script>
+<script>
+  // Server-side validation responses (400/403) carry user-facing notices —
+  // e.g. the Daily Visit "reason required" panel and route/scheduling errors.
+  // htmx only swaps 2xx by default, which silently drops those notices; allow
+  // these statuses to swap into their hx-target like any other response.
+  document.addEventListener('htmx:beforeSwap', function (e) {
+    if (e.detail.xhr.status === 400 || e.detail.xhr.status === 403) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+
+  // Contextual Help is inserted by HTMX. Open it with the native dialog API
+  // after the swap so focus, Escape and the modal backdrop work consistently
+  // without depending on a page-specific Alpine component.
+  document.addEventListener('htmx:afterSwap', function (e) {
+    e.target.querySelectorAll('dialog[data-auto-open]').forEach(function (dialog) {
+      if (!dialog.open) {
+        if (typeof dialog.showModal === 'function') dialog.showModal();
+        else dialog.setAttribute('open', '');
+      }
+      var closeButton = dialog.querySelector('[data-help-close]');
+      if (closeButton) closeButton.focus();
+    });
+  });
+  document.addEventListener('close', function (e) {
+    if (e.target.matches && e.target.matches('dialog[data-contextual-help]')) e.target.remove();
+  });
+</script>
+
+<!-- Alpine.js Components -->
+    <script src="{% static 'js/alpine-components.js' %}?v=20260731typefloor1"></script>
+
+<!-- Platform defect beacon: dead buttons, script errors and failed HTMX
+     exchanges are invisible to the server, so the page reports them. Each
+     unique defect becomes one System Incident for the Admin. -->
+<script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
+{% comment %}One pending state for every HTMX mutation on the platform. Installs
+document-level lifecycle handlers, so no template needs hx-disabled-elt.
+{% endcomment %}
+<script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
+<!-- Responsive SVGs use viewBox units internally. Counter their outer scale
+     once so chart and map labels render at the same semantic type sizes as
+     surrounding HTML, including content inserted by HTMX. -->
+<script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
+
+<!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
+     Self-hosted: if this does not load, every x-data on the page throws and
+     the UI is inert. `defer` is kept — alpine-components.js above registers
+     Alpine.data factories on alpine:init, which requires Alpine to run after
+     the document is parsed. -->
+<script defer src="{% static 'js/vendor/alpine-3.14.0.min.js' %}"></script>
+
+<!-- ApexCharts & FullCalendar JS.
+
+     ApexCharts is pinned to an exact version. It was requested unversioned,
+     which does not mean "the version we tested" — it means whatever npm
+     published most recently. Every chart here was written against the 3.x API
+     (alongside Alpine 3.14 and htmx 1.9.12), and that URL had silently moved
+     to 6.6.1: three major versions of breaking changes arriving in production
+     with no commit, no deploy and nothing to roll back, which is what raised
+     "JavaScript exception on /planning".
+
+     Upgrading is a deliberate change with its own testing. Do not drop the
+     version to pick up fixes. -->
+<script src="{% static 'js/vendor/apexcharts-3.54.1.min.js' %}"></script>
+<script>
+  /* App-wide ordered palette for comparison charts. Semantic status charts
+     (success / warning / danger) intentionally opt out so colour never lies. */
+  window.EdifyChartSystem = Object.freeze({
+    comparisonSeries: Object.freeze([
+      'var(--edify-chart-blue)',
+      'var(--edify-chart-orange)',
+      'var(--edify-chart-green)',
+    ]),
+    mixedSeries: Object.freeze([
+      'var(--edify-chart-blue)',
+      'var(--edify-chart-orange)',
+      'var(--edify-chart-green)',
+      'var(--edify-chart-amber)',
+    ]),
+
+    /* Value labels above grouped bars collide as soon as the slot is narrower
+       than the text — a three-digit label needs roughly 34px. The same chart
+       is wide on an analytics page and cramped in a sidebar column, and the
+       series count changes per role, so no fixed font size or column width
+       fixes it everywhere. Ask about the rendered geometry instead: show the
+       label when its bar has room, and let the axis and tooltip carry the
+       value when it does not. Silence beats two numbers printed on top of
+       each other. */
+    barLabelFits: function (opts, minSlotPx) {
+      var g = opts && opts.w && opts.w.globals;
+      if (!g || !g.gridWidth) return true;
+      var bars = (g.labels.length || 1) * (g.series.length || 1);
+      return g.gridWidth / bars >= (minSlotPx || 34);
+    },
+
+    /* The companion rule for a value printed INSIDE its bar. White-on-blue is
+       only readable while the bar is long enough to hold the text; on a short
+       bar the label spills onto the grey track and vanishes. Measure the bar
+       as drawn — a low count on a wide chart is fine, the same count on a
+       narrow card is not — and stay silent when it will not fit. This also
+       covers zero, which has no bar to write on at all. */
+    barValueFitsInside: function (val, opts, minPx) {
+      var g = opts && opts.w && opts.w.globals;
+      if (!g) return true;
+      var span = g.isBarHorizontal ? g.gridWidth : g.gridHeight;
+      if (!span) return true;
+      var flat = [].concat.apply([], g.series || []).filter(function (n) {
+        return typeof n === 'number' && isFinite(n);
+      });
+      var max = Math.max.apply(null, flat.concat([1]));
+      return (Math.abs(val) / max) * span >= (minPx || 26);
+    },
+  });
+
+  /* ApexCharts merges window.Apex into every chart it creates, which makes this
+     the only place that can give all of them the same empty state. Charts are
+     built inline in a dozen templates, so without it each one would need its
+     own copy and they would drift.
+
+     A chart with no rows otherwise paints a blank rectangle, and a blank
+     rectangle reads as "still loading" or "broken" rather than "nothing
+     happened in this period". The platform rule is that an empty result states
+     itself honestly instead of being dressed up or left ambiguous. */
+  window.Apex = {
+    colors: window.EdifyChartSystem.comparisonSeries,
+    noData: {
+      text: 'No data for this period',
+      align: 'center',
+      verticalAlign: 'middle',
+      style: {
+        fontFamily: 'Geist, sans-serif',
+        fontSize: '13px',
+        /* Read from the token rather than hardcoded so the message sits at the
+           same contrast as other muted copy. */
+        color: getComputedStyle(document.documentElement)
+          .getPropertyValue('--edify-text-muted').trim(),
+      },
+    },
+    /* Platform-wide chart styling. These merge into every chart config, so the
+       reference look (clean columns, restrained gridlines, direct line
+       segments, small point markers and a compact tooltip) stays consistent
+       without editing every inline chart definition. */
+    chart: {
+      fontFamily: 'Geist, sans-serif',
+      foreColor: 'var(--edify-text-muted)',
+      background: 'transparent',
+      toolbar: { show: false },
+      animations: {
+        enabled: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        speed: 320,
+      },
+    },
+    grid: {
+      borderColor: 'var(--edify-chart-grid)',
+      strokeDashArray: 0,
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } },
+      padding: { left: 4, right: 8, top: 4, bottom: 0 },
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '54%',
+        barHeight: '58%',
+        /* The reference uses confident rectangular columns with just enough
+           rounding to remove a harsh edge, not pill-shaped progress bars. */
+        borderRadius: 4,
+        borderRadiusApplication: 'end',
+        borderRadiusWhenStacked: 'last',
+        colors: {
+          backgroundBarOpacity: 0,
+          backgroundBarRadius: 4,
+        },
+      },
+    },
+    stroke: { curve: 'straight', width: 2, lineCap: 'round' },
+    markers: {
+      size: 4,
+      strokeWidth: 2,
+      hover: { sizeOffset: 2 },
+    },
+    xaxis: {
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      tooltip: { enabled: false },
+      labels: {
+        trim: true,
+        style: {
+          colors: 'var(--edify-text-subtle)',
+          fontSize: '12px',
+          fontWeight: 500,
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: 'var(--edify-text-subtle)',
+          fontSize: '12px',
+          fontWeight: 500,
+        },
+      },
+    },
+    states: {
+      hover: { filter: { type: 'darken', value: 0.96 } },
+      active: { filter: { type: 'darken', value: 0.93 } },
+    },
+    legend: {
+      position: 'bottom',
+      horizontalAlign: 'left',
+      fontSize: '12px',
+      fontWeight: 500,
+      markers: { size: 6, strokeWidth: 0, radius: 3 },
+      labels: { colors: 'var(--edify-text-muted)' },
+      itemMargin: { horizontal: 8, vertical: 2 },
+    },
+    tooltip: {
+      theme: 'dark',
+      marker: { show: true },
+      style: { fontSize: '12px', fontFamily: 'Geist, sans-serif' },
+    },
+    dataLabels: {
+      enabled: false,
+      style: {
+        fontFamily: 'Geist, sans-serif',
+        fontSize: '12px',
+        fontWeight: 650,
+      },
+    },
+  };
+</script>
+<script src="{% static 'js/vendor/fullcalendar-6.1.11.min.js' %}"></script>
+</head>
+<body
+class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
+hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+>
+{% block content %}{% endblock %}
+
+<!-- Global Flash/Alert Messages -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none" aria-live="polite" aria-atomic="false">
+{% if messages %}
+{% for msg in messages %}
+<div
+x-data="{ show: true }"
+x-show="show"
+x-init="setTimeout(() => show = false, 4000)"
+x-transition
+class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-surface border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
+>
+<span>{{ msg }}</span>
+<button type="button" @click="show = false" class="text-current opacity-70 hover:opacity-100 -my-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center text-[16px]" aria-label="Dismiss notification">&times;</button>
+</div>
+{% endfor %}
+{% endif %}
+</div>
+</body>
+</html>

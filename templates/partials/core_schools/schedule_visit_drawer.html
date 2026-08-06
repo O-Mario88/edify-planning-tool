@@ -1,0 +1,322 @@
+<div
+x-data="{
+open: true,
+delivery: 'staff',
+catalogueItemId: '{% if catalogue_items %}{{ catalogue_items.0.catalogueItemId }}{% endif %}',
+sourceActivityId: '{% if catalogue_items %}{{ catalogue_items.0.sourceActivityId|default:'' }}{% endif %}',
+focusIntervention: '{% if catalogue_items %}{{ catalogue_items.0.targetIntervention|default:'' }}{% endif %}',
+recommendationReason: '{% if catalogue_items %}{{ catalogue_items.0.recommendationReason|escapejs }}{% endif %}'
+}"
+x-show="open"
+class="edify-popup-dialog fixed inset-0 z-50"
+id="schedule-visit-drawer-root"
+>
+<!-- Backdrop Blur -->
+<div
+class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+></div>
+
+<!-- Drawer Body -->
+<div
+class="edify-popup-dialog__surface relative w-full max-w-lg edify-surface h-auto shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform"
+x-show="open"
+x-transition:enter="transition ease-out duration-300"
+x-transition:enter-start="opacity-0 scale-95"
+x-transition:enter-end="opacity-100 scale-100"
+x-transition:leave="transition ease-in duration-300"
+x-transition:leave-start="opacity-100 scale-100"
+x-transition:leave-end="opacity-0 scale-95"
+>
+<div class="space-y-5 flex-1">
+<!-- Drawer Header -->
+<div class="flex items-start justify-between border-b border-slate-100 pb-4">
+<div>
+<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight ">Schedule Core Visit</h2>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1 ">Configure annual support visit details for this school.</p>
+</div>
+<button
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
+>
+&times;
+</button>
+</div>
+
+<!-- Form Error Container -->
+<div id="visit-form-errors"></div>
+
+<!-- Action Form -->
+<form
+hx-post="/core-schools/schedule-visit/action"
+hx-target="#visit-form-errors"
+class="space-y-4 text-[12px] font-bold text-slate-700 "
+>
+{% csrf_token %}
+<input type="hidden" name="school_id" value="{{ school.school_id }}">
+<input type="hidden" name="catalogue_item_id" :value="catalogueItemId" required>
+<input type="hidden" name="source_activity_id" :value="sourceActivityId">
+<input type="hidden" name="focus_intervention" :value="focusIntervention">
+<input type="hidden" name="recommendation_reason" :value="recommendationReason">
+
+<!-- Core School Name (Read Only) -->
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
+<input type="text" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
+</div>
+
+<fieldset class="space-y-2">
+  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Core Visit</legend>
+  {% for item in catalogue_items %}
+  <label class="edify-surface block cursor-pointer rounded-control border border-slate-200 p-3">
+    <span class="flex items-start gap-3"><input type="radio" name="catalogue_choice" value="{{ item.catalogueItemId }}" {% if forloop.first %}checked{% endif %} @change="catalogueItemId='{{ item.catalogueItemId }}'; sourceActivityId='{{ item.sourceActivityId|default:'' }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'"><span><strong>{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span></span>
+  </label>
+  {% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Core Visit is eligible. Complete a verified source Training or ensure the current SSA has an unresolved intervention recommendation.</div>{% endfor %}
+</fieldset>
+
+<div class="grid grid-cols-2 gap-4">
+<!-- Visit Number -->
+<div>
+<label for="visit_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Visit Slot</label>
+<select name="visit_number" id="visit_number" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+{% for slot in available_visit_slots %}
+<option value="{{ slot.sequence }}" {% if next_visit_seq == slot.sequence %}selected{% endif %}>{{ slot.label }}</option>
+{% empty %}
+<option value="">No visit slots available</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Planned Date -->
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Planned Date</label>
+<div
+x-data="{
+open: false,
+selectedDate: '',
+currentYear: new Date().getFullYear(),
+currentMonth: new Date().getMonth(),
+months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+days: [],
+init() {
+if (this.selectedDate) {
+let d = new Date(this.selectedDate);
+if (!isNaN(d.getTime())) {
+this.currentYear = d.getFullYear();
+this.currentMonth = d.getMonth();
+}
+}
+this.getDays();
+},
+getDays() {
+let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+this.days = [];
+for (let i = 0; i < firstDay; i++) {
+this.days.push(null);
+}
+for (let d = 1; d <= lastDate; d++) {
+this.days.push(d);
+}
+},
+prevMonth() {
+if (this.currentMonth === 0) {
+this.currentMonth = 11;
+this.currentYear--;
+} else {
+this.currentMonth--;
+}
+this.getDays();
+},
+nextMonth() {
+if (this.currentMonth === 11) {
+this.currentMonth = 0;
+this.currentYear++;
+} else {
+this.currentMonth++;
+}
+this.getDays();
+},
+selectDay(day) {
+if (day === null) return;
+let monthStr = String(this.currentMonth + 1).padStart(2, '0');
+let dayStr = String(day).padStart(2, '0');
+this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
+this.open = false;
+},
+formatDate(dateStr) {
+if (!dateStr) return 'Select Date';
+let parts = dateStr.split('-');
+if (parts.length !== 3) return dateStr;
+let d = new Date(parts[0], parts[1] - 1, parts[2]);
+return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+},
+isSelected(day) {
+if (!day || !this.selectedDate) return false;
+let parts = this.selectedDate.split('-');
+return parseInt(parts[0]) === this.currentYear &&
+(parseInt(parts[1]) - 1) === this.currentMonth &&
+parseInt(parts[2]) === day;
+}
+}"
+class="relative "
+>
+<!-- Dropdown Trigger button -->
+<button
+type="button"
+@click="open = !open"
+class="w-full h-10 px-3 flex items-center justify-between rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+>
+<div class="flex items-center gap-2">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+</svg>
+<span x-text="formatDate(selectedDate)"></span>
+</div>
+<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+</svg>
+</button>
+
+<input type="hidden" name="scheduled_date" :value="selectedDate" required>
+
+<!-- Calendar Popover Card -->
+<div
+x-show="open"
+@click.outside="open = false"
+class="absolute right-0 mt-1.5 edify-calendar-popover edify-surface border border-slate-200 rounded-surface shadow-xl p-4 z-50 space-y-3 select-none"
+style="display: none;"
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="opacity-0 transform scale-95"
+x-transition:enter-end="opacity-100 transform scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="opacity-100 transform scale-100"
+x-transition:leave-end="opacity-0 transform scale-95"
+>
+<!-- Header -->
+<div class="flex items-center justify-between px-1">
+<button type="button" @click="prevMonth()" aria-label="Previous month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+</button>
+<span class="font-semibold text-[12px] text-[var(--edify-text)]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<button type="button" @click="nextMonth()" aria-label="Next month" class="h-6 w-6 flex items-center justify-center rounded-control hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+</button>
+</div>
+
+<!-- Weekdays Header -->
+<div class="grid grid-cols-7 gap-y-1 text-center edify-text-caption font-bold text-slate-400">
+<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+</div>
+
+<!-- Days Grid -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
+<template x-for="(day, index) in days" :key="index">
+<div>
+<button
+type="button"
+x-show="day !== null"
+@click="selectDay(day)"
+class="h-7 w-7 flex items-center justify-center rounded-control transition-all focus:outline-none"
+:class="isSelected(day) ? 'bg-[var(--edify-text)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+x-text="day"
+></button>
+</div>
+</template>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Primary Focus Intervention -->
+<div>
+<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention</label>
+<select id="focus_intervention" x-model="focusIntervention" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
+<option value="">Select Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}" {% if recommendations and recommendations.0.code == code %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+{% if recommendations %}
+<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-surface edify-text-caption text-amber-800 font-bold space-y-1">
+<p class="font-semibold edify-text-caption">Recommended focus areas based on latest SSA:</p>
+{% for r in recommendations %}
+<p>&bull; {{ r.label }} (Score: {{ r.score }}/10)</p>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+<!-- Responsible Staff -->
+<div>
+<label for="responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Responsible Staff Owner</label>
+<select name="responsible_staff_id" id="responsible_staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Staff Member...</option>
+{% for s in staff_members %}
+<option value="{{ s.user_id }}" {% if school.account_owner_id == s.user_id %}selected{% endif %}>{{ s.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Delivery Option -->
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Delivery Type</label>
+<select aria-label="Delivery type" x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="staff">Internal Field Staff (CCEO)</option>
+<option value="partner">Partner Agency Assignment</option>
+</select>
+</div>
+
+<!-- Partner Selection (Conditional) -->
+<div x-show="delivery === 'partner'" class="space-y-1" style="display: none;">
+<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Partner Agency</label>
+<select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Activity Goal -->
+<div>
+<label for="activity_goal" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Activity Goal</label>
+<textarea name="activity_goal" id="activity_goal" rows="2" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this school visit..."></textarea>
+</div>
+
+<!-- Expected Outcome -->
+<div>
+<label for="expected_outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Outcome</label>
+<textarea name="expected_outcome" id="expected_outcome" rows="2" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the expected results..."></textarea>
+</div>
+
+<!-- Cost Preview (Automated Catalogue rates) -->
+<div class="p-4 rounded-surface bg-slate-50  space-y-2">
+<div class="flex items-center justify-between text-[12px] text-slate-500 font-semibold">
+<span>Estimated Cost (Cost Catalogue rate)</span>
+<span class="text-slate-800 font-semibold">Auto-costed</span>
+</div>
+<p class="edify-text-caption text-slate-400 leading-normal">Operational transport and lunch allowances will be itemized automatically upon scheduling.</p>
+</div>
+
+<!-- Actions -->
+<div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+<button
+type="submit"
+class="flex-1 h-9 rounded-control btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+>
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Confirm &amp; Schedule
+</button>
+<button
+type="button"
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+class="px-5 h-9 rounded-surface bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+>
+Cancel
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>

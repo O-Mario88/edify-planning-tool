@@ -1,0 +1,3506 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY PLATFORM PRESENTATION LAYER
+   The PTO workspace is the visual benchmark. This final cascade layer brings
+   legacy Django templates and HTMX partials into the same calm, premium system
+   without changing their workflow logic or role-based behavior.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --edify-page-max-size: 112rem;
+  --edify-control-block-size: 2.5rem;
+  --edify-action-button-block-size: 2.75rem;
+  --edify-action-button-padding-inline: 1.125rem;
+  --edify-action-button-icon-size: 1.125rem;
+  --edify-action-button-radius: 1rem;
+  --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
+  --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
+  --edify-focus-outline: 2px solid var(--edify-accent);
+}
+
+::selection {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+main {
+  min-inline-size: 0;
+  color: var(--edify-text);
+  scroll-padding-block-start: 4.5rem;
+}
+
+/* Every authenticated workspace inherits the same compact cockpit density as
+   Special Project Analytics. Individual workflows keep their own hierarchy,
+   while spacing, controls, surfaces and data rhythm stay platform-consistent. */
+main.edify-workspace {
+  container: edify-workspace / inline-size;
+  --edify-workspace-section-gap: clamp(0.75rem, 0.68rem + 0.3vw, 1rem);
+}
+
+main.edify-workspace :where(.space-y-6) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 1rem !important;
+}
+
+main.edify-workspace :where(.space-y-5) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 0.875rem !important;
+}
+
+main.edify-workspace :where(.space-y-4) > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 0.75rem !important;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--edify-font-sans) !important;
+}
+
+main > :where(div, section, article) {
+  min-inline-size: 0;
+}
+
+main .grid > * {
+  min-inline-size: 0;
+}
+
+/* Keep every authenticated page on one deliberate canvas and one gutter. */
+main > :where(div, section)[class*="px-"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-4"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-5"]:not([class*="drawer"]),
+main > :where(div, section)[class*="p-6"]:not([class*="drawer"]) {
+  inline-size: min(100%, var(--edify-page-max-size));
+  max-inline-size: var(--edify-page-max-size) !important;
+  margin-inline: auto;
+  padding-inline: var(--edify-page-gutter) !important;
+}
+
+/* ── Typography: confident hierarchy, never indiscriminate heaviness. ───── */
+main h1 {
+  max-inline-size: 30ch;
+  text-wrap: balance;
+  font-size: var(--edify-text-display-size) !important;
+  font-weight: 700 !important;
+}
+
+main :where(h2, h3) {
+  text-transform: none !important;
+  letter-spacing: var(--edify-text-heading-tracking) !important;
+  text-wrap: balance;
+}
+
+main h2 {
+  font-size: var(--edify-text-heading-size) !important;
+  font-weight: 600 !important;
+}
+
+main h3 {
+  font-size: var(--edify-text-title-size) !important;
+  font-weight: 600 !important;
+}
+
+main :where(p, li, dd) {
+  text-wrap: pretty;
+}
+
+main :where(.font-black, .font-extrabold) {
+  font-weight: 700 !important;
+}
+
+main .font-bold {
+  font-weight: 600 !important;
+}
+
+main :where(.font-semibold, strong, b) {
+  font-weight: 600;
+}
+
+main :where(.tracking-widest, .tracking-wider) {
+  letter-spacing: 0.055em !important;
+}
+
+/* Legacy utility colours resolve to the same accessible hierarchy as native
+   components, so old templates cannot quietly ship low-contrast copy. */
+main :where(.text-slate-400, .text-slate-500,
+  .text-gray-400, .text-gray-500,
+  .text-zinc-400, .text-zinc-500,
+  .text-neutral-400, .text-neutral-500) {
+  color: var(--edify-text-muted) !important;
+}
+
+main :where(.text-slate-300, .text-gray-300, .text-zinc-300, .text-neutral-300) {
+  color: var(--edify-text-subtle) !important;
+}
+
+main :where(.text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900,
+  .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
+  .text-zinc-600, .text-zinc-700, .text-zinc-800, .text-zinc-900,
+  .text-neutral-600, .text-neutral-700, .text-neutral-800, .text-neutral-900) {
+  color: var(--edify-text) !important;
+}
+
+main :where(.tabular-nums, [class*="text-[19px]"], [class*="text-[20px]"],
+  [class*="text-[21px]"], [class*="text-[22px]"], [class*="text-[24px]"]) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── KPI label typography: clear title case, reserved all-caps metadata. ── */
+.edify-kpi-label,
+main :where(
+  .card.kpi > div > small, .mini > small,
+  .admin-kpi__label, .sp-kpi__label, .sp-kpi > div > span,
+  .spp-kpi > div > span, .spa-kpi small, .tt-kpi__copy > span,
+  .pl-funding-donut__label, .pto-availability-ring > span,
+  .pto-recommendation div > span, .pto-coverage-card > div:first-child > span,
+  .rounded-surface :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
+  .card :is(.edify-text-caption, [class*="text-[12px]"]):is(.uppercase, [class*="uppercase"]):has(+ .tabular-nums),
+  .rounded-surface:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase,
+  .rounded-control:has(> .edify-text-caption + :is(p, h3, h4)) > .edify-text-caption.uppercase
+) {
+  font-weight: var(--edify-kpi-label-weight) !important;
+  letter-spacing: var(--edify-kpi-label-tracking) !important;
+  text-transform: none !important;
+}
+
+/* ── Surface hierarchy: one contract for every workspace card and panel. ── */
+main :where(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+) {
+  /* Card planes are deliberate workspaces; outlines stay subordinate to data. */
+  border-color: var(--edify-card-border) !important;
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+  -webkit-backdrop-filter: var(--edify-card-backdrop-filter) !important;
+  backdrop-filter: var(--edify-card-backdrop-filter) !important;
+}
+
+/* Alert cards intentionally retain semantic colour; active cards retain their
+   own specialised treatment rather than inheriting the default neutral plane. */
+main :where(.edify-risk-card, .card-alert) {
+  background-color: var(--edify-danger-light) !important;
+  border-color: var(--edify-danger-border) !important;
+}
+
+main :where(.card, .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .bg-white[class*="rounded-surface"]) {
+  border-radius: var(--edify-radius-md) !important;
+}
+
+main :where(.panel, .premium-card, .premium-card-elevated,
+  section.bg-white[class*="rounded-overlay"], article.bg-white[class*="rounded-overlay"],
+  aside.bg-white[class*="rounded-overlay"]) {
+  border-radius: var(--edify-radius-lg) !important;
+}
+
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded-xl"], article.bg-white[class*="rounded-xl"],
+  aside.bg-white[class*="rounded-xl"],
+  section[style*="--edify-surface"][class*="rounded-xl"],
+  article[style*="--edify-surface"][class*="rounded-xl"],
+  aside[style*="--edify-surface"][class*="rounded-xl"]) {
+  min-inline-size: 0;
+  container-type: inline-size;
+  container-name: edify-card;
+}
+
+/* Card typography responds to the card, not the browser window. A narrow
+   right-rail card therefore keeps a calmer title than a full-width panel,
+   while natural phrases wrap at word boundaries instead of breaking words. */
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded"], article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"]) :where(h2, .card-heading, .panel-heading) {
+  font-size: var(--edify-text-card-heading-size);
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
+}
+
+main :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  section.bg-white[class*="rounded"], article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"]) :where(h3, h4, .card-title, .panel-title) {
+  font-size: var(--edify-text-card-title-size);
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
+}
+
+/* Content cards keep their intrinsic height. Equal-height KPI anatomy is
+   handled separately by the KPI-grid contract below; stretching every generic
+   card made short cards inherit the height of unrelated tables and charts. */
+main .grid > :where(.card, .panel, .premium-card, .premium-card-elevated,
+  .summary-card, .rail-card, .edify-kpi-card, .card-kpi) {
+  align-self: start;
+  block-size: auto;
+}
+
+main :where([class*="kpi-grid"], .platform-kpi-grid) {
+  align-items: stretch;
+}
+
+main :where([class*="kpi-grid"], .platform-kpi-grid) > :where(article, section, div) {
+  min-inline-size: 0;
+  block-size: 100%;
+}
+
+main .platform-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: clamp(0.75rem, 0.66rem + 0.3vw, 1rem);
+}
+
+main .platform-major-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--edify-panel-gap);
+}
+
+main .platform-support-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  align-items: stretch;
+  gap: var(--edify-panel-gap);
+}
+
+main .platform-support-grid > :nth-child(n + 4) {
+  grid-column: auto;
+}
+
+main :where(section, article, aside, div)[class*="rounded-xl"][class*="border"] {
+  border-color: color-mix(in oklab, var(--edify-border) 36%, transparent) !important;
+  border-radius: var(--edify-radius-lg) !important;
+}
+
+main :where(section, article, aside, div)[class*="rounded-lg"][class*="border"] {
+  border-color: color-mix(in oklab, var(--edify-border) 36%, transparent) !important;
+  border-radius: var(--edify-radius-md) !important;
+}
+
+/* Decorative cards remain still; only real controls communicate lift. */
+main :where(div, section, article, aside)[class*="hover:-translate"] {
+  transform: none !important;
+}
+
+main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
+  translate: 0 -1px;
+}
+
+/* ── Light workspace: the approved Edify sign-in visual language. ──────── */
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid rgba(8, 76, 137, .36) !important;
+  box-shadow: 0 10px 20px -12px rgba(8, 76, 137, .28), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(180deg, var(--edify-brand-primary-hover) 0%, var(--edify-brand-primary-active) 100%) !important;
+  box-shadow: var(--edify-shadow-md), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline, .pto-button--secondary,
+  .sp-button--secondary, .spa-button--secondary, .spp-button--secondary,
+  .hcos-button--secondary, .admin-button--secondary) {
+  color: var(--edify-accent) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: var(--edify-button-secondary-treatment) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) main :where(input[type="text"], input[type="email"],
+  input[type="password"], input[type="number"], input[type="search"], input[type="tel"],
+  input[type="url"], input[type="date"], input[type="datetime-local"], input[type="time"],
+  select, textarea) {
+  background-color: var(--edify-surface-raised) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: inset 0 1px 2px rgba(7, 38, 65, .025);
+}
+
+/* Match the specificity of legacy theme rules so all registered card families
+   receive the active theme treatment, including feature-local components. */
+.theme-blue main :is(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+),
+.theme-dark main :is(
+  .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
+  .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
+  .panel, .kpi, .admin-mini, .admin-budget-grid > article,
+  .platform-filter-bar, .spp-empty, .spa-empty, .tt-modal__panel,
+  .pto-balance-tile, .pto-recommendation, .pto-signal, .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
+  .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
+  [style*="--edify-surface"][class*="rounded"]
+) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+  -webkit-backdrop-filter: var(--edify-card-backdrop-filter) !important;
+  backdrop-filter: var(--edify-card-backdrop-filter) !important;
+}
+
+/* ── Page headers and breadcrumbs. ─────────────────────────────────────── */
+main :where(nav[aria-label="Breadcrumb"], nav[class*="uppercase"]:first-child) {
+  min-block-size: 1.5rem;
+  color: var(--edify-text-subtle) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 500 !important;
+}
+
+main > div > :where(header, div):has(h1):not([class*="rounded"]):not([class*="bg-"]) {
+  min-inline-size: 0;
+}
+
+main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+  flex-wrap: wrap;
+}
+
+/* ── Buttons: confident, quiet, consistent. ────────────────────────────── */
+main :where(.btn, .edify-action-button,
+  button[class*="bg-blue-"], a[class*="bg-blue-"],
+  button[class*="bg-indigo-"], a[class*="bg-indigo-"],
+  button[class*="bg-slate-8"], a[class*="bg-slate-8"]) {
+  min-block-size: 2.5rem;
+  padding-inline: 1rem;
+  border-radius: var(--edify-radius-sm) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* The platform has a single action-button contract. Legacy button classes
+   still work, but resolve to the same readable type, pill geometry and
+   primary/secondary hierarchy as the shared school actions. */
+main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+  .btn-premium-secondary, .school-record-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--edify-action-button-block-size);
+  padding-inline: var(--edify-action-button-padding-inline) !important;
+  border-radius: var(--edify-action-button-radius) !important;
+  font: var(--edify-font-label) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  letter-spacing: var(--edify-text-label-tracking) !important;
+  line-height: 1 !important;
+  text-transform: none !important;
+}
+
+main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+  .btn-premium-secondary, .school-record-action) svg {
+  inline-size: var(--edify-action-button-icon-size);
+  block-size: var(--edify-action-button-icon-size);
+  flex: 0 0 auto;
+}
+
+main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
+  .school-record-action--schedule) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-accent) !important;
+  box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--edify-accent) 44%, transparent) !important;
+}
+
+main :where(.btn-primary, .edify-action-button.primary, .btn-premium-primary,
+  .school-record-action--schedule):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  background-image: none !important;
+}
+
+main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign) {
+  color: var(--brand-primary-text) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--brand-primary-border) !important;
+  box-shadow: none !important;
+}
+
+main :where(.btn-ghost, .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign):hover:not(:disabled) {
+  color: var(--brand-primary-text-hover) !important;
+  background-color: var(--brand-primary-soft) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+/* Match the legacy light-theme selector's specificity so every secondary
+   action reads as the same calm outlined button, including header controls. */
+:root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
+  .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign) {
+  color: var(--brand-primary-text) !important;
+  border-color: var(--brand-primary-border) !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+:root:not(.theme-blue):not(.theme-dark) main :where(.btn-ghost,
+  .edify-action-button.secondary, .btn-premium-secondary,
+  .school-record-action--assign):hover:not(:disabled) {
+  color: var(--brand-primary-text-hover) !important;
+  border-color: var(--brand-primary) !important;
+  background-color: var(--brand-primary-soft) !important;
+}
+
+main :where(button, a)[class*="border-slate-"][class*="rounded"] {
+  border-color: var(--brand-primary-border) !important;
+  background-color: var(--edify-surface-raised) !important;
+  color: var(--brand-primary-text) !important;
+}
+
+main :where(button, a)[class*="border-slate-"][class*="rounded"]:hover:not(:disabled) {
+  border-color: var(--brand-primary) !important;
+  background-color: var(--brand-primary-soft) !important;
+  color: var(--brand-primary-text-hover) !important;
+}
+
+main :where(button, input[type="button"], input[type="submit"]):disabled,
+main :where(.btn, .edify-action-button)[aria-disabled="true"] {
+  border-color: var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-text-disabled) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+  translate: none !important;
+}
+
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+  outline: var(--edify-focus-outline) !important;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* FullCalendar injects its own stylesheet at runtime, and its focus glow
+   (.fc .fc-button:focus) outranks the box-shadow reset above on specificity.
+   The platform outline still won, so calendar controls were the only place on
+   the platform painting two focus rings at once -- the accent outline plus a
+   grey halo. Suppressing the third-party glow leaves the shared ring standing
+   alone, the same as every other control. */
+.fc .fc-button:focus,
+.fc .fc-button:focus-visible {
+  box-shadow: none !important;
+}
+
+/* ── Forms and filters. ────────────────────────────────────────────────── */
+main :where(input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+  input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+  min-block-size: var(--edify-control-block-size);
+  border: 1px solid color-mix(in oklab, var(--edify-border) 70%, transparent) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background-color: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+  font: var(--edify-font-body) !important;
+  padding: 0.625rem 0.75rem !important;
+}
+
+main textarea {
+  min-block-size: 6rem;
+  resize: vertical;
+}
+
+main :where(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--edify-border-strong) !important;
+}
+
+main :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  outline: var(--edify-focus-outline) !important;
+  outline-offset: 1px;
+}
+
+main :where(input, select, textarea):user-invalid {
+  border-color: var(--edify-danger) !important;
+  outline-color: var(--edify-danger) !important;
+}
+
+main :where(input, select, textarea):disabled {
+  background-color: color-mix(in oklab, var(--edify-surface-muted) 78%, transparent) !important;
+  color: var(--edify-text-subtle) !important;
+  cursor: not-allowed;
+}
+
+main input[type="checkbox"],
+main input[type="radio"] {
+  accent-color: var(--edify-accent);
+}
+
+main input[type="file"]::file-selector-button {
+  min-block-size: 2.25rem;
+  margin-inline-end: 0.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font-weight: 600;
+}
+
+main label {
+  color: var(--edify-text-muted) !important;
+  font-weight: 500 !important;
+}
+
+main label > :where(span, small):first-child[class*="uppercase"] {
+  color: var(--edify-text-subtle) !important;
+  font-weight: 600 !important;
+}
+
+main form[hx-get][class*="grid"],
+main form[id*="filter"][class*="grid"],
+main form[id*="search"][class*="grid"] {
+  border-color: var(--edify-border) !important;
+  border-radius: var(--edify-radius-lg) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
+  box-shadow: var(--edify-shadow-sm);
+  padding: var(--edify-panel-padding) !important;
+}
+
+/* ── Tables: designed for hours of operational work. ───────────────────── */
+main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  border-radius: var(--edify-radius-md);
+  scrollbar-gutter: stable;
+  overscroll-behavior-inline: contain;
+}
+
+main table,
+.drawer-body table {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-table-size) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A row header is not a column header. This banding is for the header row;
+   applied to a <th scope="row"> it painted the whole first column grey, which
+   reads as a permanently highlighted column. */
+main table tbody th {
+  background: transparent !important;
+  color: var(--edify-text) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+main table th,
+.drawer-body table th {
+  padding: 0.5625rem 0.6875rem !important;
+  border-block-end: 1px solid var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  /* Header text sits ON the muted band: the subtle tone measures 4.24:1
+     there (11px needs 4.5). The muted tone reads 6.9:1 and stays quiet. */
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-table-heading-size) !important;
+  font-weight: 600 !important;
+  letter-spacing: var(--edify-text-micro-tracking) !important;
+  line-height: 1.3;
+  text-wrap: nowrap;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+main table td,
+.drawer-body table td {
+  padding: 0.5625rem 0.6875rem !important;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-table-size) !important;
+  line-height: 1.4;
+  hyphens: manual;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  vertical-align: middle;
+  word-break: normal;
+}
+
+main table td :where(strong, .font-bold, .font-semibold),
+main table td[class*="font-"] {
+  color: var(--edify-text);
+  font-weight: 600 !important;
+}
+
+/* The rule above assumes light cells. Inside a solid brand cell (budget
+   group headers) the emphasis text keeps the on-solid colour — otherwise
+   bold children paint dark-on-navy (measured 2.29:1). */
+main table td:is(.edify-primary-solid, .edify-primary-on-solid)
+  :where(strong, .font-bold, .font-semibold) {
+  color: var(--brand-primary-on-solid);
+}
+
+main table tbody tr {
+  transition: background-color var(--edify-transition-fast);
+}
+
+main table tbody tr:hover > :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: color-mix(in oklab, var(--edify-accent-light) 54%, var(--edify-surface)) !important;
+}
+
+/* ── One table format, everywhere. ───────────────────────────────────────
+   No gridlines, horizontal or vertical. Column headings carry medium weight;
+   the body sits lighter than the heading so the eye lands on the heading
+   first and then reads the data as text rather than as ledger entries.
+
+   Matrix tables used to be exempt on the grounds that their column boundaries
+   carried meaning. They do not need lines to do that — alignment and, where
+   the data is a scale, colour do it better, and the exemption was the reason
+   the platform had two table appearances.
+
+   Selector is broad on purpose: `main` and `.drawer-body` cover every surface
+   a user sees, so a new page inherits the format instead of authoring one. */
+main table,
+.drawer-body table {
+  border: 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+main table :where(tr, th, td),
+.drawer-body table :where(tr, th, td) {
+  border: 0 !important;
+}
+
+main table thead th,
+.drawer-body table thead th {
+  background: transparent !important;
+  border: 0 !important;
+  font-weight: 500 !important;
+  color: var(--edify-text-muted);
+}
+
+main table tbody tr,
+.drawer-body table tbody tr {
+  background: transparent !important;
+}
+
+main table tbody :where(td, th),
+.drawer-body table tbody :where(td, th) {
+  font-weight: 300;
+}
+
+/* A row header — a school name, a cluster — is still the label for its row,
+   so it keeps the heading's weight rather than the body's. */
+main table tbody th[scope="row"],
+.drawer-body table tbody th[scope="row"] {
+  font-weight: 500;
+  color: var(--edify-text);
+}
+
+/* ── Heatmap cells ───────────────────────────────────────────────────────
+   Colour is the surface, the number sits on it. Eleven steps rather than four
+   bands: a band paints 5.0 and 6.9 identically, which on a comparison matrix
+   hides the differences being compared.
+
+   The number is always printed, so colour is never the only carrier of the
+   value — a reader who cannot separate these hues still reads the score. */
+.pl-ssa-heat {
+  --heat-mix: 0%;
+  background: color-mix(in oklab, var(--heat-hue) var(--heat-mix), transparent);
+  color: var(--edify-text);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-ssa-heat[data-heat="none"] {
+  --heat-hue: var(--edify-surface-muted);
+  --heat-mix: 100%;
+  color: var(--edify-text-subtle);
+}
+
+.pl-ssa-heat[data-heat="0"]  { --heat-hue: var(--edify-danger);  --heat-mix: 46%; }
+.pl-ssa-heat[data-heat="1"]  { --heat-hue: var(--edify-danger);  --heat-mix: 40%; }
+.pl-ssa-heat[data-heat="2"]  { --heat-hue: var(--edify-danger);  --heat-mix: 32%; }
+.pl-ssa-heat[data-heat="3"]  { --heat-hue: var(--edify-danger);  --heat-mix: 24%; }
+.pl-ssa-heat[data-heat="4"]  { --heat-hue: var(--edify-warning); --heat-mix: 30%; }
+.pl-ssa-heat[data-heat="5"]  { --heat-hue: var(--edify-warning); --heat-mix: 24%; }
+.pl-ssa-heat[data-heat="6"]  { --heat-hue: var(--edify-warning); --heat-mix: 17%; }
+.pl-ssa-heat[data-heat="7"]  { --heat-hue: var(--edify-chart-lime); --heat-mix: 22%; }
+.pl-ssa-heat[data-heat="8"]  { --heat-hue: var(--edify-success); --heat-mix: 20%; }
+.pl-ssa-heat[data-heat="9"]  { --heat-hue: var(--edify-success); --heat-mix: 30%; }
+.pl-ssa-heat[data-heat="10"] { --heat-hue: var(--edify-success); --heat-mix: 40%; }
+
+.pl-ssa-heat--overall {
+  font-weight: 500;
+}
+
+/* ─── ROW ACTION CONTROLS ────────────────────────────────────────────────────
+   One size for every control that sits in a table cell: 32px rather than the
+   44px page-level action button, which made an eight-row table read like a
+   form. Geometry and type only — colour stays as each table authored it, so a
+   destructive action still looks destructive.
+
+   Matched by the action classes this codebase already uses (btn*, *action*,
+   rounded-control) rather than by element, so a plain text link in a cell —
+   a school name, a record id — is untouched. */
+main table tbody td :is(a, button):is(
+  [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+),
+.drawer-body table tbody td :is(a, button):is(
+  [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-block-size: 2rem !important;
+  block-size: auto !important;
+  padding-inline: 0.75rem !important;
+  border-radius: var(--edify-radius-sm) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: none !important;
+}
+
+/* The 44px floor still applies where a finger is the pointer. */
+@media (max-width: 48rem), (pointer: coarse) {
+  main table tbody td :is(a, button):is(
+    [class*="btn"], [class*="action"], [class*="rounded-control"], .row-menu__trigger
+  ) {
+    min-block-size: 2.75rem !important;
+  }
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:last-child > td,
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:last-child > td {
+  border-block-end: 0 !important;
+}
+
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(odd),
+main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(odd),
+.drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even) {
+  background: transparent !important;
+}
+
+main :where(.card, .panel, .bg-white[class*="rounded"]):has(> table) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+main :where(.card, .panel, .bg-white[class*="rounded"]):has(> .overflow-x-auto > table) {
+  overflow: clip;
+}
+
+main :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]):has(> table),
+.drawer-body :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]):has(> table) {
+  container: edify-table / inline-size;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+/* ── Tabs, pills and workflow state. ───────────────────────────────────── */
+/* One tab design for the whole platform: a quiet underlined rail, matching the
+   Analytics workspace's section navigation. This replaced a segmented-pill
+   treatment that several pages were already overriding by hand — the app had
+   pill tabs, underline tabs and bare flex rows depending on the page.
+
+   The !important flags carry the contract over page-level Tailwind utilities
+   (a `bg-slate-100 p-1 rounded-surface` container class outranks these low
+   specificity selectors otherwise), which is the same reason the filter-bar
+   contract above uses them. */
+main :where([role="tablist"], .edify-tab-container) {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-block-end: 1px solid var(--edify-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+main :where([role="tab"], .edify-tab-btn) {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 42px;
+  flex: 0 0 auto;
+  padding-inline: 10px;
+  border: 0 !important;
+  border-block-end: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600 !important;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+main :where([role="tab"], .edify-tab-btn):hover {
+  color: var(--edify-text) !important;
+  border-block-end-color: var(--edify-border) !important;
+}
+
+main [role="tabpanel"]:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 3px;
+}
+
+main :where([role="tab"], .edify-tab-btn):focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: -3px;
+}
+
+main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+  background: transparent !important;
+  color: var(--edify-accent) !important;
+  border-block-end-color: var(--edify-accent) !important;
+  box-shadow: none !important;
+}
+
+main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
+  min-block-size: 1.5rem;
+  padding: 0.25rem 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600 !important;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ── KPI and chart refinements. ────────────────────────────────────────── */
+main :where([class*="text-[19px]"], [class*="text-[21px]"], [class*="text-[24px]"])[class*="tabular"] {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-tile-value-size) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+}
+
+main .apexcharts-canvas,
+main .apexcharts-canvas :where(text, tspan) {
+  font-family: var(--edify-font-sans) !important;
+}
+
+main .apexcharts-gridline {
+  stroke: color-mix(in oklab, var(--edify-border) 62%, transparent);
+}
+
+main .apexcharts-legend-text,
+main .apexcharts-text {
+  color: var(--edify-text-muted) !important;
+  fill: var(--edify-text-muted) !important;
+}
+
+/*
+ * Bar and line charts share one calm, left-to-right legend rhythm. ApexCharts
+ * gives every series a wide horizontal margin and wraps the legend by default;
+ * four medium-length labels can therefore become a misleading vertical stack
+ * even when the card has usable horizontal space. Keep these legends on one
+ * readable rail and allow touch/trackpad scrolling only when a narrow viewport
+ * genuinely cannot contain them. Donut and heatmap legends retain their
+ * chart-specific layouts.
+ */
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  align-content: center !important;
+  justify-content: flex-start !important;
+  gap: 0 clamp(0.5rem, 1vw, 0.75rem) !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-inline: contain;
+  padding: 0.125rem 0.125rem 0.375rem !important;
+  scrollbar-width: none;
+}
+
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend::-webkit-scrollbar {
+  display: none;
+}
+
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend-group {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  gap: 0 clamp(0.5rem, 1vw, 0.75rem) !important;
+}
+
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend-series {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  margin: 0 !important;
+}
+
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend-marker {
+  flex: 0 0 auto !important;
+  width: 0.5rem !important;
+  height: 0.5rem !important;
+  margin-right: 0 !important;
+  border-radius: var(--edify-radius-pill) !important;
+}
+
+main .apexcharts-canvas:has(
+  .apexcharts-bar-series,
+  .apexcharts-line-series
+) .apexcharts-legend-text {
+  white-space: nowrap !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+/* The existing empty-state component becomes a guided, quiet surface. */
+main .edify-empty-state {
+  min-block-size: 10rem;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.5rem;
+  border: 1px dashed var(--edify-border-strong);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+}
+
+/* ── Page command patterns. ────────────────────────────────────────────── */
+main .platform-page-header {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) auto;
+  align-items: end;
+  gap: 1.25rem 2rem;
+  padding-block-end: 0.25rem;
+}
+
+main .platform-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+main .platform-page-actions > :where(a, button) {
+  flex: 0 0 auto !important;
+  inline-size: max-content !important;
+  min-inline-size: max-content !important;
+  white-space: nowrap;
+}
+
+/* Aligned to the canonical filter anatomy: a transparent bar ON the page
+   background, controls carrying the surface, right-aligned. The old
+   12-column grid-on-a-card treatment predated the platform-wide contract
+   and crushed page headers that host the bar inline. */
+main .platform-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+main .platform-filter-bar > :where(label, div) {
+  min-inline-size: 0;
+}
+
+.theme-blue main .platform-filter-bar {
+  border-color: transparent;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* Intentional dark-blue hero for high-trust operational consoles. */
+main .platform-hero {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  padding: clamp(1.5rem, 1.1rem + 1.25vw, 2.25rem);
+  border: 1px solid rgba(123, 189, 232, 0.2) !important;
+  border-radius: var(--edify-radius-xl) !important;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(73, 118, 159, 0.34), transparent 44%),
+    linear-gradient(125deg, var(--brand-primary-active) 0%, var(--brand-primary) 64%, var(--brand-primary-hover) 100%) !important;
+  box-shadow: 0 18px 42px rgba(0, 29, 57, 0.18) !important;
+}
+
+main .platform-hero h1 {
+  max-inline-size: none;
+  color: #fff !important;
+  font-size: var(--edify-text-display-size) !important;
+  font-weight: 650 !important;
+}
+
+main .platform-hero p {
+  max-inline-size: 68ch;
+  color: rgba(232, 244, 252, 0.76) !important;
+  font-size: var(--edify-text-body-size) !important;
+  font-weight: 400 !important;
+  line-height: 1.55;
+}
+
+main .platform-hero__eyebrow {
+  color: #9edcff !important;
+  background: rgba(123, 189, 232, 0.1) !important;
+  border-color: rgba(123, 189, 232, 0.26) !important;
+}
+
+/* HTMX feedback remains perceivable without shifting the surrounding page. */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity var(--edify-transition-fast);
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request:not(form) {
+  cursor: progress;
+}
+
+/* Reusable compact skeleton for HTMX workspaces. It preserves the panel's
+   shape and never presents false zero values while the request is pending. */
+.platform-skeleton {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.platform-skeleton > span {
+  display: block;
+  block-size: 0.875rem;
+  border-radius: var(--edify-radius-pill);
+  background: linear-gradient(90deg,
+    var(--edify-surface-muted) 20%,
+    var(--edify-surface-hover) 50%,
+    var(--edify-surface-muted) 80%);
+  background-size: 220% 100%;
+  animation: edify-skeleton 1.25s ease-in-out infinite;
+}
+
+.platform-skeleton > span:nth-child(2n) { inline-size: 78%; }
+.platform-skeleton > span:nth-child(3n) { inline-size: 56%; }
+
+/* Opt-in for genuinely heavy sections below the initial fold. The intrinsic
+   size prevents scroll jumps; unsupported browsers render normally. */
+.platform-deferred {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 32rem;
+}
+
+.platform-analytics-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-muted);
+  /* Micro type on the muted surface: the subtle tone measures 4.24:1 here,
+     just under AA for 11px text. The muted tone passes while keeping the
+     stamp visually quiet. */
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.35;
+}
+
+.platform-analytics-note strong {
+  color: var(--edify-text);
+}
+
+.platform-responsive-grid {
+  container: responsive-grid / inline-size;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--edify-panel-gap);
+}
+
+@container responsive-grid (inline-size < 34rem) {
+  .platform-responsive-grid > * {
+    grid-column: 1 / -1;
+  }
+}
+
+@keyframes edify-skeleton {
+  to { background-position: -220% 0; }
+}
+
+/* Opt-in responsive table contract. Identity, status and action columns stay
+   visible; lower-priority cells collapse on tablets and become labelled cards
+   on phones when templates provide data-label attributes. */
+main .platform-responsive-table [data-priority="low"] {
+  transition: opacity var(--edify-transition-fast);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY
+   Loaded after the legacy utility bridge so one coherent component contract
+   wins across dashboards, tables, filters, drawers and HTMX partials.
+   ════════════════════════════════════════════════════════════════════════════ */
+.theme-dark .edify-topbar {
+  background: var(--edify-topbar-bg);
+  border-color: var(--edify-topbar-border);
+  box-shadow: var(--edify-topbar-shadow);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.theme-dark main :where(.bg-slate-50, .bg-slate-100,
+  [class*="bg-slate-50/"], [class*="bg-slate-100/"]) {
+  background-color: var(--edify-surface-muted) !important;
+  background-image: none !important;
+}
+
+.theme-dark :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600,
+  button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: var(--edify-button-primary-treatment) !important;
+  border: 1px solid var(--edify-accent) !important;
+  box-shadow: none !important;
+  text-shadow: none;
+}
+
+.theme-dark :where(.btn-primary, .edify-action-button.primary,
+  .premium-button-primary, .pto-button--primary, .sp-button--primary,
+  .spa-button--primary, .spp-button--primary, .tt-button--primary,
+  .hcos-button--primary, .admin-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600,
+  button.bg-indigo-700, a.bg-indigo-700,
+  button.bg-blue-600, a.bg-blue-600):hover:not(:disabled) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent-hover) !important;
+  background-image: none !important;
+  border-color: var(--edify-accent-hover) !important;
+  box-shadow: none !important;
+}
+
+.theme-dark :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary) {
+  color: var(--edify-text) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+}
+
+.theme-dark :where(.btn-ghost, .edify-action-button.secondary,
+  .premium-button-secondary, .premium-button-outline,
+  .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+  .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary):hover:not(:disabled) {
+  color: var(--edify-accent) !important;
+  background-color: var(--edify-surface-hover) !important;
+  border-color: var(--edify-accent-border) !important;
+}
+
+.theme-dark main :where(input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+  input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  color: var(--edify-text) !important;
+  box-shadow: none;
+}
+
+.theme-dark main :where(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--edify-border-strong) !important;
+}
+
+.theme-dark main :where(input, select, textarea):focus-visible {
+  background-color: var(--edify-surface) !important;
+  border-color: var(--edify-accent) !important;
+  box-shadow: var(--edify-focus-ring) !important;
+}
+
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) th {
+  background: transparent !important;
+  color: var(--edify-text-subtle) !important;
+  border-block-end-color: color-mix(in oklab, var(--edify-border) 54%, transparent) !important;
+}
+
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) td {
+  color: var(--edify-text-muted);
+  border-block-end-color: color-mix(in oklab, var(--edify-border) 38%, transparent) !important;
+}
+
+.theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even) > :where(td, th) {
+  background-color: transparent !important;
+}
+
+.theme-dark main table tbody tr:hover > :where(td, th) {
+  background-color: color-mix(in oklab, var(--edify-accent-light) 62%, var(--edify-surface)) !important;
+}
+
+/* ── Blue workspace tables. ────────────────────────────────────────────────
+   The immersive glass theme needs stronger internal hierarchy than the flat
+   light workspace. These rules deliberately land after the shared row-led
+   contract: a distinct header band, a quiet zebra rhythm, and an unmistakable
+   hover/keyboard row keep dense operational tables scannable without turning
+   every cell back into a spreadsheet grid. */
+.theme-blue main :where(.overflow-x-auto, .overflow-auto):has(> table),
+.theme-blue .drawer-body :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  border: 1px solid var(--edify-table-divider);
+  background-color: var(--edify-table-canvas);
+  box-shadow: none;
+  scrollbar-color: var(--edify-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+.theme-blue main table thead th,
+.theme-blue .drawer-body table thead th {
+  background-color: var(--edify-table-header) !important;
+  color: var(--edify-text) !important;
+  border-block-end: 1px solid var(--edify-border-strong) !important;
+  box-shadow: none;
+}
+
+.theme-blue main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix)
+  tbody tr:nth-child(even) > :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix)
+  tbody tr:nth-child(even) > :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-alt) !important;
+}
+
+.theme-blue main table tbody tr:is(:hover, :focus-within) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table tbody tr:is(:hover, :focus-within) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-hover) !important;
+}
+
+.theme-blue main table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft),
+.theme-blue .drawer-body table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):not(.edify-primary-solid, .edify-primary-soft) {
+  background-color: var(--edify-table-row-selected) !important;
+}
+
+.theme-blue main table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):first-child,
+.theme-blue .drawer-body table tbody tr:is([aria-selected="true"], [data-selected="true"]) >
+  :where(td, th):first-child {
+  box-shadow: inset 3px 0 0 var(--edify-sky-400);
+}
+
+.theme-dark main :where([role="tablist"], .edify-tab-container) {
+  background: transparent !important;
+  border-block-end-color: var(--edify-border) !important;
+  box-shadow: none !important;
+}
+
+/* --edify-accent is a brand blue built for fills; as text on the night surface
+   it measures under AA. The underline keeps the accent, the label takes the
+   theme's blue-on-dark text tone — same rule as the section navigation. */
+.theme-dark main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+  background: transparent !important;
+  color: var(--edify-info) !important;
+  border-block-end-color: var(--edify-accent) !important;
+  box-shadow: none !important;
+}
+
+.theme-dark .drawer-surface {
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-drawer) !important;
+}
+
+.theme-dark .drawer-header,
+.theme-dark .drawer-footer {
+  background: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+}
+
+.theme-dark ::selection {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+@media (prefers-contrast: more) {
+  .theme-dark {
+    --edify-border: rgba(255, 255, 255, 0.18);
+    --edify-border-strong: rgba(255, 255, 255, 0.30);
+    --edify-card-border: rgba(255, 255, 255, 0.36);
+    --edify-text-muted: #cbd2db;
+    --edify-text-subtle: #aeb8c5;
+  }
+}
+
+/* ── Responsive composition. ───────────────────────────────────────────── */
+@media (max-width: 63.9375rem) {
+  main > :where(div, section)[class*="px-"] {
+    padding-inline: clamp(1rem, 2.5vw, 1.5rem) !important;
+  }
+
+  main [class~="grid-cols-8"],
+  main [class~="grid-cols-6"],
+  main [class~="grid-cols-5"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* IA's five headline metrics need more reading room than generic compact
+     tile grids on tablet. Two columns keep labels and helpers comfortably
+     separated; the fifth metric becomes a deliberate full-width summary. */
+  main .ia-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  main .ia-kpi-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1 !important;
+  }
+
+  main .ia-quality-value,
+  main .ia-quality-helper {
+    display: block !important;
+    inline-size: 100%;
+  }
+
+  main .platform-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  main .platform-page-actions {
+    justify-content: flex-start;
+  }
+
+  main .platform-filter-bar > :where(label, div) {
+    grid-column: span 3;
+  }
+
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: 1 / -1;
+  }
+
+  main .platform-major-grid {
+    grid-template-columns: 1fr;
+  }
+
+  main .platform-responsive-table [data-priority="low"] {
+    display: none;
+  }
+}
+
+@media (max-width: 47.5rem) {
+  main > :where(div, section)[class*="px-"],
+  main > :where(div, section)[class*="p-4"],
+  main > :where(div, section)[class*="p-5"],
+  main > :where(div, section)[class*="p-6"] {
+    padding-inline: 1rem !important;
+  }
+
+  main h1 {
+    max-inline-size: none;
+  }
+
+  main > div > :where(header, div):has(h1) {
+    align-items: stretch !important;
+  }
+
+  main > div > :where(header, div):has(h1) > :where(div, nav):last-child {
+    inline-size: 100%;
+  }
+
+  main [class~="grid-cols-8"],
+  main [class~="grid-cols-6"],
+  main [class~="grid-cols-5"],
+  main [class~="grid-cols-4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main [class~="grid-cols-3"] {
+    grid-template-columns: 1fr;
+  }
+
+  main form[hx-get][class*="grid"],
+  main form[id*="filter"][class*="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main .platform-filter-bar > :where(label, div),
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: span 6;
+  }
+
+  main :where(input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="search"], input[type="tel"], input[type="url"],
+    input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
+    font-size: 1rem !important;
+  }
+
+  main :where(button, [role="button"],
+    input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+    select, a[class*="rounded"]) {
+    min-block-size: 2.75rem !important;
+  }
+
+  main :where(button, [role="button"]) {
+    min-inline-size: 2.75rem;
+  }
+
+  main table th,
+  main table td {
+    padding: 0.6875rem 0.75rem !important;
+  }
+
+  main .platform-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  main .platform-responsive-table.platform-table-cards,
+  main .platform-responsive-table.platform-table-cards :where(tbody, tr, td) {
+    display: block;
+    inline-size: 100%;
+  }
+
+  main .platform-responsive-table.platform-table-cards thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: clip;
+    clip-path: inset(50%);
+  }
+
+  main .platform-responsive-table.platform-table-cards tr {
+    margin-block-end: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface);
+    box-shadow: var(--edify-shadow-sm);
+  }
+
+  main .platform-responsive-table.platform-table-cards td {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, 42%) 1fr;
+    gap: 0.75rem;
+    border: 0 !important;
+    padding: 0.4rem 0 !important;
+    text-align: start !important;
+  }
+
+  main .platform-responsive-table.platform-table-cards td::before {
+    content: attr(data-label);
+    color: var(--edify-text-subtle);
+    font-size: var(--edify-text-table-heading-size);
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 30rem) {
+  main form[hx-get][class*="grid"],
+  main form[id*="filter"][class*="grid"],
+  main form[id*="search"][class*="grid"] {
+    grid-template-columns: 1fr;
+  }
+
+  main :where(.btn, .edify-action-button,
+    button[class*="bg-blue-"], a[class*="bg-blue-"],
+    button[class*="bg-indigo-"], a[class*="bg-indigo-"]) {
+    min-block-size: 2.75rem;
+  }
+
+  main .platform-page-actions > :where(a, button) {
+    flex: 1 1 100% !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    justify-content: center;
+  }
+
+  main .platform-filter-bar > :where(label, div),
+  main .platform-filter-bar > .platform-filter-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (pointer: coarse) {
+  main :where(button, [role="button"], input, select, textarea),
+  main a[class*="btn"],
+  main a[class*="button"],
+  main a[class*="bg-"] {
+    min-block-size: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main :where(a, button, input, select, textarea, .card, .panel) {
+    animation: none !important;
+    transition: none !important;
+    translate: none !important;
+  }
+
+  .platform-skeleton > span {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  main :where(.card, .panel, .bg-white[class*="rounded"],
+    [style*="--edify-surface"][class*="rounded"], .status, .badge) {
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  :where(a, button, input, select, textarea, summary, [role="button"]):focus-visible {
+    outline: 2px solid Highlight !important;
+  }
+}
+
+@media (min-width: 96rem) {
+  main .debrief-kpi-grid {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   School directory — compact, scan-first registry rows.
+   ════════════════════════════════════════════════════════════════════════════ */
+.school-directory-shell {
+  overflow: visible;
+}
+
+.school-directory-listbar {
+  position: relative;
+  display: flex;
+  min-block-size: 3.25rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-muted) 64%, transparent);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.school-directory-listbar__select {
+  display: inline-flex;
+  min-block-size: 2rem;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--edify-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.school-directory-listbar input,
+.school-directory-row__select input {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.25rem;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.school-directory-listbar__bulk {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--edify-border);
+}
+
+.school-directory-listbar__bulk strong {
+  margin-inline-end: 0.25rem;
+  color: var(--edify-text);
+  white-space: nowrap;
+}
+
+.school-directory-listbar__bulk button {
+  min-block-size: 1.875rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.school-directory-listbar__bulk button:hover {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.school-directory-listbar__bulk button.is-clear {
+  border-color: transparent;
+  background: transparent;
+  color: var(--edify-text-subtle);
+}
+
+.school-directory-listbar__count {
+  margin-inline-start: auto;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.school-directory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--edify-surface);
+}
+
+.school-directory-row {
+  position: relative;
+  display: grid;
+  grid-template-areas: "select icon body quick priority actions open";
+  grid-template-columns: 1.25rem 3.25rem minmax(13rem, 1fr) auto auto 2.75rem 2.75rem;
+  min-block-size: 7.75rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface) 97%, transparent);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 7.75rem;
+  transition:
+    background-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+
+.school-directory-row:last-child {
+  border-block-end: 0;
+}
+
+.school-directory-row:hover {
+  background: color-mix(in oklab, var(--edify-accent-light) 38%, var(--edify-surface));
+}
+
+.school-directory-row:focus-within {
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.school-directory-row__select {
+  grid-area: select;
+  display: grid;
+  place-items: center;
+}
+
+.school-directory-row__icon {
+  grid-area: icon;
+  display: grid;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+}
+
+.school-directory-row__icon svg {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.school-directory-row__body {
+  grid-area: body;
+  min-inline-size: 0;
+}
+
+.school-directory-row__title-line {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.school-directory-row__name {
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-directory-row__name:hover {
+  color: var(--edify-accent);
+}
+
+.school-directory-row__id {
+  flex: 0 0 auto;
+  color: var(--edify-text-subtle);
+  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.school-directory-row__location {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.3125rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.35;
+}
+
+.school-directory-row__location svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  flex: 0 0 auto;
+  color: var(--edify-accent);
+}
+
+.school-directory-row__location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.school-directory-row__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-block-start: 0.6875rem;
+}
+
+.school-directory-status,
+.school-directory-priority {
+  display: inline-flex;
+  min-block-size: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.575rem;
+  border: 1px solid;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.school-directory-status.is-complete,
+.school-directory-priority.is-low {
+  border-color: var(--edify-success-border);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+}
+
+.school-directory-status.is-missing,
+.school-directory-priority.is-high {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.school-directory-priority {
+  min-inline-size: 4.5rem;
+  text-transform: uppercase;
+}
+
+.school-directory-priority.is-medium {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.school-directory-row__quick-actions {
+  display: flex;
+  grid-area: quick;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.school-directory-row__quick-action {
+  display: inline-flex;
+  min-block-size: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--edify-accent-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--edify-shadow-sm);
+  transition:
+    border-color var(--edify-transition-fast),
+    background-color var(--edify-transition-fast),
+    color var(--edify-transition-fast),
+    transform var(--edify-transition-fast);
+}
+
+.school-directory-row__quick-action.is-project {
+  border-color: var(--edify-accent);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent, #fff);
+}
+
+.school-directory-row__quick-action:hover {
+  border-color: var(--edify-accent);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+  transform: translateY(-1px);
+}
+
+.school-directory-row__quick-action.is-project:hover {
+  background: color-mix(in oklab, var(--edify-accent) 86%, #000);
+  color: var(--edify-on-accent, #fff);
+}
+
+.school-directory-row__quick-action:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 44%, transparent);
+  outline-offset: 2px;
+}
+
+.school-directory-row__quick-action svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+  flex: 0 0 auto;
+}
+
+.school-directory-row__priority {
+  grid-area: priority;
+}
+
+.school-directory-row__actions {
+  position: relative;
+  grid-area: actions;
+}
+
+.school-directory-row__action-trigger,
+.school-directory-row__open {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text-subtle);
+}
+
+.school-directory-row__action-trigger {
+  background: transparent;
+}
+
+.school-directory-row__action-trigger:hover,
+.school-directory-row__open:hover {
+  border-color: var(--edify-border);
+  background: var(--edify-surface-hover);
+  color: var(--edify-text);
+}
+
+.school-directory-row__action-trigger svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.school-directory-row__open svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.school-directory-row__open {
+  grid-area: open;
+}
+
+.school-directory-row__menu {
+  position: absolute;
+  z-index: 40;
+  inset-block-start: calc(100% + 0.25rem);
+  inset-inline-end: 0;
+  display: grid;
+  inline-size: 11.75rem;
+  padding: 0.375rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-md);
+}
+
+.school-directory-row__menu :where(a, button) {
+  display: flex;
+  min-block-size: 2.25rem;
+  inline-size: 100%;
+  align-items: center;
+  padding: 0.5rem 0.625rem;
+  border: 0;
+  border-radius: var(--edify-radius-sm);
+  background: transparent;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 550;
+  text-align: start;
+}
+
+.school-directory-row__menu :where(a, button):hover {
+  background: var(--edify-surface-hover);
+  color: var(--edify-text);
+}
+
+.school-directory-empty {
+  padding: 4rem 1.5rem;
+  background: var(--edify-surface);
+  color: var(--edify-text-muted);
+  text-align: center;
+}
+
+.school-directory-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-block-start: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-muted) 64%, transparent);
+}
+
+@supports not (content-visibility: auto) {
+  .school-directory-row {
+    contain: layout style paint;
+  }
+}
+
+@media (max-width: 52rem) {
+  .school-directory-listbar {
+    flex-wrap: wrap;
+  }
+
+  .school-directory-listbar__bulk {
+    order: 3;
+    inline-size: 100%;
+    overflow-x: auto;
+    padding-block-start: 0.5rem;
+    padding-inline-start: 0;
+    border-block-start: 1px solid var(--edify-border);
+    border-inline-start: 0;
+  }
+
+  .school-directory-row {
+    grid-template-areas:
+      "select icon body priority"
+      ". . quick actions";
+    grid-template-columns: 1.25rem 3rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+  }
+
+  .school-directory-row__icon {
+    inline-size: 3rem;
+    block-size: 3rem;
+  }
+
+  .school-directory-row__priority {
+    align-self: start;
+  }
+
+  .school-directory-row__quick-actions {
+    justify-content: flex-start;
+  }
+
+  .school-directory-row__actions {
+    align-self: center;
+  }
+
+  .school-directory-row__open {
+    display: none;
+  }
+}
+
+@media (max-width: 36rem) {
+  .school-directory-row {
+    grid-template-areas:
+      "select icon body actions"
+      ". . priority priority"
+      ". . quick quick";
+    grid-template-columns: 1.25rem 2.75rem minmax(0, 1fr) 2.75rem;
+    align-items: start;
+    padding: 0.875rem;
+  }
+
+  .school-directory-row__icon {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .school-directory-row__priority {
+    justify-self: start;
+  }
+
+  .school-directory-row__actions {
+    align-self: start;
+  }
+
+  .school-directory-row__title-line {
+    padding-inline-end: 0;
+  }
+
+  .school-directory-row__id {
+    display: none;
+  }
+
+  .school-directory-status,
+  .school-directory-priority {
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .school-directory-row__quick-actions {
+    inline-size: 100%;
+    flex-wrap: wrap;
+  }
+
+  .school-directory-row__quick-action {
+    flex: 1 1 8.5rem;
+  }
+
+  .school-directory-listbar__count {
+    margin-inline-start: 0;
+  }
+
+  .school-directory-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Planning school list — directory-density with decision-ready SSA context.
+   ════════════════════════════════════════════════════════════════════════════ */
+.planning-school-list-wrap {
+  container: planning-school-list / inline-size;
+  background: var(--edify-surface);
+}
+
+.planning-school-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planning-school-row {
+  border-block-end: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface) 97%, transparent);
+  transition:
+    background-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+
+.planning-school-row:last-child {
+  border-block-end: 0;
+}
+
+.planning-school-row:hover,
+.planning-school-row.is-expanded {
+  background: color-mix(in oklab, var(--edify-accent-light) 34%, var(--edify-surface));
+}
+
+.planning-school-row:focus-within {
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.planning-school-row__summary {
+  display: grid;
+  grid-template-areas: "select icon identity focus cluster readiness toggle";
+  grid-template-columns: 1.25rem 3.25rem minmax(15rem, 1.35fr) minmax(19rem, 1.2fr) minmax(9rem, 0.65fr) auto auto;
+  min-block-size: 7.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+}
+
+.planning-school-row__select {
+  display: grid;
+  grid-area: select;
+  place-items: center;
+}
+
+.planning-school-row__select input {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.planning-school-row__icon {
+  display: grid;
+  grid-area: icon;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+}
+
+.planning-school-row__icon svg {
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+}
+
+.planning-school-row__identity {
+  grid-area: identity;
+  min-inline-size: 0;
+}
+
+.planning-school-row__title-line {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.planning-school-row__name {
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-row__name:hover {
+  color: var(--edify-accent);
+}
+
+.planning-school-row__id {
+  flex: 0 0 auto;
+  color: var(--edify-text-subtle);
+  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+
+.planning-school-row__address {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.3125rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.35;
+}
+
+.planning-school-row__address svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  flex: 0 0 auto;
+  color: var(--edify-accent);
+}
+
+.planning-school-row__address span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-row__signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-block-start: 0.625rem;
+}
+
+.planning-school-row__focus,
+.planning-school-row__cluster,
+.planning-school-row__readiness {
+  display: grid;
+  min-inline-size: 0;
+  align-content: center;
+  gap: 0.45rem;
+}
+
+.planning-school-row__focus { grid-area: focus; }
+.planning-school-row__cluster { grid-area: cluster; }
+.planning-school-row__readiness { grid-area: readiness; }
+
+.planning-school-row__meta-label {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.planning-school-row__interventions {
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.planning-school-intervention {
+  display: inline-flex;
+  min-block-size: 1.75rem;
+  min-inline-size: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.planning-school-intervention span {
+  overflow: hidden;
+  max-inline-size: 9.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planning-school-intervention strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.planning-school-intervention.is-critical {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.planning-school-intervention.is-warning {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.planning-school-intervention.is-improving {
+  border-color: var(--edify-info-border);
+  background: var(--edify-info-light);
+  color: var(--edify-info);
+}
+
+.planning-school-intervention.is-unassessed {
+  border-color: var(--edify-border);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+}
+
+.planning-school-row__cluster-name,
+.planning-school-readiness {
+  display: inline-flex;
+  min-block-size: 1.75rem;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--edify-success-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.planning-school-row__cluster-name svg {
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.planning-school-row__cluster-name.is-missing,
+.planning-school-readiness.is-blocked {
+  border-color: var(--edify-danger-border);
+  background: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.planning-school-readiness.is-warning {
+  border-color: var(--edify-warning-border);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.planning-school-readiness.is-ready {
+  border-color: var(--edify-success-border);
+  background: var(--edify-success-light);
+  color: var(--edify-success);
+}
+
+.planning-school-row__toggle {
+  display: inline-flex;
+  grid-area: toggle;
+  min-block-size: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+}
+
+.planning-school-row__toggle:hover {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.planning-school-row__toggle svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform var(--edify-transition-fast);
+}
+
+.planning-school-row__toggle svg.is-rotated {
+  transform: rotate(180deg);
+}
+
+.planning-school-row__details {
+  margin: 0 1.125rem 1rem 5.625rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.planning-school-row__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.planning-school-detail {
+  min-inline-size: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.planning-school-detail h4 {
+  margin: 0 0 0.625rem;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.planning-school-detail dl {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.planning-school-detail dl div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: var(--edify-text-micro-size);
+}
+
+.planning-school-detail dt {
+  color: var(--edify-text-subtle);
+}
+
+.planning-school-detail dd {
+  margin: 0;
+  color: var(--edify-text);
+  font-weight: 600;
+  text-align: end;
+}
+
+.planning-school-detail.is-recommendation {
+  border-color: var(--edify-accent-border);
+  background: var(--edify-accent-light);
+}
+
+.planning-school-detail.is-recommendation strong {
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+}
+
+.planning-school-detail.is-recommendation p {
+  margin: 0.4rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.45;
+}
+
+.planning-school-row__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.planning-school-row__actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.planning-school-row__blocked {
+  color: var(--edify-warning);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+@container planning-school-list (max-width: 70rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity identity toggle"
+      ". . focus cluster readiness";
+    grid-template-columns: 1.25rem 3.25rem minmax(0, 1fr) minmax(10rem, 0.7fr) auto;
+  }
+
+  .planning-school-row__focus,
+  .planning-school-row__cluster,
+  .planning-school-row__readiness {
+    align-self: start;
+  }
+}
+
+@container planning-school-list (max-width: 45rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity toggle"
+      ". . focus focus"
+      ". . cluster readiness";
+    grid-template-columns: 1.25rem 2.75rem minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .planning-school-row__icon {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .planning-school-row__details {
+    margin: 0 0.875rem 0.875rem 4.875rem;
+  }
+
+  .planning-school-row__detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .planning-school-row__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .planning-school-row__actions :where(a, button) {
+    justify-content: center;
+  }
+}
+
+@container planning-school-list (max-width: 31rem) {
+  .planning-school-row__summary {
+    grid-template-areas:
+      "select icon identity toggle"
+      ". . focus focus"
+      ". . cluster cluster"
+      ". . readiness readiness";
+  }
+
+  .planning-school-row__toggle span:not(.sr-only) {
+    display: none;
+  }
+
+  .planning-school-row__details {
+    margin-inline-start: 0.875rem;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Shared school record — reference-style school identity + real SSA detail.
+   Used by Planning and School Directory so a school always scans the same way.
+   ════════════════════════════════════════════════════════════════════════════ */
+.school-record-list {
+  container: school-record / inline-size;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--edify-surface);
+}
+
+.school-record-row {
+  position: relative;
+  display: block;
+  min-block-size: 0;
+  gap: 0;
+  padding: 0;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+  font: var(--edify-font-body);
+  transition: background-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+.school-record-row:last-child { border-block-end: 0; }
+
+.school-record-row:hover,
+.school-record-row.is-expanded {
+  background: color-mix(in oklab, var(--edify-accent-light) 24%, var(--edify-surface));
+}
+
+.school-record-row:focus-within {
+  z-index: 2;
+  box-shadow: inset 3px 0 0 var(--edify-accent);
+}
+
+.school-record-row__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1.1rem;
+  padding: clamp(1rem, 1.7vw, 1.5rem);
+}
+
+.school-record-row__content {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr);
+  align-items: start;
+  gap: .8rem;
+  min-inline-size: 0;
+}
+
+.school-record-row__expander {
+  position: absolute;
+  z-index: 1;
+  inset: -.35rem;
+  border: 0;
+  border-radius: .9rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.school-record-row__expander:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
+  outline-offset: 2px;
+}
+
+.school-record-row__content > :not(.school-record-row__expander) {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.school-record-row__select {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: 0.85rem;
+  inset-inline-start: 1.95rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  border-radius: 999px;
+  background: var(--edify-surface-raised);
+  box-shadow: 0 1px 4px rgba(15, 37, 58, .14);
+  cursor: pointer;
+}
+
+.school-record-row__select input {
+  inline-size: 0.8rem;
+  block-size: 0.8rem;
+  margin: 0;
+  accent-color: var(--edify-accent);
+  cursor: pointer;
+}
+
+.school-record-row__icon {
+  display: grid;
+  inline-size: 2.8rem;
+  block-size: 2.8rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 68%, transparent);
+  border-radius: .75rem;
+  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
+  color: var(--edify-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72);
+}
+
+.school-record-row__icon svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.school-record-row__identity { min-inline-size: 0; }
+
+.school-record-row__title {
+  max-inline-size: 55rem;
+  margin: 0;
+  color: var(--edify-text);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-heading-size);
+  font-weight: var(--edify-text-heading-weight);
+  letter-spacing: var(--edify-text-heading-tracking);
+  line-height: var(--edify-text-heading-leading);
+  text-wrap: balance;
+}
+
+.school-record-row__title a {
+  position: relative;
+  z-index: 3;
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.school-record-row__title a:hover { color: var(--edify-accent); text-decoration: underline; }
+.school-record-row__title a:focus-visible {
+  outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
+  outline-offset: 3px;
+  border-radius: .2rem;
+}
+
+.school-record-row__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1.15rem;
+  max-inline-size: 74rem;
+  margin: 0.45rem 0 0;
+}
+
+.school-record-row__metadata div {
+  display: inline-flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+}
+
+.school-record-row__metadata dt,
+.school-record-row__metadata dd { margin: 0; }
+
+.school-record-row__metadata dt {
+  flex: 0 0 auto;
+  color: var(--edify-text);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-record-row__metadata dd {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--edify-accent);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.school-record-row__metadata dd.is-attention { color: var(--edify-danger); }
+.school-record-row__metadata dd.is-positive { color: var(--edify-success); }
+.school-record-row__ssa.is-danger dd { color: var(--edify-danger); }
+.school-record-row__ssa.is-warning dd { color: var(--edify-warning); }
+.school-record-row__ssa.is-success dd { color: var(--edify-success); }
+.school-record-row__ssa.is-neutral dd { color: var(--edify-text-muted); }
+
+.school-record-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  max-inline-size: 17rem;
+  padding-block-start: 0.1rem;
+}
+
+.school-record-action {
+  display: inline-flex;
+  min-block-size: var(--edify-action-button-block-size);
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--edify-action-button-radius);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: 1;
+  transition: transform var(--edify-transition-fast), background-color var(--edify-transition-fast), border-color var(--edify-transition-fast);
+}
+
+.school-record-action { padding-inline: var(--edify-action-button-padding-inline); }
+
+.school-record-action svg {
+  inline-size: var(--edify-action-button-icon-size);
+  block-size: var(--edify-action-button-icon-size);
+}
+
+.school-record-action:disabled {
+  border-color: color-mix(in oklab, var(--edify-border) 72%, transparent);
+  background: color-mix(in oklab, var(--edify-surface-muted) 82%, var(--edify-surface));
+  color: var(--edify-text-subtle);
+  cursor: not-allowed;
+}
+
+.school-record-row__details {
+  margin: 0 clamp(1rem, 1.7vw, 1.5rem);
+  padding: clamp(1rem, 1.7vw, 1.35rem) 0 clamp(1rem, 1.7vw, 1.5rem);
+  border: 0;
+  border-block-start: 1px solid var(--edify-border);
+  background: transparent;
+}
+
+.school-record-ssa__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: .5rem 1rem;
+  padding-block-end: .85rem;
+  border-block-end: 1px solid var(--edify-border);
+}
+
+.school-record-ssa__eyebrow {
+  margin: 0;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+.school-record-ssa h3 {
+  margin: .2rem 0 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+
+.school-record-ssa__heading > p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-ssa-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding-block-start: 1rem;
+}
+
+.school-ssa-group {
+  min-inline-size: 0;
+  padding-inline-start: 0;
+}
+
+/* Score text sits on light surfaces, so it must use the AA-compliant text tone
+   (--edify-*-text), not the saturated fill tone. The text tokens alias back to
+   the base colour in the dark themes, so light-on-dark stays correct there. The
+   __dot inherits currentColor and simply deepens a touch — still legible. */
+.school-ssa-group--danger { color: var(--edify-danger-text); }
+.school-ssa-group--success { color: var(--edify-success-text); }
+.school-ssa-group--warning { color: var(--edify-warning-text); }
+
+.school-ssa-group h4 {
+  margin: 0 0 .5rem;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-label-leading);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .16em;
+}
+
+.school-ssa-group ul {
+  display: grid;
+  gap: .32rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.school-ssa-group li {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  gap: .38rem;
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+}
+
+.school-ssa-group__dot {
+  inline-size: .32rem;
+  block-size: .32rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.school-ssa-group strong {
+  min-inline-size: 0;
+  font-weight: var(--edify-text-title-weight);
+}
+
+.school-ssa-group__score { font-weight: 800; white-space: nowrap; }
+
+.school-ssa-group__empty {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600;
+}
+
+.school-record-ssa__empty {
+  margin: 1rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.school-record-row__detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1rem;
+  margin-block-start: 1rem;
+  padding-block-start: .85rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.school-record-row__detail-footer p {
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+.school-record-row__detail-footer div { display: inline-flex; flex-wrap: wrap; gap: .75rem; }
+
+.school-record-row__detail-footer :where(a, button) {
+  border: 0;
+  background: transparent;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.school-record-row__detail-footer :where(a, button):hover { text-decoration: underline; }
+
+/* Core Schools uses the same record-row anatomy as Directory, Planning and
+   Cluster lists.  The package status stays as plain, scannable detail instead
+   of becoming another card inside the expanded record. */
+.core-school-package {
+  margin-block-start: 1.15rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.core-school-package__heading p {
+  margin: 0;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+.core-school-package__heading h3 {
+  margin: .2rem 0 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.core-school-package__tracks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-block-start: .8rem;
+}
+
+.core-school-package__tracks h4 {
+  margin: 0 0 .45rem;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  text-decoration: underline;
+  text-underline-offset: .16em;
+}
+
+.core-school-package__tracks ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.core-school-package__tracks li {
+  display: grid;
+  gap: .15rem;
+  padding-inline-start: .55rem;
+  border-inline-start: 2px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.core-school-package__tracks strong { color: var(--edify-text); font-weight: var(--edify-text-title-weight); }
+
+@media (max-width: 38rem) {
+  .core-school-package__tracks { grid-template-columns: 1fr; }
+}
+
+/* Core Schools uses the same school identity scale as the Directory, Planning
+   and Cluster lists even though it is rendered as a richer service card. */
+.school-list-card {
+  font: var(--edify-font-body);
+}
+
+.school-list-card__title {
+  font: var(--edify-font-title) !important;
+  letter-spacing: var(--edify-text-title-tracking) !important;
+}
+
+.school-list-card :where(.school-list-card__location, .school-list-card__shipping,
+  .school-list-card__contact) {
+  font: var(--edify-font-label) !important;
+}
+
+.school-list-card :where(.edify-text-caption):not(.school-list-card__shipping):not(.school-list-card__contact) {
+  font: var(--edify-font-micro) !important;
+}
+
+.school-list-card__actions {
+  font-family: var(--edify-font-sans);
+}
+
+.core-school-matrix__header {
+  font: var(--edify-font-label);
+}
+
+.core-school-matrix__title {
+  font: var(--edify-font-micro);
+}
+
+.core-school-matrix__helper {
+  font: var(--edify-font-micro);
+  text-transform: none !important;
+  letter-spacing: var(--edify-text-micro-tracking) !important;
+}
+
+@media (max-width: 52rem) {
+  .school-record-row__summary { grid-template-columns: 1fr; }
+  .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  .school-ssa-groups { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 33rem) {
+  .school-record-row__summary { gap: .75rem; padding: 1rem; }
+  .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
+  .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
+  .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+  .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
+  .school-record-row__title { font-size: 1.13rem; }
+  .school-record-row__metadata { gap: .38rem .75rem; }
+  .school-record-action { padding-inline: .65rem; }
+  .school-record-action span { font-size: var(--edify-text-micro-size); }
+  .school-record-row__actions { padding-inline-start: 3.15rem; }
+  .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
+}
+
+@supports (container-type: inline-size) {
+  @container school-record (max-width: 58rem) {
+    .school-record-row__summary { grid-template-columns: 1fr; }
+    .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  }
+
+  @container school-record (max-width: 38rem) {
+    .school-record-row__summary { gap: .75rem; padding: 1rem; }
+    .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
+    .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
+    .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+    .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
+    .school-record-row__title { font-size: 1.13rem; }
+    .school-record-row__metadata { gap: .38rem .75rem; }
+    .school-record-action { padding-inline: .65rem; }
+    .school-record-action span { font-size: var(--edify-text-micro-size); }
+    .school-record-row__actions { padding-inline-start: 3.15rem; }
+    .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
+    .school-ssa-groups { grid-template-columns: 1fr; }
+  }
+}
+
+/* ── Report and performance workspace ──────────────────────────────────────
+   The report canvas shares the topbar's workspace gutter at every width. It
+   must not introduce a centered inner rail: on wide monitors that made the
+   page title and data bands drift inward from search and the account tools. */
+.edify-report-workspace {
+  container: edify-report / inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.125rem, 0.95rem + 0.55vw, 1.625rem);
+  inline-size: 100% !important;
+  max-inline-size: none !important;
+  margin-inline: 0 !important;
+  padding: clamp(1.375rem, 1.1rem + 0.8vw, 2rem) var(--edify-page-gutter) clamp(2rem, 1.55rem + 1.4vw, 3.25rem) !important;
+  box-sizing: border-box;
+}
+
+.edify-report-header {
+  margin-block-end: 0 !important;
+  padding-block-end: clamp(1rem, 0.85rem + 0.45vw, 1.375rem) !important;
+}
+
+.edify-report-header__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(1.25rem, 1rem + 1vw, 2.5rem);
+}
+
+.edify-report-header__copy {
+  min-inline-size: 0;
+  max-inline-size: 52rem;
+}
+
+.edify-report-header__description {
+  margin-block-start: 0.625rem;
+  max-inline-size: 68ch;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-body-size);
+  font-weight: var(--edify-text-body-weight);
+  line-height: var(--edify-text-body-leading);
+}
+
+.edify-report-header__controls {
+  display: grid;
+  gap: 0.375rem;
+  min-inline-size: 11rem;
+}
+
+.edify-report-header__controls label {
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  line-height: var(--edify-text-micro-leading);
+  text-transform: uppercase;
+}
+
+.edify-report-header__controls select {
+  inline-size: 100%;
+  min-block-size: var(--edify-control-block-size);
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-surface-raised) !important;
+  box-shadow: var(--edify-shadow-xs);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.edify-report-section {
+  display: grid;
+  gap: 0.75rem;
+  min-inline-size: 0;
+}
+
+.edify-report-section__heading,
+.edify-report-matrix__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-inline-size: 0;
+}
+
+.edify-report-section__heading > div,
+.edify-report-matrix__heading > div {
+  min-inline-size: 0;
+}
+
+.edify-report-section__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  line-height: var(--edify-text-micro-leading);
+  text-transform: uppercase;
+}
+
+.edify-report-section__heading h2,
+.edify-report-matrix__heading h2 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-heading-size) !important;
+  font-weight: var(--edify-text-heading-weight) !important;
+  line-height: var(--edify-text-heading-leading);
+}
+
+.edify-report-section__heading > p,
+.edify-report-matrix__heading > p {
+  max-inline-size: 42rem;
+  margin: 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: var(--edify-text-label-leading);
+  text-align: end;
+}
+
+.edify-report-timeline-wrap {
+  min-inline-size: 0;
+  overflow: visible;
+}
+
+.edify-report-timeline {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.625rem !important;
+  min-inline-size: 0 !important;
+  margin-block-end: 0 !important;
+  overflow: visible !important;
+}
+
+.edify-report-period {
+  min-block-size: 6.5rem !important;
+  padding: 0.875rem !important;
+  gap: 0.625rem !important;
+}
+
+.edify-report-period > :first-child {
+  min-inline-size: 0;
+}
+
+.edify-report-period__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+
+.edify-report-period__date,
+.edify-report-period__kind {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  line-height: var(--edify-text-label-leading);
+}
+
+.edify-report-period__kind {
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--edify-border-strong);
+  color: var(--edify-text-subtle);
+}
+
+.edify-report-no-target {
+  inline-size: auto !important;
+  block-size: auto !important;
+  min-block-size: 1.75rem;
+  padding-inline: 0.55rem;
+  flex-direction: row !important;
+  gap: 0.25rem;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: var(--edify-radius-pill) !important;
+  background: var(--edify-surface-muted);
+  white-space: nowrap;
+}
+
+.edify-report-no-target > :first-child {
+  display: none;
+}
+
+.edify-report-no-target > :last-child {
+  margin: 0 !important;
+  font-size: var(--edify-text-micro-size) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.edify-report-summary-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-block-end: 0 !important;
+}
+
+.edify-report-summary-card {
+  min-block-size: 6.5rem !important;
+  padding: 0.875rem !important;
+}
+
+/* The shared legacy KPI adapter centers a card's children so icon-led KPI
+   tiles balance correctly. Report summary tiles have no icon lane; keeping
+   that centering shrinks the copy column and creates a false left gutter. */
+main .edify-report-summary-grid.edify-report-summary-grid > .edify-report-summary-card {
+  align-items: stretch !important;
+  text-align: start !important;
+}
+
+main .edify-report-summary-card > :first-child {
+  inline-size: 100%;
+  min-inline-size: 0;
+  text-align: start;
+}
+
+main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
+  text-align: start !important;
+}
+
+.edify-report-matrix {
+  min-inline-size: 0;
+}
+
+.edify-report-matrix__heading {
+  padding: 1rem 1.25rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+}
+
+.edify-report-matrix__scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.edify-report-matrix__table {
+  min-inline-size: 70rem !important;
+  font-size: var(--edify-text-table-size) !important;
+}
+
+.edify-report-matrix__table :is(th, td) {
+  padding-block: 0.55rem !important;
+}
+
+.edify-report-matrix__table :is(th, td):first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  inline-size: 10rem;
+  min-inline-size: 10rem;
+  background: var(--edify-surface);
+  box-shadow: 1px 0 0 var(--edify-border);
+}
+
+.edify-report-matrix__table thead :is(th, td):first-child {
+  z-index: 2;
+  background: var(--edify-surface-muted);
+}
+
+.edify-report-insight-grid {
+  align-items: start !important;
+  gap: 1rem !important;
+}
+
+.edify-report-insight-rail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 1rem;
+  min-inline-size: 0;
+}
+
+.edify-report-panel {
+  align-self: start;
+  block-size: auto !important;
+  min-block-size: 0 !important;
+  padding: 1rem !important;
+}
+
+.edify-report-trend-chart {
+  block-size: clamp(10rem, 14vw, 13rem);
+}
+
+.edify-report-priority {
+  padding: 0.7rem !important;
+  gap: 0.625rem !important;
+}
+
+.edify-report-priority p {
+  line-height: 1.35 !important;
+}
+
+@container edify-report (max-width: 72rem) {
+  .edify-report-timeline {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-insight-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .edify-report-panel--trend {
+    grid-column: auto !important;
+  }
+
+  .edify-report-insight-rail {
+    grid-column: auto !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container edify-report (max-width: 48rem) {
+  .edify-report-header__layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .edify-report-header__controls {
+    inline-size: min(100%, 18rem);
+  }
+
+  .edify-report-section__heading,
+  .edify-report-matrix__heading {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .edify-report-section__heading > p,
+  .edify-report-matrix__heading > p {
+    max-inline-size: 65ch;
+    text-align: start;
+  }
+
+  .edify-report-timeline,
+  .edify-report-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .edify-report-insight-grid,
+  .edify-report-insight-rail {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .edify-report-panel {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 47.9375rem) {
+  .edify-report-workspace {
+    padding-inline: 0.75rem !important;
+  }
+}
+
+@container edify-report (max-width: 30rem) {
+  .edify-report-timeline,
+  .edify-report-summary-grid,
+  .edify-report-insight-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .edify-report-period,
+  .edify-report-summary-card {
+    min-block-size: 0 !important;
+  }
+}

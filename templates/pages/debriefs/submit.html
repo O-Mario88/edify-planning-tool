@@ -1,0 +1,197 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Daily Debrief · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="max-w-3xl mx-auto px-4 py-6" id="daily-debrief-page">
+
+  <!-- Canonical page header (§26): title + subtitle + date/status context. -->
+  <header class="edify-page-header">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="edify-page-header__lead">
+        <p class="edify-page-eyebrow">My Work</p>
+        <h1 class="edify-page-title edify-page-header__title">Daily Debrief</h1>
+        <p class="max-w-xl edify-page-header__description">
+          Share what you worked on, what happened and what support could
+          improve tomorrow.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-surface border border-slate-200 text-[12px] font-semibold edify-text-muted">
+          {{ today|date:"j M Y" }}
+        </span>
+        {% if existing and existing.status == 'clarification_requested' or existing and existing.status == 'returned' %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold edify-warning-soft border edify-warning-border"
+              style="color: var(--edify-warning-text)">
+          Returned for clarification
+        </span>
+        {% elif submitted %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[12px] font-semibold edify-success-soft border edify-success-border"
+              style="color: var(--edify-success-text)">
+          Submitted {{ existing.submitted_at|date:"g:i A" }}
+        </span>
+        {% elif existing %}
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill edify-surface border border-slate-200 text-[12px] font-semibold edify-text-muted">
+          Draft
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  {% if error %}
+  <div class="mb-4 p-3 rounded-surface border text-[13px] font-semibold edify-danger-soft edify-danger-border"
+       style="color: var(--edify-danger-text)"
+       role="alert">{{ error }}</div>
+  {% endif %}
+
+  {% if submitted and not editable %}
+  <!-- ── Already submitted: read-only summary (§28) ─────────────────────── -->
+  <section class="edify-surface rounded-surface border border-slate-200 p-5 space-y-5" aria-label="Submitted debrief">
+    <div>
+      <h2 class="text-[14px] font-semibold edify-text mb-2">Work covered</h2>
+      {% if rows %}
+      <ul class="space-y-2">
+        {% for row in rows %}{% if row.checked %}
+        <li class="flex items-start gap-2 text-[13px]">
+          <svg class="h-4 w-4 mt-0.5 shrink-0" style="color: var(--edify-success-text)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          <span>
+            <strong>{{ row.activity.get_activity_type_display }}</strong>
+            — {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
+          </span>
+        </li>
+        {% endif %}{% endfor %}
+      </ul>
+      {% endif %}
+      {% if existing.other_work_description %}
+      <p class="text-[13px] mt-2"><strong>Other work:</strong> {{ existing.other_work_description }}</p>
+      {% endif %}
+    </div>
+    {% if existing.what_went_well %}<div><h3 class="text-[13px] font-semibold edify-text">What worked well</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.what_went_well }}</p></div>{% endif %}
+    {% if existing.what_did_not_go_well %}<div><h3 class="text-[13px] font-semibold edify-text">What did not work well</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.what_did_not_go_well }}</p></div>{% endif %}
+    {% if existing.challenges_faced %}<div><h3 class="text-[13px] font-semibold edify-text">Challenges</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.challenges_faced }}</p></div>{% endif %}
+    {% if existing.recommendations %}<div><h3 class="text-[13px] font-semibold edify-text">Suggestions</h3><p class="text-[13px] edify-text-muted mt-1 whitespace-pre-line">{{ existing.recommendations }}</p></div>{% endif %}
+    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
+      <p class="text-[12px] edify-text-muted">Your Program Lead, Country Director and HR can now review it.</p>
+      <a href="/debriefs/{{ existing.id }}" class="text-[12px] font-bold edify-primary-text hover:underline">View full record</a>
+    </div>
+  </section>
+
+  {% elif not can_submit %}
+  <section class="edify-empty-state" aria-label="Not available">
+    <p class="text-[13px] font-semibold edify-text">Daily Debrief is not available for your role.</p>
+  </section>
+
+  {% else %}
+  <!-- ── The form (§3): activities + four questions, autosaving ─────────── -->
+  <form method="post" action="/debriefs/submit" id="daily-debrief-form"
+        hx-post="/debriefs/submit"
+        hx-trigger="change delay:600ms from:input, keyup delay:2500ms from:textarea"
+        hx-vals='{"intent":"autosave"}'
+        hx-target="#autosave-chip"
+        hx-swap="innerHTML"
+        class="space-y-5">
+    {% csrf_token %}
+
+    <!-- Q1 — What did you work on today? -->
+    <section class="edify-surface rounded-surface border border-slate-200 p-4 sm:p-5" aria-labelledby="dd-q1">
+      <div class="flex items-center justify-between gap-3 mb-1">
+        <h2 id="dd-q1" class="text-[14px] font-semibold edify-text">1 · What did you work on today?</h2>
+        <span id="autosave-chip" class="edify-text-caption edify-text-muted" aria-live="polite"></span>
+      </div>
+      <p class="text-[12px] edify-text-muted mb-3">Your scheduled activities from My Plan. Tick the ones you worked on — this never starts, completes or credits an activity.</p>
+
+      {% if rows %}
+      <div class="space-y-2">
+        {% for row in rows %}
+        {% comment %}The activity a user arrived to discuss is ticked and
+        marked, because an overdue one is not in today's plan and would
+        otherwise look like it wandered in by mistake.{% endcomment %}
+        <label class="flex items-start gap-3 p-3 rounded-control border transition-colors cursor-pointer {% if row.is_focus %}edify-primary-border edify-primary-soft{% else %}border-slate-200 bg-slate-50 hover:bg-slate-100/60{% endif %}">
+          <input type="checkbox" name="activity_ids" value="{{ row.activity.id }}"
+                 {% if row.checked %}checked{% endif %}
+                 class="mt-0.5 h-5 w-5 shrink-0">
+          <span class="min-w-0">
+            <span class="block text-[13px] font-semibold edify-text">{{ row.activity.get_activity_type_display }}{% if row.is_focus %}
+              <span class="ml-1.5 inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold edify-primary-solid edify-primary-on-solid align-[0.05em]">Discussing</span>{% endif %}</span>
+            <span class="block text-[12px] edify-text-muted truncate">
+              {% if row.activity.school %}{{ row.activity.school.name }}{% elif row.activity.cluster %}{{ row.activity.cluster.name }}{% else %}—{% endif %}
+            </span>
+            <span class="block edify-text-caption edify-text-muted mt-0.5">
+              {% if row.activity.focus_intervention %}{{ row.activity.get_focus_intervention_display }} · {% endif %}
+              {% if row.activity.scheduled_date %}{{ row.activity.scheduled_date|date:"g:i A" }} · {% endif %}
+              {{ row.activity.get_status_display }}{% if row.is_focus and row.activity.planned_date and row.activity.planned_date != today %} · carried in from {{ row.activity.planned_date|date:"j M" }}{% endif %}
+            </span>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="edify-empty-state !py-6">
+        <p class="text-[13px] font-semibold edify-text">No Activities scheduled today</p>
+        <p class="text-[12px] edify-text-muted mt-1">There are no scheduled Activities in My Plan for today. You can describe other authorized work below.</p>
+      </div>
+      {% endif %}
+
+      <!-- Add Other Work — collapsed by default (§3). -->
+      <details class="mt-3 group" {% if existing.other_work_description %}open{% endif %}>
+        <summary class="text-[12px] font-bold edify-primary-text cursor-pointer select-none list-none inline-flex items-center gap-1">
+          <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          Add Other Work
+        </summary>
+        <div class="mt-2">
+          <label for="dd-other" class="block text-[12px] font-semibold edify-text-muted mb-1">Authorized work not in My Plan (short description)</label>
+          <textarea id="dd-other" name="other_work_description" rows="2" maxlength="1000"
+                    class="w-full rounded-control border border-slate-200 text-[13px] p-3"
+                    placeholder="e.g. Covered a colleague's school visit at St. Jude Primary">{{ existing.other_work_description|default:"" }}</textarea>
+          <p class="edify-text-caption edify-text-muted mt-1">Repeated or material unplanned work is routed to your manager for future planning.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- Q2-Q5 — the four reflections. -->
+    <section class="edify-surface rounded-surface border border-slate-200 p-4 sm:p-5 space-y-4">
+      <div>
+        <label for="dd-q2" class="block text-[14px] font-semibold edify-text">2 · What worked well?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe what helped today's work succeed.</p>
+        <textarea id="dd-q2" name="what_went_well" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.what_went_well|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="dd-q3" class="block text-[14px] font-semibold edify-text">3 · What did not work well?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe anything that did not go as expected.</p>
+        <textarea id="dd-q3" name="what_did_not_go_well" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.what_did_not_go_well|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="dd-q4" class="block text-[14px] font-semibold edify-text">4 · What challenges did you face during the course of the day?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">Describe the barriers that affected your work today — e.g. transport, roads, funds, school leader availability, weather, network.</p>
+        <textarea id="dd-q4" name="challenges_faced" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.challenges_faced|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="dd-q5" class="block text-[14px] font-semibold edify-text">5 · What do you suggest should be done to improve?</label>
+        <p class="text-[12px] edify-text-muted mt-0.5 mb-2">What practical action would improve the situation?</p>
+        <textarea id="dd-q5" name="recommendations" rows="3"
+                  class="w-full rounded-control border border-slate-200 text-[13px] p-3">{{ existing.recommendations|default:"" }}</textarea>
+      </div>
+    </section>
+
+    <!-- Secondary, visible route for sensitive matters (§24). -->
+    <p class="text-[12px] edify-text-muted">
+      Safeguarding, fraud, harassment or another confidential concern?
+      <a href="/debriefs?restricted=1" class="font-bold edify-primary-text hover:underline">Report a Sensitive Issue</a>
+      — it follows a restricted workflow, not this form.
+    </p>
+
+    <!-- Sticky on mobile so the keyboard never buries it (§27). -->
+    <div class="sticky bottom-0 -mx-4 px-4 py-3 bg-[var(--edify-bg)]/85 backdrop-blur border-t border-slate-200 sm:static sm:m-0 sm:p-0 sm:bg-transparent sm:border-0">
+      <button type="submit" name="intent" value="submit"
+              class="btn-primary edify-action-button primary w-full sm:w-auto h-11 px-6 rounded-control text-[14px] font-bold">
+        Submit Daily Debrief
+      </button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

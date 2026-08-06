@@ -1,0 +1,45 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   GEIST SANS — THE ONE PLACE THE TYPEFACE IS DECLARED
+   ════════════════════════════════════════════════════════════════════════════
+   Geist is the single product typeface, served from this origin rather than
+   fonts.googleapis.com.
+
+   Every type token in design-system.css is measured against Geist's metrics.
+   Loading it from a third party made the typeface a network dependency: with
+   `display=swap`, a request that was slow or blocked rendered the whole
+   product in ui-sans-serif at Geist's measurements. That is why production
+   could look wrong while local looked right — same CSS, different luck on one
+   cross-origin request. Self-hosting removes the failure mode rather than
+   narrowing it.
+
+   Its own file, rather than a block inside design-system.css, because five
+   entry points need the typeface and only four of them load the design system:
+   the launch splash ships its own minimal stylesheet, and a second copy of
+   these rules is exactly how a renamed font file ends up fixed in four places
+   and broken in the fifth.
+
+   One variable file per style covers 100..900, so weights cost no extra
+   requests. Licence: OFL-1.1 — static/fonts/GEIST-LICENSE.txt.
+
+   Relative url() on purpose: ManifestStaticFilesStorage rewrites it to the
+   hashed filename during collectstatic, which an absolute /static/ path would
+   not get.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/Geist-Variable.woff2") format("woff2-variations"),
+       url("../fonts/Geist-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/Geist-Italic-Variable.woff2") format("woff2-variations"),
+       url("../fonts/Geist-Italic-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}

@@ -1,0 +1,126 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Add SSA Score - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+{# A div on purpose: layouts/shell.html already provides this page's single main landmark, and a second one leaves screen readers with two "main content" targets. #}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <a href="/ssa" class="inline-flex min-h-11 items-center gap-2 text-[13px] font-bold text-[var(--edify-accent)] hover:underline">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to SSA Performance
+      </a>
+      <p class="edify-page-eyebrow mt-3">Manual entry</p>
+      <h1 class="edify-page-title edify-page-header__title">Add SSA Score</h1>
+      <p class="max-w-2xl edify-page-header__description">
+        Save one School Self-Assessment directly to the SSA database. All eight intervention scores are required.
+      </p>
+    </div>
+  </header>
+
+  <form method="post" action="/ssa/manual/" class="space-y-6">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <section role="alert" aria-labelledby="ssa-form-errors-heading" class="rounded-surface border border-rose-200 bg-rose-50 p-4 text-rose-800">
+      <h2 id="ssa-form-errors-heading" class="text-[14px] font-extrabold">Please correct the highlighted fields.</h2>
+      <ul class="mt-2 list-disc space-y-1 pl-5 text-[13px] font-semibold">
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+        {% for field in form %}
+          {% for error in field.errors %}
+          <li><a class="underline" href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+      <div class="border-b border-[var(--edify-border)] px-5 py-4 sm:px-6">
+        <h2 class="text-[15px] font-extrabold text-[var(--edify-text)]">Assessment details</h2>
+        <p class="mt-1 text-[12px] font-semibold text-[var(--edify-text-muted)]">Choose a school already saved in the School Directory.</p>
+      </div>
+
+      <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+        <div class="sm:col-span-2">
+          <label for="{{ form.school_id.id_for_label }}" class="block text-[12px] font-extrabold text-[var(--edify-text)]">
+            {{ form.school_id.label }} <span class="text-rose-600" aria-hidden="true">*</span>
+          </label>
+          <div class="mt-2">{{ form.school_id }}</div>
+          <datalist id="manual-ssa-school-options">
+            {% for school in schools %}
+            <option value="{{ school.school_id }}">{{ school.name }}{% if school.district %} — {{ school.district.name }}{% endif %}</option>
+            {% endfor %}
+          </datalist>
+          <p id="manual-ssa-school-help" class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+            Start typing the School ID, then select the matching directory record.
+          </p>
+          {% for error in form.school_id.errors %}
+          <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="{{ form.date_of_ssa.id_for_label }}" class="block text-[12px] font-extrabold text-[var(--edify-text)]">
+            {{ form.date_of_ssa.label }} <span class="text-rose-600" aria-hidden="true">*</span>
+          </label>
+          <div class="mt-2">{{ form.date_of_ssa }}</div>
+          <p id="manual-ssa-date-help" class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+            The assessment date determines the fiscal year and quarter.
+          </p>
+          {% for error in form.date_of_ssa.errors %}
+          <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+      </div>
+    </section>
+
+    <fieldset class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+      <legend class="sr-only">SSA intervention scores</legend>
+      <div class="border-b border-[var(--edify-border)] px-5 py-4 sm:px-6">
+        <h2 class="text-[15px] font-extrabold text-[var(--edify-text)]">Intervention scores</h2>
+        <p class="mt-1 text-[12px] font-semibold text-[var(--edify-text-muted)]">Enter a score from 0 to 10 for every intervention.</p>
+      </div>
+
+      <div class="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+        {% for field in score_fields %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-[12px] font-extrabold text-[var(--edify-text)]">
+            {{ field.label }} <span class="text-rose-600" aria-hidden="true">*</span>
+          </label>
+          <div class="mt-2">{{ field }}</div>
+          {% if field.name == "score_enrolment" %}
+          <p class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+            This is the SSA Enrolment score out of 10, not the number of pupils. Update pupil enrolment through the School Profile or School Upload.
+          </p>
+          {% endif %}
+          {% for error in field.errors %}
+          <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div class="flex flex-col-reverse gap-3 border-t border-[var(--edify-border)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+      <a href="/uploads" class="inline-flex min-h-11 items-center justify-center rounded-control px-3 text-[13px] font-bold text-[var(--edify-accent)] edify-primary-soft-hover">
+        Open Upload Center
+      </a>
+      <div class="flex flex-col-reverse gap-2 sm:flex-row">
+        <a href="/ssa" class="inline-flex min-h-11 items-center justify-center rounded-control border border-[var(--edify-border)] px-5 text-[13px] font-bold text-[var(--edify-text-muted)] hover:bg-slate-50">
+          Cancel
+        </a>
+        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-5 text-[13px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
+          Save SSA Score
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

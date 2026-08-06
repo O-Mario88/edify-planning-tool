@@ -1,0 +1,20 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Core School Plan — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+{% include "partials/_back_link.html" with back_href="/core-schools" back_label="Core Schools" %}
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<h1 class="edify-page-title edify-page-header__title">Core School Plan</h1>
+<p class="edify-page-header__description">Edify Operations · Core School Plan</p>
+</div>
+</div>
+
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[21px] font-extrabold tracking-tight">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
+{% if slots %}<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-semibold">Activity Slots</h3></div><ul class="divide-y divide-slate-100">{% for s in slots %}<li class="px-5 py-3.5 flex items-center justify-between"><p class="text-[12px] font-bold text-slate-800">Slot #{% firstof s.slot_number forloop.counter %} — {{ s.kind|default:"Activity" }}</p><span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text">{{ s.status }}</span></li>{% endfor %}</ul></div>{% endif %}
+
+</div>
+{% endblock %}

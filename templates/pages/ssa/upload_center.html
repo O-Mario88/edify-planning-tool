@@ -1,0 +1,137 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Upload SSA Scores — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Header -->
+<div class="edify-page-header">
+  <div class="edify-page-header__lead">
+    <p class="edify-page-eyebrow">Quality & Insights</p>
+    <h1 class="edify-page-title edify-page-header__title">Upload SSA Scores</h1>
+    <p class="edify-page-header__description">Upload a sheet of initial and monitoring SSA scores to map directly to school records.</p>
+  </div>
+  <div class="edify-page-header__controls">
+    {% if can_add_ssa %}
+    <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
+      Add SSA Score
+    </a>
+    {% endif %}
+    {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+  </div>
+</div>
+
+{% if messages %}
+<div class="space-y-2">
+  {% for message in messages %}
+  <div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 text-rose-800{% else %}bg-emerald-50 text-emerald-800{% endif %} rounded-surface text-[12px] font-medium">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Template Download + Column Guide -->
+<div class="edify-surface rounded-surface shadow-sm p-5 space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-[14px] font-semibold text-slate-800">Required Column Format</h3>
+      <p class="text-[12px] text-slate-400 font-normal mt-0.5">Download the template, fill in your scores, and upload it below.</p>
+    </div>
+    <a href="/ssa/upload/template" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-control transition-colors">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download Template
+    </a>
+  </div>
+
+  <!-- Column reference table -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-[12px]">
+      <thead>
+        <tr class="text-left edify-text-caption text-slate-400 uppercase tracking-wide border-b border-slate-100">
+          <th class="pb-2 font-medium">Column Header</th>
+          <th class="pb-2 font-medium">Required</th>
+          <th class="pb-2 font-medium">Description</th>
+          <th class="pb-2 font-medium">Example</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        <tr><td class="py-2 font-medium">School ID</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Must match a school in the directory</td><td class="py-2 text-slate-400">SCH-0001</td></tr>
+        <tr><td class="py-2 font-medium">Assessment Date</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">Date of the SSA assessment (YYYY-MM-DD)</td><td class="py-2 text-slate-400">2026-07-01</td></tr>
+        <tr><td class="py-2 font-medium">SSA Year</td><td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td><td class="py-2 text-slate-500">The operational FY this assessment belongs to. Use "last" for an imported baseline or "current" for this FY.</td><td class="py-2 text-slate-400">last / current / 2025 / 2026</td></tr>
+        {% for code, label in intervention_choices|default:"" %}
+        <tr>
+          <td class="py-2 font-medium">{{ label }} (0-10)</td>
+          <td class="py-2">{% include "components/badge.html" with tone="danger" label="Yes" %}</td>
+          <td class="py-2 text-slate-500">SSA score for {{ label }}</td>
+          <td class="py-2 text-slate-400">7.5</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="edify-text-caption text-slate-400"><strong>Enrolment:</strong> In this SSA file, Enrolment is a performance score from 0 to 10. Pupil headcount belongs in the School Upload file or can be updated from the School Profile.</p>
+  <p class="edify-text-caption text-slate-400"><strong>Assessment history:</strong> A school may have several SSA assessments in one FY when the dates differ. The same School ID and Assessment Date can only appear once. A first-ever current-FY assessment is accepted as that school's baseline.</p>
+</div>
+
+<!-- Upload Area -->
+<div class="edify-surface rounded-surface shadow-sm p-6">
+  <form method="post" enctype="multipart/form-data" class="space-y-4" x-data="{ submitting: false }" @submit="if ($el.checkValidity()) submitting = true">
+  {% csrf_token %}
+
+  <div
+    x-data="{
+      dragging: false,
+      fileName: '',
+      selectDroppedFile(files) {
+        if (!files || !files.length) return;
+        this.$refs.fileInput.files = files;
+        this.fileName = files[0].name;
+      }
+    }"
+    @dragover.prevent="dragging = true"
+    @dragleave.prevent="dragging = false"
+    @drop.prevent="dragging = false; selectDroppedFile($event.dataTransfer.files)"
+    class="border-2 border-dashed rounded-surface p-10 text-center transition-colors flex flex-col items-center justify-center min-h-[200px]"
+    :class="dragging ? 'edify-primary-border edify-primary-soft-alpha-20' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'"
+  >
+    <svg class="w-10 h-10 text-slate-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+    </svg>
+    <p class="text-[14px] font-medium">Drag & drop your SSA file here</p>
+    <p id="ssa-file-types" class="edify-text-caption text-slate-400 font-normal mt-1">Supports Excel (.xlsx) and CSV format</p>
+    <label class="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-[12px] rounded-surface cursor-pointer transition-colors">
+      Browse Files
+      <input
+        x-ref="fileInput"
+        type="file"
+        name="file"
+        accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        aria-describedby="ssa-file-types ssa-selected-file"
+        @change="fileName = $event.target.files[0]?.name || ''"
+        class="sr-only"
+        required
+      >
+    </label>
+    <p id="ssa-selected-file" class="mt-3 min-h-5 text-[12px] font-bold" :class="fileName ? 'text-emerald-700' : 'text-slate-400'" aria-live="polite">
+      <span x-text="fileName ? `Selected: ${fileName}` : 'No file selected yet.'"></span>
+    </p>
+  </div>
+
+  <div class="flex items-center justify-between">
+    <span class="edify-text-caption text-slate-400 flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      School ID is required to map rows to schools.
+    </span>
+    <button type="submit" :disabled="submitting" class="min-h-11 px-4 edify-primary-solid edify-primary-hover text-white font-medium text-[12px] rounded-control transition-colors disabled:cursor-wait disabled:opacity-70" x-text="submitting ? 'Validating and importing…' : 'Upload and Import'">
+      Upload and Import
+    </button>
+  </div>
+  <p x-show="submitting" class="text-right text-[12px] font-semibold text-slate-500" role="status" aria-live="polite">Large workbooks can take a few minutes. Keep this page open until the import summary appears.</p>
+  </form>
+</div>
+
+</div>
+{% endblock %}

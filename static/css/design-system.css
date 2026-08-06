@@ -1,0 +1,835 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY DESIGN SYSTEM — THE SINGLE SOURCE OF TRUTH
+   ════════════════════════════════════════════════════════════════════════════
+   This is the ONLY place design tokens are defined. base.html must NOT
+   redefine these in a <style> block; templates must NOT hardcode raw hex.
+
+   Loaded first (after Tailwind's main.css), so unlayered rules here beat
+   Tailwind @layer utilities when needed.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* The typeface itself is declared once, in css/fonts.css, which every entry
+   point loads before this file. Tokens here are measured against Geist's
+   metrics and assume it is present. */
+
+:root {
+  color-scheme: light dark;
+  accent-color: var(--edify-accent);
+
+  /* ── EDIFY BRAND PALETTE ─────────────────────────────────────────────────
+     The login experience is the visual north star for the application.
+     These literal values come from the approved brand reference. */
+  --edify-navy-950: #001d39;
+  --edify-navy-800: #0a4d86;
+  --edify-steel-600: #49769f;
+  --edify-teal-600: #4e8ea2;
+  --edify-teal-400: #6ea2b3;
+  --edify-sky-400: #7bbde8;
+  --edify-sky-100: #bdd8e9;
+
+  /* Official Edify product brand (spec §4 / §5).
+       The reference login experience supplies the authoritative Edify blue.
+       The darker navy remains an atmospheric shell/background colour; it is
+       no longer the light-mode interaction colour. Every primary interaction
+       consumes this token or an approved tonal variant — never a page-local
+       Tailwind blue.
+
+       primary   #0e5da3 — primary buttons, active navigation, selected tabs,
+                           primary links, focus rings, primary chart series
+       secondary #ef564b — secondary actions and supporting emphasis ONLY
+
+     The hover/active steps are darkened from the primary so white label text
+     stays above WCAG AA on every state (5.21 / 6.87 / 8.12 : 1).
+
+     #ef564b is deliberately NOT used as a solid fill behind white text: white
+     on #ef564b measures 3.44:1, below the 4.5:1 body-text minimum. Secondary
+     emphasis therefore uses the soft tint with the darkened brand text
+     (5.22:1). It is also never used as the danger colour — destructive states
+     keep the separate semantic --edify-danger ramp (spec §5, §17). */
+  --brand-primary: #0e5da3;
+  --brand-primary-hover: #0a4d86;
+  --brand-primary-active: #083f70;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: #e4f2fb;
+  --brand-primary-border: #8ac6ea;
+  --brand-primary-focus: rgba(14, 93, 163, 0.28);
+  --brand-primary-text: #0a4d86;
+  --brand-primary-text-hover: var(--brand-primary);
+  --brand-primary-on-solid: #ffffff;
+
+  --edify-brand-primary: var(--brand-primary);
+  --edify-brand-primary-hover: var(--brand-primary-hover);
+  --edify-brand-primary-active: var(--brand-primary-active);
+  --edify-brand-primary-soft: var(--brand-primary-soft);
+  --edify-brand-secondary: #ef564b;
+  --edify-brand-secondary-hover: #d84a40;
+  --edify-brand-secondary-soft: #fdeae9;
+  --edify-brand-secondary-text: #ac3d36;
+
+  /* Semantic brand tokens — light mode. */
+  --edify-primary: var(--edify-brand-primary);
+  --edify-primary-hover: var(--edify-brand-primary-hover);
+  --edify-primary-active: var(--edify-brand-primary-active);
+  --edify-primary-light: var(--edify-brand-primary-soft);
+  --edify-secondary: var(--edify-brand-secondary);
+  --edify-secondary-hover: var(--edify-brand-secondary-hover);
+  --edify-secondary-light: var(--edify-brand-secondary-soft);
+  --edify-accent: var(--edify-brand-primary);
+  --edify-accent-hover: var(--edify-brand-primary-hover);
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: var(--edify-brand-primary-soft);
+  --edify-accent-border: var(--brand-primary-border);
+
+  /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
+  --edify-success: #10b981;
+  --edify-success-light: #ecfdf5;
+  --edify-success-border: #a7f3d0;
+  /* -text tones must clear 4.5:1 on ANY light surface, including the muted
+     chip (#E5EAED), not just white. emerald-700/amber-700 measured 4.49/4.14
+     there, so both step one notch deeper (5.9/6.2 on muted). */
+  --edify-success-text: #065f46;
+
+  --edify-warning: #f59e0b;
+  --edify-warning-light: #fffbeb;
+  --edify-warning-border: #fde68a;
+  --edify-warning-text: #92400e;
+
+  --edify-danger: #ef4444;
+  /* A filled destructive control is a fill plus its ink, and both have to
+     be tokens. --edify-danger itself is the semantic red for borders,
+     chart series and tints, and it is deliberately not used as a button
+     fill: white on #ef4444 measures 3.76:1, under AA for text this size.
+     rose-600 clears it at 4.70:1. In the dark themes the semantic red is
+     a light salmon, so there the ink flips dark instead — white on it was
+     rendering at 2.44:1. */
+  --edify-danger-solid: #e11d48;
+  --edify-danger-on-solid: #ffffff;
+  --edify-danger-light: #fef2f2;
+  --edify-danger-border: #fca5a5;
+  --edify-danger-text: #be123c;
+
+  --edify-info: #1872bd;
+  --edify-info-light: #eef7fd;
+  --edify-info-border: #bfdcf1;
+  --edify-info-text: #1d4ed8;
+
+  --edify-purple: #8b5cf6;
+  --edify-purple-light: #f5f3ff;
+  --edify-purple-border: #ddd6fe;
+  --edify-purple-text: #6d28d9;
+
+  --edify-teal: #14b8a6;
+  --edify-teal-light: #f0fdfa;
+  --edify-teal-border: #99f6e4;
+
+  /* Data-visualization palette. Charts consume semantic variables so their
+     axes, series and annotations remain legible when the workspace theme
+     changes without rebuilding the chart configuration. */
+  --edify-chart-blue: var(--brand-primary);
+  --edify-chart-blue-soft: var(--brand-primary-soft);
+  --edify-chart-green: var(--edify-success);
+  --edify-chart-amber: var(--edify-warning);
+  --edify-chart-red: var(--edify-danger);
+  --edify-chart-purple: var(--edify-purple);
+  --edify-chart-teal: var(--edify-teal);
+  --edify-chart-orange: #ea580c;
+  --edify-chart-pink: #ec4899;
+  --edify-chart-lime: #84cc16;
+  --edify-chart-grid: color-mix(in srgb, var(--edify-border) 58%, transparent);
+  --edify-chart-tooltip: #111827;
+  /* Ordered comparison-series contract. Bar charts always consume these
+     aliases in order so the same measure does not change colour by page. */
+  --edify-chart-series-primary: var(--edify-chart-blue);
+  --edify-chart-series-secondary: var(--edify-chart-orange);
+  --edify-chart-series-tertiary: var(--edify-chart-green);
+  --edify-chart-bar-track: color-mix(in srgb, var(--edify-chart-blue) 8%, var(--edify-surface-muted));
+
+  /* Notifications intentionally use a warm orange so urgency is visible
+     without borrowing the red reserved for destructive/error states. */
+  --edify-notification: #d85b13;
+  --edify-notification-text: #ffffff;
+  --edify-notification-glow: rgba(216, 91, 19, 0.28);
+
+  /* ── LIGHT WORKSPACE SURFACES (spec §6) ───────────────────────────────────
+     A four-step surface ladder, so a card is always distinguishable from the
+     plane behind it:
+       canvas   #e3f2fa  application background (tinted blue)
+       section  #f2f5f6  section grouping surface
+       card     #f8fafb  standard card
+       elevated #ffffff  raised/overlay surface (drawers, modals, popovers)
+
+     Pure white is reserved for the ELEVATED step only. It was previously the
+     canvas *and* the card, so cards dissolved into the page and elevation
+     carried no meaning — the exact "white cards blending into white
+     backgrounds" §6 calls out. */
+  --edify-surface: #f8fafb;
+  --edify-surface-muted: #e5eaed;
+  --edify-surface-raised: #ffffff;
+  --edify-surface-hover: #e9eef1;
+  --edify-surface-selected: #dfe8ed;
+  --edify-border: #c7d1d7;
+  --edify-border-strong: #aebcc4;
+  --edify-divider: #d7dee2;
+  /* Four-step text hierarchy, all verified against the surfaces above:
+     primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
+  --edify-text: #17232b;
+  --edify-text-muted: #3f515c;
+  /* Stepped one notch deeper when the canvas became #e3f2fa. The tinted
+     background is marginally lighter than the grey it replaced, and #5f707a
+     landed at 4.49:1 against it — under AA by a hundredth, which is still
+     under. This clears every light surface it can sit on: canvas 4.84, card
+     5.29, elevated white 5.53, muted chip 4.57. Same reasoning as the success
+     and warning text tokens above. */
+  --edify-text-subtle: #5a6b75;
+  --edify-text-disabled: #6b7b84;
+  --edify-text-secondary: var(--edify-text-muted);
+  /* Requested light-mode canvas. A faint blue tint rather than the old
+     neutral grey: white cards separate from it at 1.14:1, which is low as
+     a contrast figure but is doing the right job — a page background must
+     recede behind its content, not compete with it. Body text still reads
+     at 12.77:1 and muted text at 7.22:1 against it. */
+  --edify-bg: #e3f2fa;
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 46%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, var(--brand-primary) 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(20, 55, 75, 0.05);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
+  --edify-section-bg: #f2f5f6;
+  /* Flat neutral canvas: the tinted gradient competed with card surfaces and
+     made the same card read differently depending on where it sat. */
+  --edify-canvas-treatment: none;
+  --edify-surface-treatment: none;
+  --edify-glass-blur: 0px;
+  --edify-glass-saturation: 100%;
+  --edify-glass-highlight: rgba(255, 255, 255, 0.72);
+
+  /* Shared card contract. Component CSS consumes these through the platform
+     layer so a new card cannot accidentally reintroduce a heavy outline. */
+  --edify-card-surface: var(--edify-surface-raised);
+  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
+  --edify-card-shadow: var(--edify-shadow-sm);
+  --edify-card-backdrop-filter: none;
+  /* Buttons are deliberately flat in light mode. The reference treatment is
+     a confident Edify blue or a quiet blue outline — gradients introduced
+     competing button styles between workspaces. */
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
+
+  /* Legacy aliases consumed by base.html <style> and some components. */
+  --color-edify-primary: var(--edify-primary);
+  --color-edify-dark: var(--edify-primary-hover);
+  --color-edify-soft: var(--edify-primary-light);
+  --color-edify-border: var(--edify-border);
+  --color-edify-divider: var(--edify-divider);
+  --bg-page: var(--edify-bg);
+  --foreground: var(--edify-text);
+  --text-primary: var(--edify-text);
+  --text-secondary: var(--edify-text-muted);
+  --text-muted: var(--edify-text-subtle);
+  --color-edify-text: var(--edify-text);
+  --color-edify-muted: var(--edify-text-muted);
+  --border-card: var(--edify-border);
+  --border-strong: var(--edify-border-strong);
+
+  /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
+     Geist Sans — the platform typeface for data-dense premium dashboards.
+     Type uses stable semantic steps instead of viewport/container arithmetic.
+     Layout may reflow responsively; a label, table cell or KPI does not change
+     size merely because its card or browser happens to be a few pixels wider.
+       display → page titles (28px)
+       heading → section titles (20px)
+       title   → card/panel titles (16px)
+       body    → default text and long-form copy (15px)
+       label   → controls, table cells and secondary copy (14px)
+       micro   → short overlines and compact badges only (12px) */
+  --edify-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Compatibility alias only: themes must never introduce a second UI font. */
+  --edify-font-serif: var(--edify-font-sans);
+  --edify-font-display-family: var(--edify-font-sans);
+  --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  --edify-text-display-size: 1.75rem;
+  --edify-text-heading-size: 1.25rem;
+  --edify-text-title-size:   1rem;
+  --edify-text-body-size:    0.9375rem;
+  --edify-text-label-size:   0.875rem;
+  /* No rendered interface text may fall below this floor. Keep the micro tier
+     semantic so charts and compact controls share the same 12px contract. */
+  --edify-text-floor:        0.75rem;
+  --edify-text-micro-size:   var(--edify-text-floor);
+
+  /* Component roles share stable steps as well. Container queries still own
+     layout changes (columns, icon visibility and stacking), never font size. */
+  --edify-text-card-heading-size: 1.125rem;
+  --edify-text-card-title-size: 1rem;
+  --edify-text-tile-value-size: 1.375rem;
+  --edify-text-tile-label-size: 0.8125rem;
+  --edify-text-tile-helper-size: 0.8125rem;
+  --edify-text-table-size: 0.875rem;
+  /* Headers and cells share one readable step. Hierarchy comes from weight,
+     colour and the header band, not from shrinking column labels. */
+  --edify-text-table-heading-size: var(--edify-text-table-size);
+
+  --edify-text-display-weight: 700;
+  --edify-text-heading-weight: 600;
+  --edify-text-title-weight:   600;
+  --edify-text-body-weight:    400;
+  --edify-text-label-weight:   500;
+  --edify-text-micro-weight:   600;
+
+  --edify-text-display-leading: 1.15;
+  --edify-text-heading-leading: 1.3;
+  --edify-text-title-leading:   1.4;
+  --edify-text-body-leading:    1.5;
+  --edify-text-label-leading:   1.4;
+  --edify-text-micro-leading:   1.3;
+
+  --edify-text-display-tracking: -0.02em;
+  --edify-text-heading-tracking: -0.005em;
+  --edify-text-title-tracking: 0;
+  --edify-text-body-tracking: 0;
+  --edify-text-label-tracking: 0;
+  --edify-text-micro-tracking: 0.06em;
+
+  /* KPI names are read as labels, not machine metadata. The lower tracking
+     keeps title case calm and fast to scan in compact operational tiles. */
+  --edify-kpi-label-weight: 600;
+  --edify-kpi-label-tracking: var(--edify-text-label-tracking);
+
+  /* Convenience composed shorthands (use as: font: var(--edify-font-body)) */
+  --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
+  --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
+  --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
+  --edify-font-body:    400 var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
+  --edify-font-label:   500 var(--edify-text-label-size)/var(--edify-text-label-leading) var(--edify-font-sans);
+  --edify-font-micro:   600 var(--edify-text-micro-size)/var(--edify-text-micro-leading) var(--edify-font-sans);
+
+  /* ── SPACING (4px base unit; every gap is a multiple of 4) ─────────────── */
+  --edify-space-0: 0;
+  --edify-space-1: 4px;
+  --edify-space-2: 8px;
+  --edify-space-3: 12px;
+  --edify-space-4: 16px;
+  --edify-space-5: 20px;
+  --edify-space-6: 24px;
+  --edify-space-8: 32px;
+  --edify-space-10: 40px;
+  --edify-space-12: 48px;
+  --edify-space-16: 64px;
+  --edify-space-xs: var(--edify-space-1);
+  --edify-space-sm: var(--edify-space-2);
+  --edify-space-md: var(--edify-space-4);
+  --edify-space-lg: var(--edify-space-6);
+  --edify-space-xl: var(--edify-space-8);
+  --edify-space-2xl: var(--edify-space-12);
+
+  /* ── BORDER RADIUS — CANONICAL PLATFORM GEOMETRY ────────────────────────
+       Surfaces never change shape by page, role, theme or viewport.
+
+       The five radius tokens are DEFINED ONCE, in assets/css/tailwind.source.css
+       (compiled into main.css, which loads before this file). They are
+       deliberately NOT redefined here: this file previously re-declared them as
+       13/9/16/7, which silently overrode the canonical 12/8/16/6 scale — two
+       competing sources of truth for the same geometry, and 13px/9px matched
+       no approved value. Consume them via the aliases below; never redeclare.
+
+       Canonical scale (spec §11): surface 12px · control 8px · overlay 16px
+       · small 6px · pill fully rounded. */
+  --edify-radius-xs: var(--radius-small);
+  --edify-radius-sm: var(--radius-control);
+  --edify-radius-md: var(--radius-surface);
+  --edify-radius-lg: var(--radius-overlay);
+  --edify-radius-xl: var(--radius-overlay);
+  --edify-radius-pill: var(--radius-pill);
+  --edify-radius-circle: var(--radius-pill);
+
+  /* ── SHADOWS / ELEVATION (warm, multi-stop, very subtle at rest) ──────────
+     A-tier cards float — barely-there shadow at rest, gentle lift on hover.
+     Opacities kept low (0.02–0.06) so the surface reads as calm, not heavy. */
+  --edify-shadow-sm: 0 5px 18px -13px rgba(18, 74, 112, .18), inset 0 1px 0 rgba(255,255,255,.96);
+  --edify-shadow-md: 0 15px 34px -22px rgba(18, 74, 112, .24), 0 2px 8px rgba(18, 74, 112, .04);
+  --edify-shadow-lg: 0 28px 70px -34px rgba(18, 74, 112, .30), 0 8px 20px -14px rgba(18, 74, 112, .10);
+  --edify-shadow-drawer: -18px 0 48px -20px rgba(18, 74, 112, .24);
+
+  /* ── MOTION (fast for hovers; normal for overlays; never bounce) ───────── */
+  --edify-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --edify-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --edify-transition-all: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── INTERACTION MOTION ──────────────────────────────────────────────────
+     Controls felt stiff for two reasons, and neither was the easing curve.
+
+     First, nothing acknowledged a press. Across 488 templates there were three
+     active states, so a click produced no feedback until the server answered —
+     on a slow connection that is indistinguishable from a dead button, which
+     is why the platform's own beacon has a "dead button" category.
+
+     Second, hover in and hover out shared one duration. Real controls do not
+     behave symmetrically: the response to a pointer arriving should be quicker
+     than the settle when it leaves, or the element feels like it is dragging
+     the cursor around. Fast in, slower out, faster still on press.
+
+     `ease-out` is an expo-out curve: most of the distance is covered in the
+     first third, so the control feels like it is already there. Deliberately
+     no overshoot — this is an operational planning tool used all day, and
+     bounce that delights once becomes noise by the fiftieth click. */
+  --edify-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --edify-ease-press: cubic-bezier(0.4, 0, 0.6, 1);
+  --edify-duration-hover-in: 130ms;
+  --edify-duration-hover-out: 240ms;
+  --edify-duration-press: 90ms;
+
+  /* Press depth. A control moves toward the surface, not away from it. */
+  --edify-press-scale: 0.975;
+  --edify-lift: -1px;
+
+  /* ── THEME-AWARE SHELL SURFACES ──────────────────────────────────────────
+     Frosted glass and translucent panels that adapt to light/dark. These
+     aren't pure tokens — they're composite surface treatments consumed by
+     base.html / shell.html. */
+  --edify-topbar-bg: rgba(255, 255, 255, 0.90);
+  --edify-topbar-border: var(--edify-border);
+  --edify-topbar-shadow: 0 1px 0 rgba(255,255,255,.92), 0 12px 30px -24px rgba(18,74,112,.24);
+  --edify-scrim: rgba(7, 30, 53, 0.58);
+  --edify-focus-ring: 0 0 0 3px var(--brand-primary-focus);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 10% 5%, rgba(123,189,232,.12), transparent 22rem),
+    linear-gradient(180deg, var(--edify-navy-950) 0%, #062847 56%, var(--edify-navy-800) 100%);
+  --edify-sidebar-active: var(--edify-accent);
+  --edify-scrollbar-track: transparent;
+  --edify-scrollbar-thumb: var(--edify-sky-100);
+  --edify-page-gutter: clamp(1rem, 0.7rem + 1.1vw, 1.75rem);
+}
+
+:root.light {
+  color-scheme: light;
+  /* Explicitly re-state the reference-blue light-mode scale so it cannot be
+     shadowed by legacy theme rules loaded earlier in the cascade. */
+  --brand-primary: #0e5da3;
+  --brand-primary-hover: #0a4d86;
+  --brand-primary-active: #083f70;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: #e4f2fb;
+  --brand-primary-border: #8ac6ea;
+  --brand-primary-focus: rgba(14, 93, 163, 0.28);
+  --brand-primary-text: #0a4d86;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   BLUE THEME — the approved Edify navy palette as a complete workspace.
+   `.dark` remains present for legacy utility compatibility while this class
+   supplies the intentional blue surface hierarchy.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root.theme-blue {
+  color-scheme: dark;
+
+  /* The dark workspace uses a brighter step from the same login-reference
+     blue scale so labels and focus states stay visible on dark surfaces. */
+  --brand-primary: #1872bd;
+  --brand-primary-hover: #0d5b9e;
+  --brand-primary-active: #0a4d86;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: rgba(24, 114, 189, 0.16);
+  --brand-primary-border: rgba(113, 197, 244, 0.58);
+  --brand-primary-focus: rgba(113, 197, 244, 0.52);
+
+  --edify-primary: var(--brand-primary);
+  --edify-primary-hover: var(--brand-primary-hover);
+  --edify-primary-active: var(--brand-primary-active);
+  --edify-primary-light: var(--brand-primary-soft);
+  --edify-accent: var(--brand-primary);
+  --edify-accent-hover: var(--brand-primary-hover);
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: var(--brand-primary-soft);
+  --edify-accent-border: var(--brand-primary-border);
+  --brand-primary-text: var(--edify-sky-100);
+  --brand-primary-text-hover: #ffffff;
+
+  --edify-success: #55d6b3;
+  --edify-success-light: rgba(85, 214, 179, 0.12);
+  --edify-success-border: rgba(85, 214, 179, 0.28);
+  --edify-success-text: var(--edify-success);
+  --edify-warning: #f8c56b;
+  --edify-warning-light: rgba(248, 197, 107, 0.12);
+  --edify-warning-border: rgba(248, 197, 107, 0.28);
+  --edify-warning-text: var(--edify-warning);
+  --edify-danger: #ff8796;
+  --edify-danger-solid: #ff8796;
+  --edify-danger-on-solid: #2a0f14;
+  --edify-danger-light: rgba(255, 135, 150, 0.12);
+  --edify-danger-border: rgba(255, 135, 150, 0.28);
+  --edify-danger-text: var(--edify-danger);
+  --edify-info: var(--edify-sky-400);
+  --edify-info-light: rgba(123, 189, 232, 0.13);
+  --edify-info-border: rgba(123, 189, 232, 0.30);
+  --edify-info-text: var(--edify-info);
+  --edify-purple: #b7a6f4;
+  --edify-purple-light: rgba(183, 166, 244, 0.12);
+  --edify-purple-border: rgba(183, 166, 244, 0.26);
+  --edify-purple-text: var(--edify-purple);
+  --edify-teal: #78d5d0;
+  --edify-teal-light: rgba(120, 213, 208, 0.12);
+  --edify-teal-border: rgba(120, 213, 208, 0.26);
+
+  --edify-notification: #ff9d42;
+  --edify-notification-text: var(--edify-navy-950);
+  --edify-notification-glow: rgba(255, 157, 66, 0.38);
+
+  /* The filter controls establish Blue's single translucent content plane.
+     Reusing it at every elevation keeps the classroom image present without
+     building a stack of progressively heavier glass rectangles. */
+  --edify-surface: rgba(5, 54, 96, 0.58);
+  --edify-surface-muted: rgba(5, 54, 96, 0.58);
+  --edify-surface-raised: rgba(5, 54, 96, 0.58);
+  --edify-border: rgba(123, 189, 232, 0.32);
+  --edify-border-strong: rgba(123, 189, 232, 0.58);
+  --edify-text: #f5fbff;
+  --edify-text-muted: var(--edify-sky-100);
+  --edify-text-subtle: #91b5cc;
+  --edify-bg: var(--edify-navy-950);
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 7%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
+  --edify-canvas-treatment:
+    linear-gradient(108deg, rgba(0, 19, 39, .80) 0%, rgba(0, 29, 57, .56) 46%, rgba(3, 46, 84, .74) 100%),
+    radial-gradient(circle at 88% 0%, rgba(123,189,232,.24), transparent 36rem),
+    linear-gradient(180deg, rgba(0,29,57,.06) 0%, rgba(0,18,38,.48) 100%),
+    url("../images/login-classroom-portrait.jpg");
+  --edify-surface-treatment: none;
+  --edify-glass-tile-treatment: none;
+  --edify-glass-kpi-treatment: none;
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
+  --edify-glass-blur: 0px;
+  --edify-glass-saturation: 100%;
+  --edify-glass-highlight: transparent;
+
+  /* Exact blue filter-control treatment: translucent navy, one thin sky
+     hairline, compact corners supplied by components, and no elevation. */
+  --edify-card-surface: var(--edify-surface);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-backdrop-filter: none;
+
+  /* Blue-theme tables need their own surface ladder. Reusing the transparent
+     card tokens made header, body and hover states merge into one glass pane. */
+  --edify-table-canvas: var(--edify-surface);
+  --edify-table-header: rgba(0, 29, 57, 0.72);
+  --edify-table-row-alt: rgba(123, 189, 232, 0.08);
+  --edify-table-row-hover: rgba(24, 114, 189, 0.28);
+  --edify-table-row-selected: rgba(123, 189, 232, 0.18);
+  --edify-table-divider: rgba(123, 189, 232, 0.30);
+
+  --color-edify-divider: rgba(189, 216, 233, 0.12);
+  --bg-page: var(--edify-bg);
+
+  --edify-shadow-sm: none;
+  --edify-shadow-md: none;
+  --edify-shadow-lg: none;
+  --edify-shadow-drawer: none;
+
+  --edify-topbar-bg: var(--edify-surface);
+  --edify-topbar-border: var(--edify-border);
+  --edify-topbar-shadow: none;
+  --edify-scrim: rgba(0, 12, 28, 0.76);
+  --edify-focus-ring: 0 0 0 3px var(--brand-primary-focus);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 10% 5%, rgba(123,189,232,.14), transparent 24rem),
+    linear-gradient(180deg, #00152a 0%, #001d39 48%, #062f58 100%);
+  --edify-scrollbar-thumb: rgba(123, 189, 232, 0.42);
+}
+
+/* The `.dark` compatibility class also exists in Blue mode. The compiled
+   legacy rule for `html.dark` is more specific than the body token consumer,
+   so Blue needs an equally specific, later rule to expose its image canvas. */
+html.theme-blue,
+html.theme-blue body {
+  background-color: var(--edify-navy-950);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 30%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  html.theme-blue,
+  html.theme-blue body {
+    background-position: 38% center;
+    background-attachment: scroll;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   NIGHT BLACK — true-black canvas with near-invisible content chrome.
+
+   The page canvas is pure black so OLED displays can switch those pixels off.
+   Resting cards inherit that canvas; typography, spacing and interaction states
+   carry the hierarchy instead of opaque charcoal slabs, shadows or gradients.
+   It is not a dimmed Light theme or the translucent, image-backed Blue theme.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root.theme-dark {
+  color-scheme: dark;
+
+  --brand-primary: #1872bd;
+  --brand-primary-hover: #0d5b9e;
+  --brand-primary-active: #0a4d86;
+  --brand-primary-press: var(--brand-primary-active);
+  --brand-primary-soft: rgba(24, 114, 189, 0.16);
+  --brand-primary-border: rgba(113, 197, 244, 0.50);
+  --brand-primary-focus: rgba(113, 197, 244, 0.48);
+
+  --edify-primary: var(--brand-primary);
+  --edify-primary-hover: var(--brand-primary-hover);
+  --edify-primary-active: var(--brand-primary-active);
+  --edify-primary-light: var(--brand-primary-soft);
+  --edify-accent: var(--brand-primary);
+  --edify-accent-hover: var(--brand-primary-hover);
+  --edify-on-accent: #ffffff;
+  --edify-accent-light: var(--brand-primary-soft);
+  --edify-accent-border: var(--brand-primary-border);
+  --brand-primary-text: #bdd8e9;
+  --brand-primary-text-hover: #ffffff;
+
+  --edify-success: #79ca98;
+  --edify-success-light: rgba(43, 126, 75, 0.22);
+  --edify-success-border: rgba(121, 202, 152, 0.30);
+  --edify-success-text: var(--edify-success);
+  --edify-warning: #fb923c;
+  --edify-warning-light: rgba(154, 52, 18, 0.34);
+  --edify-warning-border: rgba(251, 146, 60, 0.38);
+  --edify-warning-text: var(--edify-warning);
+  --edify-danger: #e88c91;
+  --edify-danger-solid: #e88c91;
+  --edify-danger-on-solid: #241012;
+  --edify-danger-light: rgba(121, 43, 47, 0.34);
+  --edify-danger-border: rgba(232, 140, 145, 0.30);
+  --edify-danger-text: var(--edify-danger);
+  --edify-info: #8fb1e8;
+  --edify-info-light: rgba(41, 73, 119, 0.48);
+  --edify-info-border: rgba(143, 177, 232, 0.28);
+  --edify-info-text: var(--edify-info);
+  --edify-purple: #b7a6f4;
+  --edify-purple-light: rgba(183, 166, 244, 0.11);
+  --edify-purple-border: rgba(183, 166, 244, 0.24);
+  --edify-purple-text: var(--edify-purple);
+  --edify-teal: #78d5d0;
+  --edify-teal-light: rgba(120, 213, 208, 0.11);
+  --edify-teal-border: rgba(120, 213, 208, 0.24);
+
+  --edify-notification: #f08a3e;
+  --edify-notification-text: #ffffff;
+  --edify-notification-glow: rgba(240, 138, 62, 0.32);
+
+  /* Night uses the filter-control plane as its single content surface. The
+     page stays true black; cards, fields, tiles and overlays share one barely
+     lifted charcoal so nesting never creates a stack of grey rectangles. */
+  --edify-bg: #000000;
+
+  /* ── Page header: tonal elevation ──────────────────────────────────────
+     The header is the page's context band, and it should read as part of
+     the page rather than as a card floating on it. So the surface sits a
+     few percent off the canvas, the border is barely there, and the shadow
+     is wide and faint.
+
+     This was previously an inline style on one template referencing
+     --header-band-bg, a variable that was never defined anywhere. It worked
+     because the fallback happened to be a 10% white wash — the right effect
+     reached by accident, on exactly one page, unavailable to the other 176.
+
+     Transparency lives in these colours only, never on the container: an
+     opacity on the header would fade the title and the controls with it,
+     and the whole point is a quiet surface carrying legible content. */
+  --page-header-surface: color-mix(in oklab, #ffffff 9%, var(--edify-bg));
+  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
+  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-radius: var(--edify-radius-surface, 12px);
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
+  --page-header-padding-y: 1rem;
+  --page-header-gap: 0.75rem;
+  --edify-section-bg: #000000;
+  --edify-surface-muted: #0d0d0f;
+  --edify-surface: #0d0d0f;
+  --edify-surface-raised: #0d0d0f;
+  --edify-surface-hover: #151518;
+  --edify-surface-selected: #172237;
+  --edify-border: rgba(255, 255, 255, 0.10);
+  --edify-border-strong: rgba(255, 255, 255, 0.18);
+  --edify-divider: rgba(255, 255, 255, 0.075);
+
+  /* Text remains comfortably above WCAG AA on both canvas and card planes. */
+  --edify-text: #f5f7fa;
+  --edify-text-muted: #d6dde7;
+  --edify-text-subtle: #aeb9c7;
+  --edify-text-disabled: #7f8b9a;
+
+  --edify-canvas-treatment: none;
+  --edify-surface-treatment: none;
+  --edify-button-primary-treatment: none;
+  --edify-button-secondary-treatment: none;
+  --edify-glass-highlight: rgba(255, 255, 255, 0.055);
+
+  /* This is the exact filter-control treatment: near-black surface, one quiet
+     hairline, no gradient, blur, glow or elevation. */
+  --edify-card-surface: var(--edify-surface);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-backdrop-filter: none;
+  --edify-font-display-family: var(--edify-font-sans);
+  --color-edify-divider: var(--edify-divider);
+  --bg-page: var(--edify-bg);
+
+  --edify-shadow-sm: none;
+  --edify-shadow-md: none;
+  --edify-shadow-lg: none;
+  --edify-shadow-drawer: none;
+
+  --edify-topbar-bg: rgba(0, 0, 0, 0.94);
+  --edify-topbar-border: var(--edify-border);
+  --edify-topbar-shadow: none;
+  --edify-scrim: rgba(0, 2, 6, 0.82);
+  --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 32%, transparent);
+  --edify-sidebar-bg:
+    radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.05), transparent 22rem),
+    linear-gradient(180deg, #030303 0%, #000000 100%);
+  --edify-scrollbar-thumb: #34343a;
+}
+
+/* Theme changes feel immediate but not abrupt. Avoid overriding component
+   motion and transforms by limiting the transition to visual surfaces. */
+html.theme-fade :where(body, main, header, aside, nav, section, article, table, thead, tbody, tr, td, th, input, select, textarea, button, a, .card, .bg-white) {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus-visible rings — accessible in both themes */
+*:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Tailwind arbitrary-class fallbacks for the brand color.
+   These make `bg-[#2e505f]`, `hover:bg-[#213a45]`, etc. resolve even where
+   Tailwind's JIT didn't generate them. Keep them in unlayered CSS so they
+   win over @layer utilities.
+   ════════════════════════════════════════════════════════════════════════════ */
+[class*="bg-[#2e505f]"]      { background-color: var(--edify-primary) !important; }
+[class*="text-[#2e505f]"]    { color: var(--edify-primary) !important; }
+[class*="border-[#2e505f]"]  { border-color: var(--edify-primary) !important; }
+[class*="accent-[#2e505f]"]  { accent-color: var(--edify-accent) !important; }
+[class*="hover:bg-[#213a45]"]:hover  { background-color: var(--edify-primary-hover) !important; }
+[class*="hover:text-[#213a45]"]:hover { color: var(--edify-primary-hover) !important; }
+[class*="hover:border-[#213a45]"]:hover { border-color: var(--edify-primary-hover) !important; }
+[class*="bg-[#2e505f]/10"]   { background-color: var(--edify-primary-light) !important; }
+[class*="border-[#2e505f]/20"],
+[class*="border-[#2e505f]/30"] { border-color: var(--edify-accent-border) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-fade :where(body, main, header, aside, nav, section, article, table, input, select, textarea, button, a, .card, .bg-white) {
+    transition-duration: 0ms;
+  }
+}
+
+/* Mobile interaction baseline: prevent iOS form zoom and ensure critical
+   controls remain comfortably tappable without inflating ordinary text links. */
+@media (max-width: 40rem) and (pointer: coarse) {
+  :where(button, [role="button"], [role="tab"], input, select, textarea) {
+    min-height: 44px;
+  }
+
+  :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    font-size: 16px;
+  }
+}
+
+/* School directory filters use an explicit breakpoint contract. A generic
+   legacy `[class*="grid-cols-4"]` mobile rule also matched responsive class
+   names such as `md:grid-cols-4`, which forced clipped two-column filters. */
+.school-filter-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+#filters-form.school-filters-form {
+  display: block !important;
+}
+
+@media (min-width: 40rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 48rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 64rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+}
+
+/* A row whose whole height is a progress bar is a real control, and the bar is
+   only 18px tall by design. Stacked with an 8px gap that is an 18px tap target
+   8px from its neighbour: a 24px target circle overlaps the rows either side,
+   which is exactly what WCAG 2.2 AA 2.5.8 measures, and on a phone it is a
+   genuinely fiddly tap. The bar keeps its height; the row grows around it, so
+   the chart reads identically and only the hit area changes.
+
+   Scoped to coarse pointers so the dense desktop reading of these panels — a
+   whole intervention set visible without scrolling — is untouched. */
+@media (pointer: coarse) {
+  .edify-bar-row {
+    min-height: 44px;
+  }
+}

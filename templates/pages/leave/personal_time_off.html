@@ -1,0 +1,522 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Personal Time Off · Edify{% endblock %}
+
+{% block shell_content %}
+<div
+  class="pto-page edify-page-canvas"
+  x-data="{
+    activeTab: 'upcoming',
+    allowedTabs: ['upcoming', 'past', 'all'],
+    avgTeamAvailability: {{ avg_team_availability }},
+    init() {
+      const requested = new URL(window.location.href).searchParams.get('tab');
+      if (this.allowedTabs.includes(requested)) this.activeTab = requested;
+      window.addEventListener('popstate', () => {
+        const tab = new URL(window.location.href).searchParams.get('tab');
+        this.activeTab = this.allowedTabs.includes(tab) ? tab : 'upcoming';
+      });
+    },
+    setTab(tab) {
+      if (!this.allowedTabs.includes(tab) || tab === this.activeTab) return;
+      this.activeTab = tab;
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.pushState({}, '', url);
+    },
+    openRequestDrawer() {
+      if (!this.$refs.requestDialog.open) this.$refs.requestDialog.showModal();
+    },
+    closeRequestDrawer() {
+      if (this.$refs.requestDialog.open) this.$refs.requestDialog.close();
+    }
+  }"
+>
+  <header class="edify-page-header pto-header">
+    <div class="pto-header__copy edify-page-header__lead">
+      <div class="pto-eyebrow">
+        <span class="pto-eyebrow__dot" aria-hidden="true"></span>
+        Time &amp; availability
+      </div>
+      <h1 class="edify-page-title edify-page-header__title">Personal Time Off</h1>
+      <p class="edify-page-header__description">Plan time away with confidence, protect delivery, and keep every handover accountable.</p>
+    </div>
+
+    <div class="pto-header__actions">
+      <a href="{% url 'frontend:leave_calendar' %}" class="pto-button pto-button--secondary">
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/>
+        </svg>
+        Team calendar
+      </a>
+      <button type="button" @click="openRequestDrawer()" class="pto-button pto-button--primary">
+        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+        </svg>
+        Request leave
+      </button>
+    </div>
+  </header>
+
+  {% include "partials/_section_nav.html" %}
+
+  <section class="pto-command-grid" aria-label="Leave readiness overview">
+    <article class="pto-panel pto-balance-command edify-surface">
+      <div class="pto-panel__header">
+        <div>
+          <span class="pto-kicker">Personal leave balance</span>
+          <h2>Your available time</h2>
+        </div>
+        <a href="{% url 'frontend:leave_policies' %}" class="pto-cycle-badge">FY {% now "Y" %} policy</a>
+      </div>
+
+      <div class="pto-hero-balance">
+        <div class="pto-hero-balance__value">
+          <strong>{{ pto_remaining }}</strong>
+          <span>days available</span>
+        </div>
+        <div class="pto-hero-balance__meter">
+          <div class="pto-progress" role="progressbar" aria-label="Personal leave used" aria-valuemin="0" aria-valuemax="{{ pto_entitlement }}" aria-valuenow="{{ pto_used }}">
+            <span style="--pto-progress: {{ pto_usage_pct }}%;"></span>
+          </div>
+          <div class="pto-progress__legend">
+            <span>{{ pto_used }} used</span>
+            <span>{{ pto_entitlement }} allocated</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pto-signal-grid">
+        <div class="pto-signal">
+          <span class="pto-signal__icon pto-tone--amber">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </span>
+          <div><strong>{{ pending_requests_count }}</strong><span>Pending requests</span></div>
+        </div>
+        <div class="pto-signal">
+          <span class="pto-signal__icon pto-tone--blue">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>
+          </span>
+          <div><strong>{{ team_on_leave_count }}</strong><span>Team away today</span></div>
+        </div>
+        <div class="pto-signal">
+          <span class="pto-signal__icon pto-tone--green">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
+          </span>
+          <div><strong>{{ coverage_active_count }}</strong><span>Active handovers</span></div>
+        </div>
+        <div class="pto-signal">
+          <span class="pto-signal__icon {% if upcoming_conflicts_count %}pto-tone--rose{% else %}pto-tone--green{% endif %}">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </span>
+          <div><strong>{{ upcoming_conflicts_count }}</strong><span>Schedule conflicts</span></div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="pto-panel pto-readiness edify-surface">
+      <div class="pto-readiness__top">
+        <div>
+          <span class="pto-kicker">Operational readiness</span>
+          {% if upcoming_conflicts_count > 0 %}
+          <h2>Resolve coverage risk</h2>
+          {% elif pending_requests_count > 0 %}
+          <h2>Approval in progress</h2>
+          {% else %}
+          <h2>Ready for time away</h2>
+          {% endif %}
+        </div>
+        <span class="pto-health-badge {% if upcoming_conflicts_count > 0 %}is-risk{% elif pending_requests_count > 0 %}is-pending{% else %}is-ready{% endif %}">
+          {% if upcoming_conflicts_count > 0 %}Action needed{% elif pending_requests_count > 0 %}In review{% else %}Healthy{% endif %}
+        </span>
+      </div>
+
+      <div class="pto-readiness__body">
+        <div class="pto-availability-ring" style="--pto-availability: {{ avg_team_availability }}%;" role="img" aria-label="{{ avg_team_availability }} percent of the team is available">
+          <div><strong>{{ avg_team_availability }}%</strong><span>available</span></div>
+        </div>
+        <div class="pto-readiness__facts">
+          <div><span>Team capacity</span><strong>{{ team_available_count }} of {{ team_total_count }}</strong></div>
+          <div><span>Cover assignments</span><strong>{{ coverage_active_count }} active</strong></div>
+          <div><span>Calendar health</span><strong>{% if upcoming_conflicts_count %}{{ upcoming_conflicts_count }} at risk{% else %}Clear{% endif %}</strong></div>
+        </div>
+      </div>
+
+      <div class="pto-recommendation">
+        <span class="pto-recommendation__icon">
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 00-3 11.2V17h6v-2.8A6 6 0 0012 3zm-2 18h4"/></svg>
+        </span>
+        <div>
+          <span>Recommended next step</span>
+          {% if upcoming_conflicts_count > 0 %}
+          <p>Resolve {{ upcoming_conflicts_count }} planning conflict{{ upcoming_conflicts_count|pluralize }} before confirming time away.</p>
+          <a href="/planning">Review planning conflicts →</a>
+          {% elif pending_requests_count > 0 %}
+          <p>Your request is safely in the approval flow. Coverage will activate after approval.</p>
+          <a href="#my-requests">Track request status →</a>
+          {% else %}
+          <p>Your balance, calendar, and team capacity are ready for a new leave request.</p>
+          <button type="button" @click="openRequestDrawer()">Start a request →</button>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="pto-workspace">
+    <div class="pto-primary-column">
+      <section class="pto-panel edify-surface" aria-labelledby="balance-portfolio-title">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div>
+            <span class="pto-kicker">Entitlements</span>
+            <h2 id="balance-portfolio-title">Leave balance portfolio</h2>
+          </div>
+          <span class="pto-panel__helper">Remaining / annual allocation</span>
+        </div>
+
+        <div class="pto-balance-grid">
+          {% for b in balances %}
+          <article class="pto-balance-tile">
+            <div class="pto-balance-tile__top">
+              <span>{{ b.label }}</span>
+              <span class="pto-balance-tile__status {% if b.remaining == 0 %}is-empty{% elif b.remaining < 5 %}is-low{% else %}is-healthy{% endif %}">
+                {% if b.remaining == 0 %}Depleted{% elif b.remaining < 5 %}Low{% else %}Available{% endif %}
+              </span>
+            </div>
+            <div class="pto-balance-tile__value">
+              <strong>{{ b.remaining }}</strong>
+              <span>of {{ b.entitlement }} days</span>
+            </div>
+            <div class="pto-progress pto-progress--compact" role="progressbar" aria-label="{{ b.label }} used" aria-valuemin="0" aria-valuemax="{{ b.entitlement }}" aria-valuenow="{{ b.used }}">
+              <span style="--pto-progress: {{ b.pct_used }}%;"></span>
+            </div>
+            <p>{{ b.used }} used{% if b.pending %} · {{ b.pending }} pending{% endif %}</p>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="pto-panel edify-surface" id="my-requests" aria-labelledby="my-requests-title">
+        <div class="pto-panel__header pto-panel__header--bordered pto-requests-header">
+          <div>
+            <span class="pto-kicker">My workflow</span>
+            <h2 id="my-requests-title">Leave requests</h2>
+          </div>
+          <div class="pto-tabs" role="tablist" aria-label="Filter leave requests">
+            <button id="pto-tab-upcoming" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'upcoming'" :tabindex="activeTab === 'upcoming' ? 0 : -1" @click="setTab('upcoming')" :class="activeTab === 'upcoming' ? 'is-active' : ''">Upcoming <span>{{ upcoming_requests_count }}</span></button>
+            <button id="pto-tab-past" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'past'" :tabindex="activeTab === 'past' ? 0 : -1" @click="setTab('past')" :class="activeTab === 'past' ? 'is-active' : ''">Past <span>{{ past_requests_count }}</span></button>
+            <button id="pto-tab-all" type="button" role="tab" aria-controls="pto-requests-panel" :aria-selected="activeTab === 'all'" :tabindex="activeTab === 'all' ? 0 : -1" @click="setTab('all')" :class="activeTab === 'all' ? 'is-active' : ''">All <span>{{ leaves|length }}</span></button>
+          </div>
+        </div>
+
+        <div id="pto-requests-panel" class="pto-request-list" role="tabpanel" aria-live="polite">
+          {% for l in leaves %}
+          <article
+            class="pto-request-row"
+            x-cloak
+            x-show="activeTab === 'all' || (activeTab === 'upcoming' && '{{ l.status }}' !== 'completed' && '{{ l.status }}' !== 'rejected') || (activeTab === 'past' && ('{{ l.status }}' === 'completed' || '{{ l.status }}' === 'rejected'))"
+          >
+            <div class="pto-request-row__date">
+              <span>{{ l.start_date|slice:"5:7" }}/{{ l.start_date|slice:"8:10" }}</span>
+              <small>{{ l.days_charged }} day{{ l.days_charged|pluralize }}</small>
+            </div>
+            <div class="pto-request-row__main">
+              <strong>{{ l.type_label }}</strong>
+              <span>{{ l.start_date }} – {{ l.end_date }} {{ l.day_str }}</span>
+              {% if l.cover_name != 'None' %}<small>Coverage: {{ l.cover_name }}</small>{% endif %}
+            </div>
+            <div class="pto-request-row__meta">
+              <span class="pto-status is-{{ l.status }}">{{ l.status }}</span>
+              <small>{{ l.reviewer_name }}</small>
+            </div>
+          </article>
+          {% empty %}
+          <div class="pto-empty-state">
+            <span class="pto-empty-state__icon">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+            </span>
+            <strong x-text="activeTab === 'past' ? 'No past requests' : 'No leave requests yet'">No leave requests yet</strong>
+            <p x-text="activeTab === 'past' ? 'Completed and rejected requests will appear here.' : 'When you submit a request, its approval and coverage status will appear here.'">When you submit a request, its approval and coverage status will appear here.</p>
+            <button x-show="activeTab !== 'past'" type="button" @click="openRequestDrawer()">Request leave</button>
+          </div>
+          {% endfor %}
+          {% if leaves %}
+          <div
+            class="pto-empty-state"
+            x-cloak
+            x-show="(activeTab === 'upcoming' && {{ upcoming_requests_count }} === 0) || (activeTab === 'past' && {{ past_requests_count }} === 0)"
+          >
+            <span class="pto-empty-state__icon">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+            </span>
+            <strong x-text="activeTab === 'past' ? 'No past requests' : 'No upcoming requests'"></strong>
+            <p x-text="activeTab === 'past' ? 'Completed and rejected requests will appear here.' : 'You have no leave currently awaiting or approaching.'"></p>
+            <button x-show="activeTab === 'upcoming'" type="button" @click="openRequestDrawer()">Request leave</button>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="pto-decision-rail" aria-label="Leave planning details">
+      <section class="pto-panel edify-surface">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div>
+            <span class="pto-kicker">Decision support</span>
+            <h2>Leave impact</h2>
+          </div>
+          {% if impact_preview %}<span class="pto-cycle-badge">{{ impact_preview.start_date|slice:"5:10" }} – {{ impact_preview.end_date|slice:"5:10" }}</span>{% endif %}
+        </div>
+        {% if impact_preview %}
+        <div class="pto-impact-list">
+          <div><span>Affected activities</span><strong class="{% if impact_preview.affected_activities_count %}is-risk{% endif %}">{{ impact_preview.affected_activities_count }}</strong></div>
+          <div><span>School visit conflicts</span><strong class="{% if impact_preview.affected_activities_count %}is-risk{% endif %}">{{ impact_preview.affected_activities_count }}</strong></div>
+          <div><span>Public holidays skipped</span><strong>{{ impact_preview.public_holidays_skipped }}</strong></div>
+          <div><span>Blackout dates skipped</span><strong>{{ impact_preview.blackout_dates_skipped }}</strong></div>
+          <div><span>Conference overlap</span><strong class="{% if impact_preview.staff_conference_overlap %}is-risk{% else %}is-ready{% endif %}">{% if impact_preview.staff_conference_overlap %}Yes{% else %}None{% endif %}</strong></div>
+        </div>
+        {% else %}
+        <div class="pto-empty-state pto-empty-state--compact">
+          <span class="pto-empty-state__icon">
+            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </span>
+          <strong>No leave period to assess</strong>
+          <p>Impact analysis appears after you create a request.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="pto-panel edify-surface">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div>
+            <span class="pto-kicker">Accountability</span>
+            <h2>Coverage &amp; handover</h2>
+          </div>
+          <span class="pto-count-badge">{{ my_coverages|length|add:delegations_for_me|length }} active</span>
+        </div>
+
+        <div class="pto-coverage-list">
+          {% for p in pending_coverages %}
+          <article class="pto-coverage-card is-pending">
+            <div>
+              <span>Coverage request</span>
+              <strong>{{ p.staff.user.name }}</strong>
+              <small>{{ p.start_date|slice:"5:" }} – {{ p.end_date|slice:"5:" }}</small>
+            </div>
+            <div class="pto-coverage-card__actions">
+              <form method="POST" action="{% url 'frontend:leave_coverage_accept_action' p.id %}">
+                {% csrf_token %}
+                <button type="submit" class="is-accept">Accept</button>
+              </form>
+              <form method="POST" action="{% url 'frontend:leave_coverage_decline_action' p.id %}">
+                {% csrf_token %}
+                <button type="submit" class="is-decline">Decline</button>
+              </form>
+            </div>
+          </article>
+          {% endfor %}
+
+          {% for cov in my_coverages %}
+          <article class="pto-coverage-row">
+            <span class="pto-avatar">{{ cov.original_staff.user.name|slice:":1" }}</span>
+            <div><strong>Covering {{ cov.original_staff.user.name }}</strong><span>{{ cov.leave_request.start_date }} – {{ cov.leave_request.end_date }}</span></div>
+            <span class="pto-status is-approved">Active</span>
+          </article>
+          {% endfor %}
+
+          {% for cov in delegations_for_me %}
+          <article class="pto-coverage-row">
+            <span class="pto-avatar">{{ cov.covering_staff.user.name|slice:":1" }}</span>
+            <div><strong>{{ cov.covering_staff.user.name }} covers you</strong><span>{{ cov.leave_request.start_date }} – {{ cov.leave_request.end_date }}</span></div>
+            <span class="pto-status is-approved">Active</span>
+          </article>
+          {% endfor %}
+
+          {% if not my_coverages and not delegations_for_me and not pending_coverages %}
+          <div class="pto-empty-state pto-empty-state--compact">
+            <span class="pto-empty-state__icon">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
+            </span>
+            <strong>No active handovers</strong>
+            <p>Coverage is created and permissioned through approved leave.</p>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="pto-scope">
+          <span>Handover scope</span>
+          <div><small>Planning</small><small>My Plan</small><small>Clusters</small><small>Approvals</small></div>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+
+  <section class="pto-operations" aria-labelledby="team-operations-title">
+    <div class="pto-section-heading">
+      <div>
+        <span class="pto-kicker">Team intelligence</span>
+        <h2 id="team-operations-title">Operational continuity</h2>
+        <p>Upcoming constraints, planning risks, and team capacity in one view.</p>
+      </div>
+    </div>
+
+    <div class="pto-operations-grid">
+      <article class="pto-panel edify-surface">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div><span class="pto-kicker">Calendar controls</span><h3>Upcoming constraints</h3></div>
+          <a href="{% url 'frontend:public_holidays' %}" class="pto-text-link">View all →</a>
+        </div>
+        <div class="pto-constraint-list">
+          {% for block in upcoming_blocks %}
+          <div class="pto-constraint-row">
+            <div class="pto-constraint-row__date"><strong>{{ block.start_date|date:"d" }}</strong><span>{{ block.start_date|date:"M" }}</span></div>
+            <div><strong>{{ block.title }}</strong><span>{% firstof block.get_block_type_display block.block_type %}</span></div>
+            <span class="pto-constraint-dot is-{{ block.block_type|lower }}" aria-label="{% firstof block.get_block_type_display block.block_type %}"></span>
+          </div>
+          {% empty %}
+          <div class="pto-empty-state pto-empty-state--compact">
+            <strong>No upcoming constraints</strong><p>The planning calendar is open.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="pto-panel edify-surface">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div><span class="pto-kicker">Risk controls</span><h3>Schedule conflicts</h3></div>
+          <span class="pto-count-badge {% if my_conflicts %}is-risk{% endif %}">{{ my_conflicts|length }} active</span>
+        </div>
+        <div class="pto-conflict-list">
+          {% for conf in my_conflicts %}
+          <div class="pto-conflict-row">
+            <span class="pto-signal__icon pto-tone--rose">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg>
+            </span>
+            <div><strong>{{ conf.type }} · {{ conf.school }}</strong><span>{{ conf.date }}</span>{% for blocker in conf.blockers %}<small>{{ blocker }}</small>{% endfor %}</div>
+            <a href="/planning" aria-label="Review {{ conf.type }} conflict">Review</a>
+          </div>
+          {% empty %}
+          <div class="pto-empty-state pto-empty-state--compact is-success">
+            <span class="pto-empty-state__icon">
+              <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <strong>Schedule compliant</strong><p>No leave-related planning conflicts detected.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="pto-panel edify-surface">
+        <div class="pto-panel__header pto-panel__header--bordered">
+          <div><span class="pto-kicker">Next four weeks</span><h3>Team availability</h3></div>
+          <a href="{% url 'frontend:team_availability' %}" class="pto-text-link">Full report →</a>
+        </div>
+        <div class="pto-heatmap">
+          {% for row in availability_preview %}
+          <div class="pto-heatmap__row">
+            <div><strong>{{ row.staff_name }}</strong><span>{{ row.role }}</span></div>
+            <div class="pto-heatmap__weeks">
+              {% for wk in row.weeks %}
+              <span class="is-{{ wk.status|lower|cut:' ' }}" aria-label="Week starting {{ wk.start }}: {{ wk.status }}{% if wk.status != 'Blocked' %}, {{ wk.act_count }} activities{% endif %}">
+                {% if wk.status == 'Blocked' %}
+                <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4M6 11h12v10H6V11z"/></svg>
+                {% else %}{{ wk.act_count }}{% endif %}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% empty %}
+          <div class="pto-empty-state pto-empty-state--compact"><strong>No team data yet</strong><p>Availability will appear when team assignments are active.</p></div>
+          {% endfor %}
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="pto-panel pto-tracker edify-surface" id="history" aria-labelledby="team-tracker-title">
+    <div class="pto-panel__header pto-panel__header--bordered">
+      <div>
+        <span class="pto-kicker">Audit-ready visibility</span>
+        <h2 id="team-tracker-title">Team leave tracker</h2>
+      </div>
+      {% if role == 'PL' or role == 'CD' or role == 'HR' or role == 'ADMIN' %}
+      <a href="{% url 'frontend:leave_tracker' %}" class="pto-button pto-button--secondary pto-button--small">Manage tracker</a>
+      {% endif %}
+    </div>
+
+    <div class="pto-table-wrap overflow-x-auto">
+      {% paginate tracker_leaves "tracker_leaves_page" as tracker_leaves_pager %}
+<table>
+        <caption class="sr-only">Team leave requests, balances, coverage and approval status</caption>
+        <thead>
+          <tr>
+            <th scope="col">Staff</th><th scope="col">Role</th><th scope="col">Leave</th><th scope="col">Period</th><th scope="col">Days</th><th scope="col">Balance</th><th scope="col">Cover</th><th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tl in tracker_leaves_pager.rows %}
+          <tr>
+            <td><strong>{{ tl.staff_name }}</strong><small>{{ tl.supervisor_name }}</small></td>
+            <td>{{ tl.role }}</td>
+            <td>{{ tl.type_label }}</td>
+            <td><span class="pto-nowrap">{{ tl.start_date }} – {{ tl.end_date }}</span></td>
+            <td>{{ tl.days_charged }}d</td>
+            <td>{% if tl.balance_available %}{{ tl.remaining_days }}d{% else %}<span class="pto-muted">Not available</span>{% endif %}</td>
+            <td>{% if tl.covering_person != 'None' %}{{ tl.covering_person }}{% else %}<span class="pto-muted">Not assigned</span>{% endif %}</td>
+            <td><span class="pto-status is-{{ tl.status }}">{{ tl.status }}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8"><div class="pto-empty-state pto-empty-state--compact"><strong>No team leave history</strong><p>Approved and pending team requests will appear here.</p></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=tracker_leaves_pager param="tracker_leaves_page" %}
+    </div>
+
+    <div class="pto-tracker-cards">
+      {% for tl in tracker_leaves %}
+      <article>
+        <div><strong>{{ tl.staff_name }}</strong><span>{{ tl.role }} · {{ tl.type_label }}</span></div>
+        <span class="pto-status is-{{ tl.status }}">{{ tl.status }}</span>
+        <dl>
+          <div><dt>Period</dt><dd>{{ tl.start_date }} – {{ tl.end_date }}</dd></div>
+          <div><dt>Days</dt><dd>{{ tl.days_charged }}d</dd></div>
+          <div><dt>Balance</dt><dd>{% if tl.balance_available %}{{ tl.remaining_days }}d{% else %}Not available{% endif %}</dd></div>
+          <div><dt>Cover</dt><dd>{% if tl.covering_person != 'None' %}{{ tl.covering_person }}{% else %}Not assigned{% endif %}</dd></div>
+        </dl>
+      </article>
+      {% empty %}
+      <div class="pto-empty-state pto-empty-state--compact"><strong>No team leave history</strong><p>Approved and pending team requests will appear here.</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <dialog
+    x-ref="requestDialog"
+    class="pto-drawer-dialog"
+    aria-label="Request leave"
+    @cancel.prevent="closeRequestDrawer()"
+    @keydown.escape.window.prevent.stop="closeRequestDrawer()"
+  >
+    <div class="pto-drawer-stage" @click.self="closeRequestDrawer()">
+      <div class="pto-drawer-shell fixed inset-y-0 right-0 max-w-full flex">
+        <div
+          class="pto-drawer-panel edify-surface border-l border-slate-100 shadow-2xl flex flex-col"
+          hx-get="{% url 'frontend:request_leave_drawer' %}"
+          hx-trigger="load"
+          hx-target="#drawer-content-placeholder"
+        >
+          <div id="drawer-content-placeholder" class="flex-1 flex flex-col overflow-y-auto">
+            <div class="px-4 sm:px-6 py-5 flex items-center justify-center flex-1">
+              <span class="w-8 h-8 border-4 border-slate-200 border-t-indigo-600 rounded-pill animate-spin" aria-label="Loading leave request form"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</div>
+
+{% endblock %}

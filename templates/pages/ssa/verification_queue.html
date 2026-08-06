@@ -1,0 +1,98 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}IA SSA Verification Queue — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<header class="edify-page-header">
+<div class="flex flex-wrap items-start justify-between gap-3">
+<div class="lg:max-w-[560px] edify-page-header__lead">
+<p class="edify-page-eyebrow">Quality & Insights</p>
+<h1 class="edify-page-title edify-page-header__title">SSA Verification</h1>
+<p class="edify-page-header__description">Approve or return collected SSA records to ensure they meet quality and audit requirements.</p>
+</div>
+{% include "partials/_back_link.html" with back_href="/admin-panel/data-quality-center" back_label="Quality Center" %}
+</div>
+</header>
+
+{% include "partials/_section_nav.html" %}
+
+{% if messages %}
+<div class="space-y-2">
+{% for message in messages %}
+<div class="p-3.5 {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %} border rounded-surface text-[12px] font-bold">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Table -->
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+{% paginate records "records_page" as records_pager %}
+<table class="w-full text-[12px] border-collapse text-left">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100">
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Collector Type</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Date of SSA</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Average Score</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for r in records_pager.rows %}
+<tr class="hover:bg-slate-50/20">
+<td class="px-5 py-4">
+<span class="font-semibold text-slate-900 block leading-tight">{{ r.school.name }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">ID: {{ r.school.school_id }}</span>
+</td>
+<td class="px-4 py-4 text-slate-600 font-semibold capitalize">{{ r.collector_type }}</td>
+<td class="px-4 py-4 text-slate-500 font-semibold">{{ r.date_of_ssa|date:"N j, Y" }}</td>
+<td class="px-4 py-4 font-bold text-slate-800">
+<span class="edify-primary-text font-semibold">{{ r.average_score }}</span> / 10
+</td>
+<td class="px-5 py-4 text-right">
+{% if can_verify %}
+<div class="flex items-center justify-end gap-2">
+<form method="post" action="" class="inline m-0">
+{% csrf_token %}
+<input type="hidden" name="record_id" value="{{ r.id }}">
+<input type="hidden" name="action" value="verify">
+<button type="submit" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold edify-text-caption rounded-control shadow-sm transition-all">
+Verify &amp; Confirm
+</button>
+</form>
+
+<form method="post" action="" class="inline m-0">
+{% csrf_token %}
+<input type="hidden" name="record_id" value="{{ r.id }}">
+<input type="hidden" name="action" value="return">
+<button type="submit" class="px-3.5 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold edify-text-caption rounded-control transition-all">
+Return for Correction
+</button>
+</form>
+</div>
+{% else %}
+<span class="edify-text-caption text-slate-400 font-semibold">Awaiting Impact Assessment</span>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5" class="px-5 py-10 text-center text-slate-400 font-semibold">
+No pending SSA verification records in queue.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=records_pager param="records_page" %}
+</div>
+</div>
+
+</div>
+{% endblock %}

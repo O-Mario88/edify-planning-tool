@@ -1,0 +1,411 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}School Directory - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div
+class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
+x-data="{
+selectedSchools: [],
+assignClusterOpen: false,
+bulkAssignProjectOpen: false,
+matchStaffOpen: false,
+addSchoolOpen: false
+}"
+>
+<!-- Page Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Schools & Field</p>
+<h1 class="edify-page-title edify-page-header__title">School Directory</h1>
+<p class="edify-page-header__description">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+</div>
+
+<!-- Action buttons -->
+<div class="edify-page-header__controls">
+{% if can_upload_schools or can_add_ssa %}
+<a href="/uploads" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+</svg>
+<span>Upload Center</span>
+</a>
+{% endif %}
+{% if can_add_ssa %}
+<a href="/ssa/manual/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+</svg>
+<span>Add SSA Score</span>
+</a>
+{% endif %}
+{% if can_upload_schools %}
+<button @click="addSchoolOpen = true" class="h-9 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+</svg>
+<span>Add School</span>
+</button>
+{% endif %}
+<div class="relative" x-data="{ open: false }">
+<button @click="open = !open" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4a4 4 0 11-8 0 4 4 0 018 0zM4 3h16a1 1 0 011 1v3M4 3a1 1 0 00-1 1v3" />
+</svg>
+<span>Export</span>
+<svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 edify-surface border border-slate-200 rounded-surface shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
+<a href="{% querystring export='xlsx' %}" class="block px-4 py-2 hover:bg-slate-50">Export to Excel (.xlsx)</a>
+<a href="{% querystring export='csv' %}" class="block px-4 py-2 hover:bg-slate-50">Export to CSV (.csv)</a>
+</div>
+</div>
+</div>
+</div>
+
+{% if messages %}
+<div class="space-y-2" aria-live="polite">
+{% for message in messages %}
+<div role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}" class="rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-800{% else %}border-emerald-200 bg-emerald-50 text-emerald-800{% endif %}">
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Filters Bar -->
+<div class="school-filter-canvas">
+<form
+id="filters-form"
+hx-get="/schools"
+hx-target="#schools-table-container"
+hx-trigger="change"
+hx-include="#topbar-search-input"
+hx-push-url="true"
+class="school-filters-form space-y-3"
+@change="if ($event.target.id !== 'filters-page-input') { const p = document.getElementById('filters-page-input'); if (p) p.value = '1' }"
+>
+<!-- Hidden input to preserve tab filter state -->
+<input type="hidden" name="tab" id="filters-tab-input" value="{{ active_tab|default:'all' }}">
+<input type="hidden" name="page" id="filters-page-input" value="{{ page_obj.number|default:1 }}">
+<input type="hidden" name="per_page" id="filters-per-page-input" value="{{ per_page|default:15 }}">
+
+<!-- Row 1 Filters -->
+<div class="school-filter-grid grid gap-3">
+<!-- FY Selector -->
+<div>
+<span class="edify-filter-label">Fiscal year</span>
+<select aria-label="Fiscal year" name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+</select>
+</div>
+<!-- District -->
+<div>
+<span class="edify-filter-label">District</span>
+<select aria-label="District" name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="">All</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- Sub-county -->
+{% include "partials/schools/directory_sub_county_filter.html" %}
+<!-- Current Partner Type -->
+<div>
+<span class="edify-filter-label">Partner type</span>
+<select aria-label="Partner type" name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="">All</option>
+{% for val, label in school_types %}
+<option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- Cluster Status -->
+<div>
+<span class="edify-filter-label">Cluster status</span>
+<select aria-label="Cluster status" name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="">All</option>
+<option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
+<option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
+</select>
+</div>
+<!-- Project Status -->
+<div>
+<span class="edify-filter-label">Project status</span>
+<select aria-label="Project status" name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
+<option value="">All</option>
+<option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
+<option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
+</select>
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-1">
+<!-- Clear Filters -->
+<a href="/schools" class="edify-touch-target text-[12px] font-semibold edify-primary-text hover:underline flex items-center gap-1.5">
+<svg class="h-4 w-4 shrink-0 edify-primary-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+</svg>
+<span>Clear Filters</span>
+</a>
+</div>
+</form>
+</div>
+
+<!-- KPI Row Container -->
+<div id="kpi-cards-row" class="w-full">
+{% include "partials/schools/kpi_cards.html" %}
+</div>
+
+<!-- Split Roster Workspace -->
+<!-- Roster Workspace -->
+<div class="space-y-6">
+<!-- List Headers, Tabs, and Table Container -->
+<div class="school-directory-shell edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<!-- Horizontal Tabs Header -->
+<div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ">
+<!-- Roster Select Tabs Container -->
+<div id="school-tabs-header">
+{% include "partials/schools/tabs.html" %}
+</div>
+</div>
+
+<!-- Schools table -->
+<div
+id="schools-table-container"
+role="tabpanel"
+aria-live="polite"
+hx-get="/schools"
+hx-trigger="schools-updated from:body"
+hx-include="#filters-form"
+>
+{% include "partials/schools/table.html" with include_page_oob=False %}
+</div>
+</div>
+</div>
+
+<!-- Modals section -->
+
+<!-- Modal 1: Assign to Cluster Modal -->
+<div
+x-show="assignClusterOpen"
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="assignClusterOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-semibold text-slate-800">Assign Cluster to Schools</h3>
+<button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form action="/schools/bulk-assign-cluster" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
+
+<div class="space-y-1">
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
+<span class="edify-filter-label">Cluster ID</span>
+<select aria-label="Cluster ID" name="cluster_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose Cluster --</option>
+{% for c in clusters %}
+<option value="{{ c.id }}">{{ c.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
+
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Cluster</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal 1.5: Assign Project to Schools Modal -->
+<div
+x-show="bulkAssignProjectOpen"
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="bulkAssignProjectOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-semibold text-slate-800">Assign Project to Schools</h3>
+<button @click="bulkAssignProjectOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form action="/schools/bulk-assign-project" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
+
+<div class="space-y-1">
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project</label>
+<span class="edify-filter-label">Project ID</span>
+<select aria-label="Project ID" name="project_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose Project --</option>
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
+
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="bulkAssignProjectOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Project</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal 2: Match Staff Modal -->
+<div
+x-show="matchStaffOpen"
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="matchStaffOpen = false" class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-semibold text-slate-800">Match Staff to Schools</h3>
+<button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form action="/schools/bulk-match-staff" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
+
+<div class="space-y-1">
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
+<span class="edify-filter-label">Staff ID</span>
+<select aria-label="Staff ID" name="staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose CCEO --</option>
+{% for sp in staff_profiles %}
+<option value="{{ sp.id }}">{{ sp.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<p class="edify-text-caption text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
+
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Match Staff</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal 3: Add School Modal -->
+{% if can_upload_schools %}
+<div
+x-show="addSchoolOpen"
+@keydown.escape.window="addSchoolOpen = false"
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div
+@click.outside="addSchoolOpen = false"
+role="dialog"
+aria-modal="true"
+aria-labelledby="add-school-heading"
+class="edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 "
+>
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<div>
+<p class="edify-page-eyebrow">Manual entry</p>
+<h3 id="add-school-heading" class="text-[15px] font-semibold text-slate-800">Add New School</h3>
+</div>
+<button type="button" aria-label="Close Add School form" @click="addSchoolOpen = false" class="min-h-11 min-w-11 text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form
+action="/schools/add-school"
+method="post"
+@focusout.capture="if ($event.target.matches('[required]')) $event.target.toggleAttribute('aria-invalid', !$event.target.checkValidity())"
+@input.capture="if ($event.target.matches('[required]') && $event.target.checkValidity()) $event.target.removeAttribute('aria-invalid')"
+@submit="Array.from($el.querySelectorAll('[required]')).forEach((field) => field.toggleAttribute('aria-invalid', !field.checkValidity()))"
+class="space-y-4"
+>
+{% csrf_token %}
+
+<div class="space-y-1">
+<label for="add-school-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Official School ID <span class="text-rose-500">*</span></label>
+<input type="text" id="add-school-id" name="school_id" maxlength="64" autocomplete="off" placeholder="e.g. 1011" aria-describedby="add-school-id-help" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
+<p id="add-school-id-help" class="edify-text-caption text-slate-400">Enter the official ID exactly as assigned. The app will not add an S- prefix.</p>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-name" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School Name <span class="text-rose-500">*</span></label>
+<input type="text" id="add-school-name" name="name" maxlength="255" autocomplete="organization" placeholder="e.g. Hope Academy" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus" required>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-1">
+<label for="add-school-type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Current Partner Type <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<select id="add-school-type" name="school_type" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
+{% for value, label in school_types %}
+<option value="{{ value }}" {% if value == "client" %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="space-y-1">
+<label for="add-school-district" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
+<select
+id="add-school-district"
+name="district_id"
+hx-get="/schools/sub-counties"
+hx-trigger="change"
+hx-target="#add-school-sub-county"
+hx-swap="innerHTML"
+class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus"
+required
+>
+<option value="">-- Choose District --</option>
+{% for d in reference_districts %}
+<option value="{{ d.id }}">{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-sub-county" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sub-county <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<select id="add-school-sub-county" name="sub_county_id" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus">
+<option value="">Choose a district first</option>
+</select>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-owner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Staff Name <span class="text-rose-500">*</span></label>
+<select id="add-school-owner" name="account_owner_id" aria-describedby="add-school-owner-help" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus" required>
+<option value="">-- Choose CCEO or Program Lead --</option>
+{% for member in school_owners %}
+<option value="{{ member.id }}">{{ member.user.name }} ({{ member.user.active_role }})</option>
+{% endfor %}
+</select>
+<p id="add-school-owner-help" class="edify-text-caption text-slate-400">Required. The selected staff member becomes the school’s account owner.</p>
+</div>
+
+<div class="space-y-1">
+<label for="add-school-enrollment" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Enrollment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<input type="number" id="add-school-enrollment" name="enrollment" min="0" inputmode="numeric" placeholder="e.g. 250" class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] bg-slate-50 focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus">
+</div>
+
+<div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="addSchoolOpen = false" class="min-h-11 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+{% if can_add_ssa %}
+<button type="submit" name="next" value="ssa" class="min-h-11 px-4 rounded-control border border-[var(--edify-accent)] text-[12px] font-bold text-[var(--edify-accent)] edify-primary-soft-hover">Save &amp; Add SSA Score</button>
+{% endif %}
+<button type="submit" class="min-h-11 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Save School</button>
+</div>
+</form>
+</div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

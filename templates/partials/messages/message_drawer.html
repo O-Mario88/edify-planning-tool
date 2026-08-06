@@ -1,0 +1,67 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Messages{% endblock %}
+{% block drawer_subtitle %}
+{% if unread_count > 0 %}
+You have {{ unread_count }} unread thread{{ unread_count|pluralize }}
+{% else %}
+All caught up!
+{% endif %}
+{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-3 text-[12px] font-semibold text-slate-600">
+
+{% if threads %}
+<div class="flex items-center justify-between border-b border-slate-100 pb-2">
+<span class="edify-text-caption text-slate-400 font-semibold tracking-wider">Recent Threads</span>
+<span class="edify-text-caption text-slate-400">{{ threads|length }}</span>
+</div>
+
+<div class="space-y-1 max-h-[380px] overflow-y-auto pr-1">
+{% for t in threads %}
+<a
+href="/messages/thread/{{ t.id }}"
+class="block px-2 py-2 rounded-control hover:bg-[var(--edify-surface-muted)] transition-colors group"
+>
+<div class="flex items-start justify-between gap-2">
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-1.5">
+{% if t.unread %}<span class="h-1.5 w-1.5 rounded-pill edify-primary-solid shrink-0" aria-label="Unread"></span>{% endif %}
+<span class="font-semibold text-slate-800 text-[12px] truncate {% if t.unread %}edify-primary-text{% endif %}">
+{{ t.subject|default:"(no subject)" }}
+</span>
+</div>
+<p class="edify-text-caption text-slate-500 mt-0.5 truncate">{{ t.snippet }}</p>
+</div>
+<svg class="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+</svg>
+</div>
+</a>
+{% endfor %}
+</div>
+
+<div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-center">
+<a
+href="/messages"
+class="text-[12px] font-bold edify-primary-text edify-primary-text-hover transition-colors"
+>
+View All Messages
+</a>
+</div>
+{% else %}
+<div class="py-12 text-center space-y-3">
+<div class="text-[40px] text-slate-300">
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8L3 20l1.3-3.9A7.97 7.97 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+</div>
+<p class="text-slate-400 font-semibold text-[12px]">No messages yet</p>
+<p class="text-slate-400/80 edify-text-caption">Conversations with your team will appear here.</p>
+<a href="/messages/new" class="inline-flex items-center gap-1.5 mt-2 h-9 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold shadow-sm">
+Start a conversation
+</a>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

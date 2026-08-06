@@ -1,0 +1,306 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Projects — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto">
+
+{% comment %}
+  CCEO / Program Lead Projects page — a role-scoped operational view of the
+  existing Special Projects module. Everything below is bound to the real
+  `get_dashboard` context; nothing here invents projects, activities, budget,
+  or status (spec §1, §38: no parallel project system).
+{% endcomment %}
+
+<!-- ============================ PAGE HEADER ============================ -->
+<div class="edify-page-header">
+  <div class="min-w-0 edify-page-header__lead">
+    <p class="edify-page-eyebrow">Special Projects</p>
+    <h1 class="edify-page-title edify-page-header__title">Projects</h1>
+    <p class="max-w-2xl edify-page-header__description">Track the Projects assigned to you, enrolled schools, intervention focus, delivery progress, budget and upcoming follow-ups.</p>
+  </div>
+
+  <!-- Right-side controls: FY · Type · Status · Filters · primary action -->
+  <div class="edify-page-header__controls">
+
+    {% comment %}Live filter form — on the page background (platform-filter-bar
+       contract). Targets #project-list so a change swaps only the table+cards,
+       not the whole page. hx-push-url makes the filtered state shareable.{% endcomment %}
+    <form id="project-filters"
+          class="platform-filter-bar flex flex-wrap items-center gap-2.5"
+          hx-get="/projects/filter"
+          hx-trigger="change delay:150ms"
+          hx-target="#project-list"
+          hx-swap="outerHTML"
+          hx-push-url="true">
+
+      <label class="sr-only" for="project-fy-filter">Financial Year</label>
+      <select id="project-fy-filter" name="fy"
+              class="h-9 px-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none edify-primary-focus cursor-pointer">
+        {% for opt in fy_options %}
+        <option value="{{ opt }}" {% if opt == selected_fy %}selected{% endif %}>FY {{ opt }}</option>
+        {% endfor %}
+      </select>
+
+      <label class="sr-only" for="project-type-filter">Project Type</label>
+      <select id="project-type-filter" name="type"
+              class="h-9 px-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none edify-primary-focus cursor-pointer">
+        <option value="">All Types</option>
+        {% for value, label in category_choices %}
+        <option value="{{ value }}" {% if value == selected_type %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      <label class="sr-only" for="project-status-filter">Status</label>
+      <select id="project-status-filter" name="status"
+              class="h-9 px-3 edify-surface border border-slate-200 rounded-control text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none edify-primary-focus cursor-pointer">
+        <option value="">All Statuses</option>
+        {% for value, label in status_filter_options %}
+        <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+
+      {# Clear filters — returns to the default (unfiltered) view #}
+      {% if filters_active %}
+      <a href="/projects"
+         class="inline-flex items-center gap-1 h-9 px-2.5 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        Clear
+      </a>
+      {% endif %}
+    </form>
+
+    {# Advanced filters drawer (now backed by a real route, no 404) #}
+    <button type="button" class="inline-flex items-center gap-1.5 h-9 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors"
+            hx-get="/projects/filters-drawer" hx-target="#drawer-container" hx-swap="innerHTML">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 3v-4.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+      Filters
+    </button>
+
+    {# Primary action — kept outside the filter form so it never submits it #}
+    {% if can_create_projects %}
+    <button type="button" hx-get="/projects/create" hx-target="#drawer-container" hx-swap="innerHTML" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      New Project
+    </button>
+    {% else %}
+    <a href="/projects/planning" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1"/></svg>
+      Add Eligible Schools
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if not has_projects %}
+<!-- No projects in the caller's scope -->
+<div class="card p-12">
+  {% include "components/empty_state.html" with title="No projects in your scope yet" message="When a project is assigned to you, its cohort, planning queue, budget and impact appear here — all driven by the same planning engine." icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" %}
+</div>
+{% else %}
+
+<!-- ============================ KPI STRIP ============================ -->
+{% include "components/kpi_strip.html" with items=kpis %}
+
+<!-- ============================ MAIN GRID ============================ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+  <!-- ───────────── LEFT (2/3): Project table ───────────── -->
+  <div class="lg:col-span-2 space-y-6">
+
+  {% comment %}Project table + mobile cards. Swapped in place by the
+     #project-filters form via HTMX (hx-target="#project-list"). Extracted so the
+     filtered state can re-render without the surrounding page chrome.{% endcomment %}
+  {% include "partials/projects/portfolio_list.html" %}
+
+  <!-- =========== BUDGET & EXECUTION =========== -->
+  <div class="card p-5 space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Budget & Execution</h2>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Auto from scheduled activities · all financial stages shown separately</p>
+      </div>
+      <a href="/fund-requests/weekly" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">Fund Requests →</a>
+    </div>
+    <div class="text-[22px] font-extrabold text-slate-800 tracking-tight">{{ budget_summary.total }}</div>
+    <div class="grid grid-cols-2 gap-3">
+      {% for b in budget_summary.buckets %}
+      <div class="rounded-surface border border-slate-100 p-3">
+        <p class="edify-kpi-label edify-text-caption text-slate-400">{{ b.label }}</p>
+        <p class="text-[14px] font-bold text-slate-700 mt-0.5 tabular-nums">{{ b.value }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div>
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Budget Utilization</span>
+        <span class="text-[12px] font-bold text-slate-700 tabular-nums">{{ budget_summary.utilization }}%</span>
+      </div>
+      <div class="h-2 rounded-pill bg-slate-100 overflow-hidden">
+        <div class="h-full rounded-pill edify-primary-solid" style="width: {{ budget_summary.utilization }}%"></div>
+      </div>
+      <p class="edify-text-caption text-slate-400 font-medium mt-1.5">Disbursed ÷ planned — clearly labelled, not mixed with approved or actual.</p>
+    </div>
+  </div>
+
+  <!-- =========== IMPACT & INTERVENTION =========== -->
+  <div class="card p-5 space-y-4">
+    <div>
+      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Impact by Intervention</h2>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified delivered activities, split by delivery channel</p>
+    </div>
+    <div class="flex items-center gap-4 edify-text-caption font-bold">
+      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill" style="background:var(--edify-chart-series-primary)"></span>Staff-led</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-pill" style="background:var(--edify-chart-series-secondary)"></span>Partner-led</span>
+    </div>
+    {% if impact_bars %}
+      {% for b in impact_bars %}
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[12px] font-semibold text-slate-600 truncate">{{ b.label }}</span>
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ b.total }}</span>
+        </div>
+        <div class="h-2 rounded-pill overflow-hidden flex" style="background:var(--edify-chart-bar-track)" title="Staff {{ b.staff }} · Partner {{ b.partner }}">
+          {% if impact_max > 0 %}
+          <div class="h-full" style="width: {% widthratio b.staff impact_max 100 %}%; background:var(--edify-chart-series-primary)"></div>
+          <div class="h-full" style="width: {% widthratio b.partner impact_max 100 %}%; background:var(--edify-chart-series-secondary)"></div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
+    {% endif %}
+    <a href="/projects/analytics" class="block text-center text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline pt-1">View full Impact Analytics →</a>
+  </div>
+
+  </div>
+
+  <!-- ───────────── RIGHT RAIL (1/3) ───────────── -->
+  <div class="lg:col-span-1 space-y-6">
+
+  <!-- Selected project summary (if a project is picked) -->
+  {% if selected %}
+  <div class="card p-5 space-y-4">
+    <p class="edify-text-caption edify-primary-text font-bold uppercase tracking-wider">Selected Project</p>
+    <div class="flex items-center gap-2">
+      <a href="/projects/{{ selected.id }}" class="text-[16px] font-bold text-slate-800 tracking-tight hover:underline">{{ selected.name }}</a>
+    </div>
+    <div class="flex items-center gap-2">
+      {% include "components/badge.html" with tone=selected.status_tone label=selected.status size="sm" %}
+      <span class="edify-text-caption text-slate-500 font-semibold">{{ selected.type }}</span>
+    </div>
+    <dl class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-[12px]">
+      <div><dt class="edify-text-caption text-slate-400 uppercase font-bold">Coordinator</dt><dd class="font-semibold text-slate-700 mt-0.5">{{ selected.coordinator }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-400 uppercase font-bold">Focus</dt><dd class="font-semibold text-slate-700 mt-0.5">{{ selected.focus }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-400 uppercase font-bold">Regions</dt><dd class="font-semibold text-slate-700 mt-0.5">{{ selected.regions }}</dd></div>
+      <div><dt class="edify-text-caption text-slate-400 uppercase font-bold">Start</dt><dd class="font-semibold text-slate-700 mt-0.5">{% if selected.start_date %}{{ selected.start_date|date:"d M Y" }}{% else %}—{% endif %}</dd></div>
+    </dl>
+
+    <!-- Recommended next step -->
+    <div class="rounded-surface border border-emerald-100 bg-emerald-50/40 p-3 space-y-2">
+      <p class="edify-text-caption text-emerald-700 font-bold uppercase tracking-wider">Recommended Next Step</p>
+      <p class="text-[12px] font-semibold text-slate-700 leading-snug">{{ selected.next_step }}</p>
+      <a href="{{ selected.next_step_href }}" class="inline-flex items-center gap-1 text-[12px] font-bold text-emerald-700 hover:underline">{{ selected.next_step_cta }} →</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Upcoming Follow-Ups (real planning queue, scoped) -->
+  <div class="card p-5 space-y-3">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Upcoming Follow-Ups</h2>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ queue_total }} school{{ queue_total|pluralize }} needing action</p>
+      </div>
+      <a href="/planning" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">View all →</a>
+    </div>
+    {% if queue %}
+    <ul class="divide-y divide-slate-100">
+      {% for r in queue %}
+      <li class="py-2.5 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[12px] font-bold text-slate-700 truncate">{{ r.school }}</p>
+          <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ r.district }} · {{ r.state }}</p>
+        </div>
+        <a href="{{ r.href }}" class="shrink-0 edify-text-caption font-bold edify-primary-text hover:underline">{{ r.action }} →</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="edify-text-caption text-slate-400 font-medium py-4 text-center">All caught up — no follow-ups pending.</p>
+    {% endif %}
+  </div>
+
+  <!-- Project Risks / Attention (from selected.attention when available) -->
+  {% if selected %}
+  <div class="card p-5 space-y-3">
+    <div>
+      <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Attention Needed</h2>
+      <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Risk signals on {{ selected.name }}</p>
+    </div>
+    <ul class="space-y-2">
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold text-slate-600">Schools without SSA</span>
+        <span class="text-[12px] font-bold {% if selected.attention.no_ssa %}text-amber-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.no_ssa }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold text-slate-600">Partner pending schedule</span>
+        <span class="text-[12px] font-bold {% if selected.attention.partner_pending %}text-purple-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.partner_pending }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
+        <span class="text-[12px] font-semibold text-slate-600">Evidence overdue</span>
+        <span class="text-[12px] font-bold {% if selected.attention.evidence_overdue %}text-amber-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.evidence_overdue }}</span>
+      </li>
+      <li class="flex items-center justify-between gap-3 py-2">
+        <span class="text-[12px] font-semibold text-slate-600">IA returns</span>
+        <span class="text-[12px] font-bold {% if selected.attention.ia_returns %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.ia_returns }}</span>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Partner Delivery -->
+  {% if partner_rows %}
+  <div class="card p-5 space-y-3">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Partner Delivery</h2>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ partner_rows|length }} partner{{ partner_rows|length|pluralize }}</p>
+      </div>
+      <a href="/partners" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">All partners →</a>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for p in partner_rows %}
+      <li class="py-2.5 space-y-1">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[12px] font-bold text-slate-700 truncate">{{ p.name }}</span>
+          <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ p.completion }}%</span>
+        </div>
+        <div class="h-1.5 rounded-pill bg-slate-100 overflow-hidden">
+          <div class="h-full rounded-pill bg-emerald-500" style="width: {{ p.completion }}%"></div>
+        </div>
+        <p class="edify-text-caption text-slate-400 font-medium">{{ p.schools }} school{{ p.schools|pluralize }} · {{ p.scheduled }} scheduled · evidence {{ p.evidence }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- My Plan Sync (workflow explainer, not a duplicate of My Plan) -->
+  <div class="card p-5 space-y-2 border-slate-200">
+    <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Same engine as Planning</h2>
+    <p class="text-[12px] text-slate-500 font-medium leading-relaxed">Projects ride on the canonical workflow — assignment → planning → schedule → budget → evidence → IA → finance → closure. No duplicate system.</p>
+    <a href="/projects/my-plan" class="inline-flex items-center gap-1.5 h-9 px-3 mt-1 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold shadow-sm w-fit">
+      Open Project My Plan
+    </a>
+  </div>
+
+  </div>
+
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

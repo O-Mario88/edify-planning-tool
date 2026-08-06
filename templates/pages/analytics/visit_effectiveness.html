@@ -1,0 +1,45 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}School Visit Effectiveness · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+  <header class="edify-page-header">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div class="edify-page-header__lead">
+        <p class="edify-page-eyebrow">Quality &amp; Insights</p>
+        <h1 class="edify-page-title edify-page-header__title">School Visit Effectiveness</h1>
+        <p class="max-w-2xl edify-page-header__description">
+          How school visits relate to verified SSA change —
+          {{ d.methodology.baseline_fy }} SSA score to
+          {{ d.methodology.followup_fy }} follow-up, comparable schools only.
+        </p>
+      </div>
+      <form id="vfx-filters" class="edify-filter-bar flex flex-wrap items-center gap-2.5"
+            hx-get="/analytics/visit-effectiveness"
+            hx-target="#vfx-workspace" hx-swap="outerHTML" hx-push-url="true">
+        <div class="flex flex-col min-w-[140px]">
+          <span class="edify-filter-label">Assessment comparison</span>
+          <select name="comparison" aria-label="Assessment comparison"
+                  class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
+            <option value="v1">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</option>
+          </select>
+        </div>
+        <div class="flex flex-col min-w-[120px]">
+          <span class="edify-filter-label">School type</span>
+          <select name="school_type" aria-label="School type" hx-trigger="change"
+                  class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
+            <option value="" {% if not selected_school_type %}selected{% endif %}>All schools</option>
+            <option value="core" {% if selected_school_type == 'core' %}selected{% endif %}>Core</option>
+            <option value="client" {% if selected_school_type == 'client' %}selected{% endif %}>Client</option>
+          </select>
+        </div>
+      </form>
+    </div>
+  </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+
+  {% include "partials/analytics/visit_effectiveness_workspace.html" %}
+</div>
+{% endblock %}

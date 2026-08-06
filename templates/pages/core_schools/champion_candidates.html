@@ -1,0 +1,107 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% load static %}
+
+{% block title %}Champion School Candidates — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Breadcrumb & Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<div class="flex items-center gap-1.5 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
+<a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
+<span>&bull;</span>
+<span class="text-slate-500">Champion Pipeline</span>
+</div>
+<p class="edify-page-eyebrow">Schools & Field</p>
+<h1 class="edify-page-title edify-page-header__title">Champion Candidate Queue</h1>
+<p class="edify-page-header__description">Review core schools that have completed their support packages and met the performance benchmarks for graduation.</p>
+</div>
+
+<div class="edify-page-header__controls">
+<a
+href="{% url 'frontend:champions_list' %}"
+class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border border-transparent rounded-surface px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
+>
+<span>View Graduated Champions</span>
+<span>&rarr;</span>
+</a>
+</div>
+</div>
+
+<!-- Candidates Table / List -->
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Candidacy Proposals ({{ candidates|length }})</h3>
+</div>
+
+<div class="overflow-x-auto">
+{% paginate candidates "candidates_page" as candidates_pager %}
+<table class="edify-record-table w-full text-left text-[12px] border-collapse ">
+<thead>
+<tr class="text-slate-400 font-semibold uppercase edify-text-caption border-b border-slate-100 tracking-wider">
+<th class="py-2.5">School Name</th>
+<th class="py-2.5">District</th>
+<th class="py-2.5 text-center">SSA Avg</th>
+<th class="py-2.5 text-center">Improvement Delta</th>
+<th class="py-2.5 text-center">Package Completion</th>
+<th class="py-2.5 text-center">Lowest Score</th>
+<th class="py-2.5 text-center">Champion Score</th>
+<th class="py-2.5 text-right">Review Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for c in candidates_pager.rows %}
+<tr class="hover:bg-slate-50/40 transition-colors">
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{{ c.name }}</td>
+<td class="py-3.5 text-slate-500 font-bold" data-label="District">{{ c.district }}</td>
+<td class="py-3.5 text-center text-slate-800 font-semibold" data-label="SSA Avg">{{ c.latest_avg }}</td>
+<td class="py-3.5 text-center text-emerald-600 font-semibold" data-label="Improvement Delta">
+{% if c.delta > 0 %}▲ {{ c.delta }}{% else %}{{ c.delta }}{% endif %}
+</td>
+<td class="py-3.5 text-center" data-label="Package Completion">
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+{{ c.completed_slots }} / {{ c.total_slots }} Slots
+</span>
+</td>
+<td class="py-3.5 text-center" data-label="Lowest Score">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold bg-slate-50 border border-slate-200">
+{{ c.lowest_score }} ({{ c.lowest_intervention }})
+</span>
+</td>
+<td class="py-3.5 text-center" data-label="Champion Score">
+<span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-[12px] font-semibold edify-primary-soft edify-primary-text border edify-primary-border">
+{{ c.score }}
+</span>
+</td>
+<td class="py-3.5 text-right" data-label="Review Action">
+<button
+hx-get="{% url 'frontend:champion_review_drawer' c.school_id %}"
+hx-target="#drawer-container"
+class="edify-primary-solid edify-primary-hover text-white rounded-control px-3 py-1.5 edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-colors"
+>
+Review
+</button>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="8" class="py-12 text-center text-slate-400 font-medium">
+<div class="flex flex-col items-center justify-center space-y-2">
+<svg class="h-10 w-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z"/></svg>
+<span>No core schools currently match all graduation requirements.</span>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=candidates_pager param="candidates_page" %}
+</div>
+</div>
+</div>
+
+<div id="drawer-container"></div>
+{% endblock %}

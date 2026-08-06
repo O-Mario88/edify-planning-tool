@@ -1,5 +1,9 @@
 # Infra setup — flipping mock to production
 
+> **STALE — do not use for deployment.** This document describes the retired
+> NestJS/Next.js stack (Prisma, S3 evidence, Twilio). The current Django
+> deployment path is **DEPLOY.md** + `docs/scheduler-deployment.md`.
+
 This walks through provisioning each external service the app supports
 and the env var that switches the adapter on. The adapter pattern
 means each item is independently flippable: turn on Postgres without

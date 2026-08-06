@@ -1,0 +1,295 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Reports & Performance — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="edify-report-workspace text-[color:var(--edify-text)]">
+
+<header class="edify-page-header edify-report-header">
+<div class="edify-report-header__layout">
+<div class="edify-report-header__copy edify-page-header__lead">
+<p class="edify-page-eyebrow">Quality & Insights</p>
+<h1 class="edify-page-title edify-page-header__title">Reports & Performance</h1>
+<p class="edify-report-header__description edify-page-header__description">Track verified delivery against monthly, quarterly, mid-year and full-year targets from one accountable performance view.</p>
+</div>
+
+<!-- FY Selection — driven by apps.core.fy.fy_options(), not a hardcoded year -->
+<form method="get" class="edify-report-header__controls">
+<label for="reports-fiscal-year">Financial year</label>
+<select id="reports-fiscal-year" name="fy" @change="$el.form.requestSubmit()">
+{% for opt in fy_choices %}
+<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>
+{% endfor %}
+</select>
+</form>
+</div>
+</header>
+
+{% include "partials/analytics/section_nav.html" %}
+
+
+<!-- ================= KPI TIMELINE ROW (Chevron Sequence) ================= -->
+<section class="edify-report-section" aria-labelledby="reports-timeline-title">
+<header class="edify-report-section__heading">
+<div>
+<p class="edify-report-section__eyebrow">Performance cadence</p>
+<h2 id="reports-timeline-title">Target progress timeline</h2>
+</div>
+<p>See how verified delivery accumulates from the current month through the full financial year.</p>
+</header>
+<div class="edify-report-timeline-wrap">
+<div class="edify-report-timeline" aria-labelledby="reports-timeline-title">
+
+{% for period in periods %}
+<div class="edify-report-period flex-1 edify-surface p-4 rounded-surface border border-slate-100 shadow-sm flex items-center justify-between gap-3 {% if period.dimmed %}opacity-60{% endif %}">
+<div class="space-y-1">
+<div class="edify-report-period__heading">
+<span class="edify-report-period__date">{{ period.chevron_label }}</span>
+<span class="edify-report-period__kind">{{ period.kind_label }}</span>
+</div>
+{% if period.has_target %}
+<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }} / {{ period.target|floatformat:0 }}</h3>
+<span class="edify-text-caption font-bold text-slate-400 block">Targets Achieved</span>
+{% else %}
+<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }}</h3>
+<span class="edify-text-caption font-bold text-slate-400 block">Achieved (no target set)</span>
+{% endif %}
+</div>
+<!-- Progress circle -->
+<div class="shrink-0" style="--edify-donut-gauge-size: 3.75rem; --edify-donut-gauge-headline: 0.8125rem">
+{% if period.gauge %}
+{% include "partials/components/donut_rings.html" with donut=period.gauge donut_class="edify-donut--gauge" donut_label="Share of the period target achieved" headline=period.pct headline_unit="%" subline=period.dimmed|yesno:"Not started,On track" %}
+{% else %}
+<div class="edify-report-no-target h-14 w-14 flex flex-col items-center justify-center rounded-full border-2 border-dashed border-slate-200">
+<span class="edify-text-caption font-semibold text-slate-400 leading-none">&mdash;</span>
+<span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-0.5">No target</span>
+</div>
+{% endif %}
+</div>
+</div>
+
+{% endfor %}
+
+</div>
+</div>
+</section>
+
+
+<!-- ================= CORE TARGET CARDS ROW ================= -->
+<section class="edify-report-section" aria-labelledby="reports-core-targets-title">
+<header class="edify-report-section__heading">
+<div>
+<p class="edify-report-section__eyebrow">Annual delivery</p>
+<h2 id="reports-core-targets-title">Core target performance</h2>
+</div>
+<p>Compare verified activity volumes with the approved FY{{ fy }} operating targets.</p>
+</header>
+<div class="edify-report-summary-grid legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Core target summary">
+{% for card in core_cards %}
+<div class="edify-report-summary-card edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-3 flex flex-col justify-between">
+<div>
+<span class="edify-kpi-label edify-text-caption text-slate-400 block">{{ card.label }}</span>
+{% if card.has_target %}
+<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ card.achieved }} / {{ card.target|floatformat:0 }}</h3>
+<span class="edify-text-caption {{ card.color }} font-semibold block mt-1.5">{{ card.pct }}% of FY{{ fy }} Target</span>
+{% else %}
+<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ card.achieved }}</h3>
+<span class="edify-text-caption text-slate-400 font-semibold block mt-1.5">No FY{{ fy }} target configured</span>
+{% endif %}
+</div>
+<!-- Bar reflecting real % of target (flat/grey when no target exists) -->
+<div class="h-8 w-full pt-1 flex items-end">
+{% if card.has_target %}
+<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
+<div class="h-full rounded-pill {% if card.pct >= 75 %}bg-emerald-500{% elif card.pct >= 60 %}edify-primary-solid{% else %}bg-amber-500{% endif %}" style="width: {% if card.pct > 100 %}100{% else %}{{ card.pct }}{% endif %}%"></div>
+</div>
+{% else %}
+<div class="h-2 w-full bg-slate-100 rounded-pill"></div>
+{% endif %}
+</div>
+</div>
+{% endfor %}
+</div>
+</section>
+
+
+<!-- ================= TIME PERIOD PROGRESS MATRIX ================= -->
+<section class="edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden" aria-labelledby="reports-matrix-title">
+<header class="edify-report-matrix__heading">
+<div>
+<p class="edify-report-section__eyebrow">Period comparison</p>
+<h2 id="reports-matrix-title">Cumulative progress by time period</h2>
+</div>
+<p>Each period rolls forward verified achievement so target gaps remain visible before year end.</p>
+</header>
+
+<div class="edify-report-matrix__scroll overflow-x-auto">
+{% paginate periods "periods_page" as periods_pager %}
+<table class="edify-report-matrix__table w-full text-left edify-text-caption border-collapse">
+<thead>
+<tr class="bg-slate-50 text-slate-500 font-bold border-b ">
+<!-- Headers split -->
+<th class="p-4 font-semibold border-r  w-[200px]" rowspan="2">TARGET AREA</th>
+{% for period in periods_pager.rows %}
+<th class="py-2.5 text-center {% if not forloop.last %}border-r{% endif %} font-bold bg-slate-50/30" colspan="3">{{ period.chevron_label }} <span class="edify-text-caption text-slate-500 block uppercase">{{ period.kind_label }}</span></th>
+{% endfor %}
+</tr>
+<tr class="bg-slate-50 edify-text-caption text-slate-500 border-b  font-bold">
+{% for period in periods %}
+<th class="py-2 px-1 text-center font-bold">Target</th>
+<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-bold"> % </th>
+{% endfor %}
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-semibold">
+{% for row in matrix_rows %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="p-4 font-semibold text-slate-800 border-r ">{{ row.area }}</td>
+{% for cell in row.periods %}
+<td class="py-3 px-1 text-center text-slate-500 font-bold">{% if cell.has_target %}{{ cell.target|floatformat:0 }}{% else %}—{% endif %}</td>
+<td class="py-3 px-1 text-center font-semibold">{{ cell.achieved }}</td>
+<td class="py-3 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-semibold {{ cell.pct_class }}">{% if cell.has_target %}{{ cell.pct }}%{% else %}—{% endif %}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+<!-- overall progress summary row -->
+<tr class="bg-slate-50/70 text-slate-800 border-t border-slate-200 text-[12px] font-semibold">
+<td class="p-4 font-semibold uppercase tracking-wider border-r ">Overall Progress</td>
+{% for period in periods %}
+<td class="py-3 px-1 text-center" colspan="2"></td>
+<td class="py-3 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-semibold {{ period.pct_class }} text-[14px]">{% if period.has_target %}{{ period.pct }}%{% else %}—{% endif %}</td>
+{% endfor %}
+</tr>
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=periods_pager param="periods_page" %}
+</div>
+</section>
+
+
+<!-- ================= BOTTOM CHARTS SECTION ================= -->
+<section class="edify-report-section" aria-labelledby="reports-insights-title">
+<header class="edify-report-section__heading">
+<div>
+<p class="edify-report-section__eyebrow">Decision support</p>
+<h2 id="reports-insights-title">Performance insights</h2>
+</div>
+<p>Use trend, target health and priority signals to focus the next management action.</p>
+</header>
+<div class="edify-report-insight-grid grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+<!-- CUMULATIVE PROGRESS TREND (dominant 8-column canvas on wide screens) -->
+<div class="edify-report-panel edify-report-panel--trend lg:col-span-8 edify-surface p-5 rounded-surface shadow-sm space-y-4">
+<div class="pb-2 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cumulative Progress Trend</h3>
+<div class="flex items-center gap-3 edify-text-caption font-bold text-slate-500">
+<span class="flex items-center gap-1"><span class="h-2 w-5 edify-primary-solid rounded-pill"></span> % of FY{{ fy }} Target Achieved</span>
+</div>
+</div>
+
+<!-- Real bar chart: each bar's height is the period's actual %-of-target
+     (or a flat empty bar when no target is configured for that period). -->
+<div class="edify-report-trend-chart w-full flex items-stretch gap-3 px-2">
+{% for period in periods %}
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="flex-1 w-full flex items-end bg-slate-50 rounded-surface overflow-hidden relative">
+{% if period.has_target %}
+<div class="w-full rounded-t {% if period.pct >= 70 %}bg-emerald-500{% elif period.pct >= 50 %}edify-primary-solid{% else %}bg-rose-500{% endif %}" style="height: {% if period.pct > 100 %}100{% else %}{{ period.pct }}{% endif %}%"></div>
+{% else %}
+<span class="absolute inset-x-0 bottom-1 text-center edify-text-caption text-slate-300 font-bold">No target</span>
+{% endif %}
+</div>
+<span class="edify-text-caption font-semibold text-slate-500 text-center leading-tight">{{ period.chevron_label }}</span>
+<span class="edify-text-caption font-bold text-slate-400">{% if period.has_target %}{{ period.pct }}%{% else %}—{% endif %}</span>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Compact decision rail: target health above management priorities. -->
+<aside class="edify-report-insight-rail lg:col-span-4" aria-label="Target health and management priorities">
+
+<!-- ACHIEVEMENT VS TARGET -->
+<div class="edify-report-panel edify-report-panel--achievement edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4">
+<div class="pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Achievement vs Target</h3>
+</div>
+
+{% if donut_total %}
+<div class="flex flex-col items-center justify-center space-y-4">
+<!-- Simple stacked bar — real counts, no fabricated segments -->
+<div class="flex flex-col items-center gap-2 w-full">
+<span class="text-[24px] font-semibold text-slate-800 leading-none">{{ donut_total }}</span>
+<span class="edify-text-caption font-bold text-slate-500 uppercase tracking-wide">Targets Assessed</span>
+<div class="w-full h-3 rounded-pill overflow-hidden flex bg-slate-100">
+{% widthratio donut_on_track donut_total 100 as on_pct %}
+{% widthratio donut_at_risk donut_total 100 as risk_pct %}
+{% widthratio donut_off_track donut_total 100 as off_pct %}
+<div class="bg-emerald-500 h-full" style="width: {{ on_pct }}%"></div>
+<div class="bg-amber-500 h-full" style="width: {{ risk_pct }}%"></div>
+<div class="bg-rose-500 h-full" style="width: {{ off_pct }}%"></div>
+</div>
+</div>
+
+<div class="edify-text-caption space-y-1.5 font-bold w-full text-slate-600 px-2">
+<div class="flex items-center justify-between"><span class="text-emerald-600">● On Track (&gt;=70%)</span> <span>{{ donut_on_track }} ({{ on_pct }}%)</span></div>
+<div class="flex items-center justify-between"><span class="text-amber-600">● At Risk (50-69%)</span> <span>{{ donut_at_risk }} ({{ risk_pct }}%)</span></div>
+<div class="flex items-center justify-between"><span class="text-rose-600">● Off Track (&lt;50%)</span> <span>{{ donut_off_track }} ({{ off_pct }}%)</span></div>
+</div>
+</div>
+
+{% with fy_period=periods|last %}
+<div class="pt-2 border-t border-slate-100 flex items-center justify-between edify-text-caption font-bold">
+<span class="text-slate-500">Overall FY{{ fy }} Achievement</span>
+<span class="{{ fy_period.pct_class }}">{{ fy_period.pct }}%</span>
+</div>
+{% endwith %}
+{% else %}
+<div class="flex-1 flex items-center justify-center text-center py-6">
+<p class="text-[12px] font-semibold text-slate-400">No FY{{ fy }} targets are configured yet. Set targets in Target Setting to see on-track / at-risk / off-track status here.</p>
+</div>
+{% endif %}
+</div>
+
+<!-- TOP PRIORITIES -->
+<div class="edify-report-panel edify-report-panel--priorities edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4">
+<div class="pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Top Priorities</h3>
+</div>
+
+<div class="space-y-3 flex-1">
+{% for prio in priorities %}
+<div class="edify-report-priority p-3 bg-slate-50 hover:bg-slate-100/70 rounded-surface border border-slate-100 flex items-start gap-2.5 transition-colors cursor-pointer group">
+<!-- custom status tags -->
+{% if prio.status == 'Off Track' %}
+<div class="h-6 w-6 bg-rose-100 text-rose-600 font-semibold rounded-surface flex items-center justify-center text-xs shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+{% elif prio.status == 'At Risk' %}
+<div class="h-6 w-6 bg-amber-100 text-amber-600 font-semibold rounded-surface flex items-center justify-center text-xs shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
+{% elif prio.status == 'On Track' %}
+<div class="h-6 w-6 bg-emerald-100 text-emerald-600 font-semibold rounded-surface flex items-center justify-center text-xs shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
+{% else %}
+<div class="h-6 w-6 bg-slate-100 text-slate-500 font-semibold rounded-surface flex items-center justify-center text-xs shrink-0">•</div>
+{% endif %}
+
+<div class="flex-1 min-w-0">
+<h4 class="text-[12px] font-semibold text-slate-800 leading-tight">{{ prio.title }}</h4>
+<p class="edify-text-caption text-slate-500 font-semibold mt-0.5 leading-relaxed">{{ prio.desc }}</p>
+</div>
+
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold border {{ prio.status_class }} shrink-0 self-start">
+{{ prio.status }}
+</span>
+</div>
+{% endfor %}
+</div>
+</div>
+
+</aside>
+
+</div>
+</section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+# Development / test dependencies.
+-r base.txt
+
+# Test runner.
+pytest==9.0.3
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+# Frozen-clock test mechanism (REG-02) — pins "today"/"now" for
+# scheduling-policy tests instead of relying on the real wall-clock date.
+freezegun==1.5.1
+# Serializes tracebacks across `manage.py test --parallel` workers — without
+# it a failing test crashes the runner with "cannot pickle 'traceback'".
+tblib==3.2.2
+
+# Linting / formatting.
+ruff==0.8.4
+
+# Offline compilation and topology validation of district-sized UBOS map
+# assets. This is deliberately a development dependency: request handling
+# serves prebuilt GeoJSON and never imports a GIS runtime.
+shapely==2.1.2
+
+# Debugging.
+django-debug-toolbar==4.4.6
+ipdb==0.13.13
+
+# Security tool chains (mandate §56). These were specified as required gates
+# but had never been installed, so neither had ever actually run.
+bandit==1.9.4
+pip-audit==2.10.1
+
+# Read directly by apps/core/tests/test_deployment_manifests.py, which parses
+# .do/app.yaml to assert the App Platform spec actually runs the scheduler.
+# It resolves anyway as a transitive dependency of drf-spectacular and bandit,
+# which is exactly why it is pinned here: a test that imports a package nobody
+# declared starts failing the day an unrelated dependency drops it.
+PyYAML==6.0.3

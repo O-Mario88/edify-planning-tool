@@ -1,0 +1,37 @@
+{% comment %}
+The canonical page header.
+
+Taken from the Program Lead Dashboard, which is the agreed visual standard: a
+band that is visibly structured but almost melts into the page canvas. The
+separation comes from a few percent of tonal shift, a barely-there border and
+a wide faint shadow — not from contrast.
+
+Usage:
+
+    {% include "components/page_header.html" with title="Planning" description="..." %}
+
+Slots, for anything richer than a title and description:
+
+    {% block page_header_controls %}   filters, context pills, actions
+    {% block page_header_eyebrow %}    breadcrumb or section label
+
+Because a block cannot be passed through {% include %}, pages needing controls
+use {% with %} plus the `page_header_*` context variables, or extend this
+template. The common case — a title and a description — needs neither.
+
+Deliberately NOT here: KPI values, charts, tables, operational queues, a
+second search field. The top bar owns search. The header states where you are
+and offers the few controls that change what the page is about.
+{% endcomment %}
+<header class="edify-page-header{% if page_header_class %} {{ page_header_class }}{% endif %}">
+  <div class="edify-page-header__lead">
+    {% if eyebrow %}<p class="edify-page-eyebrow">{{ eyebrow }}</p>{% endif %}
+    <h1 class="edify-page-header__title edify-page-title">{{ title }}</h1>
+    {% if description %}
+    <p class="edify-page-header__description">{{ description }}</p>
+    {% endif %}
+  </div>
+  {% if page_header_controls %}
+  <div class="edify-page-header__controls">{{ page_header_controls }}</div>
+  {% endif %}
+</header>

@@ -1,0 +1,126 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters static %}
+
+{% block title %}School Map · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Schools & Field</p>
+      <h1 class="edify-page-title edify-page-header__title">School Map</h1>
+      <p class="edify-page-header__description">Every school with verified coordinates, plotted live. Coordinates power Route Intelligence.</p>
+    </div>
+    <span class="inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-500 w-fit">
+      <span class="h-1.5 w-1.5 rounded-pill {% if with_coords %}bg-emerald-500{% else %}bg-amber-500{% endif %}"></span>
+      {{ with_coords|intcomma }} of {{ total|intcomma }} schools have coordinates
+    </span>
+  </div>
+
+  {% if without_coords %}
+  <div class="rounded-surface border border-amber-200 bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
+    <p class="text-[12px] font-semibold text-amber-800">
+      {{ without_coords|intcomma }} school(s) have no coordinates yet — route estimates for them fall back to sub-county data.
+    </p>
+    <a href="/system-health" class="edify-text-caption font-bold text-amber-700 hover:underline shrink-0">Location data quality →</a>
+  </div>
+  {% endif %}
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-2">
+    {% if with_coords %}
+    <div id="school-map" class="h-[560px] w-full rounded-surface"></div>
+    {% else %}
+    <div class="h-[420px] flex flex-col items-center justify-center text-center gap-2">
+      <span class="h-10 w-10 rounded-pill bg-slate-100 text-slate-400 flex items-center justify-center">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0 10 10 0 003.4 6.6L12 22z"/><circle cx="12" cy="10" r="2.4"/></svg>
+      </span>
+      <p class="text-[13px] font-bold text-slate-600">No school coordinates captured yet</p>
+      <p class="edify-text-caption text-slate-400 max-w-md">The map activates automatically as coordinates arrive — from school uploads or verified GPS points captured during visits. Nothing is plotted until the data is real.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if with_coords %}
+{% comment %}
+  Leaflet self-hosted, like every other library the platform depends on. The
+  map tiles still come from tile.openstreetmap.org — those are data fetched per
+  view and cannot be vendored — but the library that draws them no longer has
+  to survive a request to unpkg first.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/vendor/leaflet-1.9.4.css' %}"/>
+<script src="{% static 'js/vendor/leaflet-1.9.4.js' %}"></script>
+<script>
+  (function () {
+    var points = {{ points_json|safe }};
+    var el = document.getElementById('school-map');
+    if (!el) { return; }
+
+    function fail(message) {
+      el.className = 'h-[560px] flex flex-col items-center justify-center text-center gap-2 px-6';
+      el.innerHTML =
+        '<p class="text-[13px] font-bold text-slate-600">Map could not be loaded</p>' +
+        '<p class="edify-text-caption text-slate-400 max-w-md">' + message + '</p>';
+    }
+
+    function start() {
+      // The map library is fetched from a public CDN. If it did not arrive,
+      // say so — a silent empty grey box reads as "no schools", which is a
+      // different and untrue statement.
+      if (typeof L === 'undefined') {
+        fail('The map library did not load. Check the connection and reload — the ' +
+             '{{ with_coords }} school coordinates themselves are unaffected.');
+        return;
+      }
+
+      var accent = getComputedStyle(document.documentElement)
+        .getPropertyValue('--edify-chart-blue').trim();
+
+      var map = L.map(el);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      var bounds = [];
+      points.forEach(function (p) {
+        // Leaflet writes these onto SVG presentation attributes, where a
+        // CSS var() never resolves — the colour has to be a real value.
+        var m = L.circleMarker([p.lat, p.lng], {
+          radius: 6, color: accent, weight: 1.5,
+          fillColor: accent, fillOpacity: 0.75
+        }).addTo(map);
+        m.bindPopup('<b>' + p.name + '</b><br>' +
+                    [p.sub_county, p.district].filter(Boolean).join(', '));
+        bounds.push([p.lat, p.lng]);
+      });
+
+      function frame() {
+        if (bounds.length) { map.fitBounds(bounds, {padding: [30, 30]}); }
+        else { map.setView([1.3733, 32.2903], 7); }
+      }
+      frame();
+
+      // Leaflet measures the container once, at init, and only requests the
+      // tiles that measurement calls for. This script used to run the moment
+      // it was parsed — before the stylesheets had applied — so on a cold load
+      // it measured a zero-width box, fetched three tiles for it and left the
+      // map looking broken until a hard refresh happened to warm the assets
+      // and change the timing. Re-measuring after layout is what actually
+      // fixes it; the observer keeps it right when the sidebar collapses or
+      // the window resizes.
+      requestAnimationFrame(function () { map.invalidateSize(); frame(); });
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () { map.invalidateSize(); }).observe(el);
+      }
+      window.addEventListener('resize', function () { map.invalidateSize(); });
+    }
+
+    // 'load', not DOMContentLoaded: the container's real size depends on
+    // leaflet.css and the app stylesheets having been applied.
+    if (document.readyState === 'complete') { start(); }
+    else { window.addEventListener('load', start); }
+  })();
+</script>
+{% endif %}
+{% endblock %}

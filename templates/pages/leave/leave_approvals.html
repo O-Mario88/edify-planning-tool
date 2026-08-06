@@ -1,0 +1,239 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% load frontend_filters %}
+
+{% block title %}Leave Approvals Cockpit — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-6 max-w-[1600px] mx-auto edify-text">
+
+  <!-- Header -->
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title edify-page-header__title">Leave Approvals</h1>
+      <p class="edify-page-header__description">Review leave requests, approve coverage, manage conflicts, and keep team operations running.</p>
+    </div>
+
+    <!-- Search & Filters -->
+    <form id="leave-approvals-filters" method="GET" class="edify-filter-bar flex flex-wrap items-center gap-3">
+      <div class="relative">
+        {% comment %}Search moved to the top bar.{% endcomment %}
+        <span class="absolute left-2.5 top-2.5 text-slate-400">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </span>
+      </div>
+
+      <span class="edify-filter-label">Type</span>
+      <select aria-label="Type"
+        name="type"
+        class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
+        @change="$el.form.requestSubmit()"
+      >
+        <option value="">All Leave Types</option>
+        <option value="personal_time_off" {% if selected_type == 'personal_time_off' %}selected{% endif %}>Personal Time Off</option>
+        <option value="sick_leave" {% if selected_type == 'sick_leave' %}selected{% endif %}>Sick Leave</option>
+        <option value="maternity_leave" {% if selected_type == 'maternity_leave' %}selected{% endif %}>Maternity Leave</option>
+        <option value="paternity_leave" {% if selected_type == 'paternity_leave' %}selected{% endif %}>Paternity Leave</option>
+        <option value="bereavement_leave" {% if selected_type == 'bereavement_leave' %}selected{% endif %}>Bereavement Leave</option>
+      </select>
+
+      <span class="edify-filter-label">Status</span>
+      <select aria-label="Status"
+        name="status"
+        class="px-3 py-1.5 text-xs rounded-control border font-bold transition edify-surface edify-border edify-text"
+        @change="$el.form.requestSubmit()"
+      >
+        <option value="pending" {% if selected_status == 'pending' or not selected_status %}selected{% endif %}>Pending Approval</option>
+        <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="returned" {% if selected_status == 'returned' %}selected{% endif %}>Returned</option>
+        <option value="hr_review" {% if selected_status == 'hr_review' %}selected{% endif %}>HR Escalated</option>
+      </select>
+
+      {% if search_q or selected_type or selected_status %}
+      <a href="{% url 'frontend:leave_approvals' %}" class="text-xs font-bold edify-primary-text edify-primary-text-hover">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for msg in messages %}
+    <div class="p-4 rounded-surface border font-semibold text-[13px] flex items-center justify-between shadow-sm
+      {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+      {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-100
+      {% else %}bg-rose-50 text-rose-700 border-rose-100{% endif %}"
+    >
+      <span>{{ msg }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- All figures are derived from the reviewer's authorized live scope. -->
+  {% include "components/kpi_strip.html" with items=leave_kpi_items %}
+
+  <!-- Main Grid: Left queue (3 cols), Right detail placeholder (9 cols) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- Left Column: Queue (3/12 cols) -->
+    <div class="lg:col-span-3 rounded-surface border flex flex-col shadow-sm overflow-hidden edify-surface edify-border">
+      <div class="p-4 border-b flex items-center justify-between edify-border">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Approval Queue ({{ requests|length }})</h3>
+        <span class="edify-text-caption font-bold text-slate-400">Sort: Oldest First</span>
+      </div>
+
+      <div class="divide-y overflow-y-auto max-h-[700px]" style="divide-color:var(--edify-border);">
+        {% for r in requests %}
+        <article
+          class="p-4 hover:bg-slate-50/50 cursor-pointer transition relative group {% if r.id == selected_leave.id %}edify-primary-tint-5{% endif %}"
+          data-leave-request
+          role="button"
+          tabindex="0"
+          hx-get="{% url 'frontend:leave_impact_partial' r.id %}"
+          hx-target="#impact-panel-placeholder"
+          hx-trigger="click"
+          @click="document.querySelectorAll('[data-leave-request]').forEach((card) => card.classList.remove('edify-primary-tint-5')); $el.classList.add('edify-primary-tint-5')"
+          @keydown.enter="$el.click()"
+          @keydown.space.prevent="$el.click()"
+        >
+          <div class="flex items-start gap-3">
+            <!-- User avatar stub -->
+            <div class="h-9 w-9 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 flex items-center justify-center font-bold edify-primary-text text-xs shadow-sm">
+              {{ r.staff.user.name|slice:":2"|upper }}
+            </div>
+
+            <div class="flex-1 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-800 text-xs edify-primary-group-hover-text transition">{{ r.staff.user.name }}</span>
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider
+                  {% if r.status == 'pending' %}bg-amber-500/10 text-amber-500
+                  {% elif r.status == 'approved' %}bg-emerald-500/10 text-emerald-500
+                  {% elif r.status == 'rejected' %}bg-rose-500/10 text-rose-500
+                  {% else %}edify-primary-tint-10 edify-primary-text{% endif %}"
+                >
+                  {{ r.status }}
+                </span>
+              </div>
+              <p class="edify-text-caption text-slate-400 font-semibold">{{ r.staff.user.active_role }} · {{ r.staff.country }}</p>
+
+              <div class="flex items-center gap-1.5 pt-1">
+                <span class="px-1.5 py-0.5 edify-primary-tint-10 edify-primary-text rounded-pill edify-text-caption font-bold tracking-wider">
+                  {{ r.type|replace_underscore|title }}
+                </span>
+                <span class="edify-text-caption text-slate-400 font-semibold">
+                  {{ r.start_date|slice:"5:" }} → {{ r.end_date|slice:"5:" }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between edify-text-caption text-slate-400 pt-1">
+                <span>Days: <b class="text-slate-700">{{ r.days_charged }} working</b></span>
+                {% if r.covering_staff %}
+                <span class="flex items-center gap-1">
+                  <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500 inline-block"></span>
+                  Cover assigned
+                </span>
+                {% else %}
+                <span class="flex items-center gap-1">
+                  <span class="h-1.5 w-1.5 rounded-pill bg-slate-500 inline-block"></span>
+                  No cover
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Hover bar -->
+          <div class="absolute left-0 top-0 bottom-0 w-0.5 edify-primary-solid opacity-0 group-hover:opacity-100 transition"></div>
+        </article>
+        {% empty %}
+        <div class="p-8 text-center text-slate-400">
+          <div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded-pill flex items-center justify-center mx-auto mb-2 text-slate-400">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-xs font-bold mt-2">All Caught Up</p>
+          <p class="edify-text-caption text-slate-500 mt-1">No leave requests awaiting approval.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Target: Includes Middle detailed view + Right staged details (9/12 cols) -->
+    <div id="impact-panel-placeholder" class="lg:col-span-9">
+      {% if selected_leave %}
+        {% include "partials/leave/impact_panel.html" with leave=selected_leave impact=selected_leave_impact conflicts=selected_leave_conflicts eligible_cover_staff=eligible_cover_staff heatmap=heatmap holidays=holidays blackouts=blackouts %}
+      {% else %}
+        <div class="rounded-surface border p-20 text-center shadow-sm edify-surface edify-border">
+          <div class="h-12 w-12 rounded-surface edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20 flex items-center justify-center mx-auto shadow-sm">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </div>
+          <h3 class="font-bold text-sm text-slate-800 mt-4">Select Request to Audit Impact</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">Choose a pending leave request from the list to analyze conflicts, check coverage, and review access transfers.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Bottom Row: Recent Approval Activity -->
+  <div class="rounded-surface border shadow-sm overflow-hidden edify-surface edify-border">
+    <div class="p-4 border-b flex items-center justify-between edify-border">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Approval Activity</h3>
+      <span class="edify-text-caption font-medium text-slate-500">Latest 10 decisions</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      {% paginate recent_activity "recent_activity_page" as recent_activity_pager %}
+<table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b edify-text-caption font-bold uppercase tracking-wider text-slate-400 edify-border edify-surface-muted">
+            <th class="px-4 py-3">Date & Time</th>
+            <th class="px-4 py-3">Staff Profile</th>
+            <th class="px-4 py-3">Action</th>
+            <th class="px-4 py-3">Leave Type</th>
+            <th class="px-4 py-3">Dates</th>
+            <th class="px-4 py-3">Duration</th>
+            <th class="px-4 py-3">Reviewed By</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y text-xs font-semibold text-slate-600" style="divide-color:var(--edify-border);">
+          {% for act in recent_activity_pager.rows %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3 text-slate-400">{{ act.datetime|date:"N j, Y H:i" }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ act.staff.name }}</td>
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold
+                {% if act.action == 'Approved' %}bg-emerald-500/10 text-emerald-400
+                {% elif act.action == 'Rejected' %}bg-rose-500/10 text-rose-400
+                {% else %}bg-amber-500/10 text-amber-400{% endif %}"
+              >
+                {{ act.action }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-400">{{ act.leave_type }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ act.dates }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ act.duration }}</td>
+            <td class="px-4 py-3 text-slate-400">{{ act.by }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-6 text-center text-slate-500">No recent activity logs.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=recent_activity_pager param="recent_activity_page" %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

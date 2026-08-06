@@ -1,0 +1,102 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Decision Intelligence — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Quality & Insights</p>
+<h1 class="edify-page-title edify-page-header__title">Decision Intelligence</h1>
+<p class="edify-page-header__description">Signals the platform detected on its own — each one recommends, you decide</p>
+</div>
+<div class="edify-page-header__controls">
+<form method="GET" class="flex items-center gap-2">
+<label class="sr-only" for="fy-select">Financial year</label>
+{% comment %}@change rather than an inline onchange: the handler moves
+into the Alpine layer the rest of the app uses, and requestSubmit()
+runs the form's own validation where submit() skips it.{% endcomment %}
+<select id="fy-select" name="fy" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+</select>
+</form>
+<form method="POST" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="action" value="recompute">
+<button type="submit" class="px-4 py-2 rounded-control border border-[var(--edify-border)] text-[12px] font-bold hover:bg-slate-50">Rescan FY {{ fy }}</button>
+</form>
+</div>
+</div>
+
+{% include "partials/analytics/section_nav.html" %}
+
+{% if messages %}
+{% for message in messages %}
+<div class="rounded-surface border px-4 py-3 text-[12.5px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ open_leadership }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Operational decisions awaiting you</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ open_budget }}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Financial decisions awaiting you</p>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
+<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ leadership_snapshot.dataConfidence|default:"—" }}{% if leadership_snapshot.dataConfidence %}%{% endif %}</p>
+<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Data confidence</p>
+</div>
+<div class="edify-surface rounded-surface border {% if budget_snapshot.amountAtRisk %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
+<p class="text-[24px] font-extrabold {% if budget_snapshot.amountAtRisk %}text-amber-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ budget_snapshot.amountAtRisk|floatformat:0 }}</p>
+<p class="edify-text-caption {% if budget_snapshot.amountAtRisk %}text-amber-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">UGX flagged at risk</p>
+</div>
+</div>
+
+{# ── Operational decisions ─────────────────────────────────────────── #}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)] flex items-center justify-between gap-3">
+<h2 class="text-[13px] font-extrabold text-slate-800">Operational decisions</h2>
+<span class="edify-text-caption text-slate-400 font-semibold">Recruitment · capacity · partners · HR risk · regional investment</span>
+</div>
+{% if leadership_insights %}
+<ul class="divide-y divide-slate-100">
+{% for i in leadership_insights %}
+{% include "partials/decisions/insight_row.html" with i=i review_action="review_leadership" can_review=can_review_leadership statuses=statuses %}
+{% endfor %}
+</ul>
+{% else %}
+<div class="p-12 text-center">
+<p class="text-[14px] font-bold text-slate-600">No operational signals for FY {{ fy }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">Nothing crossed a detector threshold. Rescan to check against current data.</p>
+</div>
+{% endif %}
+</div>
+
+{# ── Financial decisions ───────────────────────────────────────────── #}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
+<div class="px-5 py-3 border-b border-[var(--edify-border)] flex items-center justify-between gap-3">
+<h2 class="text-[13px] font-extrabold text-slate-800">Financial decisions</h2>
+<span class="edify-text-caption text-slate-400 font-semibold">Aged advances · cash variance · returned cash · oversized advances</span>
+</div>
+{% if budget_insights %}
+<ul class="divide-y divide-slate-100">
+{% for i in budget_insights %}
+{% include "partials/decisions/insight_row.html" with i=i review_action="review_budget" can_review=can_review_budget statuses=statuses %}
+{% endfor %}
+</ul>
+{% else %}
+<div class="p-12 text-center">
+<p class="text-[14px] font-bold text-slate-600">No financial signals for FY {{ fy }}</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">No cash variance, aged advance or oversized request crossed its threshold.</p>
+</div>
+{% endif %}
+</div>
+
+<p class="edify-text-caption text-slate-400 font-medium">These engines recommend — they never move money or reassign work on their own. Accepting an insight records your decision against it; the follow-up stays yours.</p>
+
+</div>
+{% endblock %}

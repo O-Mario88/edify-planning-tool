@@ -1,0 +1,239 @@
+{% load frontend_filters %}
+<div class="pl-dashboard-stack space-y-4">
+
+  {# ── KPI strip ──────────────────────────────────────────────────────── #}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead_dashboard" %}
+
+  {# ── Leadership Attention ───────────────────────────────────────────── #}
+  {% if leadership_attention %}
+  <div>
+    <h2 class="text-[13px] font-semibold mb-2 edify-text">Leadership Attention</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {% for a in leadership_attention %}
+      <div class="rounded-surface p-3.5 flex items-start gap-3"
+           style="background:
+             {% if a.tone == 'danger' %}var(--edify-danger-light)
+             {% elif a.tone == 'success' %}var(--edify-success-light)
+             {% else %}var(--edify-warning-light){% endif %};
+             border:1px solid
+             {% if a.tone == 'danger' %}rgba(239,68,68,.12)
+             {% elif a.tone == 'success' %}rgba(16,185,129,.12)
+             {% else %}rgba(245,158,11,.12){% endif %};">
+        <div class="h-9 w-9 rounded-surface flex items-center justify-center shrink-0"
+             style="background:{% if a.tone == 'danger' %}var(--edify-danger)
+             {% elif a.tone == 'success' %}var(--edify-success)
+             {% else %}var(--edify-warning){% endif %};">
+          {% include "partials/analytics/pl/_icon.html" with name=a.icon %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-[13px] font-semibold" style="
+                    color:{% if a.tone == 'danger' %}var(--edify-danger)
+                    {% elif a.tone == 'success' %}var(--edify-success)
+                    {% else %}var(--edify-warning){% endif %};">{{ a.title }}</p>
+          <p class="text-[12px] mt-1 leading-[1.4] edify-text-muted">{{ a.line1 }}</p>
+          <p class="text-[12px] leading-[1.4] edify-text-muted">{{ a.line2 }}</p>
+          <a href="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}"
+             hx-get="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+             class="inline-block mt-1.5 text-[12px] font-semibold"
+             style="
+                    color:{% if a.tone == 'danger' %}var(--edify-danger-text)
+                    {% elif a.tone == 'success' %}var(--edify-success-text)
+                    {% else %}var(--edify-warning-text){% endif %};">{{ a.action }} &rarr;</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Team Performance + Personal Targets ────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-7 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-[13px] font-semibold edify-text">Team Performance Overview</h2>
+        <span class="text-[12px] font-semibold edify-text-subtle">FY {{ fy }}</span>
+      </div>
+      <div id="plDashPerfChart" class="w-full flex-1 min-h-[200px]"></div>
+    </div>
+    <div class="lg:col-span-5 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <h2 class="text-[13px] font-semibold mb-3 edify-text">My Personal Targets</h2>
+      <div class="grid grid-cols-2 gap-2.5 flex-1">
+        {% for c in personal_targets.cards %}
+        <div class="flex items-center gap-2.5 p-2.5 rounded-surface edify-surface-muted">
+          <div>
+            <p class="edify-kpi-label text-[12px] edify-text-subtle">{{ c.label }}</p>
+            <p class="text-[15px] font-semibold tabular-nums edify-text">{{ c.done }}<span class="text-[12px] font-semibold edify-text-subtle">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span></p>
+            {% if c.has_target %}
+            <p class="text-[12px] font-semibold" style="color:
+              {% if c.pct >= 80 %}var(--edify-success)
+              {% elif c.pct >= 60 %}var(--edify-warning)
+              {% else %}var(--edify-danger){% endif %};">{{ c.pct }}%</p>
+            {% else %}
+            <p class="text-[12px] font-semibold edify-text-subtle">Not measurable</p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if personal_targets.has_target %}
+      <div class="pt-3 mt-3 border-t edify-border-top">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[12px] font-semibold edify-text-muted">Overall Achievement</span>
+          <span class="text-[13px] font-semibold edify-success-text">{{ personal_targets.overall_pct }}%</span>
+        </div>
+        <div class="h-2 w-full rounded-pill overflow-hidden" style="background:var(--edify-border);">
+          <div class="h-full rounded-pill" style="width:{{ personal_targets.overall_pct }}%;background:var(--edify-success);"></div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-[12px] mt-2 edify-text-subtle">No measurable personal target denominators for this period.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── CCEO Performance + Approval Queue + Backlog ─────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-7 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">CCEO Performance</h2></div>
+      <div class="overflow-x-auto flex-1">
+        {% include "partials/dashboards/pl/cceo_performance.html" %}
+      </div>
+      <div class="p-3 pt-2"><a href="/analytics/program-lead" class="text-[12px] font-semibold no-underline edify-primary-text">View all CCEOs performance &rarr;</a></div>
+    </div>
+    <div class="lg:col-span-5 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <div class="p-4 pb-2 flex items-center justify-between">
+        <h2 class="text-[13px] font-semibold edify-text">Approval Queue</h2>
+        {% if approval_queue.total %}<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold edify-warning-soft edify-warning-text">{{ approval_queue.total }}</span>{% endif %}
+      </div>
+      {% include "partials/dashboards/pl/approval_queue.html" %}
+    </div>
+  </div>
+
+  {% comment %}
+  Schools Needing Urgent Attention owns the full row. It is the page's risk
+  list and the thing a Program Lead acts on, so it no longer shares width
+  with a reference table.
+  {% endcomment %}
+  <div class="pl-intelligence-grid">
+    <div id="urgent-schools" class="pl-intelligence-card rounded-surface overflow-hidden flex flex-col scroll-mt-20 edify-surface border edify-border edify-shadow-sm">
+      <div class="flex items-start justify-between gap-3 px-4 py-3 border-b edify-border-bottom">
+        <div>
+          <h2 class="text-[13px] font-semibold edify-text">Schools Needing Urgent Attention</h2>
+          <p class="mt-0.5 text-[12px] edify-text-muted">Your schools and the portfolios of your supervised CCEOs.</p>
+        </div>
+        <span class="inline-flex min-w-6 items-center justify-center rounded-pill px-2 py-1 text-[12px] font-semibold edify-danger-text edify-danger-soft">{{ urgent_pagination.total }}</span>
+      </div>
+      <div id="urgent-schools-content" class="flex-1" aria-live="polite">
+        {% include "partials/dashboards/pl/urgent_schools_page.html" %}
+      </div>
+      <a href="/analytics/program-lead" class="block px-4 py-3 text-[12px] font-semibold edify-info-text border-t edify-border-top">View all schools at risk &rarr;</a>
+    </div>
+  </div>
+
+  {% comment %}
+  SSA Intelligence sits directly under the risk list it explains, at full
+  width because it is a matrix: eight interventions plus an overall column
+  per cluster. It used to sit beside the urgent-schools card in a narrow
+  column, which is why only six of the eight were ever shown.
+  {% endcomment %}
+  <div class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+    <h2 class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
+    <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
+    {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+  </div>
+
+  {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-6 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">Team Backlog</h2></div>
+      {% include "partials/dashboards/pl/backlog_snapshot.html" %}
+    </div>
+    <div class="lg:col-span-6 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <h2 class="text-[13px] font-semibold mb-3 edify-text">Smart Route &amp; Capacity</h2>
+      {% include "partials/dashboards/pl/route_capacity.html" %}
+    </div>
+  </div>
+
+  {# ── Funding & Execution: supporting financial context, kept below risk ── #}
+  <div class="pl-funding-card pl-funding-card--wide rounded-surface p-4 edify-surface border edify-border edify-shadow-sm">
+    <h2 class="text-[13px] font-semibold mb-3 edify-text">Funding &amp; Execution</h2>
+    <div class="pl-funding-card__body">
+      {% include "partials/dashboards/pl/funding_execution.html" %}
+    </div>
+  </div>
+
+  {# ── Quick Actions ───────────────────────────────────────────────────── #}
+  <div>
+    <h2 class="text-[13px] font-semibold mb-2 edify-text">Quick Actions</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {% for q in quick_actions %}
+      <a href="{{ q.url }}" class="rounded-surface p-3 flex items-center gap-2.5 edify-hover-lift no-underline edify-surface border edify-border edify-shadow-sm">
+        <span class="h-8 w-8 rounded-pill flex items-center justify-center shrink-0 edify-surface-muted">
+          {% include "partials/analytics/pl/_icon.html" with name=q.icon %}
+        </span>
+        <div>
+          <p class="text-[12px] font-semibold edify-text">{{ q.label }}</p>
+          <p class="text-[12px] edify-text-muted">{{ q.sub }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{# ── Team Performance Chart (ApexCharts, theme-aware) ──────────────────── #}
+<script>
+(function() {
+  function getChartTheme() {
+    var isDark = document.documentElement.classList.contains('dark');
+    var cs = getComputedStyle(document.documentElement);
+    return {
+      text: isDark ? 'var(--edify-text-muted)' : 'var(--edify-text-subtle)',
+      grid: isDark ? 'var(--edify-text)' : 'var(--edify-surface-muted)',
+      isDark: isDark
+    };
+  }
+
+  function buildChart() {
+    var t = getChartTheme();
+    return {
+      series: [
+        { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
+        { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
+        { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
+        { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
+      ],
+      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
+      stroke: { width: [0,0,0,2.25], curve: 'straight' },
+      colors: window.EdifyChartSystem.mixedSeries,
+      fill: { opacity: [1, 1, 1, 1] },
+      dataLabels: { enabled: false },
+      labels: {{ team_performance.labels|safe }},
+      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '12px', fontWeight: 600 } } },
+      yaxis: [
+        { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '12px' } } },
+        { seriesName: 'Planned', show: false },
+        { seriesName: 'Planned', show: false },
+        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '12px' } } }
+      ],
+      grid: { borderColor: t.grid, strokeDasharray: 3, padding: { left: 0, right: 0 } },
+      legend: { show: false },
+      tooltip: { theme: t.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '12px' } }
+    };
+  }
+
+  var chartEl = document.querySelector('#plDashPerfChart');
+  if (chartEl) {
+    var perfChart = new ApexCharts(chartEl, buildChart());
+    perfChart.render();
+
+    // Re-render on theme change
+    window.addEventListener('edify-theme-change', function() {
+      perfChart.destroy();
+      perfChart = new ApexCharts(chartEl, buildChart());
+      perfChart.render();
+    });
+  }
+})();
+</script>

@@ -1,0 +1,88 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Upload School Data - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<!-- Page Header -->
+<header class="edify-page-header">
+  <div class="edify-page-header__lead">
+  {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+  <h1 class="edify-page-title edify-page-header__title">Upload School Data</h1>
+  <p class="edify-page-header__description">Import an onboarding school roster into the School Directory.</p>
+  </div>
+</header>
+
+<div class="max-w-3xl">
+<!-- School Upload Panel -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<div>
+<h3 class="text-[15px] font-semibold text-slate-800">School Directory Upload</h3>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload a CSV or Excel sheet containing new schools. Additional profile details may be included when available.</p>
+<p class="edify-text-caption text-slate-400 mt-1">The School ID column is the source of truth and is saved exactly as uploaded; no S- prefix is generated.</p>
+<p class="edify-text-caption text-slate-400 mt-1"><strong>Required:</strong> School ID and School Name only. District, Sub-county, Staff Name, and all other details are optional and can be completed later from the School Profile.</p>
+</div>
+
+<a href="/schools/upload/template" class="inline-flex items-center gap-1.5 h-8 px-3 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-medium rounded-control transition-colors">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Download School Template
+</a>
+
+<form
+hx-post="/schools/upload"
+hx-encoding="multipart/form-data"
+hx-target="#upload-results"
+hx-indicator="#schools-indicator"
+class="space-y-4"
+>
+{% csrf_token %}
+<div>
+<label for="schools_file" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Roster File (CSV / XLSX)</label>
+<input
+type="file"
+name="schools_file"
+id="schools_file"
+accept=".csv, .xlsx"
+required
+class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-control file:border-0 file:text-[12px] file:font-semibold file:bg-[var(--edify-surface-muted)] file:text-[var(--edify-accent)] hover:file:bg-[var(--edify-surface-muted)]/80 mt-2"
+>
+</div>
+
+<div class="flex items-center">
+<input
+id="update_existing"
+name="update_existing"
+type="checkbox"
+class="h-4 w-4 text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300 rounded-control"
+>
+<label for="update_existing" class="ml-2 block text-[12px] text-slate-500 font-semibold select-none">
+Update existing school records
+</label>
+</div>
+
+<div class="flex items-center gap-3">
+<button
+type="submit"
+class="h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-all"
+>
+Upload Schools
+</button>
+
+<!-- Loading Indicator spinner -->
+<div id="schools-indicator" class="htmx-indicator flex items-center gap-2 text-slate-500 text-[12px]">
+<svg class="animate-spin h-4 w-4 text-[var(--edify-accent)]" fill="none" viewBox="0 0 24 24">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+</svg>
+<span>Processing and importing schools...</span>
+</div>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Upload Results Output (HTMX Target) -->
+<div id="upload-results" class="space-y-4"></div>
+</div>
+{% endblock %}

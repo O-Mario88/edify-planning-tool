@@ -1,0 +1,36 @@
+{% load frontend_filters %}
+<div class="space-y-2 px-4 pb-2 flex-1">
+  {% for r in approval_queue.rows %}
+  <div class="rounded-surface p-3 edify-surface-muted">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-6 w-6 items-center justify-center rounded-pill text-[12px] font-bold shrink-0 edify-primary-solid edify-on-accent">{{ r.staff|slice:":2"|upper }}</span>
+        <div>
+          <p class="edify-text text-[12px] font-bold">{{ r.staff }}</p>
+          <p class="edify-text-muted text-[12px]">{{ r.covered }}{% if r.submitted %} · {{ r.submitted|date:"M d" }}{% endif %}</p>
+        </div>
+      </div>
+      {% if r.issues and r.issues != 'Ready' and r.issues != '—' %}
+      <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold edify-warning-soft edify-warning-text">{{ r.issues }}</span>
+      {% endif %}
+    </div>
+    {% if r.kind == 'weekly_fund' %}
+    <div class="flex items-center gap-2 mt-2">
+      <button hx-post="/dashboard/pl-approve?kind=weekly_fund&id={{ r.id }}&fy={{ fy }}" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
+              class="flex-1 cursor-pointer rounded-control border-0 px-3.5 py-1.5 text-[12px] font-semibold edify-success-solid edify-shadow-sm">Approve</button>
+      <a href="/fund-requests/weekly?staff={{ r.id }}" class="rounded-surface border edify-border-strong px-3.5 py-1.5 text-[12px] font-semibold edify-text edify-surface">Review</a>
+    </div>
+    {% else %}
+    <a href="/fund-approvals" class="mt-2 inline-flex rounded-surface border edify-border-strong px-3.5 py-1.5 text-[12px] font-semibold edify-text edify-surface">Review Plan</a>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="flex flex-col items-center justify-center py-10 text-center">
+    <span class="inline-flex h-8 w-8 items-center justify-center rounded-pill mb-2 edify-success-soft">
+      <svg class="h-4 w-4 edify-success-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+    </span>
+    <p class="edify-text-muted text-[12px] font-semibold">Nothing awaiting your approval.</p>
+  </div>
+  {% endfor %}
+</div>
+<a href="/fund-approvals" class="block px-4 pb-2 text-[12px] font-semibold edify-primary-text">View all pending approvals &rarr;</a>

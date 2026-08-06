@@ -1,0 +1,74 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Schedule activity{% endblock %}
+{% block drawer_subtitle %}Choose Core package support or another school activity for {{ school.name }}.{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-5">
+  <section class="rounded-surface border border-slate-200 bg-slate-50/70 p-4">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-wider edify-primary-text">Core service package</p>
+        <h3 class="mt-1 text-[15px] font-semibold text-slate-800">Core visits and trainings</h3>
+        <p class="mt-1 edify-text-caption text-slate-500">These are limited to four visits and four trainings for the package.</p>
+      </div>
+      {% if package_complete %}
+        <span class="rounded-pill bg-emerald-50 px-2.5 py-1 edify-text-caption font-bold text-emerald-700">Package complete</span>
+      {% endif %}
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+      {% if package_available and not package_complete and visits_remaining %}
+        <button
+          type="button"
+          hx-get="/core-schools/schedule-visit?school_id={{ school.school_id }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
+        >
+          <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core visit · {{ visits_remaining }} remaining</span>
+        </button>
+      {% else %}
+        <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
+          <span class="block text-[13px] font-bold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core visit · no package slots available</span>
+        </button>
+      {% endif %}
+
+      {% if package_available and not package_complete and trainings_remaining %}
+        <button
+          type="button"
+          hx-get="/core-schools/schedule-training?school_id={{ school.school_id }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+          class="rounded-control border edify-primary-border edify-surface-raised p-3 text-left transition-colors hover:edify-primary-soft"
+        >
+          <span class="block text-[13px] font-bold edify-primary-text">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption text-slate-500">Core training · {{ trainings_remaining }} remaining</span>
+        </button>
+      {% else %}
+        <button type="button" disabled class="rounded-control border border-slate-200 bg-slate-100 p-3 text-left text-slate-400">
+          <span class="block text-[13px] font-bold">Schedule</span>
+          <span class="mt-0.5 block edify-text-caption">Core training · no package slots available</span>
+        </button>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="rounded-surface border border-slate-200 edify-surface-raised p-4">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Other school activities</p>
+    <h3 class="mt-1 text-[15px] font-semibold text-slate-800">Schedule an additional visit or training</h3>
+    <p class="mt-1 text-[12px] leading-relaxed text-slate-500">Use this for Donor Visits, Gathering Story, School Invitation, Social Visits, Training Follow-up Visits, In-school Coaching Visits, and In-school Training. These activities do not use a Core package slot.</p>
+    <button
+      type="button"
+      hx-get="/planning/schedule-modal?school_id={{ school.school_id }}"
+      hx-target="#drawer-container"
+      hx-swap="innerHTML"
+      class="mt-4 h-9 w-full rounded-control btn-premium-primary text-[12px] font-bold text-white flex items-center justify-center gap-1.5"
+    >
+      <svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule other activity
+    </button>
+  </section>
+</div>
+{% endblock %}

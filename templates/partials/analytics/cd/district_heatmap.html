@@ -1,0 +1,99 @@
+{% load frontend_filters %}
+{% comment %}
+Swapped whole by the level tabs below, so the wrapper carries the id and every
+level renders through this one template. `district_heatmap` is the context key
+at every level — renaming it would touch the CD body, the export and the
+drilldown for no gain.
+{% endcomment %}
+<div id="cd-ssa-heatmap" class="edify-surface self-start rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. SSA Heatmap <span class="text-slate-400 font-medium edify-text-caption">(Average SSA Score by Intervention)</span></h3>
+    <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Verified annual SSA · scores on the 0–10 scale · click a row for the performance drawer</p>
+  </div>
+
+  {% comment %}
+  Links, not role=tab: each one fetches a different dataset from the server
+  rather than revealing a hidden panel, and the platform's tab contract is for
+  client-side panels.
+  {% endcomment %}
+  <div class="flex flex-wrap items-center gap-1" role="group" aria-label="Heatmap level">
+    {% for lvl, lbl in heatmap_levels %}
+    <button type="button"
+            hx-get="/analytics/country-director/ssa-heatmap?level={{ lvl }}&fy={{ fy }}&quarter={{ quarter }}&month={{ month }}"
+            hx-target="#cd-ssa-heatmap" hx-swap="outerHTML"
+            aria-current="{% if district_heatmap.level == lvl %}true{% else %}false{% endif %}"
+            class="min-h-8 rounded-control px-3 edify-text-caption font-bold transition-colors
+              {% if district_heatmap.level == lvl %}edify-primary-solid edify-primary-on-solid{% else %}border border-slate-200 text-slate-600 hover:bg-slate-50{% endif %}">
+      {{ lbl }}
+    </button>
+    {% endfor %}
+  </div>
+
+  {% comment %}
+  Coverage, stated rather than implied. Sub-county is unset on ~96% of schools
+  and cluster on ~95%, so an average over the assigned few would read as a
+  national figure. A number without its denominator is the thing that gets
+  quoted in a meeting.
+  {% endcomment %}
+  {% if district_heatmap.unassigned %}
+  <p class="edify-text-caption font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-control px-2.5 py-1.5">
+    {{ district_heatmap.unassigned|intcomma }} of {{ district_heatmap.total_schools|intcomma }} schools have no {{ district_heatmap.level_label|lower }} assigned and are not counted below.
+  </p>
+  {% endif %}
+
+  <div class="overflow-x-auto -mx-1">
+    <table class="w-full edify-text-caption border-separate border-spacing-y-1">
+      <thead>
+        <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+          <th class="text-left font-bold pl-1 pb-1">{{ district_heatmap.level_label }}</th>
+          {% for c in district_heatmap.codes %}<th class="text-center font-bold pb-1 px-1">{{ c }}</th>{% endfor %}
+          <th class="text-center font-bold pb-1 pr-1">Avg</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in district_heatmap.rows %}
+        {% comment %}
+        Only levels with a drilldown branch get a click target. Sub-county has
+        none, so its rows are plain instead of dead.
+        {% endcomment %}
+        <tr {% if district_heatmap.drillable %}class="cursor-pointer"
+            hx-get="/analytics/country-director/drilldown?drill={{ district_heatmap.level }}&id={{ row.id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>
+          <td class="text-left pl-1 whitespace-nowrap max-w-[130px]">
+            <span class="block font-semibold text-slate-700 truncate">{{ row.name }}</span>
+            <span class="block edify-text-caption font-semibold {% if row.low_coverage %}text-amber-500{% else %}text-slate-300{% endif %}">cov {{ row.coverage }}{% if row.low_coverage %} · low{% endif %}</span>
+          </td>
+          {% for cell in row.cells %}
+          <td class="text-center font-bold tabular-nums rounded-small
+            {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800
+            {% elif cell.tone == 'lime' %}bg-lime-100 text-lime-800
+            {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
+            {% elif cell.tone == 'danger' %}bg-rose-100 text-rose-800
+            {% else %}bg-slate-50 text-slate-300{% endif %} px-1 py-1">
+            {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}
+          </td>
+          {% endfor %}
+          <td class="text-center font-extrabold tabular-nums rounded-small
+            {% if row.avg_tone == 'success' %}bg-emerald-200 text-emerald-900
+            {% elif row.avg_tone == 'lime' %}bg-lime-200 text-lime-900
+            {% elif row.avg_tone == 'warning' %}bg-amber-200 text-amber-900
+            {% elif row.avg_tone == 'danger' %}bg-rose-200 text-rose-900
+            {% else %}bg-slate-100 text-slate-400{% endif %} px-1 py-1">
+            {% if row.avg is not None %}{{ row.avg|floatformat:1 }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="text-center text-[12px] text-slate-400 font-medium py-6">
+          {% if district_heatmap.unassigned == district_heatmap.total_schools %}No school has a {{ district_heatmap.level_label|lower }} assigned yet, so there is nothing to compare at this level.{% else %}No verified annual SSA in scope yet.{% endif %}
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 edify-text-caption font-semibold text-slate-400">
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-emerald-100 border border-emerald-200"></span>Strong 8.0–10</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-lime-100 border border-lime-200"></span>Improving 7.0–7.9</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-amber-100 border border-amber-200"></span>Warning 5.0–6.9</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-pill bg-rose-100 border border-rose-200"></span>Critical &lt;5.0</span>
+  </div>
+</div>

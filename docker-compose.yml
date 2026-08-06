@@ -1,10 +1,10 @@
 # Edify Planning & Monitoring Tool — full stack (db + api + web).
 #
-#   cp .env.example .env   # set POSTGRES_PASSWORD + JWT_SECRET
+#   cp .env.example .env   # set POSTGRES_PASSWORD + JWT_SECRET + SUPER_ADMIN_PASSWORD
 #   docker compose up --build
 #
-# The api applies migrations on boot (docker-entrypoint.sh) and waits for a
-# healthy Postgres. Seed once with:  RUN_SEED=true docker compose up api
+# The api (Django + DRF) applies migrations on boot (docker-entrypoint.sh) and
+# waits for a healthy Postgres. Seed once with:  RUN_SEED=true docker compose up api
 
 services:
   db:
@@ -24,46 +24,82 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
-    build: ./edify-api
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    # Django + DRF + HTMX monolithic application
+    build: .
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       NODE_ENV: production
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
       PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}?schema=public
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
-      # Production safety: real data, no dev endpoints.
+      SECURE_SSL_REDIRECT: "false"
+      SESSION_COOKIE_SECURE: "false"
+      CSRF_COOKIE_SECURE: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=50 chars)}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env (32-byte hex/base64)}
+      ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
+      DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-domario@edify.org}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
       ENABLE_MOCK_DATA: "false"
       ENABLE_DEV_ENDPOINTS: "false"
-      ENABLE_SALESFORCE_INTEGRATION: "false"
-      # Comma-separated allowed CORS origins (the web app's public URL).
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      AUTHZ_MODE: enforce
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4000}
       RUN_SEED: ${RUN_SEED:-false}
-      # Evidence files land on a persistent volume (mounted below).
       EVIDENCE_STORAGE_DIR: /data/evidence
     volumes:
       - edify_evidence:/data/evidence
     ports:
-      - "${API_PORT:-4000}:4000"
+      - "${PORT:-4000}:4000"
 
-  web:
-    build: ./edify-web
+  # The scheduler is a DEDICATED process, not a thread inside a web worker —
+  # multiple web replicas would each start one and double-fire every job.
+  # Without this service no reminder, escalation sweep, digest, PD nudge or
+  # target sync ever ran in a compose deployment: ENABLE_BACKGROUND_JOBS
+  # defaults to false and only the Procfile knew about runscheduler.
+  worker:
+    build: .
     restart: unless-stopped
     depends_on:
-      api:
-        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python manage.py runscheduler
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      # Server-side base URL the Next proxies call (container DNS name).
-      EDIFY_API_URL: http://api:4000/api
-      EDIFY_USE_BACKEND: "true"
-    ports:
-      - "${WEB_PORT:-3000}:3000"
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      SECURE_SSL_REDIRECT: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=50 chars)}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?set FIELD_ENCRYPTION_KEY in .env (32-byte hex/base64)}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
+      ENABLE_BACKGROUND_JOBS: "true"
+      RUN_MIGRATIONS: "false"
+      EVIDENCE_STORAGE_DIR: /data/evidence
+    volumes:
+      - edify_evidence:/data/evidence
 
 volumes:
   edify_pgdata:

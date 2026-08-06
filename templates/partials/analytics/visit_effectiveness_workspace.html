@@ -1,0 +1,219 @@
+{% comment %}
+  School Visit Effectiveness workspace — one canonical analysis, role-scoped
+  emphasis. All figures come from SchoolVisitEffectivenessAnalyticsService;
+  nothing here computes independently. Associations only, never causation;
+  sample sizes always visible; school rows redacted for summary-only scopes.
+{% endcomment %}
+<div id="vfx-workspace" class="space-y-5">
+
+{{ chart_payload|json_script:"vfx-chart-payload" }}
+
+{% if d.cohort.comparable_schools == 0 %}
+<section class="edify-empty-state">
+  <p class="text-[14px] font-semibold edify-text">No comparable schools in this scope yet</p>
+  <p class="text-[12px] edify-text-muted mt-1 max-w-xl mx-auto">
+    A school enters this analysis only with a verified
+    {{ d.methodology.baseline_fy }} initial SSA score and a verified
+    {{ d.methodology.followup_fy }} follow-up SSA.
+    {% if d.cohort.excluded.missing_baseline_ssa %}{{ d.cohort.excluded.missing_baseline_ssa }} school{{ d.cohort.excluded.missing_baseline_ssa|pluralize }} lack a verified initial SSA score.{% endif %}
+    {% if d.cohort.excluded.missing_followup_ssa %}{{ d.cohort.excluded.missing_followup_ssa }} lack a verified follow-up (impact not yet measurable).{% endif %}
+  </p>
+</section>
+
+{% else %}
+
+<!-- ── KPI strip: role-appropriate emphasis, one data source ─────────────── -->
+<section class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" aria-label="Visit effectiveness summary">
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Comparable schools</p>
+    <p class="text-[20px] font-bold edify-text">{{ d.cohort.comparable_schools }}</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.cohort.core }} core · {{ d.cohort.client }} client</p>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Avg SSA change</p>
+    <p class="text-[20px] font-bold {% if d.ssa_change.avg_overall_delta >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">
+      {{ d.ssa_change.avg_overall_delta|floatformat:2 }}</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</p>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Schools visited</p>
+    <p class="text-[20px] font-bold edify-text">{{ d.coverage.schools_visited }}</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.coverage.schools_not_visited }} not visited</p>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Delivered visits</p>
+    <p class="text-[20px] font-bold edify-text">{{ d.coverage.delivered_visits }}</p>
+    <p class="edify-text-caption edify-text-muted">{{ d.coverage.scheduled_only_visits }} scheduled-only excluded</p>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Alignment rate</p>
+    <p class="text-[20px] font-bold edify-text">{% if d.quality.recommendation_alignment_rate is not None %}{% widthratio d.quality.recommendation_alignment_rate 1 100 %}%{% else %}—{% endif %}</p>
+    <p class="edify-text-caption edify-text-muted">of focused visits hit a weakest intervention</p>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-3">
+    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">
+      {% if is_strategic %}Partner data-collection{% else %}IA clearance{% endif %}</p>
+    <p class="text-[20px] font-bold edify-text">
+      {% if is_strategic %}{% if d.coverage.partner_data_collection_share is not None %}{% widthratio d.coverage.partner_data_collection_share 1 100 %}%{% else %}—{% endif %}
+      {% else %}{% widthratio d.quality.ia_clearance_rate 1 100 %}%{% endif %}</p>
+    <p class="edify-text-caption edify-text-muted">
+      {% if is_strategic %}share of partner visits{% else %}of delivered visits{% endif %}</p>
+  </div>
+</section>
+
+{% if d.cohort.sample_quality == 'very limited' or d.cohort.sample_quality == 'limited' %}
+<p class="p-3 rounded-surface border text-[12px] font-semibold edify-warning-soft edify-warning-border" style="color: var(--edify-warning-text)">
+  Sample: {{ d.cohort.comparable_schools }} comparable school{{ d.cohort.comparable_schools|pluralize }} —
+  {{ d.cohort.sample_quality }}. Read directional signals only; avoid firm conclusions.
+</p>
+{% endif %}
+
+<!-- ── Charts row 1: intervention change + association scatter ───────────── -->
+<section class="grid lg:grid-cols-2 gap-4">
+  <div class="edify-surface rounded-surface border border-slate-200 p-4">
+    <h2 class="text-[14px] font-semibold edify-text">SSA change by intervention</h2>
+    <p class="text-[12px] edify-text-muted mb-2">Verified initial vs follow-up SSA averages across the cohort.</p>
+    <div x-data="visitFxChart('vfx-chart-payload','interventions')" class="min-h-[300px]"><div x-ref="el"></div></div>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-4">
+    <h2 class="text-[14px] font-semibold edify-text">Delivered visits vs SSA change</h2>
+    <p class="text-[12px] edify-text-muted mb-2">
+      {{ d.association.note }}
+      {% if d.association.r is not None %}
+      <span class="font-semibold">r={{ d.association.r }}, p={{ d.association.p }}, n={{ d.association.n }} — {{ d.association.verdict }}.</span>
+      {% else %}<span class="font-semibold">{{ d.association.verdict|capfirst }} (n={{ d.association.n }}).</span>{% endif %}
+    </p>
+    <div x-data="visitFxChart('vfx-chart-payload','scatter')" class="min-h-[300px]"><div x-ref="el"></div></div>
+  </div>
+</section>
+
+<!-- ── Charts row 2: purpose mix + outcomes + funnel ─────────────────────── -->
+<section class="grid lg:grid-cols-3 gap-4">
+  <div class="edify-surface rounded-surface border border-slate-200 p-4">
+    <h2 class="text-[14px] font-semibold edify-text">Visit purpose mix</h2>
+    <p class="text-[12px] edify-text-muted mb-2">Delivered visits by purpose — volume without purpose is not effectiveness.</p>
+    <div x-data="visitFxChart('vfx-chart-payload','purpose')" class="min-h-[260px]"><div x-ref="el"></div></div>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-4">
+    <h2 class="text-[14px] font-semibold edify-text">School outcomes</h2>
+    <p class="text-[12px] edify-text-muted mb-2">Verified change distribution; schools without a follow-up SSA are "not yet measurable", never assumed.</p>
+    <div x-data="visitFxChart('vfx-chart-payload','outcomes')" class="min-h-[260px]"><div x-ref="el"></div></div>
+  </div>
+  <div class="edify-surface rounded-surface border border-slate-200 p-4">
+    <h2 class="text-[14px] font-semibold edify-text">Visit alignment funnel</h2>
+    <p class="text-[12px] edify-text-muted mb-2">Scheduled → delivered → evidenced → aligned → measurable.</p>
+    <div x-data="visitFxChart('vfx-chart-payload','funnel')" class="min-h-[260px]"><div x-ref="el"></div></div>
+  </div>
+</section>
+
+<!-- ── Strategic: quality-vs-volume quadrants ────────────────────────────── -->
+{% if is_strategic or is_pl %}
+<section class="edify-surface rounded-surface border border-slate-200 p-4">
+  <h2 class="text-[14px] font-semibold edify-text mb-1">Quality vs volume</h2>
+  <p class="text-[12px] edify-text-muted mb-3">Where support pattern and verified change diverge — replicate, review, or intervene.</p>
+  <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+    <div class="rounded-control border border-slate-200 p-3">
+      <p class="text-[12px] font-bold edify-success-text">Practice worth replicating</p>
+      <p class="text-[18px] font-bold edify-text">{{ d.quadrants.replicate.count }}</p>
+      <p class="edify-text-caption edify-text-muted mb-1">improving with typical visit volume</p>
+      {% for s in d.quadrants.replicate.schools|slice:":4" %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
+    </div>
+    <div class="rounded-control border border-slate-200 p-3">
+      <p class="text-[12px] font-bold" style="color: var(--edify-warning-text)">Review purpose &amp; execution</p>
+      <p class="text-[18px] font-bold edify-text">{{ d.quadrants.review_purpose.count }}</p>
+      <p class="edify-text-caption edify-text-muted mb-1">high volume, weak change</p>
+      {% for s in d.quadrants.review_purpose.schools|slice:":4" %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · {{ s.visit_count }} visits · Δ{{ s.overall_delta }}</p>{% endfor %}
+    </div>
+    <div class="rounded-control border border-slate-200 p-3">
+      <p class="text-[12px] font-bold edify-primary-text">Efficient practice</p>
+      <p class="text-[18px] font-bold edify-text">{{ d.quadrants.efficient.count }}</p>
+      <p class="edify-text-caption edify-text-muted mb-1">strong change, low volume — investigate</p>
+    </div>
+    <div class="rounded-control border border-slate-200 p-3">
+      <p class="text-[12px] font-bold edify-danger-text">Immediate intervention</p>
+      <p class="text-[18px] font-bold edify-text">{{ d.quadrants.intervene.count }}</p>
+      <p class="edify-text-caption edify-text-muted mb-1">high volume, declining</p>
+      {% for s in d.quadrants.intervene.schools|slice:":4" %}
+      <p class="edify-text-caption edify-text-muted truncate">{{ s.name }} · Δ{{ s.overall_delta }}</p>{% endfor %}
+    </div>
+  </div>
+  {% if not d.scope.can_view_school_details %}
+  <p class="edify-text-caption edify-text-muted mt-2">School identities are withheld at this scope — counts only.</p>
+  {% endif %}
+</section>
+
+<!-- ── Regional variation ────────────────────────────────────────────────── -->
+<section class="edify-surface rounded-surface border border-slate-200 p-4">
+  <h2 class="text-[14px] font-semibold edify-text mb-1">Regional variation</h2>
+  <p class="text-[12px] edify-text-muted mb-3">The same visit model performs differently by region — associations, not causation.</p>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px]">
+      <thead><tr class="edify-text-caption font-bold uppercase tracking-wider edify-text-muted">
+        <th class="py-1.5 pr-2">Region</th><th class="py-1.5 px-2 text-right">Schools</th>
+        <th class="py-1.5 px-2 text-right">Avg Δ</th><th class="py-1.5 px-2 text-right">Avg visits</th>
+        <th class="py-1.5 px-2 text-right">r</th><th class="py-1.5 pl-2">Association</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in d.regions %}
+        <tr>
+          <td class="py-1.5 pr-2 font-semibold edify-text">{{ r.region }}{% if r.low_sample %} <span class="edify-text-caption font-bold" style="color: var(--edify-warning-text)">small n</span>{% endif %}</td>
+          <td class="py-1.5 px-2 text-right tabular-nums">{{ r.n }}</td>
+          <td class="py-1.5 px-2 text-right tabular-nums font-bold {% if r.avg_delta >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">{{ r.avg_delta|floatformat:2 }}</td>
+          <td class="py-1.5 px-2 text-right tabular-nums">{{ r.avg_visits }}</td>
+          <td class="py-1.5 px-2 text-right tabular-nums">{% if r.r is not None %}{{ r.r }}{% else %}—{% endif %}</td>
+          <td class="py-1.5 pl-2 edify-text-muted">{{ r.verdict }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<!-- ── IA: cohort & data quality ─────────────────────────────────────────── -->
+{% if is_ia or is_strategic %}
+<section class="edify-surface rounded-surface border border-slate-200 p-4">
+  <h2 class="text-[14px] font-semibold edify-text mb-1">Cohort &amp; data quality</h2>
+  <p class="text-[12px] edify-text-muted mb-3">Can leadership trust this analysis? Exclusions are listed, never silent.</p>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[12px]">
+    <div><p class="edify-text-muted">Methodology</p><p class="font-bold edify-text">{{ d.methodology.version }}</p></div>
+    <div><p class="edify-text-muted">Excluded periods</p><p class="font-bold edify-text">{{ d.methodology.excluded_fys|join:", " }} (cycle change)</p></div>
+    <div><p class="edify-text-muted">SSA Required</p><p class="font-bold edify-text">{{ d.cohort.excluded.missing_baseline_ssa|default:0 }}</p></div>
+    <div><p class="edify-text-muted">Missing follow-up</p><p class="font-bold edify-text">{{ d.cohort.excluded.missing_followup_ssa|default:0 }} <span class="edify-text-muted font-normal">not yet measurable</span></p></div>
+    <div><p class="edify-text-muted">Invalid windows</p><p class="font-bold edify-text">{{ d.cohort.excluded.invalid_assessment_window|default:0 }}</p></div>
+    <div><p class="edify-text-muted">Sample quality</p><p class="font-bold edify-text">{{ d.cohort.sample_quality|capfirst }}</p></div>
+    <div><p class="edify-text-muted">Min group / corr n</p><p class="font-bold edify-text">{{ d.methodology.min_group_n }} / {{ d.methodology.min_corr_n }}</p></div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ── What the data does not explain (debrief context, §17) ─────────────── -->
+{% if debrief_context %}
+<section class="edify-surface rounded-surface border border-slate-200 p-4">
+  <h2 class="text-[14px] font-semibold edify-text mb-1">What the data does not explain</h2>
+  <p class="text-[12px] edify-text-muted mb-3">Consolidated field-debrief challenges from the last 30 days — context for regional differences, never scores.</p>
+  <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-2">
+    {% for c in debrief_context %}
+    <div class="rounded-control border border-slate-200 p-2.5">
+      <p class="text-[12px] font-bold edify-text">{{ c.label }}</p>
+      <p class="edify-text-caption edify-text-muted">{{ c.mentions }} mention{{ c.mentions|pluralize }} · {{ c.unique_staff }} staff{% if c.districts_affected %} · {{ c.districts_affected|join:", " }}{% endif %}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- ── Method notes ──────────────────────────────────────────────────────── -->
+<section class="rounded-surface border border-slate-200 p-4 bg-slate-50/60">
+  <h2 class="text-[12px] font-bold uppercase tracking-wider edify-text-muted mb-2">How these numbers are computed</h2>
+  <ul class="space-y-1">
+    {% for note in d.method_notes %}
+    <li class="text-[12px] edify-text-muted">— {{ note }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% endif %}
+</div>

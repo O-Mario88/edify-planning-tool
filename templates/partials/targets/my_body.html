@@ -1,0 +1,307 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
+  <div class="legacy-kpi-strip legacy-kpi-strip--timeline flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
+    {% for c in period_cards %}
+    <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
+      <div class="flex items-center justify-between">
+        <p class="edify-kpi-label edify-text-caption {% if c.current %}edify-primary-text{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <div class="relative h-[52px] w-[52px] shrink-0 rounded-pill"
+             style="background: conic-gradient({% if c.tone == 'success' %}var(--edify-chart-green){% elif c.tone == 'warning' %}var(--edify-chart-amber){% elif c.tone == 'danger' %}var(--edify-chart-red){% else %}var(--edify-border){% endif %} 0% {{ c.ring }}%, var(--edify-border, var(--edify-border)) {{ c.ring }}% 100%);">
+          <div class="absolute inset-[6px] edify-surface rounded-pill flex items-center justify-center">
+            <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ c.pct }}%</span>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <p class="edify-text-caption font-bold {% if c.tone == 'success' %}text-emerald-600{% elif c.tone == 'warning' %}text-amber-600{% elif c.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">{{ c.status }}</p>
+          <p class="edify-text-caption font-bold text-slate-700 tabular-nums">{{ c.achieved|intcomma }} / {{ c.target|intcomma }}</p>
+          <p class="edify-text-caption font-semibold text-slate-400">{% if c.status != 'Not Started' %}pace {{ c.pace }}%{% else %}&nbsp;{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    {% if not forloop.last %}
+    <div class="hidden lg:flex items-center shrink-0 text-slate-300">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="flex items-center justify-between -mt-2">
+    <p class="edify-text-caption text-slate-400 font-medium">Monthly achievements contribute to their quarter; Q1–Q4 roll into the financial year. Validated work only.</p>
+    <button type="button" @click="showRollup = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">How roll-up works</button>
+  </div>
+
+  {% include "partials/targets/strategic_priority_overview.html" with strategic_priorities=strategic_priorities fy=fy section_id="my-strategic-priorities" scope_label="your personal target ledger" only %}
+
+  {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="my-project-priorities" only %}
+
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="strategic-targets-title">
+    <div>
+      <h2 id="strategic-targets-title" class="text-[13px] font-bold text-slate-800">My Strategic Milestone Allocations</h2>
+      <p class="edify-text-caption text-slate-400">Only approved allocations appear here. Actuals come from canonical source records and cannot be typed.</p>
+    </div>
+    {% if strategic_milestones %}
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[1320px] text-left edify-text-caption">
+        <caption class="sr-only">Approved strategic milestone allocations, plans, actuals, status, linked Activities, and source data</caption>
+        <thead><tr class="border-b border-slate-100 uppercase tracking-wider text-slate-400">
+          <th class="px-3 py-2">Strategic Priority / Milestone</th><th class="px-3 py-2">Target source</th><th class="px-3 py-2 text-right">Month plan / actual</th><th class="px-3 py-2 text-right">Quarter target / actual</th><th class="px-3 py-2 text-right">FY target / actual</th><th class="px-3 py-2 text-right">Progress</th><th class="px-3 py-2 text-right">Remaining</th><th class="px-3 py-2">Status</th><th class="px-3 py-2 text-right">Linked Activities</th><th class="px-3 py-2">Data source</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for row in strategic_milestones|slice:":60" %}
+          <tr>
+            <td class="px-3 py-2.5"><span class="block font-bold text-slate-800">{{ row.milestone }}</span><span class="text-slate-400">{{ row.priority }}</span></td>
+            <td class="px-3 py-2.5 text-slate-500">{{ row.targetSource }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.monthPlan }} / {{ row.monthActual }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.quarterPlan }} / {{ row.quarterActual }}</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.fyPlan }} / {{ row.fyActual }}</td>
+            <td class="px-3 py-2.5 text-right font-bold tabular-nums">{{ row.progress }}%</td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.remaining }}</td>
+            <td class="px-3 py-2.5"><span class="pill {% if row.status == 'Achieved' %}pill-success{% else %}pill-neutral{% endif %}">{{ row.status }}</span></td>
+            <td class="px-3 py-2.5 text-right tabular-nums">{{ row.linkedActivities }}</td>
+            <td class="px-3 py-2.5 text-slate-500">{{ row.dataSource }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5">
+      <p class="text-[12px] font-bold text-slate-700">No approved milestone allocations yet</p>
+      <p class="mt-1 edify-text-caption leading-5 text-slate-500">Your existing operational targets remain unchanged. Strategic milestones will appear here automatically after definition, approval, and allocation.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  {# ── User-owned performance priority cards ─────────────────────────────── #}
+  {% if area_cards %}
+  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Performance priority summary">
+    {% for a in area_cards %}
+    <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
+         hx-target="#drawer-container" hx-swap="innerHTML"
+         class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 cursor-pointer hover:border-slate-200 hover:shadow transition-all">
+      <div class="flex items-center justify-between">
+        <p class="edify-text-caption font-bold text-slate-600 truncate">{{ a.label }}</p>
+        <svg class="h-3 w-3 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <p class="text-[17px] font-bold text-slate-800 tabular-nums mt-1.5">{{ a.achieved|intcomma }} <span class="text-[12px] text-slate-400">/ {{ a.target|intcomma }}</span></p>
+      <div class="flex items-center justify-between mt-1">
+        <span class="edify-text-caption font-bold {% if a.tone == 'success' %}text-emerald-600{% elif a.tone == 'warning' %}text-amber-600{% elif a.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">
+          {% if a.pct is not None %}{{ a.pct }}% · {% endif %}{{ a.status }}
+        </span>
+        {% if a.spark_points %}
+        <svg viewBox="0 0 60 20" class="h-5 w-[60px] shrink-0">
+          <polyline points="{{ a.spark_points }}" fill="none" stroke="{% if a.tone == 'danger' %}var(--edify-chart-red){% elif a.tone == 'warning' %}var(--edify-chart-amber){% else %}var(--edify-chart-green){% endif %}" stroke-width="1.6"/>
+        </svg>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <section class="edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6" aria-labelledby="no-performance-priorities-title">
+    <h2 id="no-performance-priorities-title" class="text-[13px] font-bold text-slate-800">No measurable performance priorities agreed for FY {{ fy }}</h2>
+    <p class="mt-1 edify-text-caption leading-5 text-slate-500">This table is populated from your agreed performance priorities. Add a measurable priority and complete manager agreement to make it appear here.</p>
+    <a href="/my-performance" class="mt-3 inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Open My Performance →</a>
+  </section>
+  {% endif %}
+
+  {# ── Priorities by Time Period matrix ───────────────────────────────────── #}
+  {% if matrix_rows %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Performance Priorities by Time Period</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full edify-text-caption border-collapse min-w-[860px]">
+        <thead>
+          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
+            <th class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Performance Priority</th>
+            {% for h in matrix_heads|slice:":30" %}
+            <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
+              <span class="block text-slate-600 font-bold">{{ h.label }}</span>
+              <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}</span>
+            </th>
+            {% endfor %}
+          </tr>
+          <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
+            <th class="py-1 px-3 sticky left-0 edify-surface z-10"></th>
+            {% for h in matrix_heads|slice:":30" %}
+            <th class="py-1 text-center border-l border-slate-100">Tgt</th><th class="py-1 text-center">Ach</th><th class="py-1 text-center">%</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+          {% for row in matrix_rows %}
+          <tr class="hover:bg-slate-50/50 cursor-pointer"
+              hx-get="/my-targets/area-drawer?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}"
+              hx-target="#drawer-container" hx-swap="innerHTML">
+            <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap sticky left-0 edify-surface z-10">{{ row.label }}</td>
+            {% for cell in row.cells %}
+            <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t }}</td>
+            <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a }}</td>
+            <td class="py-2.5 text-center font-semibold tabular-nums {% if cell.pct == None %}text-slate-300{% elif cell.pct >= 100 %}text-emerald-600{% elif cell.pct >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}">{% if cell.pct != None %}{{ cell.pct }}%{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          <tr class="border-t border-slate-100 bg-slate-50/60">
+            <td class="py-2.5 px-3 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10">Overall Progress</td>
+            {% for cell in overall_cells %}
+            <td class="py-2.5 text-center border-l border-slate-100" colspan="3">
+              <span class="font-bold tabular-nums {% if cell.pct >= 70 %}text-emerald-600{% elif cell.pct >= 50 %}text-amber-600{% else %}text-rose-500{% endif %}">{{ cell.pct }}%</span>
+            </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="edify-text-caption text-slate-400 font-medium">Weighted overall progress ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %} · {% endif %}{% endfor %}). Areas without a target are excluded.</p>
+  </div>
+  {% endif %}
+
+  {# ── Charts + focus row ─────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    <div class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2"
+         x-data="{
+           chart: null,
+           initChart() {
+             if (this.chart) { this.chart.destroy(); }
+             const el = document.querySelector('#myTargetTrend');
+             if (!el) return;
+             this.chart = new ApexCharts(el, {
+               series: [
+                 { name: 'Actual', data: {{ trend.actual_json|escape }} },
+                 { name: 'Expected Target Pace', data: {{ trend.expected_json|escape }} }
+               ],
+               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
+               stroke: { width: [2.25, 2], curve: 'straight', dashArray: [0, 6] },
+               colors: ['var(--edify-chart-blue)', 'var(--edify-text-subtle)'],
+               markers: { size: [3, 0] },
+               labels: [{% for l in trend.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+               xaxis: { axisBorder: { show: false }, axisTicks: { show: false },
+                        labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
+               yaxis: { max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+               annotations: { xaxis: [{ x: '{{ trend.current_label|escapejs }}', borderColor: 'var(--edify-chart-blue)',
+                 label: { text: 'now', style: { color: 'var(--edify-surface-raised)', background: 'var(--edify-chart-blue)', fontSize: '12px' } } }] },
+               grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
+               legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
+               tooltip: { theme: 'dark' }
+             });
+             this.chart.render();
+           }
+         }" x-init="$nextTick(() => initChart())">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Progress Trend <span class="text-slate-400 font-medium edify-text-caption">(Cumulative, FY {{ fy }})</span></h2>
+      <div class="h-[240px] w-full" id="myTargetTrend"></div>
+    </div>
+
+    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Contribution to Roll-up</h2>
+      <div class="space-y-2.5">
+        {% for c in period_cards %}
+        <div>
+          <div class="flex items-center justify-between edify-text-caption">
+            <span class="font-semibold {% if c.current %}edify-primary-text{% else %}text-slate-600{% endif %}">{% if c.kind == 'month' %}{{ c.label }} (Monthly){% elif c.kind == 'fy' %}FY Cumulative{% else %}{{ c.label }}{% endif %}</span>
+            <span class="font-bold text-slate-700 tabular-nums">{{ c.pct }}%</span>
+          </div>
+          <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+            <div class="h-full rounded-pill {% if c.tone == 'success' %}bg-emerald-500{% elif c.tone == 'warning' %}bg-amber-500{% elif c.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ c.ring }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Top Areas to Focus</h2>
+        {% if focus %}
+        <div class="divide-y divide-slate-50">
+          {% for f in focus %}
+          <div class="py-2.5 flex items-start gap-2.5">
+            <span class="h-5 w-5 rounded-pill bg-slate-100 text-slate-500 edify-text-caption font-bold flex items-center justify-center shrink-0 mt-0.5">{{ forloop.counter }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-[12px] font-bold text-slate-700">{{ f.area }}</p>
+                <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold shrink-0 {% if f.tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ f.status }}</span>
+              </div>
+              <p class="edify-text-caption text-slate-500">{{ f.achieved }} of {{ f.target }} achieved · {{ f.reason }}</p>
+              {% if f.action_url == '?mscs=new' %}
+              <button type="button" @click="showMscs = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-0.5">{{ f.action_label }} →</button>
+              {% else %}
+              <a href="{{ f.action_url }}" class="inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover mt-0.5">{{ f.action_label }} →</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="edify-text-caption text-slate-400 font-medium py-3">All assigned areas are on pace — keep executing the plan.</p>
+        {% endif %}
+    </div>
+  </div>
+
+  {# ── Core School Tracker (4 visits + 4 trainings per core school) ───────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-50">
+      <div>
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Core School Tracker</h2>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">The core package per school — SSA assessment, 4 visits and 4 trainings.</p>
+      </div>
+      {% if core_tracker_data.total %}<a href="/core-schools" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">{% if core_tracker_data.total > 12 %}All {{ core_tracker_data.total }} core schools →{% else %}Open Core Schools →{% endif %}</a>{% endif %}
+    </div>
+    {% if core_tracker_data.rows %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left edify-text-caption border-collapse min-w-[680px]">
+        <thead>
+          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
+            <th class="py-2 px-3">Core School</th>
+            <th class="py-2 px-3 text-center">Average SSA Score</th>
+            <th class="py-2 px-3">Visits (4)</th>
+            <th class="py-2 px-3">Trainings (4)</th>
+            <th class="py-2 px-3 text-center">Package</th>
+            <th class="py-2 px-3 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+          {% for c in core_tracker_data.rows|slice:":60" %}
+          <tr class="hover:bg-slate-50/50">
+            <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
+            <td class="py-2.5 px-3 text-center tabular-nums {% if c.average_ssa_score == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.average_ssa_score != None %}{{ c.average_ssa_score|floatformat:1 }}/10{% else %}—{% endif %}</td>
+            <td class="py-2.5 px-3">
+              <span class="inline-flex items-center gap-1">
+                {% for done in c.visit_dots %}<span class="h-2.5 w-2.5 rounded-pill {% if done %}bg-teal-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                <span class="edify-text-caption text-slate-400 font-bold ml-1 tabular-nums">{{ c.visits_done }}/4</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="inline-flex items-center gap-1">
+                {% for done in c.training_dots %}<span class="h-2.5 w-2.5 rounded-pill {% if done %}bg-violet-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                <span class="edify-text-caption text-slate-400 font-bold ml-1 tabular-nums">{{ c.trainings_done }}/4</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-14 h-[6px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if c.pct >= 100 %}bg-emerald-500{% elif c.pct >= 50 %}bg-teal-500{% elif c.pct > 0 %}bg-amber-500{% else %}bg-slate-200{% endif %}" style="width: {{ c.pct }}%"></span></span>
+                <span class="tabular-nums edify-text-caption font-bold text-slate-600">{{ c.pct }}%</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
+              {% if c.tone == 'success' %}bg-emerald-50 text-emerald-700
+              {% elif c.tone == 'info' %}bg-sky-50 text-sky-700
+              {% elif c.tone == 'warning' %}bg-amber-50 text-amber-700
+              {% else %}bg-slate-100 text-slate-500{% endif %}">{{ c.status }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No core schools in your portfolio yet" message="When a school in your portfolio is onboarded as a core school, its assessment + 4 visits + 4 trainings package is tracked here." %}
+    {% endif %}
+  </div>
+
+  <p class="edify-text-caption text-slate-400 font-medium text-right">Last refreshed {{ last_refreshed|date:"d M Y H:i" }}</p>
+</div>

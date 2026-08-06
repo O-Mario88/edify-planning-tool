@@ -1,0 +1,2 @@
+# Production dependencies (subset of base — no test tooling).
+-r base.txt

@@ -1,0 +1,44 @@
+<!-- Filters Form for Consolidated Fund Allocation -->
+<form id="fund-allocation-filters"
+hx-get="/finance/fund-allocation"
+hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
+hx-target="#allocation-table-container"
+hx-push-url="true"
+class="edify-filter-bar flex flex-wrap items-center gap-2.5 text-[12px] font-bold"
+>
+<!-- Month Dropdown -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm hover:border-slate-300 transition-colors">
+<span class="text-[14px] text-slate-400"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
+<span class="edify-filter-label">Month</span>
+<select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
+<option value="October" {% if selected_month == 'October' %}selected{% endif %}>October</option>
+<option value="November" {% if selected_month == 'November' %}selected{% endif %}>November</option>
+<option value="December" {% if selected_month == 'December' %}selected{% endif %}>December</option>
+<option value="January" {% if selected_month == 'January' %}selected{% endif %}>January</option>
+<option value="February" {% if selected_month == 'February' %}selected{% endif %}>February</option>
+<option value="March" {% if selected_month == 'March' %}selected{% endif %}>March</option>
+<option value="April" {% if selected_month == 'April' %}selected{% endif %}>April 2026</option>
+<option value="May" {% if selected_month == 'May' %}selected{% endif %}>May</option>
+<option value="June" {% if selected_month == 'June' %}selected{% endif %}>June</option>
+<option value="July" {% if selected_month == 'July' %}selected{% endif %}>July</option>
+<option value="August" {% if selected_month == 'August' %}selected{% endif %}>August</option>
+<option value="September" {% if selected_month == 'September' %}selected{% endif %}>September</option>
+</select>
+</div>
+
+{% comment %}Search moved to the top bar.{% endcomment %}
+
+<!-- Export button opening Export Drawer -->
+<button
+type="button"
+hx-get="/finance/fund-allocation/export-drawer?month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="flex items-center gap-1.5 h-8 px-4 btn-premium-primary text-white border border-[var(--edify-primary)] rounded-control hover:bg-[var(--edify-primary-active)] hover:border-[var(--edify-primary-active)] focus:outline-none transition-all shadow-sm font-semibold"
+>
+<svg class="h-3.5 w-3.5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+</svg>
+Export
+</button>
+</form>

@@ -1,59 +1,20 @@
 {
-  "name": "edify-web",
-  "version": "0.1.0",
+  "name": "edify-planning-tool",
   "private": true,
+  "description": "CSS build pipeline: compiles assets/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "analyze": "ANALYZE=true next build",
-    "ci": "npm run typecheck && npm run lint && npm run test",
-    "mock:audit": "node scripts/mock-audit.mjs",
-    "prod:check": "node scripts/prod-readiness.mjs",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
-    "db:reset": "prisma migrate reset --force",
-    "db:seed": "tsx prisma/seed.ts",
-    "infra:check": "node --experimental-strip-types scripts/infra-check.ts"
-  },
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "@tanstack/react-table": "^8.21.3",
-    "bcryptjs": "^3.0.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.14.0",
-    "motion": "^12.38.0",
-    "next": "16.2.6",
-    "next-auth": "^4.24.14",
-    "pg": "^8.21.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "recharts": "^3.8.1",
-    "tailwind-merge": "^3.5.0",
-    "tailwindcss-animate": "^1.0.7"
+    "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css -o static/css/tokens.css",
+    "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.2.6",
-    "@tailwindcss/postcss": "^4",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitest/coverage-v8": "^4.1.7",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "prisma": "^7.8.0",
-    "tailwindcss": "^4",
-    "tsx": "^4.22.4",
-    "typescript": "^5",
-    "vitest": "^4.1.7"
+    "@tailwindcss/cli": "4.3.2",
+    "tailwindcss": "4.3.2"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.0",
+    "apexcharts": "^3.54.1",
+    "fullcalendar": "^6.1.11",
+    "htmx.org": "^1.9.12",
+    "leaflet": "^1.9.4"
   }
 }

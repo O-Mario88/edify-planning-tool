@@ -1,0 +1,31 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Schedule Project Visits{% endblock %}
+{% block drawer_subtitle %}Create project-stamped My Plan activities for {{ assignments|length }} selected school{{ assignments|length|pluralize }}.{% endblock %}
+
+{% block drawer_body %}
+<form hx-post="/projects/planning/bulk-schedule" hx-target="#bulk-schedule-errors" hx-disabled-elt="find button[type=submit]" class="space-y-4 sm:space-y-5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+  {% csrf_token %}<input type="hidden" name="assignments" value="{{ assignment_ids }}">
+  <div id="bulk-schedule-errors"></div>
+  <div class="rounded-surface border edify-primary-border edify-primary-soft-alpha-60 p-3.5">
+    <p class="font-bold edify-primary-text">Selected project schools</p>
+    <ul class="mt-2 max-h-28 overflow-auto space-y-1 edify-primary-text">{% for item in assignments %}<li>{{ item.school.name }} · {{ item.project.name }}</li>{% endfor %}</ul>
+  </div>
+  <fieldset class="space-y-2"><legend class="block mb-1.5 edify-text-caption font-bold uppercase tracking-wider">Project-approved Activity</legend>{% for item in catalogue_items %}<label class="flex items-start gap-3 rounded-control border border-[var(--edify-border)] p-3"><input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %}><span><strong class="text-[var(--edify-text)]">{{ item.displayName }}</strong><span class="mt-1 block font-medium">{{ item.recommendationReason }}</span></span></label>{% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-800">No single Catalogue Activity is eligible for every selected Project School. Schedule smaller compatible selections or configure Project Allowed Activities.</div>{% endfor %}</fieldset>
+  <label class="block"><span class="block mb-1.5 edify-text-caption font-bold uppercase tracking-wider">Delivery date</span><input type="date" name="scheduled_date" id="bulk-schedule-date" required class="w-full h-11 rounded-control border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] px-3"><span id="bulk-schedule-date-error" class="hidden mt-1 block text-red-600 font-bold">Sundays are blocked for scheduling — choose another date.</span></label>
+  <script>
+    (function() {
+      var input = document.getElementById('bulk-schedule-date');
+      var err = document.getElementById('bulk-schedule-date-error');
+      if (!input) return;
+      input.addEventListener('change', function() {
+        var isSunday = input.value && new Date(input.value + 'T00:00:00').getDay() === 0;
+        err.classList.toggle('hidden', !isSunday);
+        input.setCustomValidity(isSunday ? 'Sundays are blocked for scheduling.' : '');
+      });
+    })();
+  </script>
+  <div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-800">Each school creates its own costed activity under the correct project. If any activity cannot be costed, the entire selection is kept unchanged.</div>
+  <button type="submit" class="w-full h-11 rounded-control bg-[var(--edify-accent)] text-[var(--edify-on-accent)] font-bold flex items-center justify-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule {{ assignments|length }} activit{{ assignments|length|pluralize:"y,ies" }}</button>
+</form>
+{% endblock %}

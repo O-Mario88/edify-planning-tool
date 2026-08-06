@@ -1,0 +1,45 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Special Projects Planning — Edify{% endblock %}
+
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/special-project-planning.css' %}?v=20260731readabletype1">
+{% endblock %}
+
+{% block shell_content %}
+<section
+  class="spp edify-page-canvas"
+  x-data="{
+    selected: [],
+    toggle(id) { this.selected.includes(id) ? this.selected = this.selected.filter(item => item !== id) : this.selected.push(id) },
+    togglePage(ids) { this.selected.length === ids.length ? this.selected = [] : this.selected = ids },
+    openBulk(kind) {
+      if (!this.selected.length) return;
+      const route = kind === 'schedule' ? '/projects/planning/bulk-schedule' : '/projects/planning/bulk-partner';
+      htmx.ajax('GET', route + '?assignments=' + encodeURIComponent(this.selected.join(',')), {target:'#drawer-container', swap:'innerHTML'});
+    }
+  }"
+  @keydown.escape.window="selected = []"
+>
+  <header class="edify-page-header spp-header">
+    <div class="spp-heading edify-page-header__lead">
+      <p class="spp-eyebrow">Special Projects</p>
+      <h1 class="edify-page-title edify-page-header__title">Special Projects Planning</h1>
+      <p class="edify-page-header__description">Plan SSA scores, school support, partner assignments, and delivery for schools assigned from the School Directory.</p>
+    </div>
+    <div class="spp-header__tools">
+      {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
+      <div class="spp-actions">
+        <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
+        <button class="spp-button spp-button--secondary" type="button" @click="openBulk('partner')" :disabled="selected.length === 0" :title="selected.length ? 'Assign selected schools to a partner' : 'Select schools first'">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign <span x-show="selected.length" x-text="selected.length"></span></button>
+        <a class="spp-button spp-button--primary" href="/projects/my-plan">{% include "partials/projects/planning_icon.html" with name="calendar" %} Open My Plan</a>
+      </div>
+    </div>
+  </header>
+
+  <div id="spp-workspace" aria-live="polite">
+    {% include "partials/projects/planning_workspace.html" %}
+  </div>
+</section>
+{% endblock %}

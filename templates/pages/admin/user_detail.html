@@ -1,0 +1,419 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Manage User: {{ member.name }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto">
+
+<!-- Breadcrumbs & Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<div class="flex items-center gap-1.5 edify-text-caption font-bold text-slate-400 uppercase tracking-wider">
+<a href="{% url 'frontend:admin_users' %}" class="hover:text-slate-600 transition-colors">User Management</a>
+<span>&bull;</span>
+<span class="text-slate-500">Edit Profile</span>
+</div>
+<p class="edify-page-eyebrow">Administration</p>
+<h1 class="edify-page-title edify-page-header__title">{{ member.name }}</h1>
+<p class="edify-page-header__description">Configure roles, reporting teams, credentials, and account lifecycle status.</p>
+</div>
+
+<div class="edify-page-header__controls">
+<!-- Status Badge -->
+{% if member.is_active %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
+<span class="h-2 w-2 rounded-pill bg-emerald-500"></span>
+Active
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-[12px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
+<span class="h-2 w-2 rounded-pill bg-slate-400"></span>
+Inactive ({{ member.status|capfirst }})
+</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Messages / Django Alerts -->
+{% if messages %}
+<div class="space-y-2">
+{% for msg in messages %}
+<div class="p-3.5 rounded-surface border font-semibold text-[12px] flex items-center justify-between shadow-sm
+{% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
+{% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
+{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}"
+>
+<span>{{ msg }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Auto-created User Warning Banner -->
+{% if "pending." in member.email and "@edify.org" in member.email %}
+<div class="bg-amber-50 border border-amber-200 rounded-surface p-4 flex gap-3 shadow-sm">
+<div class="text-[20px] text-amber-500 leading-none mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+<div class="space-y-1">
+<h4 class="text-[12px] font-semibold text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
+<p class="text-[12px] text-amber-700 font-semibold leading-relaxed">
+This user profile was automatically created during a school upload. The email address is currently a placeholder.
+You must edit it to their valid operational email address before sending the invitation.
+</p>
+</div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+<!-- Left 2 Columns: Edit Details & Roles -->
+<div class="md:col-span-2 space-y-6">
+
+<!-- General Settings Form -->
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
+
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4 font-semibold text-[12px]">
+{% csrf_token %}
+<input type="hidden" name="action" value="edit">
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Full Name</label>
+<input aria-label="Name"
+type="text"
+name="name"
+value="{{ member.name }}"
+required
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+>
+</div>
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Email Address</label>
+<input aria-label="Email"
+type="email"
+name="email"
+value="{{ member.email }}"
+required
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+>
+</div>
+</div>
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Phone Number</label>
+<input
+type="text"
+name="phone"
+value="{{ member.phone|default:'' }}"
+placeholder="+256..."
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+>
+</div>
+
+<!-- Role Assignment -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
+<select aria-label="Role"
+name="role"
+class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+>
+{% for r in available_roles %}
+<option value="{{ r }}" {% if member.active_role == r %}selected{% endif %}>{{ r }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
+<div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
+{% for r in available_roles %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input
+type="checkbox"
+name="additional_roles"
+value="{{ r }}"
+{% if r in member.roles and r != member.active_role %}checked{% endif %}
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
+>
+<span>{{ r }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+</div>
+
+<!-- District Assignment -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary District Assignment</label>
+<select aria-label="Primary district"
+name="primary_district"
+class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+>
+<option value="">None (HQ / Regional)</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if primary_district_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional District Assignments</label>
+<div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
+{% for d in districts %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input
+type="checkbox"
+name="additional_districts"
+value="{{ d.id }}"
+{% if d.id in assigned_districts and d.id != primary_district_id %}checked{% endif %}
+class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h-4 w-4"
+>
+<span>{{ d.name }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+</div>
+
+<div class="pt-4 border-t border-slate-100 flex justify-end">
+<button
+type="submit"
+class="h-9 px-4 edify-primary-solid edify-primary-hover text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+>
+Save Profile Updates
+</button>
+</div>
+</form>
+</div>
+
+{% if management_team and can_configure_management_team %}
+<!-- Role-based management team -->
+<div class="edify-surface rounded-overlay border border-[var(--border-card)] shadow-sm p-6">
+<div class="flex flex-col gap-2 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+<div>
+<h2 class="text-[14px] font-extrabold uppercase tracking-wider text-slate-800">People Managed</h2>
+{% if management_team.automatic %}
+<p class="mt-1 text-[12px] font-medium text-slate-500">Country Directors automatically manage every PL, IA, Accountant, and CCEO in {{ management_team.country }}.</p>
+{% elif management_team.role == "Program Lead" %}
+<p class="mt-1 text-[12px] font-medium text-slate-500">Choose the CCEOs who report to {{ member.name }}. These assignments control team dashboards, targets, approvals, and planning scope.</p>
+{% else %}
+<p class="mt-1 text-[12px] font-medium text-slate-500">Choose the same-country staff members managed by {{ member.name }} in their {{ management_team.role }} role.</p>
+{% endif %}
+</div>
+<span class="shrink-0 rounded-pill bg-[var(--color-edify-soft)] px-2.5 py-1 edify-text-caption font-bold text-[var(--color-edify-primary)]">{{ management_team.assigned_count }} managed</span>
+</div>
+
+{% if management_team.automatic %}
+<div class="mt-4" aria-label="Automatically managed country team">
+{% if management_team.people %}
+<ul class="max-h-72 space-y-1.5 overflow-y-auto rounded-surface border border-slate-100 bg-slate-50/50 p-2">
+{% for person in management_team.people %}
+<li class="flex min-h-12 items-center gap-3 rounded-control border border-emerald-200 bg-emerald-50/60 px-3 py-2">
+<span class="min-w-0 flex-1">
+<span class="block truncate text-[12px] font-bold text-slate-700">{{ person.name }}</span>
+<span class="block truncate edify-text-caption font-medium text-slate-500">{{ person.role }} · {{ person.email }}</span>
+</span>
+<span class="edify-badge" data-tone="success">Automatic</span>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<div class="rounded-surface border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center text-[12px] font-semibold text-slate-500">No PL, IA, Accountant, or CCEO profiles are available in {{ management_team.country }} yet.</div>
+{% endif %}
+</div>
+{% else %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="mt-4">
+{% csrf_token %}
+<input type="hidden" name="action" value="configure_managed_people">
+<fieldset aria-describedby="managed-people-hint">
+<legend class="text-[12px] font-bold text-slate-700">{{ management_team.country }} staff</legend>
+<p id="managed-people-hint" class="mt-1 edify-text-caption font-medium text-slate-500">{% if management_team.role == "Program Lead" %}Selecting a CCEO who reports to another Program Lead will move that reporting line to {{ member.name }}.{% else %}Selections add management oversight without changing each person's direct supervisor.{% endif %}</p>
+
+{% if management_team.people %}
+<div class="mt-3 max-h-72 space-y-1.5 overflow-y-auto rounded-surface border border-slate-100 bg-slate-50/50 p-2">
+{% for person in management_team.people %}
+<label for="manager-{{ member.id }}-staff-{{ person.id }}" class="flex min-h-12 cursor-pointer items-center gap-3 rounded-control border px-3 py-2 transition-colors {% if person.assigned %}border-emerald-200 bg-emerald-50/60{% else %}edify-surface border-transparent hover:border-slate-200{% endif %}">
+<input id="manager-{{ member.id }}-staff-{{ person.id }}" type="checkbox" name="managed_staff_ids" value="{{ person.id }}" {% if person.assigned %}checked{% endif %} class="h-4 w-4 shrink-0 accent-[var(--color-edify-primary)] focus:ring-4 edify-primary-focus">
+<span class="min-w-0 flex-1">
+<span class="block truncate text-[12px] font-bold text-slate-700">{{ person.name }}</span>
+<span class="block truncate edify-text-caption font-medium text-slate-400">{{ person.role }} · {{ person.email }}</span>
+{% if person.other_manager %}
+<span class="mt-0.5 block edify-text-caption font-bold text-amber-700">Currently reports to {{ person.other_manager }} — selecting will reassign</span>
+{% endif %}
+</span>
+</label>
+{% endfor %}
+</div>
+{% else %}
+<div class="mt-3 rounded-surface border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center">
+<p class="text-[12px] font-bold text-slate-600">No eligible staff are available in {{ management_team.country }}.</p>
+<p class="mt-1 edify-text-caption font-medium text-slate-400">Create or update same-country staff profiles first.</p>
+</div>
+{% endif %}
+
+<div class="mt-4 flex justify-end border-t border-slate-100 pt-4">
+<button type="submit" class="min-h-11 rounded-control bg-[var(--color-edify-primary)] px-4 text-[12px] font-bold text-white transition-all hover:bg-[var(--color-edify-dark)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">Save managed people</button>
+</div>
+</fieldset>
+</form>
+{% endif %}
+</div>
+{% endif %}
+
+</div>
+
+<!-- Right Column: Quick Status & Account Actions -->
+<div class="md:col-span-1 space-y-6">
+
+<!-- Lifecycle Status Card -->
+<div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Account Lifecycle</h3>
+
+<div class="space-y-3 font-semibold text-[12px] text-slate-600">
+<div class="flex justify-between">
+<span class="text-slate-400">Current Status:</span>
+<span class="text-slate-800 font-semibold uppercase">{{ member.status }}</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-400">Primary Role:</span>
+<span class="text-slate-800 font-semibold">{{ member.active_role }}</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-400">Member ID:</span>
+<span class="text-slate-800 font-bold truncate max-w-[120px]">{{ member.id }}</span>
+</div>
+</div>
+
+<div class="pt-4 border-t border-slate-100 space-y-2">
+
+<!-- Send Invite Action (for invited users) -->
+{% if member.status == 'pending_invited' or "pending." in member.email %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="invite">
+<button
+type="submit"
+class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+Send Invitation Link
+</button>
+</form>
+{% endif %}
+
+<!-- Unlock Account (visible only when locked) -->
+{% if is_locked %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="unlock">
+<button
+type="submit"
+class="w-full h-9 bg-amber-600 hover:bg-amber-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 017.9-.9M6 11h12a1 1 0 011 1v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a1 1 0 011-1z"/></svg> Unlock Account
+</button>
+</form>
+{% endif %}
+
+<!-- Activate / Deactivate Toggle -->
+{% if member.is_active %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="deactivate">
+<button
+type="submit"
+class="w-full h-9 border border-slate-200 edify-surface hover:bg-slate-50 edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+Deactivate User Account
+</button>
+</form>
+{% else %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="activate">
+<button
+type="submit"
+class="w-full h-9 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+Activate User Account
+</button>
+</form>
+{% endif %}
+
+</div>
+</div>
+
+<!-- Password Management Card -->
+<div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Password Management</h3>
+
+<div class="space-y-3 font-semibold text-[12px] text-slate-600">
+{% if is_locked %}
+<div class="p-3 rounded-surface bg-rose-50 border border-rose-200 edify-text-caption font-semibold text-rose-700">
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> This account is currently <strong>locked</strong> due to too many failed login attempts. Use "Unlock Account" above to restore access.
+</div>
+{% endif %}
+
+<div class="flex justify-between">
+<span class="text-slate-400">Failed Attempts:</span>
+<span class="text-slate-800 font-bold">{{ member.failed_login_count|default:"0" }}</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-400">Must Change Password:</span>
+<span class="text-slate-800 font-bold">{% if member.must_change_password %}Yes{% else %}No{% endif %}</span>
+</div>
+</div>
+
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="pt-3 border-t border-slate-100 space-y-3">
+{% csrf_token %}
+<input type="hidden" name="action" value="reset_password">
+
+<div>
+<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">New Password</label>
+<input
+type="password"
+name="new_password"
+required
+placeholder="Enter new password for user"
+class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all text-[12px]"
+>
+</div>
+
+<button
+type="submit"
+class="w-full h-9 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+>
+Reset Password
+</button>
+<p class="edify-text-caption text-slate-400 font-semibold">User will be required to change this password on their next login.</p>
+</form>
+</div>
+
+<!-- Critical Danger Zone (Admin only — deletion is enforced server-side too) -->
+{% if can_delete_users %}
+<div class="bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<p class="edify-text-caption text-rose-700 font-semibold leading-relaxed">
+Deleting this user immediately revokes their access (account disabled, active sessions ended) and marks the profile as deleted. History and audit logs are retained. You cannot delete yourself or the last active Admin.
+</p>
+
+<form
+method="POST"
+action="{% url 'frontend:admin_user_detail' member.id %}"
+>
+{% csrf_token %}
+<input type="hidden" name="action" value="delete">
+{% include "partials/components/confirm_action.html" with uid=member.id trigger_label="Delete User" trigger_class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all" title="Delete this user?" body="Their access is revoked immediately — the account is disabled and any active session ends. History and audit logs are kept." confirm_label="Delete user" %}
+</form>
+</div>
+{% endif %}
+
+</div>
+
+</div>
+
+</div>
+{% endblock %}

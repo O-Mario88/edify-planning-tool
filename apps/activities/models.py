@@ -1,0 +1,585 @@
+"""
+Activities models — the operational work ledger (the 21-state lifecycle).
+
+Ports of Activity, ActivityScheduleCostLine (auto-cost breakdown from the CD
+rate card at schedule time), and ActivityCompletionVerification (manual
+Salesforce SV-/TS- ID confirmation). Payments models (PaymentRequest etc.) live
+in the payments app.
+"""
+
+from __future__ import annotations
+
+from django.db import models, transaction
+from django.contrib.postgres.fields import ArrayField
+
+from apps.core.enums import (
+    ActivityStatus,
+    ActivityType,
+    ClusterMeetingSlot,
+    DeliveryType,
+    EvidenceStatus,
+    PaymentStatus,
+    ProgrammeActivityType,
+    ProgrammeDeliveryMode,
+    SsaIntervention,
+    VerificationStatus,
+)
+from apps.core.models import (
+    CuidField,
+    SoftDeleteModel,
+    TimeStampedModel,
+    _normalize_datetime_value,
+)
+
+
+class Activity(SoftDeleteModel):
+    """An operational work item (visit / training / cluster meeting / …)."""
+
+    id = CuidField()
+    activity_type = models.CharField(max_length=48, choices=ActivityType.choices)
+    # Governed master-data provenance.  This is deliberately a FK on the
+    # existing canonical Activity, not a second transactional activity model.
+    catalogue_item = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+    catalogue_version = models.PositiveIntegerField(null=True, blank=True)
+    activity_name_snapshot = models.CharField(max_length=255, null=True, blank=True)
+    activity_type_snapshot = models.CharField(max_length=32, null=True, blank=True)
+    delivery_method_snapshot = models.CharField(max_length=32, null=True, blank=True)
+    evidence_profile_snapshot = models.CharField(max_length=64, null=True, blank=True)
+    salesforce_record_type_snapshot = models.CharField(
+        max_length=32, null=True, blank=True
+    )
+    costing_profile_snapshot = models.CharField(max_length=64, null=True, blank=True)
+    source_ssa = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="recommended_activities",
+    )
+    source_ssa_verification_state = models.CharField(
+        max_length=32, null=True, blank=True
+    )
+    source_score = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+    source_classification = models.CharField(max_length=32, null=True, blank=True)
+    recommendation_reason = models.TextField(blank=True)
+    recommendation_source = models.JSONField(default=dict, blank=True)
+    follow_up_of_activity = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="follow_up_activities",
+    )
+    override_reason = models.TextField(blank=True)
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+    cluster = models.ForeignKey(
+        "clusters.Cluster",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+    project_id = models.CharField(max_length=30, null=True, blank=True)
+    # Set only for staff-conducted school visits priced via a shared daily cost
+    # pool (see apps.daily_visit_batches) — null for every other activity type.
+    daily_visit_batch = models.ForeignKey(
+        "daily_visit_batches.DailyVisitBatch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+
+    fy = models.CharField(max_length=16)
+    quarter = models.CharField(max_length=8)
+    month = models.IntegerField(null=True, blank=True)
+    week = models.IntegerField(null=True, blank=True)
+    scheduled_date = models.DateTimeField(null=True, blank=True)
+    planned_date = models.DateField(null=True, blank=True)
+    # Multi-day programme work: the last service day. Null (or equal to
+    # planned_date) means a one-day activity. Budget lines carry their own
+    # service dates so cross-period cost lands in the right month.
+    end_date = models.DateField(null=True, blank=True)
+    # §1: every budget amount originates from a dated plan — this names which
+    # planning workflow authorized the activity (see PlanningSource).
+    planning_source = models.CharField(max_length=32, blank=True, default="")
+    # school / cluster / project / programme / organization
+    activity_context_type = models.CharField(max_length=16, blank=True, default="")
+    # Non-school work carries a strategic rationale instead of an SSA
+    # recommendation (see SupportRationale).
+    support_rationale = models.CharField(max_length=48, blank=True, default="")
+    venue = models.CharField(max_length=255, blank=True, default="")
+    # Planning/reporting attributes specific to non-school programme work.
+    # The title itself remains governed by activity_name_snapshot from the
+    # approved Activity Catalogue.
+    programme_activity_type = models.CharField(
+        max_length=48,
+        choices=ProgrammeActivityType.choices,
+        null=True,
+        blank=True,
+    )
+    programme_delivery_mode = models.CharField(
+        max_length=16,
+        choices=ProgrammeDeliveryMode.choices,
+        null=True,
+        blank=True,
+    )
+    planned_school_count = models.PositiveIntegerField(null=True, blank=True)
+    # Location for work that has no school/cluster to inherit one from.
+    event_district = models.ForeignKey(
+        "geography.District",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="programme_activities",
+    )
+    week_start_date = models.DateField(null=True, blank=True)
+    week_end_date = models.DateField(null=True, blank=True)
+    fiscal_year = models.CharField(max_length=16, null=True, blank=True)
+    planned_month = models.IntegerField(null=True, blank=True)
+    planned_week = models.IntegerField(null=True, blank=True)
+
+    responsible_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    monitored_by_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    assigned_partner_id = models.CharField(max_length=30, null=True, blank=True)
+    delivery_type = models.CharField(
+        max_length=16, choices=DeliveryType.choices, default=DeliveryType.STAFF
+    )
+    cluster_slot = models.CharField(
+        max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True
+    )
+
+    # Core Schools tracking fields
+    visit_number = models.CharField(max_length=16, null=True, blank=True)
+    training_number = models.CharField(max_length=16, null=True, blank=True)
+    support_type = models.CharField(max_length=32, null=True, blank=True)
+
+    purpose_intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
+    )
+    activity_purpose_text = models.TextField(null=True, blank=True)
+    purpose_type = models.CharField(max_length=64, null=True, blank=True)
+    focus_intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
+    )
+    secondary_focus_interventions = ArrayField(
+        base_field=models.CharField(max_length=64, choices=SsaIntervention.choices),
+        default=list,
+        blank=True,
+    )
+    expected_outcome = models.TextField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=32,
+        choices=ActivityStatus.choices,
+        default=ActivityStatus.NOT_PLANNED,
+    )
+    evidence_status = models.CharField(
+        max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.NONE
+    )
+
+    # Salesforce-ready (manual ID confirmation, not integrated).
+    salesforce_activity_id = models.CharField(max_length=128, null=True, blank=True)
+    salesforce_activity_type = models.CharField(
+        max_length=16, null=True, blank=True
+    )  # visit | training
+
+    # SSA collection integration
+    ssa_collection_expected = models.BooleanField(default=False)
+    ssa_not_collected_reason = models.CharField(max_length=255, null=True, blank=True)
+
+    ia_verification_status = models.CharField(
+        max_length=16,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
+    )
+    # The moment the completion enters IA's queue. This is intentionally
+    # distinct from updated_at (which changes throughout review) so SLA
+    # reporting is reproducible and never inferred from a mutable timestamp.
+    submitted_to_ia_at = models.DateTimeField(null=True, blank=True)
+    ia_confirmed_at = models.DateTimeField(null=True, blank=True)
+    ia_confirmed_by = models.CharField(max_length=30, null=True, blank=True)
+    payment_status = models.CharField(
+        max_length=32, choices=PaymentStatus.choices, default=PaymentStatus.NONE
+    )
+
+    # Reschedule trail.
+    reschedule_count = models.IntegerField(default=0)
+    last_reason = models.CharField(max_length=512, null=True, blank=True)
+
+    # Auto-cost from the CD rate card at schedule time. Despite the field
+    # name, this holds plain integer UGX (whole shillings), not cents --
+    # apps.budget.costing_service is the sole writer and the CD rate card
+    # (apps.budget.models.CostSetting) is documented "1 unit = 1 UGX". Do
+    # not divide/multiply this value by 100.
+    est_cost_cents = models.IntegerField(default=0)
+    cost_missing = models.BooleanField(default=False)
+
+    # PL review handoff when a CCEO completes field work.
+    pl_review_note = models.CharField(max_length=512, null=True, blank=True)
+    pl_reviewed_at = models.DateTimeField(null=True, blank=True)
+    pl_reviewed_by = models.CharField(max_length=30, null=True, blank=True)
+
+    # Training/cluster-meeting completion detail.
+    # The confirmed headcount at scheduling time.  This remains available for
+    # planning, fund requests and budget reporting before actual attendance is
+    # recorded after the activity.
+    expected_participants = models.IntegerField(null=True, blank=True)
+    # Cluster participant planning. The user states how many people to invite
+    # from each school; the total is derived, never typed.
+    #
+    # The school count is SNAPSHOT rather than looked up on read, because
+    # cluster membership changes and an approved budget must keep the number it
+    # was priced with. A school joining the cluster in November must not
+    # silently re-price an activity approved in August.
+    participants_per_school = models.IntegerField(null=True, blank=True)
+    cluster_school_count_snapshot = models.IntegerField(null=True, blank=True)
+    teachers_attended = models.IntegerField(null=True, blank=True)
+    leaders_attended = models.IntegerField(null=True, blank=True)
+    other_participants = models.IntegerField(null=True, blank=True)
+    next_meeting_date = models.DateTimeField(null=True, blank=True)
+    attended_school_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+
+    class Meta:
+        db_table = "activity"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["school"]),
+            models.Index(fields=["cluster"]),
+            models.Index(fields=["catalogue_item", "fy", "status"]),
+            models.Index(fields=["catalogue_item", "focus_intervention"]),
+            models.Index(fields=["fy", "quarter"]),
+            models.Index(fields=["responsible_staff_id"]),
+            # The exact filter TargetAchievementService.rebuild() runs once
+            # per user (CD/PL/RVP Analytics, My/Team Targets) — the
+            # responsible_staff_id-only index above still needs a full
+            # in-row filter on fy/activity_type for every matching row.
+            models.Index(fields=["responsible_staff_id", "fy", "activity_type"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["scheduled_date"]),
+            models.Index(fields=["assigned_partner_id"]),
+            models.Index(fields=["ia_verification_status", "payment_status"]),
+            models.Index(fields=["evidence_status"]),
+            models.Index(fields=["daily_visit_batch"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(status="closed")
+                | models.Q(
+                    salesforce_record_type_snapshot__in=[
+                        "NONE",
+                        "SSA_DATA_GATHERING",
+                    ]
+                )
+                | (
+                    models.Q(salesforce_activity_id__isnull=False)
+                    & ~models.Q(salesforce_activity_id="")
+                ),
+                name="closed_activity_must_have_sf_id",
+            ),
+            # The Salesforce Activity ID is the external system's unique key
+            # for a piece of work. A hundred duplicate pairs existed with
+            # nothing preventing them: two verified activities at one school
+            # claiming the same external record, so IA verification and
+            # finance could not tell them apart. Partial, so the many rows
+            # legitimately awaiting an ID are unaffected.
+            models.UniqueConstraint(
+                fields=["salesforce_activity_id"],
+                condition=models.Q(salesforce_activity_id__isnull=False)
+                & ~models.Q(salesforce_activity_id="")
+                & models.Q(deleted_at__isnull=True),
+                name="uniq_activity_salesforce_id",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        # ``scheduled_date`` is an instant, not a date-only planning field.
+        # Normalize direct model/admin/import writes before Django prepares the
+        # database value so a legacy naïve string or datetime cannot leak into
+        # analytics, availability, or period boundaries.
+        if self.scheduled_date is not None:
+            self.scheduled_date = _normalize_datetime_value(self.scheduled_date)
+        super().save(*args, **kwargs)
+        try:
+            from apps.core_schools.models import CoreActivitySlot
+            from apps.core_schools.services import resync_plan_completion
+
+            slot = CoreActivitySlot.objects.filter(activity_id=self.id).first()
+            if slot:
+                with transaction.atomic():
+                    slot.status = self.status
+                    if self.scheduled_date:
+                        slot.scheduled_for = self.scheduled_date.date()
+                    slot.save(update_fields=["status", "scheduled_for", "updated_at"])
+                    # Keep the CorePlan's 4+4 package counters in lock-step
+                    # with the slot's real, mirrored status (this is the real
+                    # reachable path — see resync_plan_completion docstring).
+                    resync_plan_completion(slot.core_plan)
+        except Exception:
+            # Never break an Activity save over the core-slot mirror, but a
+            # silent pass here hid real drift (stale slots, wrong package
+            # counters) — log it so System Health/ops can see the failures.
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Core slot mirror resync failed for activity %s",
+                self.id,
+                exc_info=True,
+            )
+
+
+class ActivityScheduleCostLine(TimeStampedModel):
+    """Persisted cost breakdown for a scheduled activity — sourced from
+    CostSetting at schedule time so fund requests reconcile to the catalogue.
+
+    This IS the activity budget line: one row per cost item (transport, lunch,
+    venue, facilitation, meals...), each tracing to the catalogue version it was
+    priced against. Amounts are integer UGX (whole shillings)."""
+
+    id = CuidField()
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="schedule_cost_lines"
+    )
+    cost_setting_key = models.CharField(max_length=128)
+    label = models.CharField(max_length=255)
+    # BigInteger like CostSetting.unit_cost and total_cost — the 32-bit
+    # columns overflowed at ~UGX 2.1bn/line, reachable for a large
+    # training × participants (2026-07-30 audit M-14).
+    unit_cost = models.BigIntegerField()  # UGX, integer
+    quantity = models.IntegerField(default=1)
+    amount = models.BigIntegerField()  # UGX, integer
+    cost_setting_version = models.IntegerField(default=1)
+    # Catalogue provenance — the catalogue + version this line was priced from.
+    catalogue_id = models.CharField(max_length=30, null=True, blank=True)
+    catalogue_version = models.IntegerField(null=True, blank=True)
+    activity_catalogue_item_id = models.CharField(max_length=30, null=True, blank=True)
+    activity_catalogue_version = models.PositiveIntegerField(null=True, blank=True)
+    costing_profile = models.CharField(max_length=64, null=True, blank=True)
+    # Itemized line type (transport / breakfast / lunch / dinner / accommodation
+    # / venue / facilitation / participant_meals / mobilisation / lump_sum ...).
+    line_item_type = models.CharField(max_length=64, null=True, blank=True)
+    currency = models.CharField(max_length=8, default="UGX")
+    description = models.CharField(max_length=255, null=True, blank=True)
+    total_cost = models.BigIntegerField(null=True, blank=True)
+    planned_date = models.DateField(null=True, blank=True)
+    week_start_date = models.DateField(null=True, blank=True)
+    week_end_date = models.DateField(null=True, blank=True)
+    month = models.IntegerField(null=True, blank=True)
+    quarter = models.CharField(max_length=8, null=True, blank=True)
+    fiscal_year = models.CharField(max_length=16, null=True, blank=True)
+    responsible_user = models.CharField(max_length=30, null=True, blank=True)
+    responsible_role = models.CharField(max_length=64, null=True, blank=True)
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    cluster = models.ForeignKey(
+        "clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    partner = models.ForeignKey(
+        "partners.Partner", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    @property
+    def finance_status(self) -> str:
+        """Resolve the dynamic financial status of the budget line from the 17-state lifecycle."""
+        # 1. Check linked AdvanceRequest status first
+        adv = self.advance_requests.first()
+        if adv:
+            status = adv.status
+            if status == "accounted":
+                # Accountability isn't complete without the NetSuite reference:
+                # missing ID is a blocking state, not a terminal one.
+                if adv.accountability_netsuite_id:
+                    return "Cleared"
+                return "NetSuite ID Required"
+            elif status == "disbursed":
+                if self.activity.status == "ia_verified":
+                    return "Accountability Pending"
+                return "Disbursed"
+            elif status == "confirmed_for_advance":
+                return "Ready for Disbursement"
+            elif status == "self_funded_pending_reimbursement":
+                return "Execution Pending"
+            elif status == "returned":
+                return "Returned"
+            elif status == "cancelled":
+                return "Rejected"
+
+        # 2. Check WeeklyFundRequest status
+        wfr_line = self.weekly_request_lines.first()
+        if wfr_line:
+            wfr = wfr_line.weekly_fund_request
+            status = wfr.status
+            if status == "pending_responsible_confirmation":
+                return "Included in Weekly Request"
+            elif status == "pending_pl_approval":
+                return "Submitted for Approval"
+            elif status == "approved_by_pl":
+                return "PL Approved"
+            elif status == "approved_by_cd":
+                return "CD Approved"
+            elif status == "approved_by_rvp":
+                return "RVP Approved"
+            elif status == "confirmed_for_advance":
+                return "Ready for Disbursement"
+            elif status == "disbursed":
+                return "Disbursed"
+            elif status == "returned_by_accountant":
+                return "Returned"
+
+        # 3. Check Activity execution status
+        if self.activity.status == "completed":
+            return "Evidence Submitted"
+        elif self.activity.status == "ia_verified":
+            return "IA Verified"
+
+        return "Draft Costed"
+
+    class Meta:
+        db_table = "activity_schedule_cost_line"
+        indexes = [models.Index(fields=["activity"])]
+        constraints = [
+            # One cost component per activity per catalogue key — the writer
+            # (apply_to_activity) already guarantees this via delete+rebuild;
+            # the constraint makes the database enforce it against any future
+            # second writer (2026-07-30 audit M-15).
+            models.UniqueConstraint(
+                fields=["activity", "cost_setting_key"],
+                name="uniq_cost_component_per_activity",
+                # Empty-key rows are already their own violation (a cost line
+                # without a catalogue source) surfaced by the health checks —
+                # excluding them keeps this constraint applyable on legacy
+                # data without weakening the real invariant.
+                condition=~models.Q(cost_setting_key=""),
+            )
+        ]
+
+
+class SalesforceEntrySource(models.TextChoices):
+    """Who supplied an Activity Salesforce ID, for audit and duplicate-
+    investigation purposes (2026-07-15 preventive-verification mandate)."""
+
+    STAFF_SELF_ENTRY = "staff_self_entry", "Staff self-entry"
+    MANAGING_STAFF_FOR_PARTNER = (
+        "managing_staff_for_partner",
+        "Managing staff (for Partner activity)",
+    )
+    LEGACY_IMPORT = "legacy_import", "Legacy import"
+    ADMIN_EXCEPTION = "admin_exception", "Admin exception"
+
+
+class ActivitySalesforceReference(TimeStampedModel):
+    """The duplicate-prevention registry for Activity Salesforce IDs — proof
+    a completed field activity (visit or training) was entered into
+    Salesforce. Never to be confused with the platform School ID (SSA CSV
+    matching), a School's own Salesforce ID, or the NetSuite Expense ID
+    (financial accountability) — those are separate identifiers on separate
+    models.
+
+    normalized_value carries the single-Salesforce-organization global
+    uniqueness constraint (see apps.activities.salesforce module docstring
+    for why); raw_value preserves exactly what was typed/pasted, for audit.
+    Only apps.activities.salesforce.reserve_salesforce_id() may write this
+    model — no other code path should create or update a row here."""
+
+    id = CuidField()
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="salesforce_reference"
+    )
+    raw_value = models.CharField(max_length=128)
+    normalized_value = models.CharField(max_length=128, unique=True)
+    activity_type = models.CharField(max_length=48)
+    expected_prefix = models.CharField(max_length=8)
+    entry_source = models.CharField(
+        max_length=32, choices=SalesforceEntrySource.choices
+    )
+    entered_by = models.CharField(max_length=30)
+    entered_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "activity_salesforce_reference"
+        indexes = [models.Index(fields=["normalized_value"])]
+
+
+class ActivityCompletionVerification(TimeStampedModel):
+    """Manual Salesforce SV-/TS- ID confirmation (IA verifies the entry)."""
+
+    id = CuidField()
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="verification"
+    )
+    salesforce_id = models.CharField(max_length=128)  # SV- or TS-
+    entered_by = models.CharField(max_length=30)  # responsible staff userId
+    entered_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=16,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
+    )
+    ia_actor_id = models.CharField(max_length=30, null=True, blank=True)
+    ia_action_at = models.DateTimeField(null=True, blank=True)
+    ia_note = models.CharField(max_length=512, null=True, blank=True)
+
+    class Meta:
+        db_table = "activity_completion_verification"
+
+
+from .ia_models import (  # noqa: E402 — circular import, must load after Activity is defined
+    IAVerification,
+    VerificationChecklist,
+    VerificationComment,
+    VerificationDecision,
+    ReturnedReason,
+    DuplicateActivity,
+    VerificationHistory,
+)
+from .closure_models import (  # noqa: E402 — circular import, must load after Activity is defined
+    ActivityClosure,
+    ClosureChecklist,
+    ClosureBlocker,
+    CompletedActivitySnapshot,
+    ActivityReopenRequest,
+    AnalyticsPublishRecord,
+    ActivityTimelineEvent,
+)
+
+__all__ = [
+    "Activity",
+    "ActivityScheduleCostLine",
+    "SalesforceEntrySource",
+    "ActivitySalesforceReference",
+    "ActivityCompletionVerification",
+    "IAVerification",
+    "VerificationChecklist",
+    "VerificationComment",
+    "VerificationDecision",
+    "ReturnedReason",
+    "DuplicateActivity",
+    "VerificationHistory",
+    "ActivityClosure",
+    "ClosureChecklist",
+    "ClosureBlocker",
+    "CompletedActivitySnapshot",
+    "ActivityReopenRequest",
+    "AnalyticsPublishRecord",
+    "ActivityTimelineEvent",
+]

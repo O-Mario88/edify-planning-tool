@@ -1,0 +1,4 @@
+<option value="">Not specified</option>
+{% for sub_county in sub_counties %}
+<option value="{{ sub_county.id }}">{{ sub_county.name }}</option>
+{% endfor %}

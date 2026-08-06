@@ -1,0 +1,31 @@
+{% comment %}
+  One card's pager. Rendered only when there is more than a page, so a card
+  with three rows carries no furniture it does not need.
+
+  Each card pages independently: its own query parameter, and every other
+  filter preserved through `request.GET.urlencode` so paging never silently
+  drops the period or the district somebody chose.
+{% endcomment %}
+{% if pager.paginated %}
+<nav class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100"
+     aria-label="{{ label }} pages">
+  <p class="edify-text-caption font-semibold text-slate-400 tabular-nums">
+    Showing {{ pager.first_index }}–{{ pager.last_index }} of {{ pager.total }}
+  </p>
+  <div class="flex items-center gap-1.5">
+    {% if pager.has_previous %}
+    <a href="?{{ base_query }}{{ param }}={{ pager.previous_page }}"
+       class="h-8 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center">Previous</a>
+    {% else %}
+    <span class="h-8 px-3 rounded-control border border-slate-100 text-[12px] font-bold text-slate-300 inline-flex items-center" aria-hidden="true">Previous</span>
+    {% endif %}
+    <span class="edify-text-caption font-bold text-slate-500 tabular-nums px-1.5">{{ pager.page }} / {{ pager.page_count }}</span>
+    {% if pager.has_next %}
+    <a href="?{{ base_query }}{{ param }}={{ pager.next_page }}"
+       class="h-8 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center">Next</a>
+    {% else %}
+    <span class="h-8 px-3 rounded-control border border-slate-100 text-[12px] font-bold text-slate-300 inline-flex items-center" aria-hidden="true">Next</span>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

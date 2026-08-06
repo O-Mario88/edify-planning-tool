@@ -1,0 +1,89 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Professional Development Dashboard · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <!-- Header -->
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">People & Culture</p>
+      <h1 class="edify-page-title edify-page-header__title">Professional Development Dashboard</h1>
+      <p class="edify-page-header__description">
+        Oversee course tracking, fund accountability, and HR sign-off across every staff member's PD plan — FY {{ fy }}{% if locked_country %} · {{ locked_country }}{% endif %}.
+      </p>
+    </div>
+    <span class="edify-text-caption font-semibold text-slate-400">Last refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+  </div>
+
+  <!-- Messages notifications -->
+  {% if messages %}
+  <div class="space-y-2">
+  {% for message in messages %}
+    <div class="p-3.5 rounded-surface border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+      <span>{{ message }}</span>
+      <button type="button" @click="$el.parentElement.remove()" class="text-slate-400 hover:text-slate-600" aria-label="Dismiss notification">&times;</button>
+    </div>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
+  <form id="pd-filters" hx-get="/cpd-learning" hx-target="#pd-dashboard-body" hx-swap="innerHTML"
+        hx-trigger="change, search" hx-push-url="true"
+        class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country</span>
+      {% if locked_country %}
+      <div class="mt-1 w-full h-9 px-2 rounded-surface border text-[12px] font-semibold flex items-center edify-surface-muted edify-border edify-text">{{ locked_country }}</div>
+      {% else %}
+      <span class="edify-filter-label">Country</span>
+      <select aria-label="Country" name="country" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">All Countries</option>
+        {% for c in country_options %}<option value="{{ c }}" {% if c == country %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+      {% endif %}
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
+      <select aria-label="Role" name="role" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">All Roles</option>
+        {% for key, label in eligible_roles %}<option value="{{ key }}" {% if key == role_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Course Status</span>
+      <select aria-label="Status" name="status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">All Statuses</option>
+        {% for key, label in status_options %}<option value="{{ key }}" {% if key == status_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reminder Status</span>
+      <select aria-label="Reminder" name="reminder" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">Any</option>
+        {% for key, label in reminder_options %}<option value="{{ key }}" {% if key == reminder_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search</span>
+      {% comment %}Search moved to the top bar (attach_to pd-filters).{% endcomment %}
+    </label>
+  </form>
+
+  <div id="pd-dashboard-body">
+    {% include "partials/hr/pd_dashboard/body.html" %}
+  </div>
+
+  <!-- Drawer mount point (Adjust Allocation) -->
+  <div id="pd-drawer-root"></div>
+
+</div>
+{% endblock %}

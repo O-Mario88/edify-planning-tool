@@ -1,0 +1,23 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Returned Evidence — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Quality & Insights</p>
+<h1 class="edify-page-title edify-page-header__title">Returned Evidence</h1>
+<p class="edify-page-header__description">Review activities returned by PL or IA requiring modifications before verification.</p>
+</div>
+</div>
+
+<div>
+{% include "partials/my_plan/activity_table.html" with activity_list=returned_activities %}
+</div>
+
+</div>
+{% endblock %}

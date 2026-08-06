@@ -1,0 +1,129 @@
+{% comment %}PL Fund Approval root — re-rendered by HTMX on filter/select/action.{% endcomment %}
+<div class="space-y-5">
+
+  {% if action_error %}
+  <div class="p-3 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700">{{ action_error }}</div>
+  {% endif %}
+
+  <!-- Header -->
+  <div class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <h1 class="edify-page-header__title edify-page-title">Fund Approvals</h1>
+      <p class="edify-page-header__description">All fund requests are derived from CCEO plans. You approve only funds for your own team.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/fund-approvals?export=csv" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export
+      </a>
+      <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
+              hx-vals='{"action":"approve_all","fy":"{{ fy }}","month":"{{ month }}"}'
+              class="inline-flex items-center gap-1.5 h-10 px-4 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold shadow-sm transition-colors">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Approve All Valid
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
+  <form id="fa-filters" hx-get="/fund-approvals" hx-target="#fund-approval-root" hx-swap="innerHTML" hx-trigger="change, search"
+        class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
+      <select aria-label="Month" name="month" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
+        <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
+        <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
+        <option value="4" {% if month == 4 %}selected{% endif %}>April</option>
+        <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
+        <option value="6" {% if month == 6 %}selected{% endif %}>June</option>
+        <option value="7" {% if month == 7 %}selected{% endif %}>July</option>
+        <option value="8" {% if month == 8 %}selected{% endif %}>August</option>
+        <option value="9" {% if month == 9 %}selected{% endif %}>September</option>
+        <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
+        <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
+        <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
+      <select aria-label="Status" name="status" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        <option value="">All Statuses</option>
+        {% for s in status_options %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block lg:col-span-3">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Search CCEO or district</span>
+{% comment %}Search moved to the top bar.{% endcomment %}
+    </label>
+  </form>
+
+  <!-- KPI strip -->
+  {% include "components/kpi_strip.html" with items=kpis %}
+
+  {% if not has_team %}
+  <div class="card p-12">
+    {% include "components/empty_state.html" with title="No supervised CCEOs" message="You don't have any CCEOs assigned to your supervision yet, so there are no team fund plans to approve." %}
+  </div>
+  {% else %}
+
+  <!-- Focused two-pane approval workspace -->
+  <div x-data="{ selectedCceo: '{{ selected.cceo_user_id|default:'' }}' }"
+       class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(320px,0.85fr)_minmax(0,1.75fr)]">
+
+    <!-- Queue -->
+    <section class="card overflow-hidden" aria-label="Fund approval queue">
+      <div class="flex items-center justify-between px-4 py-3.5 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
+          <span class="bg-slate-100 text-slate-500 font-bold rounded-pill px-1.5 edify-text-caption tabular-nums">{{ queue_count }}</span>
+        </div>
+      </div>
+      <div class="divide-y divide-slate-50 max-h-[58vh] lg:max-h-[720px] overflow-y-auto">
+        {% for q in queue %}
+        <button type="button"
+                hx-get="/fund-approvals/detail?cceo={{ q.cceo_user_id }}&fy={{ fy }}&month={{ month }}" hx-target="#fund-plan-detail" hx-swap="innerHTML"
+                @click="selectedCceo = '{{ q.cceo_user_id }}'"
+                :class="selectedCceo === '{{ q.cceo_user_id }}' ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-200' : ''"
+                :aria-pressed="selectedCceo === '{{ q.cceo_user_id }}'"
+                aria-controls="fund-plan-detail"
+                class="w-full text-left px-4 py-3 hover:bg-slate-50/60 transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="h-9 w-9 rounded-pill bg-slate-100 text-slate-600 flex items-center justify-center edify-text-caption font-black shrink-0">{{ q.initials }}</span>
+              <div class="min-w-0">
+                <p class="text-[13px] font-bold text-slate-800 truncate">{{ q.name }}</p>
+                <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ q.district }} · {{ q.region }}</p>
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              {% include "components/badge.html" with tone=q.status_tone label=q.status size="sm" %}
+              <p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ q.total_fmt }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-slate-50 border border-slate-100 edify-text-caption font-bold text-slate-500">{{ q.chips.visits }} Visits</span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-violet-50 border border-violet-100 edify-text-caption font-bold text-violet-600">{{ q.chips.partner }} Partner</span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-primary-soft border edify-primary-border edify-text-caption font-bold edify-primary-text">{{ q.chips.clusters }} Clusters</span>
+            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill bg-amber-50 border border-amber-100 edify-text-caption font-bold text-amber-700">{{ q.chips.trainings }} Trainings</span>
+          </div>
+        </button>
+        {% empty %}
+        <p class="px-4 py-10 text-center text-[12px] font-semibold text-slate-400">No fund plans match your filters.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Selected request detail -->
+    <section class="card min-w-0 p-4 sm:p-5 lg:sticky lg:top-4" id="fund-plan-detail" aria-live="polite">
+      {% include "partials/fund_approvals/detail.html" %}
+    </section>
+  </div>
+  {% endif %}
+</div>

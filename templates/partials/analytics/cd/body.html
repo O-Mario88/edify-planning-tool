@@ -1,0 +1,61 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── Country-health KPI strip ─────────────────────────────────────────── #}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+  {# Shared country geography; identical system data for every authorized role. #}
+  {% include "partials/analytics/regional_performance.html" %}
+
+  {# ── Row 1 | 2 : Performance vs Target · SSA by Intervention ──────────── #}
+  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/performance_vs_target.html" %}
+    {% include "partials/analytics/cd/ssa_interventions.html" %}
+  </div>
+
+  {# ── Row 3 | 4 : Target delivery · verified impact ────────────────────── #}
+  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/target_by_pl.html" %}
+    {% include "partials/analytics/cd/impact_summary.html" %}
+  </div>
+
+  {# ── Row 5 | 6 : District signals · recommended actions ───────────────── #}
+  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/district_heatmap.html" %}
+    {% include "partials/analytics/cd/recommended_actions.html" %}
+  </div>
+
+  {# ── Row 7 | 8 : Partner · cluster performance ────────────────────────── #}
+  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/partner_performance.html" %}
+    {% include "partials/analytics/cd/cluster_performance.html" %}
+  </div>
+
+  {# ── Row 9 | 10 : PL oversight · regional summary ─────────────────────── #}
+  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/pl_oversight.html" %}
+    {% include "partials/analytics/cd/regional_summary.html" %}
+  </div>
+
+  {# ── Row 11 | 12 : CCEO execution detail · validated ranking ──────────── #}
+  <div data-cd-cceo-performance-row
+       data-cd-analytics-row
+       class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="min-w-0 flex items-stretch">
+      {% include "partials/analytics/cd/cceo_snapshot.html" %}
+    </div>
+    <div class="min-w-0 flex items-stretch">
+      {% include "partials/analytics/cd/cceo_leaderboard.html" %}
+    </div>
+  </div>
+  {# CCEO performance row end #}
+
+  {# Wide analytical cards retain their natural content height. #}
+  <div data-cd-analytics-wide-card>
+    {% include "partials/analytics/cd/budget_finance.html" %}
+  </div>
+  <div data-cd-analytics-wide-card>
+    {% include "partials/analytics/cd/operational_risk.html" %}
+  </div>
+
+</div>

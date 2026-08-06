@@ -1,0 +1,170 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Team Leave & Coverage Tracker — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <!-- Header -->
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Leave & Coverage Tracker</h1>
+      <p class="edify-page-header__description">Monitor leave balances, active coverage handovers, and department availability</p>
+    </div>
+
+    <div class="edify-page-header__controls">
+      {% if search_q %}
+      <a href="{% url 'frontend:leave_tracker' %}" class="px-4 py-2.5 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-surface edify-text-caption font-bold uppercase transition">Clear search</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Active Coverages Grid -->
+  {% if coverages %}
+  <div class="space-y-3">
+    <h3 class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Active Delegated Coverages</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for cov in coverages %}
+      <div class="edify-surface border border-slate-100 rounded-surface p-5 shadow-sm space-y-4 hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-0.5 edify-primary-soft border edify-primary-border rounded-pill edify-text-caption font-bold edify-primary-text tracking-wider">Active Coverage</span>
+          <span class="edify-text-caption text-slate-400 font-bold">Expires: {{ cov.end_datetime|date:"d M" }}</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex -space-x-2">
+            <span class="w-8 h-8 rounded-pill edify-primary-solid text-white border-2 border-white flex items-center justify-center font-extrabold edify-text-caption" title="Covering: {{ cov.covering_staff.user.name }}">
+              {{ cov.covering_staff.user.name|slice:":2"|upper }}
+            </span>
+            <span class="w-8 h-8 rounded-pill bg-slate-200 border-2 border-white flex items-center justify-center font-bold edify-text-caption text-slate-600" title="Original: {{ cov.original_staff.user.name }}">
+              {{ cov.original_staff.user.name|slice:":2"|upper }}
+            </span>
+          </div>
+          <div>
+            <p class="text-[13px] font-bold text-slate-800"><span class="text-slate-500 font-medium">Covering:</span> {{ cov.covering_staff.user.name }}</p>
+            <p class="text-[12px] text-slate-500 font-medium"><span class="text-slate-400 font-medium">Acting for:</span> {{ cov.original_staff.user.name }}</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-surface p-3 edify-text-caption text-slate-600 font-medium leading-relaxed">
+          <p class="font-bold edify-text-caption uppercase text-slate-400 mb-1">Handover Instructions</p>
+          {{ cov.leave_request.coverage_notes|default:"No instructions provided"|truncatechars:120 }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Team Leave Tracker Table (matching bottom card design of Reference 2) -->
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-[15px] font-bold text-slate-850">Team Resource Cockpit</h3>
+      <span class="edify-text-caption bg-slate-100 text-slate-600 px-2 py-0.5 rounded-pill font-bold">Active Year: {% now "Y" %}</span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-[12px] border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-left text-slate-400">
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase tracking-wider">Team Member</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase tracking-wider">Role & Title</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase tracking-wider text-center">Remaining PTO</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase tracking-wider text-center">Remaining Sick</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase tracking-wider">Status</th>
+            <th class="px-4 py-3.5 edify-text-caption font-bold uppercase tracking-wider">Active Cover</th>
+            <th class="px-5 py-3.5 edify-text-caption font-bold uppercase tracking-wider text-right">Next Leave Scheduled</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium">
+          {% for sp in team %}
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-5 py-4 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-pill edify-primary-soft border edify-primary-border edify-primary-text font-extrabold flex items-center justify-center edify-text-caption">
+                {{ sp.name|slice:":2"|upper }}
+              </div>
+              <span class="font-bold text-slate-850 block text-[13px]">{{ sp.name }}</span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="font-semibold text-slate-650 block">{{ sp.title }}</span>
+              <span class="edify-text-caption text-slate-400 font-bold block uppercase mt-0.5">{{ sp.role }}</span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.pto_remaining }} days</span>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.sick_remaining }} days</span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider border
+                {% if sp.status == 'On Leave' %}bg-rose-50 text-rose-700 border-rose-200
+                {% else %}bg-emerald-50 text-emerald-700 border-emerald-200{% endif %}">
+                {{ sp.status }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              {% if sp.status == 'On Leave' %}
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-pill edify-primary-solid animate-pulse"></span>
+                <span class="font-bold edify-primary-text">{{ sp.covering_person }}</span>
+              </div>
+              {% else %}
+              <span class="text-slate-400 font-semibold">—</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-4 text-right text-slate-500 font-semibold">
+              {% if sp.next_leave %}
+              <span class="font-bold text-slate-800">{{ sp.next_leave.start_date }}</span>
+              <span class="edify-text-caption text-slate-400 block mt-0.5">({{ sp.next_leave.days_charged }} working days)</span>
+              {% else %}
+              <span class="text-slate-400 font-semibold">None scheduled</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-5 py-12 text-center text-slate-400">
+              <p class="text-[36px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.9-6.4l-1.4 1.4M7.5 16.5l-1.4 1.4m0-11.3l1.4 1.4m9 9l1.4 1.4M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg></p>
+              <p class="font-bold text-[14px]">No team members found.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Heatmap Matrix Component at bottom of tracker page (matching design specifications) -->
+  <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b pb-3">
+      <h3 class="text-[14px] font-bold text-slate-850">Team Availability Matrix (Heatmap)</h3>
+      <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption edify-primary-text font-bold hover:underline">View full report &rarr;</a>
+    </div>
+
+    <div class="space-y-4">
+      {% for row in availability_preview %}
+      <div class="flex items-center justify-between edify-text-caption font-semibold">
+        <div class="w-1/3 truncate">
+          <span class="font-bold text-slate-800 block">{{ row.staff_name }}</span>
+          <span class="edify-text-caption text-slate-450 block uppercase mt-0.5">{{ row.role }}</span>
+        </div>
+
+        <div class="w-2/3 flex gap-1 justify-end">
+          {% for wk in row.weeks %}
+          <div
+            class="w-8 h-6 rounded-surface flex items-center justify-center edify-text-caption font-bold text-white shadow-sm transition hover:scale-105"
+            title="Wk starting {{ wk.start }}: {{ wk.status }}"
+            style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
+          >
+            {% if wk.status == 'Blocked' %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4M6 11h12a1 1 0 011 1v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a1 1 0 011-1z"/></svg>{% else %}{{ wk.act_count }}{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% load frontend_filters %}
+<div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
+  <div class="hidden lg:block overflow-x-auto">
+    <table class="w-full text-left" aria-describedby="ia-queue-caption">
+      <caption id="ia-queue-caption" class="sr-only">Activity verification records ordered by critical risk, overdue status, and oldest submission.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Activity or SSA record</th>
+          <th scope="col">School or cluster</th>
+          <th scope="col">Record type</th>
+          <th scope="col">Submitted by</th>
+          <th scope="col">Evidence status</th>
+          <th scope="col">Salesforce ID status</th>
+          <th scope="col">Submission date</th>
+          <th scope="col">Age</th>
+          <th scope="col">Risk</th>
+          <th scope="col">Next action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for act in queue %}
+        <tr>
+          <td>
+            <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">FY {{ act.fy }} · {{ act.quarter }}</span>
+          </td>
+          <td>
+            <strong class="block">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
+          </td>
+          <td>{{ act.activityType|title|replace_underscore }}</td>
+          <td>
+            <span class="block">{{ act.responsibleStaffId|default:"Unassigned" }}</span>
+            <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.deliveryType|title }}</span>
+          </td>
+          <td>
+            <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
+          </td>
+          <td>
+            <span class="status-pill warning">{{ act.salesforce_status }}</span>
+            <span class="block mt-1 font-mono edify-text-caption">{{ act.salesforceActivityId }}</span>
+          </td>
+          <td><time datetime="{{ act.submitted_at|date:'c' }}">{{ act.submitted_at|date:"j M Y, H:i" }}</time></td>
+          <td class="tabular-nums {% if act.is_overdue %}text-[var(--edify-danger)] font-semibold{% endif %}">{{ act.age_label }}</td>
+          <td><span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span></td>
+          <td>
+            <span class="block max-w-[17rem] text-[var(--edify-text-muted)]">{{ act.next_action_status }}</span>
+            <div class="mt-2 flex items-center gap-2">
+              <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary h-9">Review</a>
+              <details class="edify-row-overflow relative">
+                <summary class="btn btn-ghost h-9 w-9 px-0" aria-label="More actions for {{ act.activityType|title|replace_underscore }} at {{ act.schoolName|default:'cluster' }}">•••</summary>
+                <div class="edify-row-overflow__menu">
+                  <a href="/ia/compare/?activity_id={{ act.id }}">Compare evidence</a>
+                  <a href="/activities/{{ act.id }}/timeline/">View audit timeline</a>
+                </div>
+              </details>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10">
+            {% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="lg:hidden divide-y divide-[var(--edify-border)]" aria-label="Activity verification records">
+    {% for act in queue %}
+    <li class="p-4 space-y-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">{{ act.activityType|title|replace_underscore }}</a>
+          <strong class="block truncate">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+          <span class="block edify-text-caption text-[var(--edify-text-muted)]">#{{ act.id|slice:":8" }} · {{ act.age_label }} old</span>
+        </div>
+        <span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span>
+      </div>
+      <p class="text-sm text-[var(--edify-text-muted)]">{{ act.next_action_status }}</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="status-pill {% if act.has_evidence %}success{% else %}danger{% endif %}">{{ act.evidence_status }}</span>
+        <span class="status-pill warning">{{ act.salesforce_status }}</span>
+      </div>
+      <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary min-h-11 w-full">Review</a>
+    </li>
+    {% empty %}
+    <li>{% include "components/empty_state.html" with title="No Activities Awaiting Verification" message="All submitted Activities have been reviewed." tone="success" %}</li>
+    {% endfor %}
+  </ul>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--edify-border)]" aria-label="Verification queue pages">
+    <span class="edify-text-caption text-[var(--edify-text-muted)]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</span>
+    <div class="flex items-center gap-2">
+      {% if page_obj.has_previous %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Previous</a>{% endif %}
+      {% if page_obj.has_next %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.next_page_number }}" hx-get="/ia/verification/?page={{ page_obj.next_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Next</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>

@@ -1,0 +1,37 @@
+{% comment %}
+  The Platform Operations command centre — Admin's own scorecard.
+
+  Every tile answers a platform-operations question with a next step behind it.
+  None of them measures school visits or SSA outcomes: Admin's performance is
+  availability, support and security, and measuring it by field results was
+  part of what made this role look like a business role.
+{% endcomment %}
+{% include "components/kpi_strip.html" with items=admin_ops_kpi_items title="Platform operations summary" %}
+
+<div class="admin-grid admin-grid--middle">
+  <section class="admin-panel" aria-labelledby="admin-ops-critical-title">
+    <header class="admin-panel__header"><h2 id="admin-ops-critical-title">Critical Now</h2></header>
+    {% for item in admin_ops.critical_now %}
+    <div class="admin-target-row">
+      <span>{{ item.reference }} · {{ item.title }}</span>
+      <strong>{{ item.get_category_display }}</strong>
+      <span class="admin-status s-red">{% firstof item.next_action item.get_status_display %}</span>
+    </div>
+    {% empty %}
+    <p class="admin-panel__empty">Nothing critical is open. Incidents and critical tickets appear here the moment they are detected.</p>
+    {% endfor %}
+  </section>
+
+  <section class="admin-panel" aria-labelledby="admin-ops-recent-title">
+    <header class="admin-panel__header"><h2 id="admin-ops-recent-title">Recent Incidents</h2></header>
+    {% for incident in admin_ops.recent_incidents %}
+    <div class="admin-target-row">
+      <a href="/admin-ops/incidents/{{ incident.id }}">{{ incident.reference }} · {{ incident.title }}</a>
+      <strong>{{ incident.occurrence_count }}×</strong>
+      <span class="admin-status {% if incident.severity == 'critical' %}s-red{% elif incident.severity == 'high' %}s-orange{% else %}s-blue{% endif %}">{{ incident.get_status_display }}</span>
+    </div>
+    {% empty %}
+    <p class="admin-panel__empty">No open incidents. Server errors, broken routes, SLO breaches and failed jobs are detected automatically.</p>
+    {% endfor %}
+  </section>
+</div>

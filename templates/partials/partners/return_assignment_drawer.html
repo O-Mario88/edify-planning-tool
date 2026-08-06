@@ -1,0 +1,60 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Return this assignment{% endblock %}
+{% block drawer_subtitle %}{% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% endif %} · goes back to your managing staff{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/partner/assignments/{{ assignment.id }}/return-action"
+      hx-post="/partner/assignments/{{ assignment.id }}/return-action"
+      hx-target="#partner-return-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="partner-return-errors" aria-live="polite"></div>
+
+  <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What you are returning</p>
+    <p class="mt-2 text-[14px] font-bold text-slate-800">{% if assignment.catalogue_item %}{{ assignment.catalogue_item.display_name }}{% else %}Approved Activity choice{% endif %}</p>
+    {% if assignment.focus_intervention %}<p class="mt-1 text-slate-500">Intervention: {{ assignment.focus_intervention|cut:"_"|title }}</p>{% endif %}
+    <p class="mt-2 font-medium text-slate-600">This goes back to the staff member who assigned it. It leaves your scheduling queue, and no activity or cost is created.</p>
+  </div>
+
+  <div>
+    <label for="reason_category" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason</label>
+    <select id="reason_category" name="reason_category" required
+            class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] font-semibold focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <option value="">Select a reason…</option>
+      {% for value, label in reason_categories %}
+      <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div x-data="{ n: 0 }">
+    <label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Brief explanation</label>
+    <textarea id="reason" name="reason" required rows="3"
+              minlength="{{ reason_min }}" maxlength="{{ reason_max }}"
+              x-on:input="n = $event.target.value.trim().length"
+              aria-describedby="partner-return-help"
+              placeholder="Briefly explain why you cannot take this assignment—for example, distance, schedule conflict, school unavailable or work outside your current capacity."
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[16px] font-medium focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+    {% comment %}
+    The counter states the rule the server will actually enforce, so the partner
+    learns the bound before writing a paragraph and losing it.
+    {% endcomment %}
+    <p id="partner-return-help" class="mt-1 edify-text-caption font-medium text-slate-500">
+      <span x-text="n">0</span>/{{ reason_max }} characters — at least {{ reason_min }}. Enough for your managing staff to decide what happens next.
+    </p>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    {% comment %}
+    Deliberately not styled as destructive: this returns an assignment, it does
+    not delete the school or cancel the school's support.
+    {% endcomment %}
+    <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Return to staff</button>
+  </div>
+</form>
+{% endblock %}

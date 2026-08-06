@@ -1,0 +1,72 @@
+{% extends "layouts/help_center.html" %}
+
+{% block title %}Knowledge Center · Edify{% endblock %}
+
+{% block help_content %}
+<div class="help-article__prose">
+  <p class="text-[13px] leading-7 edify-text-muted">
+    This is the authoritative manual for the Edify Planning &amp; Monitoring
+    platform. Use the contents on the left to browse by area, or start with
+    your own role guide below. Everything here is filtered to what your active
+    role may do — opening an article never grants a permission.
+  </p>
+</div>
+
+{% if role_article %}
+<section class="mt-6 rounded-surface border p-4 edify-border" aria-labelledby="role-guide-heading">
+  <p class="edify-text-caption font-bold uppercase tracking-wider edify-text-subtle">Start here</p>
+  <h2 id="role-guide-heading" class="mt-1 text-[16px] font-extrabold">
+    <a class="hover:underline edify-primary-text" href="/help/articles/{{ role_article.slug }}">{{ role_article.title }}</a>
+  </h2>
+  <p class="mt-2 text-[13px] leading-6 edify-text-muted">{{ role_article.summary }}</p>
+</section>
+{% endif %}
+
+<section class="mt-7" aria-labelledby="areas-heading">
+  <h2 id="areas-heading" class="text-[15px] font-extrabold">Documentation areas</h2>
+  <p class="mt-1 text-[13px] edify-text-muted">Every area you are authorised to read, with the number of guides in each.</p>
+  <ul class="mt-4 grid gap-3 sm:grid-cols-2" role="list">
+    {% for group in knowledge_tree %}
+    <li>
+      <a href="{{ group.url }}" class="block h-full rounded-surface border p-4 edify-border hover:bg-[var(--edify-surface-muted)]">
+        <div class="flex items-start justify-between gap-3">
+          <h3 class="text-[14px] font-extrabold">{{ group.category.name }}</h3>
+          <span class="help-toc__count">{{ group.count }}<span class="sr-only"> articles</span></span>
+        </div>
+        {% if group.category.description %}
+        <p class="mt-1.5 text-[12px] leading-6 edify-text-muted">{{ group.category.description }}</p>
+        {% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% if popular_workflows %}
+<section class="mt-7" aria-labelledby="workflows-heading">
+  <h2 id="workflows-heading" class="text-[15px] font-extrabold">End-to-end workflows</h2>
+  <p class="mt-1 text-[13px] edify-text-muted">How work travels from one role to the next, and what Edify does automatically at each handoff.</p>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2" role="list">
+    {% for item in popular_workflows %}
+    <li><a href="/help/articles/{{ item.slug }}" class="text-[13px] font-bold hover:underline edify-primary-text">{{ item.title }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if common_problems %}
+<section class="mt-7" aria-labelledby="problems-heading">
+  <h2 id="problems-heading" class="text-[15px] font-extrabold">Common problems</h2>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2" role="list">
+    {% for item in common_problems %}
+    <li><a href="/help/articles/{{ item.slug }}" class="text-[13px] font-bold hover:underline edify-primary-text">{{ item.title }}</a></li>
+    {% endfor %}
+  </ul>
+  <a href="/help/troubleshooting" class="mt-3 inline-block text-[13px] font-bold edify-primary-text hover:underline">All troubleshooting guides</a>
+</section>
+{% endif %}
+
+<section class="mt-7 flex flex-wrap gap-3" aria-label="Reference">
+  <a href="/help/export/complete" class="btn h-10">Download the manual</a>
+</section>
+{% endblock %}

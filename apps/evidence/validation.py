@@ -1,0 +1,195 @@
+"""
+Secure file-upload validation — port of file-validation.ts.
+
+Defence in depth: an upload must pass ALL of —
+  1) extension allowlist
+  2) declared-MIME allowlist
+  3) extension <-> declared-MIME agree
+  4) magic-byte sniff of real bytes
+  5) active-content / executable block
+We never trust the client-supplied filename or Content-Type alone.
+"""
+
+from __future__ import annotations
+
+import os
+
+from apps.core.exceptions import BadRequest
+
+
+ALLOWED_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+    # Browsers sometimes send a generic type for .docx/.xlsx — allowed at the
+    # MIME gate, but the magic-byte sniff still pins it to a real signature.
+    "application/octet-stream",
+}
+
+# Extension -> the content families its bytes are allowed to be.
+EXTENSION_FAMILY = {
+    ".jpg": ["jpeg"],
+    ".jpeg": ["jpeg"],
+    ".png": ["png"],
+    ".webp": ["webp"],
+    ".heic": ["heic"],
+    ".pdf": ["pdf"],
+    ".doc": ["ole"],
+    ".docx": ["zip"],
+    ".xls": ["ole"],
+    ".xlsx": ["zip"],
+    ".csv": ["text"],
+}
+
+BLOCKED_EXTENSIONS = {
+    ".svg",
+    ".html",
+    ".htm",
+    ".xhtml",
+    ".xml",
+    ".js",
+    ".mjs",
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".sh",
+    ".php",
+    ".py",
+    ".jar",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".7z",
+    ".rar",
+}  # archives blocked as evidence
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+# Magic-byte signatures (offset, bytes).
+_SIGNATURES = {
+    "jpeg": [(0, b"\xff\xd8\xff")],
+    "png": [(0, b"\x89PNG\r\n\x1a\n")],
+    "pdf": [(0, b"%PDF")],
+    "zip": [(0, b"PK\x03\x04"), (0, b"PK\x05\x06"), (0, b"PK\x07\x08")],
+    "ole": [(0, b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1")],
+}
+
+
+def _detect_families(head: bytes) -> list[str]:
+    found = []
+    for family, sigs in _SIGNATURES.items():
+        for offset, sig in sigs:
+            if head[offset : offset + len(sig)] == sig:
+                found.append(family)
+                break
+    # Heuristic text detection.
+    if not found and head[:64].strip(b"\x00") and not head[:1].isdigit():
+        try:
+            head[:64].decode("ascii")
+            found.append("text")
+        except UnicodeDecodeError:
+            pass
+    return found
+
+
+def assert_safe_upload(
+    *,
+    original_name: str,
+    mime_type: str,
+    head: bytes,
+    size: int,
+    max_size: int | None = None,
+    extra_mime_types: frozenset[str] = frozenset(),
+    extra_extension_family: dict[str, list[str]] | None = None,
+) -> str:
+    """Validate an upload. Returns the normalized extension. Raises BadRequest on
+    any failure.
+
+    The three optional arguments let a second file store widen this gate rather
+    than build its own. The Document Library uses them for presentations and a
+    larger ceiling: a manual is not a photo of a visit form, and PPT/PPTX have
+    no business being accepted as activity evidence. Two independent gates
+    drift, and the weaker one becomes the way in -- so there is one gate, and
+    each store declares exactly how much more it allows.
+    """
+    ceiling = MAX_FILE_SIZE if max_size is None else max_size
+    if size > ceiling:
+        raise BadRequest(f"File exceeds the {ceiling // (1024 * 1024)} MB limit.")
+    allowed_mime = ALLOWED_MIME_TYPES | extra_mime_types
+    families = {**EXTENSION_FAMILY, **(extra_extension_family or {})}
+
+    ext = os.path.splitext(original_name or "")[1].lower()
+    if ext in BLOCKED_EXTENSIONS:
+        raise BadRequest(f"File type '{ext}' is not allowed.")
+    if ext not in families:
+        raise BadRequest(f"File extension '{ext or '(none)'}' is not allowed.")
+    if mime_type and mime_type not in allowed_mime:
+        raise BadRequest(f"Declared content type '{mime_type}' is not allowed.")
+    # Gate 3: extension <-> declared-MIME must agree. A .pdf claiming image/png
+    # is rejected. octet-stream is exempt (browsers send it generically).
+    if mime_type and mime_type != "application/octet-stream":
+        _assert_mime_matches_ext(mime_type, ext)
+    # Gate 4: magic-byte sniff of real bytes.
+    expected_families = families[ext]
+    actual = _detect_families(head[:512])
+    if not any(f in expected_families for f in actual):
+        raise BadRequest("The file content does not match its declared type.")
+    # Return the allow-list's own spelling of the extension, never the slice
+    # taken off the submitted filename. The two compare equal -- that is what
+    # the membership check above established -- but only one of them is a
+    # value this module chose, and every caller concatenates the result
+    # straight into a filesystem path.
+    #
+    # Keyed off `families`, not off a map of EXTENSION_FAMILY alone, so the
+    # guarantee also covers extensions a caller added via
+    # `extra_extension_family`. It did not before: the Document Library's
+    # .ppt/.pptx missed the map and fell through to the submitted slice, which
+    # left caller-supplied text as the last remaining source of a stored
+    # filename. `families` is assembled from module constants, so its keys are
+    # values this codebase chose no matter who widened the gate.
+    return {allowed: allowed for allowed in families}[ext]
+
+
+# Map declared MIME -> the extensions it may legitimately accompany.
+_MIME_TO_EXTS = {
+    "image/jpeg": {".jpg", ".jpeg"},
+    "image/png": {".png"},
+    "image/webp": {".webp"},
+    "image/heic": {".heic"},
+    "application/pdf": {".pdf"},
+    "application/msword": {".doc"},
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+        ".docx"
+    },
+    "application/vnd.ms-excel": {".xls"},
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {".xlsx"},
+    "text/csv": {".csv"},
+}
+
+
+# Presentation types, declared here rather than left to the unknown-MIME
+# fallthrough below: a type that passes because nobody mapped it is passing by
+# accident, and the next person to read this cannot tell the difference.
+_MIME_TO_EXTS["application/vnd.ms-powerpoint"] = {".ppt"}
+_MIME_TO_EXTS[
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+] = {".pptx"}
+
+
+def _assert_mime_matches_ext(mime_type: str, ext: str) -> None:
+    allowed_exts = _MIME_TO_EXTS.get(mime_type)
+    if allowed_exts is not None and ext not in allowed_exts:
+        raise BadRequest(
+            f"The file extension '{ext}' does not match its declared type '{mime_type}'."
+        )
+
+
+__all__ = ["ALLOWED_MIME_TYPES", "MAX_FILE_SIZE", "assert_safe_upload"]

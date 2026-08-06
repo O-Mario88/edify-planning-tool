@@ -1,0 +1,58 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Report a Problem — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
+
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">Help</p>
+      <h1 class="edify-page-title edify-page-header__title">Report a Problem</h1>
+      <p class="edify-page-header__description">Tell the platform team what went wrong. We capture the page you were on and your browser automatically — never your password, tokens or message contents.</p>
+    </div>
+  </header>
+
+  <form method="post" action="/support" class="card p-4 space-y-3.5">
+    {% csrf_token %}
+    <input type="hidden" name="route" value="{{ route }}">
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What happened?</span>
+      <input name="title" required maxlength="255" placeholder="The Schedule button does nothing" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Category</span>
+      <select name="category" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+        {% for value, label in categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Urgency</span>
+      <select name="urgency" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+        {% for value, label in urgencies %}<option value="{{ value }}" {% if value == "medium" %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Details</span>
+      <textarea name="description" rows="4" placeholder="What were you trying to do, and what did you see instead?" class="px-2.5 py-2 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"></textarea>
+    </label>
+    <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Send to the platform team</button>
+  </form>
+
+  <section class="card p-4" aria-labelledby="my-tickets-title">
+    <h2 id="my-tickets-title" class="text-[14px] font-extrabold text-slate-800 mb-2">Your Reports</h2>
+    {% for ticket in my_tickets %}
+    <div class="py-3 border-b border-slate-50 last:border-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="edify-text-caption font-bold text-slate-400 tabular-nums">{{ ticket.reference }}</span>
+        <span class="px-1.5 rounded-pill edify-text-caption font-bold bg-slate-100 text-slate-500">{{ ticket.get_status_display }}</span>
+      </div>
+      <p class="text-[13px] font-bold text-slate-700 mt-1">{{ ticket.title }}</p>
+      {% if ticket.resolution %}<p class="text-[12px] font-semibold text-slate-500 mt-0.5">{{ ticket.resolution }}</p>{% endif %}
+    </div>
+    {% empty %}
+    <p class="text-[12px] font-medium text-slate-400 py-6 text-center">You have not reported anything yet.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

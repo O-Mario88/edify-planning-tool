@@ -1,0 +1,25 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Fiscal Year Overview — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Finance</p>
+<h1 class="edify-page-title edify-page-header__title">Fiscal Year Overview</h1>
+<p class="edify-page-header__description">Edify Operations · Fiscal Year Overview</p>
+</div>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold edify-primary-text">{{ total_schools }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-emerald-600">{{ ssa_done }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Done</p></div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-rose-500">{{ ssa_pending }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Pending</p></div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Activity Rate</p></div>
+</div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[14px] font-semibold mb-3">FY{{ fy }} Summary</h2><p class="text-[12px] text-slate-600">{{ total_activities }} total activities · {{ completed_activities }} completed · {{ completion_rate }}% completion rate</p></div>
+
+</div>
+{% endblock %}

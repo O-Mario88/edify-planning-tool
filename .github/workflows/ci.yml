@@ -1,19 +1,3 @@
-# Edify CI — runs on every PR and push to main.
-#
-# Four serial gates, each fast enough to give signal under a minute.
-# Fails on the first red. None of these are optional — they all live
-# in the required-checks list on the protected `main` branch.
-#
-#   1. typecheck  — strict tsc --noEmit, blocks broken types
-#   2. lint       — next-eslint rules + custom overrides
-#   3. test       — vitest engine suite (pure-fn coverage)
-#   4. build      — production next build, catches anything the dev
-#                   server papers over (server-component boundary,
-#                   missing exports, etc.)
-#
-# We run typecheck before lint because a tsc error is a higher-signal
-# failure than a stylistic one — fix the code, then fix the style.
-
 name: CI
 
 on:
@@ -22,120 +6,173 @@ on:
   push:
     branches: [main]
 
-# Cancel any in-flight run for the same ref when a new commit lands.
+# Least privilege by default. No job here writes to the repository, opens a
+# pull request or publishes a package, so nothing needs more than read.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  ci:
+  django-tests:
+    name: Django Lint & Test Suite
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edify_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
+      JWT_SECRET: dev-secret-key-1234567890
+      DJANGO_SETTINGS_MODULE: config.settings.dev
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      # Third-party actions are pinned to a full commit SHA. A moving tag is
+      # a write-access grant to whoever can move it.
+      # persist-credentials: false — checkout otherwise leaves the job's
+      # token in .git/config, where anything that uploads the workspace
+      # as an artifact carries it out with them. Nothing here pushes.
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          node-version: 22
-          cache: npm
+          persist-credentials: false
 
-      - name: Install
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Run Ruff Linter
+        run: ruff check .
+
+      - name: Run Ruff Formatter Check
+        run: ruff format --check .
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run Tests
+        run: python manage.py test --parallel 4
+
+      # The rendered CSS bundle is committed, so it can silently fall behind
+      # the templates that generate it: a class added to a template renders as
+      # nothing until someone rebuilds. This is the gate that catches it.
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install Node dependencies
         run: npm ci
 
-      # Generate the Prisma Client so typecheck/build can resolve the 84-model
-      # types (e.g. EdifyRole) now that server code imports @prisma/client.
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm run test
-        env:
-          EDIFY_QUIET_BOOT: "1"
-
-      - name: Build (production)
-        run: npm run build
-        env:
-          # Build-time env stubs so the build doesn't fail on the
-          # absence of real secrets. Real values come from the Vercel
-          # / hosted environment.
-          DATABASE_URL: postgresql://stub@localhost:5432/stub
-          EDIFY_QUIET_BOOT: "1"
-
-      # ──────────────── Architectural invariants ────────────────
-      #
-      # These greps codify rules the human reviewer can't reliably
-      # catch every time. Each rule fails the build with a clear
-      # error line so the author can locate + fix locally.
-
-      - name: Invariant — every server action calls getCurrentUser
+      - name: CSS bundle matches its source
         run: |
-          set -euo pipefail
-          fail=0
-          for f in src/lib/actions/*.ts; do
-            case "$(basename "$f")" in
-              audit.ts|store.ts|approval-safety.ts|action-types.ts|role-action-engine.ts|last-login.ts|demo-seed-actions.ts) continue;;
-            esac
-            if ! head -3 "$f" | grep -q '"use server"'; then continue; fi
-            if ! grep -q 'getCurrentUser' "$f"; then
-              echo "::error file=$f::server action file does not call getCurrentUser"
-              fail=1
-            fi
-          done
-          exit $fail
+          npm run build:css
+          git diff --exit-code static/css/main.css \
+            || { echo "::error::static/css/main.css is out of date — run 'npm run build:css' and commit the result"; exit 1; }
 
-      - name: Invariant — every server action emits an audit row
-        run: |
-          set -euo pipefail
-          fail=0
-          for f in src/lib/actions/*.ts; do
-            case "$(basename "$f")" in
-              audit.ts|store.ts|approval-safety.ts|action-types.ts|role-action-engine.ts|last-login.ts|demo-seed-actions.ts) continue;;
-            esac
-            if ! head -3 "$f" | grep -q '"use server"'; then continue; fi
-            if ! grep -q 'emitAudit' "$f"; then
-              echo "::error file=$f::server action file does not call emitAudit"
-              fail=1
-            fi
-          done
-          exit $fail
+  security:
+    name: Security Scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
-      - name: Invariant — no rogue prisma writes outside src/lib/actions/
-        run: |
-          set -euo pipefail
-          if grep -rEn 'prisma\.[a-zA-Z]+\.(create|update|delete|upsert)' \
-              src --include="*.ts" --include="*.tsx" \
-              --exclude-dir=actions \
-              --exclude-dir=infra \
-              --exclude-dir=server; then
-            echo "::error::Prisma writes are only allowed in src/lib/actions/ and src/server/."
-            exit 1
-          fi
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
-      - name: Invariant — server actions return discriminated unions
-        run: |
-          if grep -rEn '^export async function .*Promise<(any|unknown)>' \
-              src/lib/actions --include="*.ts"; then
-            echo "::error::Server actions must return discriminated unions, not any/unknown."
-            exit 1
-          fi
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements/*.txt
 
-      - name: Secret-leak scan
-        # Lightweight grep for credential patterns. Heavier scanners
-        # (truffleHog, gitleaks) can replace this once the team is
-        # ready to budget for a fuller pass on every PR.
+      - name: Install dependencies
         run: |
-          set -euo pipefail
-          if grep -rEn '(AKIA[0-9A-Z]{16}|xox[baprs]-[0-9a-zA-Z-]+|-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----|SG\.[A-Za-z0-9_-]{20,})' \
-              --include="*.ts" --include="*.tsx" --include="*.js" --include="*.mjs" \
-              --include="*.json" --include="*.yml" --include="*.yaml" \
-              src .github 2>/dev/null; then
-            echo "::error::Possible secret committed."
-            exit 1
-          fi
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      # Known-CVE scan. This is the gate that caught Django 5.2.4 sitting on
+      # fifty-one published advisories, so it fails the build rather than
+      # warning: a dependency advisory is not something to merge past.
+      - name: Dependency CVE scan
+        run: pip-audit --strict --progress-spinner off
+
+      # Static analysis. Scoped to medium severity and medium confidence —
+      # the low-confidence tier is almost entirely table names interpolated
+      # into migration SQL beside their own hardcoded tuple, and drowning a
+      # real finding in those is how a real finding gets ignored.
+      - name: Static security analysis
+        run: bandit -r apps config -ll -ii
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: JavaScript dependency audit
+        run: npm audit --audit-level=high
+
+      # Workflow-level security: unpinned actions, injectable expressions,
+      # over-broad permissions, secrets reachable from fork code. The
+      # workflows are as much a supply chain as the dependencies are.
+      - name: Lint the workflows themselves
+        run: |
+          python -m pip install zizmor
+          # .github/ rather than .github/workflows/: the Dependabot config is
+          # part of the supply chain too, and it is not a workflow file.
+          zizmor --persona=regular .github/
+
+      # The image is built on every push, not only on the nightly scan: a
+      # Dockerfile change that breaks the build or ships a Critical CVE should
+      # fail on the commit that made it, not the next morning.
+      - name: Build the production image
+        run: docker build -t edify-ci:${{ github.sha }} .
+
+      - name: The image does not run as root
+        run: |
+          user=$(docker image inspect --format '{{.Config.User}}' \
+            edify-ci:${{ github.sha }})
+          test -n "$user" && test "$user" != "root" && test "$user" != "0" \
+            || { echo "::error::the runtime image runs as root"; exit 1; }
+          echo "runtime user: $user"
+
+      - name: The runtime user can import the application
+        run: |
+          docker run --rm --entrypoint python \
+            -e DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
+            edify-ci:${{ github.sha }} \
+            -c 'import config.settings.collectstatic; print("runtime import: ok")'
+
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: edify-ci:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

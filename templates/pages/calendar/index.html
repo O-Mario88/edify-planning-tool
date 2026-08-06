@@ -1,0 +1,170 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Calendar — Edify{% endblock %}
+
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260731readabletype1">
+{% endblock %}
+
+{% block shell_content %}
+<section class="calendar-workspace edify-page-canvas" x-data="{ eventFilter: 'all' }" aria-label="Operations calendar">
+  <header class="edify-page-header calendar-workspace__header">
+    <div class="edify-page-header__lead">
+      <p class="calendar-workspace__eyebrow">Operations calendar</p>
+      <h1 class="edify-page-title edify-page-header__title">Calendar</h1>
+      <p class="calendar-workspace__intro edify-page-header__description">See your scheduled work, approved leave, and important holidays in one place.</p>
+    </div>
+    <a href="{% url 'frontend:personal_time_off' %}" class="btn btn-primary calendar-workspace__leave-action">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M4 10h16M6 5h12a2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v4m-2-2h4" />
+      </svg>
+      <span>Apply for Leave</span>
+    </a>
+  </header>
+
+  <div class="calendar-workspace__filters" role="tablist" aria-label="Calendar event type">
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'all'" :aria-selected="eventFilter === 'all'" :class="eventFilter === 'all' ? 'is-active' : ''">
+      All events <span>{{ event_total }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'activity'" :aria-selected="eventFilter === 'activity'" :class="eventFilter === 'activity' ? 'is-active' : ''">
+      Activities <span>{{ event_counts.activity }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'leave'" :aria-selected="eventFilter === 'leave'" :class="eventFilter === 'leave' ? 'is-active' : ''">
+      Leave <span>{{ event_counts.leave }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-grid" @click="eventFilter = 'holiday'" :aria-selected="eventFilter === 'holiday'" :class="eventFilter === 'holiday' ? 'is-active' : ''">
+      Holidays <span>{{ event_counts.holiday }}</span>
+    </button>
+  </div>
+
+  {% comment %}Server-side primary filters (My Plan filter design): applied via
+  the querystring so month navigation, view switches, and reloads all keep
+  them. Auto-submits on change; the Apply button covers no-JS.{% endcomment %}
+  <form method="get" action="/calendar" class="calendar-workspace__filter-form" aria-label="Calendar filters" @change="$el.submit()">
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    {% if view_mode == 'agenda' %}<input type="hidden" name="view" value="agenda">{% endif %}
+    {% if project_scope %}<input type="hidden" name="project_scope" value="{{ project_scope }}">{% endif %}
+    {% if selected_project %}<input type="hidden" name="project" value="{{ selected_project }}">{% endif %}
+    <label class="calendar-workspace__filter-field">
+      <span class="edify-filter-label">Activity type</span>
+      <select name="activity_type" aria-label="Filter by activity type">
+        <option value="">All types</option>
+        {% for value, label in activity_type_choices %}
+        <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="calendar-workspace__filter-field">
+      <span class="edify-filter-label">Status</span>
+      <select name="status" aria-label="Filter by activity status">
+        <option value="">All statuses</option>
+        {% for value, label in status_options %}
+        <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <noscript><button type="submit" class="btn btn-secondary">Apply</button></noscript>
+    {% if filters_active %}
+    <a href="?{{ clear_qs }}" class="calendar-workspace__clear-filters">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      Clear filters
+    </a>
+    {% endif %}
+  </form>
+
+  <section class="calendar-month" aria-labelledby="calendar-month-heading">
+    <header class="calendar-month__toolbar">
+      <div class="calendar-month__heading">
+        <div class="calendar-month__date-card" aria-hidden="true">
+          <span>{{ month_name|slice:":3"|upper }}</span>
+          <strong>01</strong>
+        </div>
+        <div>
+          <h2 id="calendar-month-heading">{{ month_name }} {{ year }}</h2>
+          <p>{{ month_name }} 1, {{ year }} – {{ month_name }} {{ month_last_day|date:"j" }}, {{ year }}</p>
+        </div>
+      </div>
+
+      <nav class="calendar-month__controls" aria-label="Calendar date controls">
+        <a class="btn btn-secondary calendar-month__icon-control" href="?{{ prev_qs }}" aria-label="Previous month">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 18-6-6 6-6" /></svg>
+        </a>
+        <a class="btn btn-secondary calendar-month__today-control" href="?{{ today_qs }}">Today</a>
+        <a class="btn btn-secondary calendar-month__icon-control" href="?{{ next_qs }}" aria-label="Next month">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+        </a>
+        {% comment %}Selected view is the one blue primary; the alternative is
+        secondary — the platform's calendar-control contract.{% endcomment %}
+        <a class="btn {% if view_mode == 'month' %}btn-primary{% else %}btn-secondary{% endif %} calendar-month__view-control" href="?{{ month_view_qs }}" {% if view_mode == 'month' %}aria-current="page"{% endif %}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2" /><path stroke-linecap="round" d="M3 10h18M8 4v6m8-6v6" /></svg>
+          Month
+        </a>
+        <a class="btn {% if view_mode == 'agenda' %}btn-primary{% else %}btn-secondary{% endif %} calendar-month__view-control" href="?{{ agenda_view_qs }}" {% if view_mode == 'agenda' %}aria-current="page"{% endif %}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10" /></svg>
+          Agenda
+        </a>
+      </nav>
+    </header>
+
+    {% if view_mode == 'agenda' %}
+    <div id="calendar-event-grid" role="tabpanel" aria-label="{{ month_name }} {{ year }} agenda">
+      <div class="calendar-agenda">
+        {% include "partials/calendar/agenda.html" %}
+      </div>
+    </div>
+    {% else %}
+    <div id="calendar-event-grid" role="tabpanel" aria-label="{{ month_name }} {{ year }}">
+      <div class="calendar-month__grid-region">
+        {% comment %}A grid owes its cells a row: without one the columnheaders
+        and gridcells are dropped from the accessibility tree entirely. The row
+        wrappers carry `display: contents` so the seven-column CSS grid is
+        unchanged.{% endcomment %}
+        <div class="calendar-month__grid" role="grid" aria-label="{{ month_name }} {{ year }}">
+          <div class="calendar-month__row" role="row">
+            {% for weekday in weekday_labels %}
+            <div class="calendar-month__weekday" role="columnheader">{{ weekday }}</div>
+            {% endfor %}
+          </div>
+
+          {% for week in calendar_weeks %}
+            <div class="calendar-month__row" role="row">
+            {% for day in week %}
+            <article class="calendar-day{% if not day.is_current_month %} calendar-day--outside{% endif %}{% if day.is_today %} calendar-day--today{% endif %}" role="gridcell" aria-label="{{ day.date|date:'l, F j, Y' }}">
+              <div class="calendar-day__topline">
+                <time datetime="{{ day.date|date:'Y-m-d' }}" class="calendar-day__number">{{ day.date|date:"j" }}</time>
+                {% if day.is_today %}<span class="calendar-day__today-label">Today</span>{% endif %}
+              </div>
+              <div class="calendar-day__events">
+                {% for event in day.events %}{% include "partials/calendar/event.html" %}{% endfor %}
+              </div>
+            </article>
+            {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% comment %}Under the lg breakpoint the month grid gives way to the
+      agenda list — the same events, readable on a phone.{% endcomment %}
+      <div class="calendar-agenda calendar-agenda--compact">
+        {% include "partials/calendar/agenda.html" %}
+      </div>
+    </div>
+    {% endif %}
+
+    <footer class="calendar-month__legend">
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--visit"></i> Visits</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--training"></i> Trainings</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--cluster"></i> Cluster work</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--core"></i> Core schools</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--project"></i> Projects</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--programme"></i> Programme events</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--leave"></i> Leave</span>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--holiday"></i> Holidays</span>
+      <p>Leave and holidays are overlays and never count as activities. Government-declared holidays appear only for the year they apply.</p>
+    </footer>
+  </section>
+</section>
+{% endblock %}

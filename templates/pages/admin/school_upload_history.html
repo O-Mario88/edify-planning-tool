@@ -1,0 +1,107 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+
+{% block title %}Upload History — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Administration</p>
+<h1 class="edify-page-title edify-page-header__title">School Upload History</h1>
+<p class="edify-page-header__description">Audit uploaded school files, successful records, and row breakdowns. "Mark Failed" flags a batch record only — it does not revert school data.</p>
+</div>
+</div>
+
+<!-- Listings Table -->
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+{% paginate batches "batches_page" as batches_pager %}
+<table class="edify-record-table w-full text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">File Metadata</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Type / Source</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Row Breakdown</th>
+<th class="px-4 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
+<th class="px-5 py-3.5 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for batch in batches_pager.rows %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-5 py-4" data-record-title>
+<span class="font-semibold text-slate-800 block">{% firstof batch.file_name batch.original_file_name %}</span>
+<span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Uploaded at {{ batch.created_at|date:"M d, Y H:i" }} by User ID: {{ batch.uploaded_by }}</span>
+</td>
+<td class="px-4 py-4 text-slate-500 font-semibold" data-label="Type / Source">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-100">
+{{ batch.upload_type }}
+</span>
+<span class="block edify-text-caption text-slate-400 mt-1">Source: {{ batch.source }}</span>
+</td>
+<td class="px-4 py-4 font-semibold" data-label="Row Breakdown">
+<div class="space-y-1">
+<div class="flex gap-2 edify-text-caption">
+<span class="text-slate-500">Total:</span>
+<span class="text-slate-800 font-semibold">{{ batch.total_rows }}</span>
+</div>
+<div class="flex gap-2 edify-text-caption">
+<span class="text-emerald-600">Created: {{ batch.created_rows }}</span>
+<span class="edify-primary-text">Updated: {{ batch.updated_rows }}</span>
+<span class="text-rose-600">Failed: {{ batch.failed_rows }}</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-4" data-label="Status">
+{% if batch.status == 'completed' or batch.status == 'imported' %}
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700">
+<span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
+<span>Imported</span>
+</span>
+{% elif batch.status == 'failed' %}
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-rose-50 text-rose-700">
+<span class="h-1.5 w-1.5 rounded-pill bg-rose-500"></span>
+<span>Failed</span>
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text">
+<span class="h-1.5 w-1.5 rounded-pill edify-primary-solid"></span>
+<span>{{ batch.status|capfirst }}</span>
+</span>
+{% endif %}
+{% if batch.error_summary %}
+<p class="edify-text-caption text-slate-400 font-bold mt-1 max-edify-permission-column truncate" title="{{ batch.error_summary }}">
+{{ batch.error_summary }}
+</p>
+{% endif %}
+</td>
+<td class="px-5 py-4 text-right" data-record-action>
+{% if batch.status == 'completed' or batch.status == 'imported' %}
+<form method="post" action="{% url 'frontend:admin_school_upload_history' %}">
+{% csrf_token %}
+<input type="hidden" name="rollback_id" value="{{ batch.id }}">
+{% include "partials/components/confirm_action.html" with uid=batch.id trigger_label="Mark Failed" trigger_class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-all" title="Mark this upload batch as failed?" body="This flags the batch record only. Schools it already created or updated are NOT reverted — correct those directly in the School Directory." confirm_label="Mark batch failed" %}
+</form>
+{% else %}
+<span class="edify-text-caption text-slate-300 font-bold uppercase tracking-wider">Locked</span>
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5">
+{% include "components/empty_state.html" with title="No uploads yet" message="School data files imported through the Upload Center will be logged here." cta_label="Open Upload Center" cta_href="/uploads?tab=imports" %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% include "components/table_pager.html" with pager=batches_pager param="batches_page" %}
+</div>
+</div>
+
+</div>
+{% endblock %}

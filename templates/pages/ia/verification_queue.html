@@ -1,0 +1,129 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Activity Verification — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+{% comment %}
+The canonical page header (§8). This page previously used the legacy page-hero
+family plus two decorative blur circles, a pulsing "Audit Operations" pill
+above a second "Quality & Insights" eyebrow, and an SLA panel styled with
+dark-surface slate utilities that sat on a light page. The SLA measure kept
+its honest empty state and moved into the header's context slot.
+{% endcomment %}
+<header class="edify-page-header">
+<div class="flex flex-wrap items-start justify-between gap-3">
+<div class="lg:max-w-[560px] edify-page-header__lead">
+<p class="edify-page-eyebrow">Quality &amp; Insights</p>
+<h1 class="edify-page-title edify-page-header__title">Activity Verification</h1>
+<p class="edify-page-header__description">Review implementation evidence, cross-reference Salesforce records and certify school improvement activities.</p>
+</div>
+<div class="flex flex-col items-start gap-1">
+<span class="edify-text-caption edify-text-muted font-bold uppercase tracking-wider">SLA compliance</span>
+<span class="text-[20px] font-semibold">
+{% if kpis.sla_compliance is not None %}{{ kpis.sla_compliance|floatformat:1 }}%{% else %}Not yet measured{% endif %}
+</span>
+<span class="edify-text-caption edify-text-muted">
+{% if kpis.sla_compliance is not None %}within 24h · n={{ kpis.sla_sample_size }}{% else %}Starts with the next IA submission{% endif %}
+</span>
+</div>
+</div>
+</header>
+
+{% include "partials/_section_nav.html" %}
+
+{% comment %}
+The canonical filter toolbar (§9), matching the My Plan gold standard: one
+`edify-filter-label` per control, `data-component="filter-toolbar"`, and the
+selected value echoed back so a choice survives the HTMX swap.
+
+Three things were wrong here beyond the styling. Every field rendered its
+label twice — a `<label>` and an `edify-filter-label` span — so assistive tech
+announced each control's name twice. The four quick-filter pills set the same
+two selects sitting underneath them. And the Fiscal Year options were FY24 /
+FY25 / FY26 while `Activity.fy` stores a four-digit year, so choosing a year
+filtered on a value no row has ever carried and emptied the queue.
+{% endcomment %}
+<form data-component="filter-toolbar" id="filters-form" x-data
+      hx-get="/ia/verification/" hx-target="#queue-table-container"
+      hx-trigger="change, keyup delay:200ms" hx-push-url="true"
+      class="flex flex-wrap items-center gap-2.5 edify-surface p-3 border border-slate-200 rounded-surface shadow-sm">
+<div class="flex flex-col min-w-[110px]">
+<label class="edify-filter-label" for="ia-filter-fy">Fiscal year</label>
+<select id="ia-filter-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="">All FYs</option>
+{% for option in fy_options %}
+<option value="{{ option }}" {% if filters.fy == option %}selected{% endif %}>FY {{ option }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="flex flex-col min-w-[150px]">
+<label class="edify-filter-label" for="ia-filter-type">Activity type</label>
+<select id="ia-filter-type" name="activity_type" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+<option value="">All types</option>
+<option value="school_visit" {% if filters.activity_type == "school_visit" %}selected{% endif %}>School Visit</option>
+<option value="training" {% if filters.activity_type == "training" %}selected{% endif %}>Training</option>
+<option value="cluster_meeting" {% if filters.activity_type == "cluster_meeting" %}selected{% endif %}>Cluster Meeting</option>
+<option value="core_visit" {% if filters.activity_type == "core_visit" %}selected{% endif %}>Core Visit</option>
+<option value="core_training" {% if filters.activity_type == "core_training" %}selected{% endif %}>Core Training</option>
+</select>
+</div>
+
+<div class="flex flex-col min-w-[140px]">
+<label class="edify-filter-label" for="ia-filter-district">District</label>
+<input id="ia-filter-district" type="text" name="district" value="{{ filters.district|default:'' }}" placeholder="Kampala, Masaka…" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
+</div>
+
+<button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog" @click="$refs.advancedFilters.showModal()">Advanced filters{% if filters.quarter or filters.staff or filters.core_school %} · Applied{% endif %}</button>
+
+<dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="ia-advanced-filter-title">
+  <header class="edify-filter-drawer__header">
+    <div><p class="edify-page-eyebrow">Activity Verification</p><h2 id="ia-advanced-filter-title">Advanced filters</h2></div>
+    <button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.advancedFilters.close()">×</button>
+  </header>
+  <div class="edify-filter-drawer__body">
+    <div class="flex flex-col">
+      <label class="edify-filter-label" for="ia-filter-quarter">Quarter</label>
+      <select id="ia-filter-quarter" name="quarter">
+        <option value="">All quarters</option>
+        <option value="Q1" {% if filters.quarter == "Q1" %}selected{% endif %}>Q1</option>
+        <option value="Q2" {% if filters.quarter == "Q2" %}selected{% endif %}>Q2</option>
+        <option value="Q3" {% if filters.quarter == "Q3" %}selected{% endif %}>Q3</option>
+        <option value="Q4" {% if filters.quarter == "Q4" %}selected{% endif %}>Q4</option>
+      </select>
+    </div>
+    <div class="flex flex-col">
+      <label class="edify-filter-label" for="ia-filter-scope">School scope</label>
+      <select id="ia-filter-scope" name="core_school">
+        <option value="">All schools</option>
+        <option value="true" {% if filters.core_school == "true" %}selected{% endif %}>Core schools only</option>
+      </select>
+    </div>
+    <div class="flex flex-col">
+      <label class="edify-filter-label" for="ia-filter-staff">Responsible staff</label>
+      <input id="ia-filter-staff" type="text" name="staff" value="{{ filters.staff|default:'' }}" placeholder="Filter by CCEO name…">
+    </div>
+  </div>
+  <footer class="edify-filter-drawer__footer">
+    <button type="button" class="btn btn-primary h-10" @click="$refs.advancedFilters.close()">Apply filters</button>
+  </footer>
+</dialog>
+
+{% if filters_active %}
+<a href="/ia/verification/" data-component="clear-filters"
+   class="inline-flex items-center gap-1 h-9 px-3 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
+  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+  Clear Filters
+</a>
+{% endif %}
+</form>
+
+<!-- Queue Table Panel -->
+<div id="queue-table-container" class="transition-opacity duration-300">
+{% include "pages/ia/partials/queue_table.html" %}
+</div>
+</div>
+{% endblock %}

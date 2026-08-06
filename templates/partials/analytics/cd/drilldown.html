@@ -1,0 +1,181 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}{{ title|default:"Detail" }}{% endblock %}
+{% block drawer_subtitle %}{{ subtitle|default:"" }}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-4 text-slate-700">
+
+  {% if kind == 'pl' %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Budget Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ budget_util }}%</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if ssa_improve is not None %}{% if ssa_improve > 0 %}+{% endif %}{{ ssa_improve }} pts{% else %}—{% endif %}</p></div>
+  </div>
+  <div class="rounded-surface edify-primary-soft border edify-primary-border p-3"><p class="edify-text-caption font-bold edify-primary-text">Recommended CD action: {{ recommended }}</p></div>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Supervised CCEOs · All Target Areas</p>
+  <div class="space-y-2.5">
+    {% for c in cceos %}
+    <article class="rounded-surface border border-slate-100 p-3">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p class="text-[12px] font-bold text-slate-800">{{ c.name }}</p>
+          <p class="edify-text-caption font-semibold text-slate-400">{{ c.schools }} schools · {{ c.completed }}/{{ c.planned }} completed · {{ c.verified }} verified</p>
+        </div>
+        <span class="rounded-pill px-2 py-0.5 edify-text-caption font-bold tabular-nums
+          {% if c.target_pct >= 90 %}bg-emerald-50 text-emerald-700
+          {% elif c.target_pct >= 75 %}bg-sky-50 text-sky-700
+          {% elif c.target_pct >= 50 %}bg-amber-50 text-amber-700
+          {% else %}bg-rose-50 text-rose-700{% endif %}">{{ c.target_pct }}% overall</span>
+      </div>
+      <div class="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+        {% for area in c.areas %}
+        <div class="rounded-surface border p-2
+          {% if area.tone == 'success' %}border-emerald-100 bg-emerald-50
+          {% elif area.tone == 'info' %}border-sky-100 bg-sky-50
+          {% elif area.tone == 'warning' %}border-amber-100 bg-amber-50
+          {% elif area.tone == 'danger' %}border-rose-100 bg-rose-50
+          {% else %}border-slate-100 bg-slate-50{% endif %}">
+          <p class="edify-text-caption font-bold text-slate-500">{{ area.short_label }}</p>
+          <p class="mt-0.5 text-[13px] font-bold tabular-nums
+            {% if area.tone == 'success' %}text-emerald-700
+            {% elif area.tone == 'info' %}text-sky-700
+            {% elif area.tone == 'warning' %}text-amber-700
+            {% elif area.tone == 'danger' %}text-rose-700
+            {% else %}text-slate-400{% endif %}">{% if area.pct is not None %}{{ area.pct }}%{% else %}—{% endif %}</p>
+          <p class="edify-text-caption font-semibold text-slate-400">{% if area.target %}{{ area.achieved }}/{{ area.target }}{% else %}Not set{% endif %}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+    {% empty %}
+    <p class="rounded-surface border border-slate-100 p-4 text-center edify-text-caption font-semibold text-slate-400">No supervised CCEOs in this portfolio.</p>
+    {% endfor %}
+  </div>
+
+  {% elif kind == 'cceo' %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Completed</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ completed }}</p></div>
+  </div>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Activity mix</p>
+  <div class="space-y-1">
+    {% for r in activity_rows %}
+    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-1.5">
+      <span class="edify-text-caption font-semibold text-slate-600 capitalize">{% firstof r.type|cut:"_" r.type %}</span>
+      <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ r.count }}</span>
+    </div>
+    {% empty %}<p class="edify-text-caption text-slate-400">No activities in this period.</p>{% endfor %}
+  </div>
+
+  {% elif kind == 'district' or kind == 'cluster' %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    {% if kind == 'district' %}
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools at Risk</p><p class="text-[18px] font-bold text-rose-600 tabular-nums">{{ schools_at_risk|intcomma }}</p></div>
+    {% else %}
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Trainings / Visits</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ trainings }} / {{ visits }}</p></div>
+    {% endif %}
+  </div>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">SSA by intervention</p>
+  <div class="space-y-1.5">
+    {% for cell in cells %}
+    <div class="flex items-center gap-2">
+      <span class="w-[150px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate">{{ cell.label }}</span>
+      <div class="flex-1 h-[16px] bg-slate-50 rounded-small overflow-hidden">{% if cell.score is not None %}<div class="h-full rounded-small {% if cell.tone == 'success' %}bg-emerald-500{% elif cell.tone == 'lime' %}bg-lime-500{% elif cell.tone == 'warning' %}bg-amber-500{% elif cell.tone == 'danger' %}bg-rose-500{% else %}bg-slate-300{% endif %}" style="width: {{ cell.bar_pct }}%"></div>{% endif %}</div>
+      <span class="w-[38px] text-right edify-text-caption font-bold text-slate-700 tabular-nums">{% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}</span>
+    </div>
+    {% empty %}<p class="edify-text-caption text-slate-400">No verified SSA membership for this {{ kind }} yet.</p>{% endfor %}
+  </div>
+
+  {% elif kind == 'region' %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ schools|intcomma }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Avg SSA</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if avg_ssa is not None %}{{ avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</p></div>
+  </div>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 pt-1">Districts</p>
+  <div class="space-y-1">
+    {% for d in districts %}
+    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-1.5">
+      <span class="edify-text-caption font-semibold text-slate-600">{{ d.name }}</span>
+      <span class="edify-text-caption font-bold text-slate-500 tabular-nums">{{ d.schools|intcomma }} schools</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif kind == 'partner' and detail %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target Achievement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.target_pct }}%</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools Supported</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.schools_supported|intcomma }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Verified Activities</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ detail.verified }}</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Improvement</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{% if detail.ssa_improve is not None %}{{ detail.ssa_improve }} pts{% else %}—{% endif %}</p></div>
+  </div>
+  <div class="rounded-surface edify-primary-soft border edify-primary-border p-3"><p class="edify-text-caption font-bold edify-primary-text">Recommendation: {{ detail.recommendation }}</p></div>
+
+  {% elif kind == 'ssa' %}
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">By district (weakest first)</p>
+  <div class="space-y-1.5">
+    {% for r in rows %}
+    <div class="flex items-center gap-2">
+      <span class="w-[130px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate">{{ r.name }}</span>
+      <div class="flex-1 h-[16px] bg-slate-50 rounded-small overflow-hidden">{% if r.score is not None %}<div class="h-full rounded-small {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'lime' %}bg-lime-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'danger' %}bg-rose-500{% else %}bg-slate-300{% endif %}" style="width: {{ r.bar_pct }}%"></div>{% endif %}</div>
+      <span class="w-[38px] text-right edify-text-caption font-bold text-slate-700 tabular-nums">{% if r.score is not None %}{{ r.score|floatformat:1 }}{% else %}—{% endif %}</span>
+    </div>
+    {% empty %}<p class="edify-text-caption text-slate-400">No verified SSA yet.</p>{% endfor %}
+  </div>
+
+  {% elif kind == 'budget' %}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Utilization</p><p class="text-[18px] font-bold text-slate-800 tabular-nums">{{ finance.utilization_pct }}%</p></div>
+    <div class="rounded-surface border border-slate-100 p-3"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Requested</p><p class="text-[15px] font-bold text-slate-800 tabular-nums">UGX {{ finance.requested|intcomma }}</p></div>
+  </div>
+  <div class="space-y-1.5">
+    {% for s in finance.statuses %}
+    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-1.5">
+      <span class="edify-text-caption font-semibold text-slate-600">{{ s.label }}</span>
+      <span class="text-[12px] font-bold text-slate-800 tabular-nums">UGX {{ s.amount|intcomma }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% elif kind == 'risk' %}
+  <div class="space-y-1.5">
+    {% for r in rows %}
+    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-2">
+      <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.school }}</p><p class="edify-text-caption text-slate-400">{{ r.district }}</p></div>
+      <span class="edify-text-caption font-bold text-rose-600 shrink-0">{{ r.detail }}</span>
+    </div>
+    {% empty %}<p class="edify-text-caption text-slate-400 py-4 text-center">No records for this risk category — clean.</p>{% endfor %}
+  </div>
+
+  {% else %}
+  <div class="space-y-1.5">
+    {% for r in rows %}
+    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-2">
+      <span class="text-[12px] font-semibold text-slate-700">{{ r.name }}</span>
+      <span class="edify-text-caption font-bold text-slate-500">{{ r.target_pct }}% · {{ r.risk }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Oversight actions available to the CD (leadership routing — never field execution) #}
+  {% if actions %}
+  <div class="pt-2 border-t border-slate-100">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-2">CD oversight actions</p>
+    <div class="flex flex-wrap gap-1.5">
+      {% for a in actions %}
+      <a href="{{ a.href }}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-600 edify-hover-raised hover:border-[var(--edify-primary)] hover:text-[var(--edify-primary)] transition-colors">
+        <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        {{ a.label }}
+      </a>
+      {% endfor %}
+    </div>
+    <p class="edify-text-caption text-slate-400 font-medium mt-2">Oversight only — the CD reviews, recommends, and routes follow-up to the responsible PL. No field scheduling or execution from this drawer.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

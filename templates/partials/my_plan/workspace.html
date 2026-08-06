@@ -1,0 +1,47 @@
+<!-- My Plan Workspace container (reloaded by HTMX filters) -->
+<div class="space-y-6">
+
+<!-- 1. Filters Row -->
+{% include "partials/my_plan/filters.html" %}
+
+<!-- 2. KPI Cards Strip -->
+{% include "partials/my_plan/kpi_cards.html" %}
+
+{% comment %}
+Planning Insights is gone from here: the Dashboard already carries the same
+upcoming/alerts/next-action rail, and repeating it on My Plan meant two places
+to read the same thing and two places to keep it true. My Plan is the list of
+work; the Dashboard is where the day is summarised.
+{% endcomment %}
+
+<!-- Period Segmented Tabs row -->
+{% include "partials/my_plan/period_tabs.html" %}
+
+<!-- Activity Tables Grouped by Category -->
+<div class="space-y-8">
+
+<!-- 0. Attention region (returned / approval / partner monitoring / finance) -->
+{% include "partials/my_plan/priority_queue.html" %}
+
+{% include "partials/my_plan/attention.html" %}
+
+<!-- 1. School Visits Planned for This Week -->
+{% include "partials/my_plan/school_visits.html" %}
+
+<!-- 2. Cluster Trainings Planned for This Week -->
+{% include "partials/my_plan/cluster_trainings.html" %}
+
+<!-- 3. Cluster Meetings Planned for This Week -->
+{% include "partials/my_plan/cluster_meetings.html" %}
+
+<!-- 4. Non-school programme activities (conferences, camps, exhibitions) -->
+{% if programme_activities %}
+{% include "partials/my_plan/programme_activities.html" %}
+{% endif %}
+
+</div>
+
+<!-- Bottom Period breakdown -->
+{% include "partials/my_plan/period_breakdown.html" %}
+
+</div>

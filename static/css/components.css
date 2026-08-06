@@ -1,0 +1,3015 @@
+/* Edify Design System Components - Semantic classes powered by Design System Tokens */
+
+/* Semantic density primitives. The product previously accumulated thousands
+   of one-off 8–11px labels and literal white panels. These primitives keep the
+   compact enterprise rhythm while preserving a 12px compact-text floor and make
+   every surface participate in Light, Blue, Dark and System themes. */
+.edify-text-caption {
+  font-size: var(--edify-text-label-size) !important;
+  line-height: 1rem !important;
+}
+
+/* Status pill. Used in 27 places across projects, HR and performance, and
+   defined nowhere until now — so every one of them rendered as unstyled
+   inline text, and `data-tone` selected between four appearances that did not
+   exist. Built from the semantic ramps rather than literal colours so it
+   inherits Light, Blue, Dark and System along with everything else.
+   The -text tones are the ones already measured to clear 4.5:1 on a light
+   surface, so the tone carries meaning without failing contrast. */
+.edify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--edify-border);
+  background-color: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-micro-weight);
+  line-height: var(--edify-text-micro-leading);
+  letter-spacing: var(--edify-text-micro-tracking);
+  white-space: nowrap;
+}
+
+.edify-badge[data-tone="success"] {
+  background-color: var(--edify-success-light);
+  border-color: var(--edify-success-border);
+  color: var(--edify-success-text);
+}
+
+.edify-badge[data-tone="warning"] {
+  background-color: var(--edify-warning-light);
+  border-color: var(--edify-warning-border);
+  color: var(--edify-warning-text);
+}
+
+.edify-badge[data-tone="info"] {
+  background-color: var(--edify-info-light);
+  border-color: var(--edify-info-border);
+  color: var(--edify-info-text);
+}
+
+.edify-badge[data-tone="danger"] {
+  background-color: var(--edify-danger-light);
+  border-color: var(--edify-danger-border);
+  color: var(--edify-danger-text);
+}
+
+.edify-surface {
+  background-color: var(--edify-surface) !important;
+}
+
+.edify-surface-translucent {
+  background-color: color-mix(in srgb, var(--edify-surface) 72%, transparent) !important;
+}
+
+.edify-hover-surface:hover,
+.edify-focus-surface:focus {
+  background-color: var(--edify-surface) !important;
+}
+
+/* Lifting a control on hover. `hover:bg-white` was doing this by hand, which
+   flashes a white panel into the dark themes on every pointer pass. */
+.edify-hover-raised:hover {
+  background-color: var(--edify-surface-raised) !important;
+}
+
+.edify-calendar-popover {
+  width: min(17.5rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+}
+
+.edify-toast-card {
+  width: min(22.5rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+}
+
+.edify-permission-column {
+  width: clamp(12rem, 20vw, 15rem);
+}
+
+/* Weight discipline: operational interfaces need hierarchy, not shouting. */
+.font-bold { font-weight: 600 !important; }
+.font-extrabold,
+.font-black { font-weight: 700 !important; }
+
+/* ── Theme Toggle (segmented control in topbar) ─────────────────────────── */
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px; border-radius: var(--radius-control);
+  background: var(--edify-surface-muted);
+  background: color-mix(in oklab, var(--edify-surface-muted) 90%, transparent);
+  border: 1px solid var(--edify-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.theme-toggle button {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 30px; height: 28px; border-radius: var(--radius-small);
+  color: var(--edify-text-subtle); cursor: pointer;
+  transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+  background: transparent; border: none;
+}
+.theme-toggle button:hover:not(.active) {
+  background: color-mix(in oklab, var(--edify-surface-raised) 54%, transparent);
+  color: var(--edify-text);
+}
+.theme-toggle button.active {
+  background: var(--edify-surface-raised);
+  color: var(--edify-accent);
+  box-shadow: var(--edify-shadow-sm), inset 0 0 0 1px var(--edify-border);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK MODE UTILITY OVERRIDES
+   These rules remap common Tailwind utility classes when .dark is on <html>.
+   This lets ALL existing templates (bg-white, text-slate-*, border-slate-*)
+   adapt to dark mode WITHOUT editing each template individually.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Surfaces — bg-white → dark card surface */
+.dark .bg-white { background-color: var(--edify-surface) !important; }
+.dark .bg-slate-50 { background-color: var(--edify-surface-muted) !important; }
+.dark .bg-slate-100 { background-color: var(--edify-surface-muted) !important; }
+
+/* Text — dark text becomes light text */
+.dark :is(.text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600,
+  .text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600,
+  .text-zinc-900, .text-zinc-800, .text-zinc-700, .text-zinc-600,
+  .text-neutral-900, .text-neutral-800, .text-neutral-700, .text-neutral-600) {
+  color: var(--edify-text) !important;
+}
+.dark :is(.text-slate-500, .text-slate-400,
+  .text-gray-500, .text-gray-400,
+  .text-zinc-500, .text-zinc-400,
+  .text-neutral-500, .text-neutral-400) {
+  color: var(--edify-text-muted) !important;
+}
+.dark :is(.text-slate-300, .text-slate-200,
+  .text-gray-300, .text-gray-200,
+  .text-zinc-300, .text-zinc-200,
+  .text-neutral-300, .text-neutral-200) {
+  color: var(--edify-text-subtle) !important;
+}
+
+/* Borders — light borders become dark borders */
+.dark .border-slate-200, .dark .border-slate-100 { border-color: var(--edify-border) !important; }
+.dark .border-slate-300 { border-color: var(--edify-border-strong) !important; }
+.dark .border-slate-400 { border-color: var(--edify-border-strong) !important; }
+
+/* Divide colors */
+.dark .divide-slate-50 > * + *, .dark .divide-slate-100 > * + * { border-color: var(--edify-border) !important; }
+
+/* Semantic backgrounds — translucent tints for dark mode */
+.dark .bg-emerald-50, .dark .bg-green-50 { background-color: var(--edify-success-light) !important; }
+.dark .bg-amber-50, .dark .bg-yellow-50, .dark .bg-orange-50 { background-color: var(--edify-warning-light) !important; }
+.dark .bg-rose-50, .dark .bg-red-50 { background-color: var(--edify-danger-light) !important; }
+.dark .bg-blue-50, .dark .bg-sky-50 { background-color: var(--edify-info-light) !important; }
+.dark .bg-indigo-50 { background-color: var(--edify-info-light) !important; }
+.dark .bg-violet-50, .dark .bg-purple-50 { background-color: var(--edify-purple-light) !important; }
+.dark .bg-teal-50, .dark .bg-cyan-50 { background-color: var(--edify-teal-light) !important; }
+.dark [class*="bg-emerald-50/"], .dark [class*="bg-green-50/"] { background-color: var(--edify-success-light) !important; }
+.dark [class*="bg-amber-50/"], .dark [class*="bg-yellow-50/"], .dark [class*="bg-orange-50/"] { background-color: var(--edify-warning-light) !important; }
+.dark [class*="bg-rose-50/"], .dark [class*="bg-red-50/"] { background-color: var(--edify-danger-light) !important; }
+.dark [class*="bg-blue-50/"], .dark [class*="bg-sky-50/"] { background-color: var(--edify-info-light) !important; }
+.dark [class*="bg-indigo-50/"] { background-color: var(--edify-info-light) !important; }
+.dark [class*="bg-violet-50/"], .dark [class*="bg-purple-50/"] { background-color: var(--edify-purple-light) !important; }
+.dark [class*="bg-teal-50/"], .dark [class*="bg-cyan-50/"] { background-color: var(--edify-teal-light) !important; }
+.dark [class*="bg-slate-50/"], .dark [class*="bg-slate-100/"] { background-color: var(--edify-surface-muted) !important; }
+
+/* Semantic text — lighter for dark mode readability */
+.dark .text-emerald-600, .dark .text-emerald-700 { color: var(--edify-success) !important; }
+.dark :is(.text-amber-500, .text-amber-600, .text-amber-700, .text-amber-800,
+  .text-yellow-500, .text-yellow-600, .text-yellow-700, .text-yellow-800,
+  .text-orange-500, .text-orange-600, .text-orange-700, .text-orange-800) {
+  color: var(--edify-warning) !important;
+}
+.dark .text-rose-600, .dark .text-rose-700 { color: var(--edify-danger) !important; }
+.dark .text-blue-600, .dark .text-blue-700 { color: var(--edify-info) !important; }
+.dark .text-indigo-600, .dark .text-indigo-700 { color: var(--edify-info) !important; }
+.dark .text-violet-600, .dark .text-violet-700 { color: var(--edify-purple) !important; }
+.dark .text-teal-600, .dark .text-teal-700 { color: var(--edify-teal) !important; }
+
+/* Semantic borders — translucent */
+.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.25) !important; }
+.dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.25) !important; }
+.dark .border-rose-200 { border-color: rgba(239, 68, 68, 0.25) !important; }
+.dark .border-blue-100, .dark .border-blue-200 { border-color: var(--edify-info-border) !important; }
+.dark .border-emerald-100, .dark .border-emerald-200 { border-color: var(--edify-success-border) !important; }
+.dark .border-amber-100, .dark .border-amber-200 { border-color: var(--edify-warning-border) !important; }
+.dark .border-rose-100, .dark .border-rose-200 { border-color: var(--edify-danger-border) !important; }
+
+/* Inputs and forms — dark surfaces */
+.dark input[type="text"], .dark input[type="email"], .dark input[type="password"],
+.dark input[type="number"], .dark select, .dark textarea {
+  background-color: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
+  color: var(--edify-text) !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: var(--edify-text-subtle) !important; }
+.dark select option { background-color: var(--edify-surface) !important; color: var(--edify-text) !important; }
+
+/* Placeholder text */
+.dark .placeholder-slate-400 { color: var(--edify-text-subtle) !important; }
+
+/* Hover backgrounds */
+.dark .hover\:bg-slate-50:hover { background-color: var(--edify-surface-muted) !important; }
+.dark .hover\:bg-slate-100:hover { background-color: var(--edify-surface-muted) !important; }
+
+/* Shadow — reduce in dark mode (shadows are already dark) */
+.dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,.2) !important; }
+.dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,.25) !important; }
+.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,.3) !important; }
+
+/* Scrollbar in dark mode */
+.dark ::-webkit-scrollbar-thumb { background: var(--edify-border-strong) !important; }
+
+/* Shell & Layouts */
+.edify-shell {
+  display: flex;
+  min-height: 100dvh;
+  background-color: var(--edify-bg);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 28%;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.edify-shell main {
+  background-color: transparent !important;
+  container-name: workspace;
+  container-type: inline-size;
+  scrollbar-gutter: stable;
+}
+
+/* ═══ GLOBAL PAGE CONTENT WRAPPER ═════════════════════════════════════════
+   Every page wraps its content in a div with p-6/p-4 + space-y. These rules
+   apply the gold standard spacing and text color to ALL pages at once,
+   without editing each template. Dark mode adaptation is automatic via tokens.
+   ═════════════════════════════════════════════════════════════════════ */
+main > div[class*="p-4"]:not([id]):not([class*="drawer"]),
+main > div[class*="p-6"]:not([id]):not([class*="drawer"]) {
+  color: var(--edify-text);
+  min-width: 0;
+}
+main > div[class*="px-4"]:not([class*="drawer"]),
+main > div[class*="px-5"]:not([class*="drawer"]),
+main > div[class*="px-6"]:not([class*="drawer"]),
+main > div[class*="p-4"]:not([class*="drawer"]),
+main > div[class*="p-5"]:not([class*="drawer"]),
+main > div[class*="p-6"]:not([class*="drawer"]),
+main > section[class*="px-4"]:not([class*="drawer"]),
+main > section[class*="px-5"]:not([class*="drawer"]),
+main > section[class*="px-6"]:not([class*="drawer"]) {
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--edify-page-gutter) !important;
+}
+/* Page titles — unify all h1 inside page content */
+main h1 {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-display-size) !important;
+  line-height: var(--edify-text-display-leading) !important;
+  font-weight: var(--edify-text-display-weight) !important;
+  letter-spacing: -.025em !important;
+  font-family: var(--edify-font-display-family) !important;
+}
+/* Page subtitles — unify muted paragraphs */
+main p[class*="text-slate-500"],
+main p[class*="text-slate-400"] {
+  color: var(--edify-text-muted) !important;
+}
+
+/* ═══ GOLD STANDARD CARD ELEVATION ════════════════════════════════════════
+   Borderless cards with soft shadow only. The border only appears on hover. */
+main .bg-white {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+/* Blue keeps the approved classroom image, but its content chrome now follows
+   the same flat filter-surface contract as Night Black. */
+.theme-blue :is(.edify-topbar, main .bg-white, main .card, main .premium-card,
+  main .premium-card-elevated, main .panel, main .mini, main .summary-card,
+  main .rail-card, main .edify-kpi-card, main .card-kpi, main .pto-panel,
+  .kpi-strip, .drawer-surface, .pto-drawer-panel) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: none !important;
+}
+
+.theme-blue main :is(.bg-white, .card, .premium-card, .premium-card-elevated,
+  .panel, .mini, .summary-card, .rail-card, .edify-kpi-card, .card-kpi,
+  .pto-panel) {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+}
+
+/* Tiles use the same translucent plane as their parent cards. */
+.theme-blue main :is(.pto-balance-tile, .pto-recommendation,
+  .pto-signal, .pto-coverage-card, .pto-constraint, .pto-conflict-card,
+  .pto-tracker-card) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: none !important;
+}
+
+.theme-blue .kpi-strip {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.theme-blue .kpi-strip__item:not(:last-child) {
+  border-color: rgba(123, 189, 232, 0.24);
+}
+
+.theme-blue .kpi-strip__icon-container {
+  border: 1px solid rgba(123, 189, 232, 0.42);
+  background-color: rgba(0, 29, 57, 0.30);
+  box-shadow: none;
+}
+
+/* Blue actions keep their hierarchy through colour alone. A saturated action
+   surface always carries white ink; pale blue + navy looked like a selected
+   filter and made primary CTAs inconsistent with every other workspace. */
+.theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
+  button.bg-indigo-700, a.bg-indigo-700, button.bg-sky-600, a.bg-sky-600,
+  button.bg-sky-700, a.bg-sky-700, button.bg-cyan-600, a.bg-cyan-600) {
+  color: var(--edify-on-accent) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-accent) !important;
+  box-shadow: none !important;
+  text-shadow: none;
+}
+
+.theme-blue :is(.btn-primary, .edify-action-button.primary, .pto-button--primary,
+  button.bg-indigo-600, a.bg-indigo-600, button.bg-blue-600, a.bg-blue-600,
+  button.bg-indigo-700, a.bg-indigo-700, button.bg-sky-600, a.bg-sky-600,
+  button.bg-sky-700, a.bg-sky-700, button.bg-cyan-600, a.bg-cyan-600):hover:not(:disabled) {
+  background-color: var(--edify-accent-hover) !important;
+  border-color: var(--edify-accent-hover) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+/* Feature-local primary families resolve to the same white-on-blue contract. */
+.theme-blue :is(.premium-button-primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary) {
+  color: var(--edify-on-accent) !important;
+  text-shadow: none;
+}
+
+.theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
+  button.border-slate-200, a.border-slate-200, button.border-slate-300,
+  a.border-slate-300) {
+  color: var(--edify-text) !important;
+  background-color: var(--edify-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.theme-blue :is(.btn-ghost, .edify-action-button.secondary, .pto-button--secondary,
+  button.border-slate-200, a.border-slate-200, button.border-slate-300,
+  a.border-slate-300):hover:not(:disabled) {
+  color: var(--edify-sky-100) !important;
+  border-color: var(--edify-sky-400) !important;
+  background-color: var(--edify-surface-raised) !important;
+  transform: none;
+}
+.theme-dark main .bg-white {
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+}
+
+/* Every workspace uses Geist Sans. Dark mode changes surfaces and contrast—not the
+   product typeface—so moving between themes never changes the information
+   density or visual language. */
+.theme-dark main h1,
+.theme-dark main .edify-page-header h1 {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.018em !important;
+}
+
+.theme-dark main :is(.edify-section-heading, .edify-editorial-heading) {
+  color: var(--edify-text) !important;
+  font-family: var(--edify-font-sans) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.012em !important;
+}
+
+.theme-dark main :is(.card, .premium-card, .premium-card-elevated,
+  .panel, .edify-kpi-card, .card-kpi, .bg-white) {
+  background-color: var(--edify-card-surface) !important;
+  background-image: var(--edify-surface-treatment) !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+}
+
+.theme-dark main :is(.font-black, .font-extrabold) {
+  font-weight: 700 !important;
+}
+
+.theme-dark main .font-bold {
+  font-weight: 600 !important;
+}
+
+/* ═══ GOLD STANDARD TABLES ═══════════════════════════════════════════════
+   Premium tables: no per-row border lines. Zebra striping instead. */
+main table tbody td {
+  border-bottom: 1px solid color-mix(in srgb, var(--edify-border) 72%, transparent) !important;
+}
+main table thead th {
+  background: var(--edify-surface-muted) !important;
+  border-bottom: 2px solid var(--edify-border) !important;
+}
+main table tbody tr:nth-child(even) {
+  background: var(--edify-surface-muted) !important;
+}
+main table tbody tr:hover {
+  background: rgba(37,99,235,.06) !important;
+}
+.dark main table tbody tr:nth-child(even) {
+  background: rgba(255,255,255,.025) !important;
+}
+.dark main table tbody tr:hover {
+  background: rgba(59,130,246,.08) !important;
+}
+/* Kill divide utilities that create grid lines */
+main .divide-y > * + * {
+  border-top-color: color-mix(in srgb, var(--edify-border) 72%, transparent) !important;
+}
+
+/* ═══ GOLD STANDARD FORM INPUTS ═══════════════════════════════════════════
+   Premium form styling across ALL pages. Token-driven, theme-aware. */
+main input[type="text"], main input[type="email"], main input[type="password"],
+main input[type="number"], main input[type="date"], main select, main textarea {
+  border: 1px solid var(--edify-border) !important;
+  background: var(--edify-surface) !important;
+  border-radius: var(--edify-radius-md) !important;
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-body-size) !important;
+  font-family: var(--edify-font-sans) !important;
+  padding: 8px 12px !important;
+  min-height: 40px;
+  outline: none !important;
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast) !important;
+}
+main input:focus, main select:focus, main textarea:focus {
+  border-color: var(--edify-accent) !important;
+  box-shadow: var(--edify-focus-ring) !important;
+}
+main input::placeholder, main textarea::placeholder { color: var(--edify-text-subtle) !important; }
+main select option { background: var(--edify-surface) !important; color: var(--edify-text) !important; }
+main label { color: var(--edify-text-muted) !important; }
+
+/* Dark mode inputs */
+.dark main input[type="text"], .dark main input[type="email"], .dark main input[type="password"],
+.dark main input[type="number"], .dark main input[type="date"], .dark main select, .dark main textarea {
+  background: var(--edify-surface-muted) !important;
+}
+
+/* ═══ GOLD STANDARD SECTION HEADINGS ══════════════════════════════════════
+   All section titles (h2) inside page content get premium weight + color. */
+main h2 {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-heading-size);
+  line-height: var(--edify-text-heading-leading);
+  font-weight: var(--edify-text-heading-weight) !important;
+  letter-spacing: var(--edify-text-heading-tracking);
+}
+
+main h3 {
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  line-height: var(--edify-text-title-leading);
+  font-weight: var(--edify-text-title-weight);
+}
+
+/* ═══ GOLD STANDARD LINKS ═════════════════════════════════════════════════
+   "View all →" style links use accent color. */
+main a[class*="text-blue-600"], main a[class*="text-[var(--edify-accent)]"] {
+  color: var(--edify-accent) !important;
+  text-decoration: none;
+}
+main a[class*="text-blue-600"]:hover, main a[class*="text-[var(--edify-accent)]"]:hover {
+  color: var(--edify-accent-hover) !important;
+  text-decoration: underline;
+}
+
+/* ═══ GOLD STANDARD BUTTONS ═══════════════════════════════════════════════
+   Unify button styling across all pages. */
+main button[class*="bg-indigo-600"], main a[class*="bg-indigo-600"],
+main button[class*="bg-blue-600"], main a[class*="bg-blue-600"] {
+  background: var(--edify-accent) !important;
+  color: var(--edify-on-accent) !important;
+  border-radius: var(--edify-radius-md) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(37,99,235,.2) !important;
+}
+main button[class*="bg-indigo-600"]:hover, main a[class*="bg-indigo-600"]:hover,
+main button[class*="bg-blue-600"]:hover, main a[class*="bg-blue-600"]:hover {
+  background: var(--edify-accent-hover) !important;
+}
+main button[class*="bg-slate-800"], main a[class*="bg-slate-800"] {
+  background: var(--edify-primary) !important;
+  color: var(--edify-on-accent) !important;
+  border-radius: var(--edify-radius-md) !important;
+}
+main button[class*="bg-slate-800"]:hover, main a[class*="bg-slate-800"]:hover {
+  background: var(--edify-primary-hover) !important;
+}
+
+/* ═══ GOLD STANDARD PAGINATION ════════════════════════════════════════════ */
+main .pagination button, main .pagination a,
+main nav[class*="pagination"] button, main nav[class*="pagination"] a {
+  border-radius: var(--edify-radius-sm) !important;
+  color: var(--edify-text-muted) !important;
+}
+main .pagination button:hover, main .pagination a:hover {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-accent) !important;
+}
+
+.edify-sidebar {
+  background-color: var(--edify-primary, #2e505f);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.edify-topbar {
+  height: 56px;
+  background: var(--edify-topbar-bg);
+  border-bottom: 1px solid var(--edify-topbar-border);
+  box-shadow: var(--edify-topbar-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--edify-page-gutter);
+}
+
+.edify-skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 10000;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--edify-on-accent);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font: var(--edify-font-title);
+  translate: 0 calc(-100% - 1.5rem);
+  transition: translate var(--edify-transition-fast);
+}
+
+.edify-skip-link:focus-visible {
+  translate: 0;
+}
+
+.account-menu__signout {
+  background: transparent;
+  color: var(--edify-danger);
+}
+
+.account-menu__signout:hover {
+  background: var(--edify-danger-light);
+}
+
+/* ── Canonical page header ────────────────────────────────────────────────
+   One surface for every authenticated page, taken from the Program Lead
+   Dashboard: a band that is visibly structured but almost melts into the page
+   canvas. The separation is a few percent of tonal shift, a barely-there
+   border and a wide faint shadow — not contrast.
+
+   This class already existed and 73 templates already used it, but it was an
+   underline: margin, padding and a bottom rule. The tonal surface lived as an
+   inline style on the Program Lead Dashboard alone, referencing
+   --header-band-bg, a variable defined nowhere, so the effect came from a
+   fallback literal. Rewriting this one definition is what carries the
+   treatment to every page that was already using the class.
+
+   Transparency is in the colours, never on the container: fading the header
+   would fade its title and controls with it, and the point is a quiet surface
+   holding legible content.
+
+   Both shapes are styled — bare h1/p children for the templates that predate
+   the BEM classes, and __title/__description for new markup — so no template
+   has to change to receive the surface. */
+.edify-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--page-header-gap, 0.75rem);
+  margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
+  /* The band bleeds outward by exactly its own inner padding plus its border,
+     so the title starts on the same vertical as the breadcrumb above it and
+     the cards below it. Without this the header is the one block on the page
+     whose text is inset, and it reads as an accidental indent rather than as
+     a band. Kept under the smallest page gutter (px-4 = 16px) so the bleed
+     eats into the gutter without ever reaching the viewport edge. */
+  margin-inline: calc(-1 * (var(--page-header-padding-x, 0.75rem) + 1px));
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 0.75rem);
+  border-radius: var(--page-header-radius, 12px);
+  background: var(--page-header-surface);
+  border: 1px solid var(--page-header-border);
+  box-shadow: var(--page-header-shadow);
+}
+
+/* Grows into the space the controls leave and shrinks before wrapping, so the
+   title and the page's filters/actions stay on one line. Without a grow/shrink
+   basis the lead sits at its max-content width, which on any page with a
+   sentence of description pushed the controls onto a second row — a different
+   header height, and a different control position, on every page. The basis is
+   the narrowest a title column may get before wrapping is the better answer. */
+.edify-page-header__lead {
+  flex: 1 1 var(--page-header-lead-basis, 20rem);
+  min-inline-size: 0;
+}
+
+/* flex-start, not flex-end: on a wide viewport the controls box is content
+   sized and space-between already parks it on the right, so the only case this
+   decides is the narrow one, where the controls have wrapped onto their own
+   full-width row. There they should start on the page's left edge like every
+   other block, not hang off the right in a ragged column. */
+.edify-page-header__controls {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+/* Controls sit on a firmer surface than the band behind them. The header may
+   be quiet; the things you can click must not be. */
+.edify-page-header-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: var(--edify-radius-control, 8px);
+  background: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.edify-page-header-control select {
+  background: transparent;
+  font-size: var(--edify-text-floor);
+  font-weight: 700;
+  color: var(--edify-text);
+  cursor: pointer;
+}
+
+.edify-page-header__title,
+.edify-page-header h1 {
+  font-size: var(--edify-text-display-size);
+  line-height: var(--edify-text-display-leading);
+  font-weight: var(--edify-text-display-weight);
+  color: var(--edify-text);
+  letter-spacing: -0.01em;
+  font-family: var(--edify-font-display-family);
+}
+/* :not(.edify-page-eyebrow) is load-bearing. A bare `.edify-page-header p`
+   outranks `.edify-page-eyebrow` — one class plus a type beats one class — so
+   every eyebrow inside a header rendered as body copy: 15px, weight 400, muted,
+   instead of the 11px uppercase brand label it is. The Program Lead Dashboard
+   has no eyebrow, which is why the reference page never showed the fault. */
+.edify-page-header__description,
+.edify-page-header p:not(.edify-page-eyebrow) {
+  font-size: var(--edify-text-body-size);
+  color: var(--edify-text-muted);
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+
+/* Base Card container style. No overflow:hidden (it clipped KPI values and
+trapped dropdown menus rendered inside cards) and no hover transform —
+base.html owns card elevation; interactive tiles opt in via .card-interactive. */
+.card {
+  background-color: var(--edify-surface) !important;
+  background-image: var(--edify-surface-treatment);
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  min-width: 0;
+  container-type: inline-size;
+}
+.premium-card,
+.premium-card-elevated {
+  min-width: 0;
+  container-type: inline-size;
+}
+.card-interactive:hover, a.card:hover, button.card:hover {
+  box-shadow: var(--edify-shadow-md) !important;
+}
+
+.edify-hover-lift {
+  transition: box-shadow var(--edify-transition), border-color var(--edify-transition), transform var(--edify-transition);
+}
+
+.edify-hover-lift:hover {
+  border-color: var(--edify-border-strong) !important;
+  box-shadow: var(--edify-shadow-md) !important;
+  transform: translateY(-1px);
+}
+
+.edify-data-row {
+  transition: background-color var(--edify-transition-fast);
+}
+
+.edify-data-row:hover {
+  background: var(--edify-surface-muted) !important;
+}
+
+/* KPI Card semantic component styling */
+.edify-kpi-card, .card-kpi {
+  position: relative;
+  container: metric-tile / inline-size;
+  overflow: hidden;
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  padding: 0.75rem;
+  box-shadow: var(--edify-shadow-sm);
+  transition: var(--edify-transition-all);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 5.75rem;
+}
+.edify-kpi-card:hover, .card-kpi:hover {
+  box-shadow: var(--edify-shadow-md);
+  border-color: var(--edify-border-strong);
+}
+
+/* KPI Icon Circle container */
+.kpi-icon-circle {
+  height: 32px;
+  width: 32px;
+  border-radius: var(--edify-radius-circle);
+  background-color: var(--edify-primary-light);
+  color: var(--edify-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* Risk / Alert Card */
+.edify-risk-card, .card-alert {
+  background-color: var(--edify-danger-light);
+  border: 1px solid var(--edify-danger-border);
+  border-radius: var(--edify-radius-md);
+  padding: 1rem;
+  color: var(--edify-text);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+/* Filter Chip */
+.edify-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  padding: 0.4rem 0.75rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  color: var(--edify-text-muted);
+  transition: var(--edify-transition-fast);
+  cursor: pointer;
+}
+.edify-filter-chip:hover {
+  border-color: var(--edify-primary);
+  color: var(--edify-primary);
+  background-color: var(--edify-primary-light);
+}
+
+/* Insight Panel / Card */
+.edify-insight-panel, .card-insight {
+  background-color: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--edify-shadow-sm);
+}
+
+/* Data Table refinement */
+.edify-data-table, .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--edify-text-table-size);
+}
+.edify-data-table th, .data-table th {
+  background-color: var(--edify-surface-muted);
+  border-bottom: 1px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-size: var(--edify-text-table-heading-size);
+}
+.edify-data-table td, .data-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--edify-border);
+  color: var(--edify-text);
+  line-height: 1.5;
+}
+.edify-data-table tr:hover, .data-table tr:hover {
+  background-color: rgba(46, 80, 95, 0.02);
+}
+
+.edify-row-overflow > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.edify-row-overflow > summary::-webkit-details-marker { display: none; }
+
+.edify-row-overflow__menu {
+  position: absolute;
+  z-index: 30;
+  inset: calc(100% + 0.25rem) 0 auto auto;
+  display: grid;
+  min-width: 12rem;
+  padding: 0.375rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg);
+}
+
+.edify-row-overflow__menu a {
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text);
+  white-space: nowrap;
+}
+
+.edify-row-overflow__menu a:is(:hover, :focus-visible) {
+  background: var(--edify-surface-hover);
+  color: var(--edify-accent);
+}
+
+.edify-filter-drawer {
+  width: min(100%, 26rem);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--edify-radius-xl) 0 0 var(--edify-radius-xl);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  box-shadow: var(--edify-shadow-xl);
+}
+
+.edify-filter-drawer::backdrop {
+  background: color-mix(in srgb, var(--edify-sidebar-bg) 64%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.edify-filter-drawer__header,
+.edify-filter-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-color: var(--edify-border);
+}
+
+.edify-filter-drawer__header { border-bottom-width: 1px; }
+.edify-filter-drawer__footer { border-top-width: 1px; }
+.edify-filter-drawer__header h2 { font-size: var(--edify-text-title-size); font-weight: 750; }
+.edify-filter-drawer__body { display: grid; gap: 1rem; padding: 1.25rem; }
+
+@media (max-width: 30rem) {
+  .edify-filter-drawer { border-radius: 0; }
+}
+
+/* Status Badge & Pills */
+.edify-status-badge, .status-pill, .badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--edify-radius-sm);
+  padding: 0.25rem 0.6rem;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+/* Badge text uses 700-tone colors (not the 500-tone semantic tokens): at
+   10-11px uppercase, the 500 tones sit at ~2.2-2.5:1 contrast on their
+   50-tone backgrounds — below WCAG. The darker text keeps the same hue. */
+.edify-status-badge.success, .status-pill.success, .badge.success {
+  background-color: var(--edify-success-light);
+  color: var(--edify-success-text);
+  border-color: var(--edify-success-border);
+}
+.edify-status-badge.warning, .status-pill.warning, .badge.warning {
+  background-color: var(--edify-warning-light);
+  color: var(--edify-warning-text);
+  border-color: var(--edify-warning-border);
+}
+.edify-status-badge.danger, .status-pill.danger, .badge.danger {
+  background-color: var(--edify-danger-light);
+  color: var(--edify-danger-text);
+  border-color: var(--edify-danger-border);
+}
+.edify-status-badge.info, .status-pill.info, .badge.info {
+  background-color: var(--edify-info-light);
+  color: var(--edify-info-text);
+  border-color: var(--edify-info-border);
+}
+.edify-status-badge.pending, .status-pill.pending, .badge.pending {
+  background-color: var(--edify-purple-light);
+  color: var(--edify-purple-text);
+  border-color: var(--edify-purple-border);
+}
+.dark :is(.edify-status-badge, .status-pill, .badge).success { color: var(--edify-success-text); }
+.dark :is(.edify-status-badge, .status-pill, .badge).warning { color: var(--edify-warning-text); }
+.dark :is(.edify-status-badge, .status-pill, .badge).danger { color: var(--edify-danger-text); }
+.dark :is(.edify-status-badge, .status-pill, .badge).info { color: var(--edify-info-text); }
+.dark :is(.edify-status-badge, .status-pill, .badge).pending { color: var(--edify-purple-text); }
+
+/* Notification & Message Badges */
+.badge-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: var(--edify-radius-pill);
+  background-color: var(--edify-notification);
+  color: var(--edify-notification-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--edify-surface);
+  padding: 0 3px;
+  box-shadow: var(--edify-shadow-sm);
+}
+.badge-notification {
+  background-color: var(--edify-notification);
+  color: var(--edify-notification-text);
+}
+.badge-message {
+  background-color: var(--edify-info);
+}
+
+.notification-badge {
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--edify-radius-pill);
+  border: 2px solid var(--edify-surface);
+  background: var(--edify-notification);
+  color: var(--edify-notification-text);
+  box-shadow: 0 3px 10px var(--edify-notification-glow);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Premium Buttons & Controls Design System */
+.btn, .edify-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-weight: 600;
+  border-radius: var(--radius-control);
+  font-size: var(--edify-text-label-size);
+  padding: 0.5rem 1.15rem;
+  transition: var(--edify-transition-all);
+  cursor: pointer;
+  border: 1px solid transparent;
+  outline: none;
+  line-height: 1.25rem;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Explicit size overrides to make labels fit perfectly inside compact heights */
+.h-7.btn, .h-7.edify-action-button {
+  height: 1.75rem !important; /* 28px */
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 1.75rem !important;
+}
+
+.h-8.btn, .h-8.edify-action-button {
+  height: 2rem !important; /* 32px */
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 2rem !important;
+}
+
+.h-9.btn, .h-9.edify-action-button {
+  height: 2.25rem !important; /* 36px */
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  font-size: var(--edify-text-label-size) !important;
+  line-height: 2.25rem !important;
+}
+
+/* Budget category labels: distinguished in the dark header row by weight and
+   italic, on the platform's single UI font (Geist Sans). Serif was dropped to
+   satisfy the global Geist-only rule; the visual emphasis is preserved. */
+.budget-category-name {
+  font-style: italic !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+/* Budget sub-totals: larger and bolder than body rows. */
+.budget-subtotal-row {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+/* Button styles to match reference image 3 */
+.btn-primary, .edify-action-button.primary {
+  background-color: var(--edify-accent) !important;
+  color: var(--edify-on-accent) !important;
+  box-shadow: var(--edify-shadow-sm);
+}
+.btn-primary:hover, .edify-action-button.primary:hover {
+  background-color: var(--edify-accent-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--edify-shadow-md);
+}
+
+.btn-danger {
+  background-color: var(--edify-danger) !important; /* Warning Red */
+  color: #ffffff !important;
+}
+.btn-danger:hover {
+  background-color: var(--edify-danger) !important;
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background-color: var(--edify-success) !important; /* Positive Green */
+  color: #ffffff !important;
+}
+.btn-success:hover {
+  background-color: var(--edify-success) !important;
+  transform: translateY(-1px);
+}
+
+.btn-warning {
+  background-color: var(--edify-warning) !important; /* Attention Orange */
+  color: #ffffff !important;
+}
+.btn-warning:hover {
+  background-color: var(--edify-warning) !important;
+  transform: translateY(-1px);
+}
+
+/* Smooth style: Light background with strong matching text */
+.btn-smooth {
+  background-color: var(--edify-primary-light);
+  color: var(--edify-primary);
+}
+.btn-smooth:hover {
+  background-color: var(--edify-primary-light);
+  transform: translateY(-1px);
+}
+
+/* Secondary/Ghost styles */
+.btn-ghost, .edify-action-button.secondary {
+  background-color: transparent;
+  border-color: var(--edify-border);
+  color: var(--edify-text-muted);
+}
+.btn-ghost:hover, .edify-action-button.secondary:hover {
+  border-color: var(--edify-primary);
+  color: var(--edify-primary);
+  background-color: var(--edify-primary-light);
+  transform: translateY(-1px);
+}
+
+/* Icon button modifier: Circular */
+.btn-icon {
+  border-radius: var(--edify-radius-circle);
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--edify-shadow-sm);
+  background-color: var(--edify-surface-raised);
+  border: 1px solid var(--edify-border);
+}
+.btn-icon:hover {
+  box-shadow: var(--edify-shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Switch Component to match reference image 5 */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--edify-border-strong);
+  transition: .3s;
+  border-radius: var(--radius-pill);
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+input:checked + .toggle-slider {
+  background-color: var(--edify-success);
+}
+input:checked + .toggle-slider.toggle-blue {
+  background-color: var(--edify-info);
+}
+input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+/* Input Fields styling */
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], select, textarea {
+  border: 1px solid var(--edify-border) !important;
+  background-color: var(--edify-surface) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size) !important;
+  /* No !important on padding: inputs with icons (e.g. the topbar search)
+     must be able to reserve space for them. */
+  padding: 6px 12px;
+  outline: none !important;
+  transition: var(--edify-transition-fast) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--edify-info) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
+}
+
+/* Filter-bar selects: reserve room for a consistent dropdown chevron so the
+   native arrow never sits flush against the right edge. Targets every form
+   following the My Plan gold-standard convention (id ends in "filters-form"
+   or lives inside a .filter-bar / partner-workspace__filters wrapper). */
+/* PLATFORM-WIDE: every select reserves chevron space. The scoped version of
+   this rule covered the 125 selects inside gold-standard filter forms and
+   left 188 others (drawers, modals, detail forms) with the native arrow
+   flush against the border. One rule, one dialect: 12px left, 2.25rem right,
+   the shared chevron, never a flush edge. `select[multiple]` and explicit
+   opt-outs keep their native treatment. */
+select:not([multiple]):not(.select-native) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-left: 12px !important;
+  padding-right: 2.25rem !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 16px 16px;
+}
+
+/* Empty State component */
+.edify-empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background-color: var(--edify-surface-muted);
+  border-radius: var(--edify-radius-md);
+  border: 1px dashed var(--edify-border);
+}
+
+/* Layout & Grid Helpers (Tailwind Fallbacks) */
+@media (min-width: 1024px) {
+  .lg\:grid-cols-9 {
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+  }
+  .lg\:col-span-10 {
+    grid-column: span 10 / span 10 !important;
+  }
+  .lg\:col-span-2 {
+    grid-column: span 2 / span 2 !important;
+  }
+}
+
+/* ─── GLOBAL KPI STRIP COMPONENT ───────────────────────────────────────────── */
+.kpi-strip {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  width: 100%;
+  overflow: visible;
+  margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
+  container: kpi-strip / inline-size;
+}
+
+.kpi-strip__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 0;
+}
+
+.kpi-strip__title {
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  color: var(--edify-text);
+  letter-spacing: -0.01em;
+}
+
+.kpi-strip__subtitle {
+  font-size: var(--edify-text-label-size);
+  color: var(--edify-text-muted);
+  margin-top: 0;
+}
+
+.kpi-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+}
+
+.kpi-strip__item {
+  position: relative;
+  container: kpi-card / inline-size;
+  overflow: hidden;
+  padding: 1rem;
+  min-height: 7.15rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.kpi-strip__item::after {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: var(--edify-glass-highlight);
+  content: "";
+  pointer-events: none;
+}
+
+.kpi-strip__item-body {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.5rem, calc(0.375rem + 1.2cqi), 0.75rem);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Linked items behave as clickable tiles with a hover lift. */
+.kpi-strip__item:has(.kpi-strip__item-body--link) {
+  border-radius: var(--edify-radius-md);
+  transition: background-color var(--edify-transition-fast, 0.15s),
+              transform var(--edify-transition-fast, 0.15s),
+              border-color var(--edify-transition-fast, 0.15s),
+              box-shadow var(--edify-transition-fast, 0.15s);
+}
+.kpi-strip__item:has(.kpi-strip__item-body--link):hover {
+  border-color: var(--edify-border-strong);
+  box-shadow: var(--edify-shadow-sm);
+  transform: translateY(-1px);
+}
+.kpi-strip__item-body--link:hover { color: inherit; }
+.kpi-strip__item-body--link:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-md);
+}
+
+.kpi-strip__icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(1.75rem, calc(1.5rem + 2.4cqi), 2.25rem);
+  height: clamp(1.75rem, calc(1.5rem + 2.4cqi), 2.25rem);
+  border-radius: var(--radius-control);
+  flex-shrink: 0;
+}
+
+.kpi-strip__icon-container--primary {
+  background-color: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.kpi-strip__icon-container--info,
+.kpi-strip__icon-container--blue {
+  background-color: var(--edify-info-light);
+  color: var(--edify-info);
+}
+
+.kpi-strip__icon-container--success,
+.kpi-strip__icon-container--finance,
+.kpi-strip__icon-container--green,
+.kpi-strip__icon-container--teal,
+.kpi-strip__icon-container--emerald {
+  background-color: var(--edify-success-light);
+  color: var(--edify-success);
+}
+
+.kpi-strip__icon-container--warning,
+.kpi-strip__icon-container--amber {
+  background-color: var(--edify-warning-light);
+  color: var(--edify-warning);
+}
+
+.kpi-strip__icon-container--danger,
+.kpi-strip__icon-container--red {
+  background-color: var(--edify-danger-light);
+  color: var(--edify-danger);
+}
+
+.kpi-strip__icon-container--analytics,
+.kpi-strip__icon-container--purple {
+  background-color: var(--edify-purple-light);
+  color: var(--edify-purple);
+}
+
+.kpi-strip__icon-container--neutral,
+.kpi-strip__icon-container--slate {
+  background-color: color-mix(in srgb, var(--edify-text-muted) 10%, transparent);
+  color: var(--edify-text-muted);
+}
+
+.kpi-strip__icon {
+  width: 17px;
+  height: 17px;
+}
+
+.kpi-strip__item-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.kpi-strip__label {
+  font-size: var(--edify-text-tile-label-size);
+  font-weight: 700;
+  letter-spacing: var(--edify-kpi-label-tracking);
+  color: var(--edify-text-muted);
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+  max-inline-size: 100%;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: none;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.kpi-strip__value {
+  font-size: var(--edify-text-tile-value-size);
+  font-weight: 700;
+  color: var(--edify-text);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+
+/* A tile with no number to show.
+   The reason ("No data", "Not yet measurable") is prose, not a statistic, so
+   it drops the tabular-figure sizing that makes a value read as a quantity and
+   takes the muted ink instead. Sizing it like a value is how "No data" ends up
+   looking as authoritative as a measurement. */
+.kpi-strip__item--absent .kpi-strip__value {
+  font-size: var(--edify-text-label-size, 0.875rem);
+  font-weight: 650;
+  color: var(--edify-text-subtle);
+  letter-spacing: normal;
+  text-wrap: balance;
+}
+
+.kpi-strip__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+  font-size: var(--edify-text-tile-helper-size);
+  flex-wrap: wrap;
+}
+
+.kpi-strip__trend {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Trend chips are 11px text: the saturated fill tones read 2.5-3.6:1 on the
+   white KPI card, so they use the AA text tones. In the dark themes the -text
+   tokens alias back to the light fills, so dark surfaces keep their hue. */
+.kpi-strip__trend--up {
+  color: var(--edify-success-text);
+}
+
+.kpi-strip__trend--down {
+  color: var(--edify-danger-text);
+}
+
+.kpi-strip__trend--neutral {
+  color: var(--edify-text-muted);
+}
+
+.kpi-strip__helper {
+  color: var(--edify-text-muted);
+  font-weight: 500;
+  overflow-wrap: normal;
+  text-wrap: pretty;
+  word-break: normal;
+}
+
+/* At the smallest supported tile width, the decorative icon is the first
+   thing to yield. Giving its lane back to the label prevents four- and
+   five-line headings without hiding or truncating the actual information. */
+@container kpi-card (max-width: 16rem) {
+  .kpi-strip__icon-container {
+    display: none;
+  }
+
+  .kpi-strip__item-body {
+    gap: 0;
+  }
+}
+
+/* Band version — one surface, items divided by rules, in the pattern of the
+   login page's stats strip. For pages where a wall of six bordered cards
+   reads as clutter: the figures matter, the chrome does not. Items stay the
+   component's own markup (identity attrs, drill-down links, accessible
+   descriptions all intact); only the dress changes. */
+.kpi-strip--band {
+  background-color: var(--edify-surface);
+  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  box-shadow: var(--edify-shadow-sm);
+  padding: 0.85rem 0.5rem;
+}
+
+.kpi-strip--band .kpi-strip__grid {
+  gap: 0;
+  row-gap: 0.75rem;
+  /* One row on a desktop. The default auto-fit minimum (14rem) wraps six
+     items into two rows on ordinary laptop widths; a band exists to be a
+     single line, so its items may compress further before wrapping. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.kpi-strip--band .kpi-strip__item {
+  background: none !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 0;
+  padding: 0.2rem 0.85rem;
+  /* The divider between neighbours. The first item's is hidden below; a
+     wrapped row's leading item keeps its rule, which reads as a soft grid. */
+  border-left: 1px solid var(--edify-border) !important;
+}
+
+.kpi-strip--band .kpi-strip__item:first-child {
+  border-left: 0 !important;
+}
+
+.kpi-strip--band .kpi-strip__item:hover {
+  box-shadow: none !important;
+  background-color: var(--edify-surface-muted) !important;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  align-items: center;
+}
+
+.kpi-strip--band .kpi-strip__value {
+  font-size: clamp(1rem, calc(0.9375rem + 2cqi), 1.15rem);
+  line-height: 1.15;
+}
+
+/* Tighter chrome so six figures sit comfortably on one line. */
+.kpi-strip--band .kpi-strip__icon-container {
+  width: 28px;
+  height: 28px;
+}
+
+.kpi-strip--band .kpi-strip__icon-container svg {
+  width: 15px;
+  height: 15px;
+}
+
+.kpi-strip--band .kpi-strip__item-body {
+  gap: 0.6rem;
+}
+
+.kpi-strip--band .kpi-strip__meta {
+  margin-top: 0.1rem;
+}
+
+/* Compact version */
+.kpi-strip--compact {
+  padding: 0.75rem;
+}
+
+.kpi-strip--compact .kpi-strip__grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.kpi-strip--compact .kpi-strip__value {
+  font-size: 1.125rem;
+}
+
+@container kpi-strip (min-width: 30rem) and (max-width: 42rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container kpi-strip (min-width: 48rem) {
+  .kpi-strip__grid { gap: 0.75rem; }
+
+  .kpi-strip__item {
+    padding: 1rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+  }
+}
+
+/* Metric labels stay on one scannable line. Between tablet and laptop widths
+   the grid yields columns before the type has to wrap or become illegible. */
+@container kpi-strip (min-width: 38rem) and (max-width: 54.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+}
+
+@container kpi-strip (min-width: 55rem) and (max-width: 74.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .kpi-strip__grid:is(
+    :has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))),
+    :has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))),
+    :has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11)))
+  ) .kpi-strip__item {
+    padding: 0.75rem;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+    background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
+  }
+}
+
+/* Wide canvases keep the SAME row discipline (spec §15). Without this the
+   count-aware rules above stopped at 74.99rem and `auto-fit` took over, so a
+   7- or 8-metric strip collapsed into a single unreadable row on a normal
+   laptop — labels wrapping to three lines — and a 10-metric strip rendered
+   4+4+2, orphaning two cards in a half-empty final row. Both are explicitly
+   called out in §15 ("Do not compress eight KPIs into one unreadable row",
+   "Do not leave isolated KPI cards in partially empty rows").
+
+     5 -> one row      6 -> 3x2      7-8 -> 4x2      9-10 -> 5x2      11-12 -> 4x3 */
+@container kpi-strip (min-width: 75rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)):not(:has(> .kpi-strip__item:nth-child(7))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(13))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Phones never scroll a KPI strip horizontally. A single column gives labels
+   their full reading width and prevents narrow two-column cards from turning
+   one metric name into a stack of fragments. */
+@media (max-width: 36rem) {
+  .kpi-strip__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .kpi-strip__item {
+    min-width: 0;
+  }
+}
+
+/* Settings owns appearance selection. These previews communicate the real
+   character of each workspace instead of showing generic color swatches. */
+.appearance-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: 0.75rem;
+}
+
+.appearance-theme-option {
+  min-width: 0;
+  min-height: 8rem;
+  padding: 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text);
+  text-align: start;
+  transition: transform var(--edify-transition-fast), border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+
+.appearance-theme-option:hover {
+  transform: translateY(-1px);
+  border-color: var(--edify-border-strong);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.appearance-theme-option.is-active {
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring), var(--edify-shadow-sm);
+}
+
+.appearance-theme-preview {
+  display: block;
+  height: 3.5rem;
+  margin-bottom: 0.625rem;
+  overflow: hidden;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--radius-control);
+  background-position: center 30%;
+  background-size: cover;
+}
+
+.appearance-theme-preview--light {
+  background: linear-gradient(135deg, var(--edify-surface-raised), var(--edify-bg));
+}
+
+.appearance-theme-preview--system {
+  background:
+    linear-gradient(116deg, transparent 0 48%, rgba(255,255,255,.7) 48% 51%, transparent 51%),
+    linear-gradient(116deg, #f7fbfe 0 49%, #111c29 49% 100%);
+}
+
+.appearance-theme-preview--blue {
+  background-image:
+    linear-gradient(112deg, rgba(0,29,57,.90), rgba(10,65,116,.64)),
+    url("../images/login-classroom-portrait.jpg");
+}
+
+.appearance-theme-preview--dark {
+  position: relative;
+  background: #000000;
+}
+
+.appearance-theme-preview--dark::before,
+.appearance-theme-preview--dark::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  /* Documented radius exception (spec §11): a scaled-down illustration of
+     the app shell inside a ~56px preview thumbnail, not a real UI control. */
+  border-radius: 5px;
+  background: #0d0d0f;
+}
+
+.appearance-theme-preview--dark::before {
+  inset: 0.65rem 0.55rem 0.65rem 2.35rem;
+}
+
+.appearance-theme-preview--dark::after {
+  inset: 0.65rem auto 0.65rem 0.55rem;
+  width: 1.4rem;
+  background: #050505;
+}
+
+.settings-detail-tile {
+  container: metric-tile / inline-size;
+  min-width: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.settings-detail-tile__label {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-tile-label-size);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: var(--edify-text-micro-tracking);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The reusable card predates the KPI strip but appears across reports and
+   operational dashboards. It follows the same one-line label contract and
+   returns its decorative icon lane before the label becomes cramped. */
+.card-kpi > .flex > .min-w-0 > p:first-child {
+  max-inline-size: 100%;
+  font-size: var(--edify-text-tile-label-size) !important;
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  white-space: nowrap;
+  word-break: normal;
+}
+
+@container metric-tile (max-width: 16rem) {
+  .card-kpi .kpi-icon-circle {
+    display: none;
+  }
+}
+
+.settings-detail-tile__value {
+  margin-block-start: 0.25rem;
+  color: var(--edify-text);
+  font: var(--edify-font-title);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Responsive composition — mobile is a distinct working layout. ─────── */
+@media (min-width: 1280px) {
+  .pd-page-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .pd-page-header > :first-child {
+    max-inline-size: 24rem;
+  }
+
+  .pd-page-header > :last-child {
+    flex-wrap: nowrap !important;
+  }
+
+  #planning-main-container #filters-form {
+    flex-wrap: nowrap !important;
+  }
+
+  #planning-main-container #filters-form > div:nth-of-type(2) select,
+  #planning-main-container #filters-form > div:nth-of-type(3) select {
+    inline-size: 8.4375rem !important;
+    min-inline-size: 0 !important;
+  }
+
+  #planning-main-container #filters-form > div:nth-of-type(4) select {
+    inline-size: 9.375rem !important;
+    min-inline-size: 0 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .edify-topbar {
+    padding-inline: 0.75rem;
+  }
+
+  main > div[class*="px-4"],
+  main > div[class*="p-4"],
+  main > div[class*="p-6"] {
+    padding-inline: var(--edify-page-gutter) !important;
+  }
+
+  .edify-page-header {
+    margin-bottom: 1rem;
+  }
+
+  #planning-main-container .edify-page-header > :last-child {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  #planning-main-container .edify-page-header > :last-child > :is(a, button) {
+    flex: 1 1 auto;
+    min-width: max-content;
+  }
+
+  :is(#filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end !important;
+    gap: 0.625rem !important;
+    width: 100%;
+  }
+
+  :is(#filters-form, #analytics-filters-form) > div {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  :is(#filters-form, #analytics-filters-form) > div > span {
+    width: 100%;
+    color: var(--edify-text-muted) !important;
+  }
+
+  :is(#filters-form, #analytics-filters-form) select,
+  :is(#pl-analytics-filters, #cd-analytics-filters, #cb-filters) :is(select, input) {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  #analytics-filters-form > a,
+  #filters-form > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-left: 0 !important;
+    min-height: 36px;
+  }
+
+  #cb-filters > label {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .kpi-strip__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .edify-topbar > div:first-child {
+    gap: 0.5rem;
+  }
+
+  .kpi-strip__item-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .kpi-strip__item {
+    min-height: 8.25rem;
+  }
+}
+
+@media (pointer: coarse) {
+  :is(.btn, .edify-action-button),
+  .edify-topbar :is(button, a),
+  main :is(input, select, textarea):not([type="hidden"]) {
+    min-height: 44px;
+  }
+
+}
+
+/* ─── CANONICAL PAGE-HEADER ANATOMY ─────────────────────────────────────────
+   The Partner Activities header is the platform reference: eyebrow category
+   label above the title, subtitle under it, and (where a page filters in the
+   header) labelled controls aligned right. These classes let every page adopt
+   the same anatomy without page-scoped CSS copies. */
+.edify-page-eyebrow {
+  margin: 0 0 5px;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+/* ─── ANALYTICS SECTION SUB-NAVIGATION ──────────────────────────────────────
+   One workspace, many pages. The shell renders this strip above the page
+   header on every Analytics section so the whole analysis surface is one
+   place you move around inside, instead of a dozen sidebar links.
+
+   These are navigation links, not tabs: no [role="tab"], so they keep the
+   underline treatment rather than inheriting the segmented pill styling
+   platform.css applies to in-page tab strips. */
+/* Sits inside the page, under the filters — not as a bar floating above the
+   page header — so the page container supplies the width and gutters. */
+.edify-section-nav {
+  border-block-end: 1px solid var(--edify-border);
+  background: transparent;
+}
+
+.edify-section-nav__inner {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.edify-section-nav__eyebrow {
+  flex: 0 0 auto;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.edify-section-nav__rule {
+  flex: 0 0 auto;
+  inline-size: 1px;
+  block-size: 16px;
+  margin-inline: 8px 4px;
+  background: var(--edify-border);
+}
+
+/* Divider between clusters of related sections. */
+.edify-section-nav__divider {
+  flex: 0 0 auto;
+  inline-size: 1px;
+  block-size: 14px;
+  margin-inline: 5px;
+  background: var(--edify-border);
+}
+
+.edify-section-nav__link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 38px;
+  padding-inline: 7px;
+  border-block-end: 2px solid transparent;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+/* Touch targets follow the platform's 44px floor. */
+@media (max-width: 48rem), (pointer: coarse) {
+  .edify-section-nav__link { min-block-size: 44px; }
+}
+
+.edify-section-nav__link:hover {
+  color: var(--edify-text);
+  border-block-end-color: var(--edify-border);
+}
+
+.edify-section-nav__link.is-active {
+  color: var(--edify-accent);
+  border-block-end-color: var(--edify-accent);
+}
+
+/* --edify-accent is a solid brand blue built for fills and borders. As text on
+   the night surface it measures 3.87:1, under AA — and this is the one label
+   that says which page you are on. The underline keeps the accent; the label
+   takes the theme's blue-on-dark text tone. */
+.theme-dark .edify-section-nav__link.is-active {
+  color: var(--edify-info);
+}
+
+.edify-section-nav__link:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: -3px;
+}
+
+/* ─── BACK TO THE LIST YOU CAME FROM ────────────────────────────────────────
+   Drill-down pages put this in the eyebrow slot of the canonical page header,
+   in place of the category label. On a detail page the line that says "where
+   am I" is better spent saying "where I came from", and reusing it costs no
+   extra vertical space — the header keeps its exact rhythm. It matches the
+   eyebrow's metrics for that reason, and it is a real link to the parent
+   rather than history.back(), which strands anyone who arrived from a deep
+   link, a notification or a redirect. */
+.edify-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 5px;
+  color: var(--brand-primary-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: color .15s ease;
+}
+
+.edify-back-link svg {
+  inline-size: 13px;
+  block-size: 13px;
+  flex: 0 0 auto;
+}
+
+.edify-back-link:hover {
+  color: var(--brand-primary-text-hover);
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.edify-back-link:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+/* Touch gets a 44px target; the symmetric negative margin keeps the header
+   looking identical to the pointer layout. */
+@media (max-width: 48rem), (pointer: coarse) {
+  .edify-back-link {
+    padding-block: 11px;
+    margin-block: -11px 0;
+  }
+}
+
+.edify-header-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+.edify-header-filters label { display: grid; gap: 4px; min-width: 8.25rem; }
+.edify-header-filters label > span:not(.sr-only) {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 750;
+}
+.edify-header-filters select,
+.edify-header-filters input { width: 100%; height: 39px; }
+
+/* Filter bars sit ON the page background — never on their own card. The
+   controls carry the surface; the bar itself is transparent. */
+:is(#filters-form, #core-filters-form, #analytics-filters-form,
+    #pl-analytics-filters, #cd-analytics-filters, #cb-filters,
+    #debrief-filters, #visits-filters, #trainings-filters,
+    #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters,
+    #project-filters, [data-component="filter-toolbar"],
+    .platform-filter-bar, .edify-filter-bar) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  /* Filters start at the left edge, so every wrapped row lines up under the
+     one above it. flex-end here right-aligned each line independently: a bar
+     that wrapped put its first row against the right margin and its second
+     against the left, and the two rows shared no edge at all. Trailing
+     actions still sit right — they carry their own ml-auto, which is what
+     "actions aligned at the end" actually needs. */
+  justify-content: flex-start;
+}
+
+/* ─── CANONICAL FILTER-CONTROL DESIGN (all widths) ──────────────────────────
+   Promotes the Partner Activities reference to every shared filter bar: a
+   small label ABOVE each control, the control itself a bordered surface
+   input, actions aligned at the end. Wrappers that used to carry the pill
+   border hand it to their control. */
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(.edify-filter-actions):has(> select, > span + select, > .edify-filter-label):not(:has(div)) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  /* Each control sizes to what it actually holds, then shares the leftover
+     space on its row. A fixed 8.25rem basis gave a two-character FY the same
+     slab as "Q2 (Jan-Mar)" — one padded with dead space while the other
+     truncated mid-word — and left a gap at the end of every wrapped row
+     because nothing was allowed to grow.
+
+     The bounds still matter: a select reports its longest option as its
+     natural width, so an unbounded district list of 139 names would dominate
+     the row. The cap trims only the closed control — the open dropdown still
+     shows every option in full. */
+  min-width: 7rem;
+  max-width: 14rem;
+  flex: 1 1 auto;
+}
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 750;
+  text-transform: none;
+  letter-spacing: 0;
+}
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(:has(div)) :is(select, input:not([type="hidden"]):not([type="checkbox"])) {
+  width: 100% !important;
+  /* Without this a select still reports its longest option as its min-content
+     width and refuses to shrink inside the band above. */
+  min-width: 0 !important;
+  height: 39px !important;
+  background: var(--edify-surface) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--radius-control, 8px);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+/* The dropdown arrow needs its own lane. Without this the longest option runs
+   underneath the chevron and `text-overflow: ellipsis` above truncates against
+   the control's edge rather than before the arrow. Declared once for every
+   filter toolbar: arrow spacing is a property of the control, not something
+   each page should restate with a padding utility — and the utility that would
+   express it (pr-10) is not in the compiled bundle anyway. */
+:is(#filters-form, #core-filters-form, #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters, #debrief-filters, #visits-filters, #trainings-filters, #spp-filters, #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters, [data-component="filter-toolbar"], .platform-filter-bar, .edify-filter-bar)
+  div:not(:has(div)) select {
+  padding-right: 2.5rem !important;
+}
+
+/* ─── CONCENTRIC-RING DONUT ──────────────────────────────────────────────────
+   One ring per series rather than one ring cut into segments: each sits on its
+   own radius with a rounded cap and its value set just outside its start, the
+   headline reads from the middle, and the legend is a row of pills outlined in
+   the colour of the ring each one names. */
+.edify-donut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.edify-donut__figure {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 260px;
+  aspect-ratio: 1;
+}
+
+.edify-donut__svg {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.edify-donut__arc {
+  /* Grows from nothing on first paint rather than snapping in. */
+  animation: edify-donut-draw .7s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+@keyframes edify-donut-draw {
+  from { stroke-dashoffset: var(--edify-donut-draw-from, 0); opacity: .35; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-donut__arc { animation: none; }
+}
+
+.edify-donut__value {
+  font-size: var(--edify-svg-text-body, var(--edify-text-body-size));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+svg[data-edify-svg-typography] text {
+  font-family: var(--edify-font-sans);
+}
+
+.edify-donut__centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.edify-donut__headline {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  color: var(--edify-text);
+  font-family: var(--edify-font-display-family, inherit);
+  font-size: clamp(2.25rem, 1.6rem + 2.4vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.edify-donut__unit {
+  font-size: 0.42em;
+  font-weight: 500;
+  line-height: 1;
+  margin-block-start: 0.25em;
+}
+
+.edify-donut__subline {
+  margin: 8px 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+}
+
+/* A gauge is the same ring drawn at list scale — inside a table cell, a card
+   corner, a drawer header. Only the sizing changes; the ring, the cap and the
+   centred headline stay the language the hero donuts established. */
+.edify-donut--gauge { gap: 0; }
+
+.edify-donut--gauge .edify-donut__figure {
+  max-inline-size: var(--edify-donut-gauge-size, 5.5rem);
+}
+
+.edify-donut--gauge .edify-donut__headline {
+  font-size: var(--edify-donut-gauge-headline, 1.125rem);
+  font-weight: 600;
+}
+
+.edify-donut--gauge .edify-donut__subline {
+  margin-block-start: 2px;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.edify-donut__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edify-donut__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 28px;
+  padding-inline: 10px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-pill);
+  background: transparent;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.edify-donut__dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: var(--edify-radius-pill);
+  flex: 0 0 auto;
+}
+
+.edify-donut__chip-value {
+  color: var(--edify-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── REASON DISCLOSURE ──────────────────────────────────────────────────────
+   One capture control for "why?", shared by every action that requires a
+   written justification. It replaced, among others, two window.prompt() calls
+   collecting the reason for returning a performance agreement and for
+   recommending a formal PIP — unlabelled, unstyled, unvalidated, and silent to
+   a screen reader. Tokens only; no page overrides it. */
+.reason-disclosure { display: inline-block; text-align: start; }
+
+.reason-disclosure__trigger,
+.reason-disclosure__submit {
+  min-block-size: 2rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reason-disclosure__trigger {
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text-muted);
+}
+
+.reason-disclosure__trigger:hover,
+.reason-disclosure__trigger[aria-expanded="true"] {
+  border-color: var(--edify-border-strong);
+  color: var(--edify-text);
+}
+
+.reason-disclosure__trigger--danger { color: var(--edify-danger-text); }
+
+.reason-disclosure__panel {
+  margin-block-start: 8px;
+  min-inline-size: 16rem;
+  padding: 10px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+}
+
+.reason-disclosure__label {
+  display: block;
+  margin-block-end: 4px;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.reason-disclosure__required { color: var(--edify-danger-text); }
+
+.reason-disclosure__field {
+  inline-size: 100%;
+  padding: 8px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font: inherit;
+  font-size: var(--edify-text-label-size);
+  resize: vertical;
+}
+
+.reason-disclosure__field:focus-visible,
+.reason-disclosure__trigger:focus-visible,
+.reason-disclosure__submit:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+
+.reason-disclosure__submit {
+  inline-size: 100%;
+  margin-block-start: 8px;
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+}
+
+.reason-disclosure__submit--danger {
+  border-color: transparent;
+  background: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid);
+}
+
+/* Touch targets on a phone: the same control, at a size a thumb can hit. */
+@media (pointer: coarse) {
+  .reason-disclosure__trigger,
+  .reason-disclosure__submit { min-block-size: 2.75rem; }
+}
+
+/* ─── DRAWER DISCARD CONFIRMATION ────────────────────────────────────────────
+   Replaces window.confirm('You have unsaved changes. Discard changes?'), which
+   was copied into seven places. It sits inside the drawer so it stays within
+   the focus trap that is already there, and it covers the drawer rather than
+   the page — the question is about this drawer's contents, not the app. */
+.drawer-discard {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border-radius: inherit;
+  /* The same frosted treatment the drawer backdrop uses, so the two read as
+     one system rather than two. */
+  background: color-mix(in srgb, var(--edify-surface) 72%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.drawer-discard__panel {
+  inline-size: 100%;
+  max-inline-size: 22rem;
+  padding: 18px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg, 16px);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg, 0 16px 32px -12px rgba(0, 0, 0, .28));
+  text-align: center;
+}
+
+.drawer-discard__title {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.005em;
+}
+
+.drawer-discard__body {
+  margin: 6px 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+}
+
+.drawer-discard__actions {
+  display: flex;
+  gap: 8px;
+  margin-block-start: 16px;
+}
+
+.drawer-discard__keep,
+.drawer-discard__discard {
+  flex: 1 1 0;
+  min-block-size: 2.25rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Keeping your work is the default: it holds focus, so a return keypress is
+   the safe answer rather than the destructive one. */
+.drawer-discard__keep {
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+}
+
+.drawer-discard__discard {
+  border: 1px solid transparent;
+  background: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid);
+}
+
+.drawer-discard__keep:focus-visible,
+.drawer-discard__discard:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .drawer-discard__keep,
+  .drawer-discard__discard { min-block-size: 2.75rem; }
+}
+
+/* ─── CONFIRM ACTION ─────────────────────────────────────────────────────────
+   The dialog that replaced window.confirm() for irreversible actions. Follows
+   the platform overlay contract: dim and blur behind, 16px radius, focus
+   trapped by the Alpine component, near-full-width on a phone. */
+.confirm-action { display: inline-block; }
+
+.confirm-action__trigger {
+  min-block-size: 2rem;
+  padding-inline: 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-action__trigger--danger {
+  border-color: var(--edify-danger-border);
+  color: var(--edify-danger-text);
+}
+
+.confirm-action__trigger:hover { border-color: var(--edify-border-strong); }
+
+.confirm-action__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--edify-text) 38%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.confirm-action__panel {
+  inline-size: 100%;
+  max-inline-size: 26rem;
+  padding: 20px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg, 16px);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg, 0 24px 48px -16px rgba(0, 0, 0, .35));
+  text-align: start;
+}
+
+.confirm-action__title {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+.confirm-action__body {
+  margin: 8px 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.confirm-action__actions {
+  display: flex;
+  gap: 8px;
+  margin-block-start: 20px;
+}
+
+.confirm-action__cancel,
+.confirm-action__confirm {
+  flex: 1 1 0;
+  min-block-size: 2.5rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-action__cancel {
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+}
+
+.confirm-action__confirm {
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface-raised);
+  color: var(--edify-text);
+}
+
+.confirm-action__confirm--danger {
+  border-color: transparent;
+  background: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid);
+}
+
+.confirm-action__trigger:focus-visible,
+.confirm-action__cancel:focus-visible,
+.confirm-action__confirm:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+
+/* A phone gets the panel at reading width with thumb-sized answers. */
+@media (max-width: 30rem) {
+  .confirm-action__scrim { padding: 12px; align-items: flex-end; }
+  .confirm-action__panel { max-inline-size: none; }
+  .confirm-action__actions { flex-direction: column-reverse; }
+}
+
+@media (pointer: coarse) {
+  .confirm-action__trigger,
+  .confirm-action__cancel,
+  .confirm-action__confirm { min-block-size: 2.75rem; }
+}
+
+/* Linked KPI tiles keep their hover/focus motion off when the user asks for
+   less motion. (The themed card treatment lives at the GLOBAL KPI STRIP
+   COMPONENT block above; this rule travels separately so it can't be lost.) */
+@media (prefers-reduced-motion: reduce) {
+  .kpi-strip__item,
+  .kpi-strip__item-body--link {
+    transition: none;
+  }
+}
+
+/* ─── CANONICAL SEARCH SUBMIT ───────────────────────────────────────────────
+   The magnifier inside the top-bar search is a real submit control. It was a
+   pointer-events-none decoration, which meant the only way to run a search
+   anywhere in the platform was to already know that Enter was the trigger —
+   a control that looks interactive and is not.
+
+   It now sits in the input's right padding as a filled round button rather
+   than a bare glyph in the left padding. Same control, read correctly: on the
+   left it looked like a label for the field, and a mark that looks like
+   decoration gets treated as decoration. The input reserves pr-12 for it, so
+   the button sits inside the field without ever overlapping typed text. */
+/* The room the button occupies, owned here rather than as a utility class on
+   the input. Tailwind had never compiled pr-12 — nothing in the codebase used
+   it — so setting it in the template would have shipped an input with no right
+   padding and a button sitting on top of whatever the user typed. Keeping the
+   reservation next to the button's own size is also the only way the two
+   cannot drift apart. */
+search:has(.edify-search-submit) input[type="search"] {
+  padding-inline-end: 2.625rem;
+}
+
+.edify-search-submit {
+  position: absolute;
+  /* Right, not left. A magnifier tucked into the left padding reads as a
+     label for the field; on the right, sized and coloured as a button, it
+     reads as the thing you press — which is what it has always been. */
+  inset-inline-end: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.875rem;
+  height: 1.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--brand-primary);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+  /* Above the input so the click lands on the button, never the field. */
+  z-index: 1;
+}
+.edify-search-submit:hover {
+  background: var(--brand-primary-hover, var(--brand-primary));
+}
+.edify-search-submit:active {
+  background: var(--brand-primary-active, var(--brand-primary));
+}
+.edify-search-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--edify-focus-ring);
+}
+/* The glyph inherits the button's white, so the icon partial needs no
+   per-instance colour. */
+.edify-search-submit svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Admin Support View banner ─────────────────────────────────────────────
+   Shown on every business page an Admin is observing. Platform-wide
+   visibility with no business authority is an easy thing to forget when the
+   page looks exactly as it does for the role that owns it, so the page says
+   which mode it is in. The refusal that enforces it lives in
+   apps/admin_ops/middleware.py — a banner is a courtesy, not a control.
+   Uses the warning tone tokens, which carry their own light/dark values. */
+.edify-admin-support-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--edify-warning-text);
+  background: var(--edify-warning-light);
+  border-block-end: 1px solid color-mix(in srgb, var(--edify-warning) 32%, transparent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+}
+
+.edify-admin-support-banner svg {
+  inline-size: 15px;
+  block-size: 15px;
+  flex: 0 0 auto;
+}
+
+.edify-admin-support-banner strong { font-weight: 800; }
+
+.edify-admin-support-banner a {
+  margin-inline-start: auto;
+  flex: 0 0 auto;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: .2rem;
+}
+
+.edify-admin-support-banner a:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
+}
+
+@media (max-width: 640px) {
+  .edify-admin-support-banner { flex-wrap: wrap; }
+  .edify-admin-support-banner a { margin-inline-start: 0; }
+}
+
+/* ── ApexCharts reference treatment ───────────────────────────────────────
+   Series colors stay data-driven, while the hollow points and black tooltip
+   mirror the platform's chart reference across line and mixed charts. */
+.apexcharts-canvas .apexcharts-marker {
+  fill: var(--edify-surface);
+  stroke-width: 2px;
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark {
+  color: #fff;
+  background: var(--edify-chart-tooltip);
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title {
+  background: color-mix(in srgb, var(--edify-chart-tooltip) 92%, #fff);
+  border-block-end-color: rgb(255 255 255 / 0.12);
+}
+
+.apexcharts-xaxistooltip {
+  color: #fff;
+  background: var(--edify-chart-tooltip);
+  border: 0;
+  border-radius: 5px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.16);
+}
+
+.apexcharts-xaxistooltip::before,
+.apexcharts-xaxistooltip::after {
+  border-block-start-color: var(--edify-chart-tooltip);
+}
+/* Authentication layout: presentation lives here so every auth screen shares
+   the same token-driven composition without static inline declarations. */
+.auth-shell { background: radial-gradient(ellipse at top right, var(--edify-info-light) 0%, var(--edify-info-light) 45%, var(--edify-info-light) 100%); font-family: var(--edify-font-sans); }
+.auth-orb-primary { background: var(--edify-primary-active); }
+.auth-spark-surface { background: var(--edify-surface-raised); opacity: .7; }
+.auth-orb-accent { background: var(--edify-sky-400); opacity: .55; }
+.auth-spark-navy { background: var(--edify-navy-800); opacity: .35; }
+.auth-card { box-shadow: 0 30px 70px -20px color-mix(in srgb, var(--edify-primary) 40%, transparent); }
+.auth-brand-panel { background: linear-gradient(160deg, var(--edify-primary-active) 0%, var(--edify-navy-800) 55%, var(--edify-steel-600) 100%); }
+.auth-dot-grid--primary { opacity: .35; }
+.auth-dot-grid--muted { opacity: .25; }
+.auth-dot--primary { background: var(--edify-sky-400); }
+.auth-dot--muted { background: var(--edify-sky-100); }
+.auth-inverse-logo { filter: brightness(0) invert(1); }
+.auth-title { color: var(--edify-surface-raised); font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.auth-subtitle { color: var(--edify-sky-100); font-size: var(--edify-text-label-size); font-weight: 500; line-height: 1.5; margin-top: 10px; }
+.auth-feature-icon { background: color-mix(in srgb, var(--edify-on-accent) 12%, transparent); }
+.auth-feature-icon--primary { color: var(--edify-sky-400); }
+.auth-feature-icon--muted { color: var(--edify-sky-100); }
+.auth-feature-label { color: var(--edify-surface-raised); font-size: var(--edify-text-label-size); font-weight: 600; }
+.auth-stat-label { color: var(--edify-sky-400); font-size: var(--edify-text-micro-size); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.auth-stat-value { color: var(--edify-surface-raised); font-size: 20px; font-weight: 800; margin-top: 2px; }
+.auth-stat-divider { background: color-mix(in srgb, var(--edify-on-accent) 15%, transparent); height: 32px; width: 1px; }
+.auth-form-logo { background: linear-gradient(135deg, var(--edify-navy-800), var(--edify-steel-600)); box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--edify-primary) 35%, transparent); }
+.auth-security { border: 1px solid var(--edify-info-light); }
+.auth-security-icon { color: var(--edify-navy-800); }
+.auth-security-title { font-size: var(--edify-text-micro-size); font-weight: 700; }
+.auth-security-copy { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); margin-top: 1px; }
+.auth-footer { color: var(--edify-steel-600); font-size: var(--edify-text-micro-size); font-weight: 500; }
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   INTERACTION LAYER — hover, press, and the difference between them
+   ════════════════════════════════════════════════════════════════════════════
+   Every rule here is wrapped in :where() so its specificity is zero. A
+   Tailwind utility, a component class, and every existing hover in this
+   codebase all still win; this only supplies behaviour nothing else defines.
+   That is what makes it safe to apply platform-wide in one pass.
+
+   Three principles, in priority order:
+
+   1. A press must be acknowledged instantly and locally. The control moves
+      toward the surface (scale, not lift) within 90ms, before any network
+      round trip. This is the fix for "stiff on click": nothing was happening
+      at all.
+   2. Hover in is quicker than hover out. Symmetrical timing makes a control
+      feel like it is dragging behind the cursor.
+   3. Hover belongs to pointers. Wrapped in `(hover: hover)`, so a tap on a
+      touch device does not leave a control stuck in its hover state — the
+      most common way this kind of polish backfires on mobile.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:where(
+  button,
+  [role="button"],
+  a,
+  summary,
+  .edify-primary-solid,
+  .card-interactive
+) {
+  transition:
+    background-color var(--edify-duration-hover-out) var(--edify-ease-out),
+    border-color var(--edify-duration-hover-out) var(--edify-ease-out),
+    color var(--edify-duration-hover-out) var(--edify-ease-out),
+    box-shadow var(--edify-duration-hover-out) var(--edify-ease-out),
+    transform var(--edify-duration-hover-out) var(--edify-ease-out);
+}
+
+/* Arriving is faster than leaving. */
+@media (hover: hover) and (pointer: fine) {
+  :where(button, [role="button"], a, summary, .edify-primary-solid):hover {
+    transition-duration: var(--edify-duration-hover-in);
+  }
+}
+
+/* The press. Fastest of the three, and it wins over hover because it is the
+   more recent intent — the pointer is already there, the user has committed. */
+:where(
+  button,
+  [role="button"],
+  .edify-primary-solid
+):not(:disabled):not([aria-disabled="true"]):active {
+  transform: scale(var(--edify-press-scale));
+  transition-duration: var(--edify-duration-press);
+  transition-timing-function: var(--edify-ease-press);
+}
+
+/* A link is text, not a slab: scaling glyphs looks broken and blurs during the
+   transform. Links acknowledge a press by settling instead. */
+:where(a:not(.edify-primary-solid):not([role="button"])):active {
+  opacity: 0.72;
+  transition-duration: var(--edify-duration-press);
+}
+
+/* Disabled controls must not pretend. No lift, no press, no pointer. */
+:where(button, [role="button"], .edify-primary-solid):disabled,
+:where(button, [role="button"], .edify-primary-solid)[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Cards that behave like controls get the same grammar, one step gentler —
+   a large surface moving as far as a button reads as jitter. */
+@media (hover: hover) and (pointer: fine) {
+  :where(.card-interactive, a.card, button.card):hover {
+    transform: translateY(var(--edify-lift));
+    transition-duration: var(--edify-duration-hover-in);
+  }
+}
+
+:where(.card-interactive, a.card, button.card):active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: var(--edify-duration-press);
+}
+
+/* Keyboard parity: a control reached by Tab and fired with Enter or Space
+   should feel like one that was clicked. Focus rings are defined elsewhere and
+   are untouched — this is only the press. */
+:where(button, [role="button"], .edify-primary-solid):focus-visible:active {
+  transform: scale(var(--edify-press-scale));
+}
+
+/* Motion is a preference, not a decision we get to make for someone. Colour
+   and shadow still transition — those carry the state change and cause no
+   vestibular discomfort. Only movement is removed. */
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    button,
+    [role="button"],
+    a,
+    summary,
+    .edify-primary-solid,
+    .card-interactive,
+    a.card,
+    button.card
+  ) {
+    transform: none !important;
+    transition-duration: 1ms;
+  }
+}
+
+/* ── Pending controls ─────────────────────────────────────────────────────
+   The visual half of interaction-pending.js. A control in flight must read as
+   busy without looking broken: it keeps its size and its label position, and
+   only its surface tells you it is working.
+
+   aria-disabled rather than :disabled is what the script sets, so the styling
+   hangs off that — a genuinely disabled button loses keyboard focus, which
+   sends a keyboard user back to the top of the document mid-task. */
+:where(button, a, [role="button"]).is-pending {
+  cursor: progress;
+  opacity: 0.78;
+  /* No lift, no press. A control that is already working should not keep
+     responding to the pointer as though it were waiting for input. */
+  transform: none !important;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(button, a, [role="button"]).is-pending {
+    transition: opacity var(--edify-duration-hover-in, 130ms) ease-out;
+  }
+}
+
+/* ── Route progress ───────────────────────────────────────────────────────
+   A thin primary line at the top of the viewport while a request is in
+   flight. Paired with the 140ms delay in interaction-pending.js: a bar that
+   flashes on every fast response reads as a glitch, and one that appears
+   constantly stops meaning "working".
+
+   Animates transform and opacity only — both composited, so the bar cannot
+   cost frames on the very requests that are already slow. It is fixed and
+   1px tall, so it can never shift layout. */
+.edify-route-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  background: var(--brand-primary);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.edify-route-progress.is-active {
+  opacity: 1;
+  /* Creeps toward 90% and waits. It never completes on its own, because
+     completion is the response arriving — a bar that reaches 100% while the
+     user is still waiting has told them something untrue. */
+  animation: edify-route-progress-creep 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+
+@keyframes edify-route-progress-creep {
+  0%   { transform: scaleX(0); }
+  40%  { transform: scaleX(0.6); }
+  100% { transform: scaleX(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-route-progress.is-active {
+    animation: none;
+    transform: scaleX(0.9);
+  }
+}

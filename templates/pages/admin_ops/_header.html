@@ -1,0 +1,13 @@
+{% comment %}
+  Shared page header for the Admin platform-operations workspaces. One eyebrow,
+  one title, one purpose line — the canonical header shape, so these pages read
+  as part of the platform rather than a bolt-on console.
+{% endcomment %}
+<div class="edify-page-header">
+  <div class="min-w-0 edify-page-header__lead">
+    <p class="edify-page-eyebrow">Platform Operations</p>
+    <h1 class="edify-page-title edify-page-header__title">{{ page_title }}</h1>
+    <p class="edify-page-header__description">{{ page_purpose }}</p>
+  </div>
+  {% if header_actions %}<div class="edify-page-header__controls">{{ header_actions }}</div>{% endif %}
+</div>

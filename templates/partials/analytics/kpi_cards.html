@@ -1,0 +1,48 @@
+{% load frontend_filters %}
+
+<div id="analytics-kpi-and-content-container"
+     class="analytics-dashboard-stack"
+     data-analytics-layout="{{ analytics_layout|default:'grid' }}">
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items variant=analytics_layout %}
+
+{% comment %}
+  Performance by Sub-Region sits outside the 12-column split, so it spans the
+  whole row with nothing beside it. The map needs the width, and the roll-up
+  table it used to share a row with now lives inside its own card, pinned to
+  the right of the map.
+{% endcomment %}
+{% include "partials/analytics/regional_performance.html" %}
+
+<!-- Large analysis: one chart-led card beside one category scorecard. -->
+<div class="analytics-layout-row analytics-row--overview">
+  <div class="analytics-card-slot">{% include "partials/analytics/performance_overview.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/core_champion_performance.html" %}</div>
+</div>
+
+<!-- Decision row: ranking and recommendations have comparable visual weight. -->
+<div class="analytics-layout-row analytics-row--decision">
+  <div class="analytics-card-slot">{% include "partials/analytics/cluster_performance.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/recommended_insights.html" %}</div>
+</div>
+
+<!-- Full-width impact band keeps its four summary tiles compact. -->
+<div class="analytics-card-slot analytics-impact-band">
+  {% include "partials/analytics/impact_summary.html" %}
+</div>
+
+<!-- Compact operations: two short, list-based cards. -->
+<div class="analytics-layout-row analytics-row--compact">
+  <div class="analytics-card-slot">{% include "partials/analytics/activity_tracking.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/donor_reporting_snapshot.html" %}</div>
+</div>
+
+<!-- Medium diagnostics: progress and scorecards share one balanced row. -->
+<div class="analytics-layout-row analytics-row--diagnostics">
+  <div class="analytics-card-slot">{% include "partials/analytics/target_by_district.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/staff_partner_performance.html" %}</div>
+  <div class="analytics-card-slot">{% include "partials/analytics/ssa_performance.html" %}</div>
+</div>
+
+</div>

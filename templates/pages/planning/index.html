@@ -1,0 +1,398 @@
+{% extends base_template %}
+{% load frontend_filters %}
+
+{% block title %}Planning — Edify{% endblock %}
+
+{% block shell_content %}
+<div
+x-data="{
+selectedSchools: [],
+bulkActionOpen: false,
+selectedSchoolId: null,
+activeView: 'list',
+showScheduleForm: false,
+showAssignPartnerForm: false
+}"
+@select-school.window="selectedSchoolId = $event.detail.id;"
+class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
+id="planning-main-container"
+>
+
+<!-- Breadcrumb -->
+<nav class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+<span>Planning</span>
+<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+<span class="text-slate-600 font-semibold">School visit &amp; training plan</span>
+</nav>
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="lg:max-w-[560px] edify-page-header__lead">
+<p class="edify-page-eyebrow">Planning</p>
+<h1 class="edify-page-title edify-page-header__title">Planning</h1>
+<p class="edify-page-header__description">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
+</div>
+
+<!-- Header Actions -->
+<div class="flex flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto lg:min-w-[360px] lg:justify-end">
+<!-- Export button -->
+<a
+href="{% querystring export='csv' %}"
+class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex-none"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
+
+<!-- Bulk Action trigger -->
+<button
+@click="bulkActionOpen = !bulkActionOpen"
+:disabled="selectedSchools.length === 0"
+:class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
+class="edify-action-button secondary h-9 transition-all shadow-sm flex-1 sm:flex-none"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Assign
+</button>
+
+<!-- Open My Plan -->
+<a
+href="/my-plan"
+class="edify-action-button primary h-9 transition-all shadow-sm flex-1 sm:flex-none"
+>
+<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Open My Plan
+</a>
+</div>
+</div>
+
+<!-- Filters Row -->
+<form
+id="filters-form"
+hx-get="/planning"
+hx-trigger="change delay:100ms"
+hx-target="#schools-table-container"
+hx-swap="outerHTML"
+hx-push-url="true"
+class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption font-bold"
+>
+<input type="hidden" name="tab" value="{{ active_tab }}">
+
+<!-- Quarter -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">Quarter</span>
+<select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+{% for q in quarter_options %}
+<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- District -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">District</span>
+<select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
+<option value="All">All Districts</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Staff -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">Staff</span>
+<select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
+<option value="All">All Staff</option>
+{% for s in staff_members %}
+<option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Planning Readiness -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">Readiness</span>
+<select aria-label="Planning readiness" name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[150px]">
+<option value="All">All Readiness</option>
+{% for val, label in readiness_choices %}
+<option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+{% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
+
+<!-- Clear Filters -->
+<a
+href="/planning"
+class="edify-primary-text edify-primary-text-hover edify-text-caption font-semibold tracking-wider uppercase ml-1 flex items-center gap-1"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+Clear Filters
+</a>
+</form>
+
+<!-- KPI cards Row -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+
+
+<!-- Planning Copilot Banner -->
+{% include "partials/planning/right_panel.html" %}
+
+<!-- Main Content Column -->
+<div class="space-y-6">
+
+{% include "partials/planning/tabs.html" %}
+
+{% if active_tab == 'scheduled' %}
+<div class="flex justify-end mb-4">
+  <div class="flex items-center bg-slate-100 p-1 rounded-surface border border-slate-200 shadow-sm">
+    <button @click="activeView = 'list'" :class="activeView === 'list' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">List View</button>
+    <button @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">Calendar View</button>
+  </div>
+</div>
+{% endif %}
+
+<!-- School Table Container -->
+<div x-show="activeView === 'list'">
+  {% include "partials/planning/school_table.html" %}
+</div>
+
+{% if active_tab == 'scheduled' %}
+<div x-show="activeView === 'calendar'" style="display: none;" class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
+  <div id="planning-calendar-view" class="w-full"></div>
+</div>
+
+<!-- Embedded JSON Events Payload -->
+<script id="calendar-events-data" type="application/json">
+  [
+    {% for a in scheduled_activities %}
+      {
+        "id": "{{ a.id }}",
+        "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
+        "start": "{{ a.planned_date|date:'Y-m-d' }}",
+        "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
+        "extendedProps": {
+          "status": "{{ a.status }}",
+          "school": "{{ a.school.name|default:'' }}",
+          "activity_type": "{{ a.activity_type|title }}"
+        }
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('planning-calendar-view');
+    if (calendarEl) {
+      const eventsData = JSON.parse(document.getElementById('calendar-events-data').textContent);
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        events: eventsData,
+        themeSystem: 'standard',
+        height: 'auto',
+        eventClick: function(info) {
+          // Open reschedule drawer via HTMX
+          htmx.ajax('GET', `/my-plan/${info.event.id}/reschedule-drawer`, {target:'#drawer-container', swap:'innerHTML'});
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (e.target.innerText === 'Calendar View') {
+          setTimeout(() => {
+            calendar.render();
+          }, 100);
+        }
+      });
+    }
+  });
+</script>
+<style>
+  .fc-event-completed {
+    background-color: var(--edify-success-light) !important;
+    color: var(--edify-chart-green) !important;
+    border: 1px solid var(--edify-success-border) !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+  .fc-event-planned {
+    background-color: var(--edify-info-light) !important;
+    color: var(--edify-chart-blue) !important;
+    border: 1px solid var(--edify-info-border) !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+</style>
+{% endif %}
+
+</div>
+
+<!-- Floating Bulk Actions Bar -->
+<div
+x-show="selectedSchools.length > 0"
+x-transition:enter="transition ease-out duration-300 transform"
+x-transition:enter-start="translate-y-24 opacity-0"
+x-transition:enter-end="translate-y-0 opacity-100"
+x-transition:leave="transition ease-in duration-200 transform"
+x-transition:leave-start="translate-y-0 opacity-100"
+x-transition:leave-end="translate-y-24 opacity-0"
+class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-surface shadow-lg flex items-center gap-6 border border-slate-800/80"
+style="display: none;"
+>
+<div class="flex items-center gap-2 select-none">
+<span class="h-6 w-6 edify-primary-solid rounded-pill flex items-center justify-center edify-text-caption font-semibold text-white" x-text="selectedSchools.length"></span>
+<span class="text-[12px] font-semibold text-slate-300">schools selected</span>
+</div>
+
+<div class="h-5 w-px bg-slate-700"></div>
+
+<form
+hx-post="/planning/bulk-action"
+hx-target="body"
+class="flex items-center gap-2"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+
+{% if can_assign_partner %}
+<button
+type="button"
+@click="showAssignPartnerForm = true"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Assign
+</button>
+{% endif %}
+
+<button
+type="button"
+@click="showScheduleForm = true; $nextTick(() => window.htmx && htmx.trigger('#route-preview', 'route-refresh'))"
+class="h-8 px-4 edify-primary-solid edify-primary-hover text-white rounded-surface edify-text-caption font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Schedule
+</button>
+
+<button
+type="submit"
+name="action"
+value="export"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-control edify-text-caption font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export Selected
+</button>
+</form>
+</div>
+
+<!-- Bulk Schedule Visits popover: collects the shared visit day (+ an
+optional reason, required only if the CD's daily target isn't met) before
+POSTing — DailyVisitBatchService prices the whole day's pool and splits it
+across every school selected above. -->
+<div
+x-show="showScheduleForm"
+x-transition
+@click.outside="showScheduleForm = false"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
+style="display: none;"
+>
+<div class="flex items-center justify-between">
+<h4 class="text-[13px] font-bold text-slate-800">Schedule Recommended Activities</h4>
+<button type="button" @click="showScheduleForm = false" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+<p class="edify-text-caption text-slate-400">
+Each of the <span x-text="selectedSchools.length"></span> selected School(s) receives its own top eligible Catalogue recommendation. The server preserves the SSA source and calculates cost after scheduling.
+</p>
+<form
+hx-post="/planning/bulk-action"
+hx-target="#bulk-schedule-feedback"
+hx-swap="innerHTML"
+class="space-y-3"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<input type="hidden" name="action" value="schedule">
+<div>
+<label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Visit Date</label>
+<input aria-label="Scheduled date" type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+</div>
+<div id="bulk-schedule-feedback"></div>
+<button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-bold flex items-center justify-center gap-1.5">
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Confirm Schedule
+</button>
+</form>
+</div>
+
+<!-- Bulk Assign Partner popover: collects the partner (required) and an
+optional target date before POSTing — the button used to submit straight
+away with no partner_id at all, which get_object_or_404 turned into an
+unhandled 404 that blanked the whole page. Date is optional by design: a
+partner assignment only becomes a costed, budgeted Activity once a date is
+set, by you now or by the partner later (apps/activities/services.py
+partner_schedule()). -->
+<div
+x-show="showAssignPartnerForm"
+x-transition
+@click.outside="showAssignPartnerForm = false"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 edify-surface rounded-surface shadow-xl border border-slate-200 p-5 edify-toast-card space-y-3"
+style="display: none;"
+>
+<div class="flex items-center justify-between">
+<h4 class="text-[13px] font-bold text-slate-800">Assign Partner</h4>
+<button type="button" @click="showAssignPartnerForm = false" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+<p class="edify-text-caption text-slate-400">
+Handoff each School’s top eligible Catalogue recommendation to a partner for <span x-text="selectedSchools.length"></span> selected school(s). No Activity, cost or budget line is created until Partner scheduling.
+</p>
+<form
+hx-post="/planning/bulk-action"
+hx-target="#bulk-assign-partner-feedback"
+hx-swap="innerHTML"
+hx-disabled-elt="find button[type=submit]"
+class="space-y-3"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<input type="hidden" name="action" value="partner">
+<div>
+<label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Partner</label>
+<span class="edify-filter-label">Partner ID</span>
+<select aria-label="Partner ID" name="partner_id" required class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<option value="">Select partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+<div>
+<label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Target Date (Optional)</label>
+<input aria-label="Scheduled date" type="date" name="scheduled_date" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]">
+<p class="edify-text-caption font-semibold text-slate-400 mt-1">Leave blank if the partner will confirm their own schedule.</p>
+</div>
+<div id="bulk-assign-partner-feedback"></div>
+<button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-bold flex items-center justify-center gap-1.5">
+<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Confirm Handoff
+</button>
+</form>
+</div>
+
+{% endblock %}

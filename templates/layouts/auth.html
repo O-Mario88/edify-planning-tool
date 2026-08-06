@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<main class="auth-shell h-full w-full flex items-center justify-center relative overflow-hidden p-4 sm:p-8">
+
+  <!-- Decorative background circles (outside the card, like the reference) -->
+  <div class="auth-orb-primary absolute -top-28 -left-28 h-80 w-80 rounded-pill pointer-events-none"></div>
+  <div class="auth-spark-surface absolute top-16 left-44 h-3 w-3 rounded-pill pointer-events-none"></div>
+  <div class="auth-orb-accent absolute -bottom-36 -right-20 h-96 w-96 rounded-pill pointer-events-none"></div>
+  <div class="auth-spark-navy absolute bottom-24 right-56 h-4 w-4 rounded-pill pointer-events-none"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Floating card — a fixed, modest max-width so it always reads as a
+       centered card (never an edge-to-edge stretch) regardless of viewport.
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="auth-card relative w-full max-w-[880px] rounded-surface overflow-hidden flex mx-auto edify-surface-raised">
+
+    <!-- LEFT — brand panel. One centered flex-col block (logo/headline/
+         features/stats together) instead of justify-between, so the
+         composition reads as deliberately centered, not stretched
+         edge-to-edge across the panel's height. -->
+    <div class="auth-brand-panel hidden lg:flex lg:w-[44%] relative overflow-hidden flex-col items-center justify-center gap-9 p-10 xl:p-11">
+
+      <!-- Dot-grid corners -->
+      <div class="auth-dot-grid--primary absolute top-8 left-8 grid grid-cols-6 gap-2.5 pointer-events-none">
+        {% for i in "123456789012345678901234567890123456"|make_list %}
+        <span class="auth-dot--primary h-1 w-1 rounded-pill"></span>
+        {% endfor %}
+      </div>
+      <div class="auth-dot-grid--muted absolute bottom-8 right-8 grid grid-cols-6 gap-2.5 pointer-events-none">
+        {% for i in "123456789012345678901234"|make_list %}
+        <span class="auth-dot--muted h-1 w-1 rounded-pill"></span>
+        {% endfor %}
+      </div>
+
+      <!-- Logo -->
+      <div class="relative z-10">
+        <img src="{% static 'images/logo.png' %}" alt="Edify" class="auth-inverse-logo h-7 object-contain">
+      </div>
+
+      <!-- Headline + feature list -->
+      <div class="relative z-10 w-full max-edify-calendar-popover text-center">
+        <h1 class="auth-title">
+          Edify Planning and Monitoring Tool
+        </h1>
+        <p class="auth-subtitle">
+          Plan smarter, serve schools better, and stay on top of your monthly targets.
+        </p>
+
+        <div class="mt-8 space-y-4 text-left">
+          <div class="flex items-center gap-3">
+            <div class="auth-feature-icon h-8 w-8 rounded-pill flex items-center justify-center shrink-0">
+              <svg class="auth-feature-icon--primary h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="auth-feature-label">Data-Driven Planning</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="auth-feature-icon h-8 w-8 rounded-pill flex items-center justify-center shrink-0">
+              <svg class="auth-feature-icon--muted h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <p class="auth-feature-label">Field Activity Tracking</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="auth-feature-icon h-8 w-8 rounded-pill flex items-center justify-center shrink-0">
+              <svg class="auth-feature-icon--primary h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5-1h5v5M4 19h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z"/></svg>
+            </div>
+            <p class="auth-feature-label">Cost Catalogue &amp; Budgeting</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="auth-feature-icon h-8 w-8 rounded-pill flex items-center justify-center shrink-0">
+              <svg class="auth-feature-icon--muted h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <p class="auth-feature-label">Real-Time Analytics</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real stats footer -->
+      <div class="relative z-10 flex items-center gap-6">
+        <div class="text-center">
+          <p class="auth-stat-label">Schools Served</p>
+          <p class="auth-stat-value">{{ stat_schools_served|default:"—" }}</p>
+        </div>
+        <div class="auth-stat-divider"></div>
+        <div class="text-center">
+          <p class="auth-stat-label">Activities Completed</p>
+          <p class="auth-stat-value">{{ stat_activities_completed|default:"—" }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — auth form, centered as one compact block -->
+    <div class="flex-1 p-8 sm:p-10 xl:p-12 flex flex-col justify-center items-center">
+      <div class="w-full max-w-[340px]">
+
+        <!-- Top row: logo mark, centered -->
+        <div class="flex flex-col items-center gap-2 mb-7 text-center">
+          <div class="auth-form-logo h-11 w-11 rounded-surface flex items-center justify-center shrink-0">
+            <img src="{% static 'images/logo.png' %}" alt="Edify" class="auth-inverse-logo h-5 object-contain">
+          </div>
+        </div>
+
+        {% block auth_content %}{% endblock %}
+
+        <!-- Security note -->
+        <div class="auth-security mt-6 flex items-center gap-2.5 rounded-surface p-3 edify-info-soft">
+          <svg class="auth-security-icon h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <div>
+            <p class="auth-security-title edify-primary-text">Enterprise-grade security</p>
+            <p class="auth-security-copy">Encrypted, role-scoped, audit-logged.</p>
+          </div>
+        </div>
+
+        <p class="auth-footer text-center mt-5">
+          Protected access for country teams, CCEOs, finance &amp; leadership.
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

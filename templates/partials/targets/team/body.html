@@ -1,0 +1,429 @@
+{% load frontend_filters %}
+<div class="tt-dashboard">
+  {% include "components/kpi_strip.html" with items=summary_kpis title="Team targets summary" %}
+
+  <div class="tt-command-grid">
+    <section class="tt-panel tt-matrix-panel" id="staff-performance">
+      <header class="tt-panel__header">
+        <div>
+          <span class="tt-eyebrow">Validated performance</span>
+          <h2>Team targets performance</h2>
+          <p>{{ month_label }} · {{ selected_category_label }} · agreed employee performance priorities · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
+        </div>
+        <div class="tt-segmented" aria-label="Filter performance status">
+          <button type="button" @click="staffFilter='all'" :aria-pressed="staffFilter === 'all'" :class="staffFilter === 'all' && 'is-active'">All</button>
+          <button type="button" @click="staffFilter='behind'" :aria-pressed="staffFilter === 'behind'" :class="staffFilter === 'behind' && 'is-active'">Behind</button>
+          <button type="button" @click="staffFilter='risk'" :aria-pressed="staffFilter === 'risk'" :class="staffFilter === 'risk' && 'is-active'">High risk</button>
+        </div>
+      </header>
+
+      {% if members and areas %}
+      <div class="tt-matrix-scroll-guide" aria-hidden="true">
+        <span>Period comparison</span>
+        <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
+      </div>
+      <div class="tt-matrix-scroll tt-desktop-matrix" tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
+        <table class="tt-matrix">
+          <colgroup>
+            <col class="tt-matrix__member-column">
+            {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
+            <col class="tt-matrix__action-column">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Team member</th>
+              {% for head in matrix_heads %}
+              <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}><span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small></th>
+              {% endfor %}
+              <th scope="col" class="tt-matrix__action-head"><span>Review</span><small>Details</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in members %}
+            <tr class="tt-member-row"
+                data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
+                x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
+              <td>
+                <div class="tt-person">
+                  <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} performance priorities">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'"><path d="m7 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <span class="tt-avatar">{{ member.initials }}</span>
+                  <span class="tt-person__copy">
+                    <strong>{{ member.name }}</strong>
+                    <small>CCEO · {{ member.district_label }}</small>
+                  </span>
+                </div>
+              </td>
+              {% for cell in member.matrix_cells %}
+              <td{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                <div class="tt-period-cell">
+                  <strong class="tt-period-cell__value" data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</strong>
+                  <small>{{ cell.achieved }} of {{ cell.target }}</small>
+                  <span class="tt-status" data-tone="{{ cell.tone }}">{{ cell.status }}</span>
+                </div>
+              </td>
+              {% endfor %}
+              <td class="tt-matrix__action-cell">
+                <button type="button" class="tt-row-action"
+                        @click.stop
+                        hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                        hx-target="#drawer-container" hx-swap="innerHTML"
+                        aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr id="tt-desktop-areas-{{ member.user_id }}" class="tt-area-row" x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
+              <td colspan="{{ matrix_heads|length|add:'2' }}">
+                <div class="tt-area-matrix-shell">
+                  <table class="tt-area-matrix">
+                    <caption class="sr-only">{{ member.name }} agreed-priority performance by reporting period</caption>
+                    <colgroup>
+                      <col class="tt-matrix__member-column">
+                      {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
+                      <col class="tt-matrix__action-column">
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th scope="col"><span>Priority breakdown</span><small>Validated achievement</small></th>
+                        {% for head in matrix_heads %}
+                        <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                          {% if forloop.first %}<span>Monthly</span><small>{{ head.label }} · selected month</small>{% else %}<span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small>{% endif %}
+                        </th>
+                        {% endfor %}
+                        <th scope="col" class="tt-area-matrix__action-spacer"><span class="sr-only">Review</span></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for area in member.area_matrix %}
+                      <tr>
+                        <th scope="row">
+                          <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<span>{{ area.label }}</span></span>
+                        </th>
+                        {% for period in area.periods %}
+                        <td{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                          <span class="tt-area-period">
+                            <span class="tt-area-period__dot" data-tone="{{ period.tone }}" aria-hidden="true"></span>
+                            <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
+                            <small>{{ period.achieved }} of {{ period.target }}</small>
+                            <span class="sr-only">{{ period.status }}</span>
+                          </span>
+                        </td>
+                        {% endfor %}
+                        <td class="tt-area-matrix__action-spacer" aria-label="No review action"></td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tt-mobile-performance" aria-label="Team performance cards">
+        {% for member in members %}
+        <article class="tt-mobile-member"
+                 data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                 @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                 :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
+                 x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
+          <div class="tt-mobile-member__header">
+            <div class="tt-mobile-member__identity">
+              <span class="tt-avatar">{{ member.initials }}</span>
+              <span class="tt-person__copy">
+                <strong>{{ member.name }}</strong>
+                <small>CCEO · {{ member.district_label }}</small>
+              </span>
+            </div>
+            <span class="tt-status" data-tone="{{ member.display_tone }}">{{ member.display_status }}</span>
+            <button type="button" class="tt-row-action"
+                    @click.stop
+                    hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                    hx-target="#drawer-container" hx-swap="innerHTML"
+                    aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+          <dl class="tt-mobile-member__metrics">
+            {% for cell in member.mobile_cells %}
+            <div{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+              <dt>{% if cell.key == 'month' %}{{ cell.label }}{% elif cell.key == 'fy' %}Full year{% else %}{{ cell.label }}{% endif %}</dt>
+              <dd data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</dd>
+              <small>{{ cell.achieved }} of {{ cell.target }}</small>
+            </div>
+            {% endfor %}
+          </dl>
+
+          <button type="button" class="tt-mobile-member__area-toggle"
+                  @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                  :aria-expanded="expandedStaff === '{{ member.user_id }}'"
+                  aria-controls="tt-mobile-areas-{{ member.user_id }}">
+            <span>Priority breakdown</span>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'" aria-hidden="true"><path d="m5 7 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="tt-mobile-areas-{{ member.user_id }}" class="tt-mobile-member__areas" @click.stop x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
+            {% for area in member.area_matrix %}
+            <section class="tt-mobile-area">
+              <header class="tt-mobile-area__header">
+                <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<strong>{{ area.label }}</strong></span>
+              </header>
+              <div class="tt-mobile-area__periods" tabindex="0" aria-label="{{ area.label }} performance by reporting period">
+                {% for period in area.periods %}
+                <div{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                  <span>{{ period.label }}</span>
+                  <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
+                  <small>{{ period.achieved }} of {{ period.target }} · {{ period.status }}</small>
+                </div>
+                {% endfor %}
+              </div>
+            </section>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      <footer class="tt-panel__footer">
+        <span>Showing {{ team_size }} of {{ overall_team_size }} supervised team members</span>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">Open detailed priority matrix</button>
+      </footer>
+      {% elif members %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No measurable team priorities agreed for FY {{ fy }}</h3>
+        <p>Team performance rows are populated from each employee’s agreed performance priorities, not from the global activity catalogue.</p>
+      </div>
+      {% else %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No team members match these filters</h3>
+        <p>Adjust the reporting scope to return to the full supervised team.</p>
+        <a href="/team-targets?fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear filters</a>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="tt-rail" aria-label="Team intervention summary">
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div>
+            <span class="tt-eyebrow">Intervention queue</span>
+            <h2>Staff requiring support</h2>
+          </div>
+          <button type="button" @click="staffFilter='risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="tt-link-button">View all</button>
+        </header>
+        <div class="tt-support-list">
+          {% for staff in support_staff %}
+          <button type="button" class="tt-support-item"
+                  hx-get="/team-targets/staff-drawer?staff={{ staff.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                  hx-target="#drawer-container" hx-swap="innerHTML">
+            <span class="tt-avatar">{{ staff.initials }}</span>
+            <span class="tt-support-item__copy"><strong>{{ staff.name }}</strong><small>{{ staff.reason }}</small></span>
+            <span class="tt-status" data-tone="{{ staff.tone }}">{{ staff.status }}</span>
+          </button>
+          {% empty %}
+          <div class="tt-rail-empty"><strong>No urgent interventions</strong><span>The selected team scope is at pace.</span></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div>
+            <span class="tt-eyebrow">Planning workflow</span>
+            <h2>Recovery plans</h2>
+          </div>
+          <button type="button" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">View all</button>
+        </header>
+        <div class="tt-plan-list">
+          {% for plan in recovery_plans %}
+          <button type="button" class="tt-plan-item" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML">
+            <span class="tt-plan-item__icon" aria-hidden="true">↗</span>
+            <span><strong>{{ plan.staff }}</strong><small>{{ plan.area }} · due {{ plan.due|date:"d M" }}</small></span>
+            <span class="tt-status" data-tone="{% if plan.status_key == 'submitted' %}warning{% else %}success{% endif %}">{{ plan.status }}</span>
+          </button>
+          {% empty %}
+          <div class="tt-rail-empty"><strong>No active recovery plans</strong><span>Create one when performance needs structured intervention.</span></div>
+          {% endfor %}
+        </div>
+        <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--primary tt-button--recovery edify-card-action">Create recovery plan</button>
+      </section>
+
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div><span class="tt-eyebrow">Data quality</span><h2>Validation issues</h2></div>
+        </header>
+        <div class="tt-validation-grid">
+          {% for issue in validation_issues %}
+          {% comment %}
+          `issue.drawer` decides the element, not a substring test on the URL.
+          Sniffing for 'sfid-backlog' meant any tile whose URL did not happen to
+          contain that word silently became a plain link — which is how two
+          tiles ended up navigating to a route that does not exist.
+          {% endcomment %}
+          {% if issue.drawer %}
+          <button type="button" hx-get="{{ issue.href }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-validation-card" data-tone="{{ issue.tone }}">
+            <strong>{{ issue.value }}</strong><span>{{ issue.label }}</span>
+          </button>
+          {% else %}
+          <a href="{{ issue.href }}" class="tt-validation-card" data-tone="{{ issue.tone }}">
+            <strong>{{ issue.value }}</strong><span>{{ issue.label }}</span>
+          </a>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <section class="tt-signal-strip" aria-labelledby="tt-signals-heading">
+    <header>
+      <span class="tt-eyebrow">Operational signals</span>
+      <h2 id="tt-signals-heading">What needs attention</h2>
+    </header>
+    <div class="tt-signal-grid">
+      {% for signal in attention %}
+      <article class="tt-signal" data-tone="{{ signal.tone }}">
+        <span>{{ signal.label }}</span>
+        <strong>{{ signal.count }}</strong>
+        <small>{{ signal.sub }}</small>
+        {% if signal.drill == 'core' %}
+        <a href="/core-schools">{{ signal.action }} <span aria-hidden="true">→</span></a>
+        {% elif signal.drill == 'staff' or signal.drill == 'high_risk' %}
+        <button type="button" @click="staffFilter='{% if signal.drill == 'high_risk' %}risk{% else %}behind{% endif %}'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% else %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="tt-insights-grid">
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">Selected month</span><h2>Priority progress</h2></div>
+      </header>
+      <div class="tt-progress-list">
+        {% for target in key_progress %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}&month={{ month_of_fy }}&area={{ target.key|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-progress-row" aria-label="View {{ target.label }} performance across the team">
+          <span class="tt-progress-row__top"><strong>{{ target.label }}</strong><span>{% if target.pct is not None %}{{ target.pct }}%{% else %}—{% endif %}</span></span>
+          <span class="tt-progress"><span data-tone="{{ target.tone }}" style="width:{{ target.bar }}%"></span></span>
+          <small>{{ target.achieved|intcomma }} validated of {{ target.target|intcomma }} target · {{ target.status }}</small>
+        </button>
+        {% empty %}
+        <div class="tt-rail-empty"><strong>No priority data</strong><span>No measurable performance priorities are agreed in this scope.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">{{ fy_label }}</span><h2>Team performance trend</h2></div>
+        <span class="tt-status" data-tone="{% if summary_kpis.0.value == '0%' %}danger{% else %}success{% endif %}">{{ summary_kpis.0.value }}</span>
+      </header>
+      <figure class="tt-line-chart" aria-labelledby="tt-trend-title tt-trend-description">
+        <div class="tt-line-chart__viewport">
+          <svg viewBox="0 0 1200 600" data-edify-svg-typography role="img"
+               aria-labelledby="tt-trend-title tt-trend-description">
+            <title id="tt-trend-title">Monthly team performance trend for {{ fy_label }}</title>
+            <desc id="tt-trend-description">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</desc>
+            <defs aria-hidden="true">
+              <linearGradient id="tt-trend-line-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="var(--edify-teal-400)"/>
+                <stop offset="0.55" stop-color="var(--edify-accent)"/>
+                <stop offset="1" stop-color="var(--edify-success)"/>
+              </linearGradient>
+            </defs>
+
+            <g class="tt-line-chart__grid" aria-hidden="true">
+              <line x1="52" y1="45" x2="1148" y2="45"/><text x="16" y="50">100%</text>
+              <line x1="52" y1="161.25" x2="1148" y2="161.25"/><text x="22" y="166">75%</text>
+              <line x1="52" y1="277.5" x2="1148" y2="277.5"/><text x="22" y="282">50%</text>
+              <line x1="52" y1="393.75" x2="1148" y2="393.75"/><text x="22" y="399">25%</text>
+              <line x1="52" y1="510" x2="1148" y2="510"/><text x="29" y="515">0%</text>
+            </g>
+
+            <g aria-hidden="true">
+              {% for segment in team_trend_segments %}
+              <polyline class="tt-line-chart__glow" points="{{ segment.points }}"/>
+              <polyline class="tt-line-chart__series" points="{{ segment.points }}"/>
+              {% endfor %}
+            </g>
+
+            {% for point in team_trend %}
+            {% if point.pct is not None %}
+            <g class="tt-line-chart__point{% if point.selected %} is-selected{% endif %}" aria-hidden="true">
+              <circle class="tt-line-chart__halo" cx="{{ point.x }}" cy="{{ point.y }}" r="11"/>
+              <circle class="tt-line-chart__dot" cx="{{ point.x }}" cy="{{ point.y }}" r="5"/>
+              {% if point.selected %}<text class="tt-line-chart__selected-value" x="{{ point.x }}" y="{{ point.label_y }}">{{ point.pct }}%</text>{% endif %}
+            </g>
+            {% endif %}
+            <text class="tt-line-chart__month{% if point.selected %} is-selected{% endif %}" x="{{ point.x }}" y="566" aria-hidden="true">{{ point.month }}</text>
+            {% endfor %}
+          </svg>
+        </div>
+        <figcaption class="tt-insight-note">Weighted from the same validated ledger used by each team member’s My Targets page.</figcaption>
+        <table class="sr-only">
+          <caption>Monthly team performance values for {{ fy_label }}</caption>
+          <thead><tr><th scope="col">Month</th><th scope="col">Achievement</th></tr></thead>
+          <tbody>
+            {% for point in team_trend %}<tr><th scope="row">{{ point.month }}</th><td>{% if point.pct is not None %}{{ point.pct }}%{% else %}No assigned target{% endif %}</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </figure>
+    </section>
+  </div>
+
+  <div class="tt-lower-grid">
+    <section class="tt-panel tt-partner-panel">
+      <header class="tt-panel__header">
+        <div><span class="tt-eyebrow">Delivery assurance</span><h2>Partner contribution</h2><p>Partner-delivered work remains visible but is never double-counted into CCEO credit.</p></div>
+      </header>
+      {% if partners %}
+      <div class="tt-table-scroll">
+        <table class="tt-compact-table">
+          <thead><tr><th>Partner</th><th>Region</th><th>Assigned</th><th>Scheduled</th><th>Valid done</th><th>Achievement</th><th>SF ID</th><th>Risk</th></tr></thead>
+          <tbody>
+            {% for partner in partners %}
+            <tr><td><strong>{{ partner.name }}</strong></td><td>{{ partner.region }}</td><td>{{ partner.assigned }}</td><td>{{ partner.scheduled }}</td><td>{{ partner.valid }}</td><td>{{ partner.pct }}%</td><td>{{ partner.sf }}%</td><td><span class="tt-status" data-tone="{{ partner.tone }}">{{ partner.risk }}</span></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="tt-empty tt-empty--compact"><h3>No partner-delivered activities in this scope</h3><p>Assigned partner work will appear here without changing personal target credit.</p></div>
+      {% endif %}
+    </section>
+
+    <aside class="tt-lower-stack">
+      <section class="tt-panel tt-insight-panel">
+        <header class="tt-panel__header tt-panel__header--compact"><div><span class="tt-eyebrow">Portfolio risk</span><h2>Districts most behind</h2></div></header>
+        <div class="tt-district-list">
+          {% for district in districts_behind %}
+          <div><span><strong>{{ district.district }}</strong><small>{{ district.staff }} staff · {{ district.schools }} schools</small></span><span class="tt-district-list__score">{{ district.pct }}%</span></div>
+          {% empty %}<div class="tt-rail-empty"><strong>No district data</strong><span>Team members need school portfolio assignments.</span></div>{% endfor %}
+        </div>
+      </section>
+      <a href="/debriefs" class="tt-panel tt-debrief-card">
+        <span class="tt-eyebrow">Field intelligence</span>
+        <h2>Open team debriefs</h2>
+        <p>Connect target variance to field evidence, blockers, and follow-up actions.</p>
+        <span>Review debrief intelligence <span aria-hidden="true">→</span></span>
+      </a>
+    </aside>
+  </div>
+
+  <footer class="tt-data-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.7 8.3 7 10 4.3-1.7 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span><strong>Validated system data.</strong> Achievement comes from the canonical My Targets ledger; partner delivery, SF ID compliance, and IA exceptions are reported separately.</span>
+    <span>Refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+  </footer>
+</div>

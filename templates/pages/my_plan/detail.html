@@ -1,0 +1,212 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Activity Details — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href="/my-plan" back_label="My Plan" %}
+      <h1 class="edify-page-title capitalize edify-page-header__title">{{ act.activity_type|title|replace_underscore }}</h1>
+      <p class="ad-head__sub edify-page-header__description">
+        {% if act.school %}
+        School: <a href="/schools/{{ act.school.school_id }}">{{ act.school.name }}</a>
+        {% elif act.cluster %}
+        Cluster: <a href="/clusters/{{ act.cluster.id }}">{{ act.cluster.name }}</a>
+        {% endif %}
+      </p>
+    </div>
+    <span class="ad-status ad-status--{{ status_tone }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+      {{ status_label }}
+    </span>
+  </div>
+
+  <div class="ad-grid">
+
+    {# ── Activity overview ─────────────────────────────────────────────── #}
+    <section class="ad-card">
+      <header class="ad-card__head">
+        <span class="ad-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </span>
+        <div>
+          <h2 class="ad-card__title">Activity Overview</h2>
+          <p class="ad-card__sub">Key details about this planned activity</p>
+        </div>
+      </header>
+
+      <div class="ad-fields">
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Scheduled date</p>
+            <p class="ad-field__value">{{ act.planned_date|date:"F j, Y"|default:"Not scheduled" }}</p>
+            {% if act.planned_date %}<p class="ad-field__note">{{ act.planned_date|date:"l" }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span>
+          <div>
+            <p class="ad-field__label">Focus intervention</p>
+            <p class="ad-field__value capitalize">{{ act.focus_intervention|default:"None"|replace_underscore }}</p>
+            <p class="ad-field__note">Intervention area</p>
+          </div>
+        </div>
+
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L12 18l-4 1 1-4 8.6-8.6z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Purpose description</p>
+            <p class="ad-field__value">{{ act.activity_purpose_text|default:"No purpose description entered." }}</p>
+          </div>
+        </div>
+
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4m-7-17h14v5a7 7 0 01-14 0V4z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Expected outcome</p>
+            <p class="ad-field__value">{{ act.expected_outcome|default:"No expected outcome entered." }}</p>
+          </div>
+        </div>
+
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h10a4 4 0 000-8 6 6 0 00-11.6-2A4 4 0 003 15z"/></svg></span>
+          <div>
+            <p class="ad-field__label">Salesforce activity ID</p>
+            <p class="ad-field__value">{{ act.salesforce_activity_id|default:"Not completed yet" }}</p>
+            {% if not act.salesforce_activity_id %}<p class="ad-field__note">Will sync when the activity is completed</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="ad-field">
+          <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path stroke-linecap="round" d="M2 11h20"/></svg></span>
+          <div>
+            <p class="ad-field__label">Allocated budget</p>
+            <p class="ad-field__value ad-field__value--accent">{{ act.est_cost_cents|ugx }}</p>
+            <p class="ad-field__note">Approved budget</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {# ── Execution actions ─────────────────────────────────────────────── #}
+    <section class="ad-card">
+      <header class="ad-card__head">
+        <span class="ad-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>
+        </span>
+        <div>
+          <h2 class="ad-card__title">Execution Actions</h2>
+          <p class="ad-card__sub">Manage and execute this activity</p>
+        </div>
+      </header>
+
+      {% if act.status != 'completed' %}
+      <div class="ad-actions">
+        <button hx-get="/my-plan/{{ act.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="ad-action ad-action--primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span><strong>Complete Activity</strong><em>Mark activity as completed</em></span>
+        </button>
+        <button type="button" data-reschedule-trigger
+                hx-get="/my-plan/{{ act.id }}/reschedule-drawer" hx-trigger="click consume"
+                hx-target="#drawer-container" hx-swap="innerHTML" class="ad-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
+          <span><strong>Reschedule Activity</strong><em>Change date, time or plan</em></span>
+        </button>
+        <a href="/debriefs/submit?activity={{ act.id }}" class="ad-action">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          <span><strong>Discuss This Activity</strong><em>Raise it in your daily debrief</em></span>
+        </a>
+      </div>
+      <p class="ad-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 4.97-3.4 8.94-8 10-4.6-1.06-8-5.03-8-10V6l8-3z"/></svg>
+        Ensure all evidence and notes are updated before completing.
+      </p>
+      {% else %}
+      <p class="ad-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        This activity is complete. Nothing further is required here.
+      </p>
+      {% endif %}
+    </section>
+
+    {# ── Verification evidence ─────────────────────────────────────────── #}
+    <section class="ad-card">
+      <header class="ad-card__head">
+        <span class="ad-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5-6 6"/></svg>
+        </span>
+        <div>
+          <h2 class="ad-card__title">Verification Evidence</h2>
+          <p class="ad-card__sub">Supporting evidence and verification documents</p>
+        </div>
+      </header>
+
+      {% if evidence_list %}
+      <ul class="ad-evidence">
+        {% for ev in evidence_list %}
+        <li class="ad-evidence__item">
+          <span class="ad-evidence__name">{{ ev.original_name }}</span>
+          <span class="ad-evidence__meta">{{ ev.file_extension|upper }} · {{ ev.created_at|date:"j M Y" }}</span>
+          <span class="ad-evidence__badge">{{ ev.status }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      {% comment %}The drop zone opens the same completion drawer that owns the
+      upload rather than posting from here — one upload path, not two.
+      {% endcomment %}
+      <button type="button" class="ad-drop"
+              hx-get="/my-plan/{{ act.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.9A5 5 0 1115.9 6 4.5 4.5 0 1117 16h-1m-4-4v9m0-9l-3 3m3-3l3 3"/></svg>
+        <span class="ad-drop__title">No evidence uploaded yet for this activity.</span>
+        <span class="ad-drop__hint">Click to upload supporting evidence</span>
+        <span class="ad-drop__formats">Accepted: JPG, PNG, PDF, DOC, DOCX</span>
+      </button>
+      {% endif %}
+    </section>
+
+    {# ── Activity timeline ─────────────────────────────────────────────── #}
+    <section class="ad-card">
+      <header class="ad-card__head">
+        <span class="ad-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
+        </span>
+        <div>
+          <h2 class="ad-card__title">Activity Timeline</h2>
+          <p class="ad-card__sub">Progress and key updates</p>
+        </div>
+      </header>
+
+      {% comment %}Each step reads the record: it is Completed only when the
+      activity says so, never as a decorative default.{% endcomment %}
+      <ol class="ad-timeline">
+        {% for step in timeline %}
+        <li class="ad-timeline__step{% if step.done %} is-done{% endif %}">
+          <span class="ad-timeline__dot" aria-hidden="true"></span>
+          <div class="ad-timeline__body">
+            <p class="ad-timeline__label">{{ step.label }}</p>
+            <p class="ad-timeline__meta">
+              {% if step.when %}{{ step.when|date:"j M Y" }}{% if step.detail %} · {{ step.detail }}{% endif %}
+              {% else %}{{ step.detail }}{% endif %}
+            </p>
+          </div>
+          <span class="ad-timeline__badge{% if step.done %} is-done{% endif %}">{% if step.done %}Completed{% else %}Pending{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+  </div>
+
+  <aside class="ad-tip">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4m0-4h.01"/></svg>
+    <p><strong>Quick tip</strong> Complete the activity and upload evidence to provide proof of execution and impact.</p>
+    <a href="/help" class="ad-tip__link">View activity guidelines</a>
+  </aside>
+</div>
+{% endblock %}

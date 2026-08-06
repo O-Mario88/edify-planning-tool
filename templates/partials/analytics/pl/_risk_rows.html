@@ -1,0 +1,28 @@
+{% load table_pagination %}
+{% load frontend_filters %}
+<div class="rounded-surface border border-slate-100 overflow-hidden">
+  {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
+  <div class="overflow-x-auto">
+  {% paginate rows "rows_page" as rows_pager %}
+<table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+        <th class="py-2 px-3">School</th><th class="py-2 px-3">District</th><th class="py-2 px-3">Issue</th><th class="py-2 px-3">Next Action</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-50">
+      {% for r in rows_pager.rows %}
+      <tr>
+        <td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ r.school }}</td>
+        <td class="py-2 px-3 edify-text-caption text-slate-500">{{ r.district }}</td>
+        <td class="py-2 px-3"><span class="inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold bg-rose-50 text-rose-600 border border-rose-100 whitespace-nowrap">{{ r.issue }}</span></td>
+        <td class="py-2 px-3 edify-text-caption font-bold edify-primary-text">{{ r.next_action }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">No at-risk schools in this view.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
+  </div>
+</div>

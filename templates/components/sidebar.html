@@ -1,0 +1,122 @@
+{% load static %}
+{% load frontend_filters %}
+<div class="app-sidebar__brand">
+  <!-- Expanded Logo -->
+  <div x-show="!collapsed" class="app-sidebar__wordmark">
+    <img src="{% static 'images/logo.png' %}"
+         alt="Edify"
+         width="110"
+         height="45"
+         class="app-sidebar__brand-logo">
+    <span class="app-sidebar__brand-divider" aria-hidden="true"></span>
+    <span class="app-sidebar__brand-product">Planning &amp;<br>Monitoring</span>
+  </div>
+  <!-- Collapsed Logo -->
+  <div x-show="collapsed" class="flex justify-center w-full" style="display: none;">
+    <span class="app-sidebar__brand-logo-compact" aria-label="Edify">
+      <img src="{% static 'images/logo.png' %}" alt="" aria-hidden="true" width="88" height="36">
+    </span>
+  </div>
+</div>
+
+<div class="app-sidebar__nav-container">
+  <nav class="app-sidebar__nav" aria-label="Main Navigation">
+    {% for section in sidebar_sections %}
+      {% if section.items %}
+        <div class="app-sidebar__section">
+          {% if not section.standalone %}
+          <div class="app-sidebar__section-header" x-show="!collapsed">
+            <span class="app-sidebar__section-title">{{ section.label }}</span>
+          </div>
+          {% endif %}
+          <div class="app-sidebar__section-items">
+            {% for item in section.items %}
+              <a href="{{ item.url }}"
+                 class="app-sidebar__item {% if item.active %}app-sidebar__item--active{% endif %}"
+                 {% if item.active %}aria-current="page"{% endif %}
+                 title="{{ item.label }}">
+                <div class="app-sidebar__item-icon">
+                  {{ item.icon|safe }}
+                </div>
+                <span class="app-sidebar__item-label" x-show="!collapsed">{{ item.label }}</span>
+                {% if item.url == "/messages" %}
+                  <span id="message-sidebar-badge"
+                        class="app-sidebar__item-badge app-sidebar__item-badge--blue"
+                        x-show="!collapsed && {{ unread_messages_count }} > 0">{{ unread_messages_count }}</span>
+                {% elif item.url == "/my-professional-development" and pd_action_required_count > 0 %}
+                  <span class="app-sidebar__item-badge app-sidebar__item-badge--blue" x-show="!collapsed">{{ pd_action_required_count }}</span>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </nav>
+</div>
+
+{% comment %}
+The sidebar footer owns workspace settings only. Account identity and Log out
+live in the top-right avatar menu; the trigger here is intentionally one quiet
+gear. The desktop collapse action sits inside this panel rather than occupying
+a second permanent row beneath it.
+{% endcomment %}
+<div class="app-sidebar__footer" x-data="{ settingsOpen: false }" @keydown.escape.window="settingsOpen = false">
+  <div class="app-sidebar__settings" @click.outside="settingsOpen = false">
+    <button type="button"
+            class="app-sidebar__user app-sidebar__settings-trigger"
+            @click="settingsOpen = !settingsOpen"
+            :aria-expanded="settingsOpen ? 'true' : 'false'"
+            aria-label="Settings">
+      <span class="app-sidebar__user-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </span>
+    </button>
+
+    <div class="app-sidebar__settings-menu"
+         x-show="settingsOpen"
+         x-cloak
+         x-transition.opacity.duration.120ms
+         aria-label="Settings panel">
+
+      <p class="app-sidebar__settings-heading">Appearance</p>
+      <div class="app-sidebar__theme-row" role="group" aria-label="Workspace theme">
+        <button type="button" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('system')"
+                :aria-pressed="$store.theme.preference === 'system' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'system' ? 'is-active' : ''">System</button>
+        <button type="button" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('light')"
+                :aria-pressed="$store.theme.preference === 'light' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'light' ? 'is-active' : ''">Light</button>
+        <button type="button" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('blue')"
+                :aria-pressed="$store.theme.preference === 'blue' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'blue' ? 'is-active' : ''">Edify Blue</button>
+        <button type="button" class="app-sidebar__theme"
+                @click="$store.theme.setTheme('dark')"
+                :aria-pressed="$store.theme.preference === 'dark' ? 'true' : 'false'"
+                :class="$store.theme.preference === 'dark' ? 'is-active' : ''">Night black</button>
+      </div>
+
+      <div class="app-sidebar__settings-divider" role="separator"></div>
+
+      <button type="button"
+              class="app-sidebar__settings-item max-lg:hidden"
+              @click="collapsed = !collapsed; settingsOpen = false"
+              :aria-pressed="collapsed ? 'true' : 'false'">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="collapsed ? 'rotate-180' : ''" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+        </svg>
+        <span x-text="collapsed ? 'Expand sidebar' : 'Collapse sidebar'">Collapse sidebar</span>
+      </button>
+
+      <div class="app-sidebar__settings-divider" role="separator"></div>
+
+      <a href="/settings" class="app-sidebar__settings-item">All settings</a>
+      <a href="/profile" class="app-sidebar__settings-item">My profile</a>
+      <a href="/change-password" class="app-sidebar__settings-item">Change password</a>
+      <a href="/notifications" class="app-sidebar__settings-item">Notification centre</a>
+    </div>
+  </div>
+</div>

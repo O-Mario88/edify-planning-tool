@@ -1,0 +1,53 @@
+{% comment %}
+Capture a written reason for an action that needs one.
+
+Include this INSIDE the caller's own <form>. The form's method, action and
+hidden fields are page-specific; the disclosure, the labelled field and the
+submit control are not, and were being rewritten at twenty-one call sites.
+
+    <form method="post" action="/hr/performance-cycle/action">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="return">
+      {% include "partials/components/reason_disclosure.html" with uid=row.review.id trigger_label="Return" field_label="Reason for returning this agreement" submit_label="Return agreement" %}
+    </form>
+
+`uid` must be unique on the page — it ties the label to its field. Two of the
+call sites this replaces used window.prompt() instead: an unlabelled, unstyled,
+unvalidated browser dialog collecting the justification for returning a
+performance agreement or recommending a formal PIP. The reason was written
+into a hidden input by an inline onsubmit handler, so it could not be reviewed
+or corrected before submitting, and it read to a screen reader as nothing at
+all.
+
+Params: uid (required), trigger_label, field_label, submit_label,
+placeholder, tone ("neutral" | "danger"), rows.
+{% endcomment %}
+<div x-data="{ open: false }" @keydown.escape="open = false" class="reason-disclosure">
+  <button type="button"
+          @click="open = !open"
+          :aria-expanded="open ? 'true' : 'false'"
+          aria-controls="reason-panel-{{ uid }}"
+          class="reason-disclosure__trigger{% if tone == 'danger' %} reason-disclosure__trigger--danger{% endif %}">
+    {{ trigger_label|default:"Return" }}
+  </button>
+
+  <div x-show="open" x-cloak id="reason-panel-{{ uid }}" class="reason-disclosure__panel">
+    <label for="reason-{{ uid }}" class="reason-disclosure__label">
+      {{ field_label|default:"Reason" }}
+      <span class="reason-disclosure__required" aria-hidden="true">*</span>
+    </label>
+    <textarea id="reason-{{ uid }}"
+              name="reason"
+              required
+              rows="{{ rows|default:3 }}"
+              placeholder="{{ placeholder|default:'Say what needs to change, so the next person can act on it.' }}"
+              class="reason-disclosure__field"></textarea>
+    {% comment %}The reason is required by the field, so the browser refuses an
+    empty submit before the request is made — which is what the prompt() version
+    was doing by hand, in JavaScript, after the fact.{% endcomment %}
+    <button type="submit"
+            class="reason-disclosure__submit{% if tone == 'danger' %} reason-disclosure__submit--danger{% endif %}">
+      {{ submit_label|default:"Submit" }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,64 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ incident.reference }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href="/admin-ops/incidents" back_label="System Incidents" %}
+      <h1 class="edify-page-title edify-page-header__title">{{ incident.title }}</h1>
+      <p class="edify-page-header__description">{{ incident.reference }} · {{ incident.get_category_display }}</p>
+    </div>
+  </header>
+
+  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Incident summary">
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Severity</p><p class="text-[15px] font-bold text-slate-800 mt-1">{{ incident.get_severity_display }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Occurrences</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ incident.occurrence_count }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">First Detected</p><p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ incident.first_detected_at|date:"d M H:i" }}</p></div>
+    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Last Detected</p><p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ incident.last_detected_at|date:"d M H:i" }}</p></div>
+  </div>
+
+  <section class="card p-4 space-y-2" aria-labelledby="incident-context-title">
+    <h2 id="incident-context-title" class="text-[14px] font-extrabold text-slate-800">Error Context</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px] font-semibold text-slate-600">
+      <div><dt class="edify-text-caption uppercase tracking-wider text-slate-400">Affected route</dt><dd>{{ incident.affected_route|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption uppercase tracking-wider text-slate-400">Component</dt><dd>{{ incident.affected_component|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption uppercase tracking-wider text-slate-400">Status</dt><dd>{{ incident.get_status_display }}</dd></div>
+      <div><dt class="edify-text-caption uppercase tracking-wider text-slate-400">Request samples</dt><dd class="tabular-nums">{{ incident.samples|join:", "|default:"none captured" }}</dd></div>
+    </dl>
+    {% if incident.affected_route %}<a href="{{ incident.affected_route }}" class="inline-flex h-8 px-3 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 items-center">Open Affected Route</a>{% endif %}
+  </section>
+
+  <section class="card p-4 space-y-3" aria-labelledby="incident-actions-title">
+    <h2 id="incident-actions-title" class="text-[14px] font-extrabold text-slate-800">Response</h2>
+    {% if incident.status == "open" %}
+    <form method="post" action="/admin-ops/incidents/{{ incident.id }}/acknowledge">
+      {% csrf_token %}
+      <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Acknowledge Incident</button>
+    </form>
+    {% elif incident.status == "acknowledged" or incident.status == "mitigated" %}
+    <form method="post" action="/admin-ops/incidents/{{ incident.id }}/resolve" class="flex items-center gap-2">
+      {% csrf_token %}
+      <label class="sr-only" for="incident-note">Resolution note</label>
+      <input id="incident-note" name="note" placeholder="What resolved it?" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface w-64">
+      <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Resolve</button>
+    </form>
+    {% else %}
+    <p class="text-[12px] font-semibold text-slate-500">Resolved {{ incident.resolved_at|date:"d M H:i" }}. A recurrence will reopen this incident rather than create a new one.</p>
+    {% endif %}
+  </section>
+
+  <section class="card p-4" aria-labelledby="incident-audit-title">
+    <h2 id="incident-audit-title" class="text-[14px] font-extrabold text-slate-800 mb-2">Audit History</h2>
+    {% for row in audit %}
+    <div class="py-2 border-b border-slate-50 last:border-0 text-[12px] font-semibold text-slate-600">
+      <span class="tabular-nums text-slate-400">{{ row.created_at|date:"d M H:i" }}</span> · {{ row.action }}{% if row.actor_role %} · {{ row.actor_role }}{% endif %}
+    </div>
+    {% empty %}
+    <p class="text-[12px] font-medium text-slate-400 py-4 text-center">No audit events recorded yet.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

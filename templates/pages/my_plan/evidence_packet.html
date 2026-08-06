@@ -1,0 +1,166 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Evidence Packet — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
+
+<!-- Back button -->
+<div>
+{% include "partials/_back_link.html" with back_href="/my-plan" back_label="My Plan" %}
+</div>
+
+<!-- Header -->
+<div class="edify-page-header">
+<div class="space-y-1 edify-page-header__lead">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ act.activity_type|replace_underscore }}</span>
+<span class="text-slate-400 font-bold text-[12px]">&bull;</span>
+<span class="text-[12px] text-slate-500 font-semibold">{{ act.planned_date }}</span>
+</div>
+<p class="edify-page-eyebrow">My Work</p>
+<h1 class="edify-page-title edify-page-header__title">Evidence Proof Packet</h1>
+{% if act.school %}
+<p class="edify-page-header__description">School: <strong class="text-slate-700">{{ act.school.name }}</strong> (ID: {{ act.school.school_id }})</p>
+{% endif %}
+</div>
+
+<div class="edify-page-header__controls">
+<button
+hx-get="/activities/{{ act.id }}/timeline"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-ghost h-9 text-[12px] font-semibold shadow-sm"
+>
+View Timeline
+</button>
+{% if act.status == 'completed' %}
+<button
+hx-get="/activities/{{ act.id }}/submit"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-9 text-[12px] font-semibold shadow-sm"
+>
+Submit for Review
+</button>
+{% endif %}
+</div>
+</div>
+
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+<!-- Left column: Proof Files -->
+<div class="lg:col-span-2 space-y-6">
+
+<!-- Files List -->
+<div class="edify-surface rounded-surface  shadow-sm overflow-hidden">
+<div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-[14px] font-semibold">Uploaded Evidence Files</h3>
+<button
+hx-get="/activities/{{ act.id }}/evidence"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="text-[12px] font-semibold edify-primary-text edify-primary-text-hover"
+>
++ Upload File
+</button>
+</div>
+
+{% if evidence_list %}
+<div class="divide-y divide-slate-100">
+{% for ev in evidence_list %}
+<div class="p-4 flex items-start justify-between gap-4">
+<div class="space-y-1">
+<p class="text-[12px] font-bold text-slate-800">{{ ev.original_name }}</p>
+<div class="flex items-center gap-2 edify-text-caption text-slate-400 font-semibold">
+<span class="capitalize">{{ ev.kind|replace_underscore }}</span>
+<span>&bull;</span>
+<span>{{ ev.file_size|filesizeformat }}</span>
+<span>&bull;</span>
+<span>Uploaded {{ ev.created_at|date:"M d, Y" }}</span>
+</div>
+{% if ev.notes %}
+<p class="edify-text-caption text-slate-500 font-semibold italic mt-1.5">"{{ ev.notes }}"</p>
+{% endif %}
+</div>
+
+<div class="flex items-center gap-2">
+{% if ev.mime_type == 'application/pdf' or 'image' in ev.mime_type|default:'' %}
+<a href="/api/evidence/{{ ev.id }}/file" target="_blank" class="btn btn-ghost h-8 px-2.5 edify-text-caption font-semibold shadow-sm">
+View
+</a>
+{% endif %}
+<a href="/api/evidence/{{ ev.id }}/file?download=1" class="btn btn-ghost h-8 px-2.5 edify-text-caption font-semibold shadow-sm">
+Download
+</a>
+</div>
+</div>
+{% if ev.mime_type == 'application/pdf' %}
+<div class="px-4 pb-4">
+<div class="rounded-surface overflow-hidden border border-slate-200 bg-slate-50">
+<embed src="/api/evidence/{{ ev.id }}/file" type="application/pdf" class="w-full h-[420px]" />
+</div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+{% else %}
+<div class="py-12 text-center text-slate-400">
+<p class="text-[32px] mb-1.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg></p>
+<p class="font-bold text-[14px]">No evidence files uploaded yet.</p>
+<button
+hx-get="/activities/{{ act.id }}/evidence"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-8 mt-3 edify-text-caption font-semibold"
+>
+Upload Evidence
+</button>
+</div>
+{% endif %}
+</div>
+
+</div>
+
+<!-- Right column: Status Checklist & Metadata -->
+<div class="space-y-6">
+
+<!-- Checklist -->
+<div class="edify-surface rounded-surface  p-5 shadow-sm space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Completeness Checklist</h3>
+
+<div class="space-y-2.5">
+<div class="flex items-center justify-between text-[12px] font-bold">
+<span class="text-slate-500">Activity Completed:</span>
+{% if act.status == 'completed' or act.status == 'submitted_to_pl' or act.status == 'awaiting_ia_verification' or act.status == 'ia_verified' or act.status == 'accountant_confirmed' %}
+<span class="text-green-600">Yes</span>
+{% else %}
+<span class="text-rose-600">Pending</span>
+{% endif %}
+</div>
+<div class="flex items-center justify-between text-[12px] font-bold border-t border-slate-100 pt-2">
+<span class="text-slate-500">Evidence Uploaded:</span>
+{% if act.evidence_status == 'uploaded' %}
+<span class="text-green-600">Yes</span>
+{% else %}
+<span class="text-rose-600">Pending</span>
+{% endif %}
+</div>
+<div class="flex items-center justify-between text-[12px] font-bold border-t border-slate-100 pt-2">
+<span class="text-slate-500">Salesforce Activity ID:</span>
+{% if act.salesforce_activity_id %}
+<span class="text-green-600">{{ act.salesforce_activity_id }}</span>
+{% else %}
+<span class="text-rose-600">Missing</span>
+{% endif %}
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+{% endblock %}

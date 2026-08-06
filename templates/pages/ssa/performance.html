@@ -1,0 +1,33 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}SSA Performance · Edify{% endblock %}
+
+{% block shell_content %}
+<section class="sp-page edify-page-canvas" aria-labelledby="ssa-performance-title">
+  <header class="edify-page-header sp-page-header">
+    <div class="edify-page-header__lead">
+      <span class="sp-eyebrow">School intelligence</span>
+      <h1 id="ssa-performance-title" class="edify-page-title edify-page-header__title">SSA Performance</h1>
+      <p class="edify-page-header__description">Track confirmed school self-assessment performance across all eight interventions and act on the highest-priority gaps.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if can_add_ssa %}
+      <a href="/ssa/manual/" class="inline-flex min-h-11 items-center justify-center rounded-control bg-[var(--edify-accent)] px-4 text-[12px] font-extrabold text-white shadow-sm hover:bg-[var(--edify-accent-hover)]">
+        Add SSA Score
+      </a>
+      <a href="/uploads" class="inline-flex min-h-11 items-center justify-center rounded-control border border-[var(--edify-border)] px-4 text-[12px] font-bold text-[var(--edify-text-muted)] hover:bg-slate-50">
+        Upload Center
+      </a>
+      {% endif %}
+      <div class="sp-engine-state" aria-label="Decision engine status">
+        <span aria-hidden="true"></span>
+        {{ dashboard.engine.name }} · confirmed records only
+      </div>
+    </div>
+  </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+
+  {% include "partials/ssa/performance_workspace.html" %}
+</section>
+{% endblock %}

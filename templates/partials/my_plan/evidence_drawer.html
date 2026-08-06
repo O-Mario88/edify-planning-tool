@@ -1,0 +1,78 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Upload Evidence{% endblock %}
+{% block drawer_subtitle %}Provide verification evidence for {{ act.activity_type|title|replace_underscore }}{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="/activities/{{ act.id }}/evidence/action"
+hx-encoding="multipart/form-data"
+hx-target="#evidence-errors"
+class="space-y-5 text-[12px] font-bold text-slate-600"
+>
+<div id="evidence-errors"></div>
+
+<div class="space-y-3">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
+Select Evidence File
+</h4>
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
+Upload photos, signed attendance sheets, or completed school visit forms confirming the execution.
+</p>
+
+<div class="mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between">
+<input
+type="file"
+name="evidence_file"
+required
+class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
+>
+</div>
+
+<div class="mt-2">
+<label for="evidence_kind-ev" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</label>
+<select name="evidence_kind" id="evidence_kind-ev"
+        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 edify-text-caption font-semibold focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
+{% for item in evidence_checklist %}<option value="{{ item.kind }}" {% if not item.uploaded %}selected{% endif %}>{{ item.label }}{% if item.uploaded %} — already uploaded{% endif %}</option>{% endfor %}
+{% for value, label in evidence_kind_choices %}{% if value not in evidence_required_kinds %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}
+</select>
+{% if evidence_checklist %}<p class="mt-1 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">This activity needs {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %} before it can be submitted.</p>{% endif %}
+</div>
+
+
+<!-- Listed uploaded evidence files if any exist -->
+{% if evidence_list %}
+<div class="space-y-1.5 pt-2">
+<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
+<div class="space-y-1">
+{% for ev in evidence_list %}
+<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-surface p-2">
+<span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
+<span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+</div>
+
+<!-- Drawer Footer (Sticky Actions) -->
+<div class="drawer-footer">
+<button
+type="button"
+@click="$dispatch('close-drawer')"
+class="edify-action-button secondary h-9 transition-colors"
+>
+Cancel
+</button>
+<button
+type="submit"
+class="edify-action-button primary h-9 transition-colors shadow-sm"
+>
+Upload & Save
+</button>
+</div>
+</form>
+{% endblock %}

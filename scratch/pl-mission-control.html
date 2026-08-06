@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Dashboard — Mission Control v3 · Edify</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+/* ═══ EDIFY DESIGN TOKENS ═══ */
+:root {
+  --edify-primary: #2e505f;
+  --edify-primary-hover: #213a45;
+  --edify-accent: #2563eb;
+  --edify-accent-hover: #1d4ed8;
+  --edify-accent-light: #eff6ff;
+  --edify-success: #10b981;  --edify-success-light: #ecfdf5;  --edify-success-border: #a7f3d0;
+  --edify-warning: #f59e0b;  --edify-warning-light: #fffbeb;  --edify-warning-border: #fde68a;
+  --edify-danger:  #ef4444;  --edify-danger-light:  #fef2f2;  --edify-danger-border:  #fca5a5;
+  --edify-info:    #3b82f6;  --edify-info-light:    #eff6ff;  --edify-info-border:    #bfdbfe;
+  --edify-surface: #ffffff;
+  --edify-surface-muted: #f8fafc;
+  --edify-border: #e2e8f0;
+  --edify-border-strong: #cbd5e1;
+  --edify-text: #0f172a;
+  --edify-text-muted: #64748b;
+  --edify-text-subtle: #94a3b8;
+  --edify-bg: #eaf1f3;
+  --edify-font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  /* Type scale — content fills cards, doesn't shrink from them */
+  --edify-text-display-size: 22px;
+  --edify-text-heading-size: 15px;
+  --edify-text-title-size:   14px;
+  --edify-text-body-size:    13px;
+  --edify-text-label-size:   12px;
+  --edify-text-micro-size:   11px;
+  --edify-text-stat-size:    26px;
+  --edify-radius-sm: 6px; --edify-radius-md: 8px; --edify-radius-lg: 12px;
+}
+html, body { font-family: var(--edify-font-sans); background: var(--edify-bg); color: var(--edify-text); }
+body {
+  background-image:
+    radial-gradient(at 0% 0%, rgba(14,165,233,.04) 0, transparent 40%),
+    radial-gradient(at 100% 0%, rgba(16,185,129,.03) 0, transparent 40%);
+  background-attachment: fixed;
+}
+/* TYPE */
+.t-display { font-size: var(--edify-text-display-size); font-weight: 700; line-height: 1.15; letter-spacing: -.015em; }
+.t-heading { font-size: var(--edify-text-heading-size); font-weight: 700; line-height: 1.2; }
+.t-title   { font-size: var(--edify-text-title-size);   font-weight: 600; line-height: 1.25; }
+.t-body    { font-size: var(--edify-text-body-size);    font-weight: 400; line-height: 1.35; }
+.t-label   { font-size: var(--edify-text-label-size);   font-weight: 500; line-height: 1.3; }
+.t-micro   { font-size: var(--edify-text-micro-size);   font-weight: 600; line-height: 1.2; letter-spacing: .05em; text-transform: uppercase; }
+.t-stat    { font-size: var(--edify-text-stat-size);    font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+/* CARD */
+.card {
+  background: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  box-shadow: 0 1px 2px 0 rgba(15,23,42,.03);
+}
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: var(--edify-text-micro-size); font-weight: 600; line-height: 1.2; }
+.badge-danger  { background: var(--edify-danger-light);  color: #dc2626; border: 1px solid var(--edify-danger-border); }
+.badge-warning { background: var(--edify-warning-light); color: #b45309; border: 1px solid var(--edify-warning-border); }
+.badge-success { background: var(--edify-success-light); color: #047857; border: 1px solid var(--edify-success-border); }
+.badge-info    { background: var(--edify-info-light);    color: #1d4ed8; border: 1px solid var(--edify-info-border); }
+.badge-neutral { background: var(--edify-surface-muted); color: var(--edify-text-muted); border: 1px solid var(--edify-border); }
+/* TABLE — 36px rows */
+table.dense { border-collapse: collapse; }
+table.dense thead th {
+  font-size: var(--edify-text-micro-size); font-weight: 600; color: var(--edify-text-subtle);
+  letter-spacing: .05em; text-transform: uppercase;
+  padding: 8px 10px; border-bottom: 1px solid var(--edify-border); text-align: left; line-height: 1.2;
+}
+table.dense tbody td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; line-height: 1.3; }
+table.dense tbody tr:last-child td { border-bottom: none; }
+table.dense tbody tr:hover { background: var(--edify-surface-muted); }
+/* TRIAGE */
+.triage-row { position: relative; padding: 10px 12px 10px 16px; border-bottom: 1px solid #f1f5f9; }
+.triage-row:last-child { border-bottom: none; }
+.triage-row::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 2px 2px 0; }
+.triage-row.danger::before  { background: var(--edify-danger); }
+.triage-row.warning::before { background: var(--edify-warning); }
+.triage-row:hover { background: var(--edify-surface-muted); }
+/* RING — fills its space now */
+.ring-md { position: relative; height: 44px; width: 44px; }
+.ring-md .ring-fill { position: absolute; inset: 0; border-radius: 9999px; }
+.ring-md .ring-hole { position: absolute; inset: 4px; border-radius: 9999px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: var(--edify-text-micro-size); font-weight: 700; }
+/* SPARK — wider, fills KPI card */
+.spark { height: 24px; width: 100%; }
+/* COLLAPSIBLE */
+.detail-disclosure summary { list-style: none; cursor: pointer; }
+.detail-disclosure summary::-webkit-details-marker { display: none; }
+.detail-disclosure[open] .chev { transform: rotate(90deg); }
+.chev { transition: transform 120ms; }
+/* BUTTONS */
+.btn-primary { background: var(--edify-accent); color: #fff; font-weight: 600; border-radius: var(--edify-radius-sm); font-size: var(--edify-text-label-size); padding: 6px 12px; transition: background 120ms; }
+.btn-primary:hover { background: var(--edify-accent-hover); }
+.btn-success { background: var(--edify-success); color: #fff; font-weight: 600; border-radius: var(--edify-radius-sm); font-size: var(--edify-text-label-size); padding: 6px 12px; }
+.btn-ghost { background: var(--edify-surface); border: 1px solid var(--edify-border-strong); color: var(--edify-text-muted); font-weight: 600; border-radius: var(--edify-radius-sm); font-size: var(--edify-text-label-size); padding: 6px 12px; }
+.btn-ghost:hover { background: var(--edify-surface-muted); color: var(--edify-accent); border-color: var(--edify-accent); }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,.12); border-radius: 9999px; }
+</style>
+</head>
+<body class="h-full antialiased">
+
+<div class="h-full flex overflow-hidden">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="hidden md:flex flex-col w-56 shrink-0 text-slate-300" style="background: var(--edify-primary);">
+    <div class="h-14 flex items-center gap-2.5 px-4 border-b border-white/5">
+      <div class="h-7 w-7 rounded-md flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg,#5eead4,#0d9488);">E</div>
+      <span class="text-white font-semibold" style="font-size:14px">Edify</span>
+    </div>
+    <nav class="flex-1 px-2 py-3 space-y-0.5">
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-white font-semibold" style="background:rgba(255,255,255,.08);font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Dashboard</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>My Plan</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>Activities</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>Schools</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>Planning</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2"/></svg>Budget</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2"/></svg>Reports</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md hover:bg-white/5" style="font-size:13px"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg>Staff</a>
+    </nav>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <header class="h-14 shrink-0 flex items-center gap-3 px-5" style="background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--edify-border);">
+      <div class="relative max-w-sm w-full hidden sm:block">
+        <input placeholder="Search schools, staff…" class="w-full rounded-md border focus:outline-none t-body" style="background:var(--edify-surface-muted);border-color:var(--edify-border);padding:6px 10px 6px 30px;">
+        <svg class="h-3.5 w-3.5 absolute left-2.5 top-2" style="color:var(--edify-text-subtle)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <div class="flex items-center gap-2.5 shrink-0 ml-auto">
+        <button class="h-8 w-8 rounded-md hover:bg-slate-100 flex items-center justify-center relative" style="color:var(--edify-text-muted)">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14v-3a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+          <span class="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center text-white font-bold" style="background:var(--edify-accent);font-size:9px">3</span>
+        </button>
+        <div class="h-8 w-8 rounded-full text-white font-semibold flex items-center justify-center" style="background:var(--edify-primary);font-size:12px">MO</div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="p-4 max-w-[1500px] mx-auto">
+
+        <!-- HEADER -->
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 class="t-display" style="color:var(--edify-text)">Program Lead · Mission Control</h1>
+            <p class="t-label mt-0.5" style="color:var(--edify-text-muted)">24 CCEOs · 700 schools · <span style="color:var(--edify-danger);font-weight:600">5 actions needed</span></p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1 rounded-md border px-2.5 py-1" style="background:var(--edify-surface);border-color:var(--edify-border)">
+              <span class="t-micro" style="color:var(--edify-text-subtle)">FY</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer font-semibold t-label" style="color:var(--edify-text)"><option>FY 2025</option><option selected>FY 2026</option></select>
+            </div>
+            <div class="flex items-center gap-1 rounded-md border px-2.5 py-1" style="background:var(--edify-surface);border-color:var(--edify-border)">
+              <span class="t-micro" style="color:var(--edify-text-subtle)">TYPE</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer font-semibold t-label" style="color:var(--edify-text)"><option>All</option><option>Visits</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ROW 1: KPI strip + Approvals ═══ -->
+        <div class="grid grid-cols-12 gap-3 mb-3">
+          <!-- KPI strip — 4 cards, content fills each card -->
+          <div class="col-span-12 lg:col-span-7 grid grid-cols-4 gap-3">
+            <div class="card p-3.5 flex flex-col">
+              <div class="flex items-center justify-between"><span class="t-micro" style="color:var(--edify-text-subtle)">Target</span><span class="badge badge-success">▲ 4%</span></div>
+              <p class="t-stat mt-2" style="color:var(--edify-text)">78<span class="t-heading" style="color:var(--edify-text-muted);font-weight:600">%</span></p>
+              <p class="t-label mt-auto pt-2" style="color:var(--edify-text-muted)">vs annual</p>
+              <svg class="spark mt-1.5" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline fill="none" stroke="var(--edify-success)" stroke-width="2" points="0,20 17,17 34,18 50,12 67,9 84,5 100,3"/></svg>
+            </div>
+            <div class="card p-3.5 flex flex-col">
+              <div class="flex items-center justify-between"><span class="t-micro" style="color:var(--edify-text-subtle)">On Track</span><span class="badge badge-info">75%</span></div>
+              <p class="t-stat mt-2" style="color:var(--edify-text)">18<span class="t-heading" style="color:var(--edify-text-muted);font-weight:600">/24</span></p>
+              <p class="t-label mt-auto pt-2" style="color:var(--edify-text-muted)">CCEOs at pace</p>
+              <div class="mt-1.5 h-1.5 w-full rounded-full" style="background:var(--edify-border)"><div class="h-full rounded-full" style="width:75%;background:var(--edify-info)"></div></div>
+            </div>
+            <div class="card p-3.5 flex flex-col">
+              <div class="flex items-center justify-between"><span class="t-micro" style="color:var(--edify-text-subtle)">At Risk</span><span class="badge badge-danger">▲ 3</span></div>
+              <p class="t-stat mt-2" style="color:var(--edify-danger)">12</p>
+              <p class="t-label mt-auto pt-2" style="color:var(--edify-text-muted)">schools</p>
+              <svg class="spark mt-1.5" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline fill="none" stroke="var(--edify-danger)" stroke-width="2" points="0,18 17,20 34,15 50,13 67,10 84,7 100,3"/></svg>
+            </div>
+            <div class="card p-3.5 flex flex-col">
+              <div class="flex items-center justify-between"><span class="t-micro" style="color:var(--edify-text-subtle)">This Week</span><span class="badge badge-neutral">on plan</span></div>
+              <p class="t-stat mt-2" style="color:var(--edify-text)">42</p>
+              <p class="t-label mt-auto pt-2" style="color:var(--edify-text-muted)">activities</p>
+              <svg class="spark mt-1.5" viewBox="0 0 100 24" preserveAspectRatio="none"><polyline fill="none" stroke="var(--edify-accent)" stroke-width="2" points="0,14 17,16 34,9 50,11 67,7 84,9 100,5"/></svg>
+            </div>
+          </div>
+
+          <!-- APPROVALS — fills its card -->
+          <div class="col-span-12 lg:col-span-5 card p-3.5 flex flex-col">
+            <div class="flex items-center justify-between mb-2.5">
+              <h2 class="t-heading" style="color:var(--edify-text)">Approvals</h2>
+              <span class="badge badge-warning">7 waiting</span>
+            </div>
+            <div class="space-y-2 flex-1">
+              <div class="rounded-md border p-2.5" style="border-color:var(--edify-border)">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:10px">JM</span>
+                    <div>
+                      <p class="t-body font-semibold" style="color:var(--edify-text)">John Mukasa</p>
+                      <p class="t-label" style="color:var(--edify-text-subtle)">Weekly Fund · <span class="font-semibold" style="color:var(--edify-text)">UGX 2.4K</span> · 3 items</p>
+                    </div>
+                  </div>
+                  <span class="t-label" style="color:var(--edify-text-subtle)">Jul 10</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                  <button class="btn-success flex-1">Approve</button>
+                  <button class="btn-ghost">Review</button>
+                </div>
+              </div>
+              <div class="rounded-md border p-2.5" style="border-color:var(--edify-border)">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:10px">GA</span>
+                    <div>
+                      <p class="t-body font-semibold" style="color:var(--edify-text)">Grace Acen</p>
+                      <p class="t-label" style="color:var(--edify-text-subtle)">Monthly Plan · 8 activities <span class="badge badge-warning" style="margin-left:4px">2 SF missing</span></p>
+                    </div>
+                  </div>
+                  <span class="t-label" style="color:var(--edify-text-subtle)">Jul 09</span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                  <button class="btn-ghost flex-1">Review plan</button>
+                </div>
+              </div>
+            </div>
+            <button class="t-label font-semibold mt-2.5 hover:underline text-left" style="color:var(--edify-accent)">View all 7 pending →</button>
+          </div>
+        </div>
+
+        <!-- ═══ ROW 2: Triage + My Targets ═══ -->
+        <div class="grid grid-cols-12 gap-3 mb-3">
+          <!-- TRIAGE -->
+          <div class="col-span-12 lg:col-span-8 card overflow-hidden">
+            <div class="flex items-center justify-between p-3.5 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background:var(--edify-danger)"></span><span class="relative inline-flex rounded-full h-2 w-2" style="background:var(--edify-danger)"></span></span>
+                <h2 class="t-heading" style="color:var(--edify-text)">Triage</h2>
+                <span class="t-label" style="color:var(--edify-text-subtle)">5 actions need you</span>
+              </div>
+              <button class="t-label font-semibold hover:underline" style="color:var(--edify-accent)">Clear all</button>
+            </div>
+            <div>
+              <div class="triage-row danger flex items-center gap-3">
+                <span class="badge badge-danger shrink-0">P1</span>
+                <div class="flex-1 min-w-0">
+                  <span class="t-body font-semibold" style="color:var(--edify-text)">3 CCEOs overloaded (>120%)</span>
+                  <span class="t-label" style="color:var(--edify-text-muted)"> — Grace (58 schools), John (14 wk acts), Sarah (56 schools)</span>
+                </div>
+                <button class="btn-ghost shrink-0">Rebalance →</button>
+              </div>
+              <div class="triage-row danger flex items-center gap-3">
+                <span class="badge badge-danger shrink-0">P1</span>
+                <div class="flex-1 min-w-0">
+                  <span class="t-body font-semibold" style="color:var(--edify-text)">12 high-risk schools</span>
+                  <span class="t-label" style="color:var(--edify-text-muted)"> — SSA &lt;5.0 or no visit + no SSA this period</span>
+                </div>
+                <button class="btn-ghost shrink-0">View →</button>
+              </div>
+              <div class="triage-row warning flex items-center gap-3">
+                <span class="badge badge-warning shrink-0">P2</span>
+                <div class="flex-1 min-w-0">
+                  <span class="t-body font-semibold" style="color:var(--edify-text)">7 approvals aged 5+ days</span>
+                  <span class="t-label" style="color:var(--edify-text-muted)"> — field staff may delay activities</span>
+                </div>
+                <button class="btn-ghost shrink-0">Open queue →</button>
+              </div>
+              <div class="triage-row warning flex items-center gap-3">
+                <span class="badge badge-warning shrink-0">P2</span>
+                <div class="flex-1 min-w-0">
+                  <span class="t-body font-semibold" style="color:var(--edify-text)">12 SF IDs overdue (>7d)</span>
+                  <span class="t-label" style="color:var(--edify-text-muted)"> — Salesforce evidence compliance slipping</span>
+                </div>
+                <button class="btn-ghost shrink-0">Clear →</button>
+              </div>
+              <div class="triage-row warning flex items-center gap-3">
+                <span class="badge badge-warning shrink-0">P2</span>
+                <div class="flex-1 min-w-0">
+                  <span class="t-body font-semibold" style="color:var(--edify-text)">Route conflict Thu — 2 CCEOs in Mukono</span>
+                  <span class="t-label" style="color:var(--edify-text-muted)"> — Grace & John overlapping</span>
+                </div>
+                <button class="btn-ghost shrink-0">Resolve →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MY TARGETS — content fills the card now -->
+          <div class="col-span-12 lg:col-span-4 card p-3.5 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="t-heading" style="color:var(--edify-text)">My Targets</h2>
+              <span class="t-body font-bold" style="color:var(--edify-success)">68%</span>
+            </div>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-3 flex-1">
+              <div class="flex items-center gap-2.5">
+                <div class="ring-md shrink-0"><div class="ring-fill" style="background:conic-gradient(var(--edify-success) 70%, var(--edify-border) 0)"></div><div class="ring-hole" style="color:var(--edify-success)">70%</div></div>
+                <div><p class="t-body font-semibold" style="color:var(--edify-text)">Visits</p><p class="t-label" style="color:var(--edify-text-muted)">42 of 60</p></div>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <div class="ring-md shrink-0"><div class="ring-fill" style="background:conic-gradient(var(--edify-success) 83%, var(--edify-border) 0)"></div><div class="ring-hole" style="color:var(--edify-success)">83%</div></div>
+                <div><p class="t-body font-semibold" style="color:var(--edify-text)">Plans</p><p class="t-label" style="color:var(--edify-text-muted)">10 of 12</p></div>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <div class="ring-md shrink-0"><div class="ring-fill" style="background:conic-gradient(var(--edify-warning) 65%, var(--edify-border) 0)"></div><div class="ring-hole" style="color:#b45309">65%</div></div>
+                <div><p class="t-body font-semibold" style="color:var(--edify-text)">Reviews</p><p class="t-label" style="color:var(--edify-text-muted)">39 of 60</p></div>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <div class="ring-md shrink-0"><div class="ring-fill" style="background:conic-gradient(var(--edify-danger) 38%, var(--edify-border) 0)"></div><div class="ring-hole" style="color:var(--edify-danger)">38%</div></div>
+                <div><p class="t-body font-semibold" style="color:var(--edify-text)">Funds</p><p class="t-label" style="color:var(--edify-text-muted)">5 of 13</p></div>
+              </div>
+            </div>
+            <div class="mt-3 pt-2.5 border-t" style="border-color:var(--edify-border)">
+              <div class="flex items-center justify-between mb-1.5"><span class="t-label font-semibold" style="color:var(--edify-text-muted)">Overall achievement</span><span class="t-body font-bold" style="color:var(--edify-success)">68%</span></div>
+              <div class="h-2 w-full rounded-full overflow-hidden" style="background:var(--edify-border)"><div class="h-full rounded-full" style="width:68%;background:var(--edify-success)"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ROW 3: Chart + CCEO table ═══ -->
+        <div class="grid grid-cols-12 gap-3 mb-3">
+          <div class="col-span-12 lg:col-span-5 card p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="t-heading" style="color:var(--edify-text)">Team Performance</h2>
+              <div class="flex items-center gap-2.5">
+                <span class="flex items-center gap-1 t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full" style="background:#0f766e"></span>Planned</span>
+                <span class="flex items-center gap-1 t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full" style="background:#0d9488"></span>Done</span>
+                <span class="flex items-center gap-1 t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full" style="background:#f59e0b"></span>%</span>
+              </div>
+            </div>
+            <div id="perfChart" class="w-full" style="height:248px"></div>
+          </div>
+
+          <div class="col-span-12 lg:col-span-7 card overflow-hidden">
+            <div class="flex items-center justify-between p-3.5 pb-2.5">
+              <h2 class="t-heading" style="color:var(--edify-text)">CCEO Performance</h2>
+              <button class="t-label font-semibold hover:underline" style="color:var(--edify-accent)">All 24 →</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="dense w-full min-w-[560px]">
+                <thead><tr>
+                  <th>CCEO</th><th>Region</th><th class="text-center">Sch</th><th class="text-center">Verified</th><th class="text-center">Bklog</th><th class="text-center">Route</th><th class="text-center">Risk</th>
+                </tr></thead>
+                <tbody>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">GA</span><span class="t-body font-semibold" style="color:var(--edify-text)">Grace Acen</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Mukono</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">42</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-success)">38 · 90%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-text-muted)">2</td>
+                    <td class="text-center"><span class="badge badge-success">Good</span></td>
+                    <td class="text-center"><span class="badge badge-success">Low</span></td>
+                  </tr>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">JM</span><span class="t-body font-semibold" style="color:var(--edify-text)">John Mukasa</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Wakiso</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">38</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-warning)">19 · 52%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-danger)">6</td>
+                    <td class="text-center"><span class="badge badge-danger">Poor</span></td>
+                    <td class="text-center"><span class="badge badge-danger">High</span></td>
+                  </tr>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">SK</span><span class="t-body font-semibold" style="color:var(--edify-text)">Sarah K.</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Jinja</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">35</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-warning)">21 · 61%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-warning)">4</td>
+                    <td class="text-center"><span class="badge badge-warning">Avg</span></td>
+                    <td class="text-center"><span class="badge badge-warning">Watch</span></td>
+                  </tr>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">DO</span><span class="t-body font-semibold" style="color:var(--edify-text)">David O.</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Mukono</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">29</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-success)">25 · 86%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-text-muted)">1</td>
+                    <td class="text-center"><span class="badge badge-success">Good</span></td>
+                    <td class="text-center"><span class="badge badge-success">Low</span></td>
+                  </tr>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">PN</span><span class="t-body font-semibold" style="color:var(--edify-text)">Patricia N.</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Wakiso</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">31</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-success)">26 · 84%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-text-muted)">2</td>
+                    <td class="text-center"><span class="badge badge-success">Good</span></td>
+                    <td class="text-center"><span class="badge badge-success">Low</span></td>
+                  </tr>
+                  <tr class="cursor-pointer">
+                    <td><div class="flex items-center gap-2"><span class="h-6 w-6 rounded-full text-white font-bold flex items-center justify-center" style="background:var(--edify-primary);font-size:9px">EM</span><span class="t-body font-semibold" style="color:var(--edify-text)">Eric M.</span></div></td>
+                    <td class="t-label" style="color:var(--edify-text-muted)">Jinja</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-text)">27</td>
+                    <td class="text-center t-body font-semibold tabular-nums" style="color:var(--edify-warning)">15 · 56%</td>
+                    <td class="text-center t-body font-bold tabular-nums" style="color:var(--edify-warning)">3</td>
+                    <td class="text-center"><span class="badge badge-warning">Avg</span></td>
+                    <td class="text-center"><span class="badge badge-warning">Watch</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ROW 4: Whisper zone ═══ -->
+        <div class="grid grid-cols-12 gap-3">
+          <details class="card detail-disclosure col-span-12 lg:col-span-5" open>
+            <summary class="flex items-center gap-2 p-3.5">
+              <span class="chev" style="color:var(--edify-text-subtle)"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+              <h2 class="t-heading" style="color:var(--edify-text)">SSA Intelligence</h2>
+              <span class="t-label ml-auto" style="color:var(--edify-text-subtle)">by cluster</span>
+            </summary>
+            <div class="px-3.5 pb-3.5 overflow-x-auto">
+              <table class="dense w-full min-w-[380px]">
+                <thead><tr><th>Cluster</th><th class="text-center">LIT</th><th class="text-center">NUM</th><th class="text-center">ENG</th><th class="text-center">SCI</th><th class="text-center">Overall</th></tr></thead>
+                <tbody>
+                  <tr><td class="t-body font-medium" style="color:var(--edify-text)">Mukono Central</td><td class="text-center"><span class="badge badge-success">82</span></td><td class="text-center"><span class="badge badge-success" style="background:#f7fee7;color:#4d7c0f;border-color:#bef264">74</span></td><td class="text-center"><span class="badge badge-success">88</span></td><td class="text-center"><span class="badge badge-warning">61</span></td><td class="text-center"><span class="badge badge-success">76</span></td></tr>
+                  <tr><td class="t-body font-medium" style="color:var(--edify-text)">Wakiso North</td><td class="text-center"><span class="badge badge-warning">58</span></td><td class="text-center"><span class="badge badge-danger">42</span></td><td class="text-center"><span class="badge badge-warning">64</span></td><td class="text-center"><span class="badge badge-warning">59</span></td><td class="text-center"><span class="badge badge-warning">56</span></td></tr>
+                  <tr><td class="t-body font-medium" style="color:var(--edify-text)">Jinja East</td><td class="text-center"><span class="badge badge-success" style="background:#f7fee7;color:#4d7c0f;border-color:#bef264">71</span></td><td class="text-center"><span class="badge badge-success">79</span></td><td class="text-center"><span class="badge badge-success" style="background:#f7fee7;color:#4d7c0f;border-color:#bef264">73</span></td><td class="text-center"><span class="badge badge-success">85</span></td><td class="text-center"><span class="badge badge-success">77</span></td></tr>
+                  <tr><td class="t-body font-medium" style="color:var(--edify-text)">Mukono South</td><td class="text-center"><span class="badge badge-warning">63</span></td><td class="text-center"><span class="badge badge-warning">55</span></td><td class="text-center"><span class="badge badge-warning">68</span></td><td class="text-center"><span class="badge badge-success" style="background:#f7fee7;color:#4d7c0f;border-color:#bef264">72</span></td><td class="text-center"><span class="badge badge-warning">64</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+          <!-- Route & Capacity — fills its card -->
+          <details class="card detail-disclosure col-span-12 lg:col-span-3">
+            <summary class="flex items-center gap-2 p-3.5">
+              <span class="chev" style="color:var(--edify-text-subtle)"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+              <h2 class="t-heading" style="color:var(--edify-text)">Route &amp; Capacity</h2>
+            </summary>
+            <div class="px-3.5 pb-3.5 grid grid-cols-2 gap-3">
+              <div><p class="t-micro mb-1" style="color:var(--edify-text-subtle)">Route Quality</p><p class="t-stat" style="color:var(--edify-success)">84%</p></div>
+              <div><p class="t-micro mb-1" style="color:var(--edify-text-subtle)">Overloaded</p><p class="t-stat" style="color:var(--edify-warning)">3</p></div>
+              <div><p class="t-micro mb-1" style="color:var(--edify-text-subtle)">Leave Conflicts</p><p class="t-stat" style="color:var(--edify-text)">1</p></div>
+              <div><p class="t-micro mb-1" style="color:var(--edify-text-subtle)">Travel Eff.</p><p class="t-stat" style="color:var(--edify-text)">91%</p></div>
+            </div>
+          </details>
+
+          <!-- Finance — fills its card -->
+          <details class="card detail-disclosure col-span-12 lg:col-span-4">
+            <summary class="flex items-center gap-2 p-3.5">
+              <span class="chev" style="color:var(--edify-text-subtle)"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></span>
+              <h2 class="t-heading" style="color:var(--edify-text)">Finance</h2>
+              <span class="t-label ml-auto font-semibold tabular-nums" style="color:var(--edify-text-muted)">186K / 273K · 68%</span>
+            </summary>
+            <div class="px-3.5 pb-3.5">
+              <div class="flex items-center gap-4 mb-3">
+                <div class="relative h-20 w-20 shrink-0">
+                  <div class="absolute inset-0 rounded-full" style="background:conic-gradient(var(--edify-success) 68%, var(--edify-border) 0)"></div>
+                  <div class="absolute inset-[7px] rounded-full bg-white flex flex-col items-center justify-center">
+                    <span class="t-stat" style="color:var(--edify-text)">68%</span>
+                    <span class="t-micro" style="color:var(--edify-text-subtle);font-size:8px">UTIL</span>
+                  </div>
+                </div>
+                <div class="flex-1 space-y-1.5">
+                  <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full inline-block mr-1.5" style="background:var(--edify-success)"></span>Approved</span><span class="t-body font-bold tabular-nums" style="color:var(--edify-text)">186K</span></div>
+                  <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full inline-block mr-1.5" style="background:var(--edify-accent)"></span>Pending</span><span class="t-body font-bold tabular-nums" style="color:var(--edify-text)">54K</span></div>
+                  <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)"><span class="h-2 w-2 rounded-full inline-block mr-1.5" style="background:var(--edify-warning)"></span>Flagged</span><span class="t-body font-bold tabular-nums" style="color:var(--edify-text)">12K</span></div>
+                </div>
+              </div>
+              <div class="pt-2.5 border-t space-y-1.5" style="border-color:var(--edify-border)">
+                <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)">Teams below target</span><span class="t-body font-bold" style="color:var(--edify-danger)">6</span></div>
+                <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)">Funded, not done</span><span class="t-body font-bold" style="color:var(--edify-warning)">3</span></div>
+                <div class="flex items-center justify-between"><span class="t-label" style="color:var(--edify-text-muted)">No visit yet</span><span class="t-body font-bold" style="color:var(--edify-text)">48 sch</span></div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="flex items-center gap-2 mt-3 flex-wrap">
+          <button class="btn-primary flex items-center gap-1.5"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>Plan Activity</button>
+          <button class="btn-ghost flex items-center gap-1.5"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>Approvals (7)</button>
+          <button class="btn-ghost flex items-center gap-1.5">Reports</button>
+          <button class="btn-ghost flex items-center gap-1.5">Route Planner</button>
+          <button class="btn-ghost flex items-center gap-1.5">Team Targets</button>
+          <button class="btn-ghost flex items-center gap-1.5">Schools at Risk</button>
+        </div>
+
+        <p class="text-center t-label font-semibold pt-4 pb-1" style="color:var(--edify-text-subtle)">Mission Control v3 — content fills cards. Real templates untouched.</p>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  const perfChart = new ApexCharts(document.querySelector('#perfChart'), {
+    series: [
+      { name: 'Planned', type: 'column', data: [22,25,20,28,24,26,23,28,24,21,25,24] },
+      { name: 'Completed', type: 'column', data: [18,21,19,24,20,22,19,23,20,18,21,21] },
+      { name: 'Target %', type: 'line', data: [68,76,80,75,75,73,74,72,75,76,72,79] }
+    ],
+    chart: { height: 248, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif', animations: { enabled: true, speed: 300 } },
+    stroke: { width: [0,0,2.5], curve: 'smooth' },
+    colors: ['#cbd5e1', '#0d9488', '#f59e0b'],
+    fill: { opacity: [0.6, 1, 1] },
+    plotOptions: { bar: { columnWidth: '55%', borderRadius: 2 } },
+    dataLabels: { enabled: false },
+    labels: ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
+    xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 600 } } },
+    yaxis: [
+      { labels: { style: { colors: '#94a3b8', fontSize: '11px' } } },
+      { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '11px' } } }
+    ],
+    grid: { borderColor: '#f1f5f9', strokeDashArray: 4, padding: { left: 0, right: 0 } },
+    legend: { show: false },
+    tooltip: { theme: 'dark', shared: true, intersect: false, style: { fontSize: '12px', fontFamily: 'Outfit' } }
+  });
+  perfChart.render();
+</script>
+</body>
+</html>

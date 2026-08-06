@@ -1,50 +1,95 @@
-# ── edify-web (Next.js, standalone) ──────────────────────────────────────────
-FROM node:22-slim AS build
+# ── edify-api (Django + DRF) ─────────────────────────────────────────────────
+# Multi-stage: install deps, run a lean runtime image.
+
+FROM python:3.13-slim AS build
 WORKDIR /app
-# OpenSSL is required by Prisma's engines (generate + migrate).
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
-COPY package*.json ./
-RUN npm ci
+ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
+# Build deps for psycopg (compiles against libpq) + Pillow.
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev curl && rm -rf /var/lib/apt/lists/*
+COPY requirements/ ./requirements/
+RUN pip install --prefix=/install -r requirements/prod.txt
+
+FROM python:3.13-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.prod \
+    PORT=4000
+# Runtime deps: libpq (psycopg), libexpat (ASGI), and headless LibreOffice for
+# the evidence DOCX→PDF rendition pipeline (optional; skipped if absent).
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    libpq5 libexpat1 curl \
+    libreoffice --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+# Site-packages from the build stage.
+COPY --from=build /install /usr/local
+# Application source.
 COPY . .
-# Generate the Prisma Client (into node_modules/@prisma/client + .prisma) so it
-# can be copied into the runtime image for the pre-deploy migrate/seed step.
-# Uses the stub DATABASE_URL from prisma.config.ts — no DB needed at build time.
-RUN npm run db:generate
-# Server env (EDIFY_API_URL / EDIFY_USE_BACKEND) is read at REQUEST time, not
-# baked in, so it stays runtime-configurable. Build only needs the source.
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+# Docker preserves permissions from a local build context. Normalize read and
+# directory traversal bits so the runtime user can import the application even
+# when a developer's working tree has owner-only modes. Capital X preserves
+# executability only for directories and files already marked executable.
+RUN chmod -R a+rX /app
+# Collect static (DRF spectacular + admin assets). Fail the build if static
+# collection errors — a silent failure here means broken CSS/JS in production.
+#
+# This runs under config.settings.collectstatic, NOT config.settings.prod.
+# prod.py fails closed at import unless its entire required set of secrets and
+# Spaces credentials is present, and none of that exists at build time. The
+# previous approach — a hand-maintained list of placeholder env vars on this
+# RUN line — fell out of sync with that required set twice and made the image
+# unbuildable both times.
+#
+# collectstatic opens no socket, reads no secret, and touches no database, so
+# the production gate was never protecting anything here. See the module
+# docstring in config/settings/collectstatic.py. It shares the staticfiles
+# backend with prod.py via a single constant in base.py, so the manifest built
+# here is the manifest production serves.
+RUN DJANGO_SETTINGS_MODULE=config.settings.collectstatic \
+    python manage.py collectstatic --noinput
 
-FROM node:22-slim AS runtime
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-# OpenSSL — Prisma migrate/seed engines need it at runtime too.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
-# The standalone server + its traced runtime deps, plus static assets + public.
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/public ./public
+# Provenance for the artifact, written after the manifest exists so the hash
+# describes the bundle this image will actually serve. The commit and release
+# arguments are optional on purpose: DigitalOcean App Platform builds this
+# Dockerfile without forwarding a commit SHA, and a provenance file that
+# refused to exist without one would be missing in the only environment whose
+# provenance is in question. The manifest hash needs no cooperation from the
+# builder and is the fact that settles "is production serving the bundle I
+# built?".
+ARG GIT_COMMIT=""
+ARG RELEASE=""
+# App Platform's Dockerfile builder is Kaniko. Use a regular script rather
+# than Docker/BuildKit heredoc syntax so the file is created identically by
+# local Docker, CI, and DigitalOcean.
+RUN python -m scripts.write_build_info
 
-# ── Prisma for the pre-deploy step (`npm run db:migrate && npm run db:seed`) ──
-# Next's standalone output traces ONLY the server's runtime deps, so the Prisma
-# CLI, its engine binaries, the generated client, the schema, and the seed are
-# absent — which is why the pre-deploy command failed with "prisma: not found".
-# Copy the FULL node_modules from the build stage (it has: the prisma CLI + its
-# .bin symlink, the generated @prisma/client + engines, the @prisma/adapter-pg
-# driver adapter + pg and their transitive deps, and bcryptjs) plus the Prisma
-# schema/config and the one source file the seed imports. This overwrites the
-# standalone's partial node_modules with the complete set; `node server.js`
-# still runs (the full tree is a superset). The standalone package.json (copied
-# above) carries the npm scripts.
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/prisma.config.ts ./prisma.config.ts
-COPY --from=build /app/src/lib/uganda-districts.ts ./src/lib/uganda-districts.ts
+# Run as a non-root user. Nothing this process does needs root, and a
+# container that starts as root turns any remote-code path into host-adjacent
+# access instead of an application-level one. Created after collectstatic so
+# the collected tree is owned by whoever will serve it, and the writable
+# directories (evidence uploads, media, generated reports) are handed over
+# explicitly — the rest of /app stays read-only to the runtime user.
+RUN useradd --system --create-home --uid 10001 edify \
+    && mkdir -p /app/uploads /app/media \
+    && chown -R edify:edify /app/staticfiles /app/uploads /app/media \
+    && chmod 0444 /app/build-info.json
+USER edify
 
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 \
-  CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+# Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.
+ENV PORT=4000
+EXPOSE 4000
+# Apply migrations, optionally seed, then start the ASGI server (daphne for
+# realtime SSE + the scheduler). Health probe hits GET /api/health.
+# Liveness, not readiness. Docker marks the container unhealthy on failure and
+# orchestrators restart it — so pointing this at a probe that checks the
+# database means a database blip restarts every instance, which fixes nothing
+# and removes the capacity that would have recovered. /api/health/ready is the
+# one a load balancer should poll.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
+  CMD curl -fsS "http://localhost:${PORT:-4000}/api/health/live" || exit 1
+ENTRYPOINT ["./docker-entrypoint.sh"]
+# Keep runtime PORT expansion while making the final process Daphne itself, so
+# SIGTERM/SIGINT reach it directly during rolling deploys and shutdowns.
+CMD ["sh", "-c", "exec daphne -b 0.0.0.0 -p \"${PORT:-4000}\" config.asgi:application"]

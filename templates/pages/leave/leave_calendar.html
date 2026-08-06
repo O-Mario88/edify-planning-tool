@@ -1,0 +1,103 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Team Availability Calendar — Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+  FullCalendar is loaded once, globally, from base.html — self-hosted at
+  6.1.11. This page used to pull 5.11.3 from a CDN on top of it, so two major
+  versions of the same library raced to define window.FullCalendar and the
+  winner depended on network timing.
+
+  Nothing here needed the older one: initialView, headerToolbar, buttonText,
+  dayMaxEventRows, datesSet and eventClick are all v6 options, and the global
+  bundle already carries the dayGrid, timeGrid and list views this uses. v6
+  injects its own styles, so the separate main.min.css it also loaded is not
+  replaced by anything — it no longer exists.
+{% endcomment %}
+
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">Time & Availability</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Availability Calendar</h1>
+      <p class="edify-page-subtitle edify-page-header__description">Leave, coverage, holidays and scheduled activities on one grid.</p>
+    </div>
+    <ul class="cal-legend">
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-blue)"></span>School visit</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-green)"></span>Cluster meeting</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-orange)"></span>Training</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-red)"></span>Leave</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-pink)"></span>Leave (pending)</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-chart-purple)"></span>Coverage</li>
+      <li><span class="cal-legend__dot" style="background:var(--edify-text-muted)"></span>Public holiday</li>
+    </ul>
+  </div>
+
+  {% comment %}Calendar and the month's activity list side by side: the grid
+  answers "when", the list answers "what, in order" — which a month grid cannot
+  do without being read cell by cell.{% endcomment %}
+  <div class="cal-layout">
+    <div class="edify-surface rounded-surface border border-slate-100 p-4 shadow-sm">
+      <div id="calendar"></div>
+    </div>
+
+    <aside class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+      {% include "partials/leave/calendar_activity_panel.html" %}
+    </aside>
+  </div>
+</div>
+
+{{ events|json_script:"calendar-events" }}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('calendar');
+    if (!el || typeof FullCalendar === 'undefined') { return; }
+
+    // Rendered through json_script rather than interpolated into the source.
+    // The events were previously written straight into JS as a Python repr,
+    // which happened to parse only because JavaScript tolerates single-quoted
+    // keys — one apostrophe in a staff name would have broken the page.
+    var events = JSON.parse(document.getElementById('calendar-events').textContent);
+
+    var panel = document.getElementById('calendar-activity-panel');
+
+    function loadPanelFor(date) {
+      if (!panel) { return; }
+      var month = date.getMonth() + 1, year = date.getFullYear();
+      if (panel.dataset.month == month && panel.dataset.year == year) { return; }
+      fetch('/leave/calendar/activities?month=' + month + '&year=' + year, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (html) {
+          if (html) { panel.outerHTML = html; panel = document.getElementById('calendar-activity-panel'); }
+        })
+        .catch(function () { /* leave the current month's list in place */ });
+    }
+
+    var calendar = new FullCalendar.Calendar(el, {
+      initialView: 'dayGridMonth',
+      height: 'auto',
+      firstDay: 1,
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+      buttonText: { today: 'Today', month: 'Month', week: 'Week', list: 'List' },
+      dayMaxEventRows: 3,
+      events: events,
+      // The list must follow the grid; otherwise paging to August leaves a
+      // panel still headed July.
+      datesSet: function (info) { loadPanelFor(info.view.currentStart); },
+      eventClick: function (info) {
+        var p = info.event.extendedProps || {};
+        window.dispatchEvent(new CustomEvent('edify-toast', {
+          detail: { message: (p.type || 'Event') + ' — ' + info.event.title }
+        }));
+      }
+    });
+    calendar.render();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Create a new cluster{% endblock %}
+{% block drawer_subtitle %}Pick the district and the sub-counties it covers, then name its leader (a school leader from one of the cluster's schools). Assign schools from the workspace afterwards.{% endblock %}
+
+{% block drawer_body %}
+<div
+  class="cluster-create-drawer"
+  x-data='{
+    selectedDistrictId: "{{ selected_district_id|default:"" }}",
+    subCounties: {{ sub_counties_json|escape }},
+    selectedSubCounties: [],
+    clusterName: "",
+    clusterNameEdited: false,
+    subCountyError: false,
+    get visibleSubCounties() {
+      return this.subCounties.filter(sc => String(sc.district_id) === String(this.selectedDistrictId));
+    },
+    resetDistrict() {
+      this.selectedSubCounties = [];
+      this.subCountyError = false;
+      if (!this.clusterNameEdited) this.clusterName = "";
+    },
+    suggestClusterName() {
+      if (this.clusterNameEdited) return;
+      const first = this.subCounties.find(sc => String(sc.id) === String(this.selectedSubCounties[0]));
+      this.clusterName = first ? `${first.name} Cluster` : "";
+    }
+  }'
+  x-init='$watch("selectedSubCounties", () => suggestClusterName())'
+>
+  <form
+    action="/clusters/create"
+    method="post"
+    class="cluster-create-form"
+    @submit="
+      if (selectedSubCounties.length === 0) {
+        $event.preventDefault();
+        subCountyError = true;
+        $nextTick(() => $refs.subCountyChecklist?.focus());
+      }
+    "
+  >
+    {% csrf_token %}
+    {% if assign_school_id %}
+      <input type="hidden" name="assign_school_id" value="{{ assign_school_id }}">
+    {% endif %}
+
+    <div class="cluster-create-fields">
+      <div class="cluster-create-basics">
+        <div class="cluster-create-field">
+          <label for="cluster-district">
+            District <span class="cluster-create-required" aria-hidden="true">*</span>
+          </label>
+          <select
+            id="cluster-district"
+            name="district_id"
+            x-model="selectedDistrictId"
+            @change="resetDistrict()"
+            required
+          >
+            <option value="">Select a district</option>
+            {% for district in districts %}
+              <option value="{{ district.id }}">{{ district.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <fieldset
+          class="cluster-create-field cluster-create-subcounties"
+          aria-describedby="cluster-subcounties-error"
+          aria-required="true"
+          :aria-invalid="subCountyError"
+        >
+          <legend>
+            Sub-counties <span class="cluster-create-required" aria-hidden="true">*</span>
+            <span class="cluster-create-count" aria-live="polite">
+              (<span x-text="selectedSubCounties.length">0</span> selected)
+            </span>
+          </legend>
+
+          <div
+            class="cluster-create-checklist"
+            x-ref="subCountyChecklist"
+            tabindex="-1"
+            :class="{ 'cluster-create-checklist--invalid': subCountyError }"
+          >
+            {% comment %}
+              A sub-county already covered by an active cluster is disabled
+              here rather than hidden. Hiding it would read as missing data —
+              the person knows that sub-county exists — while disabling it with
+              the holding cluster named answers the question they are about to
+              ask. aria-disabled carries the same fact to a screen reader, and
+              the reason is in the label rather than a title tooltip, which
+              never appears on touch.
+            {% endcomment %}
+            <template x-for="subCounty in visibleSubCounties" :key="subCounty.id">
+              <label
+                class="cluster-create-check"
+                :class="subCounty.covered_by && 'cluster-create-check--taken'"
+              >
+                <input
+                  type="checkbox"
+                  name="sub_county_ids"
+                  :id="`cluster-subcounty-${subCounty.id}`"
+                  :value="subCounty.id"
+                  x-model="selectedSubCounties"
+                  :disabled="!!subCounty.covered_by"
+                  :aria-disabled="!!subCounty.covered_by"
+                  @change="subCountyError = false"
+                >
+                <span>
+                  <span x-text="subCounty.name"></span>
+                  <span
+                    x-show="subCounty.covered_by"
+                    class="cluster-create-check__taken"
+                    x-text="`Already in ${subCounty.covered_by}`"
+                  ></span>
+                </span>
+              </label>
+            </template>
+
+            <div x-show="!selectedDistrictId" class="cluster-create-empty">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/>
+                <circle cx="12" cy="10" r="2.5"/>
+              </svg>
+              <span>Choose a district to see its sub-counties.</span>
+            </div>
+
+            <div
+              x-show="selectedDistrictId && visibleSubCounties.length === 0"
+              class="cluster-create-empty"
+            >
+              <span>No sub-counties are registered for this district yet.</span>
+            </div>
+          </div>
+          <p
+            id="cluster-subcounties-error"
+            class="cluster-create-error"
+            x-show="subCountyError"
+            x-cloak
+            role="alert"
+          >
+            Select at least one sub-county for this cluster.
+          </p>
+        </fieldset>
+
+        <div class="cluster-create-field">
+          <label for="cluster-name">
+            Cluster name <span class="cluster-create-required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="cluster-name"
+            type="text"
+            name="name"
+            x-model="clusterName"
+            @input="clusterNameEdited = true"
+            placeholder="e.g. Mukono Central Cluster"
+            maxlength="255"
+            aria-describedby="cluster-name-help"
+            autocomplete="off"
+            required
+          >
+          <p id="cluster-name-help" class="cluster-create-help">
+            Auto-suggested from your selection — edit if you like. Must be unique within the district.
+          </p>
+        </div>
+      </div>
+
+      <fieldset class="cluster-create-leader">
+        <legend class="cluster-create-leader__title">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.1a7.5 7.5 0 0 0-12 0M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-2 2 2 3-4"/>
+          </svg>
+          <span>Cluster leader</span>
+        </legend>
+        <p class="cluster-create-help">
+          No school leaders on file for the selected area yet — enter the leader’s details below.
+        </p>
+
+        <div class="cluster-create-leader__grid">
+          <div class="cluster-create-field">
+            <label for="cluster-leader-name">Leader name</label>
+            <input
+              id="cluster-leader-name"
+              type="text"
+              name="cluster_leader_name"
+              placeholder="e.g. Esther Naluwu"
+              maxlength="255"
+              autocomplete="name"
+            >
+          </div>
+          <div class="cluster-create-field">
+            <label for="cluster-leader-phone">Leader phone</label>
+            <input
+              id="cluster-leader-phone"
+              type="tel"
+              name="cluster_leader_phone"
+              placeholder="e.g. +256 772 000 000"
+              maxlength="64"
+              autocomplete="tel"
+              inputmode="tel"
+            >
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <footer class="cluster-create-footer">
+      <button
+        type="button"
+        class="school-record-action cluster-create-cancel"
+        @click="$dispatch('close-drawer')"
+      >
+        Cancel
+      </button>
+      <button type="submit" class="school-record-action school-record-action--schedule cluster-create-submit">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v5m0 0H6v4m6-4h6v4M6 13v3m12-3v3M3 16h6v4H3v-4Zm12 0h6v4h-6v-4Z"/>
+        </svg>
+        <span>Create cluster</span>
+      </button>
+    </footer>
+  </form>
+</div>
+{% endblock %}

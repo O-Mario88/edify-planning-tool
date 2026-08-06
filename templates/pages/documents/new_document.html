@@ -1,0 +1,91 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{% if is_training %}New Training Resource{% else %}New Policy or Manual{% endif %} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-5">
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+      <h1 class="edify-page-title edify-page-header__title">{% if is_training %}New Training Resource{% else %}New Policy or Manual{% endif %}</h1>
+      <p class="edify-page-header__description">This creates a draft. It reaches nobody until it has been reviewed and published.</p>
+    </div>
+  </header>
+
+  <form method="post" enctype="multipart/form-data" class="card p-4 space-y-3.5">
+    {% csrf_token %}
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Title</span>
+      <input name="title" required maxlength="255" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Description</span>
+      <textarea name="description" rows="3" required placeholder="What this is, in plain language. Readers see this in the Help Center and on the agreement page."
+                class="px-2.5 py-2 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"></textarea>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</span>
+      <select name="document_type" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+        {% for value, label in document_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <fieldset class="flex flex-col gap-1">
+      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Who is this for?</legend>
+      <p class="edify-text-caption font-semibold text-slate-400 mb-1">A document with no audience reaches nobody — it is not published to everyone by default.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        {% for value, label in roles %}
+        <label class="flex items-center gap-1.5 text-[12px] font-semibold text-slate-600">
+          <input type="checkbox" name="target_roles" value="{{ value }}"> {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date</span>
+        <input type="date" name="effective_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Review date</span>
+        <input type="date" name="review_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
+    </div>
+    <label class="flex flex-col gap-1">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">File</span>
+      <input type="file" name="file" required class="text-[13px] font-semibold">
+      <span class="edify-text-caption font-semibold text-slate-400">PDF, Word, PowerPoint or an image. The original is preserved; a PDF preview is generated for reading in Edify.</span>
+    </label>
+
+    {% if not is_training %}
+    <fieldset class="space-y-2 pt-3 border-t border-slate-50">
+      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Acknowledgement</legend>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="acknowledgement_required"> Readers must acknowledge this</label>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="agreement_required"> Readers must Agree or Disagree</label>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="comment_required"> A comment is required</label>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="blocks_application_access"> Withhold Edify until this is accepted</label>
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Why acknowledgement is required</span>
+        <input name="acknowledgement_reason" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Days to respond</span>
+        <input type="number" name="acknowledgement_due_days" min="1" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface w-32">
+      </label>
+    </fieldset>
+    {% endif %}
+
+    <fieldset class="space-y-2 pt-3 border-t border-slate-50">
+      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery</legend>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="download_allowed" checked> Download allowed</label>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="print_allowed" checked> Print allowed</label>
+      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="help_visible" checked> Show in the Help Center</label>
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Help keywords (comma separated)</span>
+        <input name="help_keywords" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
+    </fieldset>
+
+    <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Save draft</button>
+  </form>
+</div>
+{% endblock %}

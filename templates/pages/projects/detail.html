@@ -1,0 +1,163 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ project.name }} — Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+<!-- Page Header -->
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<div class="flex items-center gap-2 mb-0.5">
+<span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wider edify-primary-soft edify-primary-text border edify-primary-border">
+Project
+</span>
+<p class="edify-page-eyebrow">Special Projects</p>
+<h1 class="edify-page-title edify-page-header__title">{{ project.name }}</h1>
+</div>
+<p class="edify-page-header__description">Monitoring and execution tracker for specialized initiative.</p>
+</div>
+
+<div class="edify-page-header__controls">
+{% include "partials/_back_link.html" with back_href="/projects" back_label="Projects" %}
+</div>
+</div>
+
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="grid gap-4 xl:grid-cols-2">
+{% if can_assign_staff %}
+<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="assign-project-staff-title">
+  <h2 id="assign-project-staff-title" class="text-[15px] font-extrabold text-slate-800">Assign as Staff Priority</h2>
+  <p class="mt-1 text-[12px] leading-5 text-slate-500">IA, the Country Director, and Admin can assign this Project to individuals or complete CCEO/PL role groups.</p>
+  <form method="post" action="/projects/{{ project.id }}/staff/assign" class="mt-4 space-y-3">
+    {% csrf_token %}
+    <input type="hidden" name="fy" value="{{ assignment_fy }}">
+    <fieldset class="rounded-surface border border-[var(--border-card)] p-3">
+      <legend class="px-1 edify-text-caption font-bold text-slate-600">Assign complete role groups</legend>
+      <div class="mt-2 flex flex-wrap gap-4">
+        <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="roleGroups" value="CCEO" class="h-4 w-4">All CCEOs</label>
+        <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="roleGroups" value="Program Lead" class="h-4 w-4">All Program Leads</label>
+      </div>
+    </fieldset>
+    <details class="rounded-surface border border-[var(--border-card)] bg-slate-50/60 p-3">
+      <summary class="cursor-pointer edify-text-caption font-bold text-slate-600">Or choose individual staff</summary>
+      <div class="mt-3 grid max-h-48 gap-2 overflow-y-auto sm:grid-cols-2">
+        {% for staff in staff_options %}
+        <label class="edify-surface flex items-start gap-2 rounded-control p-2 edify-text-caption">
+          <input type="checkbox" name="staffIds" value="{{ staff.id }}" class="mt-0.5 h-4 w-4">
+          <span><strong class="block text-slate-700">{{ staff.user.name }}</strong><span class="text-slate-400">{{ staff.user.active_role }}</span></span>
+        </label>
+        {% endfor %}
+      </div>
+    </details>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <label class="edify-text-caption font-bold text-slate-600">Responsibility
+        <select name="responsibility" class="mt-1 w-full border border-[var(--border-card)] rounded-control text-[13px] px-3 py-1.5 focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"><option value="execute">Execute</option><option value="supervise">Supervise</option></select>
+      </label>
+      <label class="edify-text-caption font-bold text-slate-600">Due date
+        <input type="date" name="dueDate" class="mt-1 w-full border border-[var(--border-card)] rounded-control text-[13px] px-3 py-1.5 focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      </label>
+    </div>
+    <button type="submit" class="bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white rounded-control px-4 py-2 text-[12px] font-bold transition-all">Assign Project priority</button>
+  </form>
+</section>
+{% endif %}
+
+{% if can_add_schools %}
+<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="add-project-school-title">
+  <h2 id="add-project-school-title" class="text-[15px] font-extrabold text-slate-800">Add Schools to This Priority</h2>
+  <p class="mt-1 text-[12px] leading-5 text-slate-500">Client Schools may join one active Project. Core Schools may join up to four. SSA need and Project school focus are validated on save.</p>
+  <form method="post" action="/projects/{{ project.id }}/schools/assign" class="mt-4 space-y-3">
+    {% csrf_token %}
+    <label class="block edify-text-caption font-bold text-slate-600">School
+      <select name="schoolId" required class="mt-1 w-full border border-[var(--border-card)] rounded-control text-[13px] px-3 py-1.5 focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Choose a School…</option>
+        {% for school in eligible_schools %}
+        <option value="{{ school.school_id }}">{{ school.name }} · {{ school.get_school_type_display }} · {{ school.active_project_count }} Project{{ school.active_project_count|pluralize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="block edify-text-caption font-bold text-slate-600">Override reason <span class="font-normal text-slate-400">required only when SSA need does not match</span>
+      <textarea name="reason" rows="2" class="mt-1 w-full border border-[var(--border-card)] rounded-control text-[13px] px-3 py-1.5 focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+    </label>
+    <button type="submit" class="bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white rounded-control px-4 py-2 text-[12px] font-bold transition-all">Add School</button>
+  </form>
+</section>
+{% endif %}
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6 items-start">
+<div class="lg:col-span-2 space-y-6">
+<div class="card overflow-hidden">
+<div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>
+</div>
+
+<div class="divide-y divide-[var(--edify-border)]">
+{% if school_assignments %}
+{% for sa in school_assignments %}
+<div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
+<div>
+<h4 class="text-[14px] font-semibold text-slate-800 group-hover:text-[var(--edify-accent)] transition-colors">{{ sa.school.name }}</h4>
+<p class="text-[12px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
+</div>
+<a href="/schools/{{ sa.school_id }}" class="btn btn-smooth h-8 shadow-sm">
+View Profile
+</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
+<div class="h-12 w-12 rounded-pill bg-slate-50 flex items-center justify-center border border-[var(--edify-border)]">
+<svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+</div>
+<p class="text-[14px] font-bold text-slate-500">No schools assigned to this project yet.</p>
+</div>
+{% endif %}
+</div>
+</div>
+
+<div class="card overflow-hidden">
+<div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Assigned Staff Priorities</h2>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ staff_assignments|length }} Staff</span>
+</div>
+<div class="divide-y divide-[var(--edify-border)]">
+{% for assignment in staff_assignments %}
+<div class="p-4 flex items-center justify-between gap-3">
+  <div><h4 class="text-[14px] font-semibold text-slate-800">{{ assignment.staff.user.name }}</h4><p class="mt-0.5 text-[12px] text-slate-500">{{ assignment.staff.user.active_role }} · {{ assignment.get_responsibility_display }}{% if assignment.due_date %} · due {{ assignment.due_date|date:"j M Y" }}{% endif %}</p></div>
+  <span class="edify-badge" data-tone="success">Priority assigned</span>
+</div>
+{% empty %}
+<div class="p-8 text-center"><p class="text-[13px] font-bold text-slate-500">No staff priorities assigned yet.</p></div>
+{% endfor %}
+</div>
+</div>
+</div>
+
+<div class="space-y-6">
+<div class="card p-6">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Project Details</h3>
+<div class="space-y-4">
+<div>
+<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Project Name</p>
+<p class="text-[14px] font-semibold text-slate-800">{{ project.name }}</p>
+</div>
+<div>
+<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">School Focus</p>
+<p class="text-[14px] font-semibold text-slate-800">{{ project.get_school_focus_display }}</p>
+</div>
+<div>
+<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Description</p>
+<p class="text-[14px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+{% endblock %}
