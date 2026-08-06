@@ -322,3 +322,80 @@ class RoleQueueHealthTest(HealthFixture):
         )
 
         self.assertEqual(self._check()["count"], 1)
+
+
+class DormantOwnerSeverityTest(HealthFixture):
+    """Stuck work and stale attribution are different problems.
+
+    Reporting both as one error taught the reader to discount it — the same
+    failure the evidence and Salesforce risks had earlier on this branch. A
+    signal that fires on finished work is a signal nobody reads.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.dormant_user = User.objects.create(
+            email="pending.ghost@edify.org",
+            name="Ghost",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            status="pending_invited",
+            is_active=False,
+        )
+        cls.dormant = StaffProfile.objects.create(user=cls.dormant_user, title="CCEO")
+
+    def _check(self):
+        return next(
+            c for c in health.report()["checks"] if c["key"] == "owner_never_onboarded"
+        )
+
+    def _activity(self, status):
+        return Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=self.fy,
+            quarter="Q1",
+            planned_date=date.today(),
+            planned_month=date.today().month,
+            status=status,
+            responsible_staff_id=self.dormant_user.id,
+        )
+
+    def test_completed_work_alone_is_not_an_error(self):
+        """The history is real and nothing is blocked by it."""
+        self._activity("completed")
+
+        self.assertEqual(self._check()["count"], 0)
+
+    def test_completed_work_is_still_reported_as_awaiting_re_attribution(self):
+        """Not an error, but not invisible either — the queue still has a job."""
+        self._activity("completed")
+
+        self.assertIn("await re-attribution", self._check()["route"])
+
+    def test_work_in_flight_is_an_error(self):
+        self._activity("scheduled")
+
+        finding = self._check()
+
+        self.assertEqual(finding["count"], 1)
+        self.assertEqual(finding["severity"], "error")
+        self.assertIn("1 activities stuck", finding["route"])
+
+    def test_only_the_owners_actually_blocking_something_are_named(self):
+        """A dormant account holding nothing is not this check's business."""
+        User.objects.create(
+            email="pending.idle@edify.org",
+            name="Idle",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            status="pending_invited",
+            is_active=False,
+        )
+        self._activity("scheduled")
+
+        finding = self._check()
+
+        self.assertEqual(finding["count"], 1)
+        self.assertEqual(finding["examples"][0]["staff"], "Ghost")

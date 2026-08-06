@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from django.db.models import Count, Q, Sum
 
+from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
 
 def report() -> dict:
     """Every oversight invariant, checked against live data."""
@@ -240,25 +242,40 @@ def _work_owned_by_staff_who_never_onboarded() -> dict:
     ).select_related("user")
     dormant = [p for p in profiles if not getattr(p.user, "is_active", True)]
 
-    activity_count = (
-        Activity.objects.filter(
-            deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
+    # Only work that is still moving. A dormant account holding finished work
+    # is an attribution problem — the history is real and nothing is blocked —
+    # while a dormant account holding work in flight is genuinely stuck: no
+    # evidence can be uploaded, no completion recorded, no action acted on.
+    # Reporting both under one error taught the reader to discount it, which
+    # is the same failure the evidence and Salesforce risks had: a signal that
+    # fires on finished work is a signal nobody reads.
+    in_flight = [s for s in LIVE_ACTIVITY_STATUSES if s not in COMPLETED_WORK_STATUSES]
+
+    def _owned_by(profiles, statuses):
+        if not profiles:
+            return Activity.objects.none()
+        return Activity.objects.filter(
+            deleted_at__isnull=True, status__in=statuses
+        ).filter(
+            Q(responsible_staff_id__in=[p.id for p in profiles])
+            | Q(responsible_staff_id__in=[p.user_id for p in profiles])
         )
-        .filter(
-            Q(responsible_staff_id__in=[p.id for p in dormant])
-            | Q(responsible_staff_id__in=[p.user_id for p in dormant])
-        )
-        .count()
-        if dormant
-        else 0
-    )
+
+    stranded = _owned_by(dormant, in_flight)
+    stranded_owner_ids = set(stranded.values_list("responsible_staff_id", flat=True))
+    blocking = [
+        p
+        for p in dormant
+        if p.id in stranded_owner_ids or p.user_id in stranded_owner_ids
+    ]
+    settled_count = _owned_by(dormant, COMPLETED_WORK_STATUSES).count()
 
     return _finding(
         key="owner_never_onboarded",
-        label="Live work owned by staff who have never been activated",
+        label="Work in flight owned by staff who have never been activated",
         severity="error",
-        expected="Every owner of live work can sign in and act on it",
-        count=len(dormant),
+        expected="Every owner of work still moving can sign in and act on it",
+        count=len(blocking),
         examples=[
             {
                 "id": p.id,
@@ -268,9 +285,16 @@ def _work_owned_by_staff_who_never_onboarded() -> dict:
                     "cannot sign in, upload evidence or act on an assigned action"
                 ),
             }
-            for p in dormant[:10]
+            for p in blocking[:10]
         ],
-        route=f"/admin-panel/staff-setup-queue ({activity_count} live activities affected)",
+        route=(
+            f"/admin-panel/staff-setup-queue ({stranded.count()} activities stuck"
+            + (
+                f"; {settled_count} completed also await re-attribution)"
+                if settled_count
+                else ")"
+            )
+        ),
     )
 
 
