@@ -74,7 +74,9 @@ class AbsorbFixture(TestCase):
         )
 
         # The real person, already on the system.
-        cls.real = cls._user("james@edify.org", "James Okello", EdifyRole.CCEO, "active")
+        cls.real = cls._user(
+            "james@edify.org", "James Okello", EdifyRole.CCEO, "active"
+        )
         cls.real_profile = StaffProfile.objects.create(user=cls.real, title="CCEO")
 
     @classmethod

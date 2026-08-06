@@ -43,9 +43,7 @@ class PlMyPlanTest(TestCase):
             "pl@mp.test", "Mary", EdifyRole.COUNTRY_PROGRAM_LEAD
         )
         cls.cceo_user, cls.cceo = cls._staff("james@mp.test", "James", EdifyRole.CCEO)
-        StaffSupervisorAssignment.objects.create(
-            supervisee=cls.cceo, supervisor=cls.pl
-        )
+        StaffSupervisorAssignment.objects.create(supervisee=cls.cceo, supervisor=cls.pl)
 
         cls.school = School.objects.create(
             school_id="s1", name="School A", district=cls.district, region=cls.region

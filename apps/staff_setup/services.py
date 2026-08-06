@@ -303,9 +303,9 @@ def _absorb_placeholder(
     # An open action addressed to an account nobody can sign in as is exactly
     # the dead record the oversight pages exist to surface. Move it with the
     # rest rather than leaving it in a queue no one reads.
-    moved["actions"] = TeamAction.objects.filter(
-        recipient_id=placeholder.id
-    ).update(recipient_id=target_user.id)
+    moved["actions"] = TeamAction.objects.filter(recipient_id=placeholder.id).update(
+        recipient_id=target_user.id
+    )
 
     # Its school assignments are redundant now that _link_schools has written
     # the target's, and leaving them would keep the placeholder in scope
