@@ -203,9 +203,7 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
             source = templates[path]
             if any(family in source for family in families):
                 return True
-            for match in re.finditer(
-                r'{%\s*(?:extends|include)\s+"([^"]+)"', source
-            ):
+            for match in re.finditer(r'{%\s*(?:extends|include)\s+"([^"]+)"', source):
                 if has_header(ROOT / "templates" / match.group(1), seen):
                     return True
             return False
