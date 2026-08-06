@@ -7,14 +7,14 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ showNote: false }">
 
   <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-    <div>
-      <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none edify-page-title">Regional Vice President Dashboard</h1>
-      <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-title edify-page-header__title">Regional Vice President Dashboard</h1>
+      <p class="edify-page-header__description">
         Executive oversight of country strategy, General and Annual Budgets, special-project performance, partner growth, and regional execution.
       </p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="edify-page-header__controls">
       <form method="get" class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
         <span class="uppercase tracking-wider edify-text-caption">FY</span>
         <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">

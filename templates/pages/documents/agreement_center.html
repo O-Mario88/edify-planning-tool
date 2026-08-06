@@ -16,11 +16,13 @@
 </nav>
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
 
-  <div class="min-w-0">
-    <p class="edify-page-eyebrow">Required</p>
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Policy Agreement Center</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">Please read each document and record your response. Until you do, the rest of Edify stays closed.</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">Required</p>
+      <h1 class="edify-page-title edify-page-header__title">Policy Agreement Center</h1>
+      <p class="edify-page-header__description">Please read each document and record your response. Until you do, the rest of Edify stays closed.</p>
+    </div>
+  </header>
 
   {% for ack in pending %}
   <section class="card p-4 space-y-3" aria-labelledby="policy-{{ ack.id }}-title">

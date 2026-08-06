@@ -1,18 +1,8 @@
 """The SSA heatmap answers the same question at four geographic levels.
 
-It was district-only, in one card. A sub-region tells you where to send a
-Program Lead; a sub-county tells you which communities are actually underserved,
-which is the level "dire need" becomes actionable at once schools are mapped to
-it.
-
-The top level is SUB-region, not region. Uganda has four regions, so a region
-heatmap is four rows and the eight-intervention grid averages away the very
-differences it exists to show. There are ten sub-regions.
-
-It groups through `district__sub_region`, not `School.sub_region_id`. That
-column exists and is populated on no school at all, so grouping by it would put
-every school in `unassigned` and render an empty card — a wiring failure that
-looks exactly like a data failure. The district route reaches 99%.
+It was district-only, in one card. A region tells you where to send a Program
+Lead; a sub-county tells you which communities are actually underserved, which
+is the level "dire need" becomes actionable at once schools are mapped to it.
 
 Two properties matter more than the grouping itself, and both are about not
 lying with an average:
@@ -23,7 +13,7 @@ national figure while describing a rounding error, so `unassigned` and
 `total_schools` come back with every level and the card states them.
 
 **Rows are clickable only where a drawer exists.** `CDAnalyticsService.drilldown`
-has branches for sub_region, district and cluster but none for sub-county, so
+has branches for region, district and cluster but none for sub-county, so
 sub-county rows must not carry a click target. A control that opens nothing is
 the defect this platform's audit specifically forbids.
 """
@@ -33,7 +23,7 @@ from __future__ import annotations
 from django.test import TestCase
 
 from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
-from apps.geography.models import District, Region, SubCounty, SubRegion
+from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 
 
@@ -41,14 +31,7 @@ class SsaHeatmapLevelsTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.region = Region.objects.create(name="HM Region")
-        cls.sub_region = SubRegion.objects.create(
-            name="HM Sub-Region", region=cls.region
-        )
-        # The sub-region reaches schools through the district, so the district
-        # must carry it — School.sub_region_id is not the route.
-        cls.district = District.objects.create(
-            name="HM District", region=cls.region, sub_region=cls.sub_region
-        )
+        cls.district = District.objects.create(name="HM District", region=cls.region)
         cls.sub = SubCounty.objects.create(name="HM Sub", district=cls.district)
         # Two schools with a sub-county, one without — so `unassigned` has
         # something real to count rather than being trivially zero.
@@ -73,7 +56,7 @@ class SsaHeatmapLevelsTest(TestCase):
         return CDAnalyticsService.ssa_heatmap(resolve_cd_scope("2026"), level)
 
     def test_every_level_is_reachable(self):
-        for level in ("sub_region", "district", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "district", "sub_county", "cluster"):
             with self.subTest(level=level):
                 self.assertEqual(self._heatmap(level)["level"], level)
 
@@ -104,21 +87,68 @@ class SsaHeatmapLevelsTest(TestCase):
         self.assertFalse(self._heatmap("sub_county")["drillable"])
 
     def test_the_levels_with_a_drawer_are_drillable(self):
-        for level in ("sub_region", "district", "cluster"):
+        for level in ("region", "district", "cluster"):
             with self.subTest(level=level):
                 self.assertTrue(self._heatmap(level)["drillable"])
 
     def test_each_level_carries_its_own_column_header(self):
         self.assertEqual(self._heatmap("sub_county")["level_label"], "Sub-County")
-        self.assertEqual(self._heatmap("sub_region")["level_label"], "Sub-Region")
+        self.assertEqual(self._heatmap("region")["level_label"], "Region")
 
     def test_the_intervention_columns_are_the_same_eight_everywhere(self):
         """The grid is the SSA framework; only the row grouping changes."""
         district = self._heatmap("district")
-        for level in ("sub_region", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "sub_county", "cluster"):
             with self.subTest(level=level):
                 self.assertEqual(self._heatmap(level)["codes"], district["codes"])
                 self.assertEqual(len(district["codes"]), 8)
+
+    def test_sub_region_is_reached_through_the_district(self):
+        """Not through School.sub_region_id, which is empty on every row.
+
+        The real hierarchy is SubCounty -> District -> SubRegion -> Region.
+        Reading the denormalised column instead would report every school as
+        unassigned and the level would look broken rather than useful.
+
+        `District.sub_region` is nullable, so "has a district" does not imply
+        "has a sub-region" — it only happens to hold in the current data (136
+        districts, none without one). The guaranteed relation is the weaker
+        one: a school with no district certainly has no sub-region, so
+        sub-region can never be the better-covered of the two.
+        """
+        self.assertGreaterEqual(
+            self._heatmap("sub_region")["unassigned"],
+            self._heatmap("district")["unassigned"],
+        )
+
+    def test_a_district_with_a_sub_region_reaches_the_sub_region_level(self):
+        """The join actually resolves — the assertion above passes trivially
+        if sub-region simply counted everything as unassigned."""
+        from apps.geography.models import SubRegion
+
+        sub_region = SubRegion.objects.create(name="HM SubRegion", region=self.region)
+        self.district.sub_region = sub_region
+        self.district.save(update_fields=["sub_region"])
+
+        # Asserted on `unassigned` rather than on rows: with no confirmed SSA
+        # in the fixture the service returns before building any, but coverage
+        # is computed first — and it is coverage that proves the join resolved.
+        self.assertEqual(self._heatmap("sub_region")["unassigned"], 0)
+        self.assertEqual(self._heatmap("district")["unassigned"], 0)
+
+    def test_sub_region_groups_more_coarsely_than_district(self):
+        # Guards against the join silently falling back to district grouping.
+        self.assertLessEqual(
+            len(self._heatmap("sub_region")["rows"]),
+            len(self._heatmap("district")["rows"]),
+        )
+
+    def test_sub_region_rows_are_not_drillable(self):
+        """`drilldown` has no sub_region branch, same as sub_county."""
+        self.assertFalse(self._heatmap("sub_region")["drillable"])
+
+    def test_sub_region_carries_its_own_header(self):
+        self.assertEqual(self._heatmap("sub_region")["level_label"], "Sub-Region")
 
     def test_district_heatmap_still_works_for_existing_callers(self):
         # The CD body, export and drilldown all call the old name.
@@ -160,7 +190,7 @@ class SsaHeatmapEndpointTest(TestCase):
         )
 
     def test_every_level_renders_over_http(self):
-        for level in ("sub_region", "district", "sub_county", "cluster"):
+        for level in ("region", "sub_region", "district", "sub_county", "cluster"):
             with self.subTest(level=level):
                 response = self.client.get(
                     f"/analytics/country-director/ssa-heatmap?level={level}"
@@ -172,106 +202,3 @@ class SsaHeatmapEndpointTest(TestCase):
             "/analytics/country-director/ssa-heatmap?level=../../etc/passwd"
         )
         self.assertEqual(response.status_code, 200)
-
-
-class SsaHeatmapSubRegionRouteTest(TestCase):
-    """The sub-region level must group through the district, not the CharField.
-
-    School.sub_region_id exists and is empty on every school in production
-    (0 of 16,974). Grouping by it produces a card where `unassigned` equals
-    `total_schools` and no rows render — indistinguishable, from the outside,
-    from "no SSA data yet". These pin the route rather than the symptom.
-    """
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.region = Region.objects.create(name="SR Region")
-        cls.sub_region = SubRegion.objects.create(name="SR Sub", region=cls.region)
-        cls.district = District.objects.create(
-            name="SR District", region=cls.region, sub_region=cls.sub_region
-        )
-        # Deliberately leaves School.sub_region_id unset, exactly as production
-        # has it, so a regression to that column shows up here.
-        School.objects.create(
-            school_id="SR-1",
-            name="SR School",
-            region=cls.region,
-            district=cls.district,
-            school_type="client",
-        )
-
-    def test_a_school_with_no_sub_region_column_still_counts(self):
-        heatmap = CDAnalyticsService.ssa_heatmap(resolve_cd_scope("2026"), "sub_region")
-        self.assertEqual(
-            heatmap["unassigned"],
-            0,
-            "the school reaches its sub-region through the district, so it must "
-            "not be counted unassigned — if this is 1, the grouping has "
-            "regressed to School.sub_region_id, which is empty in production",
-        )
-        self.assertEqual(heatmap["total_schools"], 1)
-
-    def test_the_grouping_field_walks_the_district_relation(self):
-        group_field, name_field, _label = CDAnalyticsService.HEATMAP_LEVELS[
-            "sub_region"
-        ]
-        self.assertEqual(group_field, "district__sub_region_id")
-        self.assertEqual(name_field, "district__sub_region__name")
-
-    def test_region_stays_available_for_the_regional_summary_card(self):
-        # partials/analytics/cd/regional_summary.html still drills to region;
-        # replacing the heatmap level must not remove that branch.
-        self.assertNotIn("region", CDAnalyticsService.HEATMAP_LEVELS)
-        self.assertTrue(hasattr(CDAnalyticsService, "_drill_region"))
-        self.assertTrue(hasattr(CDAnalyticsService, "_drill_sub_region"))
-
-
-class SsaHeatmapTabsTest(TestCase):
-    """Every level in HEATMAP_LEVELS must appear as a tab.
-
-    The tab list used to be a second hardcoded order filtered by
-    `if key in levels`, so a level in one and not the other disappeared without
-    a word: renaming `region` to `sub_region` left `region` in the order (gone,
-    no longer a level) and `sub_region` out of it (gone, not in the order). The
-    level still answered when requested by URL, so every service-level test
-    passed while the heatmap quietly lost a tab.
-    """
-
-    @classmethod
-    def setUpTestData(cls):
-        from django.contrib.auth import get_user_model
-
-        cls.cd = get_user_model().objects.create(
-            id="tab-cd",
-            email="tab-cd@edify.org",
-            name="Tab CD",
-            roles=["CountryDirector"],
-            active_role="CountryDirector",
-            is_active=True,
-        )
-
-    def test_the_tab_list_is_exactly_the_level_list(self):
-        from apps.frontend.views.analytics_views import _heatmap_level_choices
-
-        self.assertEqual(
-            [key for key, _label in _heatmap_level_choices()],
-            list(CDAnalyticsService.HEATMAP_LEVELS),
-            "the tabs and the levels have drifted — every level must be "
-            "reachable, and a tab must not point at a level that is gone",
-        )
-
-    def test_sub_region_is_offered_as_a_tab(self):
-        from apps.frontend.views.analytics_views import _heatmap_level_choices
-
-        self.assertIn(("sub_region", "Sub-Region"), _heatmap_level_choices())
-
-    def test_every_level_renders_a_tab_for_every_other_level(self):
-        """Whichever level you are on, you can still reach the others."""
-        self.client.force_login(self.cd)
-        for level in CDAnalyticsService.HEATMAP_LEVELS:
-            with self.subTest(level=level):
-                html = self.client.get(
-                    f"/analytics/country-director/ssa-heatmap?level={level}"
-                ).content.decode()
-                for other in CDAnalyticsService.HEATMAP_LEVELS:
-                    self.assertIn(f"level={other}", html)

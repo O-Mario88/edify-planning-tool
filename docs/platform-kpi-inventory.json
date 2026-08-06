@@ -1084,7 +1084,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2099,
+   "line": 2106,
    "label": null,
    "keys": [
     "aging",
@@ -1136,7 +1136,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2017,
+   "line": 2024,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1149,7 +1149,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2018,
+   "line": 2025,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1162,7 +1162,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2019,
+   "line": 2026,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1175,7 +1175,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2020,
+   "line": 2027,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1188,7 +1188,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2021,
+   "line": 2028,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1201,7 +1201,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2022,
+   "line": 2029,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1353,7 +1353,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1991,
+   "line": 2032,
    "label": null,
    "keys": [
     "delta_pct",

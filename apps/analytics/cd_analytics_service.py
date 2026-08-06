@@ -1118,26 +1118,14 @@ class CDAnalyticsService:
     # unset on ~96% of schools today and cluster on ~95%, so a mean taken over
     # the assigned few would read as a national figure while describing a
     # rounding error. The template states the coverage next to the number.
-    # Sub-region, not region. Uganda has four regions, so a "region" heatmap is
-    # four rows — too coarse to point anyone anywhere, and the eight-intervention
-    # grid averages away the very differences it exists to show. The ten
-    # sub-regions (West Nile, Acholi, Lango, Karamoja, Teso, Elgon, East
-    # Central, Central, Western, South Western) are the layer programme
-    # decisions are actually made at.
-    #
-    # Reached through the district FK rather than School.sub_region_id. That
-    # column exists but is populated on 0 of 16,974 schools, so grouping by it
-    # would put every school in `unassigned` and render an empty card that
-    # looked like a data problem rather than a wiring one. district__sub_region
-    # reaches 99% (16,922), because every one of the 136 districts has a
-    # sub-region set.
-    #
-    # This is the same route apps/analytics/subregion_analytics.py takes for the
-    # Performance by Sub-Region map ("Everything reaches the sub-region through
-    # district__sub_region"), so the heatmap and the map now group identically —
-    # two cards on one dashboard disagreeing about which sub-region a school is
-    # in would be worse than either being coarse.
     HEATMAP_LEVELS = {
+        "region": ("region_id", "region__name", "Region"),
+        # Reached through the district rather than School.sub_region_id, which
+        # is a denormalised CharField that is empty on every row. The real
+        # hierarchy is SubCounty -> District -> SubRegion -> Region, so joining
+        # gives sub-region the same coverage as district (52 of 16,974 missing)
+        # instead of the 100% gap the column would report. subregion_analytics
+        # resolves it the same way.
         "sub_region": (
             "district__sub_region_id",
             "district__sub_region__name",
@@ -1149,7 +1137,7 @@ class CDAnalyticsService:
     }
     # Levels `drilldown` can actually open a drawer for. Sub-county has no
     # branch there, so its rows stay inert rather than pretending otherwise.
-    HEATMAP_DRILLABLE = frozenset({"sub_region", "district", "cluster"})
+    HEATMAP_DRILLABLE = frozenset({"region", "district", "cluster"})
 
     @staticmethod
     def district_heatmap(cd):
@@ -2408,13 +2396,6 @@ class CDAnalyticsService:
                 **base,
                 **CDAnalyticsService._drill_region(cd, acts, params.get("id")),
             }
-        # The heatmap's top level. `region` stays because the Regional Summary
-        # card still drills to it (partials/analytics/cd/regional_summary.html).
-        if drill == "sub_region":
-            return {
-                **base,
-                **CDAnalyticsService._drill_sub_region(cd, acts, params.get("id")),
-            }
         if drill == "partner":
             return {
                 **base,
@@ -2641,58 +2622,6 @@ class CDAnalyticsService:
             "subtitle": "Regional drill-down — oversight view",
             "kind": "region",
             "schools": len(r_school_ids),
-            "avg_ssa": avg,
-            "districts": [
-                {"name": x["district__name"], "schools": x["n"]} for x in districts
-            ],
-        }
-
-    @staticmethod
-    def _drill_sub_region(cd, acts, sub_region_id):
-        """One sub-region: its SSA mean and the districts inside it.
-
-        Deliberately the same shape as _drill_region, and it reports
-        kind="region" so partials/analytics/cd/drilldown.html renders it
-        through the branch that already exists — the answer a reader wants at
-        either level is identical ("how is this area doing, and which districts
-        make it up"), so a second near-identical template branch would be two
-        places to keep in step for no gain.
-
-        Scoped through the district FK for the same reason the heatmap is:
-        School.sub_region_id is populated on no school at all.
-        """
-        from apps.geography.models import SubRegion
-
-        sr = SubRegion.objects.filter(id=sub_region_id).first()
-        sr_school_ids = list(
-            School.objects.filter(
-                id__in=cd.school_ids, district__sub_region_id=sub_region_id
-            ).values_list("id", flat=True)
-        )
-        latest, _prev = _cycle_fys(cd.school_ids, cd.fy)
-        avg = (
-            _ssa_score(
-                SsaRecord.objects.filter(
-                    school_id__in=sr_school_ids,
-                    verification_status="confirmed",
-                    fy=latest,
-                ).aggregate(a=Avg("average_score"))["a"]
-            )
-            if latest
-            else None
-        )
-        districts = list(
-            School.objects.filter(id__in=sr_school_ids)
-            .exclude(district__isnull=True)
-            .values("district__name")
-            .annotate(n=Count("id"))
-            .order_by("-n")
-        )
-        return {
-            "title": (sr.name if sr else "Sub-Region"),
-            "subtitle": "Sub-regional drill-down — oversight view",
-            "kind": "region",
-            "schools": len(sr_school_ids),
             "avg_ssa": avg,
             "districts": [
                 {"name": x["district__name"], "schools": x["n"]} for x in districts

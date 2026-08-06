@@ -6,11 +6,13 @@
 <div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-4"
      x-data="documentViewer({ versionId: '{{ version.id|default:"" }}', pageCount: {{ version.page_count|default:0 }} })">
 
-  <div class="min-w-0">
-    {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">{{ document.title }}</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ document.description }}</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href="/uploads" back_label="Upload Center" %}
+      <h1 class="edify-page-title edify-page-header__title">{{ document.title }}</h1>
+      <p class="edify-page-header__description">{{ document.description }}</p>
+    </div>
+  </header>
 
   <div class="card p-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] font-semibold text-slate-600">
     <span>Version <strong class="tabular-nums">{{ version.version_number }}</strong></span>

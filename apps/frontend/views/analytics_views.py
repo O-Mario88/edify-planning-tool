@@ -794,7 +794,12 @@ def _heatmap_level_choices():
     """
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
-    return [(key, spec[2]) for key, spec in CDAnalyticsService.HEATMAP_LEVELS.items()]
+    # Widest first, following the real hierarchy:
+    # Region -> Sub-Region -> District -> Sub-County. Cluster is last
+    # because it cuts across geography rather than nesting inside it.
+    order = ["region", "sub_region", "district", "sub_county", "cluster"]
+    levels = CDAnalyticsService.HEATMAP_LEVELS
+    return [(key, levels[key][2]) for key in order if key in levels]
 
 
 @require_page_permission("cd_analytics")

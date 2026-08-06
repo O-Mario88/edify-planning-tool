@@ -33,13 +33,20 @@
     {% endfor %}
   </fieldset>
 
+  {% comment %}
+  One drawer for every kind of assigned work — school visit, cluster meeting,
+  training. Nothing here branches on activity type, so the partner answers the
+  same question whatever they were handed.
+
+  Expected participants is deliberately gone. It was asked of the partner at
+  scheduling, weeks before delivery, for every activity type including a
+  single-school visit where the number is one school. It fed nothing that
+  required it (`data.get("expectedParticipants")` is optional the whole way
+  down) and the real figure is captured with attendance at completion.
+  {% endcomment %}
   <div>
     <label for="partner-scheduled-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery date</label>
     <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
-  </div>
-  <div>
-    <label for="partner-expected-participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected participants</label>
-    <input id="partner-expected-participants" name="expected_participants" type="number" min="1" inputmode="numeric" class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div class="rounded-surface border border-sky-200 bg-sky-50 p-3 text-sky-900">

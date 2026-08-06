@@ -6,15 +6,15 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">SSA Scores</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">FY{{ fy }} · {{ schools_with_ssa }}/{{ total_schools }} schools assessed · Average {{ avg_score }}</p>
+<h1 class="edify-page-title edify-page-header__title">SSA Scores</h1>
+<p class="edify-page-header__description">FY{{ fy }} · {{ schools_with_ssa }}/{{ total_schools }} schools assessed · Average {{ avg_score }}</p>
 </div>
 
 {% if request.user.active_role in 'ImpactAssessment,Admin,Program Lead' %}
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 <a
 href="/uploads"
 class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-surface shadow-sm transition-all focus:outline-none"

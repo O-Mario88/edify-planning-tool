@@ -5,13 +5,13 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="flex items-start justify-between gap-4 flex-wrap">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Decision Log</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days</p>
+<h1 class="edify-page-title edify-page-header__title">Decision Log</h1>
+<p class="edify-page-header__description">{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days</p>
 </div>
-<form method="GET" class="flex items-center gap-2">
+<form method="GET" class="edify-page-header__controls">
 {% if log.activeGroup %}<input type="hidden" name="group" value="{{ log.activeGroup }}">{% endif %}
 <label class="sr-only" for="days-select">Period</label>
 {% comment %}@change rather than an inline onchange: the handler moves

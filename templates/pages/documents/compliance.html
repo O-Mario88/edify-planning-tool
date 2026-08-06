@@ -5,11 +5,13 @@
 
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1500px] mx-auto space-y-6">
-  <div class="min-w-0">
-    <p class="edify-page-eyebrow">People</p>
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Policy and Manual Compliance</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ scope_note }}</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">People</p>
+      <h1 class="edify-page-title edify-page-header__title">Policy and Manual Compliance</h1>
+      <p class="edify-page-header__description">{{ scope_note }}</p>
+    </div>
+  </header>
 
   {% include "components/kpi_strip.html" with items=kpis title="Policy compliance" %}
 

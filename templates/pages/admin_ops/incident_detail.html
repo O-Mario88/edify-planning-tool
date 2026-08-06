@@ -5,11 +5,13 @@
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
 
-  <div class="min-w-0">
-    {% include "partials/_back_link.html" with back_href="/admin-ops/incidents" back_label="System Incidents" %}
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">{{ incident.title }}</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">{{ incident.reference }} · {{ incident.get_category_display }}</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href="/admin-ops/incidents" back_label="System Incidents" %}
+      <h1 class="edify-page-title edify-page-header__title">{{ incident.title }}</h1>
+      <p class="edify-page-header__description">{{ incident.reference }} · {{ incident.get_category_display }}</p>
+    </div>
+  </header>
 
   <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Incident summary">
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Severity</p><p class="text-[15px] font-bold text-slate-800 mt-1">{{ incident.get_severity_display }}</p></div>

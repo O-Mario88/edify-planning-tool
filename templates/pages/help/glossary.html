@@ -3,7 +3,7 @@
 {% block help_title %}Edify glossary{% endblock %}
 {% block help_lede %}Search identifiers, roles, terms and live workflow statuses.{% endblock %}
 {% block help_content %}
-<section aria-labelledby="glossary-title"><nav class="text-sm mb-4" aria-label="Breadcrumb"><a href="/help" class="hover:underline edify-primary-text">Knowledge Center</a><span aria-hidden="true"> / </span><span>Glossary</span></nav>{% comment %}h2, not h1: layouts/help_center.html already renders the page h1 from the help_title block.{% endcomment %}<h2 id="glossary-title" class="text-2xl font-extrabold edify-page-title">Edify glossary</h2><p class="mt-1 text-sm edify-text-muted">Search identifiers, roles, terms and live workflow statuses.</p>{% comment %}
+<section aria-label="Edify glossary"><nav class="text-sm mb-4" aria-label="Breadcrumb"><a href="/help" class="hover:underline edify-primary-text">Knowledge Center</a><span aria-hidden="true"> / </span><span>Glossary</span></nav>{% comment %}No title here: layouts/help_center.html renders the page header, and now that the header is a visible band, repeating the title and lede printed both of them twice on the page.{% endcomment %}{% comment %}
 The glossary's own search box is gone: it submitted the same q to the same
 page the top bar does, so the page carried two persistent inputs for one
 dataset. The view binds the top bar to the glossary instead.

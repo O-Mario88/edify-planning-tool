@@ -5,11 +5,13 @@
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
 
-  <div class="min-w-0">
-    <p class="edify-page-eyebrow">Help</p>
-    <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Report a Problem</h1>
-    <p class="text-[12px] text-slate-500 font-semibold mt-1">Tell the platform team what went wrong. We capture the page you were on and your browser automatically — never your password, tokens or message contents.</p>
-  </div>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <p class="edify-page-eyebrow">Help</p>
+      <h1 class="edify-page-title edify-page-header__title">Report a Problem</h1>
+      <p class="edify-page-header__description">Tell the platform team what went wrong. We capture the page you were on and your browser automatically — never your password, tokens or message contents.</p>
+    </div>
+  </header>
 
   <form method="post" action="/support" class="card p-4 space-y-3.5">
     {% csrf_token %}

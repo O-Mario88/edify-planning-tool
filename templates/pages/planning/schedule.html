@@ -6,17 +6,19 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Header -->
-<div>
-{% include "partials/_back_link.html" with back_href="/planning" back_label="Planning" %}
-<h1 class="text-[21px] font-extrabold tracking-tight mt-2 edify-page-title">
-{% if action == 'visit' %}Schedule School Visit
-{% elif action == 'training' %}Schedule Group Training
-{% else %}Schedule Cluster Meeting{% endif %}
-</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
-Configure activity logistics, purpose, and target interventions. Cost is computed from active CD catalogue.
-</p>
-</div>
+<header class="edify-page-header">
+  <div class="edify-page-header__lead">
+  {% include "partials/_back_link.html" with back_href="/planning" back_label="Planning" %}
+  <h1 class="edify-page-title edify-page-header__title">
+  {% if action == 'visit' %}Schedule School Visit
+  {% elif action == 'training' %}Schedule Group Training
+  {% else %}Schedule Cluster Meeting{% endif %}
+  </h1>
+  <p class="edify-page-header__description">
+  Configure activity logistics, purpose, and target interventions. Cost is computed from active CD catalogue.
+  </p>
+  </div>
+</header>
 
 <div class="grid md:grid-cols-3 gap-6 items-start">
 <!-- Form Panel -->

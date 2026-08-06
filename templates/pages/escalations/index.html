@@ -5,15 +5,15 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="flex items-start justify-between gap-4 flex-wrap">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Leadership</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Escalations</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">
+<h1 class="edify-page-title edify-page-header__title">Escalations</h1>
+<p class="edify-page-header__description">
 {% if is_rvp %}Decisions the Country Director has put in front of you{% else %}Decisions above your authority, routed to the Regional Vice President{% endif %}
 </p>
 </div>
-<div class="flex items-center gap-2">
+<div class="edify-page-header__controls">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] px-4 py-2.5 text-center">
 <p class="text-[19px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.open_count }}</p>
 <p class="edify-text-caption text-slate-500 font-bold mt-1">Open</p>

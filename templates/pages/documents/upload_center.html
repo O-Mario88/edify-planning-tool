@@ -40,11 +40,11 @@
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6">
 
-  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-    <div class="min-w-0">
+  <div class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
       <p class="edify-page-eyebrow">Files</p>
-      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Upload Center</h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1 max-w-3xl">Upload and manage school data, SSA files, policies, training resources and other organisational documents.</p>
+      <h1 class="edify-page-title edify-page-header__title">Upload Center</h1>
+      <p class="max-w-3xl edify-page-header__description">Upload and manage school data, SSA files, policies, training resources and other organisational documents.</p>
     </div>
     {% if show_admin_upload_menu %}
     <button
