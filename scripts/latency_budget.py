@@ -150,7 +150,9 @@ def main() -> int:
                         response = client.get(path, follow=True)
                     elapsed = (time.perf_counter() - started) * 1000
                 except Exception as exc:  # noqa: BLE001
-                    print(f"{path[:46]:<48}{role:<14}  ERROR {type(exc).__name__}: {exc}")
+                    print(
+                        f"{path[:46]:<48}{role:<14}  ERROR {type(exc).__name__}: {exc}"
+                    )
                     failed = True
                     break
                 if response.status_code != 200:

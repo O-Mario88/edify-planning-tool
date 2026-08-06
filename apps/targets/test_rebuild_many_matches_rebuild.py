@@ -100,7 +100,9 @@ class RosterFixture:
         cls._activity(cls.users[0].id, visit_type, date(2025, 11, 12), "completed")
         # Person 1: the same work owned by their STAFF PROFILE id instead —
         # `_user_ids` accepts either, so the grouping must key on both.
-        cls._activity(cls.users[1].staff_profile.id, visit_type, date(2026, 2, 3), "completed")
+        cls._activity(
+            cls.users[1].staff_profile.id, visit_type, date(2026, 2, 3), "completed"
+        )
         # Person 1 also has partner-delivered work, which is Partner
         # Contribution and must never reach a personal ledger.
         cls._activity(
@@ -112,7 +114,9 @@ class RosterFixture:
         )
         # Person 2: SSA in the year, SSA outside it, and two stories in
         # different states.
-        cls._ssa(cls.users[2].id, datetime(2026, 1, 9, tzinfo=dt_timezone.utc), "confirmed")
+        cls._ssa(
+            cls.users[2].id, datetime(2026, 1, 9, tzinfo=dt_timezone.utc), "confirmed"
+        )
         cls._ssa(
             cls.users[2].id,
             datetime(2024, 1, 9, tzinfo=dt_timezone.utc),
@@ -134,7 +138,10 @@ class RosterFixture:
         if visits:
             for month, value in ((2, 7), (5, 3)):
                 MonthlyPersonalTarget.objects.create(
-                    user_id=cls.users[0].id, fy=FY, area=visits, month_of_fy=month,
+                    user_id=cls.users[0].id,
+                    fy=FY,
+                    area=visits,
+                    month_of_fy=month,
                     target=value,
                 )
 
