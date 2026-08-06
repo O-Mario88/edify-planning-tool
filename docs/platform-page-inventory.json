@@ -353,7 +353,7 @@
       "template": "partials/analytics/drilldown_drawer.html"
     },
     {
-      "bytes": 6010,
+      "bytes": 7817,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
