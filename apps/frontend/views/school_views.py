@@ -6,6 +6,7 @@ from apps.core.donut import build_gauge
 from apps.core.permissions import (
     RolePermissionService,
     get_scoped_object_or_404,
+    require_export_permission,
     require_page_permission,
 )
 from django.core.paginator import Paginator
@@ -222,6 +223,7 @@ def school_intelligence_partial(request, school_id):
 
 
 @require_page_permission("school_directory")
+@require_export_permission
 def school_directory_view(request):
     user = request.user
     scope = resolve_user_scope(user)
