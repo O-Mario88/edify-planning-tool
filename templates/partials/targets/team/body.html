@@ -262,13 +262,21 @@
         </header>
         <div class="tt-validation-grid">
           {% for issue in validation_issues %}
-          {% if 'sfid-backlog' in issue.href %}
+          {% comment %}
+          `issue.drawer` decides the element, not a substring test on the URL.
+          Sniffing for 'sfid-backlog' meant any tile whose URL did not happen to
+          contain that word silently became a plain link — which is how two
+          tiles ended up navigating to a route that does not exist.
+          {% endcomment %}
+          {% if issue.drawer %}
           <button type="button" hx-get="{{ issue.href }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-validation-card" data-tone="{{ issue.tone }}">
+            <strong>{{ issue.value }}</strong><span>{{ issue.label }}</span>
+          </button>
           {% else %}
           <a href="{{ issue.href }}" class="tt-validation-card" data-tone="{{ issue.tone }}">
-          {% endif %}
             <strong>{{ issue.value }}</strong><span>{{ issue.label }}</span>
-          {% if 'sfid-backlog' in issue.href %}</button>{% else %}</a>{% endif %}
+          </a>
+          {% endif %}
           {% endfor %}
         </div>
       </section>

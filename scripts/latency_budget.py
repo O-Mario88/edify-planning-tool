@@ -48,6 +48,19 @@ from django.test.utils import CaptureQueriesContext  # noqa: E402
 ITERATIONS = int(os.environ.get("ITERATIONS", "15"))
 WARMUP = 2
 
+# The mandatory-policy gate redirects an un-acknowledged user out of every
+# application page and into the Agreement Center. That page is fast, returns
+# 200, and is not what anybody is waiting on — so with `follow=True` this
+# script was timing the policy document for every route and reporting the whole
+# product as comfortably inside budget. Neutralised here rather than by writing
+# acknowledgements, because the gate only decides whether a request reaches the
+# view; it has no bearing on what the view then costs. The redirect-chain check
+# in the sampling loop is the belt to this braces: any future middleware that
+# diverts a page is reported rather than silently measured in its place.
+from apps.documents.gate import PolicyGateService  # noqa: E402
+
+PolicyGateService.state_for = staticmethod(lambda user: ("clear", []))
+
 # (path, p95 budget in ms). The budgets are section 7 of the reliability brief:
 # common pages under 800ms at p95, HTMX partials under 500ms, heavy financial
 # aggregation gets its own allowance because it is genuinely a different job.
@@ -60,6 +73,16 @@ BUDGETS: tuple[tuple[str, int], ...] = (
     ("/settings", 800),
     ("/analytics", 1500),
     ("/system-health", 1500),
+    # The Country Director's cockpit: a country-wide rollup over every school,
+    # CCEO and assessment, and the heaviest read in the product. Its own
+    # allowance for the same reason financial aggregation gets one.
+    ("/analytics/country-director", 2000),
+    # The heatmap tabs are HTMX partials fetched on demand, one per level.
+    ("/analytics/country-director/ssa-heatmap?level=region", 500),
+    ("/analytics/country-director/ssa-heatmap?level=sub_region", 500),
+    ("/analytics/country-director/ssa-heatmap?level=district", 500),
+    ("/analytics/country-director/ssa-heatmap?level=sub_county", 500),
+    ("/analytics/country-director/ssa-heatmap?level=cluster", 500),
 )
 
 # One account per role that actually has data behind it. Scope changes the
@@ -97,7 +120,7 @@ def main() -> int:
     print(f"\nDataset: {_dataset()}")
     print(f"Samples: {ITERATIONS} per page per role (after {WARMUP} discarded)\n")
     print(
-        f"{'page':<18}{'role':<14}{'p50':>8}{'p95':>8}{'p99':>8}{'queries':>9}  budget"
+        f"{'page':<48}{'role':<14}{'p50':>8}{'p95':>8}{'p99':>8}{'queries':>9}  budget"
     )
     print("-" * 78)
 
@@ -127,13 +150,25 @@ def main() -> int:
                         response = client.get(path, follow=True)
                     elapsed = (time.perf_counter() - started) * 1000
                 except Exception as exc:  # noqa: BLE001
-                    print(f"{path:<18}{role:<14}  ERROR {type(exc).__name__}: {exc}")
+                    print(
+                        f"{path[:46]:<48}{role:<14}  ERROR {type(exc).__name__}: {exc}"
+                    )
                     failed = True
                     break
                 if response.status_code != 200:
                     # Not every role may open every page; that is scope working,
                     # not a latency result. Skip rather than record a fast 403 as
                     # if it were a fast page.
+                    failed = True
+                    break
+                if response.redirect_chain:
+                    # A 200 reached by redirect is a different page. Timing it
+                    # under this path's name would report somebody else's speed
+                    # as this page's — say so and skip.
+                    landed = response.redirect_chain[-1][0]
+                    print(
+                        f"{path[:46]:<48}{role:<14}  REDIRECTED to {landed} — not measured"
+                    )
                     failed = True
                     break
                 if i >= WARMUP:
@@ -152,7 +187,7 @@ def main() -> int:
             if over:
                 breaches.append(f"{path} [{role}] p95={p95:.0f}ms > {budget_ms}ms")
             print(
-                f"{path:<18}{role:<14}{p50:>7.0f}m{p95:>7.0f}m{p99:>7.0f}m"
+                f"{path[:46]:<48}{role:<14}{p50:>7.0f}m{p95:>7.0f}m{p99:>7.0f}m"
                 f"{queries:>9}  {budget_ms}ms{flag}"
             )
 

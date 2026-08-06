@@ -818,3 +818,18 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
   }
 }
+
+/* A row whose whole height is a progress bar is a real control, and the bar is
+   only 18px tall by design. Stacked with an 8px gap that is an 18px tap target
+   8px from its neighbour: a 24px target circle overlaps the rows either side,
+   which is exactly what WCAG 2.2 AA 2.5.8 measures, and on a phone it is a
+   genuinely fiddly tap. The bar keeps its height; the row grows around it, so
+   the chart reads identically and only the hit area changes.
+
+   Scoped to coarse pointers so the dense desktop reading of these panels — a
+   whole intervention set visible without scrolling — is untouched. */
+@media (pointer: coarse) {
+  .edify-bar-row {
+    min-height: 44px;
+  }
+}

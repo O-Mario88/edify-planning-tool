@@ -787,6 +787,11 @@ urlpatterns = [
         name="team_targets_sfid_backlog",
     ),
     path(
+        "team-targets/validation-backlog",
+        staff_views.team_targets_validation_backlog_view,
+        name="team_targets_validation_backlog",
+    ),
+    path(
         "team-targets/catchup",
         staff_views.team_targets_catchup_create_view,
         name="team_targets_catchup_create",

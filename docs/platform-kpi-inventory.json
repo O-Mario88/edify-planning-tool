@@ -89,7 +89,7 @@
   "band, bar_pct, code, color, delta, label, score, tone, value": 4,
   "helper, label, sparkline, trend_pct, trend_up, value, variant": 3,
   "icon, label, pct, tone, trend, value": 3,
-  "href, label, tone, value": 3,
+  "drawer, href, label, tone, value": 3,
   "icon, label, value, variant": 2,
   "delta, delta_unit, drill, key, label, tone, value": 2,
   "helper, icon, label, link, raw, sparkline, trend, value, variant": 1,
@@ -1068,7 +1068,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 504,
+   "line": 522,
    "label": null,
    "keys": [
     "helper",
@@ -1084,7 +1084,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2087,
+   "line": 2111,
    "label": null,
    "keys": [
     "aging",
@@ -1099,7 +1099,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 875,
+   "line": 893,
    "label": null,
    "keys": [
     "achieved",
@@ -1117,7 +1117,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1056,
+   "line": 1075,
    "label": null,
    "keys": [
     "band",
@@ -1136,7 +1136,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2005,
+   "line": 2029,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1149,7 +1149,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2006,
+   "line": 2030,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1162,7 +1162,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2007,
+   "line": 2031,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1175,7 +1175,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2008,
+   "line": 2032,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1188,7 +1188,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2009,
+   "line": 2033,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1201,7 +1201,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2010,
+   "line": 2034,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1214,7 +1214,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1020,
+   "line": 1039,
    "label": null,
    "keys": [
     "band",
@@ -1233,7 +1233,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 921,
+   "line": 935,
    "label": null,
    "keys": [
     "amount",
@@ -1264,7 +1264,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 619,
+   "line": 633,
    "label": null,
    "keys": [
     "count",
@@ -1280,7 +1280,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 913,
+   "line": 927,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -1319,7 +1319,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 582,
+   "line": 592,
    "label": null,
    "keys": [
     "helper",
@@ -1338,7 +1338,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1648,
+   "line": 1658,
    "label": null,
    "keys": [
     "bar_color",
@@ -1353,7 +1353,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2032,
+   "line": 2042,
    "label": null,
    "keys": [
     "delta_pct",
@@ -1369,7 +1369,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 996,
+   "line": 1006,
    "label": null,
    "keys": [
     "band",
@@ -1388,7 +1388,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 956,
+   "line": 966,
    "label": null,
    "keys": [
     "band",
@@ -2607,7 +2607,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 640,
+   "line": 657,
    "label": null,
    "keys": [
     "label",
@@ -2633,7 +2633,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 395,
+   "line": 412,
    "label": null,
    "keys": [
     "label",
@@ -5474,7 +5474,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 289,
+   "line": 291,
    "label": "Activities in My Plan",
    "keys": [
     "helper",
@@ -5490,7 +5490,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 297,
+   "line": 299,
    "label": "Evidence Pending",
    "keys": [
     "helper",
@@ -5505,7 +5505,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 304,
+   "line": 306,
    "label": "IA Pending",
    "keys": [
     "helper",
@@ -5520,7 +5520,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 311,
+   "line": 313,
    "label": "Closed Activities",
    "keys": [
     "helper",
@@ -5535,7 +5535,7 @@
   {
    "kind": "other",
    "module": "apps/projects/dashboard_service.py",
-   "line": 626,
+   "line": 628,
    "label": null,
    "keys": [
     "label",
@@ -5549,7 +5549,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 605,
+   "line": 607,
    "label": "Visits",
    "keys": [
     "label",
@@ -5561,7 +5561,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 606,
+   "line": 608,
    "label": "Trainings",
    "keys": [
     "label",
@@ -5573,7 +5573,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 607,
+   "line": 609,
    "label": "SSA Collection",
    "keys": [
     "label",
@@ -5585,7 +5585,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/projects/dashboard_service.py",
-   "line": 608,
+   "line": 610,
    "label": "Partner Activities",
    "keys": [
     "label",
@@ -6448,7 +6448,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 739,
+   "line": 886,
    "label": null,
    "keys": [
     "achieved",
@@ -6469,7 +6469,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 892,
+   "line": 1039,
    "label": null,
    "keys": [
     "count",
@@ -6481,7 +6481,7 @@
   {
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 820,
+   "line": 967,
    "label": null,
    "keys": [
     "achieved",
@@ -6500,7 +6500,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/my_targets.py",
-   "line": 976,
+   "line": 1123,
    "label": null,
    "keys": [
     "label",
@@ -6741,9 +6741,10 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 928,
+   "line": 933,
    "label": "Awaiting IA",
    "keys": [
+    "drawer",
     "href",
     "label",
     "tone",
@@ -6755,9 +6756,10 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 934,
+   "line": 943,
    "label": "Missing SF IDs",
    "keys": [
+    "drawer",
     "href",
     "label",
     "tone",
@@ -6769,9 +6771,10 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 940,
+   "line": 950,
    "label": "Returned by IA",
    "keys": [
+    "drawer",
     "href",
     "label",
     "tone",
@@ -6783,7 +6786,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1028,
+   "line": 1041,
    "label": "Team achievement",
    "keys": [
     "key",
@@ -6798,7 +6801,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1039,
+   "line": 1052,
    "label": "Monthly on track",
    "keys": [
     "key",
@@ -6813,7 +6816,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1046,
+   "line": 1059,
    "label": "At-risk staff",
    "keys": [
     "key",
@@ -6828,7 +6831,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1053,
+   "line": 1066,
    "label": "Current quarter",
    "keys": [
     "key",
@@ -6843,7 +6846,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1060,
+   "line": 1073,
    "label": "FY achievement",
    "keys": [
     "key",
@@ -6858,7 +6861,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1067,
+   "line": 1080,
    "label": "Recovery plans",
    "keys": [
     "key",
@@ -6908,7 +6911,7 @@
   {
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 1127,
+   "line": 1140,
    "label": null,
    "keys": [
     "label",
@@ -6921,7 +6924,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1178,
+   "line": 1191,
    "label": null,
    "keys": [
     "label",
@@ -6952,7 +6955,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1122,
+   "line": 1135,
    "label": "Overall weighted performance",
    "keys": [
     "label",
@@ -6964,7 +6967,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/team_targets.py",
-   "line": 1124,
+   "line": 1137,
    "label": null,
    "keys": [
     "label",

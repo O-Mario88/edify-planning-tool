@@ -36,7 +36,9 @@ def today(principal) -> dict:
                     "priority": "critical" if n > 5 else "high",
                     "title": "Awaiting IA Verification",
                     "reason": f"{n} activities need your impact review and verification.",
-                    "action": {"label": "Review", "href": "/queue"},
+                    # `/queue` was not a route; the IA verification queue is
+                    # `/ia/verification/`, which is what this count comes from.
+                    "action": {"label": "Review", "href": "/ia/verification/"},
                     "count": n,
                 }
             )
@@ -56,7 +58,9 @@ def today(principal) -> dict:
                     "priority": "critical" if n > 10 else "high",
                     "title": "Pending Payments",
                     "reason": f"{n} partner payments need to be cleared.",
-                    "action": {"label": "Clear", "href": "/payments"},
+                    # `/payments` was not a route; partner payments are
+                    # cleared from `/accounts/partner-payments`.
+                    "action": {"label": "Clear", "href": "/accounts/partner-payments"},
                     "count": n,
                 }
             )

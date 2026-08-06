@@ -367,11 +367,30 @@ def per_user_monthly_series(users, fy: str, areas=None) -> dict:
     """
     if areas is None:
         areas = active_target_areas()
+    users = list(users)
+    # One rebuild for the whole roster rather than one per head: the sources
+    # every rebuild reads are the same four tables.
+    TargetAchievementService.rebuild_many(users, fy)
+
+    # Three reads for the roster, not three per person. `series_areas` is
+    # deliberately the full active set rather than the caller's `areas`: the
+    # per-user calls this replaced took no `areas` argument, so they computed
+    # over everything active and the caller projected onto its own list below.
+    # Narrowing here would change which areas fall back to an annual target.
+    series_areas = active_target_areas()
+    area_keys = [a.key for a in series_areas]
+    explicit = MyTargetQueryService._explicit_targets(users, fy, area_keys)
+    profiles = MyTargetQueryService._target_profiles(users, fy)
+    ledger = MyTargetQueryService._validated_ledger(users, fy, area_keys)
+
     out = {}
     for u in users:
-        TargetAchievementService.rebuild(u, fy)
-        t = MyTargetQueryService.monthly_targets(u, fy)
-        a = MyTargetQueryService.monthly_achievements(u, fy)
+        t = MyTargetQueryService._targets_from(
+            series_areas,
+            explicit.get(u.id, {}),
+            profiles.get(getattr(u, "staff_profile_id", None)),
+        )
+        a = MyTargetQueryService._achievements_from(series_areas, ledger.get(u.id, ()))
         out[u.id] = (
             {area.key: list(t.get(area.key, [0] * 12)) for area in areas},
             {area.key: list(a.get(area.key, [0] * 12)) for area in areas},
@@ -428,6 +447,81 @@ def pooled_monthly_series(users, fy: str, areas=None) -> tuple[dict, dict]:
     return pool_series([u.id for u in users], per_user, areas)
 
 
+class _RebuildSources:
+    """Every source row `rebuild` reads, fetched once for a whole roster.
+
+    `rebuild` runs per person on ordinary page loads, and a leadership page
+    rebuilds everyone in scope: the Country Director's dashboard rebuilds 48
+    CCEOs, which meant 48 activity sweeps, 48 SSA sweeps, 48 story reads and 48
+    ledger reads — ~290 round trips to read four tables. Grouped in Python here
+    they are four queries, and each person's rebuild then sees exactly the rows
+    its own filters would have returned.
+
+    Deliberately holds model instances, not values: the ledger rows are mutated
+    and bulk-updated by the caller, and the source rows are read attribute-wise
+    by logic that must not change shape just because the fetch did.
+    """
+
+    __slots__ = ("activities", "ssa", "mscs", "ledger")
+
+    def __init__(self, activities, ssa, mscs, ledger):
+        self.activities = activities  # responsible_staff_id -> [Activity]
+        self.ssa = ssa  # collected_by_user_id -> [SsaRecord]
+        self.mscs = mscs  # user_id -> [MostSignificantChangeStory]
+        self.ledger = ledger  # user_id -> {(source_type, source_id): row}
+
+    @classmethod
+    def for_users(cls, users, fy: str) -> "_RebuildSources":
+        # Activity and ledger periods use calendar dates; SSA is timestamped.
+        # Query each with the matching canonical FY boundary type so Django
+        # never silently coerces a date into a naïve midnight datetime.
+        fy_start, fy_end = get_fy_date_range(fy)
+        user_ids = [u.id for u in users]
+        source_ids: list[str] = []
+        for u in users:
+            source_ids.extend(_user_ids(u))
+
+        activity_types = [
+            t
+            for stype, types in AREA_SOURCES.values()
+            if stype == "activity" and types
+            for t in types
+        ]
+        activities: dict = {}
+        for a in (
+            Activity.objects.filter(
+                responsible_staff_id__in=source_ids,
+                fy=fy,
+                activity_type__in=activity_types,
+                deleted_at__isnull=True,
+            )
+            .exclude(planned_date__isnull=True)
+            .exclude(delivery_type="partner")
+        ):
+            activities.setdefault(a.responsible_staff_id, []).append(a)
+
+        ssa: dict = {}
+        for r in SsaRecord.objects.filter(
+            collected_by_user_id__in=source_ids,
+            deleted_at__isnull=True,
+            date_of_ssa__gte=fy_start,
+            date_of_ssa__lt=fy_end,
+        ):
+            ssa.setdefault(r.collected_by_user_id, []).append(r)
+
+        mscs: dict = {}
+        for s in MostSignificantChangeStory.objects.filter(user_id__in=user_ids):
+            mscs.setdefault(s.user_id, []).append(s)
+
+        # The whole ledger, every FY — see the note on `existing` in _rebuild
+        # for why the read is deliberately not scoped to `fy`.
+        ledger: dict = {}
+        for row in TargetAchievementLedger.objects.filter(user_id__in=user_ids):
+            ledger.setdefault(row.user_id, {})[(row.source_type, row.source_id)] = row
+
+        return cls(activities, ssa, mscs, ledger)
+
+
 class TargetAchievementService:
     """Rebuild the ledger for one user + FY from real workflow records.
     Idempotent: each source gets exactly one row whose validation_status is
@@ -435,12 +529,35 @@ class TargetAchievementService:
 
     @staticmethod
     def rebuild(user, fy: str) -> None:
+        TargetAchievementService._rebuild(
+            user, fy, _RebuildSources.for_users([user], fy)
+        )
+
+    @staticmethod
+    def rebuild_many(users, fy: str) -> None:
+        """Rebuild a whole roster, reading each source table once.
+
+        Equivalent to calling `rebuild` for each user — the per-person logic is
+        the same code — but without re-querying the same four tables per head.
+        Users are de-duplicated because the pre-read ledger snapshot is taken
+        before any writes, so rebuilding the same person twice from one
+        snapshot would work from a stale view of their own rows.
+        """
+        seen_ids, roster = set(), []
+        for u in users:
+            if u.id not in seen_ids:
+                seen_ids.add(u.id)
+                roster.append(u)
+        if not roster:
+            return
+        sources = _RebuildSources.for_users(roster, fy)
+        for u in roster:
+            TargetAchievementService._rebuild(u, fy, sources)
+
+    @staticmethod
+    def _rebuild(user, fy: str, sources: "_RebuildSources") -> None:
         areas = {a.key: a for a in active_target_areas()}
         ids = _user_ids(user)
-        # Activity and ledger periods use calendar dates; SSA is timestamped.
-        # Query each with the matching canonical FY boundary type so Django
-        # never silently coerces a date into a naïve midnight datetime.
-        fy_start, fy_end = get_fy_date_range(fy)
         seen: set[tuple[str, str]] = set()
 
         # Collected in memory, then flushed in bulk. This was a
@@ -468,17 +585,16 @@ class TargetAchievementService:
             if stype != "activity":
                 continue
             # Partner-delivered work is Partner Contribution, never personal
-            # target credit (policy: no silent partner→CCEO credit).
-            acts = (
-                Activity.objects.filter(
-                    responsible_staff_id__in=ids,
-                    fy=fy,
-                    activity_type__in=types,
-                    deleted_at__isnull=True,
-                )
-                .exclude(planned_date__isnull=True)
-                .exclude(delivery_type="partner")
-            )
+            # target credit (policy: no silent partner→CCEO credit) — enforced
+            # by the `delivery_type` exclusion in _RebuildSources.for_users,
+            # which is what the pre-read below is filtered by.
+            type_set = set(types)
+            acts = [
+                a
+                for sid in ids
+                for a in sources.activities.get(sid, ())
+                if a.activity_type in type_set
+            ]
             for a in acts:
                 if a.status in RETURNED_STATUSES:
                     status = "reversed"
@@ -501,12 +617,7 @@ class TargetAchievementService:
 
         # ── SSA Completed: IA-confirmed SSA records, credited by assessment
         #    date (a late upload/verification credits the assessment month) ──
-        ssa = SsaRecord.objects.filter(
-            collected_by_user_id__in=ids,
-            deleted_at__isnull=True,
-            date_of_ssa__gte=fy_start,
-            date_of_ssa__lt=fy_end,
-        )
+        ssa = [rec for sid in ids for rec in sources.ssa.get(sid, ())]
         for rec in ssa:
             d = (
                 rec.date_of_ssa.date()
@@ -519,7 +630,7 @@ class TargetAchievementService:
             upsert("ssa_completed", "ssa_record", rec.id, d, status)
 
         # ── MSCS: only APPROVED stories count, credited by story date ───────
-        for story in MostSignificantChangeStory.objects.filter(user_id=user.id):
+        for story in sources.mscs.get(user.id, ()):
             if story.status == "approved":
                 status = "validated"
             elif story.status in ("submitted", "returned", "draft"):
@@ -539,10 +650,7 @@ class TargetAchievementService:
         # insert a second one, and `ignore_conflicts` below swallowed the
         # rejection: the new FY silently gained no credit and the old FY was
         # never reversed, leaving both years wrong with nothing logged.
-        existing = {
-            (r.source_type, r.source_id): r
-            for r in TargetAchievementLedger.objects.filter(user_id=user.id)
-        }
+        existing = sources.ledger.get(user.id, {})
         to_create, to_update = [], []
         for key, want in pending.items():
             row = existing.get(key)
@@ -614,28 +722,53 @@ class TargetAchievementService:
 class MyTargetQueryService:
     """Everything the My Targets page renders, scoped to request.user only."""
 
+    # The reads below are separated from the arithmetic so a roster can fetch
+    # once and still compute each person's series through the identical code —
+    # `_targets_from` / `_achievements_from` are the single implementation, and
+    # the per-user entry points are thin wrappers that fetch a roster of one.
+    # Duplicating the arithmetic for a batch path is how the batch and the
+    # single quietly drift apart.
     @staticmethod
-    def monthly_targets(user, fy: str, areas=None) -> dict[str, list[int]]:
-        """{area_key: [12 monthly targets]} — explicit rows win; otherwise the
-        priority's annual target (or legacy annual profile) is split so the 12
-        months sum to the annual value."""
-        areas = list(areas) if areas is not None else active_target_areas()
-        explicit: dict[str, dict[int, int]] = {}
-        area_keys = [area.key for area in areas]
+    def _explicit_targets(users, fy: str, area_keys) -> dict:
+        out: dict = {}
         for row in MonthlyPersonalTarget.objects.filter(
-            user_id=user.id,
+            user_id__in=[u.id for u in users],
             fy=fy,
             area__key__in=area_keys,
         ).select_related("area"):
-            explicit.setdefault(row.area.key, {})[row.month_of_fy] = row.target
+            out.setdefault(row.user_id, {}).setdefault(row.area.key, {})[
+                row.month_of_fy
+            ] = row.target
+        return out
 
-        sp_id = getattr(user, "staff_profile_id", None)
-        tp = (
-            StaffTargetProfile.objects.filter(staff_id=sp_id, fy=fy).first()
-            if sp_id
-            else None
-        )
+    @staticmethod
+    def _target_profiles(users, fy: str) -> dict:
+        staff_ids = [
+            sp for sp in (getattr(u, "staff_profile_id", None) for u in users) if sp
+        ]
+        return {
+            tp.staff_id: tp
+            for tp in StaffTargetProfile.objects.filter(staff_id__in=staff_ids, fy=fy)
+        }
 
+    @staticmethod
+    def _validated_ledger(users, fy: str, area_keys) -> dict:
+        out: dict = {}
+        for r in (
+            TargetAchievementLedger.objects.filter(
+                user_id__in=[u.id for u in users],
+                fy=fy,
+                validation_status="validated",
+                area__key__in=area_keys,
+            )
+            .select_related("area")
+            .order_by()
+        ):
+            out.setdefault(r.user_id, []).append(r)
+        return out
+
+    @staticmethod
+    def _targets_from(areas, explicit, tp) -> dict[str, list[int]]:
         out: dict[str, list[int]] = {}
         for area in areas:
             if area.key in explicit:
@@ -649,19 +782,33 @@ class MyTargetQueryService:
         return out
 
     @staticmethod
-    def monthly_achievements(user, fy: str, areas=None) -> dict[str, list[int]]:
-        areas = list(areas) if areas is not None else active_target_areas()
+    def _achievements_from(areas, rows) -> dict[str, list[int]]:
         out = {a.key: [0] * 12 for a in areas}
-        rows = TargetAchievementLedger.objects.filter(
-            user_id=user.id,
-            fy=fy,
-            validation_status="validated",
-            area__key__in=list(out),
-        ).select_related("area")
         for r in rows:
             if 1 <= r.credited_month <= 12:
                 out.setdefault(r.area.key, [0] * 12)[r.credited_month - 1] += r.quantity
         return out
+
+    @staticmethod
+    def monthly_targets(user, fy: str, areas=None) -> dict[str, list[int]]:
+        """{area_key: [12 monthly targets]} — explicit rows win; otherwise the
+        priority's annual target (or legacy annual profile) is split so the 12
+        months sum to the annual value."""
+        areas = list(areas) if areas is not None else active_target_areas()
+        explicit = MyTargetQueryService._explicit_targets(
+            [user], fy, [area.key for area in areas]
+        ).get(user.id, {})
+        profiles = MyTargetQueryService._target_profiles([user], fy)
+        tp = profiles.get(getattr(user, "staff_profile_id", None))
+        return MyTargetQueryService._targets_from(areas, explicit, tp)
+
+    @staticmethod
+    def monthly_achievements(user, fy: str, areas=None) -> dict[str, list[int]]:
+        areas = list(areas) if areas is not None else active_target_areas()
+        rows = MyTargetQueryService._validated_ledger(
+            [user], fy, [a.key for a in areas]
+        ).get(user.id, ())
+        return MyTargetQueryService._achievements_from(areas, rows)
 
     # ── Status math ──────────────────────────────────────────────────────────
     @staticmethod
