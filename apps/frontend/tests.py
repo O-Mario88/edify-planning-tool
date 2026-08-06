@@ -555,7 +555,22 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(invalid.context["active_tab"], "all")
 
     def test_school_directory_excel_export_is_a_real_workbook(self):
-        self.client.force_login(self.cceo_user)
+        # A Program Lead, not the CCEO this class signs in as everywhere else:
+        # the school export is gated on data.export like every other export,
+        # and the RBAC matrix withholds that from CCEO. What this test is for
+        # is the workbook being a real workbook, so it needs a role that is
+        # allowed to ask for one — apps/frontend/test_school_export_permission.py
+        # is where the gate itself is tested.
+        User = get_user_model()
+        exporter = User.objects.create(
+            id="pl-export-1",
+            email="pl-export@edify.org",
+            name="Program Lead",
+            roles=["Program Lead"],
+            active_role="Program Lead",
+            is_active=True,
+        )
+        self.client.force_login(exporter)
         response = self.client.get("/schools", {"export": "xlsx"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
