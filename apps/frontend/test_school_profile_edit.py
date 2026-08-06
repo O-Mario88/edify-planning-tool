@@ -385,6 +385,30 @@ class SchoolProfileEditTest(TestCase):
             {boundary_key(self.district.name, self.other_sub_county.name)},
         )
 
+        live_response = self.client.get(
+            reverse("frontend:map_subcounty_metrics"),
+            {"district_id": self.district.id, "fy": "2026"},
+        )
+        self.assertEqual(live_response.status_code, 200)
+        self.assertEqual(live_response.headers["Cache-Control"], "private, no-store")
+        self.assertEqual(
+            {entry["key"] for entry in live_response.json()["entries"]},
+            {boundary_key(self.district.name, self.other_sub_county.name)},
+        )
+
+    def test_live_map_location_refresh_rejects_invalid_geography(self):
+        missing = self.client.get(
+            reverse("frontend:map_subcounty_metrics"),
+            {"district_id": "missing", "fy": "2026"},
+        )
+        self.assertEqual(missing.status_code, 404)
+
+        invalid_fy = self.client.get(
+            reverse("frontend:map_subcounty_metrics"),
+            {"district_id": self.district.id, "fy": "FY2026"},
+        )
+        self.assertEqual(invalid_fy.status_code, 400)
+
 
 class SchoolManualOnboardRequiredFieldsTest(TestCase):
     def setUp(self):

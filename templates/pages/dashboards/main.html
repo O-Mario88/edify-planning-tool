@@ -1,6 +1,12 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
+{% comment %}
+Scoped here rather than loaded platform-wide: admin-dashboard.css is 29 KB
+and only this page and its own partials use it.
+{% endcomment %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260731readabletype1">{% endblock %}
+
 {% block title %}Main Dashboard — Edify{% endblock %}
 
 {% block shell_content %}

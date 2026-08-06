@@ -23,7 +23,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold">
+<table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -40,30 +40,30 @@ Review activities that are stuck and cannot close because of missing quality or 
 {% for item in blockers %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-record-title>
 <div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
 </td>
 <!-- Reason -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="Blocked Reason">
 <span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-rose-50 text-rose-700 border border-rose-150">
 {{ item.blocking_reason }}
 </span>
 </td>
 <!-- Role -->
-<td class="px-6 py-4 font-semibold text-slate-800">
+<td class="px-6 py-4 font-semibold text-slate-800" data-label="Responsible Role">
 {{ item.responsible_role }}
 </td>
 <!-- Owner -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="Owner / Staff">
 <div class="font-semibold text-slate-800">{{ item.activity.responsible_staff_id|default:"Unassigned" }}</div>
 </td>
 <!-- Days Blocked -->
-<td class="px-6 py-4 text-center text-slate-500 font-medium">
+<td class="px-6 py-4 text-center text-slate-500 font-medium" data-label="Days Blocked">
 {{ item.created_at|timesince }}
 </td>
 <!-- Next Action -->
-<td class="px-6 py-4 text-slate-500 font-medium leading-relaxed">
+<td class="px-6 py-4 text-slate-500 font-medium leading-relaxed" data-label="Next Action">
 {% if "Evidence" in item.blocking_reason %}
 CCEO must upload field visit stamp or attendance sheet.
 {% elif "IA" in item.blocking_reason %}
@@ -75,7 +75,7 @@ Reconcile outstanding disbursements.
 {% endif %}
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
+<td class="px-6 py-4 text-right" data-record-action>
 <a href="/activities/{{ item.activity.id }}/closure/" class="h-8 px-3 rounded-control bg-slate-50 hover:bg-slate-100 hover:text-slate-800 edify-text-caption font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
 Resolve Blocker
 </a>

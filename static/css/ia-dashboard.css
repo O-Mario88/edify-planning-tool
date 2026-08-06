@@ -471,7 +471,7 @@
   padding: 0.7rem 1.25rem;
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -978,7 +978,7 @@
   border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -991,7 +991,7 @@
 .ia-evidence-table__row {
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-size);
   font-weight: 650;
 }
 
@@ -1150,7 +1150,7 @@
   fill: var(--edify-text-subtle);
   /* The micro tier is the floor for every surface, chart axis labels
      included — 10px here was below it and unnamed. */
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size));
   font-weight: 700;
 }
 
@@ -1288,7 +1288,7 @@
   width: 100%;
   min-width: 42rem;
   border-collapse: collapse;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-size);
 }
 
 .ia-monitor-table th {
@@ -1299,6 +1299,7 @@
   border-bottom: 1px solid var(--edify-border);
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 800;
   text-align: right;
   text-transform: uppercase;

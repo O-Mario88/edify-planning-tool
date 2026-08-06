@@ -25,7 +25,7 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold">
+<table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -43,29 +43,29 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 {% for act in closed %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-record-title>
 <div class="font-semibold text-slate-900 text-[12px]">#{{ act.id|slice:":8" }}</div>
 </td>
 <!-- School -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="School / Cluster">
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Owner -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="Owner">
 <div class="font-semibold text-slate-800">{{ act.responsible_staff_id }}</div>
 </td>
 <!-- Type -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="Activity Type">
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.get_activity_type_display }}
 </span>
 </td>
 <!-- Planned Date -->
-<td class="px-6 py-4 text-center text-slate-500 font-medium">
+<td class="px-6 py-4 text-center text-slate-500 font-medium" data-label="Planned Date">
 {{ act.planned_date|date:"M d, Y" }}
 </td>
 <!-- IA Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="IA Status">
 {% if act.closure_checklist.ia_verified %}
 <span class="text-emerald-600 font-bold">Verified</span>
 {% else %}
@@ -73,11 +73,11 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 {% endif %}
 </td>
 <!-- NetSuite ID -->
-<td class="px-6 py-4 text-center font-mono edify-text-caption text-slate-800">
+<td class="px-6 py-4 text-center font-mono edify-text-caption text-slate-800" data-label="NetSuite ID">
 {{ act.completed_snapshot.netsuite_expense_id|default:"—" }}
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
+<td class="px-6 py-4 text-right" data-record-action>
 <a href="/completed-activities/{{ act.id }}/" class="h-8 px-4 rounded-control bg-slate-50 hover:bg-slate-100 hover:text-slate-800 edify-text-caption font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
 View Record
 </a>

@@ -73,18 +73,18 @@
           </header>
           {% if card.rows %}
           <div class="partner-activity-card__table-wrap">
-            <table class="partner-activity-table">
+            <table class="edify-record-table partner-activity-table">
               <thead><tr><th>School</th><th>District / Cluster</th><th>Purpose of Visit</th><th>Intervention Focus</th><th>Scheduled Date / Status</th><th>Cost</th><th><span class="sr-only">Action</span></th></tr></thead>
               <tbody>
                 {% for row in card.rows %}
                 <tr>
-                  <td><strong>{{ row.school_name }}</strong></td>
-                  <td>{{ row.district_cluster }}</td>
-                  <td>{{ row.purpose }}</td>
-                  <td>{{ row.focus }}</td>
-                  <td><span class="partner-status partner-status--{{ row.status_tone }}">{% if row.date %}{{ row.date|date:"d M Y" }} · {% endif %}{{ row.status_label }}</span></td>
-                  <td>{% if row.cost_pending %}<span class="partner-cost-pending">Set when scheduled</span>{% else %}{{ row.cost|ugx }}{% endif %}</td>
-                  <td><a href="{{ row.detail_url }}" class="partner-activity-table__action">{% if row.is_pending %}Review{% else %}View plan{% endif %}</a></td>
+                  <td data-record-title><strong>{{ row.school_name }}</strong></td>
+                  <td data-label="District / Cluster">{{ row.district_cluster }}</td>
+                  <td data-label="Purpose of Visit">{{ row.purpose }}</td>
+                  <td data-label="Intervention Focus">{{ row.focus }}</td>
+                  <td data-label="Scheduled Date / Status"><span class="partner-status partner-status--{{ row.status_tone }}">{% if row.date %}{{ row.date|date:"d M Y" }} · {% endif %}{{ row.status_label }}</span></td>
+                  <td data-label="Cost">{% if row.cost_pending %}<span class="partner-cost-pending">Set when scheduled</span>{% else %}{{ row.cost|ugx }}{% endif %}</td>
+                  <td data-record-action><a href="{{ row.detail_url }}" class="partner-activity-table__action">{% if row.is_pending %}Review{% else %}View plan{% endif %}</a></td>
                 </tr>
                 {% endfor %}
               </tbody>

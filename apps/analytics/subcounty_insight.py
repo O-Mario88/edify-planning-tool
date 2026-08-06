@@ -71,6 +71,10 @@ def subcounty_insight(
         if schools is not None
         else School.objects.filter(deleted_at__isnull=True)
     )
+    # Keep every dependent aggregate inside the same school scope. This is a
+    # lazy subquery, so district-scoped map refreshes remain constant-query
+    # without first materialising thousands of school identifiers in Python.
+    school_ids = school_qs.values("id")
     core_ids = _active_core_school_ids()
 
     identity_fields = (
@@ -138,6 +142,7 @@ def subcounty_insight(
     ssa_qs = (
         ssa_records if ssa_records is not None else SsaRecord.objects.all()
     ).filter(
+        school_id__in=school_ids,
         verification_status=SSA_CONFIRMED,
         school__sub_county__isnull=False,
         average_score__isnull=False,
@@ -179,7 +184,10 @@ def subcounty_insight(
         activities
         if activities is not None
         else Activity.objects.filter(deleted_at__isnull=True)
-    ).filter(status__in=COMPLETED_STATUSES)
+    ).filter(
+        school_id__in=school_ids,
+        status__in=COMPLETED_STATUSES,
+    )
     if fy:
         delivered_activity_qs = delivered_activity_qs.filter(fy=fy)
     unassigned_core_trained: dict[str, int] = {}

@@ -343,3 +343,167 @@ def mark_assignment_scheduled(assignment, *, scheduled_date):
     assignment.scheduled_date = scheduled_date
     assignment.save(update_fields=["status", "scheduled_date", "updated_at"])
     return assignment
+
+
+# ── Returning an assignment to staff ─────────────────────────────────────────
+# Minimum is long enough to rule out "no" and "busy"; maximum is short enough
+# that the field stays a sentence rather than becoming a report. Staff need
+# enough to choose the next action, not a narrative.
+RETURN_REASON_MIN_LENGTH = 10
+RETURN_REASON_MAX_LENGTH = 300
+
+
+def return_assignment(assignment_id: str, data: dict, principal) -> dict:
+    """Partner hands an unscheduled assignment back to the managing staff.
+
+    Return exists only before scheduling. Once a partner has scheduled, the
+    assignment has an Activity, a catalogue-snapshotted cost and a place in the
+    week/month/quarter/FY budget, and unpicking that silently is what
+    rescheduling, release and cancellation are for. So this refuses rather than
+    reaching into finance.
+
+    Idempotent: returning an already-returned assignment is a no-op that
+    reports success. A partner double-tapping on a slow connection should not
+    get an error for something that already happened, and a second audit row
+    would misrepresent one decision as two.
+    """
+    from django.utils import timezone
+
+    from apps.audit.services import log as audit_log
+    from apps.partners.models import PartnerAssignment, PartnerReturnReason
+
+    partner_ids = resolve_partner_ids(principal)
+    if not partner_ids:
+        raise Forbidden("Only a partner user may return an assignment.")
+
+    category = ((data or {}).get("reason_category") or "").strip()
+    reason = ((data or {}).get("reason") or "").strip()
+
+    valid_categories = {c.value for c in PartnerReturnReason}
+    if category not in valid_categories:
+        raise BadRequest("Choose a reason category.")
+    # Length is measured on the stripped value, so whitespace padding cannot
+    # buy the minimum.
+    if len(reason) < RETURN_REASON_MIN_LENGTH:
+        raise BadRequest(
+            f"Explain briefly why you cannot take this assignment "
+            f"(at least {RETURN_REASON_MIN_LENGTH} characters)."
+        )
+    if len(reason) > RETURN_REASON_MAX_LENGTH:
+        raise BadRequest(
+            f"Keep the explanation under {RETURN_REASON_MAX_LENGTH} characters."
+        )
+
+    with transaction.atomic():
+        # Locked because the staff side can withdraw or reassign the same row,
+        # and a partner page open in another tab can be stale.
+        assignment = (
+            PartnerAssignment.objects.select_for_update()
+            .filter(id=assignment_id, partner_id__in=partner_ids)
+            .first()
+        )
+        if assignment is None:
+            raise NotFoundError("Assignment not found.")
+
+        if assignment.status == PartnerAssignment.STATUS_RETURNED_TO_STAFF:
+            return _serialize_assignment(assignment)
+
+        if assignment.status not in PartnerAssignment.UNSCHEDULED_STATUSES:
+            raise ConflictError(
+                "This assignment has already been scheduled. Use Reschedule or "
+                "request release instead of returning it."
+            )
+
+        assignment.status = PartnerAssignment.STATUS_RETURNED_TO_STAFF
+        assignment.return_reason_category = category
+        assignment.return_reason = reason
+        assignment.returned_at = timezone.now()
+        assignment.returned_by = getattr(principal, "user_id", None) or getattr(
+            principal, "id", None
+        )
+        assignment.save(
+            update_fields=[
+                "status",
+                "return_reason_category",
+                "return_reason",
+                "returned_at",
+                "returned_by",
+                "updated_at",
+            ]
+        )
+
+    audit_log(
+        action="partner.assignment_returned",
+        subject_kind="PartnerAssignment",
+        subject_id=assignment.id,
+        actor_id=assignment.returned_by or "unknown",
+        actor_role=getattr(principal, "active_role", "") or "",
+        success=True,
+        payload={
+            "partner_id": assignment.partner_id,
+            "school_id": assignment.school_id,
+            "cluster_id": assignment.cluster_id,
+            "reason_category": category,
+            "reason": reason,
+        },
+    )
+    # After commit, so a notification never announces a return that rolled back.
+    _notify_assignment_returned(assignment, principal, category, reason)
+    return _serialize_assignment(assignment)
+
+
+def _serialize_assignment(assignment) -> dict:
+    return {
+        "id": assignment.id,
+        "status": assignment.status,
+        "schoolId": assignment.school_id,
+        "clusterId": assignment.cluster_id,
+        "partnerId": assignment.partner_id,
+        "returnReasonCategory": assignment.return_reason_category,
+        "returnReason": assignment.return_reason,
+        "returnedAt": (
+            assignment.returned_at.isoformat() if assignment.returned_at else None
+        ),
+        "returnedBy": assignment.returned_by,
+    }
+
+
+def _notify_assignment_returned(assignment, principal, category, reason) -> None:
+    """Tell the managing staff, with the reason, and close the partner's To-Do.
+
+    Bookkeeping must not break the return itself: the assignment is already
+    committed by the time this runs, and a notification backend being down is
+    not a reason to tell the partner their return failed.
+    """
+    import logging
+
+    from apps.partners.models import PartnerReturnReason
+
+    logger = logging.getLogger(__name__)
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        staff_id = assignment.assigning_staff_id
+        if not staff_id:
+            return
+        label = dict(PartnerReturnReason.choices).get(category, category)
+        where = getattr(assignment.school, "name", None) or getattr(
+            assignment.cluster, "name", "an assignment"
+        )
+        WorkflowNotificationService.trigger(
+            event_type="partner_assignment_returned",
+            category="partner",
+            # High: this is work that will not happen unless the staff member
+            # acts, and the schedule-by date keeps running while it waits.
+            priority="high",
+            title="A partner returned an assignment",
+            body=(
+                f"{getattr(principal, 'name', 'A partner')} returned "
+                f"{where} — {label}. {reason}"
+            ),
+            context_type="partner_assignment",
+            context_id=assignment.id,
+            recipients=[staff_id],
+        )
+    except Exception:  # pragma: no cover — bookkeeping must not break the flow
+        logger.warning("partner.assignment_returned notification failed", exc_info=True)

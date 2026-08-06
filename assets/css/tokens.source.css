@@ -1,0 +1,12 @@
+/*
+ * Tokens-only bundle for the sign-in layout: static/css/tokens.css (~6 KB).
+ *
+ * layouts/login.html needs the design tokens that login.css consumes, and
+ * nothing else. It used to get them by loading the whole 322 KB application
+ * bundle — 63% of a 514 KB cold sign-in, for five custom properties and no
+ * utilities at all.
+ *
+ * Rebuild with: npm run build:css
+ */
+@import "tailwindcss" source(none);
+@import "./_theme.css";

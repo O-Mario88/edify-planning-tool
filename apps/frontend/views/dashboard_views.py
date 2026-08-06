@@ -1136,7 +1136,10 @@ def pl_dashboard_drilldown_view(request):
 
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    payload = ProgramLeadDashboardService.drilldown(request.user, drill, fy=fy)
+    month = (request.GET.get("month") or "").strip() or None
+    payload = ProgramLeadDashboardService.drilldown(
+        request.user, drill, fy=fy, month=month
+    )
     return render(
         request,
         "partials/dashboards/pl/drilldown.html",
@@ -1220,92 +1223,102 @@ def pl_dashboard_approve_view(request):
 
 @require_page_permission("dashboard")
 def pl_send_urgent_action_view(request):
-    """Delegate one currently urgent team school to its supervised CCEO.
+    """Delegate one currently urgent school to the staff member who owns it.
 
-    The endpoint is intentionally idempotent: retrying the HTMX request marks
-    the same actionable notification unread instead of creating duplicates.
+    Every part of the send — the TeamAction, the notification, the message
+    thread and the audit event — happens inside `send_action`'s transaction.
+    The school leaves the unassigned card because that record now exists, so
+    there is no window in which it has been removed from the queue without
+    anyone actually having been made responsible for it.
     """
     from django.http import HttpResponseBadRequest, HttpResponseForbidden
 
+    # IA sends the issues assurance finds; PL sends the ones supervision
+    # finds. Both are delegating the same condition to the same owner.
     if (
-        request.user.active_role not in ("Program Lead", "Admin")
+        request.user.active_role
+        not in (
+            "Program Lead",
+            "ImpactAssessment",
+            "Admin",
+        )
         or request.method != "POST"
     ):
-        return HttpResponseForbidden("Program Lead only.")
+        return HttpResponseForbidden("Program Lead or Impact Assessment only.")
 
-    from apps.accounts.models import StaffSchoolAssignment
-    from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
-    from apps.analytics.pl_analytics_service import resolve_pl_scope
     from apps.core.fy import get_operational_fy
     from apps.core.scoping import resolve_user_scope
-    from apps.notifications.models import Notification
+    from apps.planning.action_service import ActionError, send_action
+    from apps.planning.urgent_attention import resolve_urgent_issue
     from apps.schools.models import School
 
     school_id = (request.GET.get("school_id") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    note = (request.POST.get("note") or "").strip()
+
     scope = resolve_user_scope(request.user)
-    if not school_id or school_id not in set(scope.team_school_ids):
-        return HttpResponseForbidden("This is not a supervised CCEO school.")
+    # IA has assurance oversight of the whole portfolio; a PL may only
+    # delegate within their own span of control.
+    permitted = (
+        set(scope.school_ids)
+        if request.user.active_role in ("ImpactAssessment", "Admin")
+        else set(scope.team_school_ids)
+    )
+    if not school_id or school_id not in permitted:
+        return HttpResponseForbidden("This school is not in your scope.")
 
     school = School.objects.filter(id=school_id).first()
     if not school:
         return HttpResponseBadRequest("School not found.")
 
-    owner_assignment = (
-        StaffSchoolAssignment.objects.filter(
-            school_id=school.id, staff_id__in=scope.supervised_staff_ids
-        )
-        .select_related("staff__user")
-        .order_by("created_at")
-        .first()
+    # Re-resolve rather than trusting anything the page posted. The card the
+    # user clicked may be minutes stale, and delegating an issue that has
+    # since been fixed would put a pointless demand on someone's desk.
+    issue = resolve_urgent_issue(school, fy, [])
+    supervised = (
+        None
+        if request.user.active_role in ("ImpactAssessment", "Admin")
+        else list(scope.supervised_staff_ids)
     )
-    owner = owner_assignment.staff if owner_assignment else None
-    if not owner or not owner.user_id:
-        return HttpResponseBadRequest(
-            "This school has no supervised CCEO available for delegation."
+
+    try:
+        action = send_action(
+            sender=request.user,
+            school=school,
+            issue=issue,
+            fy=fy,
+            note=note,
+            within_staff_ids=supervised,
+        )
+    except ActionError as exc:
+        # A refusal is information the user needs, not a server error. Rendered
+        # into the row so the reason lands where they clicked.
+        return render(
+            request,
+            "partials/dashboards/pl/urgent_action_error.html",
+            {"school": school, "error": str(exc)},
+            status=200,
         )
 
-    pls = resolve_pl_scope(request.user)
-    urgent_row = next(
-        (
-            row
-            for row in ProgramLeadDashboardService.urgent_schools(
-                request.user, pls, fy, {}, limit=5000
-            )
-            if row["id"] == school.id and row["owner_kind"] == "cceo"
-        ),
-        None,
-    )
-    if not urgent_row:
-        return HttpResponseBadRequest("This school no longer requires urgent action.")
-
-    Notification.objects.update_or_create(
-        recipient_id=owner.user_id,
-        context_type="School",
-        context_id=school.id,
-        source_event_type="urgent_school_delegated",
-        defaults={
-            "recipient_role": "CCEO",
-            "title": f"Urgent school action: {school.name}",
-            "body": (
-                f"{request.user.name} asked you to "
-                f"{urgent_row['recommended_activity_label'].lower()} "
-                f"because the school is flagged for {urgent_row['issue']}."
-            ),
-            "category": "planning",
-            "target_route": "/dashboard#urgent-schools",
-            "action_label": "Open urgent schools",
-            "action_required": True,
-            "priority": "urgent",
-            "status": "unread",
-            "source_event_id": school.id,
-            "read_at": None,
-        },
-    )
     return render(
         request,
         "partials/dashboards/pl/urgent_action_sent.html",
-        {"owner_name": owner.user.name, "school": school},
+        {
+            "owner_name": _action_recipient_name(action),
+            "school": school,
+            "action": action,
+        },
+    )
+
+
+def _action_recipient_name(action) -> str:
+    from apps.accounts.models import User
+
+    return (
+        User.objects.filter(id=action.recipient_id)
+        .values_list("name", flat=True)
+        .first()
+        or "the school's owner"
     )
 
 

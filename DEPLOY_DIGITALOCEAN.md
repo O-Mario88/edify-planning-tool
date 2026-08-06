@@ -150,38 +150,73 @@ A buildpack deployment must set `DJANGO_SETTINGS_MODULE=config.settings.collects
 for its build phase, or otherwise make the full production environment available
 at build time.
 
-## 3a. Custom domain: www.edifyplanning.app
+## 3a. Custom domain: edifyplanning.app
 
-The spec declares `www.edifyplanning.app` as `PRIMARY` and the apex
-`edifyplanning.app` as `ALIAS`. DNS is registered at GoDaddy, so choose one of
-two wirings.
+The canonical production hostname is the apex, `edifyplanning.app`; `www` is an
+alias that redirects to it. DNS can remain at GoDaddy. DigitalOcean App Platform
+publishes stable ingress A/AAAA records for externally managed DNS, so do not
+use GoDaddy Domain Forwarding and do not move nameservers solely to support the
+apex.
 
-**Keep DNS at GoDaddy.** Leave the `zone:` lines in `.do/app.yaml` commented
-out. After the first deploy, App Platform shows a CNAME target of the form
-`<app>-<hash>.ondigitalocean.app`. In GoDaddy → Domain → DNS → Records add:
+Use this order to avoid a certificate outage:
+
+1. In App Platform, open **Settings → Domains**, add `edifyplanning.app`, and
+   select **You manage your domain**.
+2. Keep the existing working `www` domain attached. The apex will sit in a
+   pending/unverified state — that is expected and is not something to wait
+   out. Certificate issuance validates over the public hostname, so it cannot
+   complete until step 4 makes the apex resolve to App Platform. Waiting for
+   the certificate before changing DNS deadlocks: neither side can go first.
+   Adding the domain here only teaches the shared ingress to answer for this
+   Host; that is the whole prerequisite.
+3. Remove GoDaddy Domain Forwarding and its parked apex A records. Forwarding
+   locks the apex A record, so it has to go before step 4 is possible at all.
+4. In GoDaddy DNS, create the records below. Leave the `zone:` lines in
+   `.do/app.yaml` commented because GoDaddy remains authoritative.
 
 | Type | Name | Value | TTL |
 |---|---|---|---|
-| CNAME | `www` | the target App Platform shows, with a trailing dot | 600 |
+| A | `@` | `162.159.140.98` | 600 |
+| A | `@` | `172.66.0.96` | 600 |
+| AAAA | `@` | `2606:4700:7::60` | 600 |
+| AAAA | `@` | `2a06:98c1:58::60` | 600 |
+| CNAME | `www` | `edify-planning-app-gu9a6.ondigitalocean.app.` | 600 |
 
-GoDaddy cannot put a CNAME on the apex. Either use GoDaddy Forwarding to send
-`edifyplanning.app` → `https://www.edifyplanning.app` as a permanent (301)
-redirect, or drop the apex entry from the spec.
+Add the AAAA pair in the same change as the A pair, not later. `www` already
+answers over IPv6 through its CNAME; once the apex becomes canonical, an apex
+with A records only would leave IPv6-first mobile clients unable to reach the
+canonical host — and the redirect from `www` would send them there anyway.
+These are DigitalOcean's published static ingress addresses, the same ingress
+the A records reach, so they add no new failure surface.
 
-**Or move DNS to DigitalOcean.** Set the GoDaddy nameservers to
-`ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`, add
-`edifyplanning.app` under Networking → Domains, then uncomment the `zone:` lines
-so App Platform manages the records. The apex then works natively.
+5. Watch for the certificate to be issued — this is the step that takes time,
+   typically minutes once resolvers return the new records. Until then the apex
+   is unreachable rather than wrong: `.app` is HSTS-preloaded, so browsers
+   refuse the plain-HTTP fallback. A blank apex during this window is expected.
 
-Either way DigitalOcean issues and renews a free Let's Encrypt certificate once
-DNS resolves — usually minutes, up to an hour if the old TTL is long.
+6. Verify both hosts serve the same release with valid TLS.
+7. Change `.do/app.yaml` to `edifyplanning.app` = `PRIMARY` and
+   `www.edifyplanning.app` = `ALIAS`, deploy, then set
+   `CANONICAL_HOST=edifyplanning.app` on the web service.
+8. Confirm `https://www.edifyplanning.app/<path>?<query>` reaches the equivalent
+   apex URL in exactly one permanent redirect.
 
-Two things about `.app` specifically:
+Verify each stage with:
 
-- It is on the HSTS preload list. Browsers refuse plain HTTP for it entirely, so
-  the site will not load *at all* until the certificate is issued. A blank page
-  during that window is expected, not a misconfiguration.
-- `SECURE_HSTS_PRELOAD` is already on in `prod.py`, which is correct here.
+```bash
+dig +short A edifyplanning.app; dig +short AAAA edifyplanning.app
+curl -sS -I https://edifyplanning.app/
+curl -sS https://edifyplanning.app/ | grep -c lander
+curl -sS -o /dev/null -L --max-redirs 10 -w 'final=%{url_effective} redirects=%{num_redirects}\n' https://www.edifyplanning.app/
+```
+
+Pass: the A/AAAA pairs match the table; the apex returns the Edify application;
+`grep -c lander` prints `0`; `www` reaches the apex in exactly one redirect.
+
+DigitalOcean issues and renews the certificate after domain validation. Because
+`.app` is HSTS-preloaded, there is no usable HTTP fallback while certificate
+issuance is pending; valid apex TLS is a hard prerequisite for the DNS cutover.
+`SECURE_HSTS_PRELOAD` is already on in `prod.py`, which is correct here.
 
 The matching application settings are in the spec: `ALLOWED_HOSTS` (without it
 Django returns `DisallowedHost` for every request), `CSRF_TRUSTED_ORIGINS`

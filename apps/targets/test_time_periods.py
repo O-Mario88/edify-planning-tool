@@ -143,20 +143,12 @@ class TimePeriodTargetsTest(TestCase):
             self.assertIn(label, html)
         self.assertNotIn("Mid-Year", html)
 
-    def test_my_target_shows_five_official_areas(self):
+    def test_my_target_does_not_invent_rows_from_official_area_catalogue(self):
         c = Client()
         c.force_login(self.cceo)
         html = c.get("/my-targets").content.decode()
-        for area in (
-            "School Visits",
-            "Cluster Meetings",
-            "Cluster Trainings",
-            "SSA Completed",
-            "MSCS",
-        ):
-            self.assertIn(area, html)
-        # Superseded areas must no longer render as target areas.
-        self.assertNotIn("New School", html)
+        self.assertIn("No measurable performance priorities agreed", html)
+        self.assertNotIn("Performance Priorities by Time Period", html)
 
     def test_core_school_tracker_tracks_4_visits_4_trainings(self):
         from apps.core_schools.models import CoreActivitySlot, CorePlan

@@ -141,8 +141,8 @@
 .hcos-search > a { display: inline-block; margin-block-start: 0.3rem; color: var(--edify-accent); font-size: var(--edify-text-micro-size); }
 
 .hcos-table-wrap { overflow-x: auto; overscroll-behavior-inline: contain; }
-.hcos-table { width: 100%; min-width: 52rem; border-collapse: collapse; font-size: var(--edify-text-label-size); }
-.hcos-table th { padding: 0.72rem 0.9rem; color: var(--edify-text-subtle); background: var(--edify-surface-muted); font-size: var(--edify-text-micro-size); font-weight: 620; letter-spacing: 0.055em; text-align: start; text-transform: uppercase; white-space: nowrap; }
+.hcos-table { width: 100%; min-width: 52rem; border-collapse: collapse; font-size: var(--edify-text-table-size); }
+.hcos-table th { padding: 0.72rem 0.9rem; color: var(--edify-text-subtle); background: var(--edify-surface-muted); font-size: var(--edify-text-table-heading-size); font-weight: 620; letter-spacing: 0.055em; text-align: start; text-transform: uppercase; white-space: nowrap; }
 .hcos-table td { padding: 0.82rem 0.9rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); line-height: 1.35; vertical-align: middle; }
 .hcos-table tbody tr:last-child td { border-bottom: 0; }
 .hcos-table tbody tr { transition: background-color var(--edify-transition-fast); }
@@ -186,7 +186,7 @@
   .hcos-table tbody { display: grid; gap: 0.7rem; padding: 0.72rem; }
   .hcos-table tr { display: grid; gap: 0.08rem; padding: 0.65rem 0.72rem; border: 1px solid var(--edify-border); border-radius: 0.55rem; background: var(--edify-surface-muted); }
   .hcos-table td { display: grid; grid-template-columns: minmax(6.5rem, 0.42fr) minmax(0, 1fr); align-items: center; gap: 0.65rem; padding: 0.28rem 0; border: 0; }
-  .hcos-table td::before { content: attr(data-label); color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 570; }
+  .hcos-table td::before { content: attr(data-label); color: var(--edify-text-subtle); font-size: var(--edify-text-table-heading-size); font-weight: 570; }
   .hcos-pagination { align-items: flex-start; flex-direction: column; }
 }
 

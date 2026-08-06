@@ -179,7 +179,12 @@ class DesignSystemContractTest(SimpleTestCase):
             self.assertNotIn("translate-x-full", popup, source)
 
     def test_tailwind_aliases_resolve_to_the_semantic_token_layer(self):
-        source = (ROOT / "assets/css/tailwind.source.css").read_text()
+        # The @theme block moved out of tailwind.source.css into _theme.css so
+        # the tokens-only sign-in bundle could be built from the same block
+        # rather than a second copy (see apps/core/tests/test_login_bundle.py).
+        # The invariant this test protects is unchanged — aliases must resolve
+        # to the semantic layer, never to literal values — only its address is.
+        theme = (ROOT / "assets/css/_theme.css").read_text()
 
         for declaration in (
             "--color-edify-primary: var(--brand-primary);",
@@ -189,7 +194,11 @@ class DesignSystemContractTest(SimpleTestCase):
             "--color-edify-text: var(--edify-text);",
             "--color-page: var(--edify-bg);",
         ):
-            self.assertIn(declaration, source)
+            self.assertIn(declaration, theme)
+
+        # And the block has to actually reach the application bundle.
+        source = (ROOT / "assets/css/tailwind.source.css").read_text()
+        self.assertIn('@import "./_theme.css"', source)
 
     def test_help_center_uses_the_shared_primary_and_radius_tokens(self):
         help_css = (ROOT / "static/css/help-center.css").read_text()
@@ -398,10 +407,7 @@ class DesignSystemContractTest(SimpleTestCase):
         # Pages that render outside the app shell own their own main landmark:
         # `base.html` declares none, so without it these have no main at all.
         # The rule this test enforces is "no *second* main inside the shell's".
-        standalone = {
-            pages / "auth/launch.html",
-            pages / "documents/canonical_document.html",
-        }
+        standalone = {pages / "documents/canonical_document.html"}
 
         for page in pages.rglob("*.html"):
             if page in standalone:

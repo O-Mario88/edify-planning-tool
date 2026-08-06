@@ -51,7 +51,14 @@
     </div>
 
     <div class="spp-table-wrap">
-      <table class="spp-table">
+      {% comment %}
+      Converted by hand rather than by the sweep: the leading cell is a bulk
+      -select checkbox under an empty <th>, so titling the first cell would put
+      the card's identity line on a checkbox. The School cell is the identity.
+      The project summary table further down is deliberately NOT converted — it
+      compares projects across six metrics, which is §17 class B.
+      {% endcomment %}
+      <table class="spp-table edify-record-table">
         <caption class="sr-only">Schools assigned to special projects and their planning readiness</caption>
         <thead><tr>
           <th scope="col" class="spp-check"><input type="checkbox" aria-label="Select all schools on this page" :checked="selected.length === {{ rows|length }} && {{ rows|length }} > 0" @change="togglePage([{% for row in rows %}'{{ row.assignment_id }}'{% if not forloop.last %},{% endif %}{% endfor %}])"></th>
@@ -61,14 +68,14 @@
           {% for row in rows %}
           <tr class="{% if selected_row.assignment_id == row.assignment_id %}is-selected{% endif %}">
             <td class="spp-check"><input type="checkbox" value="{{ row.assignment_id }}" aria-label="Select {{ row.school_name }} for bulk action" :checked="selected.includes('{{ row.assignment_id }}')" @change="toggle('{{ row.assignment_id }}')"></td>
-            <td><a class="spp-school" href="{{ row.select_url }}" hx-get="{{ row.select_url }}" hx-target="#spp-workspace" hx-push-url="true"><strong>{{ row.school_name }}</strong><small>{{ row.school_id }} · {{ row.district }}</small></a></td>
-            <td><strong class="spp-cell-title">{{ row.project_name }}</strong><small>{{ row.project_type }} · {{ row.school_type }}</small></td>
-            <td><span class="spp-status spp-status--{{ row.baseline_tone }}">{{ row.baseline_status }}</span>{% if row.average is not None %}<small>Average {{ row.average }}/10 · {{ row.risk_label }}</small>{% endif %}</td>
-            <td><span class="spp-status spp-status--{{ row.readiness_tone }}">{{ row.readiness }}</span>{% if row.planned_date %}<small>{{ row.planned_date|date:"d M Y" }} · {{ row.activity_type }}</small>{% endif %}</td>
-            <td><strong class="spp-cell-title">{{ row.weakest }}</strong>{% if row.weakest_score is not None %}<small>{{ row.weakest_score|floatformat:1 }}/10</small>{% endif %}</td>
-            <td><span class="spp-action-copy">{{ row.action }}</span></td>
-            <td><span>{{ row.partner }}</span></td>
-            <td><div class="spp-row-actions">
+            <td data-record-title><a class="spp-school" href="{{ row.select_url }}" hx-get="{{ row.select_url }}" hx-target="#spp-workspace" hx-push-url="true"><strong>{{ row.school_name }}</strong><small>{{ row.school_id }} · {{ row.district }}</small></a></td>
+            <td data-label="Project"><strong class="spp-cell-title">{{ row.project_name }}</strong><small>{{ row.project_type }} · {{ row.school_type }}</small></td>
+            <td data-label="SSA score"><span class="spp-status spp-status--{{ row.baseline_tone }}">{{ row.baseline_status }}</span>{% if row.average is not None %}<small>Average {{ row.average }}/10 · {{ row.risk_label }}</small>{% endif %}</td>
+            <td data-label="Readiness"><span class="spp-status spp-status--{{ row.readiness_tone }}">{{ row.readiness }}</span>{% if row.planned_date %}<small>{{ row.planned_date|date:"d M Y" }} · {{ row.activity_type }}</small>{% endif %}</td>
+            <td data-label="Weakest intervention"><strong class="spp-cell-title">{{ row.weakest }}</strong>{% if row.weakest_score is not None %}<small>{{ row.weakest_score|floatformat:1 }}/10</small>{% endif %}</td>
+            <td data-label="Recommended action"><span class="spp-action-copy">{{ row.action }}</span></td>
+            <td data-label="Partner"><span>{{ row.partner }}</span></td>
+            <td data-record-action><div class="spp-row-actions">
               {% if row.action_kind == 'schedule' and can_schedule %}<button type="button" hx-get="{{ row.schedule_url }}" hx-target="#drawer-container" hx-swap="innerHTML"><svg class="shrink-0 h-4 w-4 inline-block align-middle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule</button>{% else %}<a href="{{ row.my_plan_url }}">My Plan</a>{% endif %}
               {% if can_assign_partner %}<button type="button" class="is-secondary" hx-get="{{ row.partner_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Partner</button>{% endif %}
             </div></td>

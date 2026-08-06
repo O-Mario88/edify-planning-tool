@@ -394,6 +394,97 @@ def _school_quality_todos(scope):
     return todos
 
 
+def _school_action_todos(principal):
+    """A school issue delegated to me by my PL or IA.
+
+    Derived rather than stored, like every other To-Do here. A TeamAction is
+    already a persistent, auto-closing record of the responsibility — writing a
+    second row alongside it would need its own sync to disappear when the
+    action resolves, which is precisely the drift this module avoids. The
+    TeamAction IS the durable record; this is its view in the operating queue.
+
+    Escalated actions still appear: escalation adds an observer, it does not
+    move the work off the recipient's desk.
+    """
+    from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+    user_id = getattr(principal, "id", None)
+    if not user_id:
+        return []
+
+    actions = list(
+        TeamAction.objects.filter(
+            recipient_id=user_id, state__in=ACTIVE_STATES
+        ).order_by("due_date", "created_at")[:25]
+    )
+    if not actions:
+        return []
+
+    # Two small lookups scoped to this page's rows. Loading every school name
+    # would be 15k rows to label at most 25.
+    from apps.accounts.models import User
+    from apps.schools.models import School
+
+    school_names = dict(
+        School.objects.filter(id__in={a.school_id for a in actions}).values_list(
+            "id", "name"
+        )
+    )
+    sender_names = dict(
+        User.objects.filter(id__in={a.sender_id for a in actions}).values_list(
+            "id", "name"
+        )
+    )
+
+    today = date.today()
+    todos = []
+    for a in actions:
+        school_name = school_names.get(a.school_id, "School")
+        # _due returns (label, tone, sort_key) — the same triple every other
+        # derivation here unpacks, so the due column reads and sorts
+        # identically whether a row came from an activity or an action.
+        due_label, due_tone, due_sort = _due(a.due_date, today)
+
+        if a.due_date and a.due_date < today:
+            status_key, status_label, status_tone = "overdue", "Overdue", "danger"
+        elif a.due_date == today:
+            status_key, status_label, status_tone = "due_today", "Due Today", "warning"
+        elif a.state == "blocked":
+            status_key, status_label, status_tone = "blocked", "Blocked", "neutral"
+        else:
+            status_key, status_label, status_tone = (
+                "waiting_me",
+                "Waiting on Me",
+                "info",
+            )
+
+        todos.append(
+            {
+                # Keyed by action id so the row is stable across refreshes and
+                # cannot collide with the activity-derived To-Dos above.
+                "id": f"tact-{a.id}",
+                "title": a.requested_action,
+                "description": school_name,
+                "category": "Urgent Attention",
+                "priority": "critical" if a.severity == "critical" else "high",
+                "status_key": status_key,
+                "status_label": status_label,
+                "status_tone": status_tone,
+                "due_label": due_label,
+                "due_tone": due_tone,
+                "linked": school_name,
+                "action_label": "Open",
+                # The route recorded when the action was sent — straight to the
+                # work rather than to a dashboard to search from.
+                "action_url": a.workflow_route,
+                "actionable": True,
+                "source": f"Sent by {sender_names.get(a.sender_id, 'your lead')}",
+                "_due_sort": due_sort,
+            }
+        )
+    return todos
+
+
 def _ia_todos(principal, role):
     if role not in ("ImpactAssessment", "Admin"):
         return []
@@ -465,6 +556,67 @@ def _pl_review_todos(principal, role):
                 "actionable": True,
                 "source": "Activity workflow",
                 "_due_sort": date.max,
+            }
+        )
+    return todos
+
+
+def _returned_assignment_todos(principal, scope, today):
+    """Partner work handed back to me, still undecided.
+
+    A returned assignment is work that will not happen until the staff member
+    who assigned it does something — revise it, give it to another partner,
+    schedule it themselves or cancel it. The notification announces the return
+    once; this is what keeps it in a queue afterwards, and it closes itself as
+    soon as the status moves off `returned_to_staff`.
+    """
+    from apps.partners.models import PartnerAssignment
+
+    owner_ids = _owner_ids(principal, scope)
+    if not owner_ids:
+        return []
+    returned = (
+        PartnerAssignment.objects.filter(
+            status=PartnerAssignment.STATUS_RETURNED_TO_STAFF,
+            assigning_staff_id__in=owner_ids,
+        )
+        .select_related("school", "cluster", "partner")
+        .order_by("-returned_at")[:10]
+    )
+    todos = []
+    for a in returned:
+        where = (
+            a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "an assignment")
+        )
+        label = a.get_return_reason_category_display() or "no category"
+        days = (today - a.returned_at.date()).days if a.returned_at else 0
+        todos.append(
+            {
+                "id": f"pret-{a.id}",
+                "title": "Reassign Returned Partner Work",
+                "description": (
+                    f"{a.partner.name} returned {where} — {label}. "
+                    f"{(a.return_reason or '')[:120]}"
+                ),
+                "category": "Partner",
+                "priority": "high",
+                "status_key": "returned",
+                "status_label": "Returned to you",
+                "status_tone": "warning",
+                "due_label": (
+                    f"Waiting {days} day{'s' if days != 1 else ''}"
+                    if days
+                    else "Returned today"
+                ),
+                "due_tone": "warning" if days < 3 else "danger",
+                "linked": f"{where} · {a.partner.name}",
+                "action_label": "Review",
+                "action_url": "/partners",
+                "actionable": True,
+                "source": "Partner workflow",
+                "_due_sort": a.returned_at.date() if a.returned_at else date.max,
             }
         )
     return todos
@@ -1863,8 +2015,12 @@ def get_todos(principal) -> dict:
 
     todos = []
     todos += _activity_todos(principal, scope, today, fy)
+    # Delegated urgent-school issues. Ahead of the rest because a school
+    # someone escalated to you by name outranks routine queue work.
+    todos += _school_action_todos(principal)
     todos += _pl_review_todos(principal, role)
     todos += _partner_delay_todos(principal, scope, today)
+    todos += _returned_assignment_todos(principal, scope, today)
     todos += _fund_request_todos(principal, role)
     todos += _school_quality_todos(scope)
     todos += _ia_todos(principal, role)

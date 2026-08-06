@@ -80,7 +80,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         entry_points = [
             "templates/base.html",
             "templates/layouts/login.html",
-            "templates/pages/auth/launch.html",
             "templates/pages/help/print_article.html",
             "templates/pages/help/manual_export.html",
         ]
@@ -226,8 +225,13 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         the same geometry, at values matching nothing in the spec. Every card
         and control on the platform rendered a step rounder than approved.
         """
-        source = _read("assets/css/tailwind.source.css")
+        # The @theme block moved out of tailwind.source.css into _theme.css so
+        # the sign-in page could get the tokens without the 322 KB application
+        # bundle (apps/core/tests/test_login_bundle.py). Still defined ONCE —
+        # both tailwind.source.css and tokens.source.css import that one block.
+        source = _read("assets/css/_theme.css")
         compiled = _read("static/css/main.css")
+        token_bundle = _read("static/css/tokens.css")
         tokens = _read("static/css/design-system.css")
 
         for declaration in (
@@ -236,10 +240,17 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--radius-overlay: 16px",
         ):
             self.assertIn(
-                declaration, source, f"{declaration} missing from Tailwind source"
+                declaration, source, f"{declaration} missing from the shared @theme"
             )
             self.assertIn(
                 declaration, compiled, f"{declaration} missing from compiled main.css"
+            )
+            self.assertIn(
+                declaration,
+                token_bundle,
+                f"{declaration} missing from tokens.css — sign-in reads the radii "
+                "from login.css without using a rounded-* utility, so a non-static "
+                "@theme tree-shakes them away and every radius there renders 0.",
             )
 
         # No second definition anywhere else in the loaded cascade.
@@ -248,7 +259,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 f"{token}:",
                 tokens,
                 f"{token} must not be redefined in design-system.css — it is "
-                "defined once in assets/css/tailwind.source.css.",
+                "defined once in assets/css/_theme.css.",
             )
 
     def test_sign_in_layout_is_not_a_design_system_island(self):
@@ -258,11 +269,18 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         and had drifted to nine bespoke radii (.95rem, .72rem, 1.5rem, .7rem,
         .78rem, .92rem, .75rem, 999px, 50%) on the first screen every user
         sees. That is the "page-specific design language" §1 forbids.
+
+        The token layer arrives as tokens.css rather than main.css now. The
+        requirement was never "load the application bundle" — it was "consume
+        the canonical tokens instead of inventing values", and tokens.css is
+        built from the same assets/css/_theme.css main.css is. Loading the
+        whole bundle for five custom properties cost 322 KB on the first screen
+        every user sees; see apps/core/tests/test_login_bundle.py.
         """
         layout = _read("templates/layouts/login.html")
         login_css = _read("static/css/login.css")
 
-        self.assertIn("css/main.css", layout)
+        self.assertIn("css/tokens.css", layout)
         self.assertIn("css/design-system.css", layout)
 
         # Radii come from the token scale. The only literals allowed are the
@@ -1290,6 +1308,29 @@ class TypeScaleFloorTest(SimpleTestCase):
                     offenders.append(f"{path.relative_to(ROOT)}: fontSize {value}px")
         self.assertEqual(offenders, [], f"chart text below the floor: {offenders}")
 
+    def test_table_structure_does_not_use_micro_typography(self):
+        """Rows and headers are operational data, not badge-sized metadata."""
+        rule_pattern = re.compile(r"([^{}]+)\{([^{}]*)\}", re.S)
+        table_role = re.compile(
+            r"table|(?:^|[\s>+~,])(?:thead|tbody|th|td)(?:\b|[:.#\[])"
+        )
+        compact_metadata = re.compile(
+            r"small|caption|footer|badge|status|overline|eyebrow"
+        )
+        offenders = []
+        for path in self._source_stylesheets():
+            text = path.read_text(encoding="utf-8")
+            for selector, body in rule_pattern.findall(text):
+                if not table_role.search(selector):
+                    continue
+                if compact_metadata.search(selector):
+                    continue
+                if "font-size: var(--edify-text-micro-size)" in body:
+                    offenders.append(
+                        f"{path.name}: {' '.join(selector.split())[-100:]}"
+                    )
+        self.assertEqual(offenders, [], f"micro-sized table structure: {offenders}")
+
     def test_inline_template_css_respects_the_twelve_pixel_floor(self):
         declaration_pattern = re.compile(r"font-size\s*:\s*([^;}{]+)")
         value_pattern = re.compile(r"(\d*\.?\d+)(px|rem)")
@@ -1355,6 +1396,45 @@ class StableTypographyContractTest(SimpleTestCase):
             consistency,
         )
 
+    def test_responsive_svg_text_uses_screen_stable_typography(self):
+        """A viewBox must not scale the app's semantic font sizes."""
+        offenders = []
+        svg_pattern = re.compile(r"<svg\b(?P<attrs>[^>]*)>(?P<body>.*?)</svg>", re.S)
+        for path in (ROOT / "templates").rglob("*.html"):
+            for match in svg_pattern.finditer(path.read_text(encoding="utf-8")):
+                if "<text" not in match.group("body"):
+                    continue
+                if "data-edify-svg-typography" not in match.group("attrs"):
+                    offenders.append(str(path.relative_to(ROOT)))
+        self.assertEqual(
+            offenders, [], f"responsive SVG text without sizing: {offenders}"
+        )
+
+        # The regional map creates its text nodes in JavaScript, so it cannot
+        # be discovered by the literal <text> scan above.
+        map_template = _read("templates/partials/analytics/regional_performance.html")
+        self.assertIn("data-edify-svg-typography", map_template)
+
+    def test_svg_typography_runtime_uses_tokens_and_tracks_layout_changes(self):
+        base = _read("templates/base.html")
+        runtime = _read("static/js/svg-typography.js")
+
+        self.assertIn("js/svg-typography.js", base)
+        self.assertIn("ResizeObserver", runtime)
+        self.assertIn("htmx:afterSwap", runtime)
+        self.assertIn("svg.viewBox.baseVal", runtime)
+        self.assertIn("rect.width / viewBox.width", runtime)
+        self.assertIn("`${size / scale}px`", runtime)
+        self.assertIn("20260804svgtype2", base)
+        for token in (
+            "--edify-text-micro-size",
+            "--edify-text-label-size",
+            "--edify-text-body-size",
+            "--edify-text-title-size",
+        ):
+            self.assertIn(token, runtime)
+        self.assertIn("`--edify-svg-text-${tier}`", runtime)
+
     def test_compact_scale_has_small_caps_without_sub_twelve_pixel_text(self):
         tokens = _read("static/css/design-system.css")
 
@@ -1367,6 +1447,10 @@ class StableTypographyContractTest(SimpleTestCase):
             "--edify-text-micro-size:   var(--edify-text-floor);",
         ):
             self.assertIn(expected, tokens)
+        self.assertIn(
+            "--edify-text-table-heading-size: var(--edify-text-table-size);",
+            tokens,
+        )
 
     def test_metric_labels_yield_columns_instead_of_wrapping(self):
         components = _read("static/css/components.css")
@@ -1399,6 +1483,12 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("--edify-text-table-size", _read("static/css/design-system.css"))
         self.assertIn("container: edify-table / inline-size", platform)
         self.assertIn("font-size: var(--edify-text-table-size) !important", platform)
+        self.assertIn(".drawer-body table th {", platform)
+        self.assertIn(".drawer-body table td {", platform)
+        self.assertNotIn(
+            "--edify-text-table-heading-size: 0.8125rem;",
+            _read("static/css/design-system.css"),
+        )
         self.assertIn("text-wrap: nowrap", platform)
         self.assertIn("white-space: nowrap", platform)
         self.assertIn("overflow-x: auto", platform)

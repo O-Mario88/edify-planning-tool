@@ -1,6 +1,7 @@
 from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
+    action_views,
     work_plan_views,
     visit_effectiveness_views,
     pwa_views,
@@ -126,6 +127,22 @@ urlpatterns = [
         "dashboard/pl-send-urgent-action",
         dashboard_views.pl_send_urgent_action_view,
         name="pl_send_urgent_action",
+    ),
+    # School actions: the sender's monitoring board and the recipient's queue.
+    path(
+        "actions/sent",
+        action_views.actions_sent_view,
+        name="actions_sent",
+    ),
+    path(
+        "actions/mine",
+        action_views.my_actions_view,
+        name="my_actions",
+    ),
+    path(
+        "actions/<str:action_id>/<str:transition>",
+        action_views.action_transition_view,
+        name="action_transition",
     ),
     path(
         "dashboard/cd-approve",
@@ -413,6 +430,11 @@ urlpatterns = [
         analytics_views.combine_map_boundaries_view,
         name="combine_map_boundaries",
     ),
+    path(
+        "api/analytics/map-subcounties",
+        analytics_views.map_subcounty_metrics_view,
+        name="map_subcounty_metrics",
+    ),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
     path(
         "my-plan/<str:activity_id>",
@@ -631,6 +653,11 @@ urlpatterns = [
         "analytics/country-director/drilldown",
         analytics_views.cd_analytics_drilldown_view,
         name="cd_analytics_drilldown",
+    ),
+    path(
+        "analytics/country-director/ssa-heatmap",
+        analytics_views.cd_ssa_heatmap_view,
+        name="cd_ssa_heatmap",
     ),
     path(
         "analytics/country-director/export",
@@ -1290,6 +1317,16 @@ urlpatterns = [
         name="partner_schedule_assignment_action",
     ),
     path(
+        "partner/assignments/<str:assignment_id>/return-drawer",
+        partner_views.partner_return_assignment_drawer,
+        name="partner_return_assignment_drawer",
+    ),
+    path(
+        "partner/assignments/<str:assignment_id>/return-action",
+        partner_views.partner_return_assignment_action,
+        name="partner_return_assignment_action",
+    ),
+    path(
         "partner/evidence", partner_views.partner_evidence_view, name="partner_evidence"
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
@@ -1768,6 +1805,7 @@ urlpatterns = [
     path("offboarding", hr_views.offboarding_view, name="offboarding"),
     path("hr-analytics", hr_views.hr_analytics_view, name="hr_analytics"),
     path("hr-audit-log", hr_views.hr_audit_log_view, name="hr_audit_log"),
-    # A brief branded hand-off before the regular login flow.
-    path("", auth_views.splash_view, name="index"),
+    # Render sign-in directly. A former launch screen added a client-side timer
+    # and two extra assets before the first useful interaction.
+    path("", auth_views.login_view, name="index"),
 ]

@@ -6,7 +6,7 @@ import json
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from apps.core.permissions import require_export_permission, require_page_permission
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
@@ -709,11 +709,64 @@ def cd_analytics_view(request):
         **data,
         "month_options": month_options,
         "month": (month or ""),
+        # The heatmap ships rendered at district and swaps level on demand; the
+        # tabs need their labels on the first paint too.
+        "heatmap_levels": _heatmap_level_choices(),
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/analytics/cd/body.html", context)
     return render(request, "pages/analytics/cd_analytics.html", context)
+
+
+@require_page_permission("cd_analytics")
+def cd_ssa_heatmap_view(request):
+    """One level of the SSA heatmap, fetched on demand by the card's tabs.
+
+    Separate from the page so switching level costs one small partial rather
+    than rebuilding the whole CD cockpit — and so the three levels nobody is
+    looking at are never computed. The page ships with district rendered; the
+    rest arrive when asked for.
+    """
+    from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
+
+    level = (request.GET.get("level") or "district").strip()
+    # `get_dashboard` normalises this before resolving scope; calling
+    # resolve_cd_scope directly does not, and a None fy reaches a queryset as
+    # `fy=None` — "Cannot use None as a query value", a 500 on a bare GET.
+    # The route crawl caught it.
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    month = (request.GET.get("month") or "").strip() or None
+    cd = resolve_cd_scope(fy, quarter=quarter, month=month)
+    return render(
+        request,
+        "partials/analytics/cd/district_heatmap.html",
+        {
+            "district_heatmap": CDAnalyticsService.ssa_heatmap(cd, level),
+            "heatmap_levels": _heatmap_level_choices(),
+            "fy": fy,
+            "quarter": quarter or "",
+            "month": month or "",
+        },
+    )
+
+
+def _heatmap_level_choices():
+    """(value, label) for the SSA heatmap's level tabs, in geographic order.
+
+    Ordered widest-first because that is how somebody reads down to a problem —
+    region to district to sub-county — with cluster last since it cuts across
+    geography rather than nesting inside it.
+    """
+    from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+    # Widest first, following the real hierarchy:
+    # Region -> Sub-Region -> District -> Sub-County. Cluster is last
+    # because it cuts across geography rather than nesting inside it.
+    order = ["region", "sub_region", "district", "sub_county", "cluster"]
+    levels = CDAnalyticsService.HEATMAP_LEVELS
+    return [(key, levels[key][2]) for key in order if key in levels]
 
 
 @require_page_permission("cd_analytics")
@@ -827,3 +880,36 @@ def combine_map_boundaries_view(request):
         for feature_id, keys in list(groups.items())[:5000]
     }
     return JsonResponse({"combined": combine_boundaries(cleaned)})
+
+
+@require_GET
+@require_page_permission("analytics")
+def map_subcounty_metrics_view(request):
+    """Return fresh marker aggregates for one district map drill-down.
+
+    Dashboard HTML is deliberately cached, but school geography is mutable.
+    Keeping this small response uncached lets a saved sub-county/parish move a
+    marker immediately without discarding the much larger analytics cache or
+    refetching country-wide boundary geometry.
+    """
+    district_id = (request.GET.get("district_id") or "").strip()
+    district = District.objects.filter(id=district_id).first()
+    if district is None:
+        return JsonResponse({"detail": "District not found."}, status=404)
+
+    fy = (request.GET.get("fy") or get_operational_fy()).strip()
+    if not fy.isdigit():
+        return JsonResponse({"detail": "Fiscal year must be numeric."}, status=400)
+
+    from apps.analytics.subcounty_insight import subcounty_insight
+
+    payload = subcounty_insight(
+        fy,
+        schools=School.objects.filter(
+            deleted_at__isnull=True,
+            district_id=district.id,
+        ),
+    )
+    response = JsonResponse(payload)
+    response["Cache-Control"] = "private, no-store"
+    return response

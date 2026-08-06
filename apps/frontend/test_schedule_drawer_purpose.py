@@ -52,7 +52,7 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertIn("SSA interventions performing poorly", source)
         self.assertIn("{% for r in recommendations %}", source)
 
-    def test_the_engine_no_longer_chooses_the_activity(self):
+    def test_the_engine_no_longer_exposes_a_catalogue_picker(self):
         source = _drawer_source()
         self.assertNotIn(
             '<legend class="edify-text-caption font-bold uppercase tracking-wider '
@@ -60,6 +60,7 @@ class DrawerAsksForPurposeTest(TestCase):
             source,
         )
         self.assertNotIn('name="catalogue_choice"', source)
+        self.assertNotIn('type="radio" name="catalogue_item_id"', source)
 
     def test_focus_intervention_remains_selectable(self):
         source = _drawer_source()
@@ -114,6 +115,13 @@ class PurposeDrivesCostingTest(TestCase):
         self.assertEqual(
             purpose_activity_type("ssa_support"), "school_visit_ssa_collection"
         )
+
+    def test_visible_ssa_recommendation_is_preserved_for_ambiguous_workflows(self):
+        """The purpose chooses the workflow; the visible SSA recommendation
+        disambiguates the governed catalogue row that supplies provenance."""
+        source = _drawer_source()
+        self.assertIn('name="catalogue_item_id"', source)
+        self.assertIn('value="{{ selected_catalogue_item.catalogueItemId }}"', source)
 
 
 class CatalogueResolverTest(TestCase):

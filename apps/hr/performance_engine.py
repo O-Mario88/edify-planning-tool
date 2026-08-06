@@ -22,7 +22,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
-from apps.targets.my_targets import IA_VERIFIED_STATUSES
+from apps.targets.my_targets import IA_VERIFIED_STATUSES, PERFORMANCE_METRIC_TO_AREA
 
 
 # ── Canonical metric registry ────────────────────────────────────────────────
@@ -43,6 +43,7 @@ METRIC_KEYS = {
     # distinct to give them and quietly hands everyone the same target.
     "team_ssa_coverage": "Verified SSA coverage across the supervised team",
     "ssa_verification_sla": "SSAs verified, of those submitted for review",
+    "mscs": "Approved Most Significant Change Stories",
 }
 
 
@@ -224,6 +225,17 @@ def live_progress(priority) -> dict:
         ).count()
         total = cleared + returned
         actual = round(100 * cleared / total) if total else 0
+    elif key == "mscs":
+        from apps.core.fy import get_fy_date_range
+        from apps.targets.models import MostSignificantChangeStory
+
+        start, end = get_fy_date_range(fy)
+        actual = MostSignificantChangeStory.objects.filter(
+            user_id=staff.user_id,
+            status="approved",
+            story_date__gte=start,
+            story_date__lt=end,
+        ).count()
 
     target = priority.target_number
     pct = round(100 * actual / target) if target else None
@@ -452,6 +464,26 @@ def milestone_metrics(priority) -> list[dict]:
             {"label": "Core Assessments", "value": core_done, "kind": "auto"},
         ]
 
+    elif key == "mscs":
+        from apps.core.fy import get_fy_date_range
+        from apps.targets.models import MostSignificantChangeStory
+
+        start, end = get_fy_date_range(fy)
+        approved = MostSignificantChangeStory.objects.filter(
+            user_id=staff.user_id,
+            status="approved",
+            story_date__gte=start,
+            story_date__lt=end,
+        ).count()
+        rows += [
+            {
+                "label": "MSCS target",
+                "value": priority.target_number,
+                "kind": "target",
+            },
+            {"label": "Approved MSCS", "value": approved, "kind": "auto"},
+        ]
+
     return rows
 
 
@@ -561,12 +593,22 @@ DEFAULT_TEMPLATES = {
 }
 
 
-def build_draft_agreement(staff, cycle, principal) -> "object":
-    """Generate the draft Priority Agreement from role template + portfolio.
+def build_draft_agreement(
+    staff,
+    cycle,
+    principal,
+    *,
+    include_role_templates: bool = True,
+    due_date=None,
+) -> "object":
+    """Generate a draft agreement from governed priorities and the portfolio.
 
     Denominators come from the REAL portfolio at build time — assigned
     schools for SSA, the same count for the annual visit entitlement — so
-    '100%' always renders with its divisor. Idempotent per (staff, fy).
+    '100%' always renders with its divisor. ``include_role_templates=False``
+    is the new-FY production path: only priorities leadership/users actually
+    set are cascaded; the legacy templates remain available solely for older
+    callers and historical compatibility. Idempotent per (staff, fy).
     """
     from apps.hr.models import (
         PerformancePriority,
@@ -582,15 +624,21 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
         return existing
 
     role = staff.user.active_role if staff.user_id else ""
-    rows = list(RolePriorityTemplate.objects.filter(role=role).order_by("sequence"))
-    template = (
-        [
-            (r.priority_layer, r.outcome_statement, r.metric_key, r.default_weight)
-            for r in rows
-        ]
-        if rows
-        else DEFAULT_TEMPLATES.get(role, DEFAULT_TEMPLATES["CCEO"])
+    rows = (
+        list(RolePriorityTemplate.objects.filter(role=role).order_by("sequence"))
+        if include_role_templates
+        else []
     )
+    template = []
+    if include_role_templates:
+        template = (
+            [
+                (r.priority_layer, r.outcome_statement, r.metric_key, r.default_weight)
+                for r in rows
+            ]
+            if rows
+            else DEFAULT_TEMPLATES.get(role, DEFAULT_TEMPLATES["CCEO"])
+        )
 
     school_count = len(_assigned_school_ids(staff))
     denominators = {
@@ -600,6 +648,7 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
         "partner_supported_schools": None,  # open-ended: growth, not a cap
         "accountability_quality": 100,
         "cluster_meetings": None,
+        "mscs": None,
         "core_slots": None,
         "new_schools": None,
     }
@@ -610,7 +659,9 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
             fy=cycle.fy,
             review_type=ReviewType.ANNUAL_PRIORITIES,
             period=f"FY{cycle.fy}",
-            due_date=_fy_start(str(int(cycle.fy) + 1)),
+            due_date=due_date or _fy_start(str(int(cycle.fy) + 1)),
+            stage="priorities_draft",
+            status="Priorities drafting",
         )
         for i, (layer, category, outcome, metric, weight) in enumerate(
             template, start=1
@@ -644,12 +695,18 @@ def build_draft_agreement(staff, cycle, principal) -> "object":
         # commitments and reflections only, no counts anywhere near them.
         from apps.hr.models import ValueCommitment
 
-        for name in EDIFY_VALUES:
-            ValueCommitment.objects.create(review=review, kind="value", value_name=name)
-        ValueCommitment.objects.create(
-            review=review,
-            kind="spiritual",
-            value_name="Spiritual Formation priority",
+        ValueCommitment.objects.bulk_create(
+            [
+                *[
+                    ValueCommitment(review=review, kind="value", value_name=name)
+                    for name in EDIFY_VALUES
+                ],
+                ValueCommitment(
+                    review=review,
+                    kind="spiritual",
+                    value_name="Spiritual Formation priority",
+                ),
+            ]
         )
     try:
         from apps.audit.services import log as audit_log
@@ -815,14 +872,17 @@ def close_window(cycle, principal):
     cycle.save(update_fields=["active_window", "updated_at"])
 
 
-def take_snapshot(review, window: str):
+def take_snapshot(review, window: str, *, known_missing: bool = False):
     """Freeze the live figures for one review. Idempotent per window; an
     existing snapshot is never overwritten — that is the whole point."""
     from apps.hr.models import PerformanceSnapshot
 
-    existing = PerformanceSnapshot.objects.filter(review=review, window=window).first()
-    if existing:
-        return existing
+    if not known_missing:
+        existing = PerformanceSnapshot.objects.filter(
+            review=review, window=window
+        ).first()
+        if existing:
+            return existing
     rows = []
     for p in review.priorities.all():
         progress = live_progress(p)
@@ -848,6 +908,7 @@ def take_snapshot(review, window: str):
             employee_id=staff_id,
             status__in=["approved", "active"],
             milestone__requires_definition=False,
+            milestone__priority__fy=review.fy,
         )
         .select_related("milestone__priority")
         .prefetch_related("period_targets")
@@ -1137,12 +1198,7 @@ def flag_performance_support(review, reason: str, principal):
 # quality are performance priorities without a personal target area, and
 # inventing one for them would create the second target system the mandate
 # forbids.
-_METRIC_TO_AREA = {
-    "direct_visits": "school_visits",
-    "cluster_meetings": "cluster_meetings",
-    "trainings": "cluster_trainings",
-    "ssa_coverage": "ssa_completed",
-}
+_METRIC_TO_AREA = PERFORMANCE_METRIC_TO_AREA
 
 # Default quarterly phasing (§12). Configurable per cycle later; stated here
 # so the split is visible rather than implied by an even division.
@@ -1189,7 +1245,20 @@ def sync_targets_from_agreement(review, principal=None) -> int:
         )
     written = 0
     with transaction.atomic():
-        for p in review.priorities.all():
+        priorities = list(review.priorities.all())
+        assigned_area_keys = {
+            PERFORMANCE_METRIC_TO_AREA.get(priority.metric_key or "")
+            for priority in priorities
+            if (priority.target_number or 0) > 0
+        }
+        assigned_area_keys.discard(None)
+        mapped_area_keys = set(PERFORMANCE_METRIC_TO_AREA.values())
+        MonthlyPersonalTarget.objects.filter(
+            user_id=user_id,
+            fy=review.fy,
+            area__key__in=mapped_area_keys - assigned_area_keys,
+        ).delete()
+        for p in priorities:
             area_key = _METRIC_TO_AREA.get(p.metric_key or "")
             if not area_key or area_key not in areas:
                 continue

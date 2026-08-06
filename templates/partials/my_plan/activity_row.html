@@ -5,7 +5,13 @@ Was a bare three-dot glyph — an unlabelled affordance that hid every action
 behind a guess. It is the same labelled "Actions" control the Overdue From Last
 Week rows use, so one pattern covers both tables.
 {% endcomment %}
-<td class="px-3 py-2.5 text-right">
+{% comment %}
+data-record-action is what makes this the card's full-width control below lg
+(see .edify-record-table in css/components/mobile-shell.css). It is on the
+shared partial, so every My Plan table gets the same thumb-height control
+rather than four separate opinions about it.
+{% endcomment %}
+<td class="px-3 py-2.5 text-right" data-record-action>
   <div class="row-menu" x-data="rowMenu"
      @keydown.escape.window="close()" @click.outside="close()"
      @scroll.window.capture.passive="reposition()" @resize.window="reposition()">

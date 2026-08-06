@@ -45,6 +45,12 @@ class UnhandledRequestAuditTest(SimpleTestCase):
                     "method": "POST",
                     "path": "/team-targets/catchup",
                     "exception_type": "RuntimeError",
+                    # Where it was raised, so a failure stays diagnosable after
+                    # its container is gone. file:line:function only — this
+                    # assertion is exact equality precisely so that anything
+                    # carrying data, the exception message included, fails here
+                    # rather than reaching an exportable audit table.
+                    "origin": [],
                 },
             },
         )

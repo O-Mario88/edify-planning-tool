@@ -17,6 +17,7 @@ record; every gap has a reason; every focus area has a real next action.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import date
 
 from django.utils import timezone
@@ -66,6 +67,31 @@ AREA_SOURCES = {
     "ssa_completed": ("ssa_record", None),
     "mscs": ("mscs", None),
 }
+
+# Performance agreements are the authority for which measurable priorities
+# appear on My Targets and Team Targets.  TargetArea remains the canonical
+# achievement-ledger dimension; it no longer decides which rows a person sees.
+PERFORMANCE_METRIC_TO_AREA = {
+    "direct_visits": "school_visits",
+    "cluster_meetings": "cluster_meetings",
+    "trainings": "cluster_trainings",
+    "ssa_coverage": "ssa_completed",
+    "mscs": "mscs",
+}
+
+
+@dataclass(frozen=True)
+class PriorityTargetArea:
+    """A user-owned performance priority projected onto the target ledger."""
+
+    key: str
+    label: str
+    weight: int
+    sort_order: int
+    annual_target: int | None = None
+    priority_id: str | None = None
+    source: str = "performance_priority"
+
 
 # Annual StaffTargetProfile fallback per area (used only when no explicit
 # monthly targets exist — split across 12 months, remainder to early months,
@@ -137,6 +163,136 @@ def active_target_areas() -> list[TargetArea]:
     if bucket is not None:
         bucket["target_areas"] = repaired
     return repaired
+
+
+def priority_target_areas_for_users(
+    users, fy: str
+) -> dict[str, list[PriorityTargetArea]]:
+    """Return the measurable target rows each user actually owns for ``fy``.
+
+    An agreed annual performance review is authoritative.  Older installations
+    may have monthly targets that pre-date performance agreements; those rows
+    are retained as a per-user compatibility fallback, but the global
+    TargetArea catalogue is never used by itself to invent dashboard rows.
+
+    The team service calls this once for its complete roster, so the review,
+    priority, and legacy-target lookups remain bounded rather than becoming an
+    N+1 query per supervised employee.
+    """
+
+    users = [user for user in users if getattr(user, "staff_profile_id", None)]
+    result = {str(user.id): [] for user in users}
+    if not users:
+        return result
+
+    from django.db.models import Prefetch
+
+    from apps.hr.models import (
+        PerformancePriority,
+        PerformanceReview,
+        ReviewStage,
+        ReviewType,
+    )
+
+    users_by_staff = {str(user.staff_profile_id): user for user in users}
+    priority_qs = PerformancePriority.objects.order_by("sequence", "created_at")
+    reviews = (
+        PerformanceReview.objects.filter(
+            staff_id__in=list(users_by_staff),
+            fy=fy,
+            review_type=ReviewType.ANNUAL_PRIORITIES,
+        )
+        .exclude(
+            stage__in=(
+                ReviewStage.NOT_STARTED,
+                ReviewStage.PRIORITIES_DRAFT,
+                ReviewStage.PRIORITIES_MANAGER_REVIEW,
+            )
+        )
+        .prefetch_related(Prefetch("priorities", queryset=priority_qs))
+        .order_by("staff_id", "-updated_at")
+    )
+
+    # Only the most recently updated agreed review for a staff/FY can drive a
+    # dashboard.  Historic duplicate reviews remain auditable but cannot add
+    # duplicate target rows.
+    review_by_staff = {}
+    for review in reviews:
+        review_by_staff.setdefault(str(review.staff_id), review)
+    agreed_user_ids = {
+        str(users_by_staff[staff_id].id)
+        for staff_id in review_by_staff
+        if staff_id in users_by_staff
+    }
+
+    canonical = {area.key: area for area in active_target_areas()}
+    for staff_id, review in review_by_staff.items():
+        user = users_by_staff.get(staff_id)
+        if user is None:
+            continue
+        seen_keys = set()
+        rows = []
+        for priority in review.priorities.all():
+            area_key = PERFORMANCE_METRIC_TO_AREA.get(priority.metric_key or "")
+            annual_target = priority.target_number or 0
+            if (
+                not area_key
+                or area_key not in canonical
+                or area_key in seen_keys
+                or annual_target <= 0
+            ):
+                continue
+            seen_keys.add(area_key)
+            rows.append(
+                PriorityTargetArea(
+                    key=area_key,
+                    label=priority.outcome_statement,
+                    weight=priority.weight,
+                    sort_order=priority.sequence,
+                    annual_target=annual_target,
+                    priority_id=str(priority.id),
+                )
+            )
+        result[str(user.id)] = rows
+
+    # Compatibility for data created before agreements became the source of
+    # truth: use only areas with an explicit target for that user/FY.  This is
+    # still user-scoped data, never the five-row global catalogue.
+    fallback_user_ids = [
+        user_id
+        for user_id, rows in result.items()
+        if not rows and user_id not in agreed_user_ids
+    ]
+    if fallback_user_ids:
+        legacy_rows = (
+            MonthlyPersonalTarget.objects.filter(
+                user_id__in=fallback_user_ids,
+                fy=fy,
+                target__gt=0,
+            )
+            .select_related("area")
+            .order_by("user_id", "area__sort_order", "month_of_fy")
+        )
+        seen_legacy = set()
+        for target in legacy_rows:
+            marker = (str(target.user_id), target.area.key)
+            if marker in seen_legacy:
+                continue
+            seen_legacy.add(marker)
+            result[str(target.user_id)].append(
+                PriorityTargetArea(
+                    key=target.area.key,
+                    label=target.area.label,
+                    weight=target.area.weight,
+                    sort_order=target.area.sort_order,
+                    source="legacy_monthly_target",
+                )
+            )
+    return result
+
+
+def priority_target_areas(user, fy: str) -> list[PriorityTargetArea]:
+    return priority_target_areas_for_users([user], fy).get(str(user.id), [])
 
 
 NEXT_ACTIONS = {
@@ -459,12 +615,18 @@ class MyTargetQueryService:
     """Everything the My Targets page renders, scoped to request.user only."""
 
     @staticmethod
-    def monthly_targets(user, fy: str) -> dict[str, list[int]]:
+    def monthly_targets(user, fy: str, areas=None) -> dict[str, list[int]]:
         """{area_key: [12 monthly targets]} — explicit rows win; otherwise the
-        annual profile is split so the 12 months sum to the annual value."""
-        areas = active_target_areas()
+        priority's annual target (or legacy annual profile) is split so the 12
+        months sum to the annual value."""
+        areas = list(areas) if areas is not None else active_target_areas()
         explicit: dict[str, dict[int, int]] = {}
-        for row in MonthlyPersonalTarget.objects.filter(user_id=user.id, fy=fy):
+        area_keys = [area.key for area in areas]
+        for row in MonthlyPersonalTarget.objects.filter(
+            user_id=user.id,
+            fy=fy,
+            area__key__in=area_keys,
+        ).select_related("area"):
             explicit.setdefault(row.area.key, {})[row.month_of_fy] = row.target
 
         sp_id = getattr(user, "staff_profile_id", None)
@@ -479,16 +641,22 @@ class MyTargetQueryService:
             if area.key in explicit:
                 out[area.key] = [explicit[area.key].get(m, 0) for m in range(1, 13)]
                 continue
-            annual = ANNUAL_FALLBACK[area.key](tp) if tp else 0
+            annual = getattr(area, "annual_target", None)
+            if annual is None:
+                annual = ANNUAL_FALLBACK[area.key](tp) if tp else 0
             base, rem = divmod(annual, 12)
             out[area.key] = [base + (1 if m <= rem else 0) for m in range(1, 13)]
         return out
 
     @staticmethod
-    def monthly_achievements(user, fy: str) -> dict[str, list[int]]:
-        out = {a.key: [0] * 12 for a in active_target_areas()}
+    def monthly_achievements(user, fy: str, areas=None) -> dict[str, list[int]]:
+        areas = list(areas) if areas is not None else active_target_areas()
+        out = {a.key: [0] * 12 for a in areas}
         rows = TargetAchievementLedger.objects.filter(
-            user_id=user.id, fy=fy, validation_status="validated"
+            user_id=user.id,
+            fy=fy,
+            validation_status="validated",
+            area__key__in=list(out),
         ).select_related("area")
         for r in rows:
             if 1 <= r.credited_month <= 12:
@@ -527,9 +695,9 @@ class MyTargetQueryService:
         today = now["today"]
 
         TargetAchievementService.rebuild(user, fy)
-        areas = active_target_areas()
-        targets = MyTargetQueryService.monthly_targets(user, fy)
-        achieved = MyTargetQueryService.monthly_achievements(user, fy)
+        areas = priority_target_areas(user, fy)
+        targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
+        achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
 
         def span_sum(series, months):
             return sum(series[m - 1] for m in months)
@@ -924,13 +1092,12 @@ class MyTargetQueryService:
 
     @staticmethod
     def area_drawer(user, area_key: str, fy: str, month_of_fy: int) -> dict:
-        area = next(
-            (item for item in active_target_areas() if item.key == area_key), None
-        )
+        areas = priority_target_areas(user, fy)
+        area = next((item for item in areas if item.key == area_key), None)
         if not area:
             return {"ok": False}
-        targets = MyTargetQueryService.monthly_targets(user, fy)
-        achieved = MyTargetQueryService.monthly_achievements(user, fy)
+        targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
+        achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
         t = targets[area_key][month_of_fy - 1]
         a = achieved[area_key][month_of_fy - 1]
         m_start, m_end = Cal.month_range(fy, month_of_fy)
@@ -958,10 +1125,11 @@ class MyTargetQueryService:
 
     @staticmethod
     def export_rows(user, fy: str) -> list[list]:
-        targets = MyTargetQueryService.monthly_targets(user, fy)
-        achieved = MyTargetQueryService.monthly_achievements(user, fy)
-        rows = [["Target Area", "Period", "Target", "Achieved", "%"]]
-        for a in active_target_areas():
+        areas = priority_target_areas(user, fy)
+        targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
+        achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
+        rows = [["Performance Priority", "Period", "Target", "Achieved", "%"]]
+        for a in areas:
             for m in range(1, 13):
                 t, ach = targets[a.key][m - 1], achieved[a.key][m - 1]
                 rows.append(

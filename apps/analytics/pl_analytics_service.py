@@ -825,11 +825,27 @@ class PLAnalyticsService:
     ) -> tuple[int, int]:
         """Team target achievement % + count of CCEOs at/above the pace
         threshold (design: 'CCEOs On Track')."""
+        pct, on_track, _measurable, _total_target = (
+            PLAnalyticsService._team_target_status(pls, fy, quarter, filters)
+        )
+        return pct or 0, on_track
+
+    @staticmethod
+    def _team_target_status(
+        pls: PLScope, fy: str, quarter=None, filters=None
+    ) -> tuple[int | None, int, int, int]:
+        """Target progress plus its denominator state.
+
+        A CCEO with no configured target is not behind target.  Returning the
+        measurable CCEO count and total target lets dashboards represent the
+        absence of a denominator instead of fabricating a measured 0%.
+        """
         completed_qs = _team_activity_qs(pls, fy, quarter, filters or {}).filter(
             status__in=COMPLETED_STATUSES
         )
         total_target = total_achieved = 0
         on_track = 0
+        measurable = 0
         expected = PLAnalyticsService._expected_pace(fy)
         bulk = PLAnalyticsService._cceo_targets_bulk(
             pls.cceos, completed_qs, fy, quarter
@@ -838,10 +854,12 @@ class PLAnalyticsService:
             pct, ach, tgt = bulk[c["staff_id"]]
             total_target += tgt
             total_achieved += ach
-            if tgt and pct >= expected:
-                on_track += 1
-        team_pct = round(total_achieved / total_target * 100) if total_target else 0
-        return team_pct, on_track
+            if tgt:
+                measurable += 1
+                if pct >= expected:
+                    on_track += 1
+        team_pct = round(total_achieved / total_target * 100) if total_target else None
+        return team_pct, on_track, measurable, total_target
 
     @staticmethod
     def _expected_pace(fy: str) -> int:
@@ -1435,15 +1453,31 @@ class PLAnalyticsService:
             c_acts = acts.filter(
                 Q(responsible_staff_id__in=ids) | Q(school_id__in=c["school_ref"])
             )
-            completed = c_acts.filter(status__in=COMPLETED_STATUSES).count()
-            backlog = c_acts.filter(
-                status__in=(
-                    "returned_by_pl",
-                    "returned_by_ia",
-                    "salesforce_id_required",
-                    "awaiting_ia_verification",
-                )
-            ).count()
+            # Four conditional counts in one round trip rather than four
+            # `.count()` calls. The base queryset is unchanged, so the numbers
+            # are identical — this only stops the per-CCEO fan-out: the page
+            # issued 4 COUNT(*) on `activity` per CCEO, and database time was
+            # 77% of its wall clock.
+            counts = c_acts.aggregate(
+                completed=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                backlog=Count(
+                    "id",
+                    filter=Q(
+                        status__in=(
+                            "returned_by_pl",
+                            "returned_by_ia",
+                            "salesforce_id_required",
+                            "awaiting_ia_verification",
+                        )
+                    ),
+                ),
+                evidence_total=Count(
+                    "id", filter=Q(activity_type__in=VISIT_TYPES + TRAINING_TYPES)
+                ),
+                evidence_done=Count("id", filter=Q(evidence_status="accepted")),
+            )
+            completed = counts["completed"]
+            backlog = counts["backlog"]
             target_pct, _, target_total = bulk_targets[c["staff_id"]]
             avg_ssa = None
             if latest_fy and c["school_ids"]:
@@ -1454,10 +1488,8 @@ class PLAnalyticsService:
                         total += part[0]
                         count += part[1]
                 avg_ssa = _ssa_score(total / count) if count else None
-            evidence_total = c_acts.filter(
-                activity_type__in=VISIT_TYPES + TRAINING_TYPES
-            ).count()
-            evidence_done = c_acts.filter(evidence_status="accepted").count()
+            evidence_total = counts["evidence_total"]
+            evidence_done = counts["evidence_done"]
             evidence_pct = _pct(evidence_done, evidence_total)
             risk = PLAnalyticsService._cceo_risk(
                 target_pct,
@@ -1604,8 +1636,14 @@ class PLAnalyticsService:
                 qs = acts.filter(activity_type__in=PROJECT_TYPES)
             else:
                 qs = acts.filter(activity_type__in=types)
-            planned = qs.count()
-            done = qs.filter(status__in=COMPLETED_STATUSES).count()
+            # One round trip per card instead of two: `card` is called six
+            # times, so the pair of counts was twelve queries on its own.
+            agg = qs.aggregate(
+                planned=Count("id"),
+                done=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+            )
+            planned = agg["planned"]
+            done = agg["done"]
             pct = _pct(done, planned)
             return {
                 "label": label,
@@ -1636,9 +1674,15 @@ class PLAnalyticsService:
         )
 
         def split(qs):
-            staff = qs.exclude(delivery_type="partner").count()
-            partner = qs.filter(delivery_type="partner").count()
-            return staff, partner
+            # Called four times; one round trip each instead of two.
+            # `exclude(delivery_type="partner")` keeps NULL rows, which a
+            # `~Q(delivery_type="partner")` filter would drop, so the staff
+            # side is counted as "total minus partner" to preserve that.
+            agg = qs.aggregate(
+                total=Count("id"),
+                partner=Count("id", filter=Q(delivery_type="partner")),
+            )
+            return agg["total"] - agg["partner"], agg["partner"]
 
         v_s, v_p = split(completed.filter(activity_type__in=VISIT_TYPES))
         t_s, t_p = split(completed.filter(activity_type__in=TRAINING_TYPES))
@@ -1759,6 +1803,10 @@ class PLAnalyticsService:
         rows = []
         for s in schools:
             issues, actions = [], []
+            # Machine-readable twins of `issues`, in the same order. `issue` is
+            # a display string ("No SSA + Not Visited") and cannot be used to
+            # build a condition key without parsing prose back into meaning.
+            issue_keys: list[str] = []
             # Weakest-intervention labels are resolved after pagination, for
             # the displayed rows only; the ranking never used them.
             weakest_code = ""
@@ -1770,6 +1818,7 @@ class PLAnalyticsService:
             severity = 0
             if no_ssa:
                 issues.append("No SSA")
+                issue_keys.append("no_ssa")
                 actions.append(
                     {
                         "label": "Complete SSA",
@@ -1779,6 +1828,7 @@ class PLAnalyticsService:
                 severity += 2
             if low_ssa:
                 issues.append("Low SSA")
+                issue_keys.append("low_ssa")
                 actions.append(
                     {
                         "label": (
@@ -1792,6 +1842,7 @@ class PLAnalyticsService:
                 severity += 2
             if not_visited:
                 issues.append("Not Visited")
+                issue_keys.append("no_visit")
                 actions.append(
                     {
                         "label": "Schedule School Visit",
@@ -1801,6 +1852,7 @@ class PLAnalyticsService:
                 severity += 1
             if not_trained:
                 issues.append("Not Trained")
+                issue_keys.append("no_training")
                 actions.append(
                     {
                         "label": (
@@ -1833,6 +1885,12 @@ class PLAnalyticsService:
                     # Real column on School; blank where it was never captured.
                     "shipping_address": s.shipping_address or "",
                     "issue": " + ".join(issues[:2]),
+                    # The highest-precedence issue in machine-readable form.
+                    # `issues` is appended in severity order, so the first
+                    # entry is the one an action would be raised about, and
+                    # `issue` itself is prose ("No SSA + Not Visited") that
+                    # nothing downstream should have to parse back into meaning.
+                    "issue_key": issue_keys[0] if issue_keys else "",
                     "last_visit": f"{(today - lv).days} days ago" if lv else "—",
                     "last_training": f"{(today - lt).days} days ago" if lt else "—",
                     "next_action": recommended["label"],
@@ -1844,6 +1902,33 @@ class PLAnalyticsService:
                 }
             )
         rows.sort(key=lambda r: -r["severity"])
+
+        # This list is an UNASSIGNED queue. A school somebody already owns has
+        # moved to Actions Sent, and leaving it here would invite a second
+        # person to delegate the same problem to the same CCEO.
+        #
+        # Excluded per SCHOOL, not per condition key. This list and the
+        # canonical resolver rank by different models — this one calls "no
+        # visit and no training" two issues, the resolver calls it one
+        # (`no_visit_or_training`) — so matching on keys would silently fail
+        # to hide exactly the schools that were just assigned. One row here is
+        # one school, and once that school has an owner it is not unassigned
+        # whichever of its problems got delegated.
+        #
+        # Filtered BEFORE the page slice: excluding afterwards would punch
+        # holes in pages and make the total lie.
+        school_ids = [r["id"] for r in rows]
+        if school_ids:
+            from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+            assigned = set(
+                TeamAction.objects.filter(
+                    school_id__in=school_ids, fy=fy, state__in=ACTIVE_STATES
+                ).values_list("school_id", flat=True)
+            )
+            if assigned:
+                rows = [r for r in rows if r["id"] not in assigned]
+
         offset = max(int(offset or 0), 0)
         page = rows[offset : offset + limit]
 

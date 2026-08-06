@@ -56,11 +56,16 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
     Touchpoint(
         stage="Assign to a partner, or schedule the activity",
         actor="CCEO / Program Lead / Project Coordinator",
-        inputs=("school or cluster", "date", "executor (staff or partner)"),
+        inputs=(
+            "school, or cluster with participants per school",
+            "date",
+            "executor (staff or partner)",
+        ),
         why_a_human=(
             "Who does the work and when is an allocation decision against real "
-            "capacity. The platform recommends the intervention; the person "
-            "decides the assignment."
+            "capacity. For a cluster event, the organiser also knows how many "
+            "people each school should send; the platform derives the total "
+            "from current cluster membership."
         ),
     ),
     Touchpoint(
@@ -191,6 +196,7 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         "assigned_partner_id",
         "responsible_staff_id",
         "staff_id",
+        "participants_per_school",
         # The partner drawer names the same two inputs differently -- see
         # FIELD_NAME_ALIASES below. Both are sanctioned; the inconsistency is
         # recorded there rather than silently absorbed here.

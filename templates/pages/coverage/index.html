@@ -49,7 +49,7 @@
     {% if clusters %}
     <div class="overflow-x-auto -mx-1">
       {% paginate clusters "clusters_page" as clusters_pager %}
-<table class="w-full edify-text-caption">
+<table class="edify-record-table w-full edify-text-caption">
         <thead>
           <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <th class="text-left font-bold py-2 pl-1">Cluster</th>
@@ -61,10 +61,10 @@
         <tbody class="divide-y divide-slate-50">
           {% for c in clusters_pager.rows %}
           <tr>
-            <td class="text-left font-semibold py-2.5 pl-1">{{ c.name }}</td>
-            <td class="text-left text-slate-500 py-2.5">{{ c.district.name|default:"—" }}</td>
-            <td class="text-right tabular-nums text-slate-500 py-2.5">{{ c.school_count }}</td>
-            <td class="text-right py-2.5 pr-1">
+            <td class="text-left font-semibold py-2.5 pl-1" data-record-title>{{ c.name }}</td>
+            <td class="text-left text-slate-500 py-2.5" data-label="District">{{ c.district.name|default:"—" }}</td>
+            <td class="text-right tabular-nums text-slate-500 py-2.5" data-label="Schools">{{ c.school_count }}</td>
+            <td class="text-right py-2.5 pr-1" data-label="Status">
               <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if c.status == 'active' %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ c.status|title }}</span>
             </td>
           </tr>

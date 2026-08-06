@@ -124,6 +124,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="school_action_sweep",
+        description=(
+            "Closes delegated school actions whose underlying condition has "
+            "cleared, and marks past-due ones overdue."
+        ),
+        cron="hourly :20 Africa/Kampala",
+        cron_kwargs={"minute": 20},
+        expected_runtime_seconds=45,
+        max_interval_minutes=180,
+        idempotent=True,
+        idempotency_note=(
+            "Resolution re-reads the source condition, so a second run finds "
+            "nothing left to close; overdue marking is a state filter that "
+            "excludes rows already OVERDUE."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="escalation_sla_sweep",
         description="Re-notifies the RVP about CD escalations past their severity SLA.",
         cron="daily 07:00 Africa/Kampala",
@@ -182,6 +201,23 @@ JOB_REGISTRY: list[JobSpec] = [
         idempotency_note="Due rows are atomically claimed by advancing next_run_at before network delivery.",
         retryable=True,
         max_retries=2,
+    ),
+    JobSpec(
+        name="fiscal_year_rollover",
+        description=(
+            "Ensures the Oct-Sep fiscal year has fresh priority cycles and "
+            "draft agreements while preserving prior-year history."
+        ),
+        cron="daily 00:10 Africa/Kampala",
+        cron_kwargs={"hour": 0, "minute": 10},
+        expected_runtime_seconds=120,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "hr.FiscalYearRollover is unique by FY; completed reruns are read-only."
+        ),
+        retryable=True,
+        max_retries=3,
     ),
     JobSpec(
         name="performance_readiness",

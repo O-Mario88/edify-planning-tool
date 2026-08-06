@@ -223,7 +223,7 @@ Showing: {{ flag_label }}
 {% if rows %}
 <div class="overflow-x-auto">
 {% paginate rows "wp_page" as pager %}
-<table class="edify-data-table work-plan-table w-full text-[12px]">
+<table class="edify-record-table edify-data-table work-plan-table w-full text-[12px]">
 <thead>
 <tr>
 <th class="text-left whitespace-nowrap">Activity date</th>
@@ -239,8 +239,8 @@ Showing: {{ flag_label }}
 <tbody class="divide-y divide-[var(--edify-border)]">
 {% for r in pager.rows %}
 <tr class="edify-data-row align-top">
-<td class="whitespace-nowrap font-semibold text-slate-700">{{ r.date_label }}</td>
-<td class="min-w-[250px]">
+<td class="whitespace-nowrap font-semibold text-slate-700" data-record-title>{{ r.date_label }}</td>
+<td class="min-w-[250px]" data-label="Activity">
 <p class="font-bold text-slate-800 text-[13px] leading-tight">{{ r.name }}</p>
 <p class="edify-text-caption text-slate-500 font-semibold mt-1">{{ r.programme_activity_type }}</p>
 <details class="mt-1.5">
@@ -272,31 +272,31 @@ Showing: {{ flag_label }}
 </div>
 </details>
 </td>
-<td class="min-w-[180px]">
+<td class="min-w-[180px]" data-label="SSA intervention">
 {% if r.focus_intervention %}
 <span class="work-plan-data-pill">{{ r.focus_intervention }}</span>
 {% else %}<span class="text-slate-400">Not linked</span>{% endif %}
 </td>
-<td class="whitespace-nowrap">
+<td class="whitespace-nowrap" data-label="Scale">
 <p class="font-bold text-slate-700 tabular-nums">{{ r.school_count|default:"—" }} <span class="font-semibold text-slate-400">schools</span></p>
 <p class="mt-1 font-bold text-slate-700 tabular-nums">{{ r.participants|default:"—" }} <span class="font-semibold text-slate-400">participants</span></p>
 </td>
-<td class="whitespace-nowrap">
+<td class="whitespace-nowrap" data-label="Responsible party">
 <p class="font-semibold text-slate-700">{{ r.responsible }}</p>
 <p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ r.responsibility_type }}</p>
 </td>
-<td class="min-w-[170px]">
+<td class="min-w-[170px]" data-label="Venue & mode">
 <p class="font-semibold text-slate-700">{{ r.venue|default:"Venue not set" }}</p>
 <p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ r.programme_delivery_mode|default:"—" }}</p>
 </td>
-<td class="text-right whitespace-nowrap">
+<td class="text-right whitespace-nowrap" data-label="Cost">
 {% if r.cost_missing %}
 <span class="inline-flex items-center px-2.5 py-1 rounded-pill edify-text-caption font-semibold bg-amber-50 text-amber-700 border border-amber-200">Cost Setup Required</span>
 {% else %}
 <span class="font-semibold tabular-nums text-slate-700">UGX {{ r.cost|intcomma }}</span>
 {% endif %}
 </td>
-<td class="text-right whitespace-nowrap">
+<td class="text-right whitespace-nowrap" data-label="Status & action">
 <span class="inline-flex items-center px-2.5 py-1 rounded-pill edify-text-caption font-semibold border {{ r.status_class }}">{{ r.status_label }}</span>
 <div class="mt-2">
 <a href="{{ r.action.url }}"

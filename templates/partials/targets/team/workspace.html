@@ -29,8 +29,8 @@
       </label>
 
       <label class="tt-filter-field">
-        <span>Target category</span>
-        <select name="category" aria-label="Target category">
+        <span>Performance priority</span>
+        <select name="category" aria-label="Performance priority">
           {% for option in category_options %}
           <option value="{{ option.value }}" {% if selected_category == option.value %}selected{% endif %}>{{ option.label }}</option>
           {% endfor %}

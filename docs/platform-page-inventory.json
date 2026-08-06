@@ -65,12 +65,20 @@
       "template": "components/kpi_card.html"
     },
     {
-      "bytes": 5211,
+      "bytes": 5348,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "tables": 0,
       "template": "components/kpi_strip.html"
+    },
+    {
+      "bytes": 3727,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_bottom_nav.html"
     },
     {
       "bytes": 1612,
@@ -153,6 +161,14 @@
       "template": "partials/_section_nav.html"
     },
     {
+      "bytes": 7319,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/actions/table.html"
+    },
+    {
       "bytes": 4355,
       "findings": [],
       "forms": 0,
@@ -209,10 +225,10 @@
       "template": "partials/analytics/cd/cluster_performance.html"
     },
     {
-      "bytes": 3802,
+      "bytes": 6232,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "tables": 1,
       "template": "partials/analytics/cd/district_heatmap.html"
     },
@@ -521,7 +537,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 75100,
+      "bytes": 85846,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -713,7 +729,7 @@
       "template": "partials/components/confirm_action.html"
     },
     {
-      "bytes": 3190,
+      "bytes": 3225,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -761,7 +777,7 @@
       "template": "partials/core_schools/filters.html"
     },
     {
-      "bytes": 3596,
+      "bytes": 3777,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -849,11 +865,11 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 2707,
+      "bytes": 5413,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
-      "tables": 0,
+      "tables": 1,
       "template": "partials/cost_settings/cost_setting_row.html"
     },
     {
@@ -865,7 +881,7 @@
       "template": "partials/dashboards/admin/_icon.html"
     },
     {
-      "bytes": 2815,
+      "bytes": 2841,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -913,7 +929,7 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 13243,
+      "bytes": 13467,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -921,7 +937,7 @@
       "template": "partials/dashboards/pl/body.html"
     },
     {
-      "bytes": 3769,
+      "bytes": 3815,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -929,11 +945,11 @@
       "template": "partials/dashboards/pl/cceo_performance.html"
     },
     {
-      "bytes": 3402,
+      "bytes": 4655,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
-      "tables": 1,
+      "tables": 2,
       "template": "partials/dashboards/pl/drilldown.html"
     },
     {
@@ -969,7 +985,15 @@
       "template": "partials/dashboards/pl/team_performance.html"
     },
     {
-      "bytes": 422,
+      "bytes": 841,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/dashboards/pl/urgent_action_error.html"
+    },
+    {
+      "bytes": 797,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -993,7 +1017,7 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 5687,
+      "bytes": 5788,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1033,7 +1057,7 @@
       "template": "partials/debriefs/dashboard_body.html"
     },
     {
-      "bytes": 7670,
+      "bytes": 7918,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -1217,7 +1241,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 15284,
+      "bytes": 15309,
       "findings": [],
       "forms": 1,
       "htmx_controls": 4,
@@ -1273,7 +1297,7 @@
       "template": "partials/fund_requests/breakdown_by_period.html"
     },
     {
-      "bytes": 7003,
+      "bytes": 6990,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1521,7 +1545,7 @@
       "template": "partials/my_plan/accountability_drawer.html"
     },
     {
-      "bytes": 12181,
+      "bytes": 12287,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1529,7 +1553,7 @@
       "template": "partials/my_plan/activity_detail_drawer.html"
     },
     {
-      "bytes": 3437,
+      "bytes": 3758,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -1537,7 +1561,7 @@
       "template": "partials/my_plan/activity_row.html"
     },
     {
-      "bytes": 7417,
+      "bytes": 7540,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1553,7 +1577,7 @@
       "template": "partials/my_plan/attendance_drawer.html"
     },
     {
-      "bytes": 8894,
+      "bytes": 9456,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1561,7 +1585,7 @@
       "template": "partials/my_plan/attention.html"
     },
     {
-      "bytes": 2691,
+      "bytes": 2791,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1569,7 +1593,7 @@
       "template": "partials/my_plan/cluster_meetings.html"
     },
     {
-      "bytes": 3012,
+      "bytes": 3143,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1641,7 +1665,7 @@
       "template": "partials/my_plan/priority_queue.html"
     },
     {
-      "bytes": 2685,
+      "bytes": 2785,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1665,7 +1689,7 @@
       "template": "partials/my_plan/salesforce_id_drawer.html"
     },
     {
-      "bytes": 2726,
+      "bytes": 2872,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1737,6 +1761,14 @@
       "template": "partials/partners/create_partner_drawer.html"
     },
     {
+      "bytes": 3932,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/partners/return_assignment_drawer.html"
+    },
+    {
       "bytes": 4499,
       "findings": [],
       "forms": 1,
@@ -1777,7 +1809,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 9974,
+      "bytes": 11939,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1785,7 +1817,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 17784,
+      "bytes": 18382,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -1921,7 +1953,7 @@
       "template": "partials/projects/filters_drawer.html"
     },
     {
-      "bytes": 2483,
+      "bytes": 2718,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1945,7 +1977,7 @@
       "template": "partials/projects/my_plan_workspace.html"
     },
     {
-      "bytes": 2753,
+      "bytes": 2913,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1969,7 +2001,7 @@
       "template": "partials/projects/planning_icon.html"
     },
     {
-      "bytes": 15279,
+      "bytes": 15917,
       "findings": [],
       "forms": 1,
       "htmx_controls": 8,
@@ -2137,7 +2169,7 @@
       "template": "partials/schools/toast_success.html"
     },
     {
-      "bytes": 13176,
+      "bytes": 13215,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2161,7 +2193,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 21754,
+      "bytes": 22536,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2193,7 +2225,7 @@
       "template": "partials/targets/team/_area_icon.html"
     },
     {
-      "bytes": 27022,
+      "bytes": 27487,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -2209,7 +2241,7 @@
       "template": "partials/targets/team/day_drawer.html"
     },
     {
-      "bytes": 3692,
+      "bytes": 3677,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2233,7 +2265,7 @@
       "template": "partials/targets/team/sfid_drawer.html"
     },
     {
-      "bytes": 4781,
+      "bytes": 4795,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2241,7 +2273,7 @@
       "template": "partials/targets/team/staff_drawer.html"
     },
     {
-      "bytes": 11318,
+      "bytes": 11328,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -2294,28 +2326,30 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.auth_views",
-      "backend_view": "apps.frontend.views.auth_views.splash_view",
+      "backend_view": "apps.frontend.views.auth_views.login_view",
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
+      "forms": true,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Opening Edify Planning and Monitoring",
+      "page_title": "Sign in",
       "permission_key": "",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Show the short, branded launch screen before sign-in.",
+      "purpose": "Requires product-purpose documentation",
       "responsive_state": "manual-review-required",
       "role_access": [],
       "route": "/",
       "route_name": "index",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "{% url "
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -2326,13 +2360,13 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
       "tables": false,
       "templates": [
-        "pages/auth/launch.html"
+        "pages/auth/login.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
@@ -4351,6 +4385,174 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.action_transition_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Action Transition",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Apply one lifecycle transition and re-render the row's workspace.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.my_actions_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "My Actions",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have been handed, and by when.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.actions_sent_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Actions Sent",
+      "permission_key": "actions_sent",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have delegated, and whether it is moving.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -7753,6 +7955,65 @@
       "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.analytics_views",
+      "backend_view": "apps.frontend.views.analytics_views.cd_ssa_heatmap_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET /analytics/country-director/ssa-heatmap?level={{ lvl }}&fy={{ fy }}&quarter={{ quarter }}&month={{ month }}",
+        "GET /analytics/country-director/drilldown?drill={{ district_heatmap.level }}&id={{ row.id }}&fy={{ fy }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Cd Ssa Heatmap",
+      "permission_key": "cd_analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "One level of the SSA heatmap, fetched on demand by the card's tabs.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/analytics/country-director/ssa-heatmap",
+      "route_name": "cd_ssa_heatmap",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.system_health.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/analytics/cd/district_heatmap.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.analytics_views",
       "backend_view": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
       "charts": false,
       "drawers": true,
@@ -8365,6 +8626,67 @@
       ],
       "route": "/api/analytics/combine-map-boundaries",
       "route_name": "combine_map_boundaries",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.analytics.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.system_health.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.analytics_views",
+      "backend_view": "apps.frontend.views.analytics_views.map_subcounty_metrics_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Map Subcounty Metrics",
+      "permission_key": "analytics",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Return fresh marker aggregates for one district map drill-down.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/api/analytics/map-subcounties",
+      "route_name": "map_subcounty_metrics",
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
@@ -11050,7 +11372,7 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "tables": false,
+      "tables": true,
       "templates": [
         "partials/cost_settings/cost_setting_row.html"
       ],
@@ -11773,7 +12095,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
@@ -11858,7 +12180,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view",
@@ -11915,7 +12237,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
@@ -11976,7 +12298,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_approve_view",
@@ -12041,7 +12363,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_drilldown_view",
@@ -12104,8 +12426,8 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
+      "audit_events": true,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
       "charts": false,
@@ -12121,7 +12443,7 @@
       "permission_key": "dashboard",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Delegate one currently urgent team school to its supervised CCEO.",
+      "purpose": "Delegate one currently urgent school to the staff member who owns it.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -12152,12 +12474,13 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
       "tables": false,
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -12167,7 +12490,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_urgent_schools_page_view",
@@ -12233,7 +12556,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.planning_progress_fragment_view",
@@ -16755,7 +17078,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Performance Cycle Console",
+      "page_title": "Performance Cycle Console \u00b7 Edify",
       "permission_key": "performance_console",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -19762,7 +20085,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Priority Setting Dashboard",
+      "page_title": "Priority Setting Dashboard \u00b7 Edify",
       "permission_key": "my_performance",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -19820,7 +20143,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Priority Setting Dashboard",
+      "page_title": "Priority Setting Dashboard \u00b7 Edify",
       "permission_key": "my_performance",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -19878,7 +20201,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Priority Setting Dashboard",
+      "page_title": "Priority Setting Dashboard \u00b7 Edify",
       "permission_key": "my_performance",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -19936,7 +20259,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Priority Setting Dashboard",
+      "page_title": "Priority Setting Dashboard \u00b7 Edify",
       "permission_key": "my_performance",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -22041,6 +22364,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -22076,6 +22400,7 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
+        "GET /partner/assignments/{{ assignment.id }}/return-drawer",
         "GET /partner/assignments/{{ assignment.id }}/schedule-drawer"
       ],
       "implementation_status": "existing-routed-surface",
@@ -22119,6 +22444,118 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_return_assignment_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Return Assignment Action",
+      "permission_key": "partner_activities",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PARTNER"
+      ],
+      "route": "/partner/assignments/<str:assignment_id>/return-action",
+      "route_name": "partner_return_assignment_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_return_assignment_drawer",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /partner/assignments/{{ assignment.id }}/return-action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Return Assignment Drawer",
+      "permission_key": "partner_activities",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The Return form. Scoped and state-checked here as well as in the service.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PARTNER"
+      ],
+      "route": "/partner/assignments/<str:assignment_id>/return-drawer",
+      "route_name": "partner_return_assignment_drawer",
+      "secondary_actions": [
+        "/partner/assignments/{{ assignment.id }}/return-action"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/partners/return_assignment_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -22708,7 +23145,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Performance Conversation",
+      "page_title": "\u00b7 Edify",
       "permission_key": "performance_conversations",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -22825,7 +23262,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Conversation Record",
+      "page_title": "Conversation Record \u00b7 Edify",
       "permission_key": "performance_conversations",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -23609,6 +24046,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23671,6 +24109,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23734,6 +24173,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23795,6 +24235,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23854,6 +24295,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23915,6 +24357,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -23981,6 +24424,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -24042,6 +24486,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -24107,6 +24552,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25362,6 +25808,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25429,6 +25876,7 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.clusters.models",
+        "apps.clusters.services",
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
@@ -25816,6 +26264,56 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.auth_views",
+      "backend_view": "apps.frontend.views.auth_views.reset_password_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Reset password",
+      "permission_key": "",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Render and process the browser password-reset link.",
+      "responsive_state": "manual-review-required",
+      "role_access": [],
+      "route": "/reset-password",
+      "route_name": "reset_password",
+      "secondary_actions": [
+        "{% url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.schools.models",
+        "apps.targets.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/auth/reset_password.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -28782,7 +29280,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.team_targets_matrix_view",
       "charts": false,
@@ -28824,7 +29322,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -30114,6 +30612,20 @@
         "retryable": true
       },
       {
+        "cron": "hourly :20 Africa/Kampala",
+        "cron_kwargs": {
+          "minute": 20
+        },
+        "description": "Closes delegated school actions whose underlying condition has cleared, and marks past-due ones overdue.",
+        "expected_runtime_seconds": 45,
+        "idempotency_note": "Resolution re-reads the source condition, so a second run finds nothing left to close; overdue marking is a state filter that excludes rows already OVERDUE.",
+        "idempotent": true,
+        "max_interval_minutes": 180,
+        "max_retries": 2,
+        "name": "school_action_sweep",
+        "retryable": true
+      },
+      {
         "cron": "daily 07:00 Africa/Kampala",
         "cron_kwargs": {
           "hour": 7,
@@ -30189,6 +30701,21 @@
         "retryable": true
       },
       {
+        "cron": "daily 00:10 Africa/Kampala",
+        "cron_kwargs": {
+          "hour": 0,
+          "minute": 10
+        },
+        "description": "Ensures the Oct-Sep fiscal year has fresh priority cycles and draft agreements while preserving prior-year history.",
+        "expected_runtime_seconds": 120,
+        "idempotency_note": "hr.FiscalYearRollover is unique by FY; completed reruns are read-only.",
+        "idempotent": true,
+        "max_interval_minutes": 1560,
+        "max_retries": 3,
+        "name": "fiscal_year_rollover",
+        "retryable": true
+      },
+      {
         "cron": "daily 06:45 Africa/Kampala",
         "cron_kwargs": {
           "hour": 6,
@@ -30253,17 +30780,18 @@
   "quality_score_note": "Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.",
   "routes": [
     {
-      "callback": "apps.frontend.views.auth_views.splash_view",
+      "callback": "apps.frontend.views.auth_views.login_view",
       "kind": "page",
       "methods": [
-        "GET"
+        "GET",
+        "POST"
       ],
       "page_permission": "",
       "required_permissions": [],
       "route": "/",
       "route_name": "index",
       "templates": [
-        "pages/auth/launch.html"
+        "pages/auth/login.html"
       ]
     },
     {
@@ -30786,6 +31314,50 @@
       "route_name": "",
       "templates": [
         "pages/accounts/weekly_requests.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.action_transition_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "templates": [
+        "partials/actions/table.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.my_actions_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.actions_sent_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "actions_sent",
+      "required_permissions": [],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
       ]
     },
     {
@@ -32717,6 +33289,20 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.analytics_views.cd_ssa_heatmap_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cd_analytics",
+      "required_permissions": [],
+      "route": "/analytics/country-director/ssa-heatmap",
+      "route_name": "cd_ssa_heatmap",
+      "templates": [
+        "partials/analytics/cd/district_heatmap.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.analytics_views.analytics_customize_dashboard_view",
       "kind": "drawer",
       "methods": [
@@ -33816,6 +34402,18 @@
       "required_permissions": [],
       "route": "/api/analytics/combine-map-boundaries",
       "route_name": "combine_map_boundaries",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.analytics_views.map_subcounty_metrics_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "analytics",
+      "required_permissions": [],
+      "route": "/api/analytics/map-subcounties",
+      "route_name": "map_subcounty_metrics",
       "templates": []
     },
     {
@@ -39176,6 +39774,7 @@
       "route": "/dashboard/pl-send-urgent-action",
       "route_name": "pl_send_urgent_action",
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ]
     },
@@ -40486,6 +41085,23 @@
       "templates": []
     },
     {
+      "callback": "django.views.generic.base.view",
+      "kind": "platform-route",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/lander/?",
+      "route_name": "lander-legacy",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.extended_views.leave_requests_view",
       "kind": "page",
       "methods": [
@@ -41619,6 +42235,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.partner_views.partner_return_assignment_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_activities",
+      "required_permissions": [],
+      "route": "/partner/assignments/<str:assignment_id>/return-action",
+      "route_name": "partner_return_assignment_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_return_assignment_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_activities",
+      "required_permissions": [],
+      "route": "/partner/assignments/<str:assignment_id>/return-drawer",
+      "route_name": "partner_return_assignment_drawer",
+      "templates": [
+        "partials/partners/return_assignment_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.partner_views.partner_schedule_assignment_action",
       "kind": "page",
       "methods": [
@@ -42420,6 +43062,21 @@
       "route_name": "reports",
       "templates": [
         "pages/reports/index.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.auth_views.reset_password_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/reset-password",
+      "route_name": "reset_password",
+      "templates": [
+        "pages/auth/reset_password.html"
       ]
     },
     {
@@ -43468,22 +44125,22 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 870,
+    "all_routes": 879,
     "api_routes": 293,
-    "component_templates": 286,
-    "full_pages": 314,
-    "partials_and_drawers": 142,
-    "permission_gated": 460,
+    "component_templates": 290,
+    "full_pages": 317,
+    "partials_and_drawers": 147,
+    "permission_gated": 467,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 469,
-    "scheduled_jobs": 16,
+    "routed_surfaces": 477,
+    "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 435
+    "test_referenced": 443
   }
 }

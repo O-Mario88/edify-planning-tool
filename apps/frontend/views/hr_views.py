@@ -1596,7 +1596,9 @@ def my_performance_view(request, tab=None):
     if cycle and review is None:
         from apps.hr.performance_engine import build_draft_agreement
 
-        review = build_draft_agreement(sp, cycle, request.user)
+        review = build_draft_agreement(
+            sp, cycle, request.user, include_role_templates=False
+        )
 
     from apps.hr.performance_engine import milestone_metrics
 
@@ -2134,7 +2136,9 @@ def hr_performance_action_view(request):
             # Generate a draft agreement for every active staff member in scope.
             made = 0
             for sp in _profile_scope(request).filter(onboarding_state="active"):
-                build_draft_agreement(sp, cycle, request.user)
+                build_draft_agreement(
+                    sp, cycle, request.user, include_role_templates=False
+                )
                 made += 1
             messages.success(
                 request,

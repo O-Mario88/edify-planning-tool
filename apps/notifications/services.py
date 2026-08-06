@@ -46,7 +46,18 @@ class NotificationLinkResolver:
                 return "/admin-ops/my-plan", "Open Admin My Plan"
             return "/admin-ops/my-plan", "Open Platform Operations"
 
-        if event_type == "critical_school_ssa":
+        if event_type == "fiscal_year_priority_setting":
+            if role in ("humanresources", "admin"):
+                route = "/hr/performance"
+                label = "Open Priority Cycle"
+            elif role in ("regionalvicepresident", "countrydirector"):
+                route = "/strategic-priorities"
+                label = "Set Strategic Priorities"
+            else:
+                route = "/my-performance"
+                label = "Set My Priorities"
+
+        elif event_type == "critical_school_ssa":
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"
                 label = "Open Planning"

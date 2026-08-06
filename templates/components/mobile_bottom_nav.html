@@ -1,0 +1,90 @@
+{% comment %}
+Phone and tablet-portrait primary navigation.
+
+Destinations come from `mobile_nav` (apps/core/navigation.build_mobile_nav_for_user),
+which resolves them from the SAME registry and the SAME PAGE_PERMISSIONS the
+desktop sidebar uses. It can advertise a page but never grant one, so §7's "no
+bottom navigation item for a page the role cannot access" holds without this
+template knowing anything about roles.
+
+More opens the existing off-canvas drawer rather than a second navigation
+system — `sidebarOpen` is owned by layouts/shell.html. There is exactly one
+navigation source; this is a second surface onto it, not a parallel IA.
+
+Hidden at lg and above, where the static sidebar takes over.
+{% endcomment %}
+{% if mobile_nav %}
+<nav
+  class="edify-bottom-nav lg:hidden"
+  aria-label="Primary"
+  x-data="{
+    keyboardOpen: false,
+    onFocus(e) {
+      /* The bar is fixed to the bottom, which on Android is exactly where the
+         software keyboard lands. Yielding to a focused field keeps it off the
+         input being typed into, and off the Submit beneath it. */
+      if (e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable]')) {
+        this.keyboardOpen = true
+      }
+    },
+  }"
+  @focusin.window="onFocus($event)"
+  @focusout.window="keyboardOpen = false"
+  :class="keyboardOpen ? 'edify-bottom-nav--hidden' : ''"
+>
+  <ul class="edify-bottom-nav__list">
+    {% for item in mobile_nav %}
+    <li class="edify-bottom-nav__cell">
+      <a
+        href="{{ item.url }}"
+        class="edify-bottom-nav__item{% if item.active %} edify-bottom-nav__item--active{% endif %}"
+        {% if item.active %}aria-current="page"{% endif %}
+      >
+        <span class="edify-bottom-nav__icon" aria-hidden="true">{{ item.icon|safe }}</span>
+        <span class="edify-bottom-nav__label">{{ item.label }}</span>
+        {% if item.url == "/messages" and unread_messages_count > 0 %}
+        <span class="edify-bottom-nav__badge">
+          {{ unread_messages_count }}
+          <span class="sr-only">unread messages</span>
+        </span>
+        {% endif %}
+      </a>
+    </li>
+    {% endfor %}
+
+    <li class="edify-bottom-nav__cell">
+      {% comment %}
+      Not a link: it opens the drawer that holds every other destination.
+      aria-expanded is what tells a screen reader this is a disclosure and
+      whether it is currently open.
+      {% endcomment %}
+      {% comment %}
+      Found by attribute rather than x-ref: this button sits inside THIS
+      component's Alpine scope, so an x-ref registers here and is invisible to
+      the shell — which is the scope that has to return focus here when the
+      drawer closes.
+      {% endcomment %}
+      <button
+        type="button"
+        class="edify-bottom-nav__item"
+        data-mobile-nav-more
+        @click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
+        :aria-expanded="sidebarOpen ? 'true' : 'false'"
+        aria-haspopup="dialog"
+      >
+        <span class="edify-bottom-nav__icon" aria-hidden="true">
+          <svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </span>
+        <span class="edify-bottom-nav__label">More</span>
+        {% if unread_notifications_count > 0 %}
+        <span class="edify-bottom-nav__badge edify-bottom-nav__badge--dot">
+          <span class="sr-only">{{ unread_notifications_count }} unread notifications</span>
+        </span>
+        {% endif %}
+      </button>
+    </li>
+  </ul>
+</nav>
+{% endif %}

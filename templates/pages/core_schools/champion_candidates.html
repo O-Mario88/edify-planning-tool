@@ -39,7 +39,7 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 
 <div class="overflow-x-auto">
 {% paginate candidates "candidates_page" as candidates_pager %}
-<table class="w-full text-left text-[12px] border-collapse ">
+<table class="edify-record-table w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="text-slate-400 font-semibold uppercase edify-text-caption border-b border-slate-100 tracking-wider">
 <th class="py-2.5">School Name</th>
@@ -55,28 +55,28 @@ class="bg-[var(--edify-text)] hover:bg-[var(--edify-text)] text-white border bor
 <tbody class="divide-y divide-slate-100 font-semibold">
 {% for c in candidates_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
-<td class="py-3.5 text-slate-900 font-semibold text-[12px]">{{ c.name }}</td>
-<td class="py-3.5 text-slate-500 font-bold">{{ c.district }}</td>
-<td class="py-3.5 text-center text-slate-800 font-semibold">{{ c.latest_avg }}</td>
-<td class="py-3.5 text-center text-emerald-600 font-semibold">
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{{ c.name }}</td>
+<td class="py-3.5 text-slate-500 font-bold" data-label="District">{{ c.district }}</td>
+<td class="py-3.5 text-center text-slate-800 font-semibold" data-label="SSA Avg">{{ c.latest_avg }}</td>
+<td class="py-3.5 text-center text-emerald-600 font-semibold" data-label="Improvement Delta">
 {% if c.delta > 0 %}▲ {{ c.delta }}{% else %}{{ c.delta }}{% endif %}
 </td>
-<td class="py-3.5 text-center">
+<td class="py-3.5 text-center" data-label="Package Completion">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
 {{ c.completed_slots }} / {{ c.total_slots }} Slots
 </span>
 </td>
-<td class="py-3.5 text-center">
+<td class="py-3.5 text-center" data-label="Lowest Score">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-bold bg-slate-50 border border-slate-200">
 {{ c.lowest_score }} ({{ c.lowest_intervention }})
 </span>
 </td>
-<td class="py-3.5 text-center">
+<td class="py-3.5 text-center" data-label="Champion Score">
 <span class="inline-flex items-center rounded-pill px-2.5 py-0.5 text-[12px] font-semibold edify-primary-soft edify-primary-text border edify-primary-border">
 {{ c.score }}
 </span>
 </td>
-<td class="py-3.5 text-right">
+<td class="py-3.5 text-right" data-label="Review Action">
 <button
 hx-get="{% url 'frontend:champion_review_drawer' c.school_id %}"
 hx-target="#drawer-container"

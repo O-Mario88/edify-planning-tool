@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **469**
-- All registered routes: **870**
+- Routed product surfaces: **477**
+- All registered routes: **879**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
-- Scheduled jobs: **16**
+- Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **286**
-- Full pages: **314**
-- Partials and drawers: **142**
-- Permission-gated surfaces: **460**
-- Referenced by automated tests: **435**
+- Shared component templates: **290**
+- Full pages: **317**
+- Partials and drawers: **147**
+- Permission-gated surfaces: **467**
+- Referenced by automated tests: **443**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -24,7 +24,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 | Route | Page | Roles | Template | Automated score | Findings | Test |
 |---|---|---|---|---:|---:|---|
-| / | Opening Edify Planning and Monitoring | Unmapped | pages/auth/launch.html | 9.4 | 0 | referenced by automated test |
+| / | Sign in | Unmapped | pages/auth/login.html | 9.6 | 0 | referenced by automated test |
 | /accounts | Fund Disbursement Dashboard | ACCOUNTANT, ADMIN | pages/accounts/dashboard.html | 9.6 | 0 | referenced by automated test |
 | /accounts/ | Fund Disbursement Dashboard | ACCOUNTANT, ADMIN | pages/accounts/dashboard.html | 9.6 | 0 | referenced by automated test |
 | /accounts/accountability | Accountability Tracking - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/accountability.html | 9.4 | 0 | referenced by automated test |
@@ -63,6 +63,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /accounts/variance-review/ | Variance Review - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/variance_review.html | 9.6 | 0 | referenced by automated test |
 | /accounts/weekly-requests | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
 | /accounts/weekly-requests/ | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
+| /actions/<str:action_id>/<str:transition> | Action Transition | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html | 9.6 | 0 | referenced by automated test |
+| /actions/mine | My Actions | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
+| /actions/sent | Actions Sent | ADMIN, CD, IA, PL, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
 | /activities/<str:activity_id> | Activity Details | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/activity_detail_drawer.html<br>pages/my_plan/detail.html | 9.4 | 0 | referenced by automated test |
 | /activities/<str:activity_id>/attendance | Attendance Upload Drawer | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/attendance_drawer.html | 9.6 | 0 | referenced by automated test |
 | /activities/<str:activity_id>/attendance/action | Attendance Upload Action | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -121,6 +124,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /analytics/country-director | Overview | ADMIN, CD | partials/analytics/cd/body.html<br>pages/analytics/cd_analytics.html | 9.4 | 0 | referenced by automated test |
 | /analytics/country-director/drilldown | Cd Analytics Drilldown | ADMIN, CD | partials/analytics/cd/drilldown.html | 9.6 | 0 | referenced by automated test |
 | /analytics/country-director/export | Cd Analytics Export | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /analytics/country-director/ssa-heatmap | Cd Ssa Heatmap | ADMIN, CD | partials/analytics/cd/district_heatmap.html | 9.6 | 0 | referenced by automated test |
 | /analytics/customize-dashboard | Analytics Customize Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/schools/toast_success.html<br>partials/analytics/customize_dashboard_drawer.html | 9.6 | 0 | referenced by automated test |
 | /analytics/drilldown | Analytics Drilldown | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/drilldown_drawer.html | 9.4 | 0 | referenced by automated test |
 | /analytics/export | Analytics Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -132,6 +136,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /analytics/schedule-report | Analytics Schedule Report | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/schools/toast_success.html<br>partials/analytics/schedule_report_drawer.html | 9.6 | 0 | referenced by automated test |
 | /analytics/visit-effectiveness | Visit Effectiveness | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/visit_effectiveness_workspace.html<br>pages/analytics/visit_effectiveness.html | 9.6 | 0 | referenced by automated test |
 | /api/analytics/combine-map-boundaries | Combine Map Boundaries | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /api/analytics/map-subcounties | Map Subcounty Metrics | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
 | /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.4 | 0 | referenced by automated test |
@@ -195,7 +200,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /dashboard/pl | Pl Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /dashboard/pl-approve | Pl Dashboard Approve | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/body.html | 9.4 | 0 | referenced by automated test |
 | /dashboard/pl-drilldown | Pl Dashboard Drilldown | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/drilldown.html | 9.6 | 0 | referenced by automated test |
-| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_sent.html | 9.4 | 0 | referenced by automated test |
+| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_error.html<br>partials/dashboards/pl/urgent_action_sent.html | 9.6 | 0 | referenced by automated test |
 | /dashboard/pl-urgent-schools | Pl Urgent Schools Page | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_schools_page.html | 9.4 | 0 | referenced by automated test |
 | /dashboard/planning-progress | Planning Progress Fragment | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/admin/_planning_progress_body.html | 9.4 | 0 | referenced by automated test |
 | /data-quality/duplicates | Duplicate Review | ADMIN, IA | pages/admin/duplicate_review.html | 9.6 | 0 | referenced by automated test |
@@ -275,7 +280,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /help/workflows/<slug:workflow_slug> | Help Workflow | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-analytics | People Analytics | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-audit-log | HR Audit Log | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /hr/performance-cycle | Performance Cycle Console | ADMIN, HR | pages/hr/performance_console.html | 9.7 | 0 | referenced by automated test |
+| /hr/performance-cycle | Performance Cycle Console · Edify | ADMIN, HR | pages/hr/performance_console.html | 9.7 | 0 | referenced by automated test |
 | /hr/performance-cycle/action | Hr Performance Action | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /ia/compare/ | Evidence Comparison Workspace - Edify Command Center | ADMIN, IA | pages/ia/compare_evidence.html | 9.6 | 0 | referenced by automated test |
 | /ia/dashboard/ | Impact Assessment Dashboard | ADMIN, IA | pages/ia/analytics_dashboard.html | 9.6 | 0 | referenced by automated test |
@@ -329,10 +334,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /messages/thread/<str:thread_id>/archive | Message Thread Archive | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /messages/thread/<str:thread_id>/reply | Message Thread Reply | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
 | /messages/thread/<str:thread_id>/star | Message Thread Star | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /my-performance | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/development | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/documents | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
-| /my-performance/values | Priority Setting Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/development | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/documents | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
+| /my-performance/values | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
 | /my-plan | My Plan | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/workspace.html<br>pages/my_plan/index.html | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id> | Activity Details | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/activity_detail_drawer.html<br>pages/my_plan/detail.html | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id>/accountability | Accountability Action | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/accountability_drawer.html | 9.6 | 0 | referenced by automated test |
@@ -369,6 +374,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_schools_table.html | 9.6 | 0 | referenced by automated test |
 | /partials/costing/preview | Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
+| /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/schedule-action | Partner Schedule Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/schedule-drawer | Partner Schedule Assignment Drawer | ADMIN, PARTNER | partials/partners/schedule_assignment_drawer.html | 9.8 | 0 | referenced by automated test |
 | /partner/evidence | Evidence · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/evidence.html | 9.4 | 0 | referenced by automated test |
@@ -379,9 +386,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partners/<str:partner_id> | Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/partners/detail.html | 9.4 | 0 | referenced by automated test |
 | /partners/create | Create Partner | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/partners/create_partner_drawer.html | 9.4 | 0 | referenced by automated test |
 | /payroll-readiness | Payroll Readiness | ACCOUNTANT, ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /performance-conversation | Performance Conversation | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/performance_conversation.html | 9.6 | 0 | referenced by automated test |
+| /performance-conversation | · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/performance_conversation.html | 9.6 | 0 | referenced by automated test |
 | /performance-conversation/<str:review_id>/acknowledge | Performance Acknowledge | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /performance-conversation/<str:review_id>/document/<str:window> | Conversation Record | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/conversation_document.html | 9.4 | 0 | referenced by automated test |
+| /performance-conversation/<str:review_id>/document/<str:window> | Conversation Record · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/conversation_document.html | 9.4 | 0 | referenced by automated test |
 | /performance-conversation/<str:review_id>/sign-off | Performance Signoff | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-conversation/priority/<str:priority_id>/save | Performance Input Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-conversation/value/<str:commitment_id>/save | Performance Value Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
@@ -428,6 +435,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /recovery-plans | Recovery Plans | ADMIN, HR, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /recruitment | Recruitment | ADMIN, CD, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /reports | Reports & Performance | ADMIN, CD, IA, PL, PROJECT_COORDINATOR, RVP | pages/reports/index.html | 9.4 | 0 | referenced by automated test |
+| /reset-password | Reset password | Unmapped | pages/auth/reset_password.html | 9.6 | 0 | referenced by automated test |
 | /rvp/annual/<str:budget_id>/action | Rvp Annual Action | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /rvp/approvals | Rvp Approvals | ADMIN | partials/dashboards/rvp/approvals_drawer.html | 9.6 | 0 | referenced by automated test |
 | /rvp/project/<str:project_id>/decision | Rvp Project Decision | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
@@ -477,7 +485,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /team-targets/catchup/<str:plan_id>/action | Team Targets Catchup Action | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets/day | Team Targets Day | ADMIN, CD, HR, IA, PL | partials/targets/team/day_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/export | Team Targets Export | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /team-targets/matrix | Team Targets Matrix | ADMIN, CD, HR, IA, PL | partials/targets/team/matrix_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-targets/matrix | Team Targets Matrix | ADMIN, CD, HR, IA, PL | partials/targets/team/matrix_drawer.html | 9.6 | 0 | referenced by automated test |
 | /team-targets/recovery | Team Targets Recovery | ADMIN, CD, HR, IA, PL | partials/targets/team/recovery_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/sfid-backlog | Team Targets Sfid Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/sfid_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/staff-drawer | Team Targets Staff Drawer | ADMIN, CD, HR, IA, PL | partials/targets/team/staff_drawer.html | 9.4 | 0 | referenced by automated test |

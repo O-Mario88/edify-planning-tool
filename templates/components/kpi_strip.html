@@ -34,6 +34,9 @@
               class="kpi-strip__item-body kpi-strip__item-body--link">
       {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
       <a href="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}"
+         hx-get="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}"
+         hx-target="#drawer-container"
+         hx-swap="innerHTML"
          class="kpi-strip__item-body kpi-strip__item-body--link">
       {% comment %}
         Separate branches rather than `default:item.link` -- filter arguments

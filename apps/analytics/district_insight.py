@@ -323,6 +323,7 @@ def district_insight(
     for _i, r in base.iterrows():
         bw = best_worst.get(r["district_id"])
         out[r["district"]] = {
+            "district_id": str(r["district_id"]),
             "district": r["district"],
             "subregion": r["subregion"],
             "schools": int(r["schools"]),

@@ -1106,32 +1106,94 @@ class CDAnalyticsService:
         rows.sort(key=lambda r: -r["pl_pct"])
         return {"rows": rows}
 
-    # ── 4. District SSA heatmap ──────────────────────────────────────────────
+    # ── 4. SSA heatmap, at whichever geography you ask for ───────────────────
+    # The same eight-intervention grid answers a different question at each
+    # level: a region tells you where to send a Program Lead, a sub-county
+    # tells you which communities are actually underserved. They were one
+    # district-only card; they are now one card with a level selector, and each
+    # level is fetched on demand rather than all four being computed for every
+    # page load.
+    #
+    # `unassigned` is carried per level and is not decoration. Sub-county is
+    # unset on ~96% of schools today and cluster on ~95%, so a mean taken over
+    # the assigned few would read as a national figure while describing a
+    # rounding error. The template states the coverage next to the number.
+    HEATMAP_LEVELS = {
+        "region": ("region_id", "region__name", "Region"),
+        # Reached through the district rather than School.sub_region_id, which
+        # is a denormalised CharField that is empty on every row. The real
+        # hierarchy is SubCounty -> District -> SubRegion -> Region, so joining
+        # gives sub-region the same coverage as district (52 of 16,974 missing)
+        # instead of the 100% gap the column would report. subregion_analytics
+        # resolves it the same way.
+        "sub_region": (
+            "district__sub_region_id",
+            "district__sub_region__name",
+            "Sub-Region",
+        ),
+        "district": ("district_id", "district__name", "District"),
+        "sub_county": ("sub_county_id", "sub_county__name", "Sub-County"),
+        "cluster": ("cluster_id", None, "Cluster"),
+    }
+    # Levels `drilldown` can actually open a drawer for. Sub-county has no
+    # branch there, so its rows stay inert rather than pretending otherwise.
+    HEATMAP_DRILLABLE = frozenset({"region", "district", "cluster"})
+
     @staticmethod
     def district_heatmap(cd):
+        """Back-compat wrapper. The card defaults to district."""
+        return CDAnalyticsService.ssa_heatmap(cd, "district")
+
+    @staticmethod
+    def ssa_heatmap(cd, level="district"):
+        if level not in CDAnalyticsService.HEATMAP_LEVELS:
+            level = "district"
+        group_field, name_field, label = CDAnalyticsService.HEATMAP_LEVELS[level]
         latest, _ = _cycle_fys(cd.school_ids, cd.fy)
         schools = School.objects.filter(id__in=cd.school_ids)
         cols = SSA_INTERVENTIONS  # all 8
+        total_schools = schools.count()
+        unassigned = schools.filter(**{f"{group_field}__isnull": True}).count()
+        empty = {
+            "rows": [],
+            "codes": [c[2] for c in cols],
+            "labels": [c[1] for c in cols],
+            "level": level,
+            "level_label": label,
+            "unassigned": unassigned,
+            "total_schools": total_schools,
+            "drillable": level in CDAnalyticsService.HEATMAP_DRILLABLE,
+        }
         if not latest:
-            return {
-                "rows": [],
-                "codes": [c[2] for c in cols],
-                "labels": [c[1] for c in cols],
-            }
+            return empty
 
-        # Batch-fetch every ingredient ONCE instead of once per district (this
-        # used to run ~5 queries per district — up to ~680 queries at scale).
-        # School->district, every confirmed SSA record for the latest cycle,
-        # and every intervention score on those records, then group in Python.
-        districts = list(
-            schools.exclude(district__isnull=True)
-            .values("district_id", "district__name")
-            .annotate(n=Count("id"))
-            .order_by("-n")
-        )
-        school_district = dict(
-            schools.exclude(district__isnull=True).values_list("id", "district_id")
-        )
+        # Batch-fetch every ingredient ONCE instead of once per group (this used
+        # to run ~5 queries per district — up to ~680 queries at scale).
+        # School->group, every confirmed SSA record for the latest cycle, and
+        # every intervention score on those records, then group in Python.
+        assigned = schools.exclude(**{f"{group_field}__isnull": True})
+        if name_field:
+            districts = list(
+                assigned.values(group_field, name_field)
+                .annotate(n=Count("id"))
+                .order_by("-n")
+            )
+        else:
+            # cluster_id is a plain CharField, not a relation, so the name has
+            # to be resolved separately rather than joined.
+            districts = list(
+                assigned.values(group_field).annotate(n=Count("id")).order_by("-n")
+            )
+            from apps.clusters.models import Cluster
+
+            names = dict(
+                Cluster.objects.filter(
+                    id__in=[d[group_field] for d in districts]
+                ).values_list("id", "name")
+            )
+            for d in districts:
+                d[name_field or "name"] = names.get(d[group_field]) or "Unnamed cluster"
+        school_district = dict(assigned.values_list("id", group_field))
 
         records = list(
             SsaRecord.objects.filter(
@@ -1171,13 +1233,15 @@ class CDAnalyticsService:
 
         rows = []
         for d in districts:
-            did = d["district_id"]
+            did = d[group_field]
             by = {
                 k: _mean(v)
                 for k, v in district_intervention_scores.get(did, {}).items()
             }
             cells = []
-            for v, label, code in cols:
+            # `col_label` rather than `label` — the outer `label` is the level's
+            # own name and shadowing it here would title every tab "Enrolment".
+            for v, col_label, code in cols:
                 score = _ssa_score(by.get(v))
                 cells.append({"score": score, "tone": ssa_band(score)[2]})
             avg = _ssa_score(_mean(district_scores.get(did, [])))
@@ -1186,7 +1250,7 @@ class CDAnalyticsService:
             rows.append(
                 {
                     "id": did,
-                    "name": d["district__name"],
+                    "name": d[name_field] if name_field else d.get("name"),
                     "cells": cells,
                     "avg": avg,
                     "avg_tone": ssa_band(avg)[2],
@@ -1201,6 +1265,17 @@ class CDAnalyticsService:
             "rows": rows,
             "codes": [c[2] for c in cols],
             "labels": [c[1] for c in cols],
+            "level": level,
+            "level_label": label,
+            # Carried so the card can say how much of the country this covers.
+            # At sub-county that is currently 4%, and a mean over 4% presented
+            # without its denominator is the kind of number that gets quoted.
+            "unassigned": unassigned,
+            "total_schools": total_schools,
+            # `drilldown` has branches for region, district and cluster but not
+            # sub-county. Rows only become clickable where a drawer exists —
+            # a click target that opens nothing is worse than a plain row.
+            "drillable": level in CDAnalyticsService.HEATMAP_DRILLABLE,
         }
 
     # ── 5. Partner performance (impact-weighted) ─────────────────────────────

@@ -250,18 +250,18 @@
 .sp-table-card--purple::before { background: var(--sp-purple); }
 .sp-table-card--teal::before { background: var(--sp-teal); }
 .sp-table-wrap { overflow-x: auto; }
-.sp-table { width: 100%; border-collapse: collapse; font-size: var(--edify-text-label-size); }
+.sp-table { width: 100%; border-collapse: collapse; font-size: var(--edify-text-table-size); }
 .sp-table thead { background: var(--edify-surface-muted); }
 .sp-table th, .sp-table td { padding: 9px 11px; border-bottom: 1px solid var(--edify-border); text-align: left; vertical-align: middle; }
-.sp-table thead th { min-width: 90px; color: var(--edify-text-muted); font-size: var(--edify-text-label-size); line-height: 1.2; font-weight: 780; letter-spacing: .025em; white-space: nowrap; }
+.sp-table thead th { min-width: 90px; color: var(--edify-text-muted); font-size: var(--edify-text-table-heading-size); line-height: 1.2; font-weight: 780; letter-spacing: .025em; white-space: nowrap; }
 .sp-table tbody th { min-width: 175px; text-transform: none; letter-spacing: 0; }
-.sp-table tbody th strong { display: block; color: var(--edify-text); font-size: var(--edify-text-label-size); line-height: 1.25; }
-.sp-table tbody th small { display: block; margin-top: 2px; color: var(--edify-text-subtle); font-size: var(--edify-text-label-size); font-weight: 550; }
+.sp-table tbody th strong { display: block; color: var(--edify-text); font-size: var(--edify-text-table-size); line-height: 1.25; }
+.sp-table tbody th small { display: block; margin-top: 2px; color: var(--edify-text-subtle); font-size: var(--edify-text-table-size); font-weight: 550; }
 .sp-table tbody td { color: var(--edify-text-muted); font-weight: 600; }
 .sp-table tbody tr:last-child th, .sp-table tbody tr:last-child td { border-bottom: 0; }
 .sp-table__date { white-space: nowrap; }
 .sp-table__purpose { display: inline-block; min-width: 125px; max-width: 220px; }
-.sp-table__action a { display: inline-flex; min-height: 36px; align-items: center; color: var(--edify-accent); font-size: var(--edify-text-label-size); font-weight: 750; white-space: nowrap; }
+.sp-table__action a { display: inline-flex; min-height: 36px; align-items: center; color: var(--edify-accent); font-size: var(--edify-text-table-size); font-weight: 750; white-space: nowrap; }
 .sp-table__empty { height: 84px; text-align: center !important; color: var(--edify-text-subtle) !important; }
 
 .sp-badge { display: inline-flex; min-height: 24px; align-items: center; padding: 2px 7px; border: 1px solid transparent; border-radius: 999px; font-size: var(--edify-text-label-size); font-weight: 750; white-space: nowrap; }

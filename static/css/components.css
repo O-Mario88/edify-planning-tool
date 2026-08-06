@@ -823,7 +823,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 .edify-data-table, .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--edify-text-label-size);
+  font-size: var(--edify-text-table-size);
 }
 .edify-data-table th, .data-table th {
   background-color: var(--edify-surface-muted);
@@ -834,7 +834,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   letter-spacing: 0.05em;
   padding: 0.875rem 1rem;
   text-align: left;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
 }
 .edify-data-table td, .data-table td {
   padding: 0.875rem 1rem;
@@ -2249,10 +2249,14 @@ select:not([multiple]):not(.select-native) {
 }
 
 .edify-donut__value {
-  font-size: 15px;
+  font-size: var(--edify-svg-text-body, var(--edify-text-body-size));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+}
+
+svg[data-edify-svg-typography] text {
+  font-family: var(--edify-font-sans);
 }
 
 .edify-donut__centre {

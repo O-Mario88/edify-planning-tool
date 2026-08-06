@@ -54,6 +54,13 @@ ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()
 ]
 
+# The one hostname the application answers on; every other name in
+# ALLOWED_HOSTS redirects to it (apps.core.middleware.CanonicalHostMiddleware).
+# Empty means "serve whatever host was asked for", which is the correct default
+# for local work and for CI, and is also the safe default in production until
+# the canonical host is confirmed to resolve and hold a certificate.
+CANONICAL_HOST = os.environ.get("CANONICAL_HOST", "").strip()
+
 # The NestJS backend used String @id @default(cuid()) everywhere. We keep the
 # same semantics with a CUID generator so seeded IDs and cross-references stay
 # compatible. BigAutoField is used only for AuditLog.seq (hash-chain ordering).
@@ -139,6 +146,11 @@ MIDDLEWARE = [
     # the probe still runs the full stack, so its response carries CSP and the
     # correlation id like any other.
     "apps.core.middleware.HealthProbeHostMiddleware",
+    # Before SecurityMiddleware so host and scheme normalise in ONE redirect.
+    # Behind it, http://www would answer 301 → https://www (TLS) and only then
+    # 301 → https://apex (host); ahead of it, both collapse into one response.
+    # No-op unless CANONICAL_HOST is set.
+    "apps.core.middleware.CanonicalHostMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
@@ -154,6 +166,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # The first authenticated request in a new Oct-Sep FY is a deployment-
+    # independent safety net for the annual rollover. The middleware memoizes
+    # success for the process lifetime; normal requests do no database work.
+    "apps.core.middleware.FiscalYearRolloverMiddleware",
     "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -217,6 +233,7 @@ IS_TESTING = _is_testing
 # detection functions are exercised directly instead. Production and dev keep
 # it on.
 ADMIN_OPS_DETECTION_ENABLED = not _is_testing
+FISCAL_YEAR_ROLLOVER_ENABLED = not _is_testing
 
 # Parse DigitalOcean/Railway DATABASE_URL values, including managed-Postgres
 # query parameters such as sslmode=require. The settings below layer the

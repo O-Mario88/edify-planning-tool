@@ -177,8 +177,7 @@ class TeamTargetsPageTest(TestCase):
         TargetAchievementService.rebuild(self.pl, FY)
         page = self._page()
         self.assertNotIn("PL Alpha", [m["name"] for m in page["members"]])
-        visits = self._area(page, "school_visits")
-        self.assertEqual((visits["target"], visits["achieved"]), (0, 0))
+        self.assertEqual(page["key_progress"], [])
 
     # ── 4–6: period + areas ──────────────────────────────────────────────────
     def test_default_period_is_current_month(self):
@@ -207,6 +206,7 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn("Manager personal targets remain on My Targets", html)
 
     def test_mid_year_not_rendered(self):
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
         c = Client()
         c.force_login(self.pl)
         self.assertNotIn("Mid-Year", c.get("/team-targets").content.decode())
@@ -215,21 +215,13 @@ class TeamTargetsPageTest(TestCase):
         for q in ("Q1", "Q2", "Q3", "Q4"):
             self.assertIn(q, matrix)
 
-    def test_only_five_official_target_areas_used(self):
+    def test_global_target_catalogue_does_not_invent_team_priority_rows(self):
         page = self._page()
-        self.assertEqual(
-            [a["key"] for a in page["areas"]],
-            [
-                "school_visits",
-                "cluster_meetings",
-                "cluster_trainings",
-                "ssa_completed",
-                "mscs",
-            ],
-        )
+        self.assertEqual(page["areas"], [])
         c = Client()
         c.force_login(self.pl)
         html = c.get("/team-targets").content.decode()
+        self.assertIn("No measurable team priorities agreed", html)
         for wrong in (
             "Plan Approvals",
             "Fund Requests Reviewed",
@@ -237,6 +229,51 @@ class TeamTargetsPageTest(TestCase):
             "Salesforce Logging",
         ):
             self.assertNotIn(wrong, html)
+
+    def test_team_performance_rows_come_from_each_users_agreed_priorities(self):
+        from apps.hr.models import PerformancePriority, PerformanceReview
+        from apps.hr.performance_engine import sync_targets_from_agreement
+
+        def agree(staff, outcome, metric, target, weight):
+            review = PerformanceReview.objects.create(
+                staff=staff,
+                fy=FY,
+                period=f"FY{FY}",
+                review_type="annual_priorities",
+                stage="priorities_agreed",
+                status="Priorities agreed",
+                due_date=date(2026, 9, 30),
+            )
+            PerformancePriority.objects.create(
+                review=review,
+                sequence=1,
+                outcome_statement=outcome,
+                metric_key=metric,
+                target_number=target,
+                weight=weight,
+            )
+            sync_targets_from_agreement(review, self.pl)
+
+        grace_priority = "Coach every assigned school through a verified visit"
+        james_priority = "Deliver the agreed teacher training programme"
+        agree(self.cceo1_sp, grace_priority, "direct_visits", 12, 60)
+        agree(self.cceo2_sp, james_priority, "trainings", 9, 40)
+
+        page = self._page()
+        by_name = {member["name"]: member for member in page["members"]}
+
+        self.assertEqual(
+            [row["label"] for row in by_name["Grace One"]["area_matrix"]],
+            [grace_priority],
+        )
+        self.assertEqual(
+            [row["label"] for row in by_name["James Two"]["area_matrix"]],
+            [james_priority],
+        )
+        self.assertEqual(
+            {area["key"] for area in page["areas"]},
+            {"school_visits", "cluster_trainings"},
+        )
 
     # ── 7: aggregation ───────────────────────────────────────────────────────
     def test_team_target_aggregates_individual_my_targets(self):
@@ -308,7 +345,7 @@ class TeamTargetsPageTest(TestCase):
             'aria-label="Open Grace One validated achievement, pace, and blockers"',
             html,
         )
-        self.assertIn("Target-area breakdown", html)
+        self.assertIn("Priority breakdown", html)
         member = next(m for m in self._page()["members"] if m["name"] == "Grace One")
         self.assertEqual(
             [cell["key"] for cell in member["mobile_cells"]],
@@ -342,7 +379,7 @@ class TeamTargetsPageTest(TestCase):
         client.force_login(self.pl)
         html = client.get("/team-targets").content.decode()
         self.assertIn('class="tt-area-matrix"', html)
-        self.assertIn("target-area performance by reporting period", html)
+        self.assertIn("agreed-priority performance by reporting period", html)
         self.assertIn(f'aria-controls="tt-desktop-areas-{self.cceo1.id}"', html)
         self.assertIn('class="tt-mobile-area__periods"', html)
 
@@ -395,6 +432,7 @@ class TeamTargetsPageTest(TestCase):
         self.assertNotIn("Cluster Meetings · Team Progress", html)
 
     def test_target_area_progress_uses_the_wide_workspace_drawer_only(self):
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
         client = Client()
         client.force_login(self.pl)
 
@@ -709,7 +747,7 @@ class TeamTargetsPageTest(TestCase):
         c.force_login(self.pl)
         body = c.get(f"/team-targets/export?fy={FY}").content.decode()
         self.assertIn("Grace One", body)
-        self.assertIn("James Two", body)
+        self.assertNotIn("James Two", body)  # no priority row assigned
         self.assertNotIn("Other Three", body)
         self.assertNotIn("PL Alpha,School Visits", body)  # PL's own rows absent
 

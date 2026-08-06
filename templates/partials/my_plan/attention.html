@@ -19,7 +19,7 @@ Returned — Needs Correction
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table mp-table">
+<table class="edify-record-table edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -32,13 +32,13 @@ Returned — Needs Correction
 <tbody>
 {% for row in returned_needs_correction %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]">
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
 </td>
-<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
-<td class="font-bold text-rose-700">{{ row.returned_by }}</td>
-<td class="text-rose-700 italic font-semibold">"{{ row.return_reason }}"</td>
-<td class="text-right">
+<td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
+<td class="font-bold text-rose-700" data-label="Returned By">{{ row.returned_by }}</td>
+<td class="text-rose-700 italic font-semibold" data-label="Reason">"{{ row.return_reason }}"</td>
+<td class="text-right" data-record-action>
 <button
 hx-get="{{ row.next_action.url }}"
 hx-target="#drawer-container"
@@ -76,7 +76,7 @@ Waiting on Approval
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table mp-table">
+<table class="edify-record-table edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -88,12 +88,12 @@ Waiting on Approval
 <tbody>
 {% for row in waiting_on_approval %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]">
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
 </td>
-<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
-<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td>{% include "partials/my_plan/row_badges.html" %}</td>
+<td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
+<td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td data-label="Status">{% include "partials/my_plan/row_badges.html" %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -123,7 +123,7 @@ Partner Planned — Monitoring
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table mp-table">
+<table class="edify-record-table edify-data-table mp-table">
 <thead>
 <tr>
 <th>Partner</th>
@@ -141,20 +141,20 @@ Partner Planned — Monitoring
 <tbody>
 {% for row in partner_monitoring %}
 <tr>
-<td class="font-bold edify-primary-text">{{ row.partner_name }}</td>
-<td class="font-semibold text-slate-800 text-[13px]">
+<td class="font-bold edify-primary-text" data-record-title>{{ row.partner_name }}</td>
+<td class="font-semibold text-slate-800 text-[13px]" data-label="School / Cluster">
 {% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
 </td>
-<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
-<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td class="text-slate-600 font-semibold">{{ row.focus_intervention }}</td>
-<td class="text-slate-600 font-semibold">{{ row.evidence_status|default:"—" }}</td>
-<td class="text-center font-bold {% if row.salesforce_activity_id %}text-emerald-600{% else %}text-slate-400{% endif %}">
+<td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
+<td class="font-bold text-slate-700" data-label="Planned Date">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="text-slate-600 font-semibold" data-label="Focus">{{ row.focus_intervention }}</td>
+<td class="text-slate-600 font-semibold" data-label="Evidence">{{ row.evidence_status|default:"—" }}</td>
+<td class="text-center font-bold {% if row.salesforce_activity_id %}text-emerald-600{% else %}text-slate-400{% endif %}" data-label="SF ID">
 {% if row.salesforce_activity_id %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}—{% endif %}
 </td>
-<td class="text-slate-600 font-semibold">{{ row.ia_verification_status|default:"—" }}</td>
-<td class="text-slate-600 font-semibold">{{ row.payment_status|default:"—" }}</td>
-<td class="text-right">
+<td class="text-slate-600 font-semibold" data-label="IA Status">{{ row.ia_verification_status|default:"—" }}</td>
+<td class="text-slate-600 font-semibold" data-label="Payment">{{ row.payment_status|default:"—" }}</td>
+<td class="text-right" data-record-action>
 <a href="/my-plan/{{ row.id }}" class="btn btn-ghost h-8 edify-text-caption shadow-sm">View</a>
 </td>
 </tr>
@@ -185,7 +185,7 @@ Finance / Accountability Pending
 
 <!-- Table Section -->
 <div class="overflow-x-auto">
-<table class="edify-data-table mp-table">
+<table class="edify-record-table edify-data-table mp-table">
 <thead>
 <tr>
 <th>School / Cluster</th>
@@ -197,16 +197,16 @@ Finance / Accountability Pending
 <tbody>
 {% for row in finance_pending %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]">
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>
 {% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
 </td>
-<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
-<td>
+<td class="text-slate-600 font-semibold" data-label="Type">{{ row.activity_type_label }}</td>
+<td data-label="Payment Status">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold border bg-amber-50 text-amber-600 border-amber-150">
 {{ row.payment_status|default:"none" }}
 </span>
 </td>
-<td class="text-right">
+<td class="text-right" data-label="Next Action">
 {% if row.execution_role != 'Partner' or viewer_is_partner %}
 <button
 hx-get="{{ row.next_action.url }}"

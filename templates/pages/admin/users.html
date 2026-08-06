@@ -81,7 +81,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
   </header>
 
   <div class="overflow-x-auto">
-    <table class="w-full text-[12px] border-collapse">
+    <table class="edify-record-table w-full text-[12px] border-collapse">
       <thead>
         <tr class="bg-slate-50 border-b border-slate-100 text-left">
           <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Organisation</th>
@@ -94,23 +94,23 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
       <tbody class="divide-y divide-slate-100 font-medium">
         {% for partner in partners %}
         <tr class="hover:bg-slate-50/50 transition-colors">
-          <td class="px-5 py-3.5">
+          <td class="px-5 py-3.5" data-record-title>
             <span class="font-semibold text-slate-800 block">{{ partner.name }}</span>
             <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">
               {% if partner.user_id %}Linked user: {{ partner.user.email }}{% else %}No linked login{% endif %}
             </span>
           </td>
-          <td class="px-4 py-3.5">
+          <td class="px-4 py-3.5" data-label="Contact">
             <span class="font-semibold text-slate-700 block">{{ partner.contact_person|default:"Not recorded" }}</span>
             <span class="edify-text-caption text-slate-400 block mt-0.5">{{ partner.email|default:"No email" }}</span>
           </td>
-          <td class="px-4 py-3.5 text-slate-500 font-semibold">{{ partner.region_name|default:"Not assigned" }}</td>
-          <td class="px-4 py-3.5">
+          <td class="px-4 py-3.5 text-slate-500 font-semibold" data-label="Region">{{ partner.region_name|default:"Not assigned" }}</td>
+          <td class="px-4 py-3.5" data-label="SSA Intervention">
             <span class="inline-flex rounded-pill bg-sky-50 text-sky-700 border border-sky-100 px-2 py-0.5 edify-text-caption font-semibold">
               {{ partner.ssa_intervention_label }}
             </span>
           </td>
-          <td class="px-5 py-3.5 text-right">
+          <td class="px-5 py-3.5 text-right" data-record-action>
             <button
               type="button"
               data-partner-id="{{ partner.id }}"
@@ -175,7 +175,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 <!-- User Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] border-collapse">
+<table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
 <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">User Details</th>
@@ -188,7 +188,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for u in users %}
 <tr class="hover:bg-slate-50/50 transition-colors">
-<td class="px-5 py-3.5">
+<td class="px-5 py-3.5" data-record-title>
 <div class="flex items-center gap-3">
 <div class="h-8 w-8 rounded-pill bg-slate-100 flex items-center justify-center font-semibold text-[12px] text-slate-600">
 {{ u.name|slice:":2"|upper }}
@@ -205,13 +205,13 @@ Needs Real Email
 </div>
 </div>
 </td>
-<td class="px-4 py-3.5 text-slate-500 font-semibold">{{ u.email }}</td>
-<td class="px-4 py-3.5">
+<td class="px-4 py-3.5 text-slate-500 font-semibold" data-label="Email Address">{{ u.email }}</td>
+<td class="px-4 py-3.5" data-label="Primary Role">
 <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-100">
 {{ u.active_role|default:"CCEO" }}
 </span>
 </td>
-<td class="px-4 py-3.5">
+<td class="px-4 py-3.5" data-label="Status">
 {% if u.is_active %}
 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
 <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
@@ -224,7 +224,7 @@ Needs Real Email
 </span>
 {% endif %}
 </td>
-<td class="px-5 py-3.5 text-right space-x-1.5">
+<td class="px-5 py-3.5 text-right space-x-1.5" data-record-action>
 <a
 href="{% url 'frontend:admin_user_detail' u.id %}"
 class="inline-flex items-center px-2.5 py-1 border border-slate-200 edify-primary-border-hover edify-primary-text-hover rounded-control edify-text-caption font-semibold uppercase transition-all edify-surface"

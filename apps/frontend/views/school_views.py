@@ -226,8 +226,12 @@ def school_directory_view(request):
     user = request.user
     scope = resolve_user_scope(user)
 
-    # Scoped base query
-    base_qs = school_queryset(scope).filter(deleted_at__isnull=True)
+    # Directly-assigned schools only. A supervising Program Lead's `school_ids`
+    # unions in their CCEOs' schools, which put 1030 schools this PL does not
+    # own into their directory alongside their own 1141 — with the same edit,
+    # cluster, project and staff-match controls on every one of them.
+    # Supervision is not ownership.
+    base_qs = school_queryset(scope, direct_only=True).filter(deleted_at__isnull=True)
 
     # Input parameters
     q = request.GET.get("q", "").strip()
@@ -366,9 +370,21 @@ def school_directory_view(request):
                 school.current_fy_ssa_status or "",
                 school.planning_readiness or "",
             ]
-            for school in schools_qs.select_related("district", "sub_county", "region")[
-                :5000
-            ]
+            # No cap. This used to be [:5000], which silently truncated: a
+            # country-scope export of 16,274 schools returned 5,000 rows with
+            # no warning anywhere, and a truncated file that looks complete is
+            # worse than a refused one — it gets used as a reconciliation
+            # source. Scoped roles never hit the limit, so it only ever
+            # misinformed the people looking at the whole country.
+            #
+            # iterator() rather than a plain queryset so the rows stream from a
+            # server-side cursor instead of materialising every School with its
+            # three joined rows before the first byte is written. export_rows is
+            # already a generator and the xlsx writer is write-only, so the
+            # whole path stays constant-memory.
+            for school in schools_qs.select_related(
+                "district", "sub_county", "region"
+            ).iterator(chunk_size=1000)
         )
 
         if export_format == "xlsx":
@@ -1332,7 +1348,7 @@ def bulk_assign_cluster_view(request):
         if school_ids and cluster_id:
             cluster = get_object_or_404(Cluster, id=cluster_id, deleted_at__isnull=True)
             scope = resolve_user_scope(request.user)
-            schools = school_queryset(scope).filter(
+            schools = school_queryset(scope, direct_only=True).filter(
                 id__in=school_ids, deleted_at__isnull=True
             )
             already_clustered = schools.filter(cluster_status="clustered")
@@ -1387,7 +1403,13 @@ def bulk_assign_project_view(request):
                     "schools can be assigned to it.",
                 )
                 return redirect("/schools")
-            schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
+            # Same scope constraint as bulk_match_staff_view above: the
+            # project.assignSchool permission gates *whether* the caller may
+            # assign, not *which* schools they may reach.
+            scope = resolve_user_scope(request.user)
+            schools = school_queryset(scope, direct_only=True).filter(
+                id__in=school_ids, deleted_at__isnull=True
+            )
 
             from apps.projects.services import assign_school as assign_project_school
 
@@ -1473,7 +1495,17 @@ def bulk_match_staff_view(request):
             staff = get_object_or_404(
                 StaffProfile, id=staff_id, deleted_at__isnull=True
             )
-            schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True)
+            # Scope-constrained, like every single-school path in this module and
+            # like bulk_assign_cluster_view. require_page_permission only answers
+            # "may this role open the directory" — it says nothing about *which*
+            # schools, so an unscoped queryset here accepted any id the caller
+            # cared to post. Six roles reach this view, including CCEO, and
+            # account ownership is the root of the whole scoping chain: it feeds
+            # StaffSchoolAssignment, which feeds planning, targets and budgets.
+            scope = resolve_user_scope(request.user)
+            schools = school_queryset(scope, direct_only=True).filter(
+                id__in=school_ids, deleted_at__isnull=True
+            )
             for s in schools:
                 s.account_owner_id = staff.id
                 s.account_owner_name_raw = staff.user.name

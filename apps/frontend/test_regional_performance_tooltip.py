@@ -33,9 +33,10 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("padding:clamp(8px, 1.4vw, 14px);", template)
         self.assertIn(
-            ".sr-tip__title,.sr-tip__primary{font-size:clamp(12px, 1.15vw, 15px)}",
+            ".sr-tip__title,.sr-tip__primary{font-size:var(--edify-text-body-size)}",
             template,
         )
+        self.assertNotIn("font-size:clamp(12px, 1.15vw, 15px)", template)
 
     def test_mobile_summary_metrics_share_one_compact_row(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -96,7 +97,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
     def test_map_renders_toggleable_school_distribution_pins(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn('aria-label="Toggle school distribution pins"', template)
+        self.assertIn(
+            'role="group" aria-labelledby="school-map-legend-title"', template
+        )
         self.assertIn("toggleSchoolType(type.key)", template)
         # The pins read each district's own distribution through schoolMix().
         # This used to assert the literal line inside syncSchoolTotals, which
@@ -118,6 +121,40 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("subregion-school-type-totals", template)
         self.assertNotIn("districts.reduce(", template)
+
+    def test_school_legend_sits_below_the_map_without_outlined_pills(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        map_end = template.index("</svg>")
+        legend_start = template.index('id="school-map-legend-title"')
+        distribution_start = template.index("Distribution by ${distributionLevel()}")
+        self.assertLess(map_end, legend_start)
+        self.assertLess(legend_start, distribution_start)
+        self.assertIn(
+            'role="group" aria-labelledby="school-map-legend-title"', template
+        )
+        legend_controls = template[legend_start:distribution_start]
+        self.assertIn("hover:bg-slate-50", legend_controls)
+        self.assertNotIn("border border-slate-200 edify-surface", legend_controls)
+
+    def test_country_totals_sit_below_the_distribution_heading(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        heading = template.index("Distribution by ${distributionLevel()}")
+        districts = template.index(
+            "{{ subregion_performance.totals.districts }} districts", heading
+        )
+        subregions = template.index(
+            "{{ subregion_performance.totals.subregions }} sub-regions", districts
+        )
+        schools = template.index(
+            "{{ subregion_performance.totals.schools }} schools", subregions
+        )
+        table = template.index('<table class="w-full text-left text-table-cell">')
+        self.assertLess(heading, districts)
+        self.assertLess(districts, subregions)
+        self.assertLess(subregions, schools)
+        self.assertLess(schools, table)
 
     def test_school_pin_colours_match_the_classification_legend(self):
         template = _read("templates/partials/analytics/regional_performance.html")
@@ -150,8 +187,10 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertIn("* 7;", template)
         self.assertIn(
-            "font-size:var(--edify-text-micro-size);font-weight:750", template
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));",
+            template,
         )
+        self.assertIn("font-weight:var(--edify-text-label-weight)", template)
         self.assertIn("stroke:none;transition:opacity .3s", template)
         self.assertNotIn("stroke-width:1.4px", template)
         self.assertLess(
@@ -159,10 +198,14 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template.index("this.cam.insertBefore(labelLayer, this.labels);"),
         )
 
-    def test_district_and_subcounty_labels_use_empty_space_placement(self):
+    def test_district_and_subcounty_labels_stay_on_their_boundaries(self):
         template = _read("templates/partials/analytics/regional_performance.html")
 
-        self.assertIn("placeBoundaryLabels({labelLayer, pathLayer", template)
+        self.assertIn("placeBoundaryLabels({", template)
+        self.assertIn(
+            "labelLayer, pathLayer, pinLayer, key, scale=1,",
+            template,
+        )
         self.assertIn("placeDistrictLabels(){", template)
         self.assertIn("resolveSubcountyLabelCollisions(){", template)
         self.assertIn(
@@ -172,16 +215,23 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("for(let step = 0; step < 16; step += 1)", template)
         self.assertIn("markerObstacleRects(layer, scale)", template)
         self.assertIn("boundaryContainsLabel(path, rect)", template)
+        self.assertIn("boundaryContainsPoint(path, x, y)", template)
         self.assertIn("path.isPointInFill(point)", template)
         self.assertIn("const overlaps = (a, b) =>", template)
         self.assertIn(
             "placed.every(existing => !overlaps(rect, existing)) &&", template
         )
         self.assertIn("markerRects.every(marker => !overlaps(rect, marker))", template)
-        self.assertIn("const labelScales = [1];", template)
+        self.assertIn("labelScales=[1], allowOverlapFallback=false,", template)
+        self.assertIn("labelScales:[1, 0.9, 0.82],", template)
+        self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
-        self.assertIn("placement = 'open-space';", template)
+        self.assertIn("placement = 'boundary-fit';", template)
+        self.assertIn(
+            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
+        )
+        self.assertNotIn("placement = 'open-space';", template)
         self.assertIn("const blocked =", template)
         self.assertIn("placed.some(existing => overlaps(rect, existing))", template)
         self.assertIn("dataset.mapAnchorX", template)
@@ -200,6 +250,70 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertNotIn("declash(){", template)
+
+    def test_subcounty_labels_are_complete_and_use_compact_title_case(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("label.textContent = properties.n;", template)
+        self.assertNotIn("label.textContent = properties.n.toUpperCase();", template)
+        self.assertIn(
+            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
+        )
+
+    def test_national_overview_keeps_every_district_label_visible(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("labelScales:[0.82, 0.74, 0.68],", template)
+        self.assertIn("allowOverlapFallback:true,", template)
+        self.assertIn("}else if(allowOverlapFallback){", template)
+        self.assertNotIn("anchor-overlap", template)
+        self.assertNotIn("density-hidden", template)
+        self.assertNotIn("overviewDistrictLabelBudget", template)
+        self.assertNotIn("visibleCount", template)
+        self.assertIn("pathAreaByName", template)
+        self.assertIn("t.textContent = p.d;", template)
+        self.assertNotIn("t.textContent = p.d.toUpperCase();", template)
+
+    def test_map_text_stays_on_the_shared_screen_type_scale(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("data-edify-svg-typography", template)
+        self.assertIn('@edify-svg-typography="refreshMapLabelPlacement()"', template)
+        self.assertIn("refreshMapLabelPlacement(){", template)
+        self.assertIn("if(this.subcountyLabelLayer)", template)
+        self.assertIn("this.resolveSubcountyLabelCollisions();", template)
+        self.assertIn("else if(!this.focused) this.placeDistrictLabels();", template)
+        self.assertIn(
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
+            template,
+        )
+        self.assertIn("stroke-width:.16em", template)
+        self.assertNotIn("stroke-width:2.2px", template)
+
+    def test_subcounty_markers_refresh_after_school_geography_changes(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn('{{ map_scope|json_script:"subregion-map-scope" }}', template)
+        self.assertIn("async refreshSubcountyMetrics(district){", template)
+        self.assertIn("/api/analytics/map-subcounties?", template)
+        self.assertIn("{cache:'no-store'}", template)
+        self.assertIn("await this.refreshSubcountyMetrics(district);", template)
+        self.assertIn("document.addEventListener('visibilitychange'", template)
+        self.assertIn("delete this.combinedDistrictRequests[districtKey];", template)
+
+    def test_distribution_table_tracks_the_active_map_level(self):
+        template = _read("templates/partials/analytics/regional_performance.html")
+
+        self.assertIn("distributionLevel(){", template)
+        self.assertIn("distributionRows(){", template)
+        self.assertIn("focusDistributionRow(row){", template)
+        self.assertIn("Distribution by ${distributionLevel()}", template)
+        self.assertIn("row.level === 'subregion'", template)
+        self.assertIn("row.level === 'district'", template)
+        self.assertIn("level:'subcounty'", template)
+        self.assertIn("this.subcountyDistributionRows = boundaryRows.sort(", template)
+        self.assertIn("this.districtParentSubregion = parentSubregion;", template)
+        self.assertIn("if(parentSubregion) this.focusSub(parentSubregion);", template)
 
     def test_zoom_does_not_magnify_the_district_focus_stroke(self):
         template = _read("templates/partials/analytics/regional_performance.html")

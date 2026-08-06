@@ -848,10 +848,10 @@
 .sp-band[data-tone], .sp-table strong[data-tone] { color: var(--sp-tone-text); background: var(--sp-tone-bg); }
 
 .sp-table-scroll { max-width: 100%; overflow: auto; scrollbar-width: thin; }
-.sp-table { width: 100%; border-collapse: collapse; min-width: 690px; font-size: var(--edify-text-micro-size); }
+.sp-table { width: 100%; border-collapse: collapse; min-width: 690px; font-size: var(--edify-text-table-size); }
 .sp-table caption, .sp-matrix caption { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
 .sp-table th, .sp-table td { padding: 11px 10px; border-bottom: 1px solid var(--edify-divider); text-align: left; vertical-align: middle; }
-.sp-table thead th { color: var(--edify-text-muted); background: color-mix(in srgb, var(--edify-surface-muted) 55%, transparent); font-size: var(--edify-text-micro-size); text-transform: uppercase; letter-spacing: .045em; white-space: nowrap; }
+.sp-table thead th { color: var(--edify-text-muted); background: color-mix(in srgb, var(--edify-surface-muted) 55%, transparent); font-size: var(--edify-text-table-heading-size); text-transform: uppercase; letter-spacing: .045em; white-space: nowrap; }
 .sp-table tbody th { color: var(--edify-text); font-weight: 750; }
 .sp-table tbody tr:hover { background: color-mix(in srgb, var(--edify-primary-light) 35%, transparent); }
 .sp-table strong[data-tone] { display: inline-flex; padding: 4px 7px; border-radius: var(--radius-small); font-variant-numeric: tabular-nums; }
@@ -898,12 +898,12 @@
 .sp-trend figure { margin: 0; padding: 8px 16px 12px; }
 .sp-trend svg { display: block; width: 100%; height: auto; min-height: 210px; overflow: visible; }
 .sp-chart-grid line { stroke: var(--edify-chart-grid); stroke-dasharray: 4 7; }
-.sp-chart-axis text, .sp-chart-year { fill: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
+.sp-chart-axis text, .sp-chart-year { fill: var(--edify-text-subtle); font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size)); }
 .sp-chart-target { stroke: var(--edify-success); stroke-width: 1.2; stroke-dasharray: 5 4; }
-.sp-chart-target-label { fill: var(--edify-success); font-size: var(--edify-text-micro-size); font-weight: 800; }
+.sp-chart-target-label { fill: var(--edify-success); font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size)); font-weight: 800; }
 .sp-chart-line { fill: none; stroke: var(--edify-success); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .sp-chart-point { fill: var(--edify-surface-raised); stroke: var(--edify-success); stroke-width: 2.5; }
-.sp-chart-value { fill: var(--edify-text); font-size: var(--edify-text-micro-size); font-weight: 800; }
+.sp-chart-value { fill: var(--edify-text); font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size)); font-weight: 800; }
 .sp-trend figcaption { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-align: right; }
 .sp-visually-hidden { position: absolute !important; clip-path: inset(50%) !important; overflow: hidden !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; white-space: nowrap !important; }
 .sp-empty { grid-column: 1 / -1; margin: 18px; color: var(--edify-text-muted); text-align: center; font-size: var(--edify-text-label-size); }
@@ -3224,7 +3224,7 @@
   text-align: center;
 }
 
-.tt-matrix th span { display: block; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; letter-spacing: 0; }
+.tt-matrix th span { display: block; color: var(--edify-text-muted); font-size: var(--edify-text-table-heading-size); font-weight: 600; letter-spacing: 0; }
 .tt-matrix th small { display: block; margin-top: 0.15rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 450; letter-spacing: 0; }
 
 .tt-matrix th.is-current,
@@ -3555,7 +3555,7 @@
     inset -1px 0 0 var(--tt-current-quarter-edge);
 }
 .tt-matrix .tt-area-matrix th.is-current-quarter { background: var(--tt-current-quarter-header); }
-.tt-matrix .tt-area-matrix thead th span { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.tt-matrix .tt-area-matrix thead th span { color: var(--edify-text-muted); font-size: var(--edify-text-table-heading-size); font-weight: 600; }
 .tt-matrix .tt-area-matrix thead th small { margin-top: 0.12rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 400; }
 .tt-matrix .tt-area-matrix tbody tr:last-child > * { border-bottom: 0; }
 .tt-matrix .tt-area-matrix tbody tr:hover > * { background-color: color-mix(in oklab, var(--edify-accent-light) 48%, transparent); }
@@ -3723,7 +3723,7 @@
 .tt-line-chart__month {
   fill: var(--edify-text-subtle);
   font-family: var(--edify-font-sans);
-  font-size: 14px;
+  font-size: var(--edify-svg-text-label, var(--edify-text-label-size));
 }
 .tt-line-chart__series,
 .tt-line-chart__glow {
@@ -3752,7 +3752,7 @@
 .tt-line-chart__selected-value {
   fill: var(--edify-accent);
   font-family: var(--edify-font-sans);
-  font-size: 16px;
+  font-size: var(--edify-svg-text-title, var(--edify-text-title-size));
   font-weight: 600;
   text-anchor: middle;
 }
@@ -3764,7 +3764,7 @@
 .tt-partner-panel { overflow: hidden; }
 .tt-compact-table { width: 100%; min-width: 46rem; border-collapse: collapse; }
 .tt-compact-table th { padding: 0.72rem 0.85rem; border-bottom: 1px solid var(--edify-border); background: var(--edify-surface-muted); text-align: left; }
-.tt-compact-table td { padding: 0.72rem 0.85rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
+.tt-compact-table td { padding: 0.72rem 0.85rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-table-size); }
 .tt-compact-table tbody tr:last-child td { border-bottom: 0; }
 .tt-compact-table td strong { color: var(--edify-text); font-weight: 550; }
 .tt-lower-stack {
@@ -4123,7 +4123,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   background: transparent !important;
   border-color: var(--edify-border) !important;
   padding-block: 8px !important;
-  font-size: var(--edify-text-micro-size) !important;
+  font-size: var(--edify-text-table-heading-size) !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
   letter-spacing: .06em !important;
@@ -4636,7 +4636,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   border-bottom: 1px solid var(--edify-border);
   background: color-mix(in srgb, var(--edify-surface-subtle, #f8fafc) 76%, transparent);
   color: var(--edify-text-muted, #64748b);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 750;
   letter-spacing: 0.075em;
   text-transform: uppercase;

@@ -308,7 +308,11 @@ def _display_rows(lines, year=2026, month=1):
             else getattr(line, "activity_type", "visit")
         )
         delivery_type = activity.delivery_type if activity else "staff"
-        category = _category(activity_type, delivery_type)
+        category = _category(
+            activity_type,
+            delivery_type,
+            activity.programme_activity_type if activity else None,
+        )
         category_totals[category] += int(line.amount or 0)
 
         planned_d = getattr(line, "planned_date", None) or (
@@ -331,7 +335,11 @@ def _display_rows(lines, year=2026, month=1):
         row = {
             "item": getattr(line, "label", None)
             or getattr(line, "cost_setting_key", "").replace("_", " ").title(),
-            "activity": activity.get_activity_type_display()
+            "activity": (
+                activity.activity_name_snapshot
+                or activity.get_programme_activity_type_display()
+                or activity.get_activity_type_display()
+            )
             if activity
             else str(activity_type).replace("_", " ").title(),
             "staff": names.get(owner, "Unassigned"),
@@ -542,7 +550,15 @@ def get_monthly_request(principal, filters=None) -> dict:
         "month": month,
         "month_label": MONTHS[month],
         "fy_options": [fy, str(int(fy) - 1)],
-        "request": request,
+        # NOT "request". That key is Django's HTTP request, put in every
+        # template context by the request context processor, and shadowing it
+        # with a FundRequest broke anything that reached for the real one:
+        # {% paginate %} does `context.get("request").GET` and raised
+        # AttributeError: 'FundRequest' object has no attribute 'GET' — a 500
+        # on /accounts/monthly-request/ for any period that had a saved
+        # snapshot. Periods without one shadowed it with None instead, which
+        # did not crash but silently pinned every table on the page to page 1.
+        "fund_request": request,
         "request_id": request.id if request else "",
         "status_label": status_label,
         "status_tone": status_tone,

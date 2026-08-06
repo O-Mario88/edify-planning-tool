@@ -164,7 +164,7 @@ class IconAssetTest(SimpleTestCase):
             self.assertEqual(w, h, f"{name} is not square")
 
     def test_standard_icons_have_a_transparent_surround(self):
-        """The rounded silhouette sits on whatever is behind it."""
+        """The circular silhouette sits on whatever is behind it."""
         from PIL import Image
 
         for name in ("icon-192.png", "icon-512.png", "favicon-32.png"):
@@ -184,6 +184,35 @@ class IconAssetTest(SimpleTestCase):
             self.assertEqual(
                 px[w // 2, h // 2][3], 255, f"{name} centre must stay opaque"
             )
+
+    def test_standard_icons_have_a_true_circular_silhouette(self):
+        """Desktop and non-maskable launchers receive an actual circle."""
+        from PIL import Image
+
+        for name in ("icon-192.png", "icon-512.png", "favicon-32.png"):
+            alpha = Image.open(ICON_DIR / name).convert("RGBA").getchannel("A")
+            bbox = alpha.getbbox()
+            self.assertIsNotNone(bbox, f"{name} has no visible artwork")
+            width = bbox[2] - bbox[0]
+            height = bbox[3] - bbox[1]
+            self.assertLessEqual(abs(width - height), 2, f"{name} is not round")
+
+            w, h = alpha.size
+            # Ten percent in on the diagonal is outside a circle; eighteen
+            # percent is inside. A rounded square is opaque at both points.
+            self.assertLess(alpha.getpixel((round(w * 0.10), round(h * 0.10))), 64)
+            self.assertGreater(alpha.getpixel((round(w * 0.18), round(h * 0.18))), 200)
+            for point in (
+                (w // 2, round(h * 0.08)),
+                (w // 2, round(h * 0.92)),
+                (round(w * 0.08), h // 2),
+                (round(w * 0.92), h // 2),
+            ):
+                self.assertGreater(
+                    alpha.getpixel(point),
+                    200,
+                    f"{name} circular edge is missing at {point}",
+                )
 
     def test_ios_and_maskable_icons_stay_opaque(self):
         """These two must NOT be transparent, for different reasons.
@@ -209,10 +238,8 @@ class IconAssetTest(SimpleTestCase):
                     self.assertEqual(px[x, y][3], 255, f"{name} must be fully opaque")
             px = img.convert("RGB").load()
             for x, y in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
-                r, g, b = px[x, y]
-                self.assertLess(
-                    (r + g + b) / 3,
-                    200,
-                    f"{name} corner ({x},{y}) is light -- the white surround "
-                    f"is showing through again",
+                self.assertEqual(
+                    px[x, y],
+                    (240, 246, 249),
+                    f"{name} corner ({x},{y}) must use the circular-icon surround",
                 )

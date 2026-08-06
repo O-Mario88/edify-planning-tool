@@ -19,9 +19,9 @@ Open Planning
 </div>
 
 <!-- Table Section -->
-<div class="overflow-x-auto">
+<div class="overflow-x-auto edify-record-table-wrap">
 {% if school_visits %}
-<table class="edify-data-table mp-table">
+<table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
 <th>School Name</th>
@@ -36,11 +36,11 @@ Open Planning
 <tbody>
 {% for row in school_visits %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]">{{ row.school_name }}</td>
-<td class="font-semibold text-slate-500">{{ row.school_district }}</td>
-<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
-<td class="text-slate-600 font-semibold">{{ row.purpose }}</td>
-<td class="font-bold text-slate-700">{{ row.owner }}</td>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{{ row.school_name }}</td>
+<td class="font-semibold text-slate-500" data-label="District">{{ row.school_district }}</td>
+<td class="font-bold text-slate-700" data-label="Planned">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="text-slate-600 font-semibold" data-label="Purpose">{{ row.purpose }}</td>
+<td class="font-bold text-slate-700" data-label="Partner">{{ row.owner }}</td>
 <td>{% include "partials/my_plan/row_badges.html" %}</td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}

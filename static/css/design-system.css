@@ -286,7 +286,9 @@
   --edify-text-tile-label-size: 0.8125rem;
   --edify-text-tile-helper-size: 0.8125rem;
   --edify-text-table-size: 0.875rem;
-  --edify-text-table-heading-size: 0.8125rem;
+  /* Headers and cells share one readable step. Hierarchy comes from weight,
+     colour and the header band, not from shrinking column labels. */
+  --edify-text-table-heading-size: var(--edify-text-table-size);
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;

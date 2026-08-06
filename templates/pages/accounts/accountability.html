@@ -24,7 +24,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 <!-- Table Card -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold">
+<table class="edify-record-table w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -43,24 +43,24 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 {% for rec in records %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-record-title>
 <div class="font-semibold text-slate-900 text-[12px]">#{{ rec.activity.id|slice:":8" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ rec.activity.get_activity_type_display }}</div>
 </td>
 <!-- CCEO -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="CCEO / Owner">
 <div class="font-semibold text-slate-800">{{ rec.staff_id }}</div>
 </td>
 <!-- Disbursed -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="Amount Disbursed">
 {{ rec.amount_disbursed|ugx }}
 </td>
 <!-- Actual spend -->
-<td class="px-6 py-4 text-center text-slate-800 font-semibold">
+<td class="px-6 py-4 text-center text-slate-800 font-semibold" data-label="Actual Spend">
 {{ rec.actual_spend|ugx }}
 </td>
 <!-- Variance -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="Variance">
 {% if rec.variance == 0 %}
 <span class="text-slate-500">{{ rec.variance|ugx }}</span>
 {% elif rec.variance > 0 %}
@@ -70,7 +70,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 {% endif %}
 </td>
 <!-- IA Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="IA Status">
 {% if rec.activity.status in "ia_verified,closed,accountant_confirmed" %}
 <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold edify-text-caption">Verified</span>
 {% else %}
@@ -78,7 +78,7 @@ Audit and clear disbursement accountabilities. NetSuite Expense IDs are required
 {% endif %}
 </td>
 <!-- NetSuite Expense ID -->
-<td class="px-6 py-4">
+<td class="px-6 py-4" data-label="NetSuite Expense ID">
 {% if rec.netsuite_expense_id %}
 <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill edify-text-caption">{{ rec.netsuite_expense_id }}</span>
 {% else %}
@@ -88,7 +88,7 @@ NetSuite ID Required
 {% endif %}
 </td>
 <!-- Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-6 py-4 text-center" data-label="Status">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider
 {% if rec.status == 'cleared' %}bg-emerald-50 text-emerald-700 border border-emerald-200
 {% elif rec.status == 'variance_review' %}bg-rose-50 text-rose-700 border border-rose-200
@@ -97,7 +97,7 @@ NetSuite ID Required
 </span>
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
+<td class="px-6 py-4 text-right" data-record-action>
 <div class="flex items-center justify-end gap-2">
 <button
 @click="netsuiteOpen = true; selectedAct = '{{ rec.activity.id }}'; budgetSum = {{ rec.actual_spend }}"

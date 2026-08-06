@@ -61,7 +61,7 @@ Confirm & Import
 <div id="upload-preview-panel" class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden" role="tabpanel" aria-live="polite">
 <div class="overflow-x-auto">
 {% paginate rows "rows_page" as rows_pager %}
-<table class="w-full text-[12px] border-collapse text-left">
+<table class="edify-record-table w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
 <th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Row</th>
@@ -75,16 +75,16 @@ Confirm & Import
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for r in rows_pager.rows %}
 <tr class="hover:bg-slate-50/20">
-<td class="px-5 py-4 text-slate-400 font-bold">#{{ r.row_number }}</td>
-<td class="px-4 py-4 font-mono font-bold">{{ r.school_id|default:"-" }}</td>
-<td class="px-4 py-4 font-semibold text-slate-900">{{ r.name|default:"-" }}</td>
-<td class="px-4 py-4 text-slate-500 font-semibold">
+<td class="px-5 py-4 text-slate-400 font-bold" data-record-title>#{{ r.row_number }}</td>
+<td class="px-4 py-4 font-mono font-bold" data-label="School ID">{{ r.school_id|default:"-" }}</td>
+<td class="px-4 py-4 font-semibold text-slate-900" data-label="School Name">{{ r.name|default:"-" }}</td>
+<td class="px-4 py-4 text-slate-500 font-semibold" data-label="District / Sub-county">
 {{ r.district_name|default:"-" }} / {{ r.sub_county_name|default:"-" }}
 </td>
-<td class="px-4 py-4 text-slate-500 font-semibold">
+<td class="px-4 py-4 text-slate-500 font-semibold" data-label="Proprietor / Phone">
 {{ r.director_name|default:"-" }} / {{ r.phone|default:"-" }}
 </td>
-<td class="px-5 py-4">
+<td class="px-5 py-4" data-label="Validation Gaps">
 {% if r.validation_errors %}
 <div class="flex flex-wrap gap-1.5">
 {% for err in r.validation_errors %}

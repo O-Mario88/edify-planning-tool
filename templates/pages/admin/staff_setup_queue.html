@@ -19,7 +19,7 @@
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 {% paginate unmatched_schools "unmatched_schools_page" as unmatched_schools_pager %}
-<table class="w-full text-[12px] border-collapse">
+<table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
 <th class="px-5 py-3.5 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School Record Name</th>
@@ -32,19 +32,19 @@
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for school in unmatched_schools_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
-<td class="px-5 py-4">
+<td class="px-5 py-4" data-record-title>
 <span class="font-semibold text-slate-800 block">{{ school.name }}</span>
 <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">Uploaded Owner: {{ school.account_owner_name_raw|default:"None Specified" }}</span>
 </td>
-<td class="px-4 py-4 text-slate-500 font-semibold">
+<td class="px-4 py-4 text-slate-500 font-semibold" data-label="District / Region">
 {{ school.district.name }} district / {{ school.region.name }} region
 </td>
-<td class="px-4 py-4">
+<td class="px-4 py-4" data-label="Status">
 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-amber-50 text-amber-700">
 Pending Link
 </span>
 </td>
-<td class="px-4 py-4">
+<td class="px-4 py-4" data-label="Link to Registered Staff">
 <form id="match-form-{{ school.id }}" method="post" action="/admin/staff-setup-queue">
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.id }}">
@@ -60,7 +60,7 @@ class="rounded-control border border-slate-200 px-2 py-1 edify-text-caption font
 </select>
 </form>
 </td>
-<td class="px-5 py-4 text-right space-x-1.5">
+<td class="px-5 py-4 text-right space-x-1.5" data-label="Resolve">
 <button
 type="submit"
 form="match-form-{{ school.id }}"

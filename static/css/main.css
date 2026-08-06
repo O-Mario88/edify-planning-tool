@@ -180,10 +180,16 @@
     --color-edify-text: var(--edify-text);
     --color-edify-orange: var(--edify-brand-secondary);
     --color-page: var(--edify-bg);
+    --color-danger: var(--edify-danger);
+    --color-danger-soft: var(--edify-danger-light);
+    --color-success: var(--edify-success);
+    --color-success-soft: var(--edify-success-light);
+    --color-warn-soft: var(--edify-warning-light);
     --color-rose-150: #fed9dc;
     --color-emerald-150: #bcf6da;
     --color-amber-150: #fdeda9;
     --color-green-150: #ccf9db;
+    --color-indigo-150: #d5dcfb;
     --radius-surface: 12px;
     --radius-control: 8px;
     --radius-overlay: 16px;
@@ -1045,6 +1051,9 @@
   .max-h-\[600px\] {
     max-height: 600px;
   }
+  .max-h-\[620px\] {
+    max-height: 620px;
+  }
   .max-h-\[700px\] {
     max-height: 700px;
   }
@@ -1774,9 +1783,6 @@
   }
   .justify-end {
     justify-content: flex-end;
-  }
-  .justify-start {
-    justify-content: flex-start;
   }
   .gap-0 {
     gap: 0;
@@ -5585,6 +5591,11 @@
       outline-color: var(--edify-primary);
     }
   }
+  .focus-visible\:outline-slate-400 {
+    &:focus-visible {
+      outline-color: var(--color-slate-400);
+    }
+  }
   .focus-visible\:outline-slate-700 {
     &:focus-visible {
       outline-color: var(--color-slate-700);
@@ -5883,6 +5894,11 @@
       flex-direction: row;
     }
   }
+  .sm\:flex-wrap {
+    @media (width >= 40rem) {
+      flex-wrap: wrap;
+    }
+  }
   .sm\:items-center {
     @media (width >= 40rem) {
       align-items: center;
@@ -5918,6 +5934,11 @@
       gap: calc(var(--spacing) * 4);
     }
   }
+  .sm\:gap-5 {
+    @media (width >= 40rem) {
+      gap: calc(var(--spacing) * 5);
+    }
+  }
   .sm\:space-y-5 {
     @media (width >= 40rem) {
       :where(& > :not(:last-child)) {
@@ -5934,6 +5955,16 @@
         margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));
         margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)));
       }
+    }
+  }
+  .sm\:gap-x-5 {
+    @media (width >= 40rem) {
+      column-gap: calc(var(--spacing) * 5);
+    }
+  }
+  .sm\:gap-y-1 {
+    @media (width >= 40rem) {
+      row-gap: var(--spacing);
     }
   }
   .sm\:self-center {
@@ -7200,7 +7231,7 @@ html.dark body, html.dark {
 .premium-table th {
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .06em;
@@ -7771,7 +7802,7 @@ html.theme-fade, html.theme-fade body, html.theme-fade .card, html.theme-fade .c
 }
 .dark .dtable th, .dark .premium-table th, .glass .dtable th, .glass .premium-table th {
   color: var(--text-muted);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -9151,7 +9182,7 @@ html, body {
   border-radius: 999px;
 }
 .dtable th {
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 600;
   text-transform: uppercase;
   color: var(--color-edify-muted);
@@ -9315,7 +9346,7 @@ html, body {
   top: 0;
   z-index: 4;
   font-weight: 800;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   letter-spacing: .04em;
   text-transform: uppercase;
   padding: 8px 6px;
@@ -9402,7 +9433,7 @@ html, body {
   z-index: 3;
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -9601,7 +9632,7 @@ html, body {
   z-index: 2;
   text-align: right;
   padding: 10px 12px;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 800;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -10635,7 +10666,7 @@ html, body {
   width: 100%;
   min-width: 880px;
   border-collapse: collapse;
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-size);
 }
 .partner-activity-table th {
   padding: 10px 13px;
@@ -10645,7 +10676,7 @@ html, body {
     background: color-mix(in srgb, var(--brand-primary) 4%, var(--surface-2));
   }
   color: var(--text-secondary);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-heading-size);
   font-weight: 800;
   text-align: left;
   text-transform: uppercase;
@@ -10742,7 +10773,7 @@ html, body {
   }
   border-radius: 6px;
   color: var(--brand-primary);
-  font-size: var(--edify-text-micro-size);
+  font-size: var(--edify-text-table-size);
   font-weight: 750;
   text-decoration: none;
 }

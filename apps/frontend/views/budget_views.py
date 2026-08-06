@@ -7,6 +7,7 @@ from apps.core.permissions import require_page_permission
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
 from datetime import datetime, date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 import calendar
 
 from apps.fund_requests.weekly_service import (
@@ -24,6 +25,7 @@ from apps.geography.models import District
 from apps.accounts.models import StaffProfile
 from apps.core.fy import (
     get_fy_date_range,
+    get_operational_fy,
     get_quarter_date_range,
     get_quarter_for_date,
 )
@@ -372,54 +374,75 @@ def _build_fund_requests_context(request):
     # "November" isn't blended across every fiscal year that has a November.
     # 3. Calculate KPIs — month-scoped aggregates
     # Total Requested This Month
+    selected_month_wfr_qs = wfr_qs.filter(
+        fy=fy,
+        week_start_date__year=year_num,
+        week_start_date__month=month_num,
+    )
     requested_this_month = (
-        wfr_qs.filter(fy=fy, week_start_date__month=month_num).aggregate(
-            total=Sum("total_amount")
-        )["total"]
-        or 0
+        selected_month_wfr_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     )
 
     # Delta vs Last Month
-    last_month_num = 12 if month_num == 1 else month_num - 1
+    selected_month_anchor = date(year_num, month_num, 1)
+    previous_month_end = selected_month_anchor - timedelta(days=1)
+    previous_month_anchor = previous_month_end.replace(day=1)
+    previous_month_fy = get_operational_fy(previous_month_anchor)
     requested_last_month = (
-        wfr_qs.filter(fy=fy, week_start_date__month=last_month_num).aggregate(
-            total=Sum("total_amount")
-        )["total"]
+        wfr_qs.filter(
+            fy=previous_month_fy,
+            week_start_date__year=previous_month_anchor.year,
+            week_start_date__month=previous_month_anchor.month,
+        ).aggregate(total=Sum("total_amount"))["total"]
         or 0
     )
     if requested_last_month > 0:
         delta_val = int(
-            ((requested_this_month - requested_last_month) / requested_last_month) * 100
+            (
+                Decimal(requested_this_month - requested_last_month)
+                * Decimal(100)
+                / Decimal(requested_last_month)
+            ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         )
-        direction = "up" if delta_val >= 0 else "down"
+        direction = "up" if delta_val > 0 else "down" if delta_val < 0 else "neutral"
         trend = {"direction": direction, "value": f"{abs(delta_val)}%"}
+        trend_helper = "vs Last Month"
     else:
-        trend = {"direction": "up", "value": "12%"}
+        # A percentage change from zero has no denominator. Never invent a
+        # trend for it: the live page previously displayed a hard-coded 12%.
+        trend = None
+        trend_helper = "No prior-month baseline"
 
     # Awaiting Approval
-    awaiting_qs = wfr_qs.filter(status__in=["submitted_to_pl", "submitted_to_cd"])
+    awaiting_qs = selected_month_wfr_qs.filter(
+        status__in=["submitted_to_pl", "submitted_to_cd"]
+    )
     awaiting_amount = awaiting_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     awaiting_count = awaiting_qs.count()
 
     # Approved
-    approved_qs = wfr_qs.filter(status__in=["confirmed_for_advance", "disbursed"])
+    approved_qs = selected_month_wfr_qs.filter(
+        status__in=["confirmed_for_advance", "disbursed"]
+    )
     approved_amount = approved_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     approved_count = approved_qs.count()
 
     # Ready for Disbursement
-    ready_qs = wfr_qs.filter(status="confirmed_for_advance")
+    ready_qs = selected_month_wfr_qs.filter(status="confirmed_for_advance")
     ready_amount = ready_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     ready_count = ready_qs.count()
 
     # Returned for Review
-    returned_qs = wfr_qs.filter(
+    returned_qs = selected_month_wfr_qs.filter(
         status__in=["returned_by_pl", "returned_by_cd", "returned_by_accountant"]
     )
     returned_amount = returned_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     returned_count = returned_qs.count()
 
     # Accountability Pending
-    pending_acct_qs = wfr_qs.filter(status="disbursed", accounted_amount__isnull=True)
+    pending_acct_qs = selected_month_wfr_qs.filter(
+        status="disbursed", accounted_amount__isnull=True
+    )
     pending_acct_amount = (
         pending_acct_qs.aggregate(total=Sum("total_amount"))["total"] or 0
     )
@@ -457,7 +480,7 @@ def _build_fund_requests_context(request):
             "label": "Total Requested This Month",
             "value": format_ugx_compact(requested_this_month),
             "trend": trend,
-            "helper": "vs Last Month",
+            "helper": trend_helper,
             "icon": "currency",
             "variant": "info",
         },
@@ -579,7 +602,11 @@ def _build_fund_requests_context(request):
                 "partner_activity": "Partner Activities",
                 "project_activity": "Partner Activities",
             }
-            source = source_map.get(act_type)
+            source = (
+                "Admin Budget"
+                if act and act.programme_activity_type == "admin"
+                else source_map.get(act_type)
+            )
             if not source:
                 if act_type == "admin_budget" or (
                     line.description and "admin" in line.description.lower()
@@ -619,10 +646,19 @@ def _build_fund_requests_context(request):
         scheduled_date__date__gte=selected_week_start,
         scheduled_date__date__lte=selected_week_end,
     )
-    for act in scoped_acts.select_related("school", "cluster"):
+    for act in scoped_acts.select_related(
+        "school", "school__district", "cluster", "cluster__district", "event_district"
+    ):
         title = ""
         location = ""
-        if act.activity_type in [
+        if act.planning_source == "manual_work_plan" and act.activity_name_snapshot:
+            title = act.activity_name_snapshot
+            location = (
+                f"{act.event_district.name} District"
+                if act.event_district
+                else act.venue or "Programme activity"
+            )
+        elif act.activity_type in [
             "school_visit",
             "follow_up_visit",
             "coaching_visit",
@@ -855,7 +891,7 @@ def _build_fund_requests_context(request):
         this_week_requests.aggregate(total=Sum("total_amount"))["total"] or 0
     )
 
-    attention_wfr = wfr_qs.filter(
+    attention_wfr = this_week_requests.filter(
         status__in=["pending_responsible_confirmation", "not_requested"]
     )
     attention_count = attention_wfr.count()
@@ -874,10 +910,30 @@ def _build_fund_requests_context(request):
         if supervised_user_ids:
             self_funded_scope_q |= Q(responsible_user_id__in=supervised_user_ids)
         self_funded_qs = self_funded_qs.filter(self_funded_scope_q)
+    self_funded_qs = self_funded_qs.filter(
+        planned_date__date__gte=selected_week_start,
+        planned_date__date__lte=selected_week_end,
+    )
     self_funded_count = self_funded_qs.count()
 
     due_date = date(year_num, month_num, 25)
-    days_remaining = (due_date - date.today()).days
+    today = timezone.localdate()
+    due_delta_days = (due_date - today).days
+    if due_delta_days > 0:
+        due_status = "upcoming"
+        due_heading = "Upcoming Monthly Submission"
+        due_timing_label = f"{due_delta_days} days remaining"
+    elif due_delta_days == 0:
+        due_status = "due_today"
+        due_heading = "Monthly Submission Due Today"
+        due_timing_label = "Due today"
+    else:
+        due_status = "overdue"
+        due_heading = "Monthly Submission Overdue"
+        days_overdue = abs(due_delta_days)
+        due_timing_label = (
+            f"{days_overdue} day{'s' if days_overdue != 1 else ''} overdue"
+        )
 
     missing_cost_count = activities_qs.filter(
         scheduled_date__month=month_num, cost_missing=True
@@ -928,7 +984,9 @@ def _build_fund_requests_context(request):
         "attention_count": attention_count,
         "self_funded_count": self_funded_count,
         "due_date_str": due_date.strftime("%b %d, %Y"),
-        "days_remaining": max(0, days_remaining),
+        "due_status": due_status,
+        "due_heading": due_heading,
+        "due_timing_label": due_timing_label,
         "missing_cost_count": missing_cost_count,
         "last_checked_label": date.today().strftime("%b %d, %Y"),
         "recommended_action": recommended_action,
@@ -964,8 +1022,9 @@ def _build_fund_requests_context(request):
             "count": res["count"] or 0,
         }
 
-    month_wfr_qs = wfr_qs.filter(fy=fy, week_start_date__month=month_num)
-    month_stats = month_wfr_qs.aggregate(total=Sum("total_amount"), count=Count("id"))
+    month_stats = selected_month_wfr_qs.aggregate(
+        total=Sum("total_amount"), count=Count("id")
+    )
 
     breakdown = {
         "week": get_wfr_stats(

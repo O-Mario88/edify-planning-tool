@@ -13,7 +13,13 @@ import time
 from typing import Any, Callable
 
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponsePermanentRedirect,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.http.request import split_domain_port, validate_host
 
 from .request_context import (
@@ -24,6 +30,37 @@ from .request_context import (
 )
 
 logger = logging.getLogger("edify.exceptions")
+
+# How many innermost application frames to keep on a failed request. Three is
+# enough to say "the template tag, called from this view, via this service"
+# without turning an audit row into a stack dump.
+_ORIGIN_FRAMES = 3
+
+
+def _exception_origin(exception: BaseException) -> list[str]:
+    """Innermost `file:line:function` frames from this codebase.
+
+    Deliberately not the formatted traceback. The audit trail is read by
+    administrators through /admin-panel/audit-log, and a rendered traceback
+    carries argument values and local variables — which on this platform means
+    school names, staff identifiers and financial figures ending up in a table
+    that exists to be exported. File, line and function name locate the fault
+    exactly and carry no data.
+
+    Site-packages frames are dropped: a Django or psycopg frame is the same
+    for every error and pushes out the ones that identify this bug.
+    """
+    import traceback
+
+    frames = []
+    for frame in traceback.extract_tb(exception.__traceback__):
+        if "site-packages" in frame.filename or "/python3." in frame.filename:
+            continue
+        path = frame.filename.split("/app/", 1)[-1]
+        frames.append(f"{path}:{frame.lineno}:{frame.name}")
+    # Innermost last in a traceback, and the innermost frames are the ones that
+    # say where it broke — so keep the tail, not the head.
+    return frames[-_ORIGIN_FRAMES:]
 
 
 class RequestContextMiddleware:
@@ -113,6 +150,115 @@ class HealthProbeHostMiddleware:
                 if validate_host(candidate, settings.ALLOWED_HOSTS):
                     request.META["HTTP_HOST"] = candidate
                     return
+
+
+class CanonicalHostMiddleware:
+    """Send every alternate hostname to the one canonical host, in one hop.
+
+    Set ``CANONICAL_HOST`` to enable; left unset the middleware is a no-op, and
+    that default is deliberate. The apex only becomes reachable once DNS points
+    it at App Platform and a certificate covering it has been issued — turning
+    this on before then would redirect every visitor to a host that does not
+    yet answer. So the code ships dark and is armed with one environment
+    variable after the domain is verified. See
+    docs/incident-2026-08-03-apex-godaddy-lander.md.
+
+    Placed ahead of ``SecurityMiddleware`` so host and scheme are normalised
+    together. Landing on ``http://www`` would otherwise cost two redirects —
+    one to add TLS, another to drop the ``www`` — and the requirement is one.
+    When ``SECURE_SSL_REDIRECT`` is on we emit ``https`` directly, which
+    collapses both into a single response and leaves nothing for
+    ``SecurityMiddleware`` to do.
+
+    Health probes are exempt for the same reason they are exempt from the TLS
+    redirect: the probe arrives on the container's own IP or on localhost, and
+    an orchestrator reads a 301 as "not ready" rather than following it.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+        # Resolved once at startup. This is deployment configuration, not
+        # per-request state, and re-reading it on every request would put a
+        # settings lookup on the hot path of every page in the application.
+        self.canonical_host = (getattr(settings, "CANONICAL_HOST", "") or "").strip()
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        redirect = self._redirect_for(request)
+        if redirect is not None:
+            return redirect
+        return self.get_response(request)
+
+    def _redirect_for(self, request: HttpRequest):
+        if not self.canonical_host:
+            return None
+        if request.path in HealthProbeHostMiddleware.PROBE_PATHS:
+            return None
+
+        # HTTP_HOST directly rather than get_host(): an unknown host must fall
+        # through to Django's own 400 DisallowedHost, not be quietly rewritten
+        # into a redirect to the canonical host. Rewriting it would turn an
+        # attack probe into a 301 and hide it from the logs that matter.
+        raw_host = request.META.get("HTTP_HOST") or request.META.get("SERVER_NAME", "")
+        domain, _port = split_domain_port(raw_host)
+        if not domain:
+            return None
+        if not validate_host(domain, settings.ALLOWED_HOSTS):
+            return None
+
+        host_is_canonical = domain == self.canonical_host
+        https_is_canonical = not settings.SECURE_SSL_REDIRECT or request.is_secure()
+        if host_is_canonical and https_is_canonical:
+            return None
+
+        scheme = "https" if settings.SECURE_SSL_REDIRECT else request.scheme
+        target = f"{scheme}://{self.canonical_host}{request.get_full_path()}"
+
+        # 301 is only safe where the method may be dropped. A permanent
+        # redirect on a POST must be 308, or the browser replays it as GET and
+        # the body is silently lost — a submitted form that vanishes.
+        if request.method in ("GET", "HEAD"):
+            return HttpResponsePermanentRedirect(target)
+        return HttpResponseRedirect(target, status=308)
+
+
+class FiscalYearRolloverMiddleware:
+    """Self-heal a missed October 1 rollover on the first signed-in request.
+
+    The dedicated scheduler remains the primary trigger.  This guard matters
+    because a stopped worker must not leave the live website displaying the
+    previous FY indefinitely.  Once successful it is a pure in-process branch
+    for the rest of the FY, with no query on the request hot path.
+    """
+
+    RETRY_SECONDS = 300
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+        self.checked_fy = None
+        self.retry_after = 0.0
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        if not getattr(settings, "FISCAL_YEAR_ROLLOVER_ENABLED", True):
+            return self.get_response(request)
+        user = getattr(request, "user", None)
+        if not user or not user.is_authenticated:
+            return self.get_response(request)
+
+        from apps.core.fy import get_operational_fy
+
+        fy = get_operational_fy()
+        now = time.monotonic()
+        if self.checked_fy != fy and now >= self.retry_after:
+            try:
+                from apps.hr.fiscal_year_rollover import ensure_current_fiscal_year
+
+                ensure_current_fiscal_year(initiated_by="web-self-heal")
+                self.checked_fy = fy
+            except Exception:  # noqa: BLE001 — never take the website down
+                self.retry_after = now + self.RETRY_SECONDS
+                logger.exception("Fiscal-year rollover self-heal failed for FY%s", fy)
+
+        return self.get_response(request)
 
 
 class AllExceptionsMiddleware:
@@ -235,6 +381,20 @@ class AllExceptionsMiddleware:
                 "method": request.method,
                 "path": request.path,
                 "exception_type": type(exception).__name__,
+                # Where it came from, not just what it was. The container log
+                # holds the full traceback but App Platform keeps no logs for a
+                # superseded deployment, so after the next deploy this row is
+                # the only durable record — and "AttributeError somewhere"
+                # cannot be acted on. Frames are file:line:function from this
+                # codebase only: no locals, no argument values, nothing that
+                # could carry user data into the audit trail.
+                #
+                # The exception *message* deliberately stays out. It is the one
+                # field that routinely carries data — an IntegrityError names
+                # the conflicting key and its value — and audit rows are read
+                # and exported by administrators.
+                # test_error_observability guards this with RuntimeError("secret").
+                "origin": _exception_origin(exception),
             },
         )
         logger.exception(

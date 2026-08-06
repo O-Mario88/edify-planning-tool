@@ -25,7 +25,7 @@
 
 <div class="overflow-x-auto">
 {% paginate champions "champions_page" as champions_pager %}
-<table class="w-full text-left text-[12px] border-collapse ">
+<table class="edify-record-table w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="text-slate-400 font-semibold uppercase edify-text-caption border-b border-slate-100 tracking-wider">
 <th class="py-2.5">School Name</th>
@@ -39,12 +39,12 @@
 <tbody class="divide-y divide-slate-100 font-semibold">
 {% for c in champions_pager.rows %}
 <tr class="hover:bg-slate-50/40 transition-colors">
-<td class="py-3.5 text-slate-900 font-semibold text-[12px]">{{ c.name }}</td>
-<td class="py-3.5 text-slate-500 font-bold">{{ c.region }}</td>
-<td class="py-3.5 text-slate-500 font-bold">{{ c.district }}</td>
-<td class="py-3.5 text-center font-semibold">{{ c.onboard_fy }}</td>
-<td class="py-3.5 text-center edify-primary-text font-semibold">{{ c.latest_avg }}</td>
-<td class="py-3.5 text-center">
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]" data-record-title>{{ c.name }}</td>
+<td class="py-3.5 text-slate-500 font-bold" data-label="Region">{{ c.region }}</td>
+<td class="py-3.5 text-slate-500 font-bold" data-label="District">{{ c.district }}</td>
+<td class="py-3.5 text-center font-semibold" data-label="Core Start Fiscal Year">{{ c.onboard_fy }}</td>
+<td class="py-3.5 text-center edify-primary-text font-semibold" data-label="Latest SSA Average">{{ c.latest_avg }}</td>
+<td class="py-3.5 text-center" data-label="Independent Status">
 <span class="inline-flex items-center rounded-pill px-2.5 py-0.5 edify-text-caption font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
 Graduate Champion
 </span>
