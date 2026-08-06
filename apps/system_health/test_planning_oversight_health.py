@@ -153,6 +153,52 @@ class AttributionTest(HealthFixture):
         self.assertEqual(finding["count"], 1)
         self.assertIn("Unassigned", finding["examples"][0]["actual"])
 
+    def test_work_owned_by_a_never_activated_account_is_its_own_finding(self):
+        """The two need opposite fixes, so they must not be one finding.
+
+        An invited account that was never activated cannot sign in, upload
+        evidence or act on an action sent to it. Giving it a supervisor would
+        turn the report green and leave the work exactly as stuck.
+        """
+        invited = User.objects.create(
+            email="pending.someone@h.test",
+            name="Never Activated",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            is_active=False,
+            status="pending_invited",
+        )
+        profile = StaffProfile.objects.create(user=invited, title="CCEO")
+        self._activity(responsible_staff_id=profile.id)
+
+        onboarding = self.check("owner_never_onboarded")
+        supervisor = self.check("owner_without_supervisor")
+
+        self.assertEqual(onboarding["count"], 1)
+        self.assertEqual(onboarding["severity"], "error")
+        self.assertIn("never activated", onboarding["examples"][0]["actual"])
+        self.assertIn("staff-setup-queue", onboarding["route"])
+        self.assertEqual(
+            supervisor["count"],
+            0,
+            "an unactivated account must not also be reported as unsupervised",
+        )
+
+    def test_an_active_owner_missing_a_line_is_still_reported(self):
+        """Excluding dormant accounts must not silence the real gap."""
+        active = User.objects.create(
+            email="active@h.test",
+            name="Active No Lead",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            is_active=True,
+        )
+        profile = StaffProfile.objects.create(user=active, title="CCEO")
+        self._activity(responsible_staff_id=profile.id)
+
+        self.assertEqual(self.check("owner_without_supervisor")["count"], 1)
+        self.assertEqual(self.check("owner_never_onboarded")["count"], 0)
+
     def test_a_supervised_owner_is_not_reported(self):
         self._activity()
 

@@ -21,6 +21,7 @@ def report() -> dict:
         _assignments_costed_before_scheduling(),
         _activities_claimed_by_two_assignments(),
         _activities_without_an_operational_owner(),
+        _work_owned_by_staff_who_never_onboarded(),
         _activities_without_a_supervising_program_lead(),
         _scheduled_activities_without_a_cost(),
     ]
@@ -203,6 +204,69 @@ def _activities_without_an_operational_owner() -> dict:
     )
 
 
+def _work_owned_by_staff_who_never_onboarded() -> dict:
+    """Live work owned by an account nobody can sign in as.
+
+    Separate from the missing-supervisor check on purpose, because the two need
+    opposite fixes and conflating them sends people to the wrong place. An
+    active CCEO with no reporting line needs a line. An invited account that
+    was never activated needs onboarding — giving it a supervisor would make
+    the health report green while leaving the work exactly as unactionable as
+    it was: the owner cannot sign in, cannot upload evidence, cannot complete
+    anything, and cannot act on a TeamAction sent to them.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.activities.models import Activity
+    from apps.planning.oversight_service import LIVE_ACTIVITY_STATUSES
+
+    owner_ids = set(
+        Activity.objects.filter(
+            deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
+        )
+        .exclude(responsible_staff_id__isnull=True)
+        .exclude(responsible_staff_id="")
+        .values_list("responsible_staff_id", flat=True)
+        .distinct()
+    )
+    profiles = StaffProfile.objects.filter(
+        Q(id__in=owner_ids) | Q(user_id__in=owner_ids)
+    ).select_related("user")
+    dormant = [p for p in profiles if not getattr(p.user, "is_active", True)]
+
+    activity_count = (
+        Activity.objects.filter(
+            deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
+        )
+        .filter(
+            Q(responsible_staff_id__in=[p.id for p in dormant])
+            | Q(responsible_staff_id__in=[p.user_id for p in dormant])
+        )
+        .count()
+        if dormant
+        else 0
+    )
+
+    return _finding(
+        key="owner_never_onboarded",
+        label="Live work owned by staff who have never been activated",
+        severity="error",
+        expected="Every owner of live work can sign in and act on it",
+        count=len(dormant),
+        examples=[
+            {
+                "id": p.id,
+                "staff": getattr(p.user, "name", "") or getattr(p.user, "email", ""),
+                "actual": (
+                    f"{getattr(p.user, 'status', 'inactive')}, never activated — "
+                    "cannot sign in, upload evidence or act on an assigned action"
+                ),
+            }
+            for p in dormant[:10]
+        ],
+        route=f"/admin-panel/staff-setup-queue ({activity_count} live activities affected)",
+    )
+
+
 def _activities_without_a_supervising_program_lead() -> dict:
     """Owned work whose owner reports to nobody.
 
@@ -230,7 +294,15 @@ def _activities_without_a_supervising_program_lead() -> dict:
     profiles = StaffProfile.objects.filter(
         Q(id__in=owner_ids) | Q(user_id__in=owner_ids)
     ).select_related("user")
-    unsupervised = [p for p in profiles if p.id not in supervised]
+    # Accounts that were never activated are reported by their own check
+    # above. Counting them here too would give one problem two findings and
+    # point the reader at a fix — adding a reporting line — that would leave
+    # the work exactly as stuck as it was.
+    unsupervised = [
+        p
+        for p in profiles
+        if p.id not in supervised and getattr(p.user, "is_active", True)
+    ]
 
     return _finding(
         key="owner_without_supervisor",
