@@ -3,11 +3,11 @@
 {% block help_title %}Search the Knowledge Center{% endblock %}
 {% block help_lede %}Results are filtered to what your active role may read.{% endblock %}
 {% block help_content %}
-<section aria-labelledby="search-title">
+<section aria-label="Search the Knowledge Center">
   <nav class="text-sm mb-4" aria-label="Breadcrumb"><a href="/help" class="hover:underline edify-primary-text">Knowledge Center</a><span aria-hidden="true"> / </span><span>Search</span></nav>
   {% comment %}h2, not h1: layouts/help_center.html already renders the page h1
   from the help_title block.{% endcomment %}
-  <h2 id="search-title" class="text-2xl font-extrabold edify-page-title">Search the Knowledge Center</h2>
+  {% comment %}No title here: layouts/help_center.html renders the page header, and now that the header is a visible band, repeating the title printed it twice on the page.{% endcomment %}
   {% comment %}
   Duplicate removed: this form submitted the same q to the same route as the
   top bar, so a results page showed two inputs that could disagree after a

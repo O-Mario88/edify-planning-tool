@@ -120,6 +120,15 @@ class PartnerAssignment(TimeStampedModel):
         Partner, on_delete=models.CASCADE, related_name="school_assignments"
     )
     assigning_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    # Who watches the delivery, as distinct from who handed it over. These
+    # used to be one column, so a PL handing off a CCEO's school made the PL
+    # the monitor and the partner's work never reached the owning CCEO's My
+    # Plan — the person who actually knows the school saw nothing.
+    #
+    # Nullable and read with a fallback to assigning_staff_id, so every row
+    # written before this existed keeps resolving to exactly what it resolved
+    # to before.
+    monitoring_staff_id = models.CharField(max_length=30, null=True, blank=True)
     assignment_mode = models.CharField(
         max_length=32,
         choices=[

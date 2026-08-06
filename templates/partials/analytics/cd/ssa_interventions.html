@@ -15,7 +15,7 @@
     <a href="/analytics/country-director/drilldown?drill=ssa&intervention={{ r.value }}&fy={{ fy }}"
        hx-get="/analytics/country-director/drilldown?drill=ssa&intervention={{ r.value }}&fy={{ fy }}"
        hx-target="#drawer-container" hx-swap="innerHTML"
-       class="flex items-center gap-2 group cursor-pointer">
+       class="edify-bar-row flex items-center gap-2 group cursor-pointer">
       <span class="w-[132px] shrink-0 edify-text-caption font-semibold text-slate-600 truncate group-hover:text-slate-800">{{ r.label }} <span class="text-slate-400">({{ r.code }})</span></span>
       <div class="flex-1 h-[18px] rounded-surface overflow-hidden relative" style="background:var(--edify-chart-bar-track)">
         {% if r.score is not None %}

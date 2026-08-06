@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 557,
-  "templates": 196,
-  "distinct_titles": 531,
+  "titled_cards": 551,
+  "templates": 192,
+  "distinct_titles": 525,
   "with_card_key": 13,
-  "untitled_surfaces": 1010,
+  "untitled_surfaces": 1016,
   "untitled_chrome": 228,
   "untitled_nested": 378,
-  "untitled_headless": 404,
+  "untitled_headless": 410,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 20,
   "ambiguous_titles": 0
@@ -122,16 +122,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_evidence.html",
-   "line": 14,
-   "title": "Accountant Evidence Packet View",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-6 space-y-4 shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/activity_evidence.html",
-   "line": 38,
+   "line": 43,
    "title": "Attached Verification Files",
    "heading_level": 3,
    "has_card_key": false,
@@ -140,7 +131,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 41,
+   "line": 44,
    "title": "Activity Summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -149,7 +140,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 52,
+   "line": 55,
    "title": "Budget Breakdown (Activity Budget Lines)",
    "heading_level": 3,
    "has_card_key": false,
@@ -158,7 +149,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 91,
+   "line": 94,
    "title": "Disbursement & Payment History",
    "heading_level": 3,
    "has_card_key": false,
@@ -167,35 +158,35 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 118,
+   "line": 121,
    "title": "Compliance Blockers",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-rose-50 rounded-surface border border-rose-150 p-6 space-y-4",
    "branch_path": [
     [
-     1,
+     2,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 133,
+   "line": 136,
    "title": "No Compliance Blockers",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-emerald-50 rounded-surface border border-emerald-150 p-6 space-y-3",
    "branch_path": [
     [
-     1,
+     2,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 145,
+   "line": 148,
    "title": "Accountability & Receipts",
    "heading_level": 3,
    "has_card_key": false,
@@ -204,7 +195,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 170,
+   "line": 173,
    "title": "Finance Operations",
    "heading_level": 3,
    "has_card_key": false,
@@ -213,7 +204,7 @@
   },
   {
    "template": "templates/pages/accounts/activity_finance_detail.html",
-   "line": 218,
+   "line": 221,
    "title": "Finance Audit Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -314,20 +305,6 @@
    "has_card_key": false,
    "classes": "xl:col-span-3 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
    "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/monthly_request.html",
-   "line": 7,
-   "title": "Monthly Requests",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "card max-w-2xl p-7",
-   "branch_path": [
-    [
-     0,
-     0
-    ]
-   ]
   },
   {
    "template": "templates/pages/admin/data_quality_center.html",
@@ -582,7 +559,7 @@
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 15,
+   "line": 17,
    "title": "Error Context",
    "heading_level": 2,
    "has_card_key": false,
@@ -591,7 +568,7 @@
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 32,
+   "line": 34,
    "title": "Response",
    "heading_level": 2,
    "has_card_key": false,
@@ -600,7 +577,7 @@
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 51,
+   "line": 53,
    "title": "Audit History",
    "heading_level": 2,
    "has_card_key": false,
@@ -663,7 +640,7 @@
   },
   {
    "template": "templates/pages/admin_ops/report_problem.html",
-   "line": 40,
+   "line": 42,
    "title": "Your Reports",
    "heading_level": 2,
    "has_card_key": false,
@@ -782,7 +759,7 @@
   },
   {
    "template": "templates/pages/closure/activity_closure_detail.html",
-   "line": 33,
+   "line": 36,
    "title": "Closure Details Checklist",
    "heading_level": 2,
    "has_card_key": false,
@@ -791,7 +768,7 @@
   },
   {
    "template": "templates/pages/closure/activity_closure_detail.html",
-   "line": 110,
+   "line": 113,
    "title": "Vertical Activity Journey Stream",
    "heading_level": 3,
    "has_card_key": false,
@@ -800,7 +777,7 @@
   },
   {
    "template": "templates/pages/closure/activity_closure_detail.html",
-   "line": 134,
+   "line": 137,
    "title": "Closure Operations",
    "heading_level": 3,
    "has_card_key": false,
@@ -809,7 +786,7 @@
   },
   {
    "template": "templates/pages/closure/completed_detail.html",
-   "line": 27,
+   "line": 32,
    "title": "Final Certified Record",
    "heading_level": 2,
    "has_card_key": false,
@@ -818,7 +795,7 @@
   },
   {
    "template": "templates/pages/closure/completed_detail.html",
-   "line": 40,
+   "line": 45,
    "title": "Frozen Financial Snapshot",
    "heading_level": 3,
    "has_card_key": false,
@@ -827,7 +804,7 @@
   },
   {
    "template": "templates/pages/closure/completed_detail.html",
-   "line": 69,
+   "line": 74,
    "title": "Verification Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -836,7 +813,7 @@
   },
   {
    "template": "templates/pages/closure/completed_detail.html",
-   "line": 79,
+   "line": 84,
    "title": "Timeline checkpoints",
    "heading_level": 3,
    "has_card_key": false,
@@ -1030,24 +1007,6 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/dashboards/cd.html",
-   "line": 10,
-   "title": "Country Director Dashboard",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap bg-white/10 backdrop-blur-xl border border-white/15 edify-shadow-md",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/dashboards/hr.html",
-   "line": 10,
-   "title": "HR Director Dashboard",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "rounded-surface p-4 flex items-center justify-between gap-3 flex-wrap bg-white/10 backdrop-blur-xl border border-white/15 edify-shadow-md",
    "branch_path": []
   },
   {
@@ -1322,7 +1281,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 43,
+   "line": 45,
    "title": "Linked Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -1336,7 +1295,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 55,
+   "line": 57,
    "title": "Execution &amp; Observations",
    "heading_level": 2,
    "has_card_key": false,
@@ -1345,7 +1304,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 69,
+   "line": 71,
    "title": "Challenges",
    "heading_level": 2,
    "has_card_key": false,
@@ -1359,7 +1318,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 84,
+   "line": 86,
    "title": "Commitments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1373,7 +1332,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 104,
+   "line": 106,
    "title": "Recommendation",
    "heading_level": 2,
    "has_card_key": false,
@@ -1387,7 +1346,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 122,
+   "line": 124,
    "title": "Support Requested",
    "heading_level": 2,
    "has_card_key": false,
@@ -1401,7 +1360,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 138,
+   "line": 140,
    "title": "Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1410,7 +1369,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 174,
+   "line": 176,
    "title": "Peer Solutions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1424,7 +1383,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 199,
+   "line": 201,
    "title": "Supervisor Review",
    "heading_level": 2,
    "has_card_key": false,
@@ -1438,7 +1397,7 @@
   },
   {
    "template": "templates/pages/debriefs/detail.html",
-   "line": 210,
+   "line": 212,
    "title": "Clarification Requested",
    "heading_level": 2,
    "has_card_key": false,
@@ -1526,7 +1485,7 @@
   },
   {
    "template": "templates/pages/documents/agreement_center.html",
-   "line": 94,
+   "line": 96,
    "title": "Your completed responses",
    "heading_level": 2,
    "has_card_key": false,
@@ -1540,7 +1499,7 @@
   },
   {
    "template": "templates/pages/documents/compliance.html",
-   "line": 85,
+   "line": 87,
    "title": "Policy Comments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1554,7 +1513,7 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 13,
+   "line": 15,
    "title": "Lifecycle",
    "heading_level": 2,
    "has_card_key": false,
@@ -1563,7 +1522,7 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 34,
+   "line": 36,
    "title": "Audience",
    "heading_level": 2,
    "has_card_key": false,
@@ -1572,7 +1531,7 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 43,
+   "line": 45,
    "title": "Versions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1581,7 +1540,7 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 59,
+   "line": 61,
    "title": "Acknowledgements",
    "heading_level": 2,
    "has_card_key": false,
@@ -1729,15 +1688,6 @@
    "heading_level": 1,
    "has_card_key": false,
    "classes": "rounded-surface border p-3 edify-border",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/help/release_notes.html",
-   "line": 5,
-   "title": "Release notes",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border p-5 edify-border scroll-mt-4",
    "branch_path": []
   },
   {
@@ -2242,7 +2192,7 @@
   },
   {
    "template": "templates/pages/leave/leave_coverage.html",
-   "line": 34,
+   "line": 36,
    "title": "Coverage Assignments & Auditing",
    "heading_level": 3,
    "has_card_key": false,
@@ -2251,7 +2201,7 @@
   },
   {
    "template": "templates/pages/leave/leave_policies.html",
-   "line": 126,
+   "line": 128,
    "title": "Public Holidays",
    "heading_level": 3,
    "has_card_key": false,
@@ -2260,7 +2210,7 @@
   },
   {
    "template": "templates/pages/leave/leave_policies.html",
-   "line": 159,
+   "line": 161,
    "title": "Add Public Holiday",
    "heading_level": 4,
    "has_card_key": false,
@@ -2468,7 +2418,7 @@
   },
   {
    "template": "templates/pages/messages/new.html",
-   "line": 41,
+   "line": 43,
    "title": "Compose Message",
    "heading_level": 2,
    "has_card_key": false,
@@ -2477,7 +2427,7 @@
   },
   {
    "template": "templates/pages/messages/new.html",
-   "line": 349,
+   "line": 351,
    "title": "Message Rules",
    "heading_level": 3,
    "has_card_key": false,
@@ -2486,7 +2436,7 @@
   },
   {
    "template": "templates/pages/messages/new.html",
-   "line": 385,
+   "line": 387,
    "title": "Recent Drafts",
    "heading_level": 3,
    "has_card_key": false,
@@ -2531,15 +2481,6 @@
   },
   {
    "template": "templates/pages/my_plan/evidence_packet.html",
-   "line": 15,
-   "title": "Evidence Proof Packet",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/my_plan/evidence_packet.html",
    "line": 58,
    "title": "Uploaded Evidence Files",
    "heading_level": 3,
@@ -2572,7 +2513,7 @@
   },
   {
    "template": "templates/pages/partner/evidence.html",
-   "line": 29,
+   "line": 31,
    "title": "Recent Uploads",
    "heading_level": 2,
    "has_card_key": false,
@@ -2667,7 +2608,7 @@
   },
   {
    "template": "templates/pages/planning/schedule.html",
-   "line": 198,
+   "line": 200,
    "title": "Live Costing Breakdown",
    "heading_level": 3,
    "has_card_key": false,
@@ -3056,7 +2997,7 @@
   },
   {
    "template": "templates/pages/schools/upload.html",
-   "line": 17,
+   "line": 19,
    "title": "School Directory Upload",
    "heading_level": 3,
    "has_card_key": false,
@@ -3107,7 +3048,7 @@
   },
   {
    "template": "templates/pages/settings/activity_catalogue.html",
-   "line": 48,
+   "line": 50,
    "title": "Catalogue Mapping Review",
    "heading_level": 2,
    "has_card_key": false,
@@ -3121,7 +3062,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 16,
+   "line": 18,
    "title": "Account security",
    "heading_level": 2,
    "has_card_key": false,
@@ -3130,7 +3071,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 30,
+   "line": 32,
    "title": "Programme master data",
    "heading_level": 2,
    "has_card_key": false,
@@ -3139,7 +3080,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 37,
+   "line": 39,
    "title": "Two-step verification",
    "heading_level": 2,
    "has_card_key": false,
@@ -3148,7 +3089,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 105,
+   "line": 107,
    "title": "Appearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -3157,7 +3098,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 146,
+   "line": 148,
    "title": "Notifications",
    "heading_level": 2,
    "has_card_key": false,
@@ -3166,7 +3107,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 151,
+   "line": 153,
    "title": "Session",
    "heading_level": 2,
    "has_card_key": false,
@@ -3175,7 +3116,7 @@
   },
   {
    "template": "templates/pages/ssa/manual_entry.html",
-   "line": 26,
+   "line": 28,
    "title": "Please correct the highlighted fields.",
    "heading_level": 2,
    "has_card_key": false,
@@ -3189,7 +3130,7 @@
   },
   {
    "template": "templates/pages/ssa/manual_entry.html",
-   "line": 41,
+   "line": 43,
    "title": "Assessment details",
    "heading_level": 2,
    "has_card_key": false,
@@ -3384,7 +3325,7 @@
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 41,
+   "line": 43,
    "title": "Today's Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -3393,7 +3334,7 @@
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 87,
+   "line": 89,
    "title": "Coming This Week",
    "heading_level": 2,
    "has_card_key": false,
@@ -3407,7 +3348,7 @@
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 107,
+   "line": 109,
    "title": "Evidence Missing ()",
    "heading_level": 3,
    "has_card_key": false,
@@ -5929,7 +5870,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 302,
+   "line": 310,
    "title": "Priority progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -5938,7 +5879,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 319,
+   "line": 327,
    "title": "Team performance trend",
    "heading_level": 2,
    "has_card_key": false,
@@ -5947,7 +5888,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 378,
+   "line": 386,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -5956,7 +5897,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 399,
+   "line": 407,
    "title": "Districts most behind",
    "heading_level": 2,
    "has_card_key": false,

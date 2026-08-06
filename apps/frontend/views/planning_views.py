@@ -971,8 +971,42 @@ def assign_partner_modal_view(request):
             if partner_catalogue_recommendations
             else []
         ),
+        # Who monitors the partner. Never a field to fill: the school already
+        # belongs to somebody, so asking again invites a different answer from
+        # the assignment record and two versions of who is accountable.
+        "monitoring_staff_name": resolve_monitoring_staff(school, request.user)[1],
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def resolve_monitoring_staff(school, actor):
+    """Who monitors a partner handoff: the school's own staff member.
+
+    The single resolver behind both the drawer's "Monitored by" line and the
+    `monitored_by_staff_id` written on the assignment. They must agree — My
+    Plan surfaces partner work through `monitored_by_staff_id`, so a drawer
+    that named the school's owner while the record stored whoever clicked
+    Handoff would promise oversight to one person and deliver the row to
+    another.
+
+    Falls back to the person handing off when there is nobody to fall back
+    *from*: a cluster has no single owner, and a school may not be assigned
+    yet. Returns (staff_profile_id, display_name).
+    """
+    if school is not None:
+        from apps.planning.action_service import ResponsibleActorService
+
+        staff, _role = ResponsibleActorService.for_school(school.id)
+        if staff:
+            name = getattr(getattr(staff, "user", None), "name", "")
+            if name:
+                return staff.id, name
+    return (
+        getattr(actor, "staff_profile_id", None)
+        or getattr(actor, "user_id", None)
+        or getattr(actor, "id", None),
+        getattr(actor, "name", "") or "You",
+    )
 
 
 @require_page_permission("planning")
@@ -1180,6 +1214,10 @@ def assign_partner_action_view(request):
             )
             assignment_purpose = purpose or catalogue_item.display_name
             normalized_type = catalogue_item.workflow_kind
+            # The same resolver the drawer displayed, so the record agrees with
+            # what the person was shown — and so the partner's work lands on
+            # the owning staff member's My Plan rather than the assigner's.
+            monitoring_staff_id = resolve_monitoring_staff(school, request.user)[0]
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
                 target = "/projects/my-plan" if project_id else None
@@ -1195,6 +1233,7 @@ def assign_partner_action_view(request):
                     school=school,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
+                    monitoring_staff_id=monitoring_staff_id,
                     assignment_mode="specific_activity",
                     catalogue_item=catalogue_item,
                     source_ssa=source_ssa,

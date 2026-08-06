@@ -11,7 +11,7 @@ from apps.core.permissions import require_export_permission, require_page_permis
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
-from apps.geography.models import Region, District
+from apps.geography.models import Region, District, SubRegion, SubCounty
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner
 from apps.accounts.models import StaffProfile
@@ -26,7 +26,9 @@ def _analytics_filters(request):
     return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
+        "sub_region": request.GET.get("sub_region"),
         "district": request.GET.get("district"),
+        "sub_county": request.GET.get("sub_county"),
         "cluster": request.GET.get("cluster"),
         "staff": request.GET.get("staff"),
         "partner": request.GET.get("partner"),
@@ -90,6 +92,26 @@ def analytics_dashboard_view(request):
         .distinct()
         .order_by("name")
     )
+    # Sub-region reaches schools through the district, matching the SSA heatmap
+    # and the map. School.sub_region_id is a CharField populated on no school,
+    # so scoping through it would offer an empty list.
+    sub_regions = (
+        SubRegion.objects.filter(districts__in=_scoped_schools.values("district_id"))
+        .distinct()
+        .order_by("name")
+    )
+    # Scoped to the sub-counties schools are ACTUALLY assigned to, not to every
+    # sub-county in the country. The map draws boundaries for all of them from
+    # static GeoJSON, which makes coverage look complete; the assignment on
+    # School.sub_county is what a filter can actually return rows for, and it
+    # is set on a small minority of schools today. Listing the rest would be
+    # thousands of options that all return nothing.
+    sub_counties = (
+        SubCounty.objects.filter(id__in=_scoped_schools.values("sub_county_id"))
+        .distinct()
+        .select_related("district")
+        .order_by("district__name", "name")
+    )
     # Cluster carries its own district, so it scopes through the same set
     # rather than through School.cluster_id, which is a CharField.
     clusters = (
@@ -108,7 +130,9 @@ def analytics_dashboard_view(request):
     context = {
         **data,
         "regions": regions,
+        "sub_regions": sub_regions,
         "districts": districts,
+        "sub_counties": sub_counties,
         "clusters": clusters,
         "staff_profiles": staff_profiles,
         "partners": partners,
@@ -756,12 +780,24 @@ def _heatmap_level_choices():
     """(value, label) for the SSA heatmap's level tabs, in geographic order.
 
     Ordered widest-first because that is how somebody reads down to a problem —
-    region to district to sub-county — with cluster last since it cuts across
-    geography rather than nesting inside it.
+    sub-region to district to sub-county — with cluster last since it cuts
+    across geography rather than nesting inside it. HEATMAP_LEVELS is declared
+    in that order, so it is the order.
+
+    Derived from HEATMAP_LEVELS rather than repeated here. This used to hold
+    its own `order` list filtered by `if key in levels`, which meant a level
+    present in one and absent from the other vanished in silence: renaming
+    `region` to `sub_region` left `region` in the order (dropped, no longer a
+    level) and `sub_region` out of it (dropped, not in the order), so the
+    heatmap lost a tab while every level still worked when requested by URL.
+    A list that must agree with another list eventually will not.
     """
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
-    order = ["region", "district", "sub_county", "cluster"]
+    # Widest first, following the real hierarchy:
+    # Region -> Sub-Region -> District -> Sub-County. Cluster is last
+    # because it cuts across geography rather than nesting inside it.
+    order = ["region", "sub_region", "district", "sub_county", "cluster"]
     levels = CDAnalyticsService.HEATMAP_LEVELS
     return [(key, levels[key][2]) for key in order if key in levels]
 

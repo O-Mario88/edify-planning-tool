@@ -136,8 +136,18 @@ def ssa_band(score: float | None):
 
 
 def _ssa_score(score: float | None) -> float | None:
-    """Return a display-safe SSA score on its canonical 0-10 scale."""
-    return round(score, 1) if score is not None else None
+    """Return a display-safe SSA score on its canonical 0-10 scale.
+
+    The intermediate round to 6 places is not decoration. These means are
+    computed both in Python (`sum/len`) and in SQL (`AVG`), and the two
+    accumulate in different orders, so the same eight scores can land on 4.75
+    one way and 4.749999999999999 the other. At one decimal that is 4.8 versus
+    4.7 — a visibly different score for identical data, decided by where the
+    average happened to be taken. Source scores carry one decimal, so anything
+    below 6 places is float noise and never signal; absorbing it first makes
+    the displayed number a function of the data alone.
+    """
+    return round(round(score, 6), 1) if score is not None else None
 
 
 def _ssa_bar_pct(score: float | None) -> float:
@@ -1803,6 +1813,10 @@ class PLAnalyticsService:
         rows = []
         for s in schools:
             issues, actions = [], []
+            # Machine-readable twins of `issues`, in the same order. `issue` is
+            # a display string ("No SSA + Not Visited") and cannot be used to
+            # build a condition key without parsing prose back into meaning.
+            issue_keys: list[str] = []
             # Weakest-intervention labels are resolved after pagination, for
             # the displayed rows only; the ranking never used them.
             weakest_code = ""
@@ -1814,6 +1828,7 @@ class PLAnalyticsService:
             severity = 0
             if no_ssa:
                 issues.append("No SSA")
+                issue_keys.append("no_ssa")
                 actions.append(
                     {
                         "label": "Complete SSA",
@@ -1823,6 +1838,7 @@ class PLAnalyticsService:
                 severity += 2
             if low_ssa:
                 issues.append("Low SSA")
+                issue_keys.append("low_ssa")
                 actions.append(
                     {
                         "label": (
@@ -1836,6 +1852,7 @@ class PLAnalyticsService:
                 severity += 2
             if not_visited:
                 issues.append("Not Visited")
+                issue_keys.append("no_visit")
                 actions.append(
                     {
                         "label": "Schedule School Visit",
@@ -1845,6 +1862,7 @@ class PLAnalyticsService:
                 severity += 1
             if not_trained:
                 issues.append("Not Trained")
+                issue_keys.append("no_training")
                 actions.append(
                     {
                         "label": (
@@ -1877,6 +1895,12 @@ class PLAnalyticsService:
                     # Real column on School; blank where it was never captured.
                     "shipping_address": s.shipping_address or "",
                     "issue": " + ".join(issues[:2]),
+                    # The highest-precedence issue in machine-readable form.
+                    # `issues` is appended in severity order, so the first
+                    # entry is the one an action would be raised about, and
+                    # `issue` itself is prose ("No SSA + Not Visited") that
+                    # nothing downstream should have to parse back into meaning.
+                    "issue_key": issue_keys[0] if issue_keys else "",
                     "last_visit": f"{(today - lv).days} days ago" if lv else "—",
                     "last_training": f"{(today - lt).days} days ago" if lt else "—",
                     "next_action": recommended["label"],
@@ -1888,6 +1912,33 @@ class PLAnalyticsService:
                 }
             )
         rows.sort(key=lambda r: -r["severity"])
+
+        # This list is an UNASSIGNED queue. A school somebody already owns has
+        # moved to Actions Sent, and leaving it here would invite a second
+        # person to delegate the same problem to the same CCEO.
+        #
+        # Excluded per SCHOOL, not per condition key. This list and the
+        # canonical resolver rank by different models — this one calls "no
+        # visit and no training" two issues, the resolver calls it one
+        # (`no_visit_or_training`) — so matching on keys would silently fail
+        # to hide exactly the schools that were just assigned. One row here is
+        # one school, and once that school has an owner it is not unassigned
+        # whichever of its problems got delegated.
+        #
+        # Filtered BEFORE the page slice: excluding afterwards would punch
+        # holes in pages and make the total lie.
+        school_ids = [r["id"] for r in rows]
+        if school_ids:
+            from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+            assigned = set(
+                TeamAction.objects.filter(
+                    school_id__in=school_ids, fy=fy, state__in=ACTIVE_STATES
+                ).values_list("school_id", flat=True)
+            )
+            if assigned:
+                rows = [r for r in rows if r["id"] not in assigned]
+
         offset = max(int(offset or 0), 0)
         page = rows[offset : offset + limit]
 

@@ -7,11 +7,11 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<div class="flex items-center justify-between">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Finance</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">Cost Catalogue</h1>
-<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
+<h1 class="edify-page-title edify-page-header__title">Cost Catalogue</h1>
+<p class="edify-page-header__description">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
 </div>
 {% if active_catalogue %}

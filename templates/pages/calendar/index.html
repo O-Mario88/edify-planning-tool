@@ -10,10 +10,10 @@
 {% block shell_content %}
 <section class="calendar-workspace edify-page-canvas" x-data="{ eventFilter: 'all' }" aria-label="Operations calendar">
   <header class="edify-page-header calendar-workspace__header">
-    <div>
+    <div class="edify-page-header__lead">
       <p class="calendar-workspace__eyebrow">Operations calendar</p>
-      <h1 class="edify-page-title">Calendar</h1>
-      <p class="calendar-workspace__intro">See your scheduled work, approved leave, and important holidays in one place.</p>
+      <h1 class="edify-page-title edify-page-header__title">Calendar</h1>
+      <p class="calendar-workspace__intro edify-page-header__description">See your scheduled work, approved leave, and important holidays in one place.</p>
     </div>
     <a href="{% url 'frontend:personal_time_off' %}" class="btn btn-primary calendar-workspace__leave-action">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

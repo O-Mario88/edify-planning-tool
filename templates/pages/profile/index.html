@@ -8,10 +8,10 @@
 <div class="edify-page-header edify-page-hero">
 <div class="flex items-start gap-5">
 <div class="h-16 w-16 rounded-surface edify-primary-soft edify-primary-text font-semibold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
-<div class="flex-1">
+<div class="flex-1 edify-page-header__lead">
 <p class="edify-page-eyebrow">Account</p>
-<h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">{{ member.name }}</h1>
-<p class="edify-primary-on-solid text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
+<h1 class="edify-page-title edify-page-header__title">{{ member.name }}</h1>
+<p class="edify-primary-on-solid edify-page-header__description">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
 <span class="inline-flex items-center px-2.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ role }}</span>

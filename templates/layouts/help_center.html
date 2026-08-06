@@ -20,9 +20,15 @@ the article on smaller screens and become a sticky left rail on desktop.
 <div class="help-shell">
 
   <header class="edify-page-header help-shell__header">
-    <p class="edify-page-eyebrow">Documentation</p>
-    <h1 class="edify-page-title">{% block help_title %}Help &amp; Knowledge Center{% endblock %}</h1>
-    <p class="help-shell__lede">{% block help_lede %}Learn how every Edify feature, workflow, role and automated process works.{% endblock %}</p>
+    {% comment %}The lead wrapper is required, not decorative: the header is a
+    flex row, so an eyebrow, a title and a lede left as direct children become
+    three flex items and space-between throws the title to the far right.
+    {% endcomment %}
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Documentation</p>
+      <h1 class="edify-page-title">{% block help_title %}Help &amp; Knowledge Center{% endblock %}</h1>
+      <p class="help-shell__lede">{% block help_lede %}Learn how every Edify feature, workflow, role and automated process works.{% endblock %}</p>
+    </div>
     {% block help_header_actions %}{% endblock %}
   </header>
 

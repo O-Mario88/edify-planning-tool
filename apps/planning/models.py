@@ -89,4 +89,25 @@ class MonthlyPlanActivity(TimeStampedModel):
         indexes = [models.Index(fields=["plan"])]
 
 
-__all__ = ["AnnualPlan", "AnnualPlanActivity", "MonthlyPlan", "MonthlyPlanActivity"]
+# Defined in its own module because it is a different kind of thing from the
+# plan models above — accountability rather than intent — but re-exported here
+# so Django's app-loading discovers it.
+from apps.planning.action_models import (  # noqa: E402
+    ACTIVE_STATES,
+    RELEASING_STATES,
+    ActionPriority,
+    ActionState,
+    TeamAction,
+)
+
+__all__ = [
+    "AnnualPlan",
+    "AnnualPlanActivity",
+    "MonthlyPlan",
+    "MonthlyPlanActivity",
+    "TeamAction",
+    "ActionState",
+    "ActionPriority",
+    "ACTIVE_STATES",
+    "RELEASING_STATES",
+]

@@ -208,7 +208,10 @@
   --page-header-border: color-mix(in oklab, var(--brand-primary) 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(20, 55, 75, 0.05);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #f2f5f6;
@@ -523,7 +526,10 @@
   --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-canvas-treatment:
@@ -680,7 +686,10 @@ html.theme-blue body {
   --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
   --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  --page-header-padding-x: 1rem;
+  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
+     by this value plus its border so its content lines up with the rest of
+     the page, and that bleed must stay inside the gutter. */
+  --page-header-padding-x: 0.75rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #000000;
@@ -807,5 +816,20 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 @media (min-width: 64rem) {
   .school-filter-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+}
+
+/* A row whose whole height is a progress bar is a real control, and the bar is
+   only 18px tall by design. Stacked with an 8px gap that is an 18px tap target
+   8px from its neighbour: a 24px target circle overlaps the rows either side,
+   which is exactly what WCAG 2.2 AA 2.5.8 measures, and on a phone it is a
+   genuinely fiddly tap. The bar keeps its height; the row grows around it, so
+   the chart reads identically and only the hit area changes.
+
+   Scoped to coarse pointers so the dense desktop reading of these panels — a
+   whole intervention set visible without scrolling — is untouched. */
+@media (pointer: coarse) {
+  .edify-bar-row {
+    min-height: 44px;
   }
 }

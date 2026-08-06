@@ -9,13 +9,13 @@
      @open-compose.window="composeOpen = true">
 
   <!-- Header -->
-  <div class="flex items-center justify-between gap-4 shrink-0">
-    <div class="min-w-0">
+  <div class="shrink-0 edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
       <p class="edify-page-eyebrow">Communication</p>
-      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight edify-page-title">Messages</h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1 truncate">Contextual, workflow-linked communication across roles</p>
+      <h1 class="edify-page-title edify-page-header__title">Messages</h1>
+      <p class="truncate edify-page-header__description">Contextual, workflow-linked communication across roles</p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="edify-page-header__controls">
       <button @click="composeOpen = true"
               type="button"
               class="hidden md:inline-flex items-center gap-1.5 min-h-11 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible">

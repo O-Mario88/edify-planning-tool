@@ -10,7 +10,7 @@
 {% block shell_content %}
 <section class="spa edify-page-canvas" aria-label="Special Project Analytics">
   <header class="edify-page-header spa-header">
-    <div class="spa-heading"><p class="spa-eyebrow">Verified Impact Intelligence</p><h1 class="edify-page-title">Special Project Analytics</h1><p>Track delivery, intervention-level SSA movement, partner effectiveness, adoption signals, and cost efficiency across special projects.</p></div>
+    <div class="spa-heading edify-page-header__lead"><p class="spa-eyebrow">Verified Impact Intelligence</p><h1 class="edify-page-title edify-page-header__title">Special Project Analytics</h1><p class="edify-page-header__description">Track delivery, intervention-level SSA movement, partner effectiveness, adoption signals, and cost efficiency across special projects.</p></div>
     <div class="spa-header__tools">
       {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
       <div class="spa-actions"><a id="spa-export" class="spa-button spa-button--secondary" href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a><a id="spa-snapshot" class="spa-button spa-button--secondary" href="{{ snapshot_url }}">{% include "partials/projects/planning_icon.html" with name="document" %} Download Snapshot</a><a class="spa-button spa-button--primary" href="#spa-insights">{% include "partials/projects/planning_icon.html" with name="chart" %} Review Recommendations</a></div>

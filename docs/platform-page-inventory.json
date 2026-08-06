@@ -161,6 +161,14 @@
       "template": "partials/_section_nav.html"
     },
     {
+      "bytes": 7319,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "tables": 1,
+      "template": "partials/actions/table.html"
+    },
+    {
       "bytes": 4355,
       "findings": [],
       "forms": 0,
@@ -289,7 +297,7 @@
       "template": "partials/analytics/cd/regional_summary.html"
     },
     {
-      "bytes": 2634,
+      "bytes": 2648,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -345,7 +353,7 @@
       "template": "partials/analytics/drilldown_drawer.html"
     },
     {
-      "bytes": 6010,
+      "bytes": 7817,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -625,7 +633,7 @@
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 7423,
+      "bytes": 7747,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -857,11 +865,11 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 2947,
+      "bytes": 5413,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
-      "tables": 0,
+      "tables": 1,
       "template": "partials/cost_settings/cost_setting_row.html"
     },
     {
@@ -977,7 +985,15 @@
       "template": "partials/dashboards/pl/team_performance.html"
     },
     {
-      "bytes": 422,
+      "bytes": 841,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/dashboards/pl/urgent_action_error.html"
+    },
+    {
+      "bytes": 797,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1089,7 +1105,7 @@
       "template": "partials/disbursements/return_drawer.html"
     },
     {
-      "bytes": 19016,
+      "bytes": 18996,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1177,7 +1193,7 @@
       "template": "partials/finance/country_budget/return_drawer.html"
     },
     {
-      "bytes": 27977,
+      "bytes": 27957,
       "findings": [],
       "forms": 3,
       "htmx_controls": 7,
@@ -1225,7 +1241,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 15309,
+      "bytes": 15328,
       "findings": [],
       "forms": 1,
       "htmx_controls": 4,
@@ -1249,7 +1265,7 @@
       "template": "partials/fund_approvals/return_drawer.html"
     },
     {
-      "bytes": 8762,
+      "bytes": 8689,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1313,7 +1329,7 @@
       "template": "partials/fund_requests/period_budget_tabs.html"
     },
     {
-      "bytes": 14764,
+      "bytes": 14682,
       "findings": [],
       "forms": 2,
       "htmx_controls": 2,
@@ -1753,7 +1769,7 @@
       "template": "partials/partners/return_assignment_drawer.html"
     },
     {
-      "bytes": 4499,
+      "bytes": 4648,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1761,7 +1777,7 @@
       "template": "partials/partners/schedule_assignment_drawer.html"
     },
     {
-      "bytes": 13625,
+      "bytes": 7203,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2209,7 +2225,7 @@
       "template": "partials/targets/team/_area_icon.html"
     },
     {
-      "bytes": 27487,
+      "bytes": 27858,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -2255,6 +2271,14 @@
       "htmx_controls": 0,
       "tables": 1,
       "template": "partials/targets/team/staff_drawer.html"
+    },
+    {
+      "bytes": 1168,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/targets/team/validation_drawer.html"
     },
     {
       "bytes": 11328,
@@ -4369,6 +4393,174 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.action_transition_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Action Transition",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Apply one lifecycle transition and re-render the row's workspace.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.my_actions_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "My Actions",
+      "permission_key": "my_actions",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have been handed, and by when.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.action_views",
+      "backend_view": "apps.frontend.views.action_views.actions_sent_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET ?tab={{ key }}",
+        "POST /actions/{{ r.id }}/escalate?tab={{ tab }}",
+        "POST /actions/{{ r.id }}/acknowledge?tab={{ tab }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Actions Sent",
+      "permission_key": "actions_sent",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What I have delegated, and whether it is moving.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -11188,7 +11380,7 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "tables": false,
+      "tables": true,
       "templates": [
         "partials/cost_settings/cost_setting_row.html"
       ],
@@ -11911,7 +12103,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
@@ -11996,7 +12188,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view",
@@ -12053,7 +12245,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
@@ -12114,7 +12306,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_approve_view",
@@ -12179,7 +12371,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_drilldown_view",
@@ -12242,8 +12434,8 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
-      "automated_quality_score": 9.4,
+      "audit_events": true,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_send_urgent_action_view",
       "charts": false,
@@ -12259,7 +12451,7 @@
       "permission_key": "dashboard",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Delegate one currently urgent team school to its supervised CCEO.",
+      "purpose": "Delegate one currently urgent school to the staff member who owns it.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -12290,12 +12482,13 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "partial",
       "tables": false,
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -12305,7 +12498,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_urgent_schools_page_view",
@@ -12371,7 +12564,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.planning_progress_fragment_view",
@@ -24009,7 +24202,7 @@
         "partials/planning/assign_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -29335,6 +29528,65 @@
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
+      "backend_view": "apps.frontend.views.staff_views.team_targets_validation_backlog_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Targets Validation Backlog",
+      "permission_key": "team_targets",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The team's activities in one workflow state, behind a Validation tile.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR",
+        "IA",
+        "PL"
+      ],
+      "route": "/team-targets/validation-backlog",
+      "route_name": "team_targets_validation_backlog",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.models",
+        "apps.schools.models",
+        "apps.ssa.services",
+        "apps.targets.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/targets/team/validation_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.today_view",
       "charts": false,
       "drawers": false,
@@ -30427,6 +30679,20 @@
         "retryable": true
       },
       {
+        "cron": "hourly :20 Africa/Kampala",
+        "cron_kwargs": {
+          "minute": 20
+        },
+        "description": "Closes delegated school actions whose underlying condition has cleared, and marks past-due ones overdue.",
+        "expected_runtime_seconds": 45,
+        "idempotency_note": "Resolution re-reads the source condition, so a second run finds nothing left to close; overdue marking is a state filter that excludes rows already OVERDUE.",
+        "idempotent": true,
+        "max_interval_minutes": 180,
+        "max_retries": 2,
+        "name": "school_action_sweep",
+        "retryable": true
+      },
+      {
         "cron": "daily 07:00 Africa/Kampala",
         "cron_kwargs": {
           "hour": 7,
@@ -31115,6 +31381,50 @@
       "route_name": "",
       "templates": [
         "pages/accounts/weekly_requests.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.action_transition_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/<str:action_id>/<str:transition>",
+      "route_name": "action_transition",
+      "templates": [
+        "partials/actions/table.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.my_actions_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_actions",
+      "required_permissions": [],
+      "route": "/actions/mine",
+      "route_name": "my_actions",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.action_views.actions_sent_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "actions_sent",
+      "required_permissions": [],
+      "route": "/actions/sent",
+      "route_name": "actions_sent",
+      "templates": [
+        "partials/actions/table.html",
+        "pages/actions/workspace.html"
       ]
     },
     {
@@ -39531,6 +39841,7 @@
       "route": "/dashboard/pl-send-urgent-action",
       "route_name": "pl_send_urgent_action",
       "templates": [
+        "partials/dashboards/pl/urgent_action_error.html",
         "partials/dashboards/pl/urgent_action_sent.html"
       ]
     },
@@ -43658,6 +43969,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.staff_views.team_targets_validation_backlog_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_targets",
+      "required_permissions": [],
+      "route": "/team-targets/validation-backlog",
+      "route_name": "team_targets_validation_backlog",
+      "templates": [
+        "partials/targets/team/validation_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.staff_views.today_view",
       "kind": "page",
       "methods": [
@@ -43881,22 +44206,22 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 876,
+    "all_routes": 880,
     "api_routes": 293,
-    "component_templates": 288,
+    "component_templates": 291,
     "full_pages": 317,
-    "partials_and_drawers": 144,
-    "permission_gated": 464,
+    "partials_and_drawers": 148,
+    "permission_gated": 468,
     "permission_keys": 66,
     "roles": 11,
-    "routed_surfaces": 474,
-    "scheduled_jobs": 17,
+    "routed_surfaces": 478,
+    "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 440
+    "test_referenced": 444
   }
 }

@@ -1498,6 +1498,92 @@ def team_targets_sfid_backlog_view(request):
     )
 
 
+# What each Validation-issues tile opens. The tiles count team activities stuck
+# in a workflow state, so the drill-down has to be team-scoped too — pointing
+# them at the personal plan would answer a different question. Keyed by status
+# rather than taking one from the query string, so a caller cannot ask this
+# view for an arbitrary slice of the team's work.
+VALIDATION_BACKLOGS = {
+    "awaiting_ia_verification": {
+        "title": "Awaiting IA Verification",
+        "subtitle": "Completed team activities submitted to Internal Audit, not yet verified",
+        "badge": "Awaiting IA",
+        "tone": "warning",
+        "helper": (
+            "Work here is done and visible but not yet credited — it counts as "
+            "provisional until Internal Audit verifies it."
+        ),
+        "empty_message": "Nothing is waiting on Internal Audit.",
+    },
+    "returned_by_ia": {
+        "title": "Returned by IA",
+        "subtitle": "Team activities Internal Audit sent back for correction",
+        "badge": "Returned",
+        "tone": "danger",
+        "helper": (
+            "A return reverses any credit already given. The responsible CCEO "
+            "corrects the activity from My Plan and resubmits."
+        ),
+        "empty_message": "Internal Audit has returned nothing.",
+    },
+}
+
+
+@require_page_permission("team_targets")
+def team_targets_validation_backlog_view(request):
+    """The team's activities in one workflow state, behind a Validation tile."""
+    from apps.activities.models import Activity
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.my_targets import _user_ids
+    from apps.targets.team_targets import supervised_users
+
+    status = (request.GET.get("status") or "").strip()
+    copy = VALIDATION_BACKLOGS.get(status)
+    if copy is None:
+        from django.http import HttpResponseBadRequest
+
+        return HttpResponseBadRequest("Unknown validation backlog.")
+
+    team = supervised_users(request.user)
+    ids, names = [], {}
+    for u in team:
+        for i in _user_ids(u):
+            ids.append(i)
+            names[i] = u.name
+    fy = (request.GET.get("fy") or "").strip() or Cal.current()["fy"]
+    acts = (
+        Activity.objects.filter(
+            responsible_staff_id__in=ids,
+            fy=fy,
+            status=status,
+            deleted_at__isnull=True,
+        )
+        # Partner-delivered work is Partner Contribution, never personal
+        # credit — the same exclusion the tile's own count applies.
+        .exclude(delivery_type="partner")
+        .select_related("school", "cluster")
+        .order_by("planned_date")[:100]
+        if ids
+        else []
+    )
+    rows = [
+        {
+            "staff": names.get(a.responsible_staff_id, "—"),
+            "what": a.get_activity_type_display(),
+            "where": a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "—"),
+            "date": a.planned_date,
+        }
+        for a in acts
+    ]
+    return render(
+        request,
+        "partials/targets/team/validation_drawer.html",
+        {"rows": rows, "fy": fy, **copy},
+    )
+
+
 @require_page_permission("team_targets")
 def team_targets_catchup_create_view(request):
     from django.http import HttpResponseBadRequest, HttpResponseForbidden

@@ -924,24 +924,37 @@ class PLTeamTargetsService:
             if team_ids
             else 0
         )
+        # Every tile opens a team-scoped drawer. Two of these used to point at
+        # `/activities?status=...`, a route that does not exist — the tile
+        # showed a real count and then 404'd on the way to the work behind it.
+        # `drawer` is carried explicitly so the template does not have to infer
+        # how a tile opens by sniffing its URL for a substring.
         validation_issues = [
             {
                 "label": "Awaiting IA",
                 "value": awaiting_ia_count,
                 "tone": "warning",
-                "href": "/activities?status=awaiting_ia_verification",
+                "drawer": True,
+                "href": (
+                    "/team-targets/validation-backlog"
+                    f"?status=awaiting_ia_verification&fy={fy}"
+                ),
             },
             {
                 "label": "Missing SF IDs",
                 "value": sf_missing_count,
                 "tone": "danger",
+                "drawer": True,
                 "href": f"/team-targets/sfid-backlog?fy={fy}",
             },
             {
                 "label": "Returned by IA",
                 "value": returned_count,
                 "tone": "info",
-                "href": "/activities?status=returned_by_ia",
+                "drawer": True,
+                "href": (
+                    f"/team-targets/validation-backlog?status=returned_by_ia&fy={fy}"
+                ),
             },
         ]
 

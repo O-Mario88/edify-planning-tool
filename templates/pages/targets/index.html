@@ -8,15 +8,15 @@
      x-data="{ showRollup: false, showMscs: false }">
 
   <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-    <div>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Performance</p>
-      <h1 class="text-[21px] font-extrabold tracking-tight edify-page-title">My Targets</h1>
-      <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">
+      <h1 class="edify-page-title edify-page-header__title">My Targets</h1>
+      <p class="edify-page-header__description">
         Track your personal performance across monthly, quarterly, and financial-year targets.
       </p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="edify-page-header__controls">
       <form hx-get="/my-targets" hx-target="#my-targets-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
             class="edify-filter-bar flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
         <span class="uppercase tracking-wider edify-text-caption">FY</span>

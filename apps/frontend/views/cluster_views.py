@@ -265,6 +265,23 @@ def cluster_list_view(request):
         "selected_activity_status": request.GET.get("activity_status", "").strip(),
     }
 
+    # Create Cluster, the two header schedule buttons and the per-card
+    # "schedule training" all open drawers behind `planning`, which oversight
+    # roles do not hold — a Country Director may read this page in full and may
+    # not schedule field work on it. They were rendered unconditionally, so
+    # those roles were offered controls that answered 403. Gated on the same
+    # permission the drawers enforce, exactly as the cluster detail page
+    # already does, so a control is present precisely when it works. The server
+    # check stays where it is; this is the other half of it.
+    #
+    # Set BEFORE the HTMX branch: the cards are re-rendered by every filter and
+    # search keystroke through that path, so a flag added after it would make
+    # the per-card button vanish on the first refresh for the people who are
+    # entitled to it.
+    context["can_plan_clusters"] = RolePermissionService.can_view_page(
+        request.user, "planning"
+    )
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/clusters/htmx_response.html", context)
 

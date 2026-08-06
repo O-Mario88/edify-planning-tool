@@ -23,16 +23,16 @@ the heading on screen would be the worse of the two.
   1280px screen, so an lg: (1024px) rule would never fire for the people who
   actually use this page.
   {% endcomment %}
-  <div class="edify-page-header flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-      <div class="min-w-0">
+  <div class="edify-page-header">
+      <div class="min-w-0 edify-page-header__lead">
         <p class="edify-page-eyebrow">People & Culture</p>
-        <h1 class="edify-page-title">Priority Setting Dashboard</h1>
-        <p class="edify-page-subtitle">
+        <h1 class="edify-page-title edify-page-header__title">Priority Setting Dashboard</h1>
+        <p class="edify-page-subtitle edify-page-header__description">
           Your agreed priorities drive your targets, allocations and performance
           conversations — progress is computed from verified work, never typed.
         </p>
       </div>
-      <div class="flex flex-wrap items-center justify-end gap-2">
+      <div class="edify-page-header__controls">
         {% if cycle %}
         <span class="edify-badge">FY{{ cycle.fy }} Performance Cycle</span>
         {% if cycle.status == "active" %}<span class="edify-badge" data-tone="success">Active</span>{% endif %}

@@ -6,19 +6,19 @@
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
 <!-- Page Header -->
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
 <div class="flex items-center gap-2 mb-0.5">
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wider edify-primary-soft edify-primary-text border edify-primary-border">
 Project
 </span>
 <p class="edify-page-eyebrow">Special Projects</p>
-<h1 class="text-[21px] font-extrabold tracking-tight leading-tight edify-page-title">{{ project.name }}</h1>
+<h1 class="edify-page-title edify-page-header__title">{{ project.name }}</h1>
 </div>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Monitoring and execution tracker for specialized initiative.</p>
+<p class="edify-page-header__description">Monitoring and execution tracker for specialized initiative.</p>
 </div>
 
-<div>
+<div class="edify-page-header__controls">
 {% include "partials/_back_link.html" with back_href="/projects" back_label="Projects" %}
 </div>
 </div>
