@@ -2174,7 +2174,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             assert_partner_activity_allowance(
                 pa.partner_id, pa.school_id, _sched_activity_type, fy
             )
-        monitored_by_staff_id = _canonical_staff_identity(pa.assigning_staff_id)
+        # The school's own staff member where the handoff recorded one; the
+        # assigner otherwise, which is what every pre-existing row resolves to.
+        monitored_by_staff_id = _canonical_staff_identity(
+            pa.monitoring_staff_id or pa.assigning_staff_id
+        )
         activity = Activity.objects.create(
             activity_type=_sched_activity_type,
             school=pa.school,

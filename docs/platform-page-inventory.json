@@ -1769,7 +1769,7 @@
       "template": "partials/partners/return_assignment_drawer.html"
     },
     {
-      "bytes": 4499,
+      "bytes": 4648,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1777,7 +1777,7 @@
       "template": "partials/partners/schedule_assignment_drawer.html"
     },
     {
-      "bytes": 13625,
+      "bytes": 7203,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -24194,7 +24194,7 @@
         "partials/planning/assign_partner_drawer.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
