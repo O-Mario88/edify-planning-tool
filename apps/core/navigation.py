@@ -77,6 +77,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # NOTE: HR and IA are still listed and still resolve to an empty team —
     # out of scope for the field-role audit, flagged in the proposal.
     "team_targets": {PL, CD, HR, IA, ADMIN},
+    # Supervision lenses over the country plan. Deliberately narrow: the PL
+    # page resolves a team only for a Program Lead, and the country page is a
+    # leadership review surface, not a field-planning one. Neither grants any
+    # write access to the work it shows.
+    "team_planning_oversight": {PL, ADMIN},
+    "country_planning_oversight": {CD, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -825,6 +831,16 @@ SIDEBAR_ITEMS = [
                 "label": "Team Targets",
                 "url": "/team-targets/",
                 "page_key": "team_targets",
+            },
+            {
+                "label": "Team Planning",
+                "url": "/team-planning-oversight/",
+                "page_key": "team_planning_oversight",
+            },
+            {
+                "label": "Country Planning",
+                "url": "/country-planning-oversight/",
+                "page_key": "country_planning_oversight",
             },
             {
                 "label": "My Plan",

@@ -2216,6 +2216,11 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
 
         pa.status = "partner_scheduled"
         pa.scheduled_date = scheduled_date.date()
+        # The pairing, recorded rather than inferred. Oversight has to say that
+        # this assignment and the activity it just became are one item; without
+        # the id it would have to match on partner + school + status and would
+        # get it wrong the moment a partner holds two assignments at one school.
+        pa.scheduled_activity = activity
         if monitored_by_staff_id:
             pa.assigning_staff_id = monitored_by_staff_id
         pa.save(
@@ -2223,6 +2228,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 "assigning_staff_id",
                 "status",
                 "scheduled_date",
+                "scheduled_activity",
                 "updated_at",
             ]
         )

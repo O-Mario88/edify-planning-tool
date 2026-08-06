@@ -1,0 +1,91 @@
+{% comment %}
+The advanced filter drawer. The primary filters — financial year, month, team
+member or Program Lead — stay in the page header where they are always visible;
+everything that narrows rather than reframes lives here, so the header does not
+become a control panel.
+
+Options are built from the values actually present in the current view, so no
+selection can return an empty page and read as a broken one.
+{% endcomment %}
+{% load frontend_filters %}
+
+<form class="space-y-3"
+      hx-get="{{ target_url }}"
+      hx-target="{{ target_id }}"
+      hx-swap="innerHTML"
+      hx-push-url="true">
+  <input type="hidden" name="fy" value="{{ fy }}">
+  {% if month %}<input type="hidden" name="month" value="{{ month }}">{% endif %}
+  {% if tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
+  {% if team_member %}<input type="hidden" name="team_member" value="{{ team_member }}">{% endif %}
+  {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
+
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Activity type</span>
+    <select name="activity_type" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any</option>
+      {% for value in filter_options.activity_types %}
+      <option value="{{ value }}" {% if advanced.activity_type == value %}selected{% endif %}>{{ value|replace_underscore|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Executed by</span>
+    <select name="executor_type" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Anyone</option>
+      <option value="staff" {% if advanced.executor_type == "staff" %}selected{% endif %}>Staff</option>
+      <option value="partner" {% if advanced.executor_type == "partner" %}selected{% endif %}>Partner</option>
+    </select>
+  </label>
+
+  {% if filter_options.partners %}
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Partner</span>
+    <select name="partner_id" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any partner</option>
+      {% for id, name in filter_options.partners %}
+      <option value="{{ id }}" {% if advanced.partner_id == id %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Context</span>
+    <select name="context" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any</option>
+      <option value="school" {% if advanced.context == "school" %}selected{% endif %}>School work</option>
+      <option value="cluster" {% if advanced.context == "cluster" %}selected{% endif %}>Cluster work</option>
+      <option value="project" {% if advanced.context == "project" %}selected{% endif %}>Project work</option>
+      <option value="non_school" {% if advanced.context == "non_school" %}selected{% endif %}>Non-school work</option>
+    </select>
+  </label>
+
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Status</span>
+    <select name="status" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any</option>
+      {% for value in filter_options.statuses %}
+      <option value="{{ value }}" {% if advanced.status == value %}selected{% endif %}>{{ value|replace_underscore|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">Risk</span>
+    <select name="risk" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any</option>
+      <option value="any" {% if advanced.risk == "any" %}selected{% endif %}>Has any risk</option>
+      {% for value in filter_options.risks %}
+      <option value="{{ value }}" {% if advanced.risk == value %}selected{% endif %}>{{ value|replace_underscore|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div class="flex items-center gap-2 pt-1">
+    <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+    <a href="{{ target_url }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}"
+       class="btn h-9 inline-flex items-center">Clear</a>
+  </div>
+</form>

@@ -11,6 +11,7 @@ from .views import (
     school_views,
     cluster_views,
     planning_views,
+    oversight_views,
     budget_views,
     my_plan_views,
     analytics_views,
@@ -329,6 +330,49 @@ urlpatterns = [
         "clusters/<str:cluster_id>/bulk-assign-drawer",
         cluster_views.cluster_bulk_assign_drawer_view,
         name="cluster_bulk_assign_drawer",
+    ),
+    # Planning oversight — supervision lenses over the canonical plan. These
+    # read the same Activities and PartnerAssignments the Planning and My Plan
+    # pages write; they create nothing of their own.
+    path(
+        "team-planning-oversight/",
+        oversight_views.team_planning_oversight_view,
+        name="team_planning_oversight",
+    ),
+    path(
+        "country-planning-oversight/",
+        oversight_views.country_planning_oversight_view,
+        name="country_planning_oversight",
+    ),
+    path(
+        "country-planning-oversight/team/<str:staff_id>",
+        oversight_views.country_planning_team_view,
+        name="country_planning_oversight_team",
+    ),
+    path(
+        "team-planning-oversight/send",
+        oversight_views.team_planning_send_action_view,
+        name="team_planning_oversight_send",
+    ),
+    path(
+        "country-planning-oversight/send",
+        oversight_views.country_planning_send_action_view,
+        name="country_planning_oversight_send",
+    ),
+    path(
+        "team-planning-oversight/detail",
+        oversight_views.oversight_detail_view,
+        name="team_planning_oversight_detail",
+    ),
+    path(
+        "team-planning-oversight/export",
+        oversight_views.team_planning_export_view,
+        name="team_planning_oversight_export",
+    ),
+    path(
+        "country-planning-oversight/export",
+        oversight_views.country_planning_export_view,
+        name="country_planning_oversight_export",
     ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),

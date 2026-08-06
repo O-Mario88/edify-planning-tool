@@ -163,6 +163,24 @@ class PartnerAssignment(TimeStampedModel):
         blank=True,
         related_name="derived_partner_assignments",
     )
+    # The activity the PARTNER created when it scheduled this assignment, as
+    # distinct from source_activity, which is the staff activity the assignment
+    # came FROM. Until this existed the only way to pair the two was to guess:
+    # same partner, same school, status looks scheduled. Oversight has to state
+    # that an assignment and the activity it became are one item and not two,
+    # and a guess cannot carry that — a partner with two assignments at one
+    # school made both pairings ambiguous, and every count and every shilling
+    # downstream inherited the ambiguity.
+    #
+    # SET_NULL rather than CASCADE: deleting the activity must not delete the
+    # assignment record, which is the history of the handover.
+    scheduled_activity = models.OneToOneField(
+        "activities.Activity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="originating_partner_assignment",
+    )
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.PROTECT,

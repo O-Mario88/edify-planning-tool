@@ -89,11 +89,130 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "route": "/schools/{school_pk}",
         "why": "The school's intervention areas need follow-up.",
     },
+    # ── Planning oversight conditions ───────────────────────────────────────
+    # Registered here rather than in a second playbook so a supervisor's
+    # "Send to…" and a school card's "Send to…" produce the same kind of
+    # record, land in the same queue, and are closed by the same sweep.
+    # Keys match apps.planning.risk_service detector keys exactly; a risk that
+    # forgets to register fails loudly in the send path.
+    "partner_not_scheduled": {
+        "action": "Resolve the partner scheduling delay",
+        "route": "/partners",
+        "why": "Work was handed to a partner who has not put a date on it.",
+    },
+    "scheduled_without_cost": {
+        # Routes to the recipient's own queue rather than the activity: the
+        # send path only interpolates school references, so an activity-scoped
+        # URL here would be formatted with the wrong id.
+        "route": "/my-plan",
+        "action": "Correct the missing cost configuration",
+        "why": "The activity is scheduled but carries no cost line, so it "
+        "cannot enter a fund request or a monthly budget.",
+    },
+    "activity_overdue": {
+        "action": "Complete or reschedule the overdue activity",
+        "route": "/my-plan",
+        "why": "The activity's planned date has passed and it is not complete.",
+    },
+    "evidence_outstanding": {
+        "action": "Upload the evidence pack",
+        "route": "/my-plan",
+        "why": "The activity was delivered but no evidence has been uploaded.",
+    },
+    "salesforce_missing": {
+        "action": "Enter the Salesforce Activity ID",
+        "route": "/my-plan",
+        "why": "The activity is complete but has no Salesforce Activity ID.",
+    },
+    "ia_returned": {
+        "action": "Resolve the Impact Assessment return",
+        "route": "/my-plan",
+        "why": "Impact Assessment returned this activity and it has not been "
+        "resubmitted.",
+    },
+    "repeated_reschedule": {
+        "action": "Review whether the plan is realistic",
+        "route": "/my-plan",
+        "why": "The activity has been rescheduled repeatedly.",
+    },
+    # Team-level asks a Country Director sends to a Program Lead. These name a
+    # team condition rather than one record, so they route to the PL's own
+    # oversight page where the detail lives.
+    "team_partner_backlog": {
+        "action": "Clear the partner scheduling backlog",
+        "route": "/team-planning-oversight/",
+        "why": "Several handovers in this team are waiting on partners to "
+        "schedule them.",
+    },
+    "team_costing_backlog": {
+        "action": "Get the team's scheduled work priced",
+        "route": "/team-planning-oversight/",
+        "why": "Scheduled activities in this team carry no cost, so they "
+        "cannot enter a fund request.",
+    },
+    "team_execution_risk": {
+        "action": "Provide a recovery plan for the team's overdue work",
+        "route": "/team-planning-oversight/",
+        "why": "Activities in this team are past their planned date and not "
+        "complete.",
+    },
 }
+
+# Risks raised against ONE record by apps.planning.risk_service. The sweep
+# settles these by re-running that detector against the record, so the
+# condition that closes an action is the same condition that opened it.
+OVERSIGHT_RISK_KEYS = frozenset(
+    {
+        "partner_not_scheduled",
+        "scheduled_without_cost",
+        "activity_overdue",
+        "evidence_outstanding",
+        "salesforce_missing",
+        "ia_returned",
+        "repeated_reschedule",
+    }
+)
+
+# Team-level asks. "The backlog is cleared" is a judgement about a body of
+# work rather than a fact about one record, so a human closes these and the
+# audit trail records that they did.
+TEAM_OVERSIGHT_KEYS = frozenset(
+    {"team_partner_backlog", "team_costing_backlog", "team_execution_risk"}
+)
+
+# The condition key for a risk carries the record it was raised against, so
+# the sweep can find it again without a schema change.
+OVERSIGHT_KEY_PREFIX = "oversight"
+
+
+def oversight_condition_key(
+    risk_key: str, *, activity_id=None, assignment_id=None
+) -> str:
+    """`oversight|<risk>|activity|<id>` — parsed back by the resolution sweep.
+
+    The identity of the CONDITION, like every other condition key here: two
+    supervisors looking at the same overdue activity produce the same key, so
+    the second send is refused as a duplicate rather than doubling the ask.
+    """
+    kind, ref = (
+        ("activity", activity_id) if activity_id else ("assignment", assignment_id)
+    )
+    return f"{OVERSIGHT_KEY_PREFIX}|{risk_key}|{kind}|{ref}"
+
+
+def parse_oversight_condition_key(key: str) -> tuple[str, str] | None:
+    """(kind, id) from a key this module wrote, or None if it did not."""
+    parts = (key or "").split("|")
+    if len(parts) != 4 or parts[0] != OVERSIGHT_KEY_PREFIX:
+        return None
+    return parts[2], parts[3]
+
 
 # Conditions the system can settle by querying. Everything outside this set
 # needs a human to say why it is closed, and says so in the audit trail.
-SYSTEM_VERIFIABLE = frozenset(ISSUE_PLAYBOOK) - {"intervention_follow_up"}
+SYSTEM_VERIFIABLE = (
+    frozenset(ISSUE_PLAYBOOK) - {"intervention_follow_up"} - TEAM_OVERSIGHT_KEYS
+)
 
 
 # ── Who is responsible ───────────────────────────────────────────────────────
@@ -541,6 +660,9 @@ def condition_still_holds(action: TeamAction) -> bool:
     if action.issue_type not in SYSTEM_VERIFIABLE:
         return True  # not ours to settle; a human closes it
 
+    if action.issue_type in OVERSIGHT_RISK_KEYS:
+        return _oversight_risk_still_holds(action)
+
     has_ssa = SsaRecord.objects.filter(
         school_id=action.school_id,
         fy=action.fy,
@@ -581,6 +703,28 @@ def condition_still_holds(action: TeamAction) -> bool:
         return _intervention_still_weak(action)
 
     return True
+
+
+def _oversight_risk_still_holds(action: TeamAction) -> bool:
+    """Ask the risk detector again about the one record this action names.
+
+    The record having gone (deleted, or an assignment the partner has since
+    scheduled) means the condition cannot still hold, so the action closes.
+    """
+    from apps.planning.oversight_service import build_item_by_reference
+
+    reference = parse_oversight_condition_key(action.condition_key)
+    if reference is None:
+        return True  # an unparseable key is not ours to settle
+    kind, record_id = reference
+
+    item = build_item_by_reference(
+        activity_id=record_id if kind == "activity" else None,
+        assignment_id=record_id if kind == "assignment" else None,
+    )
+    if item is None:
+        return False
+    return any(risk["key"] == action.issue_type for risk in item.risks)
 
 
 def _intervention_still_weak(action: TeamAction) -> bool:
