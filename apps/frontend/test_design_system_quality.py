@@ -106,9 +106,18 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             r"\b(Inter|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
             re.IGNORECASE,
         )
+        # Tailwind's preflight writes `font-family: var(--default-font-family,
+        # <generic stack>)`, and from 4.3.3 that stack is spelled out inline —
+        # -apple-system, Segoe UI, Roboto, Arial and the rest. It is a fallback
+        # for a variable the bundle defines two lines earlier as var(--font-sans),
+        # which is Geist, so none of those families can ever be applied. Scanning
+        # it would fail the gate on text that cannot reach a screen; what the gate
+        # is for is a real font sneaking into hand-written CSS or a template.
+        unreachable_fallback = re.compile(r"var\(--default-font-family,[^)]*\)")
         violations = []
         for path in _production_frontend_files():
-            match = forbidden.search(path.read_text(encoding="utf-8"))
+            text = unreachable_fallback.sub("", path.read_text(encoding="utf-8"))
+            match = forbidden.search(text)
             if match:
                 violations.append(f"{path.relative_to(ROOT)}: {match.group(0)}")
         self.assertEqual(
