@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **477**
-- All registered routes: **879**
+- Routed product surfaces: **478**
+- All registered routes: **880**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **290**
+- Shared component templates: **291**
 - Full pages: **317**
-- Partials and drawers: **147**
-- Permission-gated surfaces: **467**
-- Referenced by automated tests: **443**
+- Partials and drawers: **148**
+- Permission-gated surfaces: **468**
+- Referenced by automated tests: **444**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -489,6 +489,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /team-targets/recovery | Team Targets Recovery | ADMIN, CD, HR, IA, PL | partials/targets/team/recovery_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/sfid-backlog | Team Targets Sfid Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/sfid_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/staff-drawer | Team Targets Staff Drawer | ADMIN, CD, HR, IA, PL | partials/targets/team/staff_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-targets/validation-backlog | Team Targets Validation Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/validation_drawer.html | 9.4 | 0 | referenced by automated test |
 | /today | Today | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/today/index.html | 9.4 | 0 | referenced by automated test |
 | /todos | To-Do | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/todos/index.html | 9.4 | 0 | referenced by automated test |
 | /trainings | Trainings Log | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | pages/trainings/index.html | 9.4 | 0 | referenced by automated test |

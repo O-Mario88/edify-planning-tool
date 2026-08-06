@@ -1281,7 +1281,9 @@ def school_detail_view(request, school_id):
     activities = school.activities.filter(deleted_at__isnull=True).order_by(
         "-planned_date"
     )
-    impact_data = school_impact(school_id, request.user)
+    # `school.school_id`, not the raw URL value: the route accepts either
+    # identifier, and this helper resolves the directory one.
+    impact_data = school_impact(school.school_id, request.user)
 
     from apps.ssa.services import get_ssa_progress_by_fy
     from apps.schools.models import School

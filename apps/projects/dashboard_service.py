@@ -284,7 +284,9 @@ def get_dashboard(
             "icon": "finance",
             "variant": "success",
             "helper": "Auto from schedules",
-            "link": "/weekly-fund-request",
+            # The route is `fund-requests/weekly`; the singular form here
+            # resolved to nothing and the tile 404'd.
+            "link": "/fund-requests/weekly",
         },
         {
             "label": "Activities in My Plan",

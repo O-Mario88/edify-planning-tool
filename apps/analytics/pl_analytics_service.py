@@ -136,8 +136,18 @@ def ssa_band(score: float | None):
 
 
 def _ssa_score(score: float | None) -> float | None:
-    """Return a display-safe SSA score on its canonical 0-10 scale."""
-    return round(score, 1) if score is not None else None
+    """Return a display-safe SSA score on its canonical 0-10 scale.
+
+    The intermediate round to 6 places is not decoration. These means are
+    computed both in Python (`sum/len`) and in SQL (`AVG`), and the two
+    accumulate in different orders, so the same eight scores can land on 4.75
+    one way and 4.749999999999999 the other. At one decimal that is 4.8 versus
+    4.7 — a visibly different score for identical data, decided by where the
+    average happened to be taken. Source scores carry one decimal, so anything
+    below 6 places is float noise and never signal; absorbing it first makes
+    the displayed number a function of the data alone.
+    """
+    return round(round(score, 6), 1) if score is not None else None
 
 
 def _ssa_bar_pct(score: float | None) -> float:

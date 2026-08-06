@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from django.db.models import Avg, Q, Sum
+from django.db.models import Avg, Count, Q, Sum
 
 from apps.accounts.models import User
 from apps.core.fy import get_operational_fy
@@ -394,30 +394,44 @@ class CDDashboardService:
     # ── Regional performance ranking (mandate §9) ────────────────────────────
     @staticmethod
     def regional_performance(cd, acts) -> dict:
-        from apps.geography.models import Region
-
-        schools = School.objects.filter(id__in=cd.school_ids)
-        region_ids = list(
-            schools.exclude(region__isnull=True)
+        schools = School.objects.filter(id__in=cd.school_ref)
+        # Two GROUP BYs, not five queries per region. The loop this replaced
+        # pulled every school id in a region into Python and then handed that
+        # set straight back to the database as an activity filter — at country
+        # scale, four regions of a few thousand ids each, twice over.
+        #
+        # `no_ssa` is the region's school count minus its done count rather
+        # than a negated filter: `exclude(current_fy_ssa_status="done")` keeps
+        # rows where the column is NULL, and reproducing that faithfully inside
+        # a conditional aggregate is easy to get subtly wrong. Subtraction
+        # cannot be.
+        by_region = {
+            r["region_id"]: r
+            for r in schools.exclude(region__isnull=True)
+            .values("region_id", "region__name")
+            .annotate(
+                n=Count("id"),
+                ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
+            )
             .order_by("region_id")
-            .values_list("region_id", flat=True)
-            .distinct()
-        )
-        names = dict(Region.objects.filter(id__in=region_ids).values_list("id", "name"))
+        }
+        # Scoped to in-scope schools exactly as the per-region filter was:
+        # `acts` is country-wide unless a filter narrowed it.
+        act_totals = {
+            a["school__region_id"]: a
+            for a in acts.filter(school_id__in=cd.school_ref)
+            .values("school__region_id")
+            .annotate(
+                planned=Count("id"),
+                done=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+            )
+        }
         rows = []
-        for rid in region_ids:
-            r_school_ids = set(
-                schools.filter(region_id=rid).values_list("id", flat=True)
-            )
-            r_acts = acts.filter(school_id__in=r_school_ids)
-            planned = r_acts.count()
-            done = r_acts.filter(status__in=COMPLETED_STATUSES).count()
+        for rid, region in by_region.items():
+            totals = act_totals.get(rid) or {}
+            planned = totals.get("planned", 0)
+            done = totals.get("done", 0)
             achievement = _pct(done, planned)
-            no_ssa = (
-                schools.filter(region_id=rid)
-                .exclude(current_fy_ssa_status="done")
-                .count()
-            )
             risk = (
                 "danger"
                 if achievement < 50
@@ -428,12 +442,12 @@ class CDDashboardService:
             rows.append(
                 {
                     "id": rid,
-                    "name": names.get(rid, "Region"),
+                    "name": region["region__name"] or "Region",
                     "achievement": achievement,
                     "planned": planned,
                     "completed": done,
-                    "schools": len(r_school_ids),
-                    "no_ssa": no_ssa,
+                    "schools": region["n"],
+                    "no_ssa": region["n"] - region["ssa_done"],
                     "tone": risk,
                 }
             )
@@ -588,7 +602,7 @@ class CDDashboardService:
     @staticmethod
     def operational_risk_backlog(cd, acts, fy) -> list[dict]:
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
         all_ids = set(schools.values_list("id", flat=True))
 
         overdue_sf = CDDashboardService._sf_overdue(acts)
@@ -712,7 +726,7 @@ class CDDashboardService:
         from apps.geography.models import Region
         from apps.ssa.models import SsaRecord, SsaScore
 
-        latest, _prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         codes = [c for _, _, c in SSA_INTERVENTIONS]
         if not latest:
             return {"rows": [], "codes": codes, "latest_fy": None}
@@ -749,7 +763,7 @@ class CDDashboardService:
                 "overall_tone": ssa_band(overall)[2],
             }
 
-        schools = School.objects.filter(id__in=cd.school_ids)
+        schools = School.objects.filter(id__in=cd.school_ref)
         rows = []
         for rid in (
             schools.exclude(region__isnull=True)
@@ -785,7 +799,7 @@ class CDDashboardService:
         from apps.ssa.models import SsaRecord
 
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-        schools = School.objects.filter(id__in=cd.school_ids).select_related(
+        schools = School.objects.filter(id__in=cd.school_ref).select_related(
             "district", "region"
         )
         visited = set(
@@ -798,12 +812,12 @@ class CDDashboardService:
             .exclude(school_id__isnull=True)
             .values_list("school_id", flat=True)
         )
-        latest, _prev = _cycle_fys(cd.school_ids, cd.fy)
+        latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         weak = set()
         if latest:
             weak = set(
                 SsaRecord.objects.filter(
-                    school_id__in=cd.school_ids,
+                    school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=latest,
                     average_score__lt=5.0,

@@ -86,6 +86,12 @@ class SsaRecord(SoftDeleteModel):
             models.Index(fields=["fy"]),
             models.Index(fields=["collector_type"]),
             models.Index(fields=["verification_status"]),
+            # The target ledger credits SSA collection to the person who
+            # collected it, so `rebuild()` filters this column once per user.
+            # Unindexed that was a sequential scan of every assessment ever
+            # taken, per person: on a CD dashboard rebuilding 48 CCEOs it read
+            # 39,000 rows 48 times to find a handful each.
+            models.Index(fields=["collected_by_user_id"]),
         ]
 
     def save(self, *args, **kwargs):
