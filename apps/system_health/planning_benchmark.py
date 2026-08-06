@@ -192,6 +192,15 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         "cluster_id",
         "scheduled_date",
         "date",
+        # The due date on a SPECIAL-PROJECT partner handoff, and only there.
+        # The backend refuses a project handoff without one, so it has always
+        # been a required human input; it simply used to be a hidden field
+        # inside a hand-rolled calendar widget, which this scanner skips. Now
+        # that it is a plain date input the scanner can see it, and the honest
+        # answer is to sanction it rather than to hide it again. An ordinary
+        # handoff still asks for no date at all — the partner sets one when
+        # they schedule.
+        "expected_date",
         "delivery_type",
         "assigned_partner_id",
         "responsible_staff_id",
