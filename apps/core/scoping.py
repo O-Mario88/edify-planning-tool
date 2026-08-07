@@ -508,6 +508,20 @@ def cluster_in_scope(scope: UserScope, cluster) -> bool:
 
 
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
+def _operationally_active(qs):
+    """Not deleted, and not closed.
+
+    Kept here rather than imported from apps.schools so core.scoping does not
+    take a dependency on an app it is scoping — the status values are a small
+    stable vocabulary and duplicating the tuple is cheaper than the import
+    cycle. The health check asserts the two agree.
+    """
+    return qs.filter(
+        deleted_at__isnull=True,
+        operational_status__in=("active", "reopened"),
+    )
+
+
 def school_queryset(scope: UserScope, *, direct_only: bool = False):
     """Return the base queryset for the School model, scope-constrained.
 
@@ -534,7 +548,13 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     school_model = _get_school_model()
     if school_model is None:
         return None
-    qs = school_model.objects.all()
+    # Operationally active only. This is the directory-and-planning queryset,
+    # and a school that has closed must not be offered for new work, counted
+    # in a current total, or listed as somebody's to visit. History does not
+    # come through here — `scoped_school_queryset` serves the analytics
+    # surfaces, and it deliberately keeps closed schools so a report about
+    # last quarter still counts a school that was open then.
+    qs = _operationally_active(school_model.objects.all())
     if scope.active_role == "CountryDirector":
         from django.conf import settings
 

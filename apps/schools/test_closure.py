@@ -73,6 +73,9 @@ class ClosureFixture(TestCase):
             enrollment=310,
             account_owner_id=cls.cceo.id,
         )
+        # Assigned too, so "the closed one leaves and the open one stays" is a
+        # real comparison rather than an empty queryset either way.
+        StaffSchoolAssignment.objects.create(staff=cls.cceo, school_id=cls.other.id)
 
     @classmethod
     def _staff(cls, email, name, role):
@@ -414,3 +417,90 @@ class ReopeningTest(ClosureFixture):
         closure.refresh_from_db()
         self.assertIsNotNone(closure.reopened_at)
         self.assertEqual(SchoolClosure.objects.filter(school=self.school).count(), 1)
+
+
+class ClosedSchoolsLeaveOperationalSurfacesTest(ClosureFixture):
+    """The whole point of the closure. A school that is still returned by the
+    operational queryset is still offered for planning, still counted in a
+    KPI, and still on somebody's list to visit."""
+
+    def _scope(self, user):
+        from apps.core.scoping import resolve_user_scope
+
+        return resolve_user_scope(user)
+
+    def test_the_operational_directory_drops_a_closed_school(self):
+        from apps.core.scoping import school_queryset
+
+        before = school_queryset(self._scope(self.cceo_user))
+        self.assertIn(self.school, list(before))
+
+        svc.close_school(self.school.id, self.payload(), self.cceo_user)
+
+        after = school_queryset(self._scope(self.cceo_user))
+        self.assertNotIn(self.school, list(after))
+        self.assertIn(self.other, list(after))
+
+    def test_reopening_puts_it_back(self):
+        from apps.core.scoping import school_queryset
+
+        svc.close_school(self.school.id, self.payload(), self.cceo_user)
+        svc.reopen_school(
+            self.school.id,
+            {
+                "reason": "The school has reopened under new management.",
+                "enrollment": 380,
+            },
+            self.cceo_user,
+        )
+
+        self.assertIn(self.school, list(school_queryset(self._scope(self.cceo_user))))
+
+    def test_the_two_definitions_of_active_agree(self):
+        """core.scoping keeps its own tuple to avoid depending on the app it
+        scopes. A duplicated constant that drifts is worse than the import."""
+        from apps.core.scoping import _operationally_active
+        from apps.schools.lifecycle_models import OPERATING_STATUSES
+
+        sql = str(_operationally_active(School.objects.all()).query)
+        for status in OPERATING_STATUSES:
+            with self.subTest(status=str(status)):
+                self.assertIn(str(status), sql)
+
+
+class ClosureHealthTest(ClosureFixture):
+    def _check(self, key):
+        from apps.system_health import school_closure_health
+
+        return next(
+            c for c in school_closure_health.report()["checks"] if c["key"] == key
+        )
+
+    def test_a_clean_closure_reports_nothing(self):
+        self.future_activity()
+        svc.close_school(self.school.id, self.payload(), self.cceo_user)
+
+        from apps.system_health import school_closure_health
+
+        report = school_closure_health.report()
+        self.assertTrue(report["clean"], report["checks"])
+
+    def test_future_work_left_behind_is_an_error(self):
+        activity = self.future_activity()
+        svc.close_school(self.school.id, self.payload(), self.cceo_user)
+        # Simulate the drift: an activity created, or resurrected, afterwards.
+        activity.status = "scheduled"
+        activity.save(update_fields=["status"])
+
+        finding = self._check("closed_school_future_work")
+
+        self.assertEqual(finding["count"], 1)
+        self.assertEqual(finding["severity"], "error")
+
+    def test_a_missing_enrolment_snapshot_is_reported(self):
+        self.school.enrollment = None
+        self.school.save(update_fields=["enrollment"])
+
+        svc.close_school(self.school.id, self.payload(), self.cceo_user)
+
+        self.assertEqual(self._check("closure_missing_enrolment_snapshot")["count"], 1)

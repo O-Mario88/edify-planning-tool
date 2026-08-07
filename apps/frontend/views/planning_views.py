@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
@@ -1601,7 +1602,7 @@ def schedule_activity_form_view(request):
     cluster_id = request.GET.get("cluster", "")
 
     # Populate lookups
-    schools = School.objects.filter(deleted_at__isnull=True).order_by("name")
+    schools = active_schools().order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
     partners = assignable_partners()
 
