@@ -16,7 +16,11 @@ from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
-from apps.core.permissions import require_any_page_permission, require_page_permission
+from apps.core.permissions import (
+    require_any_page_permission,
+    require_export_permission,
+    require_page_permission,
+)
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
@@ -401,6 +405,7 @@ def _export_response(items, filename: str):
 
 
 @require_page_permission("team_planning_oversight")
+@require_export_permission
 def team_planning_export_view(request):
     """The Program Lead's current view, as CSV. Same scope, same filters."""
     period = _period_filters(request)
@@ -418,6 +423,7 @@ def team_planning_export_view(request):
 
 
 @require_page_permission("country_planning_oversight")
+@require_export_permission
 def country_planning_export_view(request):
     """The country plan, as CSV, honouring the current filters."""
     period = _period_filters(request)
@@ -886,6 +892,7 @@ def partner_oversight_send_action_view(request):
 
 
 @require_page_permission("partner_oversight")
+@require_export_permission
 def partner_oversight_export_view(request):
     """The current partner view, as CSV. Same scope, same period, same rows."""
     import csv

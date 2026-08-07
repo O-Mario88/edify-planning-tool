@@ -793,3 +793,29 @@ class CceoVisibilityIsNotAuthorityTest(PageFixture):
         self.assertFalse(
             has_permission(self.cceo_user, Permission.PARTNER_WITHDRAWAL_REVIEW.value)
         )
+
+    def test_a_cceo_cannot_bulk_export_the_page(self):
+        """Reading a scoped page is not permission to extract the dataset.
+
+        `partner_oversight_export_view` carried only the page permission, so
+        every role that could open the page could download it. That was latent
+        while every such role happened to hold `data.export`; adding the CCEO,
+        who does not, turned it into a live hole. The export decorator is the
+        fix, and this pins it beside the feature that exposed it.
+        """
+        self.assign()
+        self.sign_in(self.cceo_user)
+
+        response = self.client.get("/partner-oversight/export")
+
+        self.assertNotIn("attachment", response.headers.get("Content-Disposition", ""))
+
+    def test_the_pl_can_still_export(self):
+        """The guard must refuse the CCEO without breaking the role it was
+        built for."""
+        self.assign()
+        self.sign_in(self.pl_user)
+
+        response = self.client.get("/partner-oversight/export")
+
+        self.assertIn("attachment", response.headers.get("Content-Disposition", ""))
