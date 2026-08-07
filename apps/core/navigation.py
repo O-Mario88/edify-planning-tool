@@ -93,7 +93,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # the partner's work, and both were previously named as responsible on a
     # page neither could open. Their lens is country-wide, matching the queues
     # they already work from.
-    "partner_oversight": {PL, CD, IA, ACCOUNTANT, ADMIN},
+    # The CCEO is here to help the PL monitor, not to be monitored. They see
+    # partner work at their own schools — the service scopes it — because the
+    # person who knows the school is the first to notice a partner who has
+    # gone quiet. The PL's decision queue is filtered by `supervising_pl_id`
+    # and so stays empty for them: shared visibility, unchanged authority.
+    "partner_oversight": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,

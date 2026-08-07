@@ -169,7 +169,18 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
     )
     if not scope["is_country"]:
         ids = scope["staff_ids"]
-        qs = qs.filter(Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids))
+        # School ownership is the third arm, and it is not redundant.
+        # `monitoring_staff_id` is nullable — every assignment written before
+        # that column existed has none, and falls back to the *assigner*. So a
+        # partner handed off by a PL to a CCEO's school resolves to the PL on
+        # those older rows, and the CCEO who owns the school would open this
+        # page to a blank list. Owning the school is the durable claim: it does
+        # not depend on who clicked Handoff or on when the row was written.
+        qs = qs.filter(
+            Q(monitoring_staff_id__in=ids)
+            | Q(assigning_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
+        )
     if partner_id:
         qs = qs.filter(partner_id=partner_id)
 

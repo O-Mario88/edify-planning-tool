@@ -379,13 +379,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /org-structure | Organization Structure | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_schools_table.html | 9.6 | 0 | referenced by automated test |
 | /partials/costing/preview | Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
-| /partner-oversight/ | Partner Oversight | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/partner_workspace.html<br>pages/oversight/partner_oversight.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw | Partner Withdrawal Preview | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/withdrawal_drawer.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw/review | Partner Withdrawal Review | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw/submit | Partner Withdrawal Submit | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/ | Partner Oversight | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/partner_workspace.html<br>pages/oversight/partner_oversight.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw | Partner Withdrawal Preview | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/withdrawal_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/review | Partner Withdrawal Review | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/submit | Partner Withdrawal Submit | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |

@@ -44,13 +44,18 @@ class PageRendersTest(PageFixture):
         self.assertIn("Partner Y", body)
         self.assertIn("Yet to Schedule", body)
 
-    def test_a_cceo_has_no_partner_shaped_page(self):
-        """They reach the same records through the school they manage."""
+    def test_a_cceo_sees_the_page_for_their_own_schools(self):
+        """The CCEO helps the PL monitor. They were previously refused the
+        page on the grounds that they reach the same records through the
+        school; in practice that meant the person who knows the school best
+        had no view of the partner working in it."""
+        self.assign()
         self.sign_in(self.cceo_user)
 
         response = self.client.get("/partner-oversight/")
 
-        self.assertNotEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Partner X", response.content.decode())
 
     def test_the_country_director_sees_every_partner(self):
         director = self._staff("cd@p.test", "Direktor", EdifyRole.COUNTRY_DIRECTOR)[0]
@@ -645,3 +650,146 @@ class WithdrawalActionIsStateAwareTest(PageFixture):
                     "scheduled_activity"
                 ).get(id=a.id)
                 self.assertEqual(item.withdrawal_kind, resolve_kind(fresh))
+
+
+class CceoSeesTheirOwnPartnerWorkTest(PageFixture):
+    """Shared visibility, unchanged authority.
+
+    The CCEO joins this page to help the PL watch partner delivery. Two things
+    have to hold at once: they see the partner work at their own schools, and
+    they see nothing of anyone else's.
+    """
+
+    def test_they_see_partner_work_at_their_schools(self):
+        self.assign()
+
+        items = svc.build_items(self.cceo_user, fy=self.fy)
+
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].school_name, "School A")
+
+    def test_they_do_not_see_another_cceos_schools(self):
+        self.assign()
+        self.assign(cceo=self.rival_cceo, school=self.rival_school)
+
+        items = svc.build_items(self.cceo_user, fy=self.fy)
+
+        self.assertEqual([i.school_name for i in items], ["School A"])
+
+    def test_a_handoff_with_no_monitor_recorded_still_reaches_the_owner(self):
+        """The gap that made this more than a permission change.
+
+        `monitoring_staff_id` is nullable, and every assignment written before
+        that column existed falls back to the *assigner*. A partner handed off
+        by the PL to this CCEO's school therefore resolves to the PL on those
+        rows — and the CCEO who owns the school would open the page to nothing.
+        Owning the school is the claim that does not depend on who clicked
+        Handoff.
+        """
+        from apps.schools.models import School
+
+        School.objects.filter(id=self.school.id).update(account_owner_id=self.cceo.id)
+        assignment = self.assign()
+        # Exactly the legacy shape: no monitor, assigned by the PL.
+        type(assignment).objects.filter(id=assignment.id).update(
+            monitoring_staff_id=None, assigning_staff_id=self.pl.id
+        )
+
+        items = svc.build_items(self.cceo_user, fy=self.fy)
+
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].school_name, "School A")
+
+    def test_ownership_does_not_widen_them_past_their_own_portfolio(self):
+        """The new arm must not become a back door to the whole country."""
+        from apps.schools.models import School
+
+        School.objects.filter(id=self.rival_school.id).update(
+            account_owner_id=self.rival_cceo.id
+        )
+        self.assign(cceo=self.rival_cceo, school=self.rival_school)
+
+        self.assertEqual(svc.build_items(self.cceo_user, fy=self.fy), [])
+
+    def test_they_get_none_of_the_pls_decision_queue(self):
+        """Visibility is not authority. Requests are addressed to the
+        supervising PL and stay there."""
+        self.assign()
+
+        self.assertEqual(svc.withdrawal_requests(self.cceo_user), [])
+
+    def test_the_page_shows_them_no_requests_block(self):
+        self.assign()
+        self.sign_in(self.cceo_user)
+
+        body = self.client.get("/partner-oversight/").content.decode()
+
+        self.assertNotIn("Withdrawal requests", body)
+
+    def test_the_pl_still_sees_their_whole_team(self):
+        """Adding the CCEO must not narrow the supervisor who was already here."""
+        self.assign()
+        self.assign(partner=self.other_partner)
+
+        items = svc.build_items(self.pl_user, fy=self.fy)
+
+        self.assertEqual(len(items), 2)
+
+    def test_the_pl_also_gains_the_ownership_arm_for_their_team(self):
+        """Same legacy gap, same fix, one level up."""
+        from apps.schools.models import School
+
+        School.objects.filter(id=self.school.id).update(account_owner_id=self.cceo.id)
+        assignment = self.assign()
+        type(assignment).objects.filter(id=assignment.id).update(
+            monitoring_staff_id=None, assigning_staff_id=self.rival_pl.id
+        )
+
+        items = svc.build_items(self.pl_user, fy=self.fy)
+
+        self.assertEqual(len(items), 1)
+
+
+class CceoVisibilityIsNotAuthorityTest(PageFixture):
+    """Opening the page must not have opened the decisions on it.
+
+    Adding the CCEO to `partner_oversight` widened seven routes at once,
+    including the endpoint where a Program Lead answers a withdrawal request.
+    Page permission is the outer door; the service is the lock.
+    """
+
+    def test_a_cceo_cannot_decide_a_withdrawal_request(self):
+        from apps.core.exceptions import Forbidden
+        from apps.partners import withdrawal_service
+
+        with self.assertRaises(Forbidden) as caught:
+            withdrawal_service.review_request(
+                "any-id", {"decision": "approve"}, self.cceo_user
+            )
+
+        self.assertIn("Program Lead", str(caught.exception))
+
+    def test_the_review_endpoint_refuses_them_over_http(self):
+        self.sign_in(self.cceo_user)
+
+        response = self.client.post(
+            "/partner-oversight/withdraw/review",
+            {"withdrawal_id": "any-id", "decision": "approve"},
+        )
+
+        self.assertNotIn(response.status_code, (500,))
+        self.assertNotIn(
+            "approved", response.content.decode().lower(), "no decision may land"
+        )
+
+    def test_the_supervising_pl_still_can(self):
+        """The guard must refuse the CCEO without also refusing the PL."""
+        from apps.core.permissions import has_permission
+        from apps.core.rbac import Permission
+
+        self.assertTrue(
+            has_permission(self.pl_user, Permission.PARTNER_WITHDRAWAL_REVIEW.value)
+        )
+        self.assertFalse(
+            has_permission(self.cceo_user, Permission.PARTNER_WITHDRAWAL_REVIEW.value)
+        )
