@@ -5,6 +5,18 @@
    without changing their workflow logic or role-based behavior.
    ════════════════════════════════════════════════════════════════════════════ */
 
+/* Alpine's x-cloak, which nothing had ever defined.
+
+   58 elements across 38 templates carry the attribute, and it is inert without
+   this rule: every panel, drawer body and expanded row rendered in full on
+   first paint and only collapsed once Alpine initialised and applied x-show.
+   On the school directory that read as the first rows arriving already
+   expanded — the ones above the fold during the gap.
+
+   Declared here rather than in the Tailwind bundle because platform.css is
+   served directly, so the rule cannot be lost to a stale build. */
+[x-cloak] { display: none !important; }
+
 :root {
   --edify-page-max-size: 112rem;
   --edify-control-block-size: 2.5rem;
@@ -2661,6 +2673,35 @@ main .platform-responsive-table [data-priority="low"] {
   align-items: start;
   gap: 1.1rem;
   padding: clamp(1rem, 1.7vw, 1.5rem);
+}
+
+/* Collapsed by default: a school row is its name and its actions, and
+   everything else waits to be asked for. Eleven metadata pairs per row meant
+   roughly five schools filled a screen; collapsed, the same screen holds the
+   list somebody is actually scanning.
+
+   Keyed on `.is-expanded`, which Alpine already writes on the <li>, so this
+   one rule governs all four school lists — the directory, planning, core
+   schools and the cluster table — instead of the same edit made four times
+   and drifting. Before Alpine boots the class is absent and the row is
+   collapsed, which is the state we want anyway. */
+.school-record-row:not(.is-expanded) .school-record-row__metadata,
+.school-record-row:not(.is-expanded) .school-record-row__details { display: none; }
+
+/* Hiding the metadata alone barely moved the row: at 1280px it went 151px to
+   142px, because the height was never set by the metadata — it was set by the
+   actions column, whose 17rem cap wrapped two buttons onto two lines (98px).
+   A collapsed row has the width to hold them on one, so the cap lifts and the
+   generous padding tightens, and only then does the row actually shrink. */
+.school-record-row:not(.is-expanded) .school-record-row__summary {
+  align-items: center;
+  padding-block: 0.7rem;
+}
+
+.school-record-row:not(.is-expanded) .school-record-row__actions {
+  flex-wrap: nowrap;
+  max-inline-size: none;
+  padding-block-start: 0;
 }
 
 .school-record-row__content {
