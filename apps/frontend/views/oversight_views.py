@@ -22,6 +22,14 @@ from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
 
 
+# Where a no-JavaScript send returns to when the Referer cannot be trusted.
+# Each page falls back to itself: bouncing a Country Director to the Program
+# Lead's page would be a scope change dressed up as a redirect.
+TEAM_OVERSIGHT_PATH = "/team-planning-oversight/"
+COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
+PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
+
+
 def _kpi_items(summary, *, country: bool) -> list[dict]:
     """The headline tiles, built through the metric registry.
 
@@ -271,7 +279,10 @@ def country_planning_send_action_view(request):
     )
     if not items:
         return _action_response(
-            request, "That team has no planned work in this period.", ok=False
+            request,
+            "That team has no planned work in this period.",
+            ok=False,
+            fallback=COUNTRY_OVERSIGHT_PATH,
         )
     if not _team_condition_holds(issue_key, items):
         return _action_response(
@@ -279,6 +290,7 @@ def country_planning_send_action_view(request):
             "That condition is not currently true of this team, so there is "
             "nothing to send.",
             ok=False,
+            fallback=COUNTRY_OVERSIGHT_PATH,
         )
 
     program_lead = StaffProfile.objects.filter(id=program_lead_id).first()
@@ -294,10 +306,14 @@ def country_planning_send_action_view(request):
             note=note,
         )
     except ActionError as exc:
-        return _action_response(request, str(exc), ok=False)
+        return _action_response(
+            request, str(exc), ok=False, fallback=COUNTRY_OVERSIGHT_PATH
+        )
 
     return _action_response(
-        request, f"Sent to {_recipient_name(action)}. Tracked under Actions Sent."
+        request,
+        f"Sent to {_recipient_name(action)}. Tracked under Actions Sent.",
+        fallback=COUNTRY_OVERSIGHT_PATH,
     )
 
 
@@ -562,11 +578,29 @@ def _recipient_name(action) -> str:
     return getattr(user, "name", "") or "the responsible staff member"
 
 
-def _action_response(request, message: str, *, ok: bool = True):
-    """A short confirmation for the HTMX swap, or a redirect for a plain post."""
+def _action_response(
+    request,
+    message: str,
+    *,
+    ok: bool = True,
+    fallback: str = TEAM_OVERSIGHT_PATH,
+):
+    """A short confirmation for the HTMX swap, or a redirect for a plain post.
+
+    The no-JavaScript path returns the sender to the page they sent from, and
+    that page is named by the Referer header — which the sender's browser
+    supplies and an attacker can therefore choose. Only its *path* is used,
+    and only through `local_redirect`, so a Referer naming another host lands
+    on the same path of this site or on the fallback. Handing the raw header
+    to `redirect()` is an open redirect, and on an authenticated app that is a
+    credible phishing primitive: the link really does come from this domain.
+    """
+    from urllib.parse import urlsplit
+
     from django.contrib import messages
     from django.http import HttpResponse
-    from django.shortcuts import redirect
+
+    from apps.core.redirects import local_redirect
 
     if request.headers.get("HX-Request") == "true":
         tone = "success" if ok else "danger"
@@ -574,7 +608,8 @@ def _action_response(request, message: str, *, ok: bool = True):
             f'<p class="pill pill-{tone}" role="status">{escape(message)}</p>'
         )
     messages.success(request, message) if ok else messages.error(request, message)
-    return redirect(request.META.get("HTTP_REFERER") or "/team-planning-oversight/")
+    came_from = urlsplit(request.META.get("HTTP_REFERER") or "").path
+    return local_redirect(came_from, fallback=fallback)
 
 
 @require_page_permission("country_planning_oversight")
@@ -809,7 +844,10 @@ def partner_oversight_send_action_view(request):
     )
     if item is None:
         return _action_response(
-            request, "That assignment is not in your team.", ok=False
+            request,
+            "That assignment is not in your team.",
+            ok=False,
+            fallback=PARTNER_OVERSIGHT_PATH,
         )
 
     try:
@@ -836,9 +874,11 @@ def partner_oversight_send_action_view(request):
         else:
             return _action_response(request, "Unknown action.", ok=False)
     except ActionError as exc:
-        return _action_response(request, str(exc), ok=False)
+        return _action_response(
+            request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+        )
 
-    return _action_response(request, message)
+    return _action_response(request, message, fallback=PARTNER_OVERSIGHT_PATH)
 
 
 @require_page_permission("partner_oversight")

@@ -443,3 +443,57 @@ class RoleQueueOnStaffWorkTest(SendActionFixture):
         item = self._item()
 
         self.assertNotIn("payment_overdue", [r["key"] for r in item.risks])
+
+
+class SendRedirectIsLocalTest(SendActionFixture):
+    """The no-JavaScript path must not redirect anywhere it is told to.
+
+    `_action_response` returns the sender to the page they sent from, named by
+    the Referer header — which the sender's browser supplies and an attacker
+    can therefore choose. Handing that to `redirect()` is an open redirect,
+    and on an authenticated app it is a credible phishing primitive: the link
+    genuinely does come from this domain, so it survives the checks a user has
+    been taught to make. CodeQL caught it on the pull request.
+    """
+
+    def _send(self, referer):
+        return self.as_pl().post(
+            "/team-planning-oversight/send",
+            {"risk": "activity_overdue", "activity_id": self.activity.id},
+            HTTP_REFERER=referer,
+        )
+
+    def test_an_absolute_referer_elsewhere_cannot_take_the_sender_offsite(self):
+        response = self._send("https://evil.example/phish")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(response["Location"].startswith("http"))
+        self.assertNotIn("evil.example", response["Location"])
+
+    def test_a_protocol_relative_referer_is_refused(self):
+        """`//evil.example` is a host, not a path — the subtler half of this."""
+        response = self._send("//evil.example/phish")
+
+        self.assertNotIn("evil.example", response["Location"])
+
+    def test_a_referer_on_this_site_still_returns_the_sender_where_they_were(self):
+        response = self._send("http://testserver/team-planning-oversight/?tab=partner")
+
+        self.assertEqual(response["Location"], "/team-planning-oversight/")
+
+    def test_no_referer_falls_back_to_the_page_that_sent(self):
+        response = self.as_pl().post(
+            "/team-planning-oversight/send",
+            {"risk": "activity_overdue", "activity_id": self.activity.id},
+        )
+
+        self.assertEqual(response["Location"], "/team-planning-oversight/")
+
+    def test_each_page_falls_back_to_itself(self):
+        """A Country Director bounced to the PL's page is a scope change."""
+        from apps.frontend.views import oversight_views
+
+        self.assertEqual(
+            oversight_views.COUNTRY_OVERSIGHT_PATH, "/country-planning-oversight/"
+        )
+        self.assertEqual(oversight_views.PARTNER_OVERSIGHT_PATH, "/partner-oversight/")
