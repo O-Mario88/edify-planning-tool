@@ -225,8 +225,27 @@ urlpatterns = [
         school_views.school_intelligence_partial,
         name="school_intelligence_partial",
     ),
+    # ── School lifecycle ─────────────────────────────────────────────────────
+    # This MUST stay above the <str:school_id> detail route below. Move it
+    # after and "closed" is read as a school id, and the archive 404s.
+    path("schools/closed", school_views.closed_schools_view, name="closed_schools"),
     path(
         "schools/<str:school_id>", school_views.school_detail_view, name="school_detail"
+    ),
+    path(
+        "schools/<str:school_id>/close-drawer",
+        school_views.school_close_drawer,
+        name="school_close_drawer",
+    ),
+    path(
+        "schools/<str:school_id>/close",
+        school_views.school_close_action,
+        name="school_close",
+    ),
+    path(
+        "schools/<str:school_id>/reopen",
+        school_views.school_reopen_action,
+        name="school_reopen",
     ),
     path(
         "schools/<str:school_id>/delete",

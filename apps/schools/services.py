@@ -78,6 +78,19 @@ def _with_relations(qs):
     return qs.select_related("region", "district", "sub_county", "parish")
 
 
+def _scoped_ids(scope):
+    """The school ids this principal may read, closed or not.
+
+    Mirrors `school_queryset`'s scope rules without its operational filter, so
+    reopening a profile never widens who can see it.
+    """
+    if scope.country_scope:
+        return School.objects.values_list("id", flat=True)
+    if scope.can_view_summary_only:
+        return []
+    return scope.school_ids or []
+
+
 def get_one(school_id: str, principal):
     """Single school detail, scope-constrained + relations eager-loaded.
 
@@ -91,9 +104,22 @@ def get_one(school_id: str, principal):
 
     Ordered, not OR'd: `school_id` is the identifier people type and quote, so
     it wins if a value could somehow be both.
+
+    Closed schools resolve here. `school_queryset` excludes them because it
+    governs the operational directory and planning, but a school profile is
+    where its history is read — and a closure that made the record unreachable
+    would be a deletion wearing a different word. Scope is unchanged: the same
+    people may see the same schools, whether or not those schools still
+    operate.
     """
     scope = resolve_user_scope(principal)
     base = school_queryset(scope)
+    if base is not None:
+        from apps.schools.lifecycle_models import CLOSED_STATUSES
+
+        base = base | School.objects.filter(
+            id__in=_scoped_ids(scope), operational_status__in=CLOSED_STATUSES
+        )
     qs = _with_relations(base if base is not None else School.objects.all())
     school = qs.filter(school_id=school_id).first() or qs.filter(id=school_id).first()
     if not school:

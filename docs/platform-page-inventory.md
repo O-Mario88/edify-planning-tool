@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **493**
-- All registered routes: **895**
+- Routed product surfaces: **497**
+- All registered routes: **899**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **300**
-- Full pages: **322**
-- Partials and drawers: **155**
-- Permission-gated surfaces: **483**
-- Referenced by automated tests: **456**
+- Shared component templates: **301**
+- Full pages: **325**
+- Partials and drawers: **156**
+- Permission-gated surfaces: **487**
+- Referenced by automated tests: **460**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -456,12 +456,16 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /schools/<str:school_id>/add-to-cluster | Add To Cluster Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/drawer_error.html<br>partials/schools/add_to_cluster_drawer.html<br>partials/schools/toast_success.html | 9.6 | 0 | referenced by automated test |
 | /schools/<str:school_id>/assign-to-project | Assign To Project Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/drawer_error.html<br>partials/schools/assign_to_project_drawer.html<br>partials/schools/toast_success.html | 9.6 | 0 | referenced by automated test |
 | /schools/<str:school_id>/change-type | School Change Type | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/close | School Close | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/close-drawer | School Close Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/close_drawer.html | 9.4 | 0 | referenced by automated test |
 | /schools/<str:school_id>/delete | School Delete | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/edit_drawer.html | 9.7 | 0 | referenced by automated test |
+| /schools/<str:school_id>/reopen | School Reopen | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/add-school | Add School | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/bulk-assign-cluster | Bulk Assign Cluster | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/bulk-assign-project | Bulk Assign Project | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/bulk-match-staff | Bulk Match Staff | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/closed | Closed Schools · Edify | ADMIN, CCEO, CD, IA, PL | pages/schools/closed.html | 9.4 | 0 | referenced by automated test |
 | /schools/create-drawer | School Onboard Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/onboard_drawer.html | 9.6 | 0 | referenced by automated test |
 | /schools/parishes | School Parish Options | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/parish_options.html | 9.4 | 0 | referenced by automated test |
 | /schools/partial-intelligence/<str:school_id> | School Intelligence Partial | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/directory_intelligence.html | 9.6 | 0 | referenced by automated test |

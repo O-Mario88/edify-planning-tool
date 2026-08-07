@@ -2129,6 +2129,14 @@
       "template": "partials/schools/assign_to_project_drawer.html"
     },
     {
+      "bytes": 8032,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/schools/close_drawer.html"
+    },
+    {
       "bytes": 9357,
       "findings": [],
       "forms": 1,
@@ -27277,7 +27285,9 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "GET /schools/{{ school.id }}/edit-drawer"
+        "POST /schools/{{ school.school_id }}/reopen",
+        "GET /schools/{{ school.id }}/edit-drawer",
+        "GET /schools/{{ school.school_id }}/close-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -27300,6 +27310,7 @@
       "route": "/schools/<str:school_id>",
       "route_name": "school_detail",
       "secondary_actions": [
+        "/schools/{{ school.school_id }}/reopen",
         "{% url "
       ],
       "services_and_models": [
@@ -27541,6 +27552,136 @@
       "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_close_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "School Close",
+      "permission_key": "school_profile",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Close the school, or say why it cannot be closed.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/schools/<str:school_id>/close",
+      "route_name": "school_close",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.analytics.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_close_drawer",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /schools/{{ preview.school_ref }}/close"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "School Close Drawer",
+      "permission_key": "school_profile",
+      "primary_action": "Close",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What closing this school would do, before anybody confirms it.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/schools/<str:school_id>/close-drawer",
+      "route_name": "school_close_drawer",
+      "secondary_actions": [
+        "/schools/{{ preview.school_ref }}/close"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.analytics.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/schools/close_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_delete_view",
       "charts": false,
       "drawers": false,
@@ -27663,6 +27804,68 @@
       "templates": [
         "partials/schools/edit_drawer.html"
       ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.school_reopen_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "School Reopen",
+      "permission_key": "school_profile",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Bring a school back, without resurrecting the work that was stopped.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/schools/<str:school_id>/reopen",
+      "route_name": "school_reopen",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.analytics.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -27911,6 +28114,69 @@
       "surface_kind": "page",
       "tables": false,
       "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.school_views",
+      "backend_view": "apps.frontend.views.school_views.closed_schools_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Closed Schools \u00b7 Edify",
+      "permission_key": "closed_schools",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The archive. Closed schools stay reachable \u2014 just not operationally.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/schools/closed",
+      "route_name": "closed_schools",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.analytics.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/schools/closed.html"
+      ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -44300,6 +44566,32 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.school_views.school_close_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_profile",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/close",
+      "route_name": "school_close",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.school_views.school_close_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_profile",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/close-drawer",
+      "route_name": "school_close_drawer",
+      "templates": [
+        "partials/schools/close_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.school_views.school_delete_view",
       "kind": "page",
       "methods": [
@@ -44325,6 +44617,18 @@
       "templates": [
         "partials/schools/edit_drawer.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.school_views.school_reopen_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "school_profile",
+      "required_permissions": [],
+      "route": "/schools/<str:school_id>/reopen",
+      "route_name": "school_reopen",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.school_views.add_school_view",
@@ -44376,6 +44680,20 @@
       "route": "/schools/bulk-match-staff",
       "route_name": "bulk_match_staff",
       "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.school_views.closed_schools_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "closed_schools",
+      "required_permissions": [],
+      "route": "/schools/closed",
+      "route_name": "closed_schools",
+      "templates": [
+        "pages/schools/closed.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.school_views.school_onboard_drawer_view",
@@ -45287,15 +45605,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 895,
+    "all_routes": 899,
     "api_routes": 293,
-    "component_templates": 300,
-    "full_pages": 322,
-    "partials_and_drawers": 155,
-    "permission_gated": 483,
+    "component_templates": 301,
+    "full_pages": 325,
+    "partials_and_drawers": 156,
+    "permission_gated": 487,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 493,
+    "routed_surfaces": 497,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45303,6 +45621,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 456
+    "test_referenced": 460
   }
 }

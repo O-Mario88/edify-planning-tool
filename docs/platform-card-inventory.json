@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 554,
-  "templates": 194,
+  "titled_cards": 555,
+  "templates": 195,
   "distinct_titles": 528,
   "with_card_key": 13,
-  "untitled_surfaces": 1023,
-  "untitled_chrome": 231,
-  "untitled_nested": 378,
-  "untitled_headless": 414,
+  "untitled_surfaces": 1028,
+  "untitled_chrome": 232,
+  "untitled_nested": 381,
+  "untitled_headless": 415,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 20,
+  "titles_in_several_templates": 21,
   "ambiguous_titles": 0
  },
  "same_page_duplicate_titles": {},
@@ -39,6 +39,10 @@
   "how these numbers are computed": [
    "templates/partials/analytics/impact_workspace.html",
    "templates/partials/analytics/visit_effectiveness_workspace.html"
+  ],
+  "impact": [
+   "templates/partials/oversight/withdrawal_drawer.html",
+   "templates/partials/schools/close_drawer.html"
   ],
   "message rules": [
    "templates/pages/messages/index.html",
@@ -2860,7 +2864,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 38,
+   "line": 104,
    "title": "School Demographics &amp; Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2869,7 +2873,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 119,
+   "line": 185,
    "title": "Intervention Impact Timeline",
    "heading_level": 3,
    "has_card_key": false,
@@ -2878,7 +2882,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 183,
+   "line": 249,
    "title": "Recent Field Work",
    "heading_level": 3,
    "has_card_key": false,
@@ -2887,21 +2891,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 233,
+   "line": 299,
    "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     11,
+     17,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 271,
+   "line": 337,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2910,7 +2914,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 311,
+   "line": 377,
    "title": "Current SSA Assessment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2919,42 +2923,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 345,
+   "line": 411,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     21,
+     27,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 365,
+   "line": 431,
    "title": "Historical Averages",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     22,
+     28,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 387,
+   "line": 453,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     23,
+     29,
      0
     ]
    ]
@@ -5714,6 +5718,20 @@
    "has_card_key": false,
    "classes": "p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-surface text-[12px] font-bold",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/close_drawer.html",
+   "line": 52,
+   "title": "Impact",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-3 edify-border",
+   "branch_path": [
+    [
+     3,
+     3
+    ]
+   ]
   },
   {
    "template": "templates/partials/schools/directory_intelligence.html",

@@ -189,6 +189,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "core_schools": {CCEO, PL, IA, ADMIN},
     "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
     "school_profile": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
+    # The archive. IA and CD are here because closure data quality and country
+    # closure trends are theirs to watch; RVP works from aggregates and is not.
+    "closed_schools": {CCEO, PL, IA, CD, ADMIN},
     "school_action_drawer": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
     "school_upload": {IA, ADMIN},
     "clusters": {CCEO, PL, IA, PARTNER, CD, ADMIN},
@@ -949,6 +952,15 @@ SIDEBAR_ITEMS = [
                 "label": "Schools",
                 "url": "/schools",
                 "page_key": "schools",
+            },
+            {
+                # Its own entry, not a filter on the directory. The rule is
+                # that closed schools do not appear there, and a hidden filter
+                # default is a promise that breaks the first time somebody
+                # clears it or arrives from a saved link.
+                "label": "Closed Schools",
+                "url": "/schools/closed",
+                "page_key": "closed_schools",
             },
             {
                 "label": "Core Schools",
