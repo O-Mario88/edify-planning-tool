@@ -55,6 +55,11 @@ class Permission(str, Enum):
     DAILY_DEBRIEF_VIEW = "dailyDebrief.view"
     SCHOOL_UPLOAD = "school.upload"
     SCHOOL_EDIT = "school.edit"
+    # Close a school. Separate from SCHOOL_EDIT because closure is not an edit
+    # — it removes a school from every current count, cancels planned work and
+    # changes somebody's target denominator. Scope is still checked per record:
+    # holding this does not let a PL close a supervised CCEO's school.
+    SCHOOL_CLOSE = "school.close"
     SCHOOL_RESOLVE_DUPLICATE = "school.resolveDuplicate"
     CLUSTER_VIEW = "cluster.view"
     CLUSTER_ASSIGN = "cluster.assign"
@@ -206,6 +211,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # fund requests (field chain CCEO → PL).
         P.SCHOOL_VIEW,
         P.SCHOOL_EDIT,
+        P.SCHOOL_CLOSE,
         P.CLUSTER_VIEW,
         P.CLUSTER_ASSIGN,
         P.CLUSTER_OVERRIDE,
@@ -291,6 +297,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_EDIT,
+        P.SCHOOL_CLOSE,
         P.CLUSTER_VIEW,
         P.CLUSTER_ASSIGN,
         P.SSA_VIEW,
@@ -343,6 +350,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.EVIDENCE_REVIEW,
         P.PARTNER_VIEW,
         P.PARTNER_ASSIGNMENT_WITHDRAW,
+        # Closes schools directly assigned to them. Scope is enforced per
+        # record — this does not reach another CCEO's portfolio.
+        P.SCHOOL_CLOSE,
         # CCEO approves the fund requests of the staff they supervise, then
         # submits their own consolidated monthly request up to the PL.
         P.BUDGET_VIEW_DETAIL,

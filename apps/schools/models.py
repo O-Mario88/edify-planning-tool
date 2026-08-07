@@ -29,6 +29,11 @@ from apps.core.enums import (
     SsaStatus,
 )
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
+from apps.schools.lifecycle_models import (
+    CLOSED_STATUSES,
+    OPERATING_STATUSES,
+    SchoolOperationalStatus,
+)
 
 
 class School(SoftDeleteModel):
@@ -140,6 +145,39 @@ class School(SoftDeleteModel):
 
     created_by_ia = models.BooleanField(default=False)
     upload_batch_id = models.CharField(max_length=30, null=True, blank=True)
+
+    # ── Operational lifecycle ────────────────────────────────────────────────
+    # Whether the school is currently receiving programme support. Deliberately
+    # NOT school_type (Client / Core), which says what kind of support it gets
+    # — a closed Core school still has a Core history to report, and one field
+    # cannot answer both questions.
+    #
+    # Also deliberately not `deleted_at`, which already means "this row should
+    # never have existed" (a duplicate, a bad import). Closure means "this was
+    # real and has ended", and the archive shows one and not the other.
+    operational_status = models.CharField(
+        max_length=32,
+        choices=SchoolOperationalStatus.choices,
+        default=SchoolOperationalStatus.ACTIVE,
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    # The date the school stopped operating, which is not necessarily the date
+    # somebody recorded it. Everything prospective keys off this.
+    closure_effective_date = models.DateField(null=True, blank=True)
+    reopened_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def is_operating(self) -> bool:
+        """True when this school counts toward anything current.
+
+        The one place the question is answered on an instance. Callers that
+        need it as a query use `apps.schools.lifecycle_service.active_schools`.
+        """
+        return self.operational_status in OPERATING_STATUSES
+
+    @property
+    def is_closed(self) -> bool:
+        return self.operational_status in CLOSED_STATUSES
 
     class Meta:
         db_table = "school"
@@ -839,3 +877,14 @@ __all__ = [
     "SSAImportRow",
     "UnmatchedSSARecord",
 ]
+
+
+# The closure record lives in its own module — a school's lifecycle is a
+# subject of its own, and inlining it here would bury the school model it
+# hangs off. Imported so Django's app registry sees it.
+from apps.schools.lifecycle_models import (  # noqa: E402,F401
+    DATA_QUALITY_REASONS,
+    ClosureReason,
+    ClosureType,
+    SchoolClosure,
+)
