@@ -5,14 +5,16 @@ Three resolution paths:
                    created (pending_invited). ALL schools whose account_owner_name_raw
                    normalizes to this candidate's name are linked to the new staff
                    via StaffSchoolAssignment + flipped to account_owner_status=matched.
-  • match_existing — Admin picks an existing user id; the same school re-link happens;
-                     the candidate is marked merged.
+  • match_existing — Admin picks an existing user id; the same school re-link
+                     happens, the placeholder's own work is carried across to
+                     the real person, and the candidate is marked merged.
   • ignore       — invalid name; candidate marked ignored (schools keep raw name).
 """
 
 from __future__ import annotations
 
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import (
     StaffProfile,
@@ -20,6 +22,7 @@ from apps.accounts.models import (
     StaffSetupCandidate,
     StaffSetupCandidateStatus,
     User,
+    UserStatus,
 )
 from apps.accounts.staff_matching import normalize_name
 from apps.core.enums import AccountOwnerStatus
@@ -150,8 +153,12 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
 
 
 def match_existing(candidate_id: str, data: dict, principal) -> dict:
-    """Merge a candidate with an existing user (by user id). Links the affected
-    schools to that user's staff profile. Candidate → merged."""
+    """Merge a candidate with an existing user (by user id).
+
+    Links the affected schools to that user's staff profile AND carries the
+    placeholder's own work across — see `_absorb_placeholder`. Candidate →
+    merged.
+    """
     c = StaffSetupCandidate.objects.filter(id=candidate_id).first()
     if not c:
         raise NotFoundError("Staff candidate not found.")
@@ -167,6 +174,10 @@ def match_existing(candidate_id: str, data: dict, principal) -> dict:
 
     with transaction.atomic():
         _link_schools(c, sp.id, principal)
+        # Before repointing the candidate: the placeholder it currently names
+        # is about to stop being anybody's account, and everything it owns has
+        # to go somewhere first.
+        _absorb_placeholder(c, target_user=user, target_profile=sp, principal=principal)
         c.matched_user_id = user.id
         c.status = StaffSetupCandidateStatus.MERGED.value
         c.save(update_fields=["matched_user_id", "status", "updated_at"])
@@ -229,6 +240,114 @@ def _link_schools(
         payload={"schoolIds": [s.id for s in affected]},
     )
     return len(affected), len(new_assignments)
+
+
+def _absorb_placeholder(
+    candidate: StaffSetupCandidate, *, target_user, target_profile, principal=None
+) -> dict:
+    """Carry a placeholder's work across to the real person, then retire it.
+
+    A school import that names an owner with no account creates a placeholder
+    User + StaffProfile (`upload_service._ensure_staff_for_owner_name`) and
+    assigns the school to it. Work then gets planned against those schools and
+    recorded against the placeholder.
+
+    `_link_schools` moves the *schools*. Without this, the *work* stayed
+    behind: the admin resolves the queue, the schools reassign, the candidate
+    reads "merged" — and every activity the placeholder owned stays attributed
+    to an account nobody can sign in as. The real person inherits their schools
+    with none of their own history, and the activities are stranded for good,
+    because the placeholder is never resolved a second time.
+
+    Only genuine placeholders are absorbed: an account somebody has actually
+    used is somebody's, and merging it away would be destroying real access
+    rather than tidying an import artefact.
+    """
+    placeholder_user_id = candidate.matched_user_id
+    if not placeholder_user_id or placeholder_user_id == target_user.id:
+        return {"absorbed": False}
+
+    placeholder = User.objects.filter(id=placeholder_user_id).first()
+    if placeholder is None or not _is_import_placeholder(placeholder):
+        return {"absorbed": False}
+
+    placeholder_profile = StaffProfile.all_objects.filter(user=placeholder).first()
+
+    # responsible_staff_id and monitored_by_staff_id hold EITHER a StaffProfile
+    # id or a User id depending on which path wrote them, so each space is
+    # rewritten to its own counterpart. Collapsing both onto one space here
+    # would silently disown whichever half of the work used the other.
+    spaces = [(placeholder.id, target_user.id)]
+    if placeholder_profile is not None:
+        spaces.append((placeholder_profile.id, target_profile.id))
+
+    from apps.activities.models import Activity
+    from apps.partners.models import PartnerAssignment
+    from apps.planning.action_models import TeamAction
+
+    moved = {"activities": 0, "assignments": 0, "actions": 0}
+    for old_id, new_id in spaces:
+        moved["activities"] += Activity.objects.filter(
+            responsible_staff_id=old_id
+        ).update(responsible_staff_id=new_id)
+        moved["activities"] += Activity.objects.filter(
+            monitored_by_staff_id=old_id
+        ).update(monitored_by_staff_id=new_id)
+        moved["assignments"] += PartnerAssignment.objects.filter(
+            monitoring_staff_id=old_id
+        ).update(monitoring_staff_id=new_id)
+        moved["assignments"] += PartnerAssignment.objects.filter(
+            assigning_staff_id=old_id
+        ).update(assigning_staff_id=new_id)
+
+    # An open action addressed to an account nobody can sign in as is exactly
+    # the dead record the oversight pages exist to surface. Move it with the
+    # rest rather than leaving it in a queue no one reads.
+    moved["actions"] = TeamAction.objects.filter(recipient_id=placeholder.id).update(
+        recipient_id=target_user.id
+    )
+
+    # Its school assignments are redundant now that _link_schools has written
+    # the target's, and leaving them would keep the placeholder in scope
+    # queries as a second owner of the same schools.
+    if placeholder_profile is not None:
+        StaffSchoolAssignment.objects.filter(staff_id=placeholder_profile.id).delete()
+        placeholder_profile.deleted_at = timezone.now()
+        placeholder_profile.save(update_fields=["deleted_at"])
+
+    placeholder.status = UserStatus.DISABLED.value
+    placeholder.is_active = False
+    placeholder.save(update_fields=["status", "is_active"])
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="admin.placeholder_absorbed",
+        subject_kind="user",
+        subject_id=target_user.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={
+            "placeholder_user_id": placeholder.id,
+            "placeholder_email": placeholder.email,
+            **moved,
+        },
+    )
+    return {"absorbed": True, **moved}
+
+
+def _is_import_placeholder(user) -> bool:
+    """A never-used account the school import invented, not a real person's.
+
+    Both conditions are required. The `pending.` prefix alone is not enough —
+    an admin may have created a real account and not yet invited it — and
+    `pending_invited` alone certainly is not, since that is the normal state
+    of every genuine invitation awaiting its first sign-in.
+    """
+    return bool(
+        (user.email or "").startswith("pending.")
+        and user.status == UserStatus.PENDING_INVITED.value
+    )
 
 
 def _serialize(c: StaffSetupCandidate) -> dict:

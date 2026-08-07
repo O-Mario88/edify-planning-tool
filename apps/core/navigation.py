@@ -77,6 +77,23 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # NOTE: HR and IA are still listed and still resolve to an empty team —
     # out of scope for the field-role audit, flagged in the proposal.
     "team_targets": {PL, CD, HR, IA, ADMIN},
+    # Supervision lenses over the country plan. Deliberately narrow: the PL
+    # page resolves a team only for a Program Lead, and the country page is a
+    # leadership review surface, not a field-planning one. Neither grants any
+    # write access to the work it shows.
+    "team_planning_oversight": {PL, ADMIN},
+    "country_planning_oversight": {CD, ADMIN},
+    # Partner-delivered work, grouped by partner. The PL owns team-level
+    # monitoring of it and the CD sees the country picture; the CCEO reaches
+    # the same records through the school they manage, so they do not need a
+    # partner-shaped page and are not given one.
+    #
+    # Impact Assessment and the Accountant are here because they are IN this
+    # chain, not observing it: verification gates payment and payment closes
+    # the partner's work, and both were previously named as responsible on a
+    # page neither could open. Their lens is country-wide, matching the queues
+    # they already work from.
+    "partner_oversight": {PL, CD, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -825,6 +842,21 @@ SIDEBAR_ITEMS = [
                 "label": "Team Targets",
                 "url": "/team-targets/",
                 "page_key": "team_targets",
+            },
+            {
+                "label": "Team Planning",
+                "url": "/team-planning-oversight/",
+                "page_key": "team_planning_oversight",
+            },
+            {
+                "label": "Country Planning",
+                "url": "/country-planning-oversight/",
+                "page_key": "country_planning_oversight",
+            },
+            {
+                "label": "Partner Oversight",
+                "url": "/partner-oversight/",
+                "page_key": "partner_oversight",
             },
             {
                 "label": "My Plan",

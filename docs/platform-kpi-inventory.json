@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 11,
   "labels_in_several_modules": 15,
-  "breakdown_rows": 100
+  "breakdown_rows": 102
  },
  "duplicated_labels": {
   "Accountability Pending": [
@@ -3572,6 +3572,20 @@
    "has_drilldown": false
   },
   {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/oversight_views.py",
+   "line": 175,
+   "label": null,
+   "keys": [
+    "count",
+    "is_active",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
    "line": 451,
@@ -6425,6 +6439,24 @@
    "keys": [
     "label",
     "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/system_health/planning_oversight_health.py",
+   "line": 55,
+   "label": null,
+   "keys": [
+    "clean",
+    "count",
+    "examples",
+    "expected",
+    "key",
+    "label",
+    "route",
+    "severity"
    ],
    "has_metric_key": false,
    "has_drilldown": false

@@ -1,0 +1,65 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Team Planning Oversight · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Supervision</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Planning Oversight</h1>
+      <p class="edify-page-header__description">Monitor your own work, supervised CCEO plans and Partner delivery from Planning through execution and closure.</p>
+    </div>
+    <form class="edify-page-header__controls"
+          hx-get="/team-planning-oversight/"
+          hx-target="#oversight-workspace"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-push-url="true">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+        <select name="fy" aria-label="Financial year" class="focus:outline-none">
+          {% for option in fy_options %}
+          <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Month</span>
+        <select name="month" aria-label="Month" class="focus:outline-none">
+          <option value="">All</option>
+          <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
+          <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
+          <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
+          <option value="4" {% if month == 4 %}selected{% endif %}>April</option>
+          <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
+          <option value="6" {% if month == 6 %}selected{% endif %}>June</option>
+          <option value="7" {% if month == 7 %}selected{% endif %}>July</option>
+          <option value="8" {% if month == 8 %}selected{% endif %}>August</option>
+          <option value="9" {% if month == 9 %}selected{% endif %}>September</option>
+          <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
+          <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
+          <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+        </select>
+      </label>
+      {% if team_members %}
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Team member</span>
+        <select name="team_member" aria-label="Team member" class="focus:outline-none">
+          <option value="">Everyone</option>
+          {% for member in team_members %}
+          <option value="{{ member.id }}" {% if member.id == team_member %}selected{% endif %}>{{ member.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endif %}
+    </form>
+  </header>
+
+  <div id="oversight-workspace">
+    {% include "partials/oversight/pl_workspace.html" %}
+  </div>
+</div>
+{% endblock %}

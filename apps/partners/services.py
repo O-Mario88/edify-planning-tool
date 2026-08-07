@@ -326,7 +326,7 @@ __all__ = [
 ]
 
 
-def mark_assignment_scheduled(assignment, *, scheduled_date):
+def mark_assignment_scheduled(assignment, *, scheduled_date, activity):
     """Move a PartnerAssignment from pending to scheduled, once its Activity exists.
 
     Both planning views -- the single handoff and the bulk one -- wrote this
@@ -336,12 +336,26 @@ def mark_assignment_scheduled(assignment, *, scheduled_date):
     have hit, and it is easier to see and to fix in one function than in two
     copies inside unrelated view bodies.
 
+    `activity` is required, not optional. A scheduled assignment whose activity
+    is not recorded is exactly the row planning oversight cannot resolve: it has
+    to decide whether the assignment and some activity are one item or two, and
+    without the id it is guessing. Making the argument mandatory means a future
+    caller cannot create that row by omission.
+
     Idempotent: re-running it on an already-scheduled assignment rewrites the
     same values rather than raising, so a retried HTMX POST is harmless.
     """
     assignment.status = "partner_scheduled"
     assignment.scheduled_date = scheduled_date
-    assignment.save(update_fields=["status", "scheduled_date", "updated_at"])
+    assignment.scheduled_activity = activity
+    assignment.save(
+        update_fields=[
+            "status",
+            "scheduled_date",
+            "scheduled_activity",
+            "updated_at",
+        ]
+    )
     return assignment
 
 

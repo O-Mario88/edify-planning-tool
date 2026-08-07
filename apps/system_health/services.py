@@ -71,7 +71,23 @@ def report() -> dict:
     data["workPlan"] = _work_plan()
     data["strategicPriorities"] = _strategic_priorities()
     data["projectPriorities"] = _project_priorities()
+    data["planningOversight"] = _planning_oversight()
     return data
+
+
+def _planning_oversight() -> dict:
+    """Invariants behind the PL and CD planning-oversight pages.
+
+    Wrapped like its neighbours: one failing check must not take the whole
+    health report down, because the report is what people use to find out
+    something is failing.
+    """
+    try:
+        from apps.system_health.planning_oversight_health import report as oversight
+
+        return oversight()
+    except Exception as exc:  # noqa: BLE001
+        return {"clean": False, "issueCount": 0, "checks": [], "error": str(exc)}
 
 
 def _work_plan() -> dict:

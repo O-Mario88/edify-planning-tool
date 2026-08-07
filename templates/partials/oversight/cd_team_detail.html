@@ -1,0 +1,89 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+One Program Lead's team, expanded: level 2 (the CCEOs and the PL's own work)
+and level 3 (staff versus partner execution) of the country hierarchy.
+
+Read-only. The Country Director reviews the plan here and acts through the
+Program Lead; there is no control on this partial that schedules, edits,
+reschedules or cancels field work.
+{% endcomment %}
+
+{% if owner_groups %}
+<div class="space-y-3 pt-2">
+  {% for group in owner_groups %}
+  <section class="rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}">
+    <header class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b edify-border">
+      <h3 id="owner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h3>
+      <p class="edify-text-caption edify-text-muted">
+        {{ group.summary.total_planned }} planned ·
+        {{ group.summary.staff_scheduled }} staff ·
+        {{ group.summary.partner_scheduled }} partner ·
+        {{ group.summary.partner_awaiting_schedule }} awaiting ·
+        UGX {{ group.summary.planned_budget|intcomma }}
+      </p>
+    </header>
+    {% paginate group.items group.page_param as owner_page %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <caption class="sr-only">Planned work owned by {{ group.name }}</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-3 py-2 font-semibold">Activity</th>
+            <th scope="col" class="px-3 py-2 font-semibold">Context</th>
+            <th scope="col" class="px-3 py-2 font-semibold">Executor</th>
+            <th scope="col" class="px-3 py-2 font-semibold">Planned</th>
+            <th scope="col" class="px-3 py-2 font-semibold">Cost</th>
+            <th scope="col" class="px-3 py-2 font-semibold">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in owner_page.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-3 py-2">
+              {% if item.activity_id %}
+              <a href="/activities/{{ item.activity_id }}" class="font-semibold hover:underline edify-primary-text">{{ item.activity_type|replace_underscore|title }}</a>
+              {% else %}
+              <span class="font-semibold">{{ item.activity_type|replace_underscore|title|default:"Partner assignment" }}</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-sm">{{ item.context_label }}</td>
+            <td class="px-3 py-2 text-sm">
+              {% if item.is_partner_work %}
+              {{ item.partner_name|default:"Partner" }}
+              <span class="block edify-text-caption edify-text-muted">via {{ item.managing_staff_name|default:"—" }}</span>
+              {% else %}
+              {{ item.executor_name|default:"—" }}
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-sm whitespace-nowrap">
+              {% if item.planned_date %}{{ item.planned_date|date:"j M" }}{% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-2 text-sm whitespace-nowrap">
+              {% if item.is_awaiting_partner_schedule %}
+              <span class="edify-text-muted" title="An assignment carries no cost until the partner schedules it">UGX 0</span>
+              {% else %}
+              UGX {{ item.planned_cost|intcomma }}
+              {% endif %}
+            </td>
+            <td class="px-3 py-2">
+              {% if item.is_awaiting_partner_schedule %}
+              <span class="pill pill-warning">Partner yet to schedule</span>
+              {% else %}
+              <span class="pill">{{ item.activity_status|replace_underscore|title }}</span>
+              {% endif %}
+              {% if item.next_action_owner_name %}
+              <span class="block edify-text-caption edify-text-muted">Waiting on {{ item.next_action_owner_name }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% include "components/table_pager.html" with pager=owner_page param=group.page_param %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<p class="edify-text-caption edify-text-muted py-2">This team has no planned work in the selected period.</p>
+{% endif %}

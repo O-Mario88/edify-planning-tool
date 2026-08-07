@@ -219,6 +219,50 @@ Improved: {{ impact_data.improvedCount }}
 {% endif %}
 </div>
 </div>
+
+{% comment %}
+Partner Support. The CCEO handed this school's support to a partner and keeps
+the school relationship, so this is where they see what became of it — without
+having to go looking on a partner-shaped page they do not own.
+
+Read-only, and it carries no cost until the partner schedules. An assignment
+with no date has no activity, so there is no price to show; a "UGX 0" here
+would read as free work rather than unpriced work.
+{% endcomment %}
+{% if partner_support %}
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Partner Support</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Support handed to a partner. The partner sets the date; you keep the evidence and Salesforce handoff.</p>
+</div>
+<div class="divide-y divide-[var(--edify-border)] text-[12px]">
+{% for item in partner_support %}
+<div class="p-4 flex flex-wrap justify-between gap-3">
+<div class="min-w-0">
+<h4 class="font-semibold text-slate-800">{{ item.partner_name|default:"Partner" }} &mdash; {{ item.activity_type|replace_underscore|title|default:"Support" }}</h4>
+<p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">
+{% if item.is_scheduled %}Scheduled for {{ item.scheduled_date|date:"j M Y"|default:"—" }}
+{% elif item.is_returned %}Returned to staff{% if item.return_reason %} &mdash; {{ item.return_reason }}{% endif %}
+{% else %}Assigned {{ item.assignment_date|date:"j M Y"|default:"—" }} &bull; no date set yet
+{% endif %}
+</p>
+<p class="edify-text-caption text-slate-400 mt-0.5 font-semibold">Next: {{ item.next_action }} &mdash; {{ item.next_action_owner }}</p>
+</div>
+<div class="text-right">
+{% if item.has_cost %}
+<p class="text-[12px] font-bold tabular-nums text-slate-700">UGX {{ item.planned_cost|intcomma }}</p>
+{% endif %}
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+{% if item.is_scheduled %}{{ item.activity_status|replace_underscore|title }}
+{% elif item.is_returned %}Returned
+{% else %}Awaiting partner{% endif %}
+</p>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
 </div>
 
 <!-- Right Column: SSA Assessment scores -->

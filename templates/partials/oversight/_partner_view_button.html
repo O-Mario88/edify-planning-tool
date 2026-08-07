@@ -1,0 +1,10 @@
+{% comment %}
+The one control every partner row carries. Included rather than repeated so
+the four lists cannot drift into offering different affordances for the same
+record.
+{% endcomment %}
+<button type="button"
+        class="text-sm font-semibold hover:underline edify-primary-text{% if mobile %} min-h-11{% endif %}"
+        hx-get="/partner-oversight/detail?assignment_id={{ item.partner_assignment_id }}"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML">{% if mobile %}View details{% else %}View{% endif %}</button>

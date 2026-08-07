@@ -1,0 +1,181 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters table_pagination %}
+{% comment %}
+One item's full lineage: planning source, ownership, cost, funding, execution
+and verification. Read-only by design — a supervisor opens this to understand
+a piece of work and to decide whom to ask, never to change it. The only form
+here sends a corrective action, which writes a TeamAction and nothing else.
+{% endcomment %}
+
+{% block drawer_title %}{% if item %}{{ item.activity_type|replace_underscore|title|default:"Partner assignment" }}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if item %}{{ item.context_label }}{% else %}This record is not in your scope, or no longer exists.{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if item %}
+<div class="space-y-4 pr-1 edify-drawer-scroll">
+  {% if item.risks %}
+  <section aria-labelledby="detail-risks">
+    <h3 id="detail-risks" class="text-sm font-semibold mb-2">Needs attention</h3>
+    <ul class="space-y-2">
+      {% for risk in item.risks %}
+      <li class="rounded-surface border p-3 edify-border">
+        <p class="text-sm font-semibold">{{ risk.recommended_action }}</p>
+        <p class="edify-text-caption edify-text-muted">{{ risk.reason }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          Owner: {{ risk.owner_name|default:"Unassigned" }}
+          {% if risk.due_date %} · Due {{ risk.due_date|date:"j M Y" }}{% endif %}
+        </p>
+        {% comment %}
+        A school is required to send to a person, because TeamAction is
+        school-scoped and the recipient is resolved from the school's
+        assignment. A role queue needs none: Impact Assessment and the
+        Accountant are reached as a queue, so cluster and programme work can
+        be asked of them too.
+        {% endcomment %}
+        {% if can_send and item.school_id or can_send and risk.responsible_role %}
+        <form hx-post="/team-planning-oversight/send"
+              hx-target="#oversight-send-result"
+              hx-swap="innerHTML"
+              class="mt-2 flex flex-wrap items-center gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="risk" value="{{ risk.key }}">
+          {% if item.activity_id %}<input type="hidden" name="activity_id" value="{{ item.activity_id }}">{% endif %}
+          {% if item.partner_assignment_id %}<input type="hidden" name="assignment_id" value="{{ item.partner_assignment_id }}">{% endif %}
+          <label class="sr-only" for="note-{{ forloop.counter }}">Note for the recipient</label>
+          <input id="note-{{ forloop.counter }}" name="note" type="text"
+                 class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
+                 placeholder="Add a note (optional)">
+          <button type="submit" class="btn btn-primary h-9">
+            Send to {{ risk.owner_name|default:"the owner" }}
+          </button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <div id="oversight-send-result" class="mt-2"></div>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="detail-ownership">
+    <h3 id="detail-ownership" class="text-sm font-semibold mb-2">Ownership</h3>
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Planned by</dt>
+        <dd>{{ item.planned_by_name|default:"—" }}{% if item.planned_by_role %} <span class="edify-text-muted">({{ item.planned_by_role }})</span>{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Operational owner</dt>
+        <dd>{{ item.operational_owner_name|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Executor</dt>
+        <dd>{{ item.executor_name|default:"—" }} <span class="edify-text-muted">({{ item.executor_type }})</span></dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Managing staff</dt>
+        <dd>{{ item.managing_staff_name|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Supervising PL</dt>
+        <dd>{{ item.supervising_pl_name|default:"Unassigned" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Partner</dt>
+        <dd>{{ item.partner_name|default:"—" }}</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="detail-planning">
+    <h3 id="detail-planning" class="text-sm font-semibold mb-2">Planning</h3>
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Planned date</dt>
+        <dd>{% if item.planned_date %}{{ item.planned_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Financial year</dt>
+        <dd>FY {{ item.fy|default:"—" }} {% if item.quarter %}· {{ item.quarter }}{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Assigned</dt>
+        <dd>{% if item.assigned_date %}{{ item.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Schedule by</dt>
+        <dd>{% if item.schedule_by_date %}{{ item.schedule_by_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Intervention</dt>
+        <dd>{{ item.target_intervention|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Rationale</dt>
+        <dd>{{ item.operational_rationale|default:"—" }}</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="detail-cost">
+    <h3 id="detail-cost" class="text-sm font-semibold mb-2">Cost lineage</h3>
+    {% if item.is_awaiting_partner_schedule %}
+    <p class="text-sm edify-text-muted">
+      Nothing is scheduled yet, so this handover carries no cost line and
+      contributes UGX 0 to the plan. A cost appears when the partner schedules.
+    </p>
+    {% elif lineage.cost_lines %}
+    {% paginate lineage.cost_lines "cost_page" as cost_page %}
+    <table class="w-full text-left text-sm">
+      <caption class="sr-only">Cost lines for this activity</caption>
+      <thead>
+        <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+          <th scope="col" class="py-1 font-semibold">Line</th>
+          <th scope="col" class="py-1 font-semibold">Unit</th>
+          <th scope="col" class="py-1 font-semibold">Qty</th>
+          <th scope="col" class="py-1 font-semibold">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in cost_page.rows %}
+        <tr class="border-t edify-border">
+          <td class="py-1.5">{{ line.label }}
+            {% if line.cost_setting_version %}<span class="edify-text-caption edify-text-muted">v{{ line.cost_setting_version }}</span>{% endif %}
+          </td>
+          <td class="py-1.5 tabular-nums">UGX {{ line.unit_cost|intcomma }}</td>
+          <td class="py-1.5 tabular-nums">{{ line.quantity }}</td>
+          <td class="py-1.5 tabular-nums">UGX {{ line.amount|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="border-t edify-border font-semibold">
+          <td class="py-1.5" colspan="3">Total</td>
+          <td class="py-1.5 tabular-nums">UGX {{ lineage.cost_total|intcomma }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% include "components/table_pager.html" with pager=cost_page param="cost_page" %}
+    {% else %}
+    <p class="text-sm edify-text-muted">
+      No cost lines. This activity cannot enter a fund request until it is priced.
+    </p>
+    {% endif %}
+  </section>
+
+  {% if lineage.assignment %}
+  <section aria-labelledby="detail-handover">
+    <h3 id="detail-handover" class="text-sm font-semibold mb-2">Partner handover</h3>
+    <p class="text-sm">
+      Handed to {{ lineage.assignment.partner.name }} and scheduled by them.
+      {% if lineage.assignment.created_at %}Assigned {{ lineage.assignment.created_at|date:"j M Y" }}.{% endif %}
+    </p>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="detail-workflow">
+    <h3 id="detail-workflow" class="text-sm font-semibold mb-2">Workflow state</h3>
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Activity</dt>
+        <dd>{{ item.activity_status|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Evidence</dt>
+        <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Salesforce</dt>
+        <dd>{{ item.salesforce_status|title }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Impact Assessment</dt>
+        <dd>{{ item.ia_status|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Finance</dt>
+        <dd>{{ item.finance_status|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Reschedules</dt>
+        <dd>{{ item.reschedule_count }}</dd></div>
+    </dl>
+  </section>
+
+  {% if item.activity_id %}
+  <p class="pt-1">
+    <a href="/activities/{{ item.activity_id }}" class="text-sm font-semibold hover:underline edify-primary-text">
+      Open the full activity record
+    </a>
+  </p>
+  {% endif %}
+</div>
+{% else %}
+<p class="text-sm edify-text-muted">This record is not in your scope, or no longer exists.</p>
+{% endif %}
+{% endblock %}

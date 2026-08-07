@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **478**
-- All registered routes: **880**
+- Routed product surfaces: **490**
+- All registered routes: **892**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **66**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **291**
-- Full pages: **317**
-- Partials and drawers: **148**
-- Permission-gated surfaces: **468**
-- Referenced by automated tests: **444**
+- Shared component templates: **299**
+- Full pages: **320**
+- Partials and drawers: **154**
+- Permission-gated surfaces: **480**
+- Referenced by automated tests: **453**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -190,6 +190,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /country-budget/history/<str:budget_id> | FY | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/finance/country_budget_submission.html | 9.4 | 0 | referenced by automated test |
 | /country-budget/plan-sources | Country Budget Plan Sources | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/plan_sources_drawer.html | 9.6 | 0 | referenced by automated test |
 | /country-budget/return | Country Budget Return Drawer | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/return_drawer.html | 9.4 | 0 | referenced by automated test |
+| /country-planning-oversight/ | Country Planning | ADMIN, CD | partials/oversight/cd_workspace.html<br>pages/oversight/country_planning.html | 9.4 | 0 | referenced by automated test |
+| /country-planning-oversight/export | Country Planning Oversight Export | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | coverage review required |
+| /country-planning-oversight/send | Country Planning Oversight Send | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | coverage review required |
+| /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | ADMIN, CD | partials/oversight/cd_team_detail.html | 9.4 | 0 | coverage review required |
 | /coverage | Coverage · Edify | ADMIN, CD, HR, PL, PROJECT_COORDINATOR, RVP | pages/coverage/index.html | 9.4 | 0 | referenced by automated test |
 | /cpd-learning | CPD & Learning | ADMIN, CD, HR, PL, RVP | partials/hr/pd_dashboard/tracker_table.html<br>partials/hr/pd_dashboard/body.html<br>pages/hr/professional_development_dashboard.html | 9.8 | 0 | referenced by automated test |
 | /cpd-learning/action | Pd Dashboard Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -373,6 +377,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /org-structure | Organization Structure | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_schools_table.html | 9.6 | 0 | referenced by automated test |
 | /partials/costing/preview | Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
+| /partner-oversight/ | Partner Oversight | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/partner_workspace.html<br>pages/oversight/partner_oversight.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |
@@ -479,6 +487,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
+| /team-planning-oversight/ | Team Planning | ADMIN, PL | partials/oversight/pl_workspace.html<br>pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/detail | Team Planning Oversight Detail | ADMIN, PL | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/export | Team Planning Oversight Export | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/send | Team Planning Oversight Send | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/ | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/catchup | Team Targets Catchup Create | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
