@@ -324,3 +324,102 @@ def reopenings(limit: int = MAX_ROWS) -> list[dict]:
         }
         for closure in rows
     ]
+
+
+# ── The leadership lens ──────────────────────────────────────────────────────
+# Everything below answers the Country Director's question, which is not the
+# one above. IA asks which records are wrong; the CD asks where the programme
+# is losing schools and what that did to the plan. The two must not be merged
+# into one "closure dashboard": a page that mixes work-to-fix with country
+# performance leaves nobody knowing which numbers they are accountable for.
+
+
+def country_summary(fy_start: date | None = None, fy_end: date | None = None) -> dict:
+    """What the country lost, and what the loss did to delivery.
+
+    Schools that have since reopened are excluded from the losses: they are
+    operating again, so counting them would report a programme smaller than it
+    is. They are reported separately rather than silently dropped.
+
+    The learner total carries its own coverage. Some schools have no enrolment
+    count at all, so the honest statement is "X learners across Y of Z closed
+    schools" — a bare total implies a completeness the data does not have.
+    """
+    base = _base(fy_start, fy_end)
+    lost = base.filter(reopened_at__isnull=True)
+
+    totals = lost.aggregate(
+        schools=Count("id"),
+        learners=Sum("enrollment_at_closure"),
+        counted=Count("id", filter=Q(enrollment_at_closure__isnull=False)),
+        # What closing did to work that was already planned. Read from the
+        # closure's own snapshot rather than re-queried: these are facts about
+        # the day the decision was made, and the plan has moved since.
+        activities_cancelled=Sum("activities_cancelled"),
+        budget_released=Sum("budget_released"),
+        partners_withdrawn=Sum("partner_assignments_withdrawn"),
+        awaiting_finance=Sum("locked_activities_for_review"),
+        districts=Count("school__district", distinct=True),
+    )
+
+    schools = totals["schools"] or 0
+    counted = totals["counted"] or 0
+
+    return {
+        "schools_lost": schools,
+        "learners_lost": totals["learners"] or 0,
+        "schools_counted": counted,
+        "schools_without_enrollment": schools - counted,
+        "districts_affected": totals["districts"] or 0,
+        "reopened": base.filter(reopened_at__isnull=False).count(),
+        "activities_cancelled": totals["activities_cancelled"] or 0,
+        "budget_released": totals["budget_released"] or 0,
+        "partners_withdrawn": totals["partners_withdrawn"] or 0,
+        "awaiting_finance": totals["awaiting_finance"] or 0,
+        # An average built on partial coverage would read as a fact about all
+        # closed schools. None when nothing has an enrolment count.
+        "average_school_size": (
+            round((totals["learners"] or 0) / counted) if counted else None
+        ),
+    }
+
+
+def by_place(
+    field: str = "district",
+    fy_start: date | None = None,
+    fy_end: date | None = None,
+    limit: int = 50,
+) -> list[dict]:
+    """Where the losses are, worst first.
+
+    Concentration is the point. Eight schools lost across eight districts is a
+    country-wide drift; eight lost in one district is a district in trouble,
+    and the two call for completely different responses. A national total
+    cannot tell them apart, so this list exists to.
+    """
+    if field not in {"district", "region"}:
+        raise ValueError("by_place groups by district or region only")
+
+    name = f"school__{field}__name"
+    rows = (
+        _base(fy_start, fy_end)
+        .filter(reopened_at__isnull=True)
+        .values(name)
+        .annotate(
+            schools=Count("id"),
+            learners=Sum("enrollment_at_closure"),
+            counted=Count("id", filter=Q(enrollment_at_closure__isnull=False)),
+            activities_cancelled=Sum("activities_cancelled"),
+        )
+        .order_by("-schools", "-learners")[:limit]
+    )
+    return [
+        {
+            "name": row[name] or "Not recorded",
+            "schools": row["schools"],
+            "learners": row["learners"] or 0,
+            "schools_without_enrollment": row["schools"] - (row["counted"] or 0),
+            "activities_cancelled": row["activities_cancelled"] or 0,
+        }
+        for row in rows
+    ]

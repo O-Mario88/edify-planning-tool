@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **498**
-- All registered routes: **900**
+- Routed product surfaces: **499**
+- All registered routes: **901**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **302**
+- Shared component templates: **303**
 - Full pages: **325**
-- Partials and drawers: **157**
-- Permission-gated surfaces: **488**
-- Referenced by automated tests: **461**
+- Partials and drawers: **158**
+- Permission-gated surfaces: **489**
+- Referenced by automated tests: **462**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -135,6 +135,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /analytics/publishing | Analytics Publishing Status - Edify Command Center | ADMIN, CD, IA | pages/analytics/publishing_status.html | 9.7 | 0 | referenced by automated test |
 | /analytics/publishing/ | Analytics Publishing Status - Edify Command Center | ADMIN, CD, IA | pages/analytics/publishing_status.html | 9.7 | 0 | referenced by automated test |
 | /analytics/schedule-report | Analytics Schedule Report | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/schools/toast_success.html<br>partials/analytics/schedule_report_drawer.html | 9.6 | 0 | referenced by automated test |
+| /analytics/school-closures | School Closures | ADMIN, CD | partials/analytics/closure_impact_workspace.html<br>pages/analytics/closure_impact.html | 9.4 | 0 | referenced by automated test |
 | /analytics/visit-effectiveness | Visit Effectiveness | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/visit_effectiveness_workspace.html<br>pages/analytics/visit_effectiveness.html | 9.6 | 0 | referenced by automated test |
 | /api/analytics/combine-map-boundaries | Combine Map Boundaries | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /api/analytics/map-subcounties | Map Subcounty Metrics | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

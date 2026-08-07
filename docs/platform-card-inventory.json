@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 558,
-  "templates": 196,
-  "distinct_titles": 530,
+  "titled_cards": 561,
+  "templates": 197,
+  "distinct_titles": 533,
   "with_card_key": 13,
-  "untitled_surfaces": 1036,
+  "untitled_surfaces": 1044,
   "untitled_chrome": 232,
-  "untitled_nested": 386,
-  "untitled_headless": 418,
+  "untitled_nested": 390,
+  "untitled_headless": 422,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 0
@@ -3498,6 +3498,56 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 84,
+   "title": "By",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     4,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 140,
+   "title": "Why schools closed",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 183,
+   "title": "Closures by month",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-4",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     11,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/partials/analytics/closure_quality_workspace.html",

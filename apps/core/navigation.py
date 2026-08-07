@@ -319,6 +319,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # surfaces, which count real closures and exclude the record errors listed
     # here — the same numbers with the corrections already applied.
     "closure_quality": {IA, ADMIN},
+    # Where the country is losing schools, and what closing them did to the
+    # plan. Deliberately a different page from closure_quality above: that one
+    # is a worklist of records to distrust, this one is country performance,
+    # and a single page mixing them leaves nobody sure which numbers they own.
+    # RVP is not here yet — that view needs region scoping first.
+    "closure_impact": {CD, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
@@ -593,6 +599,14 @@ ANALYTICS_SECTIONS = [
         "page_key": "closure_quality",
         "cluster": "delivery",
         "description": "Closure records to distrust: wrong, unconfirmed or late.",
+    },
+    {
+        "key": "closure_impact",
+        "label": "School Closures",
+        "url": "/analytics/school-closures",
+        "page_key": "closure_impact",
+        "cluster": "programme",
+        "description": "Where the country is losing schools, and what it cost the plan.",
     },
     {
         "key": "completed_work",

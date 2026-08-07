@@ -1,0 +1,219 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+The body of the country closure page, swapped on its own when the period or
+grouping changes — so the header keeps the control that fired the request.
+{% endcomment %}
+
+{% if summary.schools_lost or summary.reopened %}
+<div class="space-y-4">
+
+  {# ── What the country lost ──────────────────────────────────────────────── #}
+  <section aria-labelledby="ci-summary" class="space-y-3">
+    <h2 id="ci-summary" class="sr-only">Summary</h2>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Schools lost</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.schools_lost|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          {% if summary.reopened %}{{ summary.reopened }} reopened and no longer counted as lost{% else %}Still closed{% endif %}
+        </p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Learners removed</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.learners_lost|intcomma }}</p>
+        {% comment %}
+        The coverage is stated with the number, never after it. A bare total
+        implies a completeness this data does not have: some closed schools
+        carry no enrolment count at all, and reporting their learners as zero
+        would understate the loss with total confidence.
+        {% endcomment %}
+        <p class="edify-text-caption edify-text-muted">
+          Across {{ summary.schools_counted|intcomma }} of {{ summary.schools_lost|intcomma }} closed schools
+          {% if summary.schools_without_enrollment %}
+          · <span class="font-semibold">{{ summary.schools_without_enrollment }} had no count</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Districts affected</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.districts_affected|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          {% if summary.average_school_size %}Average closed school held {{ summary.average_school_size|intcomma }} learners{% else %}No enrolment counts recorded{% endif %}
+        </p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Budget released</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.budget_released|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">UGX, from work that will not now happen</p>
+      </div>
+    </div>
+
+    {% comment %}
+    What closure did to the plan. Leadership's distinct question: the losses
+    above are about schools, these are about the work that was already
+    committed to them.
+    {% endcomment %}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Activities cancelled</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.activities_cancelled|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Planned visits and trainings stopped</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Partner work withdrawn</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.partners_withdrawn|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Assignments taken back from partners</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Awaiting finance</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.awaiting_finance|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Money already moved — settled, not cancelled</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Operating again, excluded from the losses</p>
+      </div>
+    </div>
+  </section>
+
+  {# ── Where ──────────────────────────────────────────────────────────────── #}
+  {% if places %}
+  {% paginate places "place_page" as place_pager %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="ci-where">
+    <div class="p-4 border-b edify-border">
+      <h2 id="ci-where" class="text-sm font-bold">By {{ grouping }}</h2>
+      <p class="edify-text-caption edify-text-muted mt-0.5">
+        Worst first. Eight schools lost across eight {{ grouping }}s is country-wide drift; eight lost in one is a {{ grouping }} in trouble, and the national total cannot tell them apart.
+      </p>
+    </div>
+    <div class="overflow-x-auto max-md:hidden">
+      <table class="w-full text-left">
+        <caption class="sr-only">Closures grouped by {{ grouping }}</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">{{ grouping|capfirst }}</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Schools lost</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Learners</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Activities cancelled</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in place_pager.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 text-sm font-semibold">{{ row.name }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.schools|intcomma }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">
+              {{ row.learners|intcomma }}
+              {% if row.schools_without_enrollment %}
+              <span class="block edify-text-caption edify-text-muted">{{ row.schools_without_enrollment }} without a count</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{% if row.activities_cancelled %}{{ row.activities_cancelled|intcomma }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="md:hidden divide-y edify-border">
+      {% for row in place_pager.rows %}
+      <li class="p-4 space-y-1">
+        <div class="flex items-baseline justify-between gap-2">
+          <p class="font-semibold text-sm">{{ row.name }}</p>
+          <p class="text-sm font-extrabold tabular-nums">{{ row.schools|intcomma }}</p>
+        </div>
+        <p class="edify-text-caption edify-text-muted">
+          {{ row.learners|intcomma }} learners{% if row.schools_without_enrollment %} · {{ row.schools_without_enrollment }} without a count{% endif %}
+          {% if row.activities_cancelled %} · {{ row.activities_cancelled }} activities cancelled{% endif %}
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% include "components/table_pager.html" with pager=place_pager param="place_page" %}
+  </section>
+  {% endif %}
+
+  {# ── Why ────────────────────────────────────────────────────────────────── #}
+  <section class="card p-0 overflow-hidden" aria-labelledby="ci-why">
+    <div class="p-4 border-b edify-border">
+      <h2 id="ci-why" class="text-sm font-bold">Why schools closed</h2>
+      <p class="edify-text-caption edify-text-muted mt-0.5">
+        Reasons call for different responses — fees and enrolment are a market signal, licensing and government closure a regulatory one, security and disaster neither.
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <caption class="sr-only">Closures grouped by reason</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">Reason</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Schools</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Learners</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Reopened</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% comment %}
+          The slice cannot bind: this is a GROUP BY over ClosureReason, which
+          has fifteen members. It states the bound rather than truncating.
+          {% endcomment %}
+          {% for row in by_reason|slice:":20" %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 text-sm">{{ row.label }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.total|intcomma }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">
+              {{ row.enrollment|intcomma }}
+              {% if row.missing_enrollment %}
+              <span class="block edify-text-caption edify-text-muted">{{ row.missing_enrollment }} without a count</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{% if row.reopened %}{{ row.reopened|intcomma }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {# ── Trend ──────────────────────────────────────────────────────────────── #}
+  {% if trend %}
+  <section class="card p-4" aria-labelledby="ci-trend">
+    <h2 id="ci-trend" class="text-sm font-bold">Closures by month</h2>
+    <p class="edify-text-caption edify-text-muted mt-0.5 mb-3">
+      The last twelve months, by the date each school stopped operating — not the date it was recorded, so a closure discovered late lands in the month it happened.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <caption class="sr-only">Closures per month</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-2 py-2 font-semibold">Month</th>
+            <th scope="col" class="px-2 py-2 font-semibold text-right">Closures</th>
+            <th scope="col" class="px-2 py-2 font-semibold text-right">Since reopened</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% comment %}
+          Bounded in the service to a twelve-month window, so the slice is a
+          restatement of that ceiling rather than a second, quieter cap.
+          {% endcomment %}
+          {% for row in trend|slice:":24" %}
+          <tr class="border-t edify-border">
+            <td class="px-2 py-2 text-sm">{{ row.month|date:"F Y" }}</td>
+            <td class="px-2 py-2 text-sm text-right tabular-nums">{{ row.total|intcomma }}</td>
+            <td class="px-2 py-2 text-sm text-right tabular-nums">{% if row.reopened %}{{ row.reopened|intcomma }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No schools closed in this period" message="When a school is closed from its profile, the country picture of what was lost — where, how many learners, and what planned work stopped — appears here." %}
+{% endif %}

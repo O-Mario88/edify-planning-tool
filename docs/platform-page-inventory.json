@@ -313,6 +313,14 @@
       "template": "partials/analytics/cd/target_by_pl.html"
     },
     {
+      "bytes": 12349,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 3,
+      "template": "partials/analytics/closure_impact_workspace.html"
+    },
+    {
       "bytes": 14548,
       "findings": [],
       "forms": 0,
@@ -8674,6 +8682,54 @@
       "templates": [
         "partials/schools/toast_success.html",
         "partials/analytics/schedule_report_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.closure_impact_views",
+      "backend_view": "apps.frontend.views.closure_impact_views.closure_impact_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /analytics/school-closures"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "School Closures",
+      "permission_key": "closure_impact",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/analytics/school-closures",
+      "route_name": "closure_impact",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/analytics/closure_impact_workspace.html",
+        "pages/analytics/closure_impact.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
@@ -34718,6 +34774,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.closure_impact_views.closure_impact_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "closure_impact",
+      "required_permissions": [],
+      "route": "/analytics/school-closures",
+      "route_name": "closure_impact",
+      "templates": [
+        "partials/analytics/closure_impact_workspace.html",
+        "pages/analytics/closure_impact.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.visit_effectiveness_views.visit_effectiveness_view",
       "kind": "partial",
       "methods": [
@@ -45676,15 +45747,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 900,
+    "all_routes": 901,
     "api_routes": 293,
-    "component_templates": 302,
+    "component_templates": 303,
     "full_pages": 325,
-    "partials_and_drawers": 157,
-    "permission_gated": 488,
+    "partials_and_drawers": 158,
+    "permission_gated": 489,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 498,
+    "routed_surfaces": 499,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45692,6 +45763,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 461
+    "test_referenced": 462
   }
 }
