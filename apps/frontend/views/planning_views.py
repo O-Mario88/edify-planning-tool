@@ -1601,9 +1601,15 @@ def schedule_activity_form_view(request):
     school_id = request.GET.get("school", "")
     cluster_id = request.GET.get("cluster", "")
 
-    # Populate lookups
+    from apps.core.scoping import cluster_queryset, resolve_user_scope
+
+    # Populate lookups. Schools were scoped here and clusters were not — the
+    # picker offered every cluster in the country beside a correctly narrowed
+    # school list, so the two dropdowns on one form disagreed about whose work
+    # this is.
+    scope = resolve_user_scope(request.user)
     schools = active_schools().order_by("name")
-    clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
+    clusters = cluster_queryset(scope).order_by("name")
     partners = assignable_partners()
 
     selected_school = (
@@ -1611,9 +1617,9 @@ def schedule_activity_form_view(request):
         if school_id
         else None
     )
-    selected_cluster = (
-        Cluster.objects.filter(id=cluster_id).first() if cluster_id else None
-    )
+    # Read back through the same scope: a cluster id arriving in the query
+    # string must not preselect what the dropdown would not have listed.
+    selected_cluster = clusters.filter(id=cluster_id).first() if cluster_id else None
 
     # Resolve focus recommendations if school chosen
     recommendations = []

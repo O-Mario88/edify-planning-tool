@@ -16,7 +16,11 @@ from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import (
+    cluster_queryset,
+    resolve_user_scope,
+    school_queryset,
+)
 from apps.core.enums import SsaIntervention
 
 from apps.clusters.services import (
@@ -385,11 +389,7 @@ def cluster_schedule_activity_view(request):
             messages.error(request, f"Failed to schedule activity: {e}")
             if request.headers.get("HX-Request") == "true":
                 scope = resolve_user_scope(request.user)
-                clusters = Cluster.objects.filter(
-                    deleted_at__isnull=True, status="active"
-                )
-                if not scope.country_scope and scope.district_ids:
-                    clusters = clusters.filter(district_id__in=scope.district_ids)
+                clusters = cluster_queryset(scope).filter(status="active")
 
                 selected_cluster = clusters.filter(id=cluster_id).first()
                 rec = None
@@ -615,10 +615,11 @@ def planner_drawer_view(request):
     activity_type = request.GET.get("activity_type", "training").strip()
     fixed_cluster = request.GET.get("fixed_cluster", "false").strip().lower() == "true"
 
+    # Was: skip the filter when `scope.district_ids` is empty — which handed
+    # every cluster in the country to the one user who has no geography at all.
+    # `cluster_queryset` fails closed instead, agreeing with `cluster_in_scope`.
     scope = resolve_user_scope(request.user)
-    clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-    if not scope.country_scope and scope.district_ids:
-        clusters = clusters.filter(district_id__in=scope.district_ids)
+    clusters = cluster_queryset(scope).filter(status="active")
 
     selected_cluster = None
     if cluster_id:

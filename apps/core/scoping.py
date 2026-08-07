@@ -507,6 +507,40 @@ def cluster_in_scope(scope: UserScope, cluster) -> bool:
     )
 
 
+def cluster_queryset(scope: UserScope, base=None):
+    """The clusters this user may pick, as a queryset.
+
+    The set form of `cluster_in_scope`, and it must stay the set form: four
+    pickers each re-derived "which clusters can I offer" and they did not
+    agree. The activity picker offered **every cluster in the country**, so a
+    CCEO chose one, and the service then refused it — the drawer promising what
+    the service rejects is precisely what `cluster_in_scope` says this rule
+    exists to prevent.
+
+    Fails closed. The repeated inline version read
+
+        if not scope.country_scope and scope.district_ids:
+            clusters = clusters.filter(district_id__in=scope.district_ids)
+
+    which skips the filter entirely when a user has no districts — so the one
+    person with no geography at all saw everyone's clusters. `cluster_in_scope`
+    returns False for that user, and this returns nothing, so the two agree.
+    Somebody with no clusters yet can still create one; the drawer's "new
+    cluster" path does not go through here.
+    """
+    cluster_model = _get_cluster_model()
+    if cluster_model is None:  # pragma: no cover - app not ready
+        return None
+
+    qs = base if base is not None else cluster_model.objects.all()
+    qs = qs.filter(deleted_at__isnull=True)
+    if scope.country_scope:
+        return qs
+    return qs.filter(
+        Q(district_id__in=scope.district_ids) | Q(id__in=scope.cluster_ids)
+    )
+
+
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
 def _operationally_active(qs):
     """Not deleted, and not closed.
@@ -647,6 +681,15 @@ def _get_school_model():
         from apps.schools.models import School  # type: ignore
 
         return School
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _get_cluster_model():
+    try:
+        from apps.clusters.models import Cluster  # type: ignore
+
+        return Cluster
     except Exception:  # noqa: BLE001
         return None
 

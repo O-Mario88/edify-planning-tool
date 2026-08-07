@@ -43,7 +43,7 @@ from apps.projects.models import (
     Project,
     ProjectSchoolAssignment,
 )
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
 
 
@@ -811,12 +811,14 @@ def add_to_cluster_drawer_view(request, school_id):
     def drawer_context(validation_error=None):
         nearby_clusters = Cluster.objects.none()
         if show_cluster_directory:
+            # Scoped, not merely district-filtered. The school is already in
+            # the caller's scope, but its district is not theirs alone: every
+            # cluster another CCEO built in the same district was on offer
+            # here, and choosing one moves this school into somebody else's
+            # portfolio.
             nearby_clusters = (
-                Cluster.objects.filter(
-                    district_id=school.district_id,
-                    deleted_at__isnull=True,
-                    status="active",
-                )
+                cluster_queryset(resolve_user_scope(request.user))
+                .filter(district_id=school.district_id, status="active")
                 .select_related("district", "sub_county")
                 .annotate(schools_count=Count("assignments", distinct=True))
                 .order_by("name")
@@ -863,11 +865,14 @@ def add_to_cluster_drawer_view(request, school_id):
                     ),
                 )
             cluster_id = request.POST.get("existing_cluster_id")
+            # The same scope on submit, because narrowing only the dropdown is
+            # not a rule — the id arrives in a POST body and a crafted one
+            # would still land this school in another CCEO's cluster.
             cluster = (
-                Cluster.objects.filter(
+                cluster_queryset(resolve_user_scope(request.user))
+                .filter(
                     id=cluster_id,
                     district_id=school.district_id,
-                    deleted_at__isnull=True,
                     status="active",
                 )
                 .select_related("district")
