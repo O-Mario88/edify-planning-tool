@@ -1817,7 +1817,7 @@
       "template": "partials/oversight/pl_workspace.html"
     },
     {
-      "bytes": 9729,
+      "bytes": 10028,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1849,7 +1849,7 @@
       "template": "partials/partners/schedule_assignment_drawer.html"
     },
     {
-      "bytes": 7203,
+      "bytes": 8422,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2434,7 +2434,6 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.schools.models",
         "apps.targets.models"
       ],
       "state_coverage": {
@@ -9066,7 +9065,6 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.schools.models",
         "apps.targets.models"
       ],
       "state_coverage": {
@@ -19451,7 +19449,6 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.schools.models",
         "apps.targets.models"
       ],
       "state_coverage": {
@@ -22655,6 +22652,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -24721,6 +24719,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -24784,6 +24783,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -24848,6 +24848,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -24910,6 +24911,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -24970,6 +24972,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -25032,6 +25035,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -25099,6 +25103,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -25161,6 +25166,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -25227,6 +25233,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -26483,6 +26490,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -26551,6 +26559,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.partners.services",
         "apps.planning.services",
         "apps.projects.models",
         "apps.schools.models",
@@ -26969,7 +26978,6 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.schools.models",
         "apps.targets.models"
       ],
       "state_coverage": {
@@ -31374,6 +31382,7 @@
       "dailyDebrief.view",
       "school.upload",
       "school.edit",
+      "school.close",
       "school.resolveDuplicate",
       "cluster.view",
       "cluster.assign",
@@ -45284,7 +45293,7 @@
     "full_pages": 322,
     "partials_and_drawers": 155,
     "permission_gated": 483,
-    "permission_keys": 69,
+    "permission_keys": 70,
     "roles": 11,
     "routed_surfaces": 493,
     "scheduled_jobs": 18,
