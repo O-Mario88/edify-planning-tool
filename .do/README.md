@@ -55,6 +55,12 @@ Recorded 2026-08-04 after the spec repair. Treat as documentation, not as input:
 - env is set at **app level**, so both components inherit it; the worker
   overrides `DATABASE_URL`, `ENABLE_BACKGROUND_JOBS`, `RUN_MIGRATIONS`,
   `RUN_SEED`
+- `RUN_MIGRATIONS=true` on the web service: migrations run on **container
+  boot**, not in a pre-deploy job. That makes `instance_count: 1` load-bearing
+  — two web instances would migrate concurrently against one database. Raising
+  it is not a capacity decision on its own; move migrations to a `PRE_DEPLOY`
+  job first, as `app.yaml` describes. Verified still true on 2026-08-07, when
+  `partners.0014` applied on web boot during deployment `add854f8`.
 
 ### The `DATABASE_URL` landmine (cost one failed deploy, 2026-08-04)
 
@@ -84,9 +90,6 @@ Two things follow, and both are now true of the live spec:
 The general lesson: **app-level env is inherited, not validated.** A binding
 that is broken for every component can look healthy indefinitely if the only
 component that exists happens to override it.
-- `RUN_MIGRATIONS=true` on the web service: migrations run on **container
-  boot**, not in a pre-deploy job. That makes `instance_count: 1` load-bearing
-  — two web instances would migrate concurrently against one database.
 
 ## Known gaps, deliberately not changed here
 
