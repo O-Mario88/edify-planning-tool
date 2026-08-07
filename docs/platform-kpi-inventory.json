@@ -6432,6 +6432,23 @@
    "has_drilldown": false
   },
   {
+   "kind": "other",
+   "module": "apps/schools/closure_analytics.py",
+   "line": 166,
+   "label": null,
+   "keys": [
+    "enrollment",
+    "is_weak_ground",
+    "key",
+    "label",
+    "missing_enrollment",
+    "reopened",
+    "total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "kpi-tile",
    "module": "apps/system_health/page_inventory.py",
    "line": 769,

@@ -313,6 +313,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # by typing the URL — it had no key and no navigation. Named explicitly now
     # that it is an Analytics section.
     "ia_dashboard": {IA, ADMIN},
+    # Closure quality. IA and Admin only: this is a data-quality worklist about
+    # which closure records to distrust, not a report on how many schools the
+    # country lost. Leadership gets that from the closure analytics on their own
+    # surfaces, which count real closures and exclude the record errors listed
+    # here — the same numbers with the corrections already applied.
+    "closure_quality": {IA, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
@@ -579,6 +585,14 @@ ANALYTICS_SECTIONS = [
         "page_key": "ia_dashboard",
         "cluster": "delivery",
         "description": "Evidence quality and verification throughput.",
+    },
+    {
+        "key": "closure_quality",
+        "label": "Closure Quality",
+        "url": "/analytics/closure-quality",
+        "page_key": "closure_quality",
+        "cluster": "delivery",
+        "description": "Closure records to distrust: wrong, unconfirmed or late.",
     },
     {
         "key": "completed_work",

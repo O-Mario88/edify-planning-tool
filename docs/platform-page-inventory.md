@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **497**
-- All registered routes: **899**
+- Routed product surfaces: **498**
+- All registered routes: **900**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **301**
+- Shared component templates: **302**
 - Full pages: **325**
-- Partials and drawers: **156**
-- Permission-gated surfaces: **487**
-- Referenced by automated tests: **460**
+- Partials and drawers: **157**
+- Permission-gated surfaces: **488**
+- Referenced by automated tests: **461**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -121,6 +121,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /admin-panel/workflow-rules | Workflow Rules | ADMIN | pages/admin/workflow_rules.html | 9.4 | 0 | referenced by automated test |
 | /analytics | Overview | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/kpi_cards.html<br>pages/analytics/index.html | 9.4 | 0 | referenced by automated test |
 | /analytics/ | Overview | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/analytics/kpi_cards.html<br>pages/analytics/index.html | 9.4 | 0 | referenced by automated test |
+| /analytics/closure-quality | Closure Quality | ADMIN, IA | partials/analytics/closure_quality_workspace.html<br>pages/analytics/closure_quality.html | 9.6 | 0 | referenced by automated test |
 | /analytics/country-director | Overview | ADMIN, CD | partials/analytics/cd/body.html<br>pages/analytics/cd_analytics.html | 9.4 | 0 | referenced by automated test |
 | /analytics/country-director/drilldown | Cd Analytics Drilldown | ADMIN, CD | partials/analytics/cd/drilldown.html | 9.6 | 0 | referenced by automated test |
 | /analytics/country-director/export | Cd Analytics Export | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

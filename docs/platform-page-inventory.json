@@ -313,6 +313,14 @@
       "template": "partials/analytics/cd/target_by_pl.html"
     },
     {
+      "bytes": 14548,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 3,
+      "template": "partials/analytics/closure_quality_workspace.html"
+    },
+    {
       "bytes": 3099,
       "findings": [],
       "forms": 0,
@@ -1761,7 +1769,7 @@
       "template": "partials/oversight/_partner_view_button.html"
     },
     {
-      "bytes": 4372,
+      "bytes": 4369,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1801,7 +1809,7 @@
       "template": "partials/oversight/partner_detail_drawer.html"
     },
     {
-      "bytes": 16531,
+      "bytes": 16510,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1809,7 +1817,7 @@
       "template": "partials/oversight/partner_workspace.html"
     },
     {
-      "bytes": 10468,
+      "bytes": 10456,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1817,7 +1825,7 @@
       "template": "partials/oversight/pl_workspace.html"
     },
     {
-      "bytes": 10028,
+      "bytes": 10025,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2129,7 +2137,7 @@
       "template": "partials/schools/assign_to_project_drawer.html"
     },
     {
-      "bytes": 8032,
+      "bytes": 8029,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -7862,6 +7870,54 @@
       "templates": [
         "partials/analytics/kpi_cards.html",
         "pages/analytics/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.closure_quality_views",
+      "backend_view": "apps.frontend.views.closure_quality_views.closure_quality_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /analytics/closure-quality"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Closure Quality",
+      "permission_key": "closure_quality",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "IA"
+      ],
+      "route": "/analytics/closure-quality",
+      "route_name": "closure_quality",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/analytics/closure_quality_workspace.html",
+        "pages/analytics/closure_quality.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
@@ -34465,6 +34521,21 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.closure_quality_views.closure_quality_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "closure_quality",
+      "required_permissions": [],
+      "route": "/analytics/closure-quality",
+      "route_name": "closure_quality",
+      "templates": [
+        "partials/analytics/closure_quality_workspace.html",
+        "pages/analytics/closure_quality.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.analytics_views.cd_analytics_view",
       "kind": "partial",
       "methods": [
@@ -45605,15 +45676,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 899,
+    "all_routes": 900,
     "api_routes": 293,
-    "component_templates": 301,
+    "component_templates": 302,
     "full_pages": 325,
-    "partials_and_drawers": 156,
-    "permission_gated": 487,
+    "partials_and_drawers": 157,
+    "permission_gated": 488,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 497,
+    "routed_surfaces": 498,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45621,6 +45692,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 460
+    "test_referenced": 461
   }
 }
