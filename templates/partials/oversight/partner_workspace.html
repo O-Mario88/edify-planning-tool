@@ -59,7 +59,7 @@ schedule, and none edits a CCEO's record.
             <p class="edify-text-caption edify-text-muted mt-0.5">
               Proposed next: {{ req.disposition }}
               {% if req.planned_cost %} · UGX {{ req.planned_cost|intcomma }} planned{% endif %}
-              {% if req.financially_locked %} · <span class="pill pill-warning">Committed money</span>{% endif %}
+              {% if req.financially_locked %} · <span class="pill pill-warn">Committed money</span>{% endif %}
             </p>
           </div>
         </div>
@@ -150,9 +150,9 @@ schedule, and none edits a CCEO's record.
                 {% if item.assignment_date %}{{ item.assignment_date|date:"j M" }}{% else %}—{% endif %}
               </td>
               <td class="px-4 py-2.5">
-                <span class="pill pill-warning">{{ item.next_action_owner }}</span>
+                <span class="pill pill-warn">{{ item.next_action_owner }}</span>
                 {% for risk in item.risks %}
-                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
+                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
               </td>
@@ -175,9 +175,9 @@ schedule, and none edits a CCEO's record.
             {% if item.responsible_cceo_name %} · {{ item.responsible_cceo_name }}{% endif %}
           </p>
           <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span class="pill pill-warning">Waiting on {{ item.next_action_owner }}</span>
+            <span class="pill pill-warn">Waiting on {{ item.next_action_owner }}</span>
             {% for risk in item.risks %}
-            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
+            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
           {% include "partials/oversight/_partner_view_button.html" with mobile=1 %}
@@ -226,7 +226,7 @@ schedule, and none edits a CCEO's record.
               <td class="px-4 py-2.5">
                 <span class="pill">{{ item.activity_status|replace_underscore|title|default:"Scheduled" }}</span>
                 {% for risk in item.risks %}
-                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
+                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
               </td>
@@ -263,7 +263,7 @@ schedule, and none edits a CCEO's record.
           <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
             <span class="pill">{{ item.activity_status|replace_underscore|title|default:"Scheduled" }}</span>
             {% for risk in item.risks %}
-            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
+            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
           {% include "partials/oversight/_partner_view_button.html" with mobile=1 %}

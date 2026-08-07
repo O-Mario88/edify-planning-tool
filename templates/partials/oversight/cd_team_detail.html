@@ -67,7 +67,7 @@ reschedules or cancels field work.
             </td>
             <td class="px-3 py-2">
               {% if item.is_awaiting_partner_schedule %}
-              <span class="pill pill-warning">Partner yet to schedule</span>
+              <span class="pill pill-warn">Partner yet to schedule</span>
               {% else %}
               <span class="pill">{{ item.activity_status|replace_underscore|title }}</span>
               {% endif %}
