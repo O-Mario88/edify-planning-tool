@@ -61,18 +61,34 @@ STALE_RECORDING_DAYS = 30
 MAX_ROWS = 500
 
 
-def _base(fy_start: date | None = None, fy_end: date | None = None):
-    """Every closure, optionally within a period.
+def _base(fy_start: date | None = None, fy_end: date | None = None, scope=None):
+    """Every closure, optionally within a period and a viewer's scope.
 
     The period is half-open [start, end) to match `core.fy.get_fy_date_range`.
     An inclusive end would count 1 October in both the year that ended and the
     year that began, which is how a school gets closed twice in reporting.
+
+    Scope goes through `scoped_school_queryset`, the one definition of what an
+    *analytics* surface may aggregate over, so an RVP means the same thing here
+    as on every other intelligence page: their assigned regions, or the whole
+    deployment when no geography is configured. Passing `None` means country —
+    it is not a synonym for "no access", and a caller that wants nothing should
+    not call.
 
     Reopened closures stay in. A closure that was undone is exactly what IA
     needs to see — excluding it would hide the mistakes and leave only the
     decisions nobody revisited.
     """
     qs = SchoolClosure.objects.all()
+    if scope is not None:
+        from apps.core.scoping import scoped_school_queryset
+
+        schools = scoped_school_queryset(scope)
+        if schools is not None:
+            # A subquery rather than a list of ids: a region can hold thousands
+            # of schools and shipping them as literals is how a page stops
+            # scaling.
+            qs = qs.filter(school_id__in=schools.values("id"))
     if fy_start is not None:
         qs = qs.filter(effective_date__gte=fy_start)
     if fy_end is not None:
@@ -141,7 +157,9 @@ def closure_quality(fy_start: date | None = None, fy_end: date | None = None) ->
     }
 
 
-def by_reason(fy_start: date | None = None, fy_end: date | None = None) -> list[dict]:
+def by_reason(
+    fy_start: date | None = None, fy_end: date | None = None, scope=None
+) -> list[dict]:
     """Closures grouped by why, with weak grounds flagged rather than hidden.
 
     Ordered by count so the reasons worth investigating rise to the top, and
@@ -150,7 +168,7 @@ def by_reason(fy_start: date | None = None, fy_end: date | None = None) -> list[
     """
     labels = dict(ClosureReason.choices)
     rows = (
-        _base(fy_start, fy_end)
+        _base(fy_start, fy_end, scope)
         .values("reason_category")
         .annotate(
             total=Count("id"),
@@ -176,7 +194,7 @@ def by_reason(fy_start: date | None = None, fy_end: date | None = None) -> list[
     ]
 
 
-def monthly_trend(months: int = 12) -> list[dict]:
+def monthly_trend(months: int = 12, scope=None) -> list[dict]:
     """Closures per month, and how many of them were later undone.
 
     Bounded to a window rather than all history: a trend line nobody can read
@@ -184,7 +202,7 @@ def monthly_trend(months: int = 12) -> list[dict]:
     """
     since = date.today().replace(day=1) - timedelta(days=31 * max(1, months - 1))
     rows = (
-        _base(fy_start=since)
+        _base(fy_start=since, scope=scope)
         .annotate(month=TruncMonth("effective_date"))
         .values("month")
         .annotate(
@@ -334,8 +352,14 @@ def reopenings(limit: int = MAX_ROWS) -> list[dict]:
 # performance leaves nobody knowing which numbers they are accountable for.
 
 
-def country_summary(fy_start: date | None = None, fy_end: date | None = None) -> dict:
+def country_summary(
+    fy_start: date | None = None, fy_end: date | None = None, scope=None
+) -> dict:
     """What the country lost, and what the loss did to delivery.
+
+    With a scope, "the country" is whatever that viewer oversees — an RVP's
+    assigned regions. The shape does not change with the audience, only the
+    rows it is computed from.
 
     Schools that have since reopened are excluded from the losses: they are
     operating again, so counting them would report a programme smaller than it
@@ -345,7 +369,7 @@ def country_summary(fy_start: date | None = None, fy_end: date | None = None) ->
     count at all, so the honest statement is "X learners across Y of Z closed
     schools" — a bare total implies a completeness the data does not have.
     """
-    base = _base(fy_start, fy_end)
+    base = _base(fy_start, fy_end, scope)
     lost = base.filter(reopened_at__isnull=True)
 
     totals = lost.aggregate(
@@ -389,6 +413,7 @@ def by_place(
     fy_start: date | None = None,
     fy_end: date | None = None,
     limit: int = 50,
+    scope=None,
 ) -> list[dict]:
     """Where the losses are, worst first.
 
@@ -402,7 +427,7 @@ def by_place(
 
     name = f"school__{field}__name"
     rows = (
-        _base(fy_start, fy_end)
+        _base(fy_start, fy_end, scope)
         .filter(reopened_at__isnull=True)
         .values(name)
         .annotate(

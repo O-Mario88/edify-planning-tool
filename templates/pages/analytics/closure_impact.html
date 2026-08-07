@@ -18,7 +18,12 @@ trouble, and a national total cannot tell them apart.
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Country</p>
+      {% comment %}
+      The eyebrow names whose ground this is. An RVP reading "the country lost
+      40 schools" would reasonably assume the country, when the figure covers
+      their regions — naming the scope is cheaper than the misread.
+      {% endcomment %}
+      <p class="edify-page-eyebrow">{{ scope_label }}</p>
       <h1 class="edify-page-title edify-page-header__title">School Closures</h1>
       <p class="edify-page-header__description">Where the programme is losing schools, how many learners that removed, and what closing them did to planned work.</p>
     </div>

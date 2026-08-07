@@ -345,3 +345,134 @@ class TheTwoClosurePagesStaySeparateTest(ClosureImpactFixture):
 
         self.assertEqual(ca.country_summary()["schools_lost"], 0)
         self.assertEqual(ca.closure_quality()["recorded"], 1)
+
+
+class RvpSeesTheirRegionsOnlyTest(ClosureImpactFixture):
+    """RVP is summary-only and region-scoped.
+
+    Two rules, and they are separate: *which* closures are counted (their
+    assigned regions) and *what detail* is shown (aggregates, never a school
+    row). Getting the first right while leaking the second would still be a
+    breach, so both are tested.
+    """
+
+    def _client(self, user):
+        from django.test import Client
+
+        c = Client()
+        c.force_login(user)
+        return c
+
+    def _rvp(self, *regions, email="rvp@c.test"):
+        from apps.accounts.models import StaffGeographyAssignment
+
+        user, staff = self._staff(email, "Rita", EdifyRole.REGIONAL_VICE_PRESIDENT)
+        for region in regions:
+            StaffGeographyAssignment.objects.create(staff=staff, region_id=region.id)
+        return user
+
+    def _close_one_each(self):
+        self.close(self.school("s1", enrollment=200, district=self.kampala))
+        self.close(self.school("s2", enrollment=340, district=self.jinja))
+
+    def test_closures_outside_their_regions_are_not_counted(self):
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        scope = resolve_user_scope(self._rvp(self.region))  # Central only
+
+        summary = ca.country_summary(scope=scope)
+
+        self.assertEqual(summary["schools_lost"], 1)
+        self.assertEqual(summary["learners_lost"], 200)
+
+    def test_the_place_breakdown_is_scoped_too(self):
+        """A total that respects scope and a table that does not is worse than
+        neither — the numbers disagree and the wider one is believed."""
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        scope = resolve_user_scope(self._rvp(self.region))
+
+        rows = ca.by_place("district", scope=scope)
+
+        self.assertEqual([r["name"] for r in rows], ["Kampala"])
+
+    def test_reasons_and_trend_are_scoped_as_well(self):
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        scope = resolve_user_scope(self._rvp(self.region))
+
+        self.assertEqual(sum(r["total"] for r in ca.by_reason(scope=scope)), 1)
+        self.assertEqual(sum(r["total"] for r in ca.monthly_trend(scope=scope)), 1)
+
+    def test_an_rvp_covering_both_regions_sees_both(self):
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        scope = resolve_user_scope(self._rvp(self.region, self.other_region))
+
+        self.assertEqual(ca.country_summary(scope=scope)["schools_lost"], 2)
+
+    def test_an_rvp_with_no_geography_oversees_everything(self):
+        """Treating "unassigned" as "assigned to nothing" empties the pages
+        built for this role. `rvp_region_scoped` records which case applies."""
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        user, _ = self._staff(
+            "rvp2@c.test", "Raymond", EdifyRole.REGIONAL_VICE_PRESIDENT
+        )
+        scope = resolve_user_scope(user)
+
+        self.assertFalse(scope.rvp_region_scoped)
+        self.assertEqual(ca.country_summary(scope=scope)["schools_lost"], 2)
+
+    def test_no_school_identity_reaches_an_rvp(self):
+        """The invariant that makes this page safe to share with a
+        summary-only role. If a per-school list is ever added, this fails."""
+        self._close_one_each()
+        rvp = self._rvp(self.region, self.other_region)
+
+        body = (
+            self._client(rvp)
+            .get("/analytics/school-closures?period=all")
+            .content.decode()
+        )
+
+        self.assertEqual(
+            self._client(rvp).get("/analytics/school-closures").status_code, 200
+        )
+        self.assertNotIn("School s1", body)
+        self.assertNotIn("School s2", body)
+        self.assertNotIn(">s1<", body)
+        # The aggregates it IS entitled to are present.
+        self.assertIn("Kampala", body)
+        self.assertIn("Schools lost", body)
+
+    def test_the_page_names_the_scope_rather_than_calling_it_the_country(self):
+        """ "The country lost 40 schools" reads as the country. It is not."""
+        self._close_one_each()
+
+        body = (
+            self._client(self._rvp(self.region))
+            .get("/analytics/school-closures?period=all")
+            .content.decode()
+        )
+
+        self.assertIn("Central", body)
+
+    def test_the_cd_still_sees_the_whole_country(self):
+        from apps.core.scoping import resolve_user_scope
+
+        self._close_one_each()
+        scope = resolve_user_scope(self.cd_user)
+
+        self.assertEqual(ca.country_summary(scope=scope)["schools_lost"], 2)
+
+    def test_no_scope_means_country_not_nothing(self):
+        """`scope=None` is the unscoped call, not a locked door."""
+        self._close_one_each()
+
+        self.assertEqual(ca.country_summary()["schools_lost"], 2)

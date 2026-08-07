@@ -8713,12 +8713,16 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
-        "CD"
+        "CD",
+        "RVP"
       ],
       "route": "/analytics/school-closures",
       "route_name": "closure_impact",
       "secondary_actions": [],
-      "services_and_models": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.geography.models"
+      ],
       "state_coverage": {
         "disabled": false,
         "empty": false,

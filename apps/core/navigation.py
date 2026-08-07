@@ -323,8 +323,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # plan. Deliberately a different page from closure_quality above: that one
     # is a worklist of records to distrust, this one is country performance,
     # and a single page mixing them leaves nobody sure which numbers they own.
-    # RVP is not here yet — that view needs region scoping first.
-    "closure_impact": {CD, ADMIN},
+    # RVP is here because the page carries no school-level rows: every table
+    # aggregates to a district, region, reason or month, and the service scopes
+    # to their assigned regions through scoped_school_queryset. A test asserts
+    # no school name reaches an RVP's render, so adding a per-school list later
+    # fails loudly rather than leaking quietly.
+    "closure_impact": {CD, RVP, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
