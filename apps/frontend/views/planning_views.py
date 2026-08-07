@@ -19,6 +19,7 @@ from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
     PARTNER_VISIT_PURPOSES,
     STAFF_VISIT_PURPOSES,
@@ -214,9 +215,7 @@ def special_projects_bulk_partner_view(request):
     if not assignments:
         return HttpResponse("No in-scope project schools were selected.", status=400)
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
     if request.method == "GET":
         catalogue_items, _ = _common_project_recommendations(
             assignments,
@@ -430,9 +429,7 @@ def planning_dashboard_view(request):
         .select_related("user")
         .order_by("user__name")
     )
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
 
     # Pagination pages list
     total_pages = data["total_pages"]
@@ -565,9 +562,7 @@ def schedule_modal_view(request):
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
         action = request.GET.get("action", "training")
-        partners = Partner.objects.filter(
-            deleted_at__isnull=True, active_status=True
-        ).order_by("name")
+        partners = assignable_partners()
         from apps.clusters.services import active_school_count
 
         context = {
@@ -641,9 +636,7 @@ def schedule_modal_view(request):
             if len(recommendations) == 3:
                 break
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
 
     school_activity_types = {
         ActivityType.SCHOOL_VISIT,
@@ -923,9 +916,7 @@ def assign_partner_modal_view(request):
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
     project_id = request.GET.get("project_id", "")
     partner_catalogue_recommendations = None
     if school:
@@ -975,8 +966,43 @@ def assign_partner_modal_view(request):
         # belongs to somebody, so asking again invites a different answer from
         # the assignment record and two versions of who is accountable.
         "monitoring_staff_name": resolve_monitoring_staff(school, request.user)[1],
+        # What happened to this school's partner work before. Shown because
+        # the person choosing a partner is the one who most needs to know the
+        # last one was withdrawn for capacity — and because handing the same
+        # school back to the partner it was just taken from is a mistake worth
+        # catching before it is made rather than after.
+        "prior_withdrawals": _prior_withdrawals(school),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def _prior_withdrawals(school):
+    """This school's withdrawal history, newest first.
+
+    Attribution travels with each one, so a partner withdrawn because the
+    school was closed does not read here as a partner who failed.
+    """
+    if school is None:
+        return []
+    from apps.partners.withdrawal_models import (
+        PartnerAssignmentWithdrawal,
+        WithdrawalState,
+    )
+
+    return [
+        {
+            "partner": getattr(w.partner, "name", ""),
+            "kind": w.get_kind_display(),
+            "reason": w.get_reason_category_display(),
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "when": w.effective_at or w.requested_at,
+        }
+        for w in PartnerAssignmentWithdrawal.objects.filter(school=school)
+        .exclude(state__in=(WithdrawalState.REJECTED, WithdrawalState.CANCELLED))
+        .select_related("partner")
+        .order_by("-requested_at")[:5]
+    ]
 
 
 def resolve_monitoring_staff(school, actor):
@@ -1577,9 +1603,7 @@ def schedule_activity_form_view(request):
     # Populate lookups
     schools = School.objects.filter(deleted_at__isnull=True).order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
 
     selected_school = (
         School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()

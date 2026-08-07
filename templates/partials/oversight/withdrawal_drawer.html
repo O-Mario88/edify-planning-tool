@@ -65,7 +65,13 @@ somebody to try.
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Scheduled for</dt>
         <dd>{% if preview.scheduled_date %}{{ preview.scheduled_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Current state</dt>
-        <dd>{{ preview.activity_status|replace_underscore|title|default:preview.assignment_status|replace_underscore|title }}</dd></div>
+        {% comment %}
+        firstof, not `default:`. A dotted filter argument is resolved eagerly
+        and raises VariableDoesNotExist rather than falling back, which would
+        500 this drawer the first time an unscheduled assignment opened it.
+        {% endcomment %}
+        {% firstof preview.activity_status preview.assignment_status as current_state %}
+        <dd>{{ current_state|replace_underscore|title }}</dd></div>
     </dl>
   </section>
 

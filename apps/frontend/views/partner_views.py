@@ -26,6 +26,11 @@ from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.schools.models import School
 
+#: Work a partner must not act on: stopped by staff, or already refused.
+#: Named once so every partner-facing list excludes the same set —
+#: "cancelled" alone would leave deferred and rejected work on somebody's day.
+STOPPED_ACTIVITY_STATUSES = ("cancelled", "deferred", "rejected")
+
 # Row-level scoping: a Partner-role login (no StaffProfile, no country/region
 # scope) must only ever see their OWN partner org — matching what the REST
 # endpoint already intends (PartnerListOnboardView/PartnerUpdateView require
@@ -594,12 +599,18 @@ def partner_today_view(request):
     # link instead (same resolver used everywhere else a partner identity is
     # checked, e.g. apps/debriefs/field_debrief_service.py).
     partner_ids = resolve_partner_ids(user)
+    # Withdrawn work must leave the partner's day. Without the status
+    # exclusion a recalled activity dated today still appeared here, so a
+    # partner who had been told to stop was still being told to go — and any
+    # visit they made off the back of it would have had no assignment behind
+    # it, no evidence route and no way to pay them.
     today_activities = (
         Activity.objects.filter(
             assigned_partner_id__in=partner_ids,
             planned_date=today,
             deleted_at__isnull=True,
         )
+        .exclude(status__in=STOPPED_ACTIVITY_STATUSES)
         .select_related("school", "cluster")
         .order_by("activity_type")
     )
