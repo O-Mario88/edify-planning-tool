@@ -725,7 +725,9 @@ class ArchiveTotalsTest(ClosureFixture):
         # And the table itself is bounded: one page of rows, with a pager to
         # reach the rest. Counting the school-id cells counts rendered rows.
         body = response.content.decode()
-        rendered = body.count('<span class="block edify-text-caption edify-text-muted">ARCH-')
+        rendered = body.count(
+            '<span class="block edify-text-caption edify-text-muted">ARCH-'
+        )
         self.assertLessEqual(rendered, TABLE_PAGE_SIZE)
         self.assertIn("closed_page", body)
 
