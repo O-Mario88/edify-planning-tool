@@ -103,6 +103,12 @@ class PartnerOversightItem:
     risks: list[dict] = field(default_factory=list)
     next_action_owner: str = ""
     next_action: str = ""
+    # The label of the withdrawal action this record's state permits, or "" if
+    # none does. Carried on the item so the row, the drawer and the service all
+    # name the same decision — a row offering "Withdraw" over work that is
+    # actually going to be suspended is a promise the service will break.
+    withdrawal_kind: str = ""
+    withdrawal_label: str = ""
 
     @property
     def is_scheduled(self) -> bool:
@@ -395,7 +401,51 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         )
 
     _set_next_action(item)
+    _set_withdrawal_action(item)
     return item
+
+
+def _set_withdrawal_action(item) -> None:
+    """Which controlled workflow this record's state permits, in words.
+
+    Asks the same resolver the service uses rather than re-deriving it here.
+    Two implementations of "what can be done to this" is how a page comes to
+    offer a control the service refuses.
+    """
+    from apps.partners.withdrawal_models import WithdrawalKind
+    from apps.partners.withdrawal_service import resolve_kind
+
+    # A lightweight stand-in: the resolver reads only status fields, and
+    # building it from the item avoids re-fetching the assignment row the
+    # oversight query already loaded.
+    # None when the partner has not scheduled — `resolve_kind` reads "no
+    # activity" as "still a plain handover", and handing it an empty stand-in
+    # instead made every unscheduled assignment look unwithdrawable.
+    activity = _ActivityView(item) if item.partner_activity_id else None
+    kind = resolve_kind(_AssignmentView(item), activity)
+    item.withdrawal_kind = kind
+    item.withdrawal_label = (
+        "" if kind == WithdrawalKind.BLOCKED else WithdrawalKind(kind).label
+    )
+
+
+class _AssignmentView:
+    """Just enough of an assignment for `resolve_kind` to read."""
+
+    def __init__(self, item):
+        self.status = item.assignment_status
+        self.scheduled_activity = (
+            _ActivityView(item) if item.partner_activity_id else None
+        )
+
+
+class _ActivityView:
+    """Just enough of an activity for `resolve_kind` to read."""
+
+    def __init__(self, item):
+        self.status = item.activity_status
+        self.evidence_status = item.evidence_status
+        self.payment_status = item.payment_status
 
 
 def _set_next_action(item) -> None:
@@ -640,3 +690,77 @@ def group_by_partner(items) -> list[dict]:
         group["awaiting_page_param"] = f"a{index}_page"
         group["scheduled_page_param"] = f"s{index}_page"
     return groups
+
+
+# ── Withdrawal queues ────────────────────────────────────────────────────────
+def withdrawal_requests(principal) -> list[dict]:
+    """Requests waiting on this Program Lead's decision.
+
+    Scoped by the supervisor recorded on the request rather than by re-deriving
+    the team, because supervision can change between the ask and the answer and
+    the request should stay with whoever it was addressed to.
+    """
+    from apps.partners.withdrawal_models import (
+        PartnerAssignmentWithdrawal,
+        WithdrawalState,
+    )
+
+    scope = _resolve_scope(principal)
+    qs = PartnerAssignmentWithdrawal.objects.filter(
+        state=WithdrawalState.REQUESTED
+    ).select_related("school", "partner", "assignment")
+
+    if not scope["is_country"]:
+        ids = scope["staff_ids"]
+        if not ids:
+            return []
+        qs = qs.filter(supervising_pl_id__in=ids)
+
+    return [
+        {
+            "id": w.id,
+            "school": getattr(w.school, "name", "") or "",
+            "partner": getattr(w.partner, "name", "") or "",
+            "kind_label": w.get_kind_display(),
+            "reason": w.get_reason_category_display(),
+            "explanation": w.partner_facing_reason,
+            "internal_note": w.internal_note,
+            "disposition": w.get_disposition_display(),
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "planned_cost": w.original_planned_cost,
+            "financially_locked": w.financial_state_at_withdrawal == "locked",
+            "requested_at": w.requested_at,
+            "assignment_id": w.assignment_id,
+        }
+        for w in qs.order_by("requested_at")[:100]
+    ]
+
+
+def withdrawal_history(assignment_id: str) -> list[dict]:
+    """Every withdrawal decision this assignment has been through.
+
+    A list rather than one record: an assignment can be suspended, resumed and
+    later recalled, and collapsing that to "the latest" loses the pattern a
+    performance review is actually looking at.
+    """
+    from apps.partners.withdrawal_models import PartnerAssignmentWithdrawal
+
+    return [
+        {
+            "id": w.id,
+            "kind_label": w.get_kind_display(),
+            "state_label": w.get_state_display(),
+            "reason": w.get_reason_category_display(),
+            "explanation": w.partner_facing_reason,
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "requested_at": w.requested_at,
+            "effective_at": w.effective_at,
+            "replacement_assignment_id": w.replacement_assignment_id,
+            "original_planned_cost": w.original_planned_cost,
+        }
+        for w in PartnerAssignmentWithdrawal.objects.filter(
+            assignment_id=assignment_id
+        ).order_by("requested_at")
+    ]

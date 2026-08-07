@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 552,
-  "templates": 192,
-  "distinct_titles": 526,
+  "titled_cards": 554,
+  "templates": 194,
+  "distinct_titles": 528,
   "with_card_key": 13,
   "untitled_surfaces": 1022,
   "untitled_chrome": 231,
@@ -5240,6 +5240,34 @@
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/oversight/partner_workspace.html",
+   "line": 34,
+   "title": "Withdrawal requests ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/oversight/withdrawal_drawer.html",
+   "line": 73,
+   "title": "Impact",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-3 edify-border",
+   "branch_path": [
+    [
+     2,
+     2
+    ]
+   ]
   },
   {
    "template": "templates/partials/partners/create_partner_drawer.html",

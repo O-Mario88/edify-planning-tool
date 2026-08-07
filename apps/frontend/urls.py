@@ -396,6 +396,23 @@ urlpatterns = [
         oversight_views.partner_oversight_export_view,
         name="partner_oversight_export",
     ),
+    # Taking work back. The preview is a GET because it changes nothing and
+    # must be safe to open; the two POSTs are the only writes.
+    path(
+        "partner-oversight/withdraw",
+        oversight_views.partner_withdrawal_preview_view,
+        name="partner_withdrawal_preview",
+    ),
+    path(
+        "partner-oversight/withdraw/submit",
+        oversight_views.partner_withdrawal_submit_view,
+        name="partner_withdrawal_submit",
+    ),
+    path(
+        "partner-oversight/withdraw/review",
+        oversight_views.partner_withdrawal_review_view,
+        name="partner_withdrawal_review",
+    ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
     path(

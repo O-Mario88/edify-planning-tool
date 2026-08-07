@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **490**
-- All registered routes: **892**
+- Routed product surfaces: **493**
+- All registered routes: **895**
 - API routes: **293**
 - Roles: **11**
-- Permission keys: **66**
+- Permission keys: **69**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **299**
-- Full pages: **320**
-- Partials and drawers: **154**
-- Permission-gated surfaces: **480**
-- Referenced by automated tests: **453**
+- Shared component templates: **300**
+- Full pages: **322**
+- Partials and drawers: **155**
+- Permission-gated surfaces: **483**
+- Referenced by automated tests: **456**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -381,6 +381,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
 | /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw | Partner Withdrawal Preview | ACCOUNTANT, ADMIN, CD, IA, PL | partials/oversight/withdrawal_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/review | Partner Withdrawal Review | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/submit | Partner Withdrawal Submit | ACCOUNTANT, ADMIN, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |

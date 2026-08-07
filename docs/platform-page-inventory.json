@@ -1753,10 +1753,10 @@
       "template": "partials/notifications/notification_drawer_list.html"
     },
     {
-      "bytes": 540,
+      "bytes": 1267,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "tables": 0,
       "template": "partials/oversight/_partner_view_button.html"
     },
@@ -1801,10 +1801,10 @@
       "template": "partials/oversight/partner_detail_drawer.html"
     },
     {
-      "bytes": 13524,
+      "bytes": 16531,
       "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
+      "forms": 1,
+      "htmx_controls": 1,
       "tables": 2,
       "template": "partials/oversight/partner_workspace.html"
     },
@@ -1815,6 +1815,14 @@
       "htmx_controls": 3,
       "tables": 1,
       "template": "partials/oversight/pl_workspace.html"
+    },
+    {
+      "bytes": 9729,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/oversight/withdrawal_drawer.html"
     },
     {
       "bytes": 4941,
@@ -22679,6 +22687,7 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
+        "POST /partner-oversight/withdraw/review",
         "GET /partner-oversight/"
       ],
       "implementation_status": "existing-routed-surface",
@@ -22687,7 +22696,7 @@
       "notifications": false,
       "page_title": "Partner Oversight",
       "permission_key": "partner_oversight",
-      "primary_action": "Requires manual product review",
+      "primary_action": "Approve",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Which schools are with partners, who has scheduled, and what it costs.",
       "responsive_state": "detected",
@@ -22700,7 +22709,9 @@
       ],
       "route": "/partner-oversight/",
       "route_name": "partner_oversight",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/partner-oversight/withdraw/review"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -22865,6 +22876,168 @@
       ],
       "route": "/partner-oversight/send",
       "route_name": "partner_oversight_send",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_withdrawal_preview_view",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "POST /partner-oversight/withdraw/submit"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Withdrawal Preview",
+      "permission_key": "partner_oversight",
+      "primary_action": "Send request to Program Lead",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "What confirming would actually do, computed on the server.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/withdraw",
+      "route_name": "partner_withdrawal_preview",
+      "secondary_actions": [
+        "/partner-oversight/withdraw/submit"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/oversight/withdrawal_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_withdrawal_review_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Withdrawal Review",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The supervising Program Lead answers a CCEO's request.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/withdraw/review",
+      "route_name": "partner_withdrawal_review",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.fund_requests.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.oversight_views",
+      "backend_view": "apps.frontend.views.oversight_views.partner_withdrawal_submit_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Partner Withdrawal Submit",
+      "permission_key": "partner_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Withdraw, or request withdrawal \u2014 the service decides which is allowed.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL"
+      ],
+      "route": "/partner-oversight/withdraw/submit",
+      "route_name": "partner_withdrawal_submit",
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
@@ -31239,6 +31412,9 @@
       "user.manage",
       "partner.view",
       "partner.manage",
+      "partnerAssignment.withdraw",
+      "partnerWithdrawal.review",
+      "partner.hold",
       "project.manage",
       "project.configurePriorities",
       "project.assignSchool",
@@ -43093,6 +43269,44 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.oversight_views.partner_withdrawal_preview_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/withdraw",
+      "route_name": "partner_withdrawal_preview",
+      "templates": [
+        "partials/oversight/withdrawal_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_withdrawal_review_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/withdraw/review",
+      "route_name": "partner_withdrawal_review",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.oversight_views.partner_withdrawal_submit_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_oversight",
+      "required_permissions": [],
+      "route": "/partner-oversight/withdraw/submit",
+      "route_name": "partner_withdrawal_submit",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.partner_views.partner_activities_view",
       "kind": "page",
       "methods": [
@@ -45064,15 +45278,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 892,
+    "all_routes": 895,
     "api_routes": 293,
-    "component_templates": 299,
-    "full_pages": 320,
-    "partials_and_drawers": 154,
-    "permission_gated": 480,
-    "permission_keys": 66,
+    "component_templates": 300,
+    "full_pages": 322,
+    "partials_and_drawers": 155,
+    "permission_gated": 483,
+    "permission_keys": 69,
     "roles": 11,
-    "routed_surfaces": 490,
+    "routed_surfaces": 493,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45080,6 +45294,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 453
+    "test_referenced": 456
   }
 }

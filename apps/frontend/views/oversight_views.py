@@ -666,6 +666,10 @@ def partner_oversight_view(request):
         "summary": summary,
         "kpis": _partner_kpis(summary),
         "groups": partner_oversight.group_by_partner(items),
+        # Requests a CCEO raised that this Program Lead has to answer. Kept
+        # above the partner groups because a decision somebody is waiting on
+        # outranks routine monitoring.
+        "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
         "partners": sorted(
             {(i.partner_id, i.partner_name) for i in all_items if i.partner_id},
             key=lambda pair: pair[1],
@@ -911,3 +915,145 @@ def partner_oversight_export_view(request):
         f'attachment; filename="partner-oversight-{period["fy"]}.csv"'
     )
     return response
+
+
+# ── Taking work back from a partner ──────────────────────────────────────────
+@require_page_permission("partner_oversight")
+def partner_withdrawal_preview_view(request):
+    """What confirming would actually do, computed on the server.
+
+    A preview built in the browser could disagree with what the service then
+    does; this asks the same functions the service asks, so the number shown
+    is the number that will move.
+    """
+    from apps.partners import withdrawal_service
+
+    item = _partner_item_in_scope(
+        request.user, (request.GET.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return render(
+            request,
+            "partials/oversight/withdrawal_drawer.html",
+            {"preview": None},
+            status=404,
+        )
+
+    from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
+
+    preview = withdrawal_service.preview(request.user, item.partner_assignment_id)
+    return render(
+        request,
+        "partials/oversight/withdrawal_drawer.html",
+        {
+            "preview": preview,
+            "item": item,
+            "reasons": WithdrawalReason.choices,
+            "dispositions": WithdrawalDisposition.choices,
+            "partners": _eligible_replacements(item),
+            # A CCEO looking at work a partner has already scheduled gets the
+            # request form, not the withdraw form. Decided here from the same
+            # rule the service enforces, so the page cannot offer a control
+            # the service will refuse.
+            "must_request": _must_request(request.user, item, preview),
+        },
+    )
+
+
+def _eligible_replacements(item) -> list[dict]:
+    """Active partners other than the one the work is being taken from."""
+    from apps.partners.models import Partner
+
+    return [
+        {"id": p.id, "name": p.name}
+        for p in Partner.objects.filter(active_status=True, deleted_at__isnull=True)
+        .exclude(id=item.partner_id)
+        .order_by("name")[:100]
+    ]
+
+
+def _must_request(user, item, preview) -> bool:
+    """True when this reader may only ask, not decide."""
+    from apps.core.rbac import EdifyRole
+    from apps.partners.withdrawal_models import WithdrawalKind
+
+    role = getattr(user, "active_role", "") or ""
+    return (
+        role == EdifyRole.CCEO.value
+        and preview["kind"] != WithdrawalKind.WITHDRAW_UNSCHEDULED
+    )
+
+
+@require_page_permission("partner_oversight")
+@require_POST
+def partner_withdrawal_submit_view(request):
+    """Withdraw, or request withdrawal — the service decides which is allowed."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners import withdrawal_service
+
+    item = _partner_item_in_scope(
+        request.user, (request.POST.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return _action_response(
+            request,
+            "That assignment is not in your team.",
+            ok=False,
+            fallback=PARTNER_OVERSIGHT_PATH,
+        )
+
+    data = {
+        "reason_category": request.POST.get("reason_category"),
+        "partner_facing_reason": request.POST.get("partner_facing_reason"),
+        "internal_note": request.POST.get("internal_note"),
+        "disposition": request.POST.get("disposition"),
+        "replacement_partner_id": request.POST.get("replacement_partner_id"),
+    }
+    requesting = (request.POST.get("intent") or "") == "request"
+
+    try:
+        if requesting:
+            withdrawal_service.request_withdrawal(
+                item.partner_assignment_id, data, request.user
+            )
+            message = "Sent to your Program Lead for a decision."
+        else:
+            result = withdrawal_service.withdraw(
+                item.partner_assignment_id, data, request.user
+            )
+            message = f"{result.get_kind_display()} — {result.get_state_display()}."
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _action_response(
+            request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+        )
+
+    return _action_response(request, message, fallback=PARTNER_OVERSIGHT_PATH)
+
+
+@require_page_permission("partner_oversight")
+@require_POST
+def partner_withdrawal_review_view(request):
+    """The supervising Program Lead answers a CCEO's request."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners import withdrawal_service
+
+    try:
+        result = withdrawal_service.review_request(
+            (request.POST.get("withdrawal_id") or "").strip(),
+            {
+                "decision": request.POST.get("decision"),
+                "note": request.POST.get("note"),
+                "replacement_partner_id": request.POST.get("replacement_partner_id"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _action_response(
+            request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+        )
+
+    return _action_response(
+        request,
+        f"Request {result.get_state_display().lower()}.",
+        fallback=PARTNER_OVERSIGHT_PATH,
+    )

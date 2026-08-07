@@ -579,3 +579,69 @@ class RoleQueueTest(PageFixture):
         )
         self.assertEqual(notes.count(), 1)
         self.assertIn("Still waiting", notes.first().body)
+
+
+class WithdrawalActionIsStateAwareTest(PageFixture):
+    """The row's action must name the decision the service will actually make.
+
+    A row offering "Withdraw" over work that is going to be suspended is a
+    promise the service breaks, so the label is derived from the same resolver
+    the service uses rather than computed a second time in the template.
+    """
+
+    def _labelled(self, assignment):
+        return svc.build_item_by_assignment(assignment.id).withdrawal_label
+
+    def test_an_unscheduled_handover_offers_a_plain_withdrawal(self):
+        self.assertEqual(self._labelled(self.assign()), "Withdraw assignment")
+
+    def test_scheduled_work_offers_a_recall(self):
+        a = self.assign()
+        self.schedule(a)
+        self.assertEqual(self._labelled(a), "Recall scheduled activity")
+
+    def test_work_under_way_offers_a_suspension(self):
+        a = self.assign()
+        activity = self.schedule(a)
+        activity.status = "in_progress"
+        activity.save()
+        self.assertEqual(self._labelled(a), "Suspend delivery and review")
+
+    def test_submitted_evidence_offers_a_quality_review(self):
+        a = self.assign()
+        activity = self.schedule(a)
+        activity.status = "evidence_uploaded"
+        activity.evidence_status = "uploaded"
+        activity.save()
+        self.assertEqual(self._labelled(a), "Withdraw for quality review")
+
+    def test_paid_work_offers_nothing(self):
+        """Rewriting a settled activity is not a supervision decision."""
+        a = self.assign()
+        activity = self.schedule(a)
+        activity.status = "ia_verified"
+        activity.payment_status = "paid"
+        activity.save()
+        self.assertEqual(self._labelled(a), "")
+
+    def test_the_row_and_the_service_agree_on_every_state(self):
+        """The property that matters, asserted directly rather than inferred."""
+        from apps.partners.withdrawal_service import resolve_kind
+        from apps.partners.models import PartnerAssignment
+
+        for status in (
+            "partner_scheduled",
+            "in_progress",
+            "evidence_uploaded",
+            "ia_verified",
+        ):
+            with self.subTest(status=status):
+                a = self.assign()
+                activity = self.schedule(a)
+                activity.status = status
+                activity.save()
+                item = svc.build_item_by_assignment(a.id)
+                fresh = PartnerAssignment.objects.select_related(
+                    "scheduled_activity"
+                ).get(id=a.id)
+                self.assertEqual(item.withdrawal_kind, resolve_kind(fresh))

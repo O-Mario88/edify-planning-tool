@@ -107,6 +107,19 @@ class Permission(str, Enum):
     USER_MANAGE = "user.manage"
     PARTNER_VIEW = "partner.view"
     PARTNER_MANAGE = "partner.manage"
+    # Take work back from a partner. Coarse: it says the role does withdrawals
+    # at all. WHICH assignment is a scope question, answered per record by
+    # partners.withdrawal_service.assert_may_withdraw — a CCEO holds this and
+    # may still only withdraw their own school's unscheduled work.
+    PARTNER_ASSIGNMENT_WITHDRAW = "partnerAssignment.withdraw"
+    # Decide a withdrawal somebody else requested. The CCEO asks once a partner
+    # has committed to a date; the supervising PL answers.
+    PARTNER_WITHDRAWAL_REVIEW = "partnerWithdrawal.review"
+    # Stop new assignments reaching a partner, without touching the work they
+    # already hold. Deliberately separate: one broad "suspend partner" button
+    # that also cancelled live work is how a school loses support nobody
+    # decided to remove.
+    PARTNER_HOLD = "partner.hold"
     PROJECT_MANAGE = "project.manage"
     PROJECT_CONFIGURE_PRIORITIES = "project.configurePriorities"
     # Assign a school to a project. Distinct from PROJECT_MANAGE (which gates
@@ -215,6 +228,13 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STAFF_PERFORMANCE_VIEW,
         P.PARTNER_VIEW,
         P.PARTNER_MANAGE,
+        # Review escalated partner cases and hold a partner from new work. NOT
+        # PARTNER_ASSIGNMENT_WITHDRAW: routine team withdrawals belong to the
+        # Program Lead, and a CD reaching past them into one school's
+        # assignment is the kind of quiet override that leaves nobody sure who
+        # decided. Admin retains it for support.
+        P.PARTNER_WITHDRAWAL_REVIEW,
+        P.PARTNER_HOLD,
         P.PROJECT_MANAGE,
         P.PROJECT_CONFIGURE_PRIORITIES,
         P.PROJECT_ASSIGN_SCHOOL,
@@ -287,6 +307,12 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_VIEW_DETAIL,
         P.BUDGET_APPROVE,
         P.PARTNER_VIEW,
+        # The PL is the routine decision maker for scheduled and active partner
+        # work in their team, and answers the withdrawal requests their CCEOs
+        # raise once a partner has committed to a date.
+        P.PARTNER_ASSIGNMENT_WITHDRAW,
+        P.PARTNER_WITHDRAWAL_REVIEW,
+        P.PARTNER_HOLD,
         P.ANALYTICS_VIEW,
         P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
@@ -316,6 +342,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ACTIVITY_CATALOGUE_VIEW,
         P.EVIDENCE_REVIEW,
         P.PARTNER_VIEW,
+        P.PARTNER_ASSIGNMENT_WITHDRAW,
         # CCEO approves the fund requests of the staff they supervise, then
         # submits their own consolidated monthly request up to the PL.
         P.BUDGET_VIEW_DETAIL,
