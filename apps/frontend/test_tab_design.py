@@ -1,9 +1,8 @@
-"""One flat tab design, owned by platform.css, used by every page.
+"""One segmented tab design, owned by platform.css, used by every page.
 
-The app had three: segmented pills on some pages, an underlined rail on
-others, and bare flex rows elsewhere — several pages overriding the shared
-contract by hand. The contract now describes the underlined rail, and pages
-are not allowed to paint their own.
+The app had KPI-card tabs, underlined rails, segmented pills and bare flex
+rows. The shared contract now owns the muted rail and raised active surface;
+pages are not allowed to paint their own.
 """
 
 from __future__ import annotations
@@ -50,24 +49,42 @@ class TabContractTest(SimpleTestCase):
     def setUp(self):
         self.css = PLATFORM_CSS.read_text()
 
-    def test_the_contract_is_flat_navigation_not_a_segmented_pill(self):
+    def test_the_contract_is_the_canonical_segmented_rail(self):
         contract = self.css.split("Tabs, pills and workflow state", 1)[1]
 
         self.assertIn('[role="tablist"]', contract)
         self.assertIn("[data-edify-tablist]", contract)
-        self.assertIn("gap: 1.25rem", contract)
-        self.assertIn("border: 0 !important", contract)
-        self.assertIn("background: transparent", contract)
-        self.assertIn("border-radius: 0", contract)
+        self.assertIn("display: flex !important", contract)
+        self.assertIn("gap: 0.25rem !important", contract)
+        self.assertIn("padding: 0.25rem !important", contract)
+        self.assertIn("border: 1px solid var(--edify-border) !important", contract)
+        self.assertIn("background: var(--edify-surface-muted) !important", contract)
+        self.assertIn("border-radius: var(--edify-radius-sm) !important", contract)
 
-    def test_the_selected_tab_is_marked_by_an_underline(self):
+    def test_the_selected_tab_is_a_raised_active_surface(self):
         contract = self.css.split("Tabs, pills and workflow state", 1)[1]
 
         self.assertIn('[role="tab"][aria-selected="true"]', contract)
         self.assertIn('[data-edify-tab][aria-pressed="true"]', contract)
-        self.assertIn("border-block-end-color: var(--edify-accent)", contract)
-        self.assertIn("background: transparent", contract)
-        self.assertIn("box-shadow: none", contract)
+        self.assertIn('[data-edify-tab][aria-current="true"]', contract)
+        self.assertIn("background: var(--edify-surface-raised) !important", contract)
+        self.assertIn("color: var(--edify-accent) !important", contract)
+        self.assertIn("box-shadow: var(--edify-shadow-sm) !important", contract)
+        self.assertNotIn("border-block-end-color: var(--edify-accent)", contract)
+
+    def test_specialist_and_role_routed_tabs_share_the_same_contract(self):
+        contract = self.css.split("Tabs, pills and workflow state", 1)[1]
+
+        for selector in (
+            ".pto-tabs",
+            ".sp-period-tabs",
+            ".spp-tabs",
+            ".tt-segmented",
+            ".oversight-entity-tabs",
+            ".oversight-entity-tabs__link.is-active",
+            ".oversight-entity-tabs__count",
+        ):
+            self.assertIn(selector, contract)
 
     def test_night_mode_uses_a_readable_blue_for_the_selected_label(self):
         """--edify-accent as text on the night surface falls under AA."""
@@ -75,6 +92,7 @@ class TabContractTest(SimpleTestCase):
         self.assertIn('[role="tab"][aria-selected="true"]', contract)
         self.assertIn('[data-edify-tab][aria-pressed="true"]', contract)
         self.assertIn("color: var(--edify-info)", contract)
+        self.assertIn("background: var(--edify-surface-raised) !important", contract)
 
     def test_legacy_alpine_tab_rows_opt_into_the_shared_contract(self):
         sources = (

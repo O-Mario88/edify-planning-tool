@@ -62,9 +62,9 @@
   {# Map left, table pinned right; stacks on mobile. #}
   <div class="sr-map-layout flex flex-col xl:flex-row gap-4 xl:gap-5 items-start">
 
-    <div class="w-full xl:flex-1 xl:min-w-0"
+    <div class="sr-map-canvas w-full xl:flex-1 xl:min-w-0"
          @keydown.escape.window="back()" @click.outside="reset()">
-      <div class="relative w-full aspect-square">
+      <div class="sr-map-viewport relative w-full aspect-square">
       <div x-show="!ready && !failed"
            class="absolute inset-0 flex items-center justify-center
                   edify-text-caption font-semibold text-slate-400">
@@ -229,8 +229,15 @@
           {{ subregion_performance.totals.schools }} schools
         </p>
       </div>
-      <div class="sr-distribution-scroll max-h-[620px] overflow-auto">
-        <table class="w-full text-left text-table-cell" data-mobile-table="scroll">
+      <div class="sr-distribution-scroll max-h-[620px]">
+        <table class="sr-distribution-table w-full text-left text-table-cell"
+               data-mobile-table="fit">
+          <colgroup>
+            <col class="sr-distribution-col--name">
+            <col class="sr-distribution-col--schools">
+            <col class="sr-distribution-col--clusters">
+            <col class="sr-distribution-col--ssa">
+          </colgroup>
           <thead class="sticky top-0 z-10 edify-surface">
             <tr class="text-table-header font-bold uppercase tracking-wider text-slate-400">
               <th class="pb-1.5 pr-1" x-text="distributionLevel()">Sub-region</th>
@@ -1849,6 +1856,13 @@ function subregionMap(){
     font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
     font-weight:var(--edify-text-label-weight);fill:var(--edify-text);
     letter-spacing:0;
+  }
+  /* Phone maps keep the decision hierarchy readable: sub-region labels stay,
+     while the much denser district-name layer yields until detailed geography
+     becomes the active level. */
+  @media (max-width:48rem){
+    #sr-cam .sr-dl{display:none}
+    #sr-cam .sr-sl{display:block}
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
   #sr-cam .sr-boundary-layer > path{

@@ -349,6 +349,20 @@
   --edify-space-xl: var(--edify-space-8);
   --edify-space-2xl: var(--edify-space-12);
 
+  /* ── SEMANTIC SURFACE SPACING ────────────────────────────────────────────
+       One fluid inset replaces the page-by-page mix of 12, 16, 20 and 24px.
+       It stays compact on a phone, reaches the full 20px rhythm on a wide
+       canvas, and is consumed by cards, tiles, panels and KPI components. */
+  --edify-surface-padding-inline: clamp(0.875rem, 0.78rem + 0.42vw, 1.25rem);
+  --edify-surface-padding-block: clamp(0.875rem, 0.8rem + 0.32vw, 1.125rem);
+  --edify-surface-padding:
+    var(--edify-surface-padding-block) var(--edify-surface-padding-inline);
+  --edify-surface-padding-compact: clamp(0.75rem, 0.69rem + 0.28vw, 1rem);
+  --edify-surface-padding-generous: clamp(1.5rem, 1.28rem + 0.9vw, 2.25rem);
+  --edify-kpi-padding:
+    clamp(0.8125rem, 0.75rem + 0.25vw, 1rem)
+    clamp(0.8125rem, 0.74rem + 0.32vw, 1.0625rem);
+
   /* ── BORDER RADIUS — CANONICAL PLATFORM GEOMETRY ────────────────────────
        Surfaces never change shape by page, role, theme or viewport.
 

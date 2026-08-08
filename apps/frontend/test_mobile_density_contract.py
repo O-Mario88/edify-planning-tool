@@ -69,4 +69,4 @@ class MobileDensityContractTests(SimpleTestCase):
     def test_mobile_density_stylesheet_cache_key_is_current(self):
         base = (ROOT / "templates/base.html").read_text()
 
-        self.assertIn("mobile-micro-ux.css' %}?v=20260808micro13", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260809micro14", base)

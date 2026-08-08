@@ -1253,7 +1253,7 @@ main :is(
   justify-content: flex-start !important;
   gap: clamp(0.65rem, 0.6rem + 0.25vw, 0.9rem) !important;
   margin: 0 !important;
-  padding: 0.875rem clamp(0.8rem, 0.72rem + 0.3vw, 1.05rem) !important;
+  padding: var(--edify-kpi-padding) !important;
   overflow: visible !important;
   border: 1px solid var(--edify-border) !important;
   border-radius: var(--edify-radius-md) !important;
@@ -1469,11 +1469,6 @@ main .edify-kpi-strip--value-first > * > p:first-child {
 
 main .edify-kpi-strip--value-first > * > p:last-child {
   color: var(--edify-kpi-strip-label) !important;
-}
-
-main .edify-kpi-strip--tabs > [role="tab"][aria-selected="true"] {
-  background: var(--brand-primary-soft) !important;
-  box-shadow: inset 0 -3px 0 var(--edify-accent) !important;
 }
 
 main .edify-kpi-strip--timeline {
@@ -1728,6 +1723,52 @@ main :is(
   box-shadow: var(--edify-card-shadow) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+/* Professional surface insets are a component contract, not a Tailwind
+   utility choice. Leaf cards and tiles consume one fluid spacing token across
+   roles and viewports. Structured cards keep their own padded header/body
+   anatomy, and explicit flush table shells remain edge-to-edge by design. */
+main :is(
+  .card:not(.card-alert),
+  .card-elevated,
+  .card-flat,
+  .card-insight,
+  .premium-card,
+  .premium-card-elevated,
+  .panel,
+  .mini,
+  .summary-card,
+  .rail-card,
+  .edify-kpi-card,
+  .card-kpi,
+  .edify-tile,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]):not([class*="filter"]),
+  [class*="-tile"]:not([class*="-tile-"]):not([class*="-tile__"]),
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  aside.edify-surface[class*="rounded"]
+):not(.p-0):not([data-edify-padding="flush"]):not(:has(> :is(
+  header,
+  [class*="__header"],
+  [class*="titlebar"],
+  table,
+  .overflow-x-auto,
+  .overflow-auto,
+  [class*="table-wrap"],
+  [class*="table-scroll"]
+))) {
+  padding: var(--edify-surface-padding) !important;
+}
+
+main :is(.edify-kpi-card, .card-kpi) {
+  padding: var(--edify-kpi-padding) !important;
+}
+
+main :is(.card, .panel, [class*="-card"], [class*="-panel"]):is(.p-12, .p-16) {
+  padding: var(--edify-surface-padding-generous) !important;
 }
 
 /* Drawers and modal panels can be mounted outside <main>; keep them on the

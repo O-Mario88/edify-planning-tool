@@ -150,7 +150,9 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         schools = template.index(
             "{{ subregion_performance.totals.schools }} schools", subregions
         )
-        table = template.index('<table class="w-full text-left text-table-cell"')
+        table = template.index(
+            '<table class="sr-distribution-table w-full text-left text-table-cell"'
+        )
         self.assertLess(heading, districts)
         self.assertLess(districts, subregions)
         self.assertLess(subregions, schools)

@@ -78,6 +78,15 @@
   min-inline-size: max(44rem, 100%);
 }
 
+/* Small comparison tables can declare their own column proportions and stay
+   as tables at phone widths. This mode deliberately avoids both the 44rem
+   scroll floor and the record-card transformation. */
+.edify-mobile-table--fit {
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  table-layout: fixed;
+}
+
 @media (max-width: 63.999rem) {
   /* Buttons are controls even when their original utility classes describe a
      32px desktop target. min-size lets long labels grow without clipping. */

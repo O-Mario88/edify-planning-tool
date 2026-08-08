@@ -24,7 +24,7 @@
   --edify-action-button-padding-inline: 1.125rem;
   --edify-action-button-icon-size: 1.125rem;
   --edify-action-button-radius: var(--radius-control);
-  --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
+  --edify-panel-padding: var(--edify-surface-padding-compact);
   --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
   --edify-focus-outline: 2px solid var(--edify-accent);
 }
@@ -854,10 +854,9 @@ main :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="ta
 }
 
 /* ── Tabs, pills and workflow state. ───────────────────────────────────── */
-/* One tab design for the whole platform: a quiet underlined rail, matching the
-   Analytics workspace's section navigation. This replaced a segmented-pill
-   treatment that several pages were already overriding by hand — the app had
-   pill tabs, underline tabs and bare flex rows depending on the page.
+/* One tab design for the whole platform: a calm segmented rail with a muted
+   track and a raised white/active surface. It is the same treatment for true
+   ARIA tabs, server-routed workspace tabs and legacy Alpine filter tabs.
 
    The !important flags carry the contract over page-level Tailwind utilities
    (a `bg-slate-100 p-1 rounded-surface` container class outranks these low
@@ -870,17 +869,21 @@ main :where(
   .messages-inbox-tabs,
   .pto-tabs,
   .sp-period-tabs,
-  .spp-tabs
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs
 ) {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 0.25rem !important;
+  min-inline-size: 0 !important;
+  min-block-size: 2.75rem !important;
+  padding: 0.25rem !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background: var(--edify-surface-muted) !important;
   box-shadow: none !important;
-  overflow-x: auto;
+  overflow-x: auto !important;
   overscroll-behavior-inline: contain;
   scroll-behavior: smooth;
   scroll-padding-inline: 0.5rem;
@@ -894,23 +897,31 @@ main :where(
   .messages-inbox-tab,
   .pto-tabs > button,
   .sp-period-tabs > button,
-  .spp-tabs > button
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link
 ) {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 44px;
-  flex: 0 0 auto;
-  padding: 0.125rem 0 0.5rem !important;
-  border: 0 !important;
-  border-block-end: 2px solid transparent !important;
-  border-radius: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-inline-size: 7rem !important;
+  min-block-size: 2.375rem !important;
+  flex: 1 0 7rem !important;
+  gap: 0.375rem !important;
+  padding: 0.5rem 0.875rem !important;
+  border: 1px solid transparent !important;
+  border-radius: calc(var(--edify-radius-sm) - 2px) !important;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--edify-text-muted) !important;
-  font-size: var(--edify-text-label-size);
+  font-size: var(--edify-text-label-size) !important;
   font-weight: 600 !important;
   white-space: nowrap;
-  transition: color .15s ease, border-color .15s ease;
+  text-align: center;
+  text-decoration: none;
+  scroll-snap-align: start;
+  transition: color .15s ease, background-color .15s ease,
+              border-color .15s ease, box-shadow .15s ease;
 }
 
 main :where(
@@ -920,11 +931,13 @@ main :where(
   .messages-inbox-tab,
   .pto-tabs > button,
   .sp-period-tabs > button,
-  .spp-tabs > button
-):hover {
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link
+):hover:not(:disabled) {
   color: var(--edify-text) !important;
-  border-block-end-color: transparent !important;
-  background: transparent !important;
+  border-color: transparent !important;
+  background: var(--edify-surface-hover) !important;
 }
 
 main [role="tabpanel"]:focus-visible {
@@ -939,7 +952,9 @@ main :where(
   .messages-inbox-tab,
   .pto-tabs > button,
   .sp-period-tabs > button,
-  .spp-tabs > button
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link
 ):focus-visible {
   outline: var(--edify-focus-outline);
   outline-offset: 3px;
@@ -949,16 +964,21 @@ main :where(
   [role="tab"][aria-selected="true"],
   .edify-tab-btn.active,
   [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
   [data-edify-tab].is-active,
   .messages-inbox-tab[aria-pressed="true"],
   .pto-tabs > button.is-active,
   .sp-period-tabs > button.is-active,
-  .spp-tabs > button.is-active
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active
 ) {
-  background: transparent !important;
+  background: var(--edify-surface-raised) !important;
   color: var(--edify-accent) !important;
-  border-block-end-color: var(--edify-accent) !important;
-  box-shadow: none !important;
+  border-color: color-mix(in oklab, var(--edify-border) 78%, transparent) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
 }
 
 /* Counts belong to the tab label rather than sitting in a second pill. */
@@ -969,8 +989,10 @@ main :where(
   .messages-inbox-tab,
   .pto-tabs > button,
   .sp-period-tabs > button,
-  .spp-tabs > button
-) :where(.rounded-pill, b, .messages-inbox-tab__count) {
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link
+) :where(.rounded-pill, b, .messages-inbox-tab__count, .oversight-entity-tabs__count) {
   min-inline-size: auto !important;
   block-size: auto !important;
   padding: 0 !important;
@@ -981,6 +1003,13 @@ main :where(
   color: currentColor !important;
   font-variant-numeric: tabular-nums;
   opacity: 0.78;
+}
+
+/* Oversight links are route navigation rather than ARIA tabs, but visually
+   they use the same segmented rail. Suppress the page stylesheet's legacy
+   underline marker so active state has one signal, not two. */
+main .oversight-entity-tabs__link::after {
+  content: none !important;
 }
 
 main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
@@ -1458,30 +1487,36 @@ main .platform-responsive-table [data-priority="low"] {
   .messages-inbox-tabs,
   .pto-tabs,
   .sp-period-tabs,
-  .spp-tabs
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs
 ) {
-  background: transparent !important;
-  border-color: transparent !important;
+  background: var(--edify-surface-muted) !important;
+  border-color: var(--edify-border) !important;
   box-shadow: none !important;
 }
 
 /* --edify-accent is a brand blue built for fills; as text on the night surface
-   it measures under AA. The underline keeps the accent, the label takes the
-   theme's blue-on-dark text tone — same rule as the section navigation. */
+   it measures under AA, so the active label takes the theme's readable blue. */
 .theme-dark main :where(
   [role="tab"][aria-selected="true"],
   .edify-tab-btn.active,
   [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
   [data-edify-tab].is-active,
   .messages-inbox-tab[aria-pressed="true"],
   .pto-tabs > button.is-active,
   .sp-period-tabs > button.is-active,
-  .spp-tabs > button.is-active
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active
 ) {
-  background: transparent !important;
+  background: var(--edify-surface-raised) !important;
   color: var(--edify-info) !important;
-  border-block-end-color: var(--edify-accent) !important;
-  box-shadow: none !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-shadow-sm) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1492,7 +1527,9 @@ main .platform-responsive-table [data-priority="low"] {
     .messages-inbox-tabs,
     .pto-tabs,
     .sp-period-tabs,
-    .spp-tabs
+    .spp-tabs,
+    .tt-segmented,
+    .oversight-entity-tabs
   ) {
     scroll-behavior: auto;
   }
@@ -1504,7 +1541,9 @@ main .platform-responsive-table [data-priority="low"] {
     .messages-inbox-tab,
     .pto-tabs > button,
     .sp-period-tabs > button,
-    .spp-tabs > button
+    .spp-tabs > button,
+    .tt-segmented > button,
+    .oversight-entity-tabs__link
   ) {
     transition: none !important;
   }
@@ -1515,14 +1554,20 @@ main .platform-responsive-table [data-priority="low"] {
     [role="tab"][aria-selected="true"],
     .edify-tab-btn.active,
     [data-edify-tab][aria-pressed="true"],
+    [data-edify-tab][aria-current="true"],
+    [data-edify-tab][aria-current="page"],
     [data-edify-tab].is-active,
     .messages-inbox-tab[aria-pressed="true"],
     .pto-tabs > button.is-active,
     .sp-period-tabs > button.is-active,
-    .spp-tabs > button.is-active
+    .spp-tabs > button.is-active,
+    .tt-segmented > button.is-active,
+    .tt-segmented > button[aria-pressed="true"],
+    .oversight-entity-tabs__link.is-active
   ) {
     color: Highlight !important;
-    border-block-end-color: Highlight !important;
+    border-color: Highlight !important;
+    background: Canvas !important;
   }
 }
 

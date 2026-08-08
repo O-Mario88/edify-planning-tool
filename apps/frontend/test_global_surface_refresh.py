@@ -45,6 +45,25 @@ class GlobalSurfaceRefreshTest(SimpleTestCase):
         self.assertIn("border-color: var(--edify-card-border) !important", contract)
         self.assertIn("box-shadow: var(--edify-card-shadow) !important", contract)
 
+    def test_cards_tiles_and_kpis_consume_one_responsive_padding_scale(self):
+        tokens = _read("static/css/design-system.css")
+        bridge = _read("static/css/consistency.css")
+        components = _read("static/css/components.css")
+
+        for token in (
+            "--edify-surface-padding-inline:",
+            "--edify-surface-padding-block:",
+            "--edify-surface-padding:",
+            "--edify-surface-padding-compact:",
+            "--edify-kpi-padding:",
+        ):
+            self.assertIn(token, tokens)
+        self.assertIn("padding: var(--edify-surface-padding) !important", bridge)
+        self.assertIn(':not([data-edify-padding="flush"])', bridge)
+        self.assertIn(":not(:has(> :is(", bridge)
+        self.assertIn("padding: var(--edify-kpi-padding) !important", bridge)
+        self.assertIn("padding: var(--edify-kpi-padding);", components)
+
     def test_functional_boundaries_and_forced_colors_remain_visible(self):
         tokens = _read("static/css/design-system.css")
         bridge = _read("static/css/consistency.css")

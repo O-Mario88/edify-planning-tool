@@ -19,6 +19,14 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("items=executive_kpi_items", cards)
         self.assertIn("items=additional_kpi_items", cards)
         self.assertIn("analytics-row--geography", cards)
+        geography = cards.split('class="analytics-layout-row analytics-row--geography"', 1)[1]
+        geography = geography.split("</div>", 2)[0]
+        self.assertIn("regional_performance.html", geography)
+        self.assertNotIn("target_by_district.html", geography)
+        self.assertLess(
+            cards.index("regional_performance.html"),
+            cards.index("target_by_district.html"),
+        )
         self.assertLess(
             cards.index("regional_performance.html"),
             cards.index("recommended_insights.html"),
@@ -40,17 +48,32 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         map_template = _read("templates/partials/analytics/regional_performance.html")
         layout = _read("static/css/pages/analytics-dashboard.css")
 
-        self.assertIn('class="relative w-full aspect-square"', map_template)
+        self.assertIn(
+            'class="sr-map-viewport relative w-full aspect-square"', map_template
+        )
         self.assertNotIn("sr-map-stage", map_template)
         self.assertNotIn("sr-subregion-zoomed", map_template)
         self.assertNotIn("#sr-cam:not(.sr-zoomed) .sr-labels", map_template)
         self.assertNotIn("#sr-cam:not(.sr-zoomed) .sr-school-pins", map_template)
         self.assertNotIn("max-block-size: 350px", layout)
         self.assertIn("sr-map-layout flex flex-col xl:flex-row", map_template)
+        self.assertIn("sr-map-viewport", map_template)
         self.assertIn("sr-distribution-panel", map_template)
-        self.assertIn('data-mobile-table="scroll"', map_template)
+        self.assertIn('data-mobile-table="fit"', map_template)
+        self.assertNotIn('data-mobile-table="scroll"', map_template)
+        self.assertIn("sr-distribution-col--name", map_template)
         self.assertIn("@media (max-width: 64rem)", layout)
-        self.assertIn("min-inline-size: 34rem", layout)
+        self.assertNotIn("min-inline-size: 34rem", layout)
+        self.assertIn("overflow-x: clip", layout)
+        self.assertIn("table-layout: fixed", layout)
+        self.assertIn("padding: 1rem 0.5rem 0", layout)
+        self.assertIn("@media (max-width:48rem)", map_template)
+        self.assertIn("#sr-cam .sr-dl{display:none}", map_template)
+        self.assertIn("#sr-cam .sr-sl{display:block}", map_template)
+        cluster_template = _read(
+            "templates/partials/analytics/cluster_performance.html"
+        )
+        self.assertIn('data-mobile-table="cards"', cluster_template)
 
     def test_analytics_navigation_exposes_named_workspace_areas(self):
         navigation = _read("apps/core/navigation.py")

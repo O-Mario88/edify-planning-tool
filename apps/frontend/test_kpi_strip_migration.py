@@ -40,7 +40,6 @@ class KpiStripMigrationTests(SimpleTestCase):
             # test_ia_dashboard_design.test_summary_metrics_use_the_one_approved_kpi_component.
             "templates/pages/notifications/index.html",
             "templates/pages/reports/index.html",
-            "templates/pages/schools/upload_preview.html",
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
             "templates/pages/todos/index.html",
