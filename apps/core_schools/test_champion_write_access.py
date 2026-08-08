@@ -127,9 +127,7 @@ class ChampionGraduationFollowsOwnershipTest(TestCase):
         for verifier in (self.ia, self.accountant):
             with self.subTest(role=verifier.active_role):
                 with self.assertRaises(Forbidden):
-                    ChampionEligibilityService.approve(
-                        self.school.school_id, verifier
-                    )
+                    ChampionEligibilityService.approve(self.school.school_id, verifier)
                 self.assertEqual(
                     self._status(), ("Potential Champion", "potential_champion")
                 )
