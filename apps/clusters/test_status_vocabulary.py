@@ -346,3 +346,109 @@ class ASchoolOnlyJoinsAClusterInItsOwnDistrictTest(TestCase):
         school.refresh_from_db()
 
         self.assertEqual(school.cluster_id, near.id)
+
+
+class ThePortfolioAuditReadsRatherThanGuessesTest(TestCase):
+    """The audit's job is to be believed.
+
+    Two ways it stops being useful: reporting a count that is really a scan
+    limit, and merging states that call for opposite responses. Both happened
+    while writing it — an inactive-owner check reported 16,274 schools at high
+    severity when the real finding was "these staff have not accepted their
+    invitations yet".
+    """
+
+    def setUp(self):
+        from apps.accounts.models import StaffProfile, User
+        from apps.core.rbac import EdifyRole
+        from apps.schools.models import School
+
+        self.region = Region.objects.create(name="Audit Region")
+        self.district = District.objects.create(
+            name="Audit District", region=self.region
+        )
+
+        def staff(email, *, active, status):
+            user = User.objects.create(
+                email=email,
+                name=email.split("@")[0],
+                roles=[EdifyRole.CCEO.value],
+                active_role=EdifyRole.CCEO.value,
+                is_active=active,
+                status=status,
+            )
+            return StaffProfile.objects.create(user=user, title="CCEO")
+
+        self.live = staff("live@audit.test", active=True, status="active")
+        self.invited = staff(
+            "invited@audit.test", active=False, status="pending_invited"
+        )
+        self.gone = staff("gone@audit.test", active=False, status="deactivated")
+
+        def school(ref, owner, district=None):
+            return School.objects.create(
+                school_id=ref,
+                name=f"School {ref}",
+                region=self.region,
+                district=district if district is not None else self.district,
+                school_type="client",
+                account_owner_id=owner.id if owner else "",
+            )
+
+        self.ok = school("AUD-OK", self.live)
+        self.pending = school("AUD-PENDING", self.invited)
+        self.orphan = school("AUD-GONE", self.gone)
+
+    def _check(self, key):
+        from apps.clusters.portfolio_audit import report
+
+        return next(c for c in report()["checks"] if c["key"] == key)
+
+    def test_a_pending_invite_is_not_reported_as_a_departed_owner(self):
+        """The distinction the whole split exists for."""
+        pending = self._check("school_owner_pending_invite")
+        gone = self._check("school_owner_unreachable")
+
+        self.assertEqual(pending["count"], 1)
+        self.assertEqual(pending["severity"], "medium")
+        self.assertEqual(gone["count"], 1)
+        self.assertEqual(gone["severity"], "high")
+
+    def test_a_correctly_owned_school_appears_in_neither(self):
+        for key in ("school_owner_pending_invite", "school_owner_unreachable"):
+            with self.subTest(check=key):
+                subjects = {r["school"] for r in self._check(key)["examples"]}
+                self.assertNotIn("AUD-OK", subjects)
+
+    def test_a_school_with_no_district_is_high_and_not_guessable(self):
+        from apps.schools.models import School
+
+        School.objects.filter(id=self.ok.id).update(district=None)
+
+        check = self._check("school_without_district")
+
+        self.assertEqual(check["count"], 1)
+        self.assertEqual(check["classification"], "manual")
+
+    def test_the_audit_writes_nothing(self):
+        """It is a reading. A repair that ran on inspection would be the worst
+        possible shape for this."""
+        from apps.clusters.portfolio_audit import report
+        from apps.schools.models import School
+
+        before = list(
+            School.objects.order_by("school_id").values_list(
+                "school_id", "account_owner_id", "district_id"
+            )
+        )
+
+        report()
+
+        self.assertEqual(
+            before,
+            list(
+                School.objects.order_by("school_id").values_list(
+                    "school_id", "account_owner_id", "district_id"
+                )
+            ),
+        )
