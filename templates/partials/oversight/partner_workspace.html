@@ -90,6 +90,21 @@ schedule, and none edits a CCEO's record.
       <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
         <div class="min-w-0">
           <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h2>
+          {% comment %}
+          Who to call, carried over when the Partners directory merged into
+          this page. Every control here asks somebody to act, and for a partner
+          that somebody is a person with a phone number — a page that says
+          "waiting on Partner X" without saying who X is makes you open another
+          page to finish the thought.
+          {% endcomment %}
+          {% if group.contact_person or group.phone or group.region_name or group.intervention_label %}
+          <p class="edify-text-caption edify-text-muted">
+            {% if group.contact_person %}{{ group.contact_person }}{% endif %}
+            {% if group.phone %} · {{ group.phone }}{% endif %}
+            {% if group.region_name %} · {{ group.region_name }}{% endif %}
+            {% if group.intervention_label %} · {{ group.intervention_label }}{% endif %}
+          </p>
+          {% endif %}
           <p class="edify-text-caption edify-text-muted">
             {{ group.summary.schools_assigned }} school{{ group.summary.schools_assigned|pluralize }} ·
             {{ group.summary.awaiting_schedule }} yet to schedule ·

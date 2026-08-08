@@ -30,11 +30,6 @@ from datetime import date
 
 from apps.planning.oversight_service import resolve_oversight_scope
 
-# A supervisor scanning for problems does not need the tail. Past this many the
-# page stops being a decision aid and becomes a report, and the count above the
-# list still reports the true total — see `total` below.
-MAX_ROWS_PER_OWNER = 25
-
 
 def _month_bounds(fy: str, month: int):
     from apps.core.fy import get_fy_date_range
@@ -146,11 +141,12 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
             {
                 "owner_id": owner_id,
                 "owner_name": owner_name,
-                "rows": rows[:MAX_ROWS_PER_OWNER],
-                # The true count, so a truncated list never reads as the whole
-                # problem. `hidden` is what the template says out loud.
+                # Every row, paged in the template. Truncating here instead
+                # would have been a silent cap: a supervisor with forty flagged
+                # schools would read twenty-five and have no way to reach the
+                # rest, which is worse than a long list.
+                "rows": rows,
                 "count": len(rows),
-                "hidden": max(0, len(rows) - MAX_ROWS_PER_OWNER),
                 "critical": sum(1 for r in rows if r.get("severity") == "critical"),
                 "delegated": sum(1 for r in rows if r["delegated"]),
             }
@@ -159,4 +155,9 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
     # Most critical first, then most flagged — a supervisor reads the top of
     # this list and stops, so the top has to be the person to talk to.
     groups.sort(key=lambda g: (-g["critical"], -g["count"], g["owner_name"]))
+    # One page param per group, positional: paging one person's list must not
+    # move anybody else's, and the URL should not name a staff member. Same
+    # scheme the partner workspace uses for its two per-partner tables.
+    for index, group in enumerate(groups, start=1):
+        group["page_param"] = f"f{index}_page"
     return {"groups": groups, "total": total, "flagged_owners": len(groups)}

@@ -9,6 +9,7 @@ from collections import defaultdict
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from apps.core.permissions import (
     RolePermissionService,
     require_export_permission,
@@ -68,7 +69,13 @@ def partners_list_view(request):
     drift the first time either page's audience changed.
     """
     if RolePermissionService.can_view_page(request.user, "partner_oversight"):
-        return redirect("frontend:partner_oversight")
+        # Carry the query string. Both pages read `fy` and `partner` under the
+        # same names, so a saved link or a filtered view survives the merge —
+        # dropping it would silently reset somebody's filters to this month and
+        # look like the data had changed.
+        target = reverse("frontend:partner_oversight")
+        query = request.GET.urlencode()
+        return redirect(f"{target}?{query}" if query else target)
     return _partner_workspace(request)
 
 

@@ -1,4 +1,4 @@
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% comment %}
 Flagged schools, grouped by the person who owns them.
 
@@ -38,6 +38,7 @@ is the answer to half the questions this page gets asked.
   <ul class="divide-y edify-border">
     {% for group in flagged_schools.groups %}
     <li class="p-4 space-y-2">
+      {% paginate group.rows group.page_param as flagged_page %}
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <p class="text-sm font-semibold">{{ group.owner_name }}</p>
         <p class="edify-text-caption edify-text-muted">
@@ -59,7 +60,7 @@ is the answer to half the questions this page gets asked.
             </tr>
           </thead>
           <tbody>
-            {% for row in group.rows %}
+            {% for row in flagged_page.rows %}
             <tr class="border-t edify-border">
               <td class="px-3 py-2.5">
                 <span class="font-semibold">{{ row.name }}</span>
@@ -81,7 +82,7 @@ is the answer to half the questions this page gets asked.
       </div>
 
       <ul class="md:hidden divide-y edify-border border-t edify-border">
-        {% for row in group.rows %}
+        {% for row in flagged_page.rows %}
         <li class="py-3 space-y-1">
           <p class="font-semibold text-sm">{{ row.name }}</p>
           <p class="edify-text-caption edify-text-muted">
@@ -96,12 +97,7 @@ is the answer to half the questions this page gets asked.
         {% endfor %}
       </ul>
 
-      {% if group.hidden %}
-      <p class="edify-text-caption edify-text-muted">
-        Showing the {{ group.rows|length }} most urgent of {{ group.count }}.
-        {{ group.hidden }} more not listed.
-      </p>
-      {% endif %}
+      {% include "components/table_pager.html" with pager=flagged_page param=group.page_param %}
     </li>
     {% endfor %}
   </ul>

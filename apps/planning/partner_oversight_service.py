@@ -199,6 +199,9 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
     directory = _staff_directory(assignments)
 
     items = [_item_for(a, costs, directory) for a in assignments]
+    items += _unassigned_partner_activities(
+        scope, fy=fy, partner_id=partner_id, already=set(activity_ids)
+    )
     if month:
         items = [
             i
@@ -215,6 +218,100 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
 
     partner_risk_service.annotate(items)
     items.sort(key=lambda i: (i.partner_name, i.school_name))
+    return items
+
+
+def _unassigned_partner_activities(
+    scope, *, fy: str, partner_id, already: set
+) -> list[PartnerOversightItem]:
+    """Partner-delivered activities that no PartnerAssignment points at.
+
+    This page was built from PartnerAssignment alone, which was right while it
+    sat beside the Partners directory: the directory read Activity as well, so
+    between them every piece of partner work was visible somewhere. Merging the
+    two made that split a hole — `activity_services.create` stamps
+    `assigned_partner_id` straight onto an Activity without writing an
+    assignment row, so that work would have disappeared from the only remaining
+    partner page.
+
+    They arrive as scheduled-stage items with no assignment id. That is honest
+    rather than tidy: there is no handover record to open, and inventing one
+    would put a withdrawal control on a row the withdrawal service cannot act
+    on.
+    """
+    from apps.activities.models import Activity
+
+    qs = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+        )
+        .exclude(assigned_partner_id__isnull=True)
+        .exclude(assigned_partner_id="")
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .select_related("school", "school__district", "cluster")
+    )
+    if fy:
+        qs = qs.filter(fy=fy)
+    if partner_id:
+        qs = qs.filter(assigned_partner_id=partner_id)
+    if already:
+        qs = qs.exclude(id__in=already)
+    if not scope["is_country"]:
+        ids = scope["staff_ids"]
+        qs = qs.filter(
+            Q(monitored_by_staff_id__in=ids)
+            | Q(responsible_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
+        )
+
+    activities = list(qs)
+    if not activities:
+        return []
+
+    from apps.partners.models import Partner
+
+    names = dict(
+        Partner.all_objects.filter(
+            id__in={a.assigned_partner_id for a in activities}
+        ).values_list("id", "name")
+    )
+    costs = _cost_by_activity([a.id for a in activities])
+
+    items = []
+    for activity in activities:
+        entry = costs.get(activity.id)
+        cost, catalogue_id, catalogue_version = entry if entry else (0, None, None)
+        item = PartnerOversightItem(
+            stage=STAGE_SCHEDULED if activity.planned_date else STAGE_AWAITING_SCHEDULE,
+            partner_assignment_id="",
+            partner_activity_id=activity.id,
+            school_id=activity.school_id,
+            school_name=getattr(activity.school, "name", "") or "",
+            school_type=getattr(activity.school, "school_type", "") or "",
+            district=getattr(getattr(activity.school, "district", None), "name", "")
+            or "",
+            cluster_name=getattr(activity.cluster, "name", "") or "",
+            partner_id=activity.assigned_partner_id,
+            partner_name=names.get(activity.assigned_partner_id, ""),
+            responsible_cceo_id=activity.monitored_by_staff_id
+            or activity.responsible_staff_id,
+            activity_type=activity.activity_type or "",
+            target_intervention=activity.focus_intervention or "",
+            scheduled_date=activity.planned_date,
+            month=activity.planned_month,
+            quarter=activity.quarter or "",
+            financial_year=activity.fy or "",
+            activity_status=activity.status,
+            evidence_status=activity.evidence_status or "",
+            ia_status=activity.ia_verification_status or "",
+            payment_status=activity.payment_status or "",
+            planned_cost=cost,
+            cost_catalogue_id=catalogue_id,
+            cost_catalogue_version=catalogue_version,
+        )
+        _set_next_action(item)
+        items.append(item)
     return items
 
 
@@ -667,6 +764,29 @@ def export_rows(items):
         )
 
 
+def _attach_partner_identity(groups: list[dict]) -> None:
+    """Fill each group's contact fields from one Partner query.
+
+    `ssa_intervention_label` is a property rather than a column, so the rows
+    have to be model instances — `.values()` would return the raw code and the
+    page would show `government_requirements` where it used to show a label.
+    """
+    from apps.partners.models import Partner
+
+    ids = [g["id"] for g in groups if g.get("id")]
+    if not ids:
+        return
+    by_id = {p.id: p for p in Partner.all_objects.filter(id__in=ids)}
+    for group in groups:
+        partner = by_id.get(group.get("id"))
+        if partner is None:
+            continue
+        group["contact_person"] = partner.contact_person or ""
+        group["phone"] = partner.phone or ""
+        group["region_name"] = partner.region_name or ""
+        group["intervention_label"] = partner.ssa_intervention_label or ""
+
+
 def group_by_partner(items) -> list[dict]:
     """The page's primary organisation: one group per partner."""
     buckets: dict[tuple, list] = {}
@@ -693,6 +813,12 @@ def group_by_partner(items) -> list[dict]:
                 "delivering": [i for i in group_items if i.is_scheduled],
             }
         )
+    # Who to call, in one query for the whole page. Carried over when the
+    # Partners directory merged into Partner Oversight: the directory was the
+    # only place a supervisor could find a partner's contact person, and losing
+    # it would have made the merge a net removal rather than a consolidation.
+    _attach_partner_identity(groups)
+
     groups.sort(key=lambda g: g["name"])
     # Two independently paged tables per partner — the handover list and the
     # delivery list. Positional keys, so paging one partner's work does not
