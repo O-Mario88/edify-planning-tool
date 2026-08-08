@@ -318,17 +318,54 @@ DATABASES["default"]["OPTIONS"].setdefault(
     "connect_timeout", _as_int(os.environ.get("DB_CONNECT_TIMEOUT_S"), 5)
 )
 
+
 # ── Caching (Redis-backed with dynamic fallback to LocMemCache) ──────────────
+def _redis_host_for_log(url: str) -> str:
+    """host:port from a cache URL, without the credentials.
+
+    The fallback warning used to log `REDIS_URL` whole. A managed cache URL
+    carries its password inline, so every degraded boot wrote that password
+    into the application log — where it is readable by anyone who can run
+    `doctl apps logs`, and by anything that ships logs onward. The host is the
+    part that helps you diagnose; the password never was.
+    """
+    from urllib.parse import urlsplit
+
+    try:
+        parts = urlsplit(url)
+        return f"{parts.hostname or '?'}:{parts.port or '?'}"
+    except ValueError:
+        return "unparseable"
+
+
 _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 _use_redis = False
+_redis_failure = ""
 try:
     import redis
-
-    _conn = redis.Redis.from_url(_redis_url, socket_timeout=1)
-    _conn.ping()
-    _use_redis = True
-except Exception:
-    _use_redis = False
+except ImportError as exc:
+    # Kept apart from the connection attempt on purpose. Both used to land in
+    # one `except Exception` reporting "Redis unreachable at <url>", so a
+    # missing client library was indistinguishable from an unreachable server —
+    # and `redis` was in fact absent from every requirements file. Production
+    # ran on a per-process cache for months while the log accused the network,
+    # and two separate investigations chased connectivity before anyone read
+    # the traceback that was never printed.
+    _redis_failure = f"the redis client library is not installed ({exc})"
+else:
+    try:
+        # A generous bound, and deliberately not the 2s used for live traffic
+        # below: this runs once per process against a cold connection, and a
+        # managed cache speaks TLS — a handshake alone can outlast a 1s budget
+        # on a first connect. Losing that race stuck the process on LocMemCache
+        # for its whole life, which is a far worse outcome than waiting.
+        _conn = redis.Redis.from_url(
+            _redis_url, socket_connect_timeout=5, socket_timeout=5
+        )
+        _conn.ping()
+        _use_redis = True
+    except Exception as exc:  # noqa: BLE001 — boot must survive any client error
+        _redis_failure = f"{type(exc).__name__}: {exc}"
 
 if _use_redis:
     CACHES = {
@@ -353,9 +390,11 @@ else:
     # boot otherwise looks completely healthy.
     if not _is_testing:
         logging.getLogger("edify.settings").warning(
-            "Redis unreachable at %s — falling back to per-process LocMemCache. "
-            "Cache state is NOT shared between workers until this is fixed.",
-            _redis_url,
+            "Cache unavailable (%s) — falling back to per-process LocMemCache. "
+            "Cache state is NOT shared between workers until this is fixed. "
+            "Configured REDIS_URL host: %s",
+            _redis_failure or "unknown cause",
+            _redis_host_for_log(_redis_url),
         )
     CACHES = {
         "default": {
