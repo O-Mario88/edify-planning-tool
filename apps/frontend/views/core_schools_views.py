@@ -962,7 +962,17 @@ def core_strategy_playbook_drawer(request):
 @require_page_permission("core_schools")
 def champion_candidates_view(request):
     """View to list Proposed Champion Candidates."""
+    from apps.core.scoping import resolve_user_scope
+
     candidates = ChampionEligibilityService.evaluate_all()
+    # Evaluation is a system-wide sweep — it must stay system-wide so a school's
+    # candidacy does not depend on who happened to open this page — but the
+    # *list* is a read, and reads follow the ordinary portfolio scope. It was
+    # showing every candidate in the country to every CCEO.
+    scope = resolve_user_scope(request.user)
+    visible = set(scope.school_ids or [])
+    if not scope.country_scope:
+        candidates = [c for c in candidates if c["school"].id in visible]
     # Format candidates list
     formatted_candidates = []
     for c in candidates:
@@ -1015,11 +1025,16 @@ def champion_review_drawer(request, school_id):
                 }
             )
 
+    from apps.core.scoping import may_write_school, resolve_user_scope
+
     context = {
         "school": school,
         "metrics": metrics,
         "latest_ssa": latest_ssa,
         "scores": scores,
+        # A Programme Lead may open this drawer for a CCEO's candidate and
+        # read the score; graduating the school is the owner's write.
+        "may_review": may_write_school(resolve_user_scope(request.user), school),
     }
     return render(request, "partials/core_schools/champion_review_drawer.html", context)
 
@@ -1028,7 +1043,7 @@ def champion_review_drawer(request, school_id):
 @require_page_permission("core_schools")
 def champion_approve_action(request, school_id):
     """Approve a core school to become champion."""
-    success = ChampionEligibilityService.approve(school_id, request.user.user_id)
+    success = ChampionEligibilityService.approve(school_id, request.user)
     if success:
         messages.success(request, "School successfully graduated to Champion Status!")
     else:
@@ -1040,7 +1055,7 @@ def champion_approve_action(request, school_id):
 @require_page_permission("core_schools")
 def champion_reject_action(request, school_id):
     """Reject a champion candidacy proposal."""
-    success = ChampionEligibilityService.reject(school_id)
+    success = ChampionEligibilityService.reject(school_id, request.user)
     if success:
         messages.warning(request, "Candidacy proposal rejected.")
     else:

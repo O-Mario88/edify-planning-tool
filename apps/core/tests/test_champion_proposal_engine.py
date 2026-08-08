@@ -135,9 +135,7 @@ class ChampionProposalEngineTest(TestCase):
             salesforce_activity_id="SF-ACT-999",
         )
 
-        success = ChampionEligibilityService.approve(
-            self.school.school_id, self.user.user_id
-        )
+        success = ChampionEligibilityService.approve(self.school.school_id, self.user)
         self.assertTrue(success)
 
         self.school.refresh_from_db()

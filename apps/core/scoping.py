@@ -35,6 +35,16 @@ COUNTRY_ROLES = {
     EdifyRole.PROGRAM_ACCOUNTANT.value,
     EdifyRole.ADMIN.value,
 }
+# Seeing the whole country is not the same as running it. Impact Assessment and
+# the Programme Accountant need country-wide *visibility* to do their jobs —
+# verifying completed work, confirming and paying accountabilities — and that is
+# what COUNTRY_ROLES grants. Neither owns programme decisions about a school, so
+# a guard that spends COUNTRY_ROLES as write authority hands them the Country
+# Director's powers as a side effect of letting them read.
+COUNTRY_WRITE_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.ADMIN.value,
+}
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
 
 
@@ -485,6 +495,47 @@ def resolve_partner_ids(user) -> list[str]:
         if first:
             return [first.id]
     return []
+
+
+def may_write_school(scope: UserScope, school) -> bool:
+    """Return whether this person may change the record of `school` itself.
+
+    The one place the direct-portfolio rule is expressed for schools, so that
+    every write surface asks the same question. Planning asks it through
+    `_assert_target_in_scope` and cluster membership through
+    `set_school_cluster_membership`; anything that edits the school row —
+    graduating it to Champion, changing its type — asks it here rather than
+    growing a fourth private copy that can drift from the other three.
+
+    The Country Director and Admin act everywhere, because the programme is
+    their remit. Everyone else acts on the schools in their own portfolio.
+
+    Two roles are deliberately absent from both halves. **Supervisors**: a
+    Programme Lead sees a CCEO's school on oversight and asks about it, which
+    is the whole distinction §7 draws. **Impact Assessment and the Programme
+    Accountant**: they hold country-wide visibility so they can verify and pay,
+    which is why this reads `COUNTRY_WRITE_ROLES` and not `country_scope` —
+    the latter would have let a verifier graduate a school.
+
+    Summary-only roles (RVP) are readers by construction and get nothing here —
+    `own_school_ids` is empty for them, so they fall through to False.
+    """
+    if getattr(scope, "active_role", None) in COUNTRY_WRITE_ROLES:
+        return True
+    school_id = getattr(school, "id", school)
+    return bool(scope.own_school_ids) and school_id in scope.own_school_ids
+
+
+def assert_may_write_school(principal, school, *, action: str = "change") -> None:
+    """Raise Forbidden unless `principal` owns `school` (or works country-wide)."""
+    from apps.core.exceptions import Forbidden
+
+    if not may_write_school(resolve_user_scope(principal), school):
+        raise Forbidden(
+            f"You can only {action} a school in your own portfolio. "
+            "This one belongs to another staff member — ask its owner, or a "
+            "country role, to act."
+        )
 
 
 def cluster_owner_ids(scope: UserScope) -> set[str]:
