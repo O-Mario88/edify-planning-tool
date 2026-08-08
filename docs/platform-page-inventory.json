@@ -1817,7 +1817,7 @@
       "template": "partials/oversight/filter_drawer.html"
     },
     {
-      "bytes": 5060,
+      "bytes": 5020,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1833,7 +1833,7 @@
       "template": "partials/oversight/partner_detail_drawer.html"
     },
     {
-      "bytes": 16510,
+      "bytes": 17423,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
