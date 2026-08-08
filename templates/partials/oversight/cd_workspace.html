@@ -79,7 +79,12 @@ summary and the detail are the same numbers by construction.
               the Program Lead and changes nothing about the work itself; the PL
               then acts through supervision and delegates where necessary.
               {% endcomment %}
-              {% if group.id and group.summary.at_risk %}
+              {% comment %}
+              `may_delegate` gates the control as well as the endpoint. The RVP
+              reads this page for Cluster Oversight and cannot send from it, and
+              a Send button that answers "not you" is worse than no button.
+              {% endcomment %}
+              {% if may_delegate and group.id and group.summary.at_risk %}
               <form hx-post="/country-planning-oversight/send"
                     hx-target="#cd-send-result-{{ forloop.counter }}"
                     hx-swap="innerHTML"

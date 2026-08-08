@@ -21,6 +21,7 @@ from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
 )
+from apps.clusters.oversight_service import grouped_clusters
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
@@ -32,6 +33,38 @@ from apps.planning.action_service import ActionError
 TEAM_OVERSIGHT_PATH = "/team-planning-oversight/"
 COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
+
+
+def may_delegate(user, *, country: bool) -> bool:
+    """Whether this person may send a corrective action from these pages.
+
+    Delegation follows the reporting line: a Programme Lead asks their CCEOs,
+    a Country Director asks their Programme Leads. Reading the page is a
+    different thing from being able to hand somebody work off it.
+
+    Impact Assessment and the Accountant sit at the *end* of the chain, not
+    above it: IA verifies completed work and the Accountant confirms it and
+    releases payment or chases the accountability. Neither supervises anybody,
+    so neither hands work out. The RVP reads the country picture.
+
+    This became load-bearing when Cluster Oversight was added as a section
+    here and those three were given the pages to reach it.
+    `send_risk_to_owner` constrains delegation with `within_staff_ids`, and the
+    view passes `scope.supervised_ids or None` — where None means *no
+    constraint*. Roles that supervise nobody would therefore have been able to
+    delegate to anyone, which is a wider authority than the page was widened
+    for. `ACTIVITY_ASSIGN` cannot express this: the Country Director does not
+    hold it and must still be able to send.
+    """
+    from apps.core.rbac import EdifyRole
+
+    role = getattr(user, "active_role", "") or ""
+    allowed = (
+        {EdifyRole.COUNTRY_DIRECTOR.value}
+        if country
+        else {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
+    )
+    return role in allowed | {EdifyRole.ADMIN.value}
 
 
 def _kpi_items(summary, *, country: bool) -> list[dict]:
@@ -200,6 +233,11 @@ def team_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
+        # IA and the Accountant read this page for Cluster Oversight below.
+        # The send controls are theirs to see refused, so they are not drawn:
+        # a control that answers "not you" is worse than no control.
+        "may_delegate": may_delegate(request.user, country=False),
+        "cluster_oversight": grouped_clusters(request.user),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -256,6 +294,10 @@ def country_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
+        # The RVP reads this page for Cluster Oversight below and does not
+        # delegate from it.
+        "may_delegate": may_delegate(request.user, country=True),
+        "cluster_oversight": grouped_clusters(request.user),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -272,6 +314,15 @@ def country_planning_send_action_view(request):
     Director cannot raise a backlog that is not there.
     """
     from apps.accounts.models import StaffProfile
+
+    if not may_delegate(request.user, country=True):
+        return _action_response(
+            request,
+            "Delegating work here belongs to the Country Director. You can "
+            "read this page but not send from it.",
+            ok=False,
+            fallback=COUNTRY_OVERSIGHT_PATH,
+        )
 
     issue_key = (request.POST.get("issue") or "").strip()
     program_lead_id = (request.POST.get("program_lead") or "").strip()
@@ -464,7 +515,17 @@ def oversight_detail_view(request):
     return render(
         request,
         "partials/oversight/detail_drawer.html",
-        {"item": item, "lineage": _lineage_for(item), "can_send": not scope.is_country},
+        {
+            "item": item,
+            "lineage": _lineage_for(item),
+            # `not scope.is_country` was enough while only the Programme Lead
+            # reached this drawer. IA and the Accountant now do, for Cluster
+            # Oversight, and they are not country-scoped in the sense that
+            # check meant — so the send button would have drawn for them and
+            # the endpoint refused it.
+            "can_send": not scope.is_country
+            and may_delegate(request.user, country=False),
+        },
     )
 
 
@@ -520,6 +581,14 @@ def team_planning_send_action_view(request):
     Program Lead cannot send an action about a record outside their team by
     editing the form.
     """
+    if not may_delegate(request.user, country=False):
+        return _action_response(
+            request,
+            "Delegating work here belongs to the Programme Lead who supervises "
+            "the team. You can read this page but not send from it.",
+            ok=False,
+        )
+
     risk_key = (request.POST.get("risk") or "").strip()
     activity_id = (request.POST.get("activity_id") or "").strip() or None
     assignment_id = (request.POST.get("assignment_id") or "").strip() or None

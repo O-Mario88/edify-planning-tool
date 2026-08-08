@@ -249,3 +249,100 @@ class ACreatedClusterKeepsItsOwnerTest(TestCase):
         cluster = Cluster.objects.filter(name="Unowned Cluster").first()
         self.assertIsNotNone(cluster)
         self.assertIsNone(cluster.responsible_staff_id)
+
+
+class ASchoolOnlyJoinsAClusterInItsOwnDistrictTest(TestCase):
+    """Ownership decides *whose* cluster it is; district decides which clusters
+    a school can join at all.
+
+    Clusters are built from a district's sub-counties, so a cross-district
+    membership is not a stretch of the rule — it contradicts how the cluster
+    was defined. `set_school_cluster_membership` enforces it, and the two paths
+    that write `cluster_id` without going through it are checked here too.
+    """
+
+    def setUp(self):
+        from apps.geography.models import SubCounty
+
+        self.region = Region.objects.create(name="Cross Region")
+        self.here = District.objects.create(name="Here District", region=self.region)
+        self.there = District.objects.create(name="There District", region=self.region)
+        self.here_sc = SubCounty.objects.create(name="Here SC", district=self.here)
+        self.there_sc = SubCounty.objects.create(name="There SC", district=self.there)
+
+    def _cluster(self, name, district, sub_county):
+        return Cluster.objects.create(
+            name=name,
+            region=self.region,
+            district=district,
+            sub_county=sub_county,
+            cluster_type="mixed",
+            status=ClusterRecordStatus.ACTIVE,
+        )
+
+    def _school(self, ref, district, sub_county):
+        from apps.schools.models import School
+
+        return School.objects.create(
+            school_id=ref,
+            name=f"School {ref}",
+            region=self.region,
+            district=district,
+            sub_county=sub_county,
+            school_type="client",
+        )
+
+    def test_the_canonical_setter_refuses_a_cross_district_cluster(self):
+        from apps.clusters.services import set_school_cluster_membership
+        from apps.core.exceptions import BadRequest
+
+        school = self._school("X-1", self.here, self.here_sc)
+        far = self._cluster("Far Cluster", self.there, self.there_sc)
+
+        with self.assertRaises(BadRequest) as caught:
+            set_school_cluster_membership(school, far, "tester")
+
+        self.assertIn("own district", str(caught.exception))
+
+    def test_the_setter_accepts_a_cluster_in_the_same_district(self):
+        from apps.clusters.services import set_school_cluster_membership
+
+        school = self._school("X-2", self.here, self.here_sc)
+        near = self._cluster("Near Cluster", self.here, self.here_sc)
+
+        set_school_cluster_membership(school, near, "tester")
+
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, near.id)
+
+    def test_auto_clustering_on_save_stays_inside_the_district(self):
+        """`School.save()` derives a cluster from the sub-county and writes
+        `cluster_id` directly, never reaching the setter above. A cluster in
+        another district that somehow covers this sub-county must not be
+        picked up."""
+        from apps.clusters.models import ClusterSubCounty
+
+        foreign = self._cluster("Foreign Cluster", self.there, self.there_sc)
+        # The shape the transitive argument assumes cannot happen: a cluster in
+        # There covering a sub-county in Here.
+        ClusterSubCounty.objects.create(cluster=foreign, sub_county=self.here_sc)
+
+        school = self._school("X-3", self.here, self.here_sc)
+        school.save()
+        school.refresh_from_db()
+
+        self.assertNotEqual(
+            school.cluster_id,
+            foreign.id,
+            "auto-clustering crossed a district boundary",
+        )
+
+    def test_auto_clustering_still_finds_the_right_cluster(self):
+        """The district filter must not stop the normal case working."""
+        near = self._cluster("Right Cluster", self.here, self.here_sc)
+
+        school = self._school("X-4", self.here, self.here_sc)
+        school.save()
+        school.refresh_from_db()
+
+        self.assertEqual(school.cluster_id, near.id)

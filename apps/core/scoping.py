@@ -487,20 +487,72 @@ def resolve_partner_ids(user) -> list[str]:
     return []
 
 
+def cluster_owner_ids(scope: UserScope) -> set[str]:
+    """Every id a cluster this person is responsible for could be filed under.
+
+    Two expansions, both load-bearing:
+
+    * **Both id spaces.** `Cluster.responsible_staff_id` is a plain CharField.
+      The edit drawer writes a *User* id; other paths write a StaffProfile id.
+      A set built from one space silently disowns the clusters filed under the
+      other — the trap `owner_ids` exists for.
+    * **The team.** A Programme Lead is responsible for their CCEOs' clusters,
+      so their supervisees' ids belong in the same set rather than in a second
+      branch that could drift from this one.
+    """
+    ids = {scope.user_id} | set(scope.staff_ids) | set(scope.supervised_staff_ids)
+    ids = {i for i in ids if i}
+    if not ids:
+        return set()
+    try:
+        from apps.accounts.models import StaffProfile  # type: ignore
+    except Exception:  # noqa: BLE001 - accounts may not be ready
+        return ids
+    # Profile id → user id, and user id → profile id, so either space resolves.
+    pairs = StaffProfile.objects.filter(Q(id__in=ids) | Q(user_id__in=ids)).values_list(
+        "id", "user_id"
+    )
+    for profile_id, user_id in pairs:
+        ids.update({i for i in (profile_id, user_id) if i})
+    return ids
+
+
 def cluster_in_scope(scope: UserScope, cluster) -> bool:
     """Return whether a cluster is inside an operational user's scope.
 
-    Clusters are assigned and managed at district level.  A CCEO or Program
-    Lead who has an assigned school in a district can work the district's
-    clusters, even before one of their individual schools has been added to a
-    particular cluster.  This mirrors the cluster list and assignment rules;
-    keeping the rule here prevents a drawer from offering a cluster that the
-    activity service later rejects.
+    **A cluster belongs to the person responsible for it, not to a district.**
+    The rule used to be geographic — anyone with a school in the district could
+    work every cluster in it — which meant four CCEOs sharing Mukono each saw
+    all fifteen of its clusters and could move a school into any of them. A
+    cluster is somebody's portfolio; sharing a district is not sharing it.
+
+    Country roles (CD, IA, Accountant, Admin) and summary-only roles (RVP) see
+    every cluster, because their job is the whole picture. Everyone else sees
+    the clusters they are responsible for — a Programme Lead's set includes
+    their CCEOs' — plus any cluster already holding one of their schools, which
+    is how a cluster becomes theirs in practice even before the column is set.
+
+    **Ownership binds only once it is set.** A cluster with no responsible
+    staff is unassigned, not somebody else's, and it stays reachable from its
+    district so it can be picked up. Without that carve-out the rule would have
+    been retroactive: every cluster created before the column was captured — all
+    of them — would have belonged to nobody and been schedulable by nobody, and
+    `test_cceo_can_schedule_a_cluster_in_their_assigned_district` says in as
+    many words that a not-yet-populated cluster must remain schedulable.
     """
-    if scope.country_scope:
+    # Soft-deleted first, and for everyone: `cluster_queryset` filters these
+    # out, so a predicate that let them through disagreed with its own set
+    # form — a retired cluster answered "in scope" to every caller that asked
+    # the question one record at a time.
+    if getattr(cluster, "deleted_at", None) is not None:
+        return False
+    if scope.country_scope or scope.can_view_summary_only:
         return True
     if getattr(cluster, "id", None) in scope.cluster_ids:
         return True
+    owner = (getattr(cluster, "responsible_staff_id", "") or "").strip()
+    if owner:
+        return owner in cluster_owner_ids(scope)
     return bool(
         getattr(cluster, "district_id", None)
         and cluster.district_id in scope.district_ids
@@ -527,6 +579,10 @@ def cluster_queryset(scope: UserScope, base=None):
     returns False for that user, and this returns nothing, so the two agree.
     Somebody with no clusters yet can still create one; the drawer's "new
     cluster" path does not go through here.
+
+    A cluster with an owner reaches that owner's chain only. One with no owner
+    is unassigned rather than somebody else's, so it stays visible from its
+    district and can be picked up — `list_ownerless_clusters` names them.
     """
     cluster_model = _get_cluster_model()
     if cluster_model is None:  # pragma: no cover - app not ready
@@ -534,10 +590,13 @@ def cluster_queryset(scope: UserScope, base=None):
 
     qs = base if base is not None else cluster_model.objects.all()
     qs = qs.filter(deleted_at__isnull=True)
-    if scope.country_scope:
+    if scope.country_scope or scope.can_view_summary_only:
         return qs
+    unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     return qs.filter(
-        Q(district_id__in=scope.district_ids) | Q(id__in=scope.cluster_ids)
+        Q(responsible_staff_id__in=cluster_owner_ids(scope))
+        | Q(id__in=scope.cluster_ids)
+        | (unassigned & Q(district_id__in=scope.district_ids))
     )
 
 

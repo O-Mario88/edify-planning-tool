@@ -885,7 +885,9 @@ class FrontendViewsTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["show_cluster_directory"])
-        self.assertContains(response, "Nearby clusters")
+        # "Your clusters", not "Nearby": the list is scoped to who is
+        # responsible for a cluster rather than to the district it sits in.
+        self.assertContains(response, "Your clusters")
         self.assertContains(response, self.cluster.name)
         self.assertContains(response, "Create new")
         self.assertNotContains(response, "Cluster selected automatically")

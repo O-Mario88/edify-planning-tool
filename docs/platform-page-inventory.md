@@ -11,11 +11,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **303**
+- Shared component templates: **304**
 - Full pages: **325**
 - Partials and drawers: **158**
 - Permission-gated surfaces: **489**
-- Referenced by automated tests: **462**
+- Referenced by automated tests: **463**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -192,10 +192,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /country-budget/history/<str:budget_id> | FY | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/finance/country_budget_submission.html | 9.4 | 0 | referenced by automated test |
 | /country-budget/plan-sources | Country Budget Plan Sources | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/plan_sources_drawer.html | 9.6 | 0 | referenced by automated test |
 | /country-budget/return | Country Budget Return Drawer | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/return_drawer.html | 9.4 | 0 | referenced by automated test |
-| /country-planning-oversight/ | Country Planning | ADMIN, CD | partials/oversight/cd_workspace.html<br>pages/oversight/country_planning.html | 9.4 | 0 | referenced by automated test |
-| /country-planning-oversight/export | Country Planning Oversight Export | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /country-planning-oversight/send | Country Planning Oversight Send | ADMIN, CD | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | ADMIN, CD | partials/oversight/cd_team_detail.html | 9.4 | 0 | coverage review required |
+| /country-planning-oversight/ | Country Planning | ADMIN, CD, RVP | partials/oversight/cd_workspace.html<br>pages/oversight/country_planning.html | 9.4 | 0 | referenced by automated test |
+| /country-planning-oversight/export | Country Planning Oversight Export | ADMIN, CD, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
+| /country-planning-oversight/send | Country Planning Oversight Send | ADMIN, CD, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | ADMIN, CD, RVP | partials/oversight/cd_team_detail.html | 9.4 | 0 | coverage review required |
 | /coverage | Coverage · Edify | ADMIN, CD, HR, PL, PROJECT_COORDINATOR, RVP | pages/coverage/index.html | 9.4 | 0 | referenced by automated test |
 | /cpd-learning | CPD & Learning | ADMIN, CD, HR, PL, RVP | partials/hr/pd_dashboard/tracker_table.html<br>partials/hr/pd_dashboard/body.html<br>pages/hr/professional_development_dashboard.html | 9.8 | 0 | referenced by automated test |
 | /cpd-learning/action | Pd Dashboard Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -496,10 +496,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
-| /team-planning-oversight/ | Team Planning | ADMIN, PL | partials/oversight/pl_workspace.html<br>pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/detail | Team Planning Oversight Detail | ADMIN, PL | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/export | Team Planning Oversight Export | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/send | Team Planning Oversight Send | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/ | Team Planning | ACCOUNTANT, ADMIN, IA, PL | partials/oversight/pl_workspace.html<br>pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, IA, PL | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/send | Team Planning Oversight Send | ACCOUNTANT, ADMIN, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/ | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/catchup | Team Targets Catchup Create | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

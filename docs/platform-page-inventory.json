@@ -737,6 +737,14 @@
       "template": "partials/clusters/kpi_strip.html"
     },
     {
+      "bytes": 6434,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 1,
+      "template": "partials/clusters/oversight_workspace.html"
+    },
+    {
       "bytes": 3584,
       "findings": [],
       "forms": 2,
@@ -1785,7 +1793,7 @@
       "template": "partials/oversight/cd_team_detail.html"
     },
     {
-      "bytes": 8048,
+      "bytes": 8361,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -2129,7 +2137,7 @@
       "template": "partials/pwa_head.html"
     },
     {
-      "bytes": 9288,
+      "bytes": 10288,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -12030,7 +12038,8 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
-        "CD"
+        "CD",
+        "RVP"
       ],
       "route": "/country-planning-oversight/",
       "route_name": "country_planning_oversight",
@@ -12084,7 +12093,8 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
-        "CD"
+        "CD",
+        "RVP"
       ],
       "route": "/country-planning-oversight/export",
       "route_name": "country_planning_oversight_export",
@@ -12133,7 +12143,8 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
-        "CD"
+        "CD",
+        "RVP"
       ],
       "route": "/country-planning-oversight/send",
       "route_name": "country_planning_oversight_send",
@@ -12154,7 +12165,7 @@
       "surface_kind": "page",
       "tables": false,
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
     },
@@ -12182,7 +12193,8 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
-        "CD"
+        "CD",
+        "RVP"
       ],
       "route": "/country-planning-oversight/team/<str:staff_id>",
       "route_name": "country_planning_oversight_team",
@@ -30013,7 +30025,9 @@
       "purpose": "What my team has planned, who executes it, and where I must intervene.",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
+        "IA",
         "PL"
       ],
       "route": "/team-planning-oversight/",
@@ -30067,7 +30081,9 @@
       "purpose": "One item's full Planning-to-Closure lineage, read-only.",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
+        "IA",
         "PL"
       ],
       "route": "/team-planning-oversight/detail",
@@ -30120,7 +30136,9 @@
       "purpose": "The Program Lead's current view, as CSV. Same scope, same filters.",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
+        "IA",
         "PL"
       ],
       "route": "/team-planning-oversight/export",
@@ -30169,7 +30187,9 @@
       "purpose": "\"Send to <CCEO>\" \u2014 one risk, delegated to the person answerable for it.",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
+        "IA",
         "PL"
       ],
       "route": "/team-planning-oversight/send",
@@ -45762,7 +45782,7 @@
     "activity_states": 23,
     "all_routes": 901,
     "api_routes": 293,
-    "component_templates": 303,
+    "component_templates": 304,
     "full_pages": 325,
     "partials_and_drawers": 158,
     "permission_gated": 489,
@@ -45776,6 +45796,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 462
+    "test_referenced": 463
   }
 }

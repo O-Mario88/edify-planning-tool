@@ -334,9 +334,25 @@ class School(SoftDeleteModel):
             if not still_covered:
                 new_cluster = None
                 if self.sub_county_id:
+                    candidates = Cluster.objects.filter(
+                        deleted_at__isnull=True, status="active"
+                    )
+                    # A school only ever joins a cluster in its own district —
+                    # clusters are built from a district's sub-counties, so a
+                    # cross-district membership is not a stretch of the rule but
+                    # a contradiction of how the cluster was defined.
+                    #
+                    # The sub-county match gets there transitively (covered
+                    # sub-counties are constrained to the cluster's district at
+                    # creation), but this path writes `cluster_id` directly and
+                    # never reaches `set_school_cluster_membership`, where the
+                    # rule is actually enforced. Stating it here means the
+                    # guarantee does not depend on an invariant two models away
+                    # continuing to hold.
+                    if self.district_id:
+                        candidates = candidates.filter(district_id=self.district_id)
                     new_cluster = (
-                        Cluster.objects.filter(deleted_at__isnull=True, status="active")
-                        .filter(
+                        candidates.filter(
                             Q(sub_county_id=self.sub_county_id)
                             | Q(covered_sub_counties__sub_county_id=self.sub_county_id)
                         )

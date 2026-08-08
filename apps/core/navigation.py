@@ -81,8 +81,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # page resolves a team only for a Program Lead, and the country page is a
     # leadership review surface, not a field-planning one. Neither grants any
     # write access to the work it shows.
-    "team_planning_oversight": {PL, ADMIN},
-    "country_planning_oversight": {CD, ADMIN},
+    # Cluster Oversight is a section on these two pages rather than a page of
+    # its own, so the roles that need it are here. IA and the Accountant read
+    # the team lens; the RVP reads the country one.
+    #
+    # Widening a page permission widens every route behind it, which is how the
+    # partner-oversight export hole opened earlier in this branch. The two
+    # exports here now carry `@require_export_permission`, and the corrective
+    # actions gate on their own authority rather than on page access — both
+    # asserted in test_planning_oversight_access.py.
+    "team_planning_oversight": {PL, IA, ACCOUNTANT, ADMIN},
+    "country_planning_oversight": {CD, RVP, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a

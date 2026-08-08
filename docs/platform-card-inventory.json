@@ -4,10 +4,10 @@
   "templates": 197,
   "distinct_titles": 533,
   "with_card_key": 13,
-  "untitled_surfaces": 1044,
-  "untitled_chrome": 232,
+  "untitled_surfaces": 1049,
+  "untitled_chrome": 233,
   "untitled_nested": 390,
-  "untitled_headless": 422,
+  "untitled_headless": 426,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 0
@@ -5793,7 +5793,7 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 50,
+   "line": 55,
    "title": "Cluster selected automatically",
    "heading_level": 3,
    "has_card_key": false,
@@ -5807,7 +5807,7 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 138,
+   "line": 157,
    "title": "Responsible Field Staff",
    "heading_level": 3,
    "has_card_key": false,

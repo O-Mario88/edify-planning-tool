@@ -2607,7 +2607,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 671,
+   "line": 699,
    "label": null,
    "keys": [
     "label",
@@ -3574,7 +3574,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 179,
+   "line": 212,
    "label": null,
    "keys": [
     "count",

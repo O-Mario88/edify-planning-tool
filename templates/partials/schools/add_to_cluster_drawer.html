@@ -38,7 +38,12 @@
     hx-target="#drawer-container"
     class="edify-surface space-y-5 text-[12px] text-slate-600"
     x-data="{
-      actionType: '{% if existing_covering_cluster or show_cluster_directory %}existing{% else %}new{% endif %}',
+      {% comment %}
+      Land on the tab that can actually be completed. With no cluster assigned
+      to this person there is nothing to pick, and opening on an empty picker
+      makes the drawer look broken rather than pointing at the way forward.
+      {% endcomment %}
+      actionType: '{% if existing_covering_cluster or show_cluster_directory and all_clusters %}existing{% else %}new{% endif %}',
       selectedClusterId: '{{ existing_covering_cluster.id|default:"" }}'
     }"
   >
@@ -84,7 +89,8 @@
       </div>
 
       <div x-show="actionType === 'existing'" class="space-y-2">
-        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Nearby clusters</label>
+        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Your clusters</label>
+        {% if all_clusters %}
         <select
           id="all_cluster_id"
           x-model="selectedClusterId"
@@ -95,7 +101,20 @@
           <option value="{{ cluster.id }}">{{ cluster.name }} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
           {% endfor %}
         </select>
-        <p class="edify-text-caption font-semibold text-slate-400">Only active clusters in {{ school.district.name }} are shown.</p>
+        <p class="edify-text-caption font-semibold text-slate-400">Clusters you are responsible for in {{ school.district.name }}.</p>
+        {% else %}
+        {% comment %}
+        An empty picker with no explanation reads as a broken page. A cluster
+        belongs to whoever is responsible for it, so having none here is a
+        fact about assignment rather than about this school — and the next
+        step is the one already on this drawer.
+        {% endcomment %}
+        <p class="edify-text-caption font-semibold text-slate-500">
+          No cluster in {{ school.district.name }} is assigned to you. Clusters
+          belong to the staff member responsible for them — create one below, or
+          ask your Programme Lead to assign you an existing cluster.
+        </p>
+        {% endif %}
       </div>
       {% endif %}
 

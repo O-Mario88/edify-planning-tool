@@ -454,6 +454,27 @@ def cluster_impact_partial(request, cluster_id):
     return render(request, "partials/clusters/impact_panel.html", context)
 
 
+def _default_cluster_owner(user):
+    """Who owns a cluster when the creator did not name anybody.
+
+    A field role gets themselves: a cluster is scoped to whoever is responsible
+    for it, so a CCEO who created one and left the field blank would build a
+    cluster that immediately vanished from their own pickers.
+
+    An oversight role gets nobody. A Country Director creating a cluster is
+    setting it up for a team, and quietly filing it under the CD would hide it
+    from the field and make the CD the responsible party for work they do not
+    do. It stays unowned and visible in `list_ownerless_clusters` until
+    somebody assigns it.
+    """
+    from apps.core.scoping import resolve_user_scope
+
+    scope = resolve_user_scope(user)
+    if scope.country_scope or scope.can_view_summary_only:
+        return None
+    return getattr(user, "user_id", None) or getattr(user, "id", None)
+
+
 @require_page_permission("planning")
 def create_cluster_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
@@ -493,8 +514,15 @@ def create_cluster_view(request):
                 # `create_cluster` has always accepted it — only the edit
                 # drawer ever sent it, so an owner could be added afterwards
                 # but never chosen at the point the cluster was made.
+                #
+                # Falling back to the creator matters now that a cluster is
+                # scoped to whoever is responsible for it: a CCEO who made one
+                # and left the field alone would otherwise build a cluster they
+                # could not then see. An oversight role creating on somebody
+                # else's behalf picks the owner explicitly.
                 "responsibleStaffId": (
-                    request.POST.get("responsible_staff_id", "").strip() or None
+                    request.POST.get("responsible_staff_id", "").strip()
+                    or _default_cluster_owner(request.user)
                 ),
             }
             try:
