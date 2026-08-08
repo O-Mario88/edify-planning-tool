@@ -331,3 +331,53 @@ class ACreatedClusterBelongsToItsCreatorTest(ClusterPickerScopeFixture):
             cluster_in_scope(resolve_user_scope(self.cceo_user), cluster),
             "a cluster its creator cannot see is worse than no cluster",
         )
+
+
+class TheClustersPageAgreesWithItsOwnDrawersTest(ClusterPickerScopeFixture):
+    """The directory is a picker too — it is where somebody decides what to work on.
+
+    Every drawer on this page moved to ownership; the page behind them did not.
+    `ClusterDashboardService` still filtered on `district_id__in`, so a CCEO
+    opened Clusters, saw a neighbour's cluster listed with its schools and its
+    risk badge, and only discovered whose it was when a drawer refused it. A
+    page that lists what its own drawers reject is the same defect as a
+    dropdown that does, and it is the one users meet first.
+    """
+
+    def _listed(self, user):
+        from apps.clusters.services import ClusterDashboardService
+
+        request = type("R", (), {"GET": {}, "user": user})()
+        data = ClusterDashboardService.get_dashboard_data(request, user)
+        return {card["name"] for card in data["cards"]}
+
+    def test_a_cceo_sees_their_own_clusters_and_not_a_neighbours(self):
+        listed = self._listed(self.cceo_user)
+
+        self.assertIn("Mine Cluster", listed)
+        self.assertNotIn("Neighbour Cluster", listed)
+        self.assertNotIn("Theirs Cluster", listed)
+
+    def test_an_unowned_cluster_stays_visible_so_it_can_be_picked_up(self):
+        """16 of 16 live clusters have no owner. A rule that hid them would
+        have emptied the page for everyone on the day it shipped."""
+        self.assertIn("Unowned Cluster", self._listed(self.cceo_user))
+
+    def test_the_page_and_the_picker_return_the_same_set(self):
+        """The invariant behind the fix, stated directly: if these two ever
+        diverge again, one of them is offering what the other refuses."""
+        scope = resolve_user_scope(self.cceo_user)
+        picker = set(
+            cluster_queryset(scope)
+            .filter(status="active")
+            .values_list("name", flat=True)
+        )
+
+        self.assertEqual(self._listed(self.cceo_user), picker)
+
+    def test_a_country_role_still_sees_everything(self):
+        listed = self._listed(self.admin_user)
+
+        self.assertIn("Mine Cluster", listed)
+        self.assertIn("Theirs Cluster", listed)
+        self.assertIn("Neighbour Cluster", listed)

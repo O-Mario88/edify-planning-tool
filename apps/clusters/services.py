@@ -17,7 +17,7 @@ from django.db.models import Avg, Count, Max, Min, Prefetch, Q
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import Permission
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary
@@ -1251,13 +1251,22 @@ class ClusterDashboardService:
 
         scope = resolve_user_scope(user)
 
-        # 1. Base scoped query
+        # 1. Base scoped query.
+        #
+        # The Clusters page is an operational directory, so it shows the
+        # clusters this person is responsible for — `cluster_queryset` is the
+        # canonical set, shared with every picker and with the membership
+        # service that decides what a save will accept.
+        #
+        # It used to scope geographically, which is the rule §4 replaced: four
+        # CCEOs sharing Mukono each saw all fifteen of its clusters, and the
+        # page therefore disagreed with the drawers next to it about whose
+        # clusters they were. Unowned clusters stay visible from their district
+        # — that carve-out lives inside cluster_queryset — so nothing becomes
+        # unreachable while ownership is still being captured.
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        if not scope.country_scope:
-            # Fails CLOSED. The previous `and scope.district_ids` meant a user
-            # with no district assignment — true for most seeded CCEOs — fell
-            # through to every cluster in the country instead of none.
-            base_qs = base_qs.filter(district_id__in=scope.district_ids or ["__none__"])
+        scoped = cluster_queryset(scope, base=base_qs)
+        base_qs = scoped if scoped is not None else base_qs.none()
 
         # 2. Filters from request
         q = request.GET.get("q", "").strip()

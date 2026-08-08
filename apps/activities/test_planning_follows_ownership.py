@@ -194,3 +194,56 @@ class ThePlanningFormOffersOnlyWhatItWillAcceptTest(TestCase):
         )
 
         self.assertEqual(refs, {"FORM-PL"})
+
+
+class ASummaryOnlyRoleHasNoPortfolioToWriteIntoTest(PlanningFollowsDirectOwnershipTest):
+    """§12: the RVP reads the country in aggregate and owns none of it.
+
+    The school branch already refused them — an RVP has no `own_school_ids`.
+    The cluster branch did not: `cluster_in_scope` answers True for every
+    cluster when a scope is summary-only, because that is the right answer for
+    a *reader*, and the guard was spending a read rule as a write rule.
+    """
+
+    def _rvp(self):
+        rvp, _ = self._staff("rvp@own.test", EdifyRole.REGIONAL_VICE_PRESIDENT)
+        return rvp
+
+    def test_an_rvp_may_not_plan_at_a_school(self):
+        with self.assertRaises(Forbidden):
+            self._plan(self._rvp(), self.cceo_school)
+
+    def test_an_rvp_may_not_plan_at_a_cluster_either(self):
+        from apps.activities.services import _assert_target_in_scope
+        from apps.clusters.models import Cluster
+
+        cluster = Cluster.objects.create(
+            name="Summary Only Cluster",
+            region=self.region,
+            district=self.district,
+            cluster_type="mixed",
+            status="active",
+        )
+
+        with self.assertRaises(Forbidden):
+            _assert_target_in_scope(
+                school=None, cluster_id=cluster.id, principal=self._rvp()
+            )
+
+    def test_the_cceo_can_still_plan_at_that_cluster(self):
+        """The narrowing must land on the summary-only role and nobody else."""
+        from apps.activities.services import _assert_target_in_scope
+        from apps.clusters.models import Cluster
+
+        cluster = Cluster.objects.create(
+            name="Owned Cluster",
+            region=self.region,
+            district=self.district,
+            cluster_type="mixed",
+            status="active",
+            responsible_staff_id=self.cceo_profile.id,
+        )
+
+        _assert_target_in_scope(
+            school=None, cluster_id=cluster.id, principal=self.cceo
+        )  # does not raise

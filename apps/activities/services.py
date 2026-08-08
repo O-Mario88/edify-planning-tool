@@ -278,7 +278,18 @@ def _assert_in_scope(activity: Activity, principal) -> None:
 
 
 def _target_in_direct_portfolio(scope, school: School | None, cluster_id) -> bool:
-    """Is this target inside the *direct* portfolio the scope describes?"""
+    """Is this target inside the *direct* portfolio the scope describes?
+
+    Summary-only roles have no portfolio at all. The RVP reads the whole
+    country in aggregate, and `cluster_in_scope` says yes to every cluster for
+    exactly that reason — so consulting it below would have read strategic
+    visibility as authority to schedule, in the one branch where a target does
+    not have to be a school. The page permission does not admit an RVP to
+    planning today, which is the only thing that kept it theoretical, and a
+    rule that holds only while the nav stays as it is is not a rule.
+    """
+    if getattr(scope, "can_view_summary_only", False):
+        return False
     if school and scope.own_school_ids and school.id in scope.own_school_ids:
         return True
     if cluster_id:
