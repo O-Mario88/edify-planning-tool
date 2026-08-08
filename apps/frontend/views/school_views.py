@@ -1672,13 +1672,18 @@ def school_edit_drawer_view(request, school_id):
     )
     districts = District.objects.select_related("region").order_by("name")
     clusters = (
-        Cluster.objects.filter(
-            deleted_at__isnull=True,
-            status="active",
-            district_id=selected_district_id,
-        )
-        .select_related("district")
-        .order_by("name")
+        # The same eligibility rule as the assignment drawer. This list was
+        # district-only, so the edit form quietly offered every cluster in the
+        # district including other CCEOs' — the fifth picker deriving its own
+        # answer to a question that has one canonical service.
+        #
+        # While the district select still shows the school's own district the
+        # school itself is the right subject. Once somebody changes it, no
+        # cluster is offered: a district change invalidates the membership
+        # (§17), and the new one is chosen after the move, not during it.
+        eligible_clusters_for_school(school, scope=resolve_user_scope(request.user))
+        if str(selected_district_id or "") == str(school.district_id or "")
+        else Cluster.objects.none()
     )
     staff = _school_owner_queryset()
     sub_counties = SubCounty.objects.filter(district_id=selected_district_id).order_by(

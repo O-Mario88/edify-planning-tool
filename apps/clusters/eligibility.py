@@ -59,6 +59,32 @@ def owner_id_variants(owner_id: str) -> set[str]:
     return ids
 
 
+def school_owner_ids(school) -> set[str]:
+    """The school's operational owner, in both id spaces.
+
+    `account_owner_id` is the canonical column, and the active
+    `StaffSchoolAssignment` is the fallback the specification allows as the
+    other face of the same relationship. Reading only the column treats a
+    school that has an assignment but a blank denormalised field as ownerless
+    — which is a gap in one column, not an absence of an owner.
+    """
+    ids = owner_id_variants(getattr(school, "account_owner_id", ""))
+    if ids:
+        return ids
+    try:
+        from apps.accounts.models import StaffSchoolAssignment
+    except Exception:  # noqa: BLE001 - accounts may not be ready
+        return set()
+    assigned = list(
+        StaffSchoolAssignment.objects.filter(school_id=school.id).values_list(
+            "staff_id", flat=True
+        )[:2]
+    )
+    # Exactly one is an answer. Two are a decision, and this is not the place
+    # to make it — the audit reports those for a person to resolve.
+    return owner_id_variants(assigned[0]) if len(assigned) == 1 else set()
+
+
 def eligible_clusters_for_school(school, *, scope=None):
     """Clusters this school may join, narrowed as far as its data allows.
 
@@ -69,17 +95,27 @@ def eligible_clusters_for_school(school, *, scope=None):
     if school is None:
         return Cluster.objects.none()
 
-    owner_ids = owner_id_variants(getattr(school, "account_owner_id", ""))
+    owner_ids = school_owner_ids(school)
     if not owner_ids or not getattr(school, "district_id", None):
         # No owner or no district is a data-quality problem, not a licence to
         # offer everything. The drawer explains which field is missing.
         return Cluster.objects.none()
 
+    # Owned by this school's owner, or owned by nobody yet.
+    #
+    # The second half is not a loophole, and leaving it out made this service
+    # disagree with `cluster_in_scope`, which has always treated an unowned
+    # cluster as unassigned rather than as somebody else's. Two rules
+    # disagreeing about the same question is the exact failure the canonical
+    # service exists to end — and with every cluster in the deployment
+    # currently unowned, the strict reading emptied the picker for every
+    # school. Assigning a school to an unowned cluster is how it gets claimed.
+    unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     qs = Cluster.objects.filter(
+        Q(responsible_staff_id__in=owner_ids) | unassigned,
         deleted_at__isnull=True,
         status=ClusterRecordStatus.ACTIVE,
         district_id=school.district_id,
-        responsible_staff_id__in=owner_ids,
     )
 
     sub_county_id = getattr(school, "sub_county_id", None)
@@ -126,7 +162,7 @@ def ineligibility_reason(school) -> str | None:
             "This school has no district, so no cluster can be matched to it. "
             "Add the district on the school profile first."
         )
-    if not (getattr(school, "account_owner_id", "") or "").strip():
+    if not school_owner_ids(school):
         return (
             "This school has no assigned staff owner, and a cluster belongs to "
             "the person responsible for its schools. Assign an owner first."

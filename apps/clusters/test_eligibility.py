@@ -192,6 +192,11 @@ class MissingOwnerOrDistrictTest(EligibilityFixture):
     offer everything."""
 
     def test_a_school_with_no_owner_gets_nothing_and_a_reason(self):
+        # The assignment too: with it in place the column is merely blank and
+        # the fallback resolves the owner, which is the behaviour
+        # TheOwnerFallsBackToTheAssignmentTest covers. This is the school that
+        # genuinely has nobody.
+        StaffSchoolAssignment.objects.filter(school_id=self.school.id).delete()
         School.objects.filter(id=self.school.id).update(account_owner_id="")
         self.school.refresh_from_db()
 
@@ -296,3 +301,137 @@ class ADistrictLevelClusterIsNotAnotherSubCountyTest(EligibilityFixture):
     def test_a_cluster_naming_a_different_sub_county_is_still_excluded(self):
         """The relaxation is only for clusters that name none."""
         self.assertNotIn("Akokoro Cluster", self._names())
+
+
+class EditingAClusterFollowsItsOwnerTest(EligibilityFixture):
+    """§9. The only guard was on the district of an incoming change, so a CCEO
+    could rename, retype and re-cover another CCEO's cluster in the same
+    district — and changing nothing about the district skipped even that."""
+
+    def _update(self, actor, cluster, **data):
+        from apps.clusters.services import update_cluster
+
+        return update_cluster(cluster.id, {"name": "Renamed", **data}, actor)
+
+    def test_the_owner_may_edit_their_own_cluster(self):
+        self._update(self.james, self.chegere_north)
+
+        self.chegere_north.refresh_from_db()
+        self.assertEqual(self.chegere_north.name, "Renamed")
+
+    def test_another_staff_member_may_not(self):
+        from apps.core.exceptions import Forbidden
+
+        with self.assertRaises(Forbidden) as caught:
+            self._update(self.mary, self.chegere_north)
+
+        self.assertIn("another staff member", str(caught.exception))
+        self.chegere_north.refresh_from_db()
+        self.assertEqual(self.chegere_north.name, "Chegere North Cluster")
+
+    def test_sharing_a_district_does_not_grant_the_edit(self):
+        """Mary holds schools in Apac and still may not touch James's cluster."""
+        from apps.core.exceptions import Forbidden
+
+        self._school(
+            "MARY-1",
+            "Mary's School",
+            self.mary_profile,
+            district=self.apac,
+            sub_county=self.chegere,
+        )
+
+        with self.assertRaises(Forbidden):
+            self._update(self.mary, self.chegere_north)
+
+    def test_an_unowned_cluster_stays_editable_so_it_can_be_claimed(self):
+        """Otherwise every cluster that never had an owner is frozen."""
+        Cluster.objects.filter(id=self.chegere_north.id).update(
+            responsible_staff_id=None
+        )
+        self.chegere_north.refresh_from_db()
+
+        self._update(self.mary, self.chegere_north)
+
+        self.chegere_north.refresh_from_db()
+        self.assertEqual(self.chegere_north.name, "Renamed")
+
+    def test_a_country_role_is_unaffected(self):
+        from apps.accounts.models import StaffProfile
+
+        cd = User.objects.create(
+            email="cd@edify.test",
+            name="Clare",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            is_active=True,
+        )
+        StaffProfile.objects.create(user=cd, title="CD")
+
+        self._update(cd, self.chegere_north)
+
+        self.chegere_north.refresh_from_db()
+        self.assertEqual(self.chegere_north.name, "Renamed")
+
+
+class TheTwoRulesAgreeAboutAnUnownedClusterTest(EligibilityFixture):
+    """`cluster_in_scope` has always treated an unowned cluster as unassigned
+    rather than as somebody else's. This service excluded them, so the two
+    disagreed about the same question — the exact failure a canonical service
+    exists to end, and with every cluster in the deployment unowned it emptied
+    the picker for every school."""
+
+    def setUp(self):
+        super().setUp()
+        Cluster.objects.filter(id=self.chegere_north.id).update(
+            responsible_staff_id=None
+        )
+
+    def test_an_unowned_cluster_is_offered(self):
+        self.assertIn("Chegere North Cluster", self._names())
+
+    def test_the_service_and_the_predicate_agree(self):
+        from apps.core.scoping import cluster_in_scope, resolve_user_scope
+
+        scope = resolve_user_scope(self.james)
+        offered = set(
+            eligible_clusters_for_school(self.school, scope=scope).values_list(
+                "id", flat=True
+            )
+        )
+
+        for cluster in Cluster.objects.filter(district=self.apac):
+            if cluster.id in offered:
+                with self.subTest(cluster=cluster.name):
+                    self.assertTrue(cluster_in_scope(scope, cluster))
+
+    def test_assigning_to_it_is_how_it_gets_claimed(self):
+        from apps.clusters.services import set_school_cluster_membership
+
+        set_school_cluster_membership(self.school, self.chegere_north, "tester")
+
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.chegere_north.id)
+
+
+class TheOwnerFallsBackToTheAssignmentTest(EligibilityFixture):
+    """§1A allows the canonical active assignment as the owner source. A school
+    with an assignment but a blank denormalised column has a gap in one column,
+    not an absent owner."""
+
+    def test_a_blank_column_falls_back_to_a_single_assignment(self):
+        School.objects.filter(id=self.school.id).update(account_owner_id="")
+        self.school.refresh_from_db()
+
+        self.assertIn("Chegere North Cluster", self._names())
+        self.assertIsNone(ineligibility_reason(self.school))
+
+    def test_two_assignments_are_a_decision_not_a_guess(self):
+        School.objects.filter(id=self.school.id).update(account_owner_id="")
+        self.school.refresh_from_db()
+        StaffSchoolAssignment.objects.create(
+            staff=self.mary_profile, school_id=self.school.id
+        )
+
+        self.assertEqual(self._names(), set())
+        self.assertIn("no assigned staff owner", ineligibility_reason(self.school))
