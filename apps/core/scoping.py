@@ -45,6 +45,18 @@ COUNTRY_WRITE_ROLES = {
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.ADMIN.value,
 }
+# Who may place field work anywhere in the country. Impact Assessment does its
+# own field work — school visits and assessment training — so it schedules; the
+# Programme Accountant observes, pays and follows up accountabilities, and never
+# schedules anything. The two roles share country-wide *visibility* and split on
+# this, which is exactly why one set cannot serve both questions: reading
+# COUNTRY_ROLES here gave the Accountant a planning power that is not part of
+# the job, and reading COUNTRY_WRITE_ROLES would have taken IA's own work away.
+COUNTRY_SCHEDULING_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.ADMIN.value,
+}
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
 
 

@@ -311,3 +311,86 @@ class WriteAccessDoesNotSurviveATransferTest(PlanningFollowsDirectOwnershipTest)
             request_cache.store(),
             "a scope memo outside a request means scope can go stale between them",
         )
+
+
+class SeeingTheCountryIsNotSchedulingInItTest(PlanningFollowsDirectOwnershipTest):
+    """Impact Assessment schedules its own field work; the Accountant does not.
+
+    Both roles are in COUNTRY_ROLES because both need country-wide visibility —
+    IA verifies completed work, the Accountant confirms and pays
+    accountabilities. Every scheduling guard tested that one flag, so it
+    granted the union of two jobs: the Accountant could place and move field
+    work anywhere in Uganda, which is not part of the role.
+
+    IA must keep it. IA does school visits and assessment training, and a guard
+    written against COUNTRY_WRITE_ROLES — the set that correctly withholds the
+    Country Director's programme decisions from both — would have taken IA's
+    own work away instead. Three different questions, three different sets.
+    """
+
+    def _country(self, role, email):
+        user, _ = self._staff(email, role)
+        return user
+
+    def test_impact_assessment_may_schedule_anywhere(self):
+        ia = self._country(EdifyRole.IMPACT_ASSESSMENT, "ia@sched.test")
+
+        self._plan(ia, self.cceo_school)  # does not raise
+
+    def test_the_accountant_may_not_schedule_at_all(self):
+        accountant = self._country(EdifyRole.PROGRAM_ACCOUNTANT, "acct@sched.test")
+
+        with self.assertRaises(Forbidden):
+            self._plan(accountant, self.cceo_school)
+
+    def test_the_accountant_may_not_schedule_at_their_own_cluster_either(self):
+        """ "Anything" means anything: the cluster branch is a separate path
+        into the same guard and would otherwise still be open."""
+        from apps.activities.services import _assert_target_in_scope
+        from apps.clusters.models import Cluster
+
+        cluster = Cluster.objects.create(
+            name="Accountant Cluster",
+            region=self.region,
+            district=self.district,
+            cluster_type="mixed",
+            status="active",
+        )
+        accountant = self._country(EdifyRole.PROGRAM_ACCOUNTANT, "acct2@sched.test")
+
+        with self.assertRaises(Forbidden):
+            _assert_target_in_scope(
+                school=None, cluster_id=cluster.id, principal=accountant
+            )
+
+    def test_the_accountant_may_not_move_an_existing_activity(self):
+        """Rescheduling is scheduling. The read gate let them this far because
+        reading every activity in the country is exactly their job."""
+        from apps.activities.services import _assert_may_schedule
+        from apps.activities.models import Activity
+
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school_id=self.cceo_school.id,
+            responsible_staff_id=self.cceo_profile.id,
+            fy="2026",
+            status="planned",
+        )
+        accountant = self._country(EdifyRole.PROGRAM_ACCOUNTANT, "acct3@sched.test")
+
+        with self.assertRaises(Forbidden):
+            _assert_may_schedule(activity, accountant)
+
+        _assert_may_schedule(activity, self.cceo)  # the owner still may
+        _assert_may_schedule(
+            activity, self._country(EdifyRole.IMPACT_ASSESSMENT, "ia2@sched.test")
+        )
+
+    def test_the_accountant_still_sees_everything(self):
+        """The narrowing is on scheduling alone. If this fails, the change went
+        too far and took the Accountant's actual job with it."""
+        from apps.core.scoping import resolve_user_scope
+
+        accountant = self._country(EdifyRole.PROGRAM_ACCOUNTANT, "acct4@sched.test")
+
+        self.assertTrue(resolve_user_scope(accountant).country_scope)
