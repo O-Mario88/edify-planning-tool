@@ -280,11 +280,25 @@ def _assert_in_scope(activity: Activity, principal) -> None:
 def _assert_target_in_scope(
     *, school: School | None, cluster_id: str | None, principal
 ) -> None:
-    """Validate create-time targets before an Activity exists."""
+    """Validate create-time targets before an Activity exists.
+
+    Planning follows **direct** ownership, so this reads `own_school_ids` and
+    not `school_ids`. The latter unions in the schools of everyone a supervisor
+    supervises, which let a Programme Lead schedule work at a CCEO's school
+    purely because that CCEO reports to them — supervision acting as ownership.
+    A PL supervising two CCEOs could plan across 1,030 schools that were not
+    theirs.
+
+    The PL still sees that work: it is on Team Planning Oversight, read-only,
+    where the response to a problem is to ask the person who owns it rather
+    than to reach past them. `own_school_ids` is populated for the CCEO and the
+    Project Coordinator alike, so narrowing changes the supervisor's reach and
+    nobody else's.
+    """
     scope = resolve_user_scope(principal)
     if scope.country_scope:
         return
-    if school and scope.school_ids and school.id in scope.school_ids:
+    if school and scope.own_school_ids and school.id in scope.own_school_ids:
         return
     if cluster_id:
         from apps.clusters.models import Cluster

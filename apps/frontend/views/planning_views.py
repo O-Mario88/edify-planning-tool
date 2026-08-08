@@ -397,9 +397,13 @@ def planning_dashboard_view(request):
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset
 
-    _planning_schools = school_queryset(resolve_user_scope(request.user)).filter(
-        deleted_at__isnull=True
-    )
+    # direct_only, to match the create-time guard. Offering a supervised
+    # CCEO's school in a planning dropdown and then refusing the save is the
+    # drawer-promises-what-the-service-rejects shape; the team's work belongs
+    # on Team Planning Oversight, read-only.
+    _planning_schools = school_queryset(
+        resolve_user_scope(request.user), direct_only=True
+    ).filter(deleted_at__isnull=True)
 
     districts = (
         District.objects.filter(id__in=_planning_schools.values("district_id"))
