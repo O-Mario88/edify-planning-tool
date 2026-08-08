@@ -10,6 +10,7 @@ from collections import defaultdict
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from urllib.parse import urlencode
 from apps.core.permissions import (
     RolePermissionService,
     require_export_permission,
@@ -69,12 +70,24 @@ def partners_list_view(request):
     drift the first time either page's audience changed.
     """
     if RolePermissionService.can_view_page(request.user, "partner_oversight"):
-        # Carry the query string. Both pages read `fy` and `partner` under the
-        # same names, so a saved link or a filtered view survives the merge —
-        # dropping it would silently reset somebody's filters to this month and
-        # look like the data had changed.
+        # Carry the filters both pages read under the same names, so a saved
+        # link survives the merge — dropping them would silently reset somebody
+        # to the current period and look like the data had changed.
+        #
+        # Named individually rather than forwarded wholesale. Passing the whole
+        # query string put request data into a redirect target, which CodeQL
+        # flagged: the fixed `/partner-oversight/?` prefix meant it could not
+        # actually leave the site, but "cannot escape today" is a property of
+        # the prefix rather than of the code, and the next edit owns it. An
+        # allowlist cannot be argued with — and the directory's other params
+        # (`q`, `status`, `region`) mean nothing on the destination anyway.
+        carried = {
+            key: value
+            for key, value in ((k, request.GET.get(k)) for k in ("fy", "partner"))
+            if value
+        }
         target = reverse("frontend:partner_oversight")
-        query = request.GET.urlencode()
+        query = urlencode(carried)
         return redirect(f"{target}?{query}" if query else target)
     return _partner_workspace(request)
 

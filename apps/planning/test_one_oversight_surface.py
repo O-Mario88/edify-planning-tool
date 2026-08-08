@@ -173,6 +173,45 @@ class PartnerWorkIsOnePageTest(OversightFixture):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/partner-oversight/", response["Location"])
 
+    def test_the_redirect_carries_the_filters_and_nothing_else(self):
+        """A saved link keeps its period; everything else is dropped.
+
+        The first version forwarded the whole query string, which put request
+        data into a redirect target. It could not leave the site — the fixed
+        `/partner-oversight/?` prefix saw to that — but the guarantee lived in
+        the prefix rather than in the code, so the params are now named.
+        """
+        self.client.force_login(self.pl)
+
+        response = self.client.get(
+            "/partners?fy=2026&partner=p1&q=ignored&status=overdue"
+        )
+
+        location = response["Location"]
+        self.assertTrue(location.startswith("/partner-oversight/?"))
+        self.assertIn("fy=2026", location)
+        self.assertIn("partner=p1", location)
+        self.assertNotIn("ignored", location)
+        self.assertNotIn("status", location)
+
+    def test_a_hostile_query_string_cannot_move_the_destination(self):
+        self.client.force_login(self.pl)
+
+        for hostile in (
+            "?next=https://evil.example",
+            "?fy=https://evil.example",
+            "?//evil.example",
+            "?fy=%2F%2Fevil.example",
+        ):
+            with self.subTest(query=hostile):
+                location = self.client.get(f"/partners{hostile}")["Location"]
+
+                self.assertTrue(
+                    location.startswith("/partner-oversight/"),
+                    f"{hostile} redirected to {location}",
+                )
+                self.assertNotIn("evil.example", location.split("?")[0])
+
     def test_a_cceo_lands_there_too(self):
         self.client.force_login(self.cceo)
 
