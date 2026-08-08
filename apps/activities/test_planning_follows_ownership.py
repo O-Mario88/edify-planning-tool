@@ -67,10 +67,15 @@ class PlanningFollowsDirectOwnershipTest(TestCase):
         StaffSchoolAssignment.objects.create(staff=owner, school_id=school.id)
         return school
 
-    def _plan(self, actor, school):
+    def _plan(self, actor, school, owner=None):
         from apps.activities.services import _assert_target_in_scope
 
-        _assert_target_in_scope(school=school, cluster_id=None, principal=actor)
+        _assert_target_in_scope(
+            school=school,
+            cluster_id=None,
+            principal=actor,
+            owner_id=owner.id if owner else None,
+        )
 
     def test_a_cceo_may_plan_for_their_own_school(self):
         self._plan(self.cceo, self.cceo_school)  # does not raise
@@ -106,6 +111,56 @@ class PlanningFollowsDirectOwnershipTest(TestCase):
         cd, _ = self._staff("cd@own.test", EdifyRole.COUNTRY_DIRECTOR)
 
         self._plan(cd, self.cceo_school)  # does not raise
+
+
+class AssigningWorkToTheOwnerIsNotReachingPastThemTest(
+    PlanningFollowsDirectOwnershipTest
+):
+    """The one case where actor and owner legitimately differ.
+
+    A supervisor accepting a Field Debrief recommendation creates an activity
+    the *submitter* owns, at the submitter's own school. The write lands inside
+    the submitter's portfolio at their own request, so it is their ownership
+    that decides the target — not the supervisor's, which would refuse it, and
+    not supervision-as-ownership, which would permit far too much.
+    """
+
+    def test_a_lead_may_assign_work_to_the_cceo_who_owns_the_school(self):
+        self._plan(self.pl, self.cceo_school, owner=self.cceo_profile)
+
+    def test_a_lead_still_may_not_take_the_work_themselves(self):
+        """Naming nobody means naming yourself, and the PL owns no such school."""
+        with self.assertRaises(Forbidden):
+            self._plan(self.pl, self.cceo_school)
+
+    def test_a_lead_may_not_assign_a_school_the_named_owner_does_not_own(self):
+        """The supervisee is not a pass-through to schools nobody owns."""
+        unowned = School.objects.create(
+            school_id="OWN-NONE",
+            name="School OWN-NONE",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+
+        with self.assertRaises(Forbidden):
+            self._plan(self.pl, unowned, owner=self.cceo_profile)
+
+    def test_a_peer_may_not_plant_work_by_naming_the_owner(self):
+        """Without the supervision test, naming the owner would be a bypass:
+        anyone could write into anyone else's portfolio uninvited."""
+        peer, peer_profile = self._staff("peer@own.test", EdifyRole.CCEO)
+
+        with self.assertRaises(Forbidden):
+            self._plan(peer, self.cceo_school, owner=self.cceo_profile)
+
+    def test_naming_an_unrelated_owner_does_not_widen_the_lead(self):
+        """A CCEO who does not report to this PL is not theirs to assign."""
+        stranger, stranger_profile = self._staff("stranger@own.test", EdifyRole.CCEO)
+        theirs = self._school("OWN-STRANGER", stranger_profile)
+
+        with self.assertRaises(Forbidden):
+            self._plan(self.pl, theirs, owner=stranger_profile)
 
 
 class ThePlanningFormOffersOnlyWhatItWillAcceptTest(TestCase):
