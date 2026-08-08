@@ -22,6 +22,7 @@ from apps.core.permissions import (
     require_page_permission,
 )
 from apps.clusters.oversight_service import grouped_clusters
+from apps.planning.flagged_schools import team_flagged_schools
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
@@ -238,6 +239,12 @@ def team_planning_oversight_view(request):
         # a control that answers "not you" is worse than no control.
         "may_delegate": may_delegate(request.user, country=False),
         "cluster_oversight": grouped_clusters(request.user),
+        # §12's Team School Oversight, as a section rather than a page: plans,
+        # clusters and flagged schools are three lenses on one team, and a
+        # supervisor should not visit three pages to answer one question.
+        "flagged_schools": team_flagged_schools(
+            request.user, fy=period["fy"], month=period.get("month")
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":

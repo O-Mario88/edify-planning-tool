@@ -1,0 +1,113 @@
+{% load frontend_filters %}
+{% comment %}
+Flagged schools, grouped by the person who owns them.
+
+Grouped by owner rather than listed by school because the supervisor's next
+move is a conversation, not an edit: "Grace has four schools with no SSA" is
+one action, and four school rows scattered down a list is four.
+
+Read-only, and structurally so — there is not a form or an action id on this
+partial. §12 says team oversight opens an oversight record rather than an
+editable school page, and the reliable way to keep that true is to give the
+template nothing it could submit.
+
+A delegated school stays listed, marked. The dashboard card hides those on
+purpose (it is an unassigned queue, and hiding prevents two people sending the
+same action twice); oversight wants the opposite, because "someone is on it"
+is the answer to half the questions this page gets asked.
+{% endcomment %}
+
+<div class="card p-0 overflow-hidden">
+  <header class="px-4 py-3 border-b edify-border flex flex-wrap items-baseline justify-between gap-2">
+    <div>
+      <h3 class="text-sm font-semibold">Flagged schools</h3>
+      <p class="edify-text-caption edify-text-muted">
+        Planned this period, carrying an unresolved problem. Read-only — ask the
+        person who owns the school.
+      </p>
+    </div>
+    {% if flagged_schools.total %}
+    <p class="edify-text-caption edify-text-muted">
+      {{ flagged_schools.total }} school{{ flagged_schools.total|pluralize }} ·
+      {{ flagged_schools.flagged_owners }} staff member{{ flagged_schools.flagged_owners|pluralize }}
+    </p>
+    {% endif %}
+  </header>
+
+  {% if flagged_schools.groups %}
+  <ul class="divide-y edify-border">
+    {% for group in flagged_schools.groups %}
+    <li class="p-4 space-y-2">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <p class="text-sm font-semibold">{{ group.owner_name }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          {{ group.count }} flagged
+          {% if group.critical %} · <span class="pill pill-danger">{{ group.critical }} critical</span>{% endif %}
+          {% if group.delegated %} · {{ group.delegated }} already assigned{% endif %}
+        </p>
+      </div>
+
+      <div class="overflow-x-auto max-md:hidden">
+        <table class="w-full text-left">
+          <caption class="sr-only">Flagged schools owned by {{ group.owner_name }}</caption>
+          <thead>
+            <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+              <th scope="col" class="px-3 py-2 font-semibold">School</th>
+              <th scope="col" class="px-3 py-2 font-semibold">Issue</th>
+              <th scope="col" class="px-3 py-2 font-semibold">Planned</th>
+              <th scope="col" class="px-3 py-2 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in group.rows %}
+            <tr class="border-t edify-border">
+              <td class="px-3 py-2.5">
+                <span class="font-semibold">{{ row.name }}</span>
+                {% if row.district %}<span class="block edify-text-caption edify-text-muted">{{ row.district }}</span>{% endif %}
+              </td>
+              <td class="px-3 py-2.5">
+                <span class="pill {% if row.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ row.label }}</span>
+              </td>
+              <td class="px-3 py-2.5 text-sm whitespace-nowrap">
+                {% if row.planned_date %}{{ row.planned_date|date:"j M" }}{% else %}—{% endif %}
+              </td>
+              <td class="px-3 py-2.5 edify-text-caption edify-text-muted">
+                {% if row.delegated %}Assigned{% else %}Not yet assigned{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="md:hidden divide-y edify-border border-t edify-border">
+        {% for row in group.rows %}
+        <li class="py-3 space-y-1">
+          <p class="font-semibold text-sm">{{ row.name }}</p>
+          <p class="edify-text-caption edify-text-muted">
+            {% if row.district %}{{ row.district }} · {% endif %}
+            {% if row.planned_date %}{{ row.planned_date|date:"j M" }}{% else %}No date{% endif %}
+          </p>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="pill {% if row.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ row.label }}</span>
+            {% if row.delegated %}<span class="pill">Assigned</span>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if group.hidden %}
+      <p class="edify-text-caption edify-text-muted">
+        Showing the {{ group.rows|length }} most urgent of {{ group.count }}.
+        {{ group.hidden }} more not listed.
+      </p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="p-4 edify-text-caption edify-text-muted">
+    No school planned this period is carrying an unresolved problem.
+  </p>
+  {% endif %}
+</div>

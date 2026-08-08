@@ -893,7 +893,11 @@ SIDEBAR_ITEMS = [
                 "page_key": "team_targets",
             },
             {
-                "label": "Team Planning",
+                # Team oversight is one surface, not one per subject. Plans,
+                # clusters and flagged schools are three lenses on the same
+                # team, and splitting them into separate pages would make a
+                # supervisor visit three places to answer one question.
+                "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
             },
@@ -901,11 +905,6 @@ SIDEBAR_ITEMS = [
                 "label": "Country Planning",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
-            },
-            {
-                "label": "Partner Oversight",
-                "url": "/partner-oversight/",
-                "page_key": "partner_oversight",
             },
             {
                 "label": "My Plan",
@@ -1019,9 +1018,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "clusters",
             },
             {
+                # One Partners entry, not a directory beside an oversight page
+                # answering the same question from two places in the sidebar.
+                #
+                # It stays on `/partners` — ALL_ROLES, so nobody loses the link
+                # — and the view redirects whoever may open Partner Oversight.
+                # Pointing the item straight at `/partner-oversight/` would
+                # have offered it to HR, the RVP and the Project Coordinator,
+                # who hold `partners` but not `partner_oversight`, and to the
+                # partner organisations themselves. `extra_active_paths` keeps
+                # the entry highlighted once the redirect has happened.
                 "label": "Partners",
                 "url": "/partners",
                 "page_key": "partners",
+                "extra_active_paths": ["/partner-oversight/"],
             },
             {
                 "label": "Projects",
@@ -1640,6 +1650,17 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     is_active = current_path == url
                 else:
                     is_active = current_path.startswith(url)
+
+                # An item whose view redirects elsewhere still owns the page it
+                # sends you to. "Partners" points at /partners and bounces
+                # staff to /partner-oversight/, and without this the sidebar
+                # would highlight nothing once they arrived — the one entry for
+                # partner work looking unselected on the partner page.
+                if not is_active:
+                    is_active = any(
+                        current_path.startswith(extra)
+                        for extra in item.get("extra_active_paths", ())
+                    )
 
                 visible_items.append(
                     {

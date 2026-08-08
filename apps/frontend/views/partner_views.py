@@ -8,8 +8,12 @@ import csv
 from collections import defaultdict
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404
-from apps.core.permissions import require_export_permission, require_page_permission
+from django.shortcuts import render, get_object_or_404, redirect
+from apps.core.permissions import (
+    RolePermissionService,
+    require_export_permission,
+    require_page_permission,
+)
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_partner_ids
 from django.db.models import Q
@@ -43,11 +47,37 @@ PARTNER_ROLES = (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.
 @require_page_permission("partners")
 @require_export_permission
 def partners_list_view(request):
-    """Partner Activities workspace for staff and partner organisations.
+    """Partner Activities workspace for partner organisations.
 
-    The former directory only named organisations.  This view joins the
-    assignment queue with scheduled partner work so staff can see what is
-    assigned, scheduled, due, and funded without leaving the page.
+    Staff are redirected to Partner Oversight, which is now the single staff
+    view of partner work. The two pages answered the same question — which
+    schools are with which partner, who has scheduled, what it costs — from
+    two sidebar entries, and a supervisor had no way to tell which one to
+    trust. Oversight won because it also carries the withdrawal decisions and
+    the per-item risks.
+
+    The redirect is deliberately conditional rather than a route-level one.
+    `/partners` is ALL_ROLES and Partner Oversight is not, so redirecting
+    everybody would bounce three populations into a page that then refuses
+    them: the external partner organisations, for whom this is the only
+    directory they have, and HR, the RVP and the Project Coordinator, who hold
+    `partners` but not `partner_oversight`.
+
+    It asks `can_view_page` rather than listing roles, so the redirect and the
+    destination's own gate can never disagree — a hardcoded list here would
+    drift the first time either page's audience changed.
+    """
+    if RolePermissionService.can_view_page(request.user, "partner_oversight"):
+        return redirect("frontend:partner_oversight")
+    return _partner_workspace(request)
+
+
+def _partner_workspace(request):
+    """The partner-facing workspace body.
+
+    The former directory only named organisations. This view joins the
+    assignment queue with scheduled partner work so a partner organisation can
+    see what is assigned, scheduled, due, and funded without leaving the page.
     """
     search = request.GET.get("q", "").strip()
     selected_fy = request.GET.get("fy", get_operational_fy())
@@ -630,6 +660,13 @@ def partner_today_view(request):
         "today_activities": today_activities,
         "upcoming": upcoming,
         "today": today,
+        "is_partner_admin": user.active_role == EdifyRole.PARTNER_ADMIN.value,
+        "mobile_primary_action": {
+            "label": "Open today's plan"
+            if today_activities
+            else "View assigned schools",
+            "url": "/my-plan" if today_activities else "/partner/schools",
+        },
     }
     return render(request, "pages/partner/today.html", context)
 
