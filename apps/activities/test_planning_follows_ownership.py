@@ -247,3 +247,67 @@ class ASummaryOnlyRoleHasNoPortfolioToWriteIntoTest(PlanningFollowsDirectOwnersh
         _assert_target_in_scope(
             school=None, cluster_id=cluster.id, principal=self.cceo
         )  # does not raise
+
+
+class WriteAccessDoesNotSurviveATransferTest(PlanningFollowsDirectOwnershipTest):
+    """§23: nobody keeps write access to a school they no longer own.
+
+    Today this holds for a structural reason rather than a deliberate one:
+    `resolve_user_scope` memoizes into `apps.core.request_cache`, which exists
+    only while a request is being handled, so the next request re-resolves from
+    the assignment tree. There is no cross-request scope cache to invalidate,
+    and therefore no invalidation hook that could be forgotten.
+
+    That is worth pinning precisely *because* it is structural. Scope
+    resolution walks the full assignment tree and is a natural candidate for
+    somebody to move behind a TTL cache keyed on (user, role) — a change that
+    looks like pure performance work and would silently hand a departing owner
+    write access for the length of the timeout. These tests fail the moment
+    that happens.
+    """
+
+    def _transfer(self, school, *, to):
+        """The transfer as the system performs it today.
+
+        §15's controlled Portfolio Transfer workflow is not built yet, so this
+        moves the two records that ownership is actually read from. When that
+        workflow lands it should replace the body of this helper and leave the
+        assertions untouched.
+        """
+        from apps.accounts.models import StaffSchoolAssignment
+
+        StaffSchoolAssignment.objects.filter(school_id=school.id).delete()
+        StaffSchoolAssignment.objects.create(staff=to, school_id=school.id)
+        School.objects.filter(pk=school.pk).update(account_owner_id=to.id)
+
+    def test_the_previous_owner_loses_write_access_immediately(self):
+        from apps.core.scoping import resolve_user_scope
+
+        # Resolve first, so a cache that outlived the transfer would be warm
+        # and this test would be measuring the stale copy.
+        self.assertIn(self.cceo_school.id, resolve_user_scope(self.cceo).own_school_ids)
+        self._plan(self.cceo, self.cceo_school)  # does not raise, yet
+
+        other, other_profile = self._staff("successor@own.test", EdifyRole.CCEO)
+        self._transfer(self.cceo_school, to=other_profile)
+
+        with self.assertRaises(Forbidden):
+            self._plan(self.cceo, self.cceo_school)
+
+    def test_the_new_owner_gains_it_in_the_same_breath(self):
+        """Half a transfer is worse than none: the school would belong to
+        nobody and no one could plan for it."""
+        other, other_profile = self._staff("successor2@own.test", EdifyRole.CCEO)
+
+        self._transfer(self.cceo_school, to=other_profile)
+
+        self._plan(other, self.cceo_school)  # does not raise
+
+    def test_scope_is_not_cached_beyond_the_request_that_resolved_it(self):
+        """The structural reason the two tests above pass, stated directly."""
+        from apps.core import request_cache
+
+        self.assertIsNone(
+            request_cache.store(),
+            "a scope memo outside a request means scope can go stale between them",
+        )
