@@ -1304,7 +1304,7 @@ select:not([multiple]):not(.select-native) {
   position: relative;
   container: kpi-card / inline-size;
   overflow: hidden;
-  padding: 1rem;
+  padding: var(--edify-kpi-padding);
   min-height: 7.15rem;
   min-width: 0;
   display: flex;
@@ -1524,7 +1524,7 @@ select:not([multiple]):not(.select-native) {
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-md);
   box-shadow: var(--edify-shadow-sm);
-  padding: 0.85rem 0.5rem;
+  padding: var(--edify-surface-padding-compact);
 }
 
 .kpi-strip--band .kpi-strip__grid {
@@ -1588,7 +1588,7 @@ select:not([multiple]):not(.select-native) {
 
 /* Compact version */
 .kpi-strip--compact {
-  padding: 0.75rem;
+  padding: var(--edify-surface-padding-compact);
 }
 
 .kpi-strip--compact .kpi-strip__grid {
@@ -1609,7 +1609,7 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip__grid { gap: 0.75rem; }
 
   .kpi-strip__item {
-    padding: 1rem;
+    padding: var(--edify-kpi-padding);
     border: 1px solid var(--edify-border);
     border-radius: var(--edify-radius-md);
   }
@@ -1645,7 +1645,7 @@ select:not([multiple]):not(.select-native) {
     :has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(9))),
     :has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(11)))
   ) .kpi-strip__item {
-    padding: 0.75rem;
+    padding: var(--edify-surface-padding-compact);
     border: 1px solid var(--edify-border);
     border-radius: var(--edify-radius-md);
     background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
@@ -1692,7 +1692,7 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip__item {
     min-width: 0;
     min-height: 5.75rem;
-    padding: 0.75rem;
+    padding: var(--edify-surface-padding-compact);
     justify-content: flex-start;
   }
 

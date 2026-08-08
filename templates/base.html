@@ -79,8 +79,8 @@ inset themselves — see components/mobile-shell.css.
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260808headergutter1">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260808headergutter1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260809surfaces1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260809surfaces1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260808mobilephase1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260808mobilephase5">
@@ -100,13 +100,13 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260808tabreveal1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260809tabs2">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260808filteraudit1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260808micro13">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260809surfaces1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260809micro14">
 
 <style>
 /* All design tokens live in design-system.css. This block only consumes them.
@@ -282,7 +282,7 @@ document-level lifecycle handlers, so no template needs hx-disabled-elt.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260808micro7"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260809micro11"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

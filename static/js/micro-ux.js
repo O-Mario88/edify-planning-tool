@@ -22,6 +22,7 @@
     '.pto-tabs',
     '.sp-period-tabs',
     '.spp-tabs',
+    '.tt-segmented',
     '.oversight-entity-tabs'
   ].join(', ');
   var tabSelector = [
@@ -32,6 +33,7 @@
     '.pto-tabs > button',
     '.sp-period-tabs > button',
     '.spp-tabs > button',
+    '.tt-segmented > button',
     '.oversight-entity-tabs__link'
   ].join(', ');
 
@@ -128,6 +130,15 @@
     });
     enhanceTableChoices(table);
 
+    /* Compact comparison tables can opt into a fixed, intrinsic-width layout
+       that keeps every column visible on phones. They remain semantic tables
+       instead of becoming cards or a horizontal scroll region. */
+    if (table.matches('[data-mobile-table="fit"]')) {
+      table.classList.add('edify-mobile-table--fit');
+      return;
+    }
+
+    var forceCards = table.matches('[data-mobile-table="cards"]');
     var bodyRows = Array.from(table.querySelectorAll('tbody > tr'));
     var structuralSpan = Array.from(
       table.querySelectorAll('[rowspan], [colspan]:not([colspan="1"])')
@@ -136,9 +147,11 @@
       var isSingleCellEmptyState = row && row.closest('tbody') && row.children.length === 1;
       return cell.hasAttribute('rowspan') || cell.closest('thead') || !isSingleCellEmptyState;
     });
-    var complex = headerCells.length === 0 || headerCells.length > 5 || Boolean(
-      structuralSpan ||
-      table.matches('.edify-report-matrix__table, [data-mobile-table="scroll"]')
+    var complex = !forceCards && (
+      headerCells.length === 0 || headerCells.length > 5 || Boolean(
+        structuralSpan ||
+        table.matches('.edify-report-matrix__table, [data-mobile-table="scroll"]')
+      )
     );
 
     if (complex) {
@@ -233,8 +246,10 @@
 
     var active = tablist.querySelector(
       '[role="tab"][aria-selected="true"], .edify-tab-btn.active, [data-edify-tab][aria-pressed="true"], ' +
+      '[data-edify-tab][aria-current="true"], [data-edify-tab][aria-current="page"], ' +
       '.messages-inbox-tab[aria-pressed="true"], .pto-tabs > button.is-active, ' +
-      '.sp-period-tabs > button.is-active, .spp-tabs > button.is-active'
+      '.sp-period-tabs > button.is-active, .spp-tabs > button.is-active, ' +
+      '.tt-segmented > button.is-active, .tt-segmented > button[aria-pressed="true"]'
       + ', .oversight-entity-tabs__link.is-active'
     );
     if (active) revealTab(active, true, true);

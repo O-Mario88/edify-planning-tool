@@ -57,6 +57,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn(".edify-table-choice", styles)
         self.assertIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
+        self.assertIn('table.matches(\'[data-mobile-table="fit"]\')', behavior)
+        self.assertIn('table.matches(\'[data-mobile-table="cards"]\')', behavior)
+        self.assertIn("edify-mobile-table--fit", styles)
         self.assertIn("Scrollable table:", behavior)
 
     def test_pagination_is_named_and_touch_safe_at_source(self):
@@ -100,8 +103,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260808tabreveal1", base)
-        self.assertIn("micro-ux.js' %}?v=20260808micro7", base)
+        self.assertIn("platform.css' %}?v=20260809tabs2", base)
+        self.assertIn("micro-ux.js' %}?v=20260809micro11", base)
 
     def test_feedback_and_accessible_name_auditing_are_centralized(self):
         base = _read("templates/base.html")

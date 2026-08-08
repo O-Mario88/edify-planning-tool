@@ -153,6 +153,76 @@
   block-size: auto;
 }
 
+/* Geography owns a complete dashboard row. The original map visual remains
+   unchanged; only the space assigned to it and its companion table changes. */
+.analytics-row--geography,
+.analytics-row--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.analytics-geo-card .sr-map-layout,
+.analytics-geo-card .sr-map-canvas,
+.analytics-geo-card .sr-distribution-panel {
+  min-inline-size: 0;
+}
+
+.analytics-geo-card .sr-map-viewport {
+  margin-inline: auto;
+}
+
+.analytics-geo-card .sr-distribution-scroll {
+  max-inline-size: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+  scrollbar-gutter: auto;
+}
+
+.analytics-geo-card .sr-distribution-table {
+  inline-size: 100%;
+  min-inline-size: 0 !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: .6875rem;
+  line-height: 1.25;
+  table-layout: fixed;
+}
+
+.analytics-geo-card .sr-distribution-col--schools {
+  inline-size: 3.25rem;
+}
+
+.analytics-geo-card .sr-distribution-col--clusters {
+  inline-size: 2.75rem;
+}
+
+.analytics-geo-card .sr-distribution-col--ssa {
+  inline-size: 3.85rem;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td) {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  overflow: hidden;
+  padding-inline: .22rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td):first-child {
+  overflow: hidden;
+  padding-inline-start: .08rem !important;
+  text-overflow: ellipsis;
+}
+
+.analytics-geo-card .sr-distribution-table :is(th, td):last-child {
+  padding-inline-end: .08rem !important;
+}
+
+.analytics-geo-card .sr-distribution-table td:first-child > span {
+  max-inline-size: 100%;
+}
+
 .analytics-band-heading {
   display: flex;
   align-items: end;
@@ -555,7 +625,7 @@
 
 @container analytics-dashboard (min-width: 52rem) {
   .analytics-row--geography {
-    grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .analytics-row--overview {
@@ -566,6 +636,12 @@
     grid-template-columns: minmax(0, 7fr) minmax(20rem, 5fr);
   }
 
+}
+
+@media (min-width: 80rem) {
+  .analytics-geo-card .sr-map-viewport {
+    max-inline-size: 60rem;
+  }
 }
 
 @container analytics-dashboard (max-width: 51.99rem) {
@@ -692,23 +768,51 @@
 @media (max-width: 64rem) {
   .analytics-geo-card .sr-distribution-panel {
     margin-block-start: .25rem;
-    padding-block-start: 1rem;
+    padding: 1rem 0.5rem 0;
     border-block-start: 1px solid var(--edify-border);
   }
 
   .analytics-geo-card .sr-distribution-scroll {
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-gutter: stable;
+    overflow-x: clip;
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+    scrollbar-gutter: auto;
   }
 
   .analytics-geo-card .sr-distribution-scroll table {
-    min-inline-size: 34rem;
+    inline-size: 100%;
+    min-inline-size: 0 !important;
   }
 
   .analytics-geo-card .sr-distribution-scroll :is(th, td) {
-    min-block-size: 42px;
-    padding-block: .65rem;
+    min-block-size: 38px;
+    padding-block: .5rem;
+  }
+}
+
+@media (max-width: 36rem) {
+  .analytics-geo-card .sr-distribution-col--schools {
+    inline-size: 2.8rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--clusters {
+    inline-size: 2.45rem;
+  }
+
+  .analytics-geo-card .sr-distribution-col--ssa {
+    inline-size: 3.45rem;
+  }
+
+  .analytics-geo-card .sr-distribution-table {
+    font-size: .625rem;
+  }
+
+  .analytics-geo-card .sr-distribution-table :is(th, td) {
+    padding-inline: .15rem !important;
+  }
+
+  .analytics-geo-card .sr-distribution-table td:first-child > span {
+    gap: .35rem;
   }
 }
 

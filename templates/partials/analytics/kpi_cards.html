@@ -25,29 +25,35 @@
 </section>
 
 {% comment %}
-  Geography is the primary decision surface. The map receives two thirds of
-  the row; the ranked, sub-region-grouped exception list receives one third.
-  They stack at narrower container widths without changing DOM or focus order.
+  Geography is the primary decision surface and owns the complete row. The
+  map and its distribution table therefore keep a useful working size on
+  laptop screens instead of competing with an unrelated priority card.
 {% endcomment %}
 <div class="analytics-layout-row analytics-row--geography">
   <div class="analytics-card-slot analytics-card-slot--map">
     {% include "partials/analytics/regional_performance.html" %}
   </div>
+</div>
+
+<!-- Leadership exceptions and recommended responses follow the complete map
+     as a balanced desktop pair and stack in reading order on smaller screens. -->
+<div class="analytics-layout-row analytics-row--decision">
   <div class="analytics-card-slot analytics-card-slot--priorities">
     {% include "partials/analytics/target_by_district.html" %}
   </div>
-</div>
-
-<!-- The answer and the recommended response share the same row. -->
-<div class="analytics-layout-row analytics-row--overview">
-  <div class="analytics-card-slot">{% include "partials/analytics/performance_overview.html" %}</div>
   <div class="analytics-card-slot">{% include "partials/analytics/recommended_insights.html" %}</div>
 </div>
 
-<!-- Comparable programme breakdowns remain visible without repeating KPIs. -->
-<div class="analytics-layout-row analytics-row--decision">
-  <div class="analytics-card-slot">{% include "partials/analytics/cluster_performance.html" %}</div>
+<!-- Comparable programme summaries share a compact row. -->
+<div class="analytics-layout-row analytics-row--overview">
+  <div class="analytics-card-slot">{% include "partials/analytics/performance_overview.html" %}</div>
   <div class="analytics-card-slot">{% include "partials/analytics/core_champion_performance.html" %}</div>
+</div>
+
+<!-- The wider comparison table receives the full row so its operational
+     columns remain legible without competing with another card. -->
+<div class="analytics-layout-row analytics-row--wide">
+  <div class="analytics-card-slot">{% include "partials/analytics/cluster_performance.html" %}</div>
 </div>
 
 <!-- Reporting evidence is available in place without making the default page
