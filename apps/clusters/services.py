@@ -429,6 +429,34 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
     if cluster and school.district_id != cluster.district_id:
         raise BadRequest("A school can only be assigned within its own district.")
 
+    # Owner and sub-county, enforced here rather than only in the picker.
+    # Filtering a dropdown is not a rule: the cluster id arrives in a POST body,
+    # and every other write path — bulk assignment, the API, a management
+    # command — reaches this function without passing a dropdown at all.
+    if cluster:
+        from apps.clusters.eligibility import owner_id_variants
+
+        owners = owner_id_variants(getattr(school, "account_owner_id", ""))
+        cluster_owner = (cluster.responsible_staff_id or "").strip()
+        if cluster_owner and cluster_owner not in owners:
+            raise BadRequest(
+                "That cluster belongs to another staff member. A school joins "
+                "a cluster owned by the person responsible for the school; "
+                "moving it across portfolios needs a transfer."
+            )
+        # Only when both are known. A school with no sub-county is a data gap
+        # to complete, not grounds to refuse the district-level assignment it
+        # could always make.
+        if school.sub_county_id and cluster.sub_county_id:
+            covers = cluster.covered_sub_counties.filter(
+                sub_county_id=school.sub_county_id
+            ).exists()
+            if cluster.sub_county_id != school.sub_county_id and not covers:
+                raise BadRequest(
+                    "That cluster covers a different sub-county. A school "
+                    "joins a cluster covering its own sub-county."
+                )
+
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)
         old_cluster_id = school.cluster_id

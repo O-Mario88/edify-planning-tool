@@ -29,6 +29,10 @@ from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.accounts.staff_matching import OWNER_ROLES, on_staff
+from apps.clusters.eligibility import (
+    eligible_clusters_for_school,
+    ineligibility_reason,
+)
 from apps.clusters.models import Cluster
 from apps.clusters.services import (
     assign_school as assign_school_to_cluster,
@@ -43,7 +47,7 @@ from apps.projects.models import (
     Project,
     ProjectSchoolAssignment,
 )
-from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
+from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
 
 
@@ -809,20 +813,15 @@ def add_to_cluster_drawer_view(request, school_id):
     )
 
     def drawer_context(validation_error=None):
+        # One canonical rule, not a filter assembled here: active, owned by
+        # this school's own staff owner, in its district, and in its sub-county
+        # when it has one. The scope narrows it further to what this caller may
+        # write, so the picker can never offer what the service will refuse.
         nearby_clusters = Cluster.objects.none()
         if show_cluster_directory:
-            # Scoped, not merely district-filtered. The school is already in
-            # the caller's scope, but its district is not theirs alone: every
-            # cluster another CCEO built in the same district was on offer
-            # here, and choosing one moves this school into somebody else's
-            # portfolio.
-            nearby_clusters = (
-                cluster_queryset(resolve_user_scope(request.user))
-                .filter(district_id=school.district_id, status="active")
-                .select_related("district", "sub_county")
-                .annotate(schools_count=Count("assignments", distinct=True))
-                .order_by("name")
-            )
+            nearby_clusters = eligible_clusters_for_school(
+                school, scope=resolve_user_scope(request.user)
+            ).annotate(schools_count=Count("assignments", distinct=True))
         return {
             "school": school,
             "responsible_staff": responsible_staff,
@@ -830,6 +829,13 @@ def add_to_cluster_drawer_view(request, school_id):
             "existing_covering_cluster": existing_covering_cluster,
             "show_cluster_directory": show_cluster_directory,
             "validation_error": validation_error,
+            # What the list was narrowed by, so the drawer can say why a
+            # cluster somebody expected is absent. An empty picker that
+            # explains nothing reads as a broken page rather than as a fact
+            # about this school's owner and geography.
+            "filtered_by_sub_county": bool(school.sub_county_id),
+            "sub_county_missing": not school.sub_county_id,
+            "ineligibility_reason": ineligibility_reason(school),
             "drawer_type": "center",
             "drawer_size": "md",
         }
@@ -865,17 +871,16 @@ def add_to_cluster_drawer_view(request, school_id):
                     ),
                 )
             cluster_id = request.POST.get("existing_cluster_id")
-            # The same scope on submit, because narrowing only the dropdown is
+            # The same rule on submit, because narrowing only the dropdown is
             # not a rule — the id arrives in a POST body and a crafted one
-            # would still land this school in another CCEO's cluster.
+            # would otherwise land this school in another CCEO's cluster, or in
+            # the wrong sub-county. `set_school_cluster_membership` checks it a
+            # third time, for the write paths that never see this view.
             cluster = (
-                cluster_queryset(resolve_user_scope(request.user))
-                .filter(
-                    id=cluster_id,
-                    district_id=school.district_id,
-                    status="active",
+                eligible_clusters_for_school(
+                    school, scope=resolve_user_scope(request.user)
                 )
-                .select_related("district")
+                .filter(id=cluster_id)
                 .first()
             )
             if cluster is None:

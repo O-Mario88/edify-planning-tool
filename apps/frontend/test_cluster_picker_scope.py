@@ -284,7 +284,8 @@ class TheDrawerExplainsAnEmptyPickerTest(ClusterPickerScopeFixture):
         body = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("is assigned to you", body)
+        # The wording is the eligibility rule's, not the old scope message's.
+        self.assertIn("No active cluster owned by", body)
         self.assertNotIn("Mine Cluster", body)
 
     def test_a_cceo_with_clusters_gets_the_picker_not_the_message(self):
@@ -295,7 +296,7 @@ class TheDrawerExplainsAnEmptyPickerTest(ClusterPickerScopeFixture):
         ).content.decode()
 
         self.assertIn("Mine Cluster", body)
-        self.assertNotIn("is assigned to you", body)
+        self.assertNotIn("No active cluster owned by", body)
 
 
 class ACreatedClusterBelongsToItsCreatorTest(ClusterPickerScopeFixture):
