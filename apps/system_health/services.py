@@ -544,7 +544,11 @@ def _workflow_issues() -> dict:
     )
 
     # ── Workflow-consistency checks (clustering → planning → partner → project) ─
-    from apps.clusters.models import Cluster, SchoolClusterAssignment
+    from apps.clusters.models import (
+        Cluster,
+        ClusterSubCounty,
+        SchoolClusterAssignment,
+    )
     from apps.partners.models import Partner, PartnerAssignment
     from apps.projects.models import ProjectSchoolAssignment
 
@@ -601,6 +605,67 @@ def _workflow_issues() -> dict:
     cluster_membership_projection_drift = (
         missing_assignment_projection + incorrect_assignment_projection
     )
+
+    # §14 membership invariants: a school belongs in a cluster owned by the
+    # person who owns the school, in the school's own district, covering the
+    # school's own sub-county. Every write path refuses a violation now; these
+    # count the rows that predate the rule, so the number is visible here and
+    # not only to whoever remembers to run audit_portfolio_ownership.
+    #
+    # Counted by grouping rather than by walking schools: the audit command
+    # caps its row list so a report stays readable, and a *count* that inherits
+    # that cap silently reads "700 problems" when there are 17,000. One grouped
+    # query over the membership, compared in Python because the owner columns
+    # hold either a StaffProfile id or a User id and only Python knows both
+    # spellings of the same person.
+    from apps.accounts.models import StaffProfile as _StaffProfile
+
+    _identity = {}
+    for _pid, _uid in _StaffProfile.objects.values_list("id", "user_id"):
+        pair = {i for i in (_pid, _uid) if i}
+        for i in pair:
+            _identity[i] = pair
+
+    def _variants(raw):
+        raw = (raw or "").strip()
+        return _identity.get(raw, {raw} if raw else set())
+
+    owned_clusters = {
+        c["id"]: c
+        for c in Cluster.objects.filter(deleted_at__isnull=True).values(
+            "id", "responsible_staff_id", "district_id", "sub_county_id"
+        )
+    }
+    covered_sub_counties: dict[str, set] = {}
+    for _cid, _scid in ClusterSubCounty.objects.filter(
+        cluster__deleted_at__isnull=True
+    ).values_list("cluster_id", "sub_county_id"):
+        covered_sub_counties.setdefault(_cid, set()).add(_scid)
+
+    membership_owner_mismatch = 0
+    membership_geography_mismatch = 0
+    for group in (
+        live_schools.exclude(cluster_id__isnull=True)
+        .exclude(cluster_id="")
+        .values("cluster_id", "account_owner_id", "district_id", "sub_county_id")
+        .annotate(n=Count("id"))
+    ):
+        cluster = owned_clusters.get(group["cluster_id"])
+        if cluster is None:
+            # A pointer at a deleted cluster is already counted by
+            # clustered_invalid_pointer; do not double-report it here.
+            continue
+        cluster_owner = (cluster["responsible_staff_id"] or "").strip()
+        if cluster_owner and cluster_owner not in _variants(group["account_owner_id"]):
+            membership_owner_mismatch += group["n"]
+        if cluster["district_id"] and group["district_id"] != cluster["district_id"]:
+            membership_geography_mismatch += group["n"]
+        elif group["sub_county_id"] and cluster["sub_county_id"]:
+            covers = group["sub_county_id"] in covered_sub_counties.get(
+                cluster["id"], set()
+            )
+            if group["sub_county_id"] != cluster["sub_county_id"] and not covers:
+                membership_geography_mismatch += group["n"]
 
     # Partner-assignment statuses. Pending = handed to partner but not yet
     # scheduled; active additionally includes partner_scheduled (mirrors
@@ -1044,6 +1109,14 @@ def _workflow_issues() -> dict:
         blockers.append(
             f"{cluster_membership_projection_drift} cluster-membership projection row(s) drift from canonical School.cluster_id."
         )
+    if membership_owner_mismatch:
+        blockers.append(
+            f"{membership_owner_mismatch} school(s) sit in a cluster owned by someone other than the school's owner."
+        )
+    if membership_geography_mismatch:
+        blockers.append(
+            f"{membership_geography_mismatch} school(s) sit in a cluster outside their own district or sub-county."
+        )
     if partner_assigned_still_staff_planning:
         blockers.append(
             f"{partner_assigned_still_staff_planning} partner assignment(s) whose school still renders actionable in Staff Planning."
@@ -1442,6 +1515,8 @@ def _workflow_issues() -> dict:
         "legacyOrUnknownPlanningReadiness": legacy_or_unknown_readiness,
         "clusteredSchoolsMissingAssignment": clustered_invalid_pointer,
         "clusterMembershipProjectionDrift": cluster_membership_projection_drift,
+        "membershipOwnerMismatch": membership_owner_mismatch,
+        "membershipGeographyMismatch": membership_geography_mismatch,
         "partnerAssignedStillInStaffPlanning": partner_assigned_still_staff_planning,
         "partnerAssignmentsInvisibleToPartner": partner_assignments_invisible,
         "partnerScheduledMissingFromPartnerPlan": partner_scheduled_no_partner_plan,
