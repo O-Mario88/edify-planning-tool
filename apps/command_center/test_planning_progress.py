@@ -243,11 +243,27 @@ class PeriodSwitchPageTests(TestCase):
         for period in PERIODS:
             with self.subTest(period):
                 self.assertIn(f'href="?progress_period={period}"', body)
+                self.assertIn(f'data-admin-progress-period="{period}"', body)
+        self.assertIn("data-edify-tablist", body)
+        self.assertEqual(body.count("data-edify-tab\n"), len(PERIODS))
         self.assertNotIn(
             '<span class="is-active">Week</span><span>Month</span>',
             body,
             "the decorative switch markup must be gone",
         )
+
+    def test_the_tabs_and_details_link_share_the_card_header(self):
+        body = self.client.get("/dashboard").content.decode()
+        header_start = body.index(
+            '<header class="admin-panel__header admin-planning-progress__header">'
+        )
+        header_end = body.index("</header>", header_start)
+        header = body[header_start:header_end]
+
+        self.assertIn('class="admin-panel__header-actions"', header)
+        self.assertIn('class="admin-period-switch"', header)
+        self.assertIn('href="/planning">View Details</a>', header)
+        self.assertNotIn("<figure", header)
 
     def test_each_period_renders_its_own_series(self):
         expectations = {

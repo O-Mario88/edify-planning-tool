@@ -1,5 +1,5 @@
 <!-- Filters Form for My Plan -->
-<form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan"
+<form data-component="filter-toolbar" id="filters-form" method="GET" action="/my-plan" x-data
 hx-get="/my-plan"
 hx-target="#my-plan-workspace"
 hx-swap="innerHTML"
@@ -39,6 +39,18 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 {% endfor %}
 </select>
 </div>
+
+<button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog"
+        @click="$refs.advancedFilters.showModal()">
+More filters{% if selected_week or selected_district != "all" or selected_staff != "all" or selected_activity_type != "all" or selected_status != "all" %} · Applied{% endif %}
+</button>
+
+<dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="my-plan-advanced-filter-title">
+<header class="edify-filter-drawer__header">
+<div><p class="edify-page-eyebrow">My Plan</p><h2 id="my-plan-advanced-filter-title">Advanced filters</h2></div>
+<button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.advancedFilters.close()">×</button>
+</header>
+<div class="edify-filter-drawer__body">
 
 <!-- Week Filter -->
 <div class="flex flex-col min-w-[160px]">
@@ -94,6 +106,12 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 <option value="returned_for_correction" {% if selected_status == 'returned_for_correction' %}selected{% endif %}>Returned</option>
 </select>
 </div>
+
+</div>
+<footer class="edify-filter-drawer__footer">
+<button type="button" class="btn btn-primary h-10" @click="$refs.advancedFilters.close()">Apply filters</button>
+</footer>
+</dialog>
 
 {% comment %}Clear Filters — shown only when a filter is actually active, so
 the control never occupies space it has not earned. Server-rendered rather

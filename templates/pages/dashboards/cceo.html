@@ -6,8 +6,31 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
+{% include "components/mobile_role_home.html" with eyebrow="Field execution" headline="Your day, in priority order" description="Finish overdue work first, then move into today's visits and cluster activities." period_label=today|date:"D, j M" status_label=week_plan_total|add:"0" primary_action=mobile_primary_action %}
+
+<div class="mobile-home-only">
+  <section class="mobile-home-section" aria-labelledby="cceo-mobile-next-title">
+    <div class="mobile-home-section__header">
+      <h2 id="cceo-mobile-next-title">Do next</h2>
+      <a href="/my-plan">Open full plan</a>
+    </div>
+    <div class="mobile-home-stack">
+      {% for item in overdue_last_week|slice:":3" %}
+        {% include "components/mobile_agenda_card.html" with item=item %}
+      {% empty %}
+        {% for item in school_visits_week|slice:":3" %}
+          {% include "components/mobile_agenda_card.html" with item=item %}
+        {% empty %}
+          <div class="edify-empty-state"><strong>No urgent field work</strong><span>Your next scheduled activity will appear here.</span></div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </section>
+  {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Week at a glance" %}
+</div>
+
 <!-- ================= TOP HEADER BAR ================= -->
-<div class="edify-page-header">
+<div class="edify-page-header mobile-home-hide">
   <div class="edify-page-header__lead">
     <h1 class="edify-page-title edify-page-header__title">Good morning, {{ user_name }} <span class="inline-block"></span></h1>
     <p class="edify-page-header__description">Here's your plan for today. Stay focused, drive impact.</p>
@@ -19,7 +42,7 @@
 
 
 <!-- Unified KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+<div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
 
 <!-- Owner-scoped urgent-school decisions -->
 <section id="urgent-schools" class="card overflow-hidden scroll-mt-20" aria-labelledby="urgent-schools-title">
@@ -37,7 +60,7 @@
 
 
 <!-- ================= MAIN DASHBOARD CONTENT ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mobile-home-deferred">
 
   <!-- THIS WEEK'S PLAN (Col Span 8) -->
   <div class="lg:col-span-12 space-y-5">

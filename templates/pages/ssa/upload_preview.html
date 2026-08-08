@@ -3,7 +3,7 @@
 {% block title %}SSA Upload Preview — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ tab: 'ready' }">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ tab: 'ready' }" data-mobile-family="upload">
 
 <!-- Header -->
 <div class="edify-page-header">
@@ -26,25 +26,22 @@ Confirm Import ({{ ready_count }} ready)
 </div>
 
 <!-- Tabs Navigation -->
-<div class="flex border-b  gap-4">
-<button
+<div data-edify-tablist class="flex">
+<button data-edify-tab type="button"
 @click="tab = 'ready'"
-class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
-:class="tab === 'ready' ? 'edify-primary-border edify-primary-text' : 'border-transparent text-slate-500 hover:text-slate-600'"
+:aria-pressed="tab === 'ready'"
 >
 Ready to Import ({{ ready_count }})
 </button>
-<button
+<button data-edify-tab type="button"
 @click="tab = 'unmatched'"
-class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
-:class="tab === 'unmatched' ? 'border-amber-500 text-amber-500' : 'border-transparent text-slate-500 hover:text-slate-600'"
+:aria-pressed="tab === 'unmatched'"
 >
 Unmatched School IDs ({{ unmatched_count }})
 </button>
-<button
+<button data-edify-tab type="button"
 @click="tab = 'blocked'"
-class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
-:class="tab === 'blocked' ? 'border-rose-600 text-rose-600' : 'border-transparent text-slate-500 hover:text-slate-600'"
+:aria-pressed="tab === 'blocked'"
 >
 Blocked Rows ({{ blocked_count }})
 </button>

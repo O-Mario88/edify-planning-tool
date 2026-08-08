@@ -21,7 +21,7 @@
     <span>Declined <strong class="tabular-nums {% if counts.declined %}text-rose-600{% else %}text-slate-700{% endif %}">{{ counts.declined }}</strong></span>
   </div>
 
-  <form method="get" class="card p-3 flex flex-wrap items-end gap-2.5">
+  <form method="get" class="edify-filter-bar" aria-label="Policy compliance filters">
     <label class="flex flex-col gap-1">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Policy</span>
       <select name="document" class="h-8 px-2 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface">

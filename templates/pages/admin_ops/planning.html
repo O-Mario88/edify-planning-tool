@@ -7,7 +7,7 @@
 
   {% include "pages/admin_ops/_header.html" with page_title="Admin Planning" page_purpose="Platform work that is not yet scheduled: maintenance, incidents, support, security, performance, data repair, features and releases. Scheduling an item moves it into Admin My Plan." %}
 
-  <div class="legacy-kpi-strip grid grid-cols-3 gap-3" aria-label="Planning backlog summary">
+  <div class="edify-kpi-strip grid grid-cols-3 gap-3" aria-label="Planning backlog summary">
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Unscheduled Work</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ backlog|length }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Open Incidents</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ open_incidents|length }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Tickets Awaiting Triage</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ untriaged_tickets|length }}</p></div>

@@ -24,25 +24,30 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
       </div>
     </details>
     <a class="btn h-9 inline-flex items-center"
-       href="/team-planning-oversight/export?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if team_member %}&team_member={{ team_member }}{% endif %}&tab={{ tab }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
+       href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
     </a>
   </div>
 
-  {# ── Own work kept apart from the team's ──────────────────────────────── #}
-  <nav class="edify-section-nav" aria-label="Planned work">
+  {# ── People are the navigation; workflow status stays in the rows. ───── #}
+  <nav class="oversight-entity-tabs" aria-label="Team members">
     {% for entry in tabs %}
-    <a href="?tab={{ entry.key }}&fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if team_member %}&team_member={{ team_member }}{% endif %}"
-       hx-get="/team-planning-oversight/?tab={{ entry.key }}&fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if team_member %}&team_member={{ team_member }}{% endif %}"
-       hx-target="#oversight-workspace"
-       hx-swap="innerHTML"
-       hx-push-url="true"
-       class="edify-section-nav__link{% if entry.is_active %} is-active{% endif %}"
+    <a href="?owner={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+       class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
        {% if entry.is_active %}aria-current="page"{% endif %}>
-      {{ entry.label }} ({{ entry.count }})
+      <span>{{ entry.label }}</span>
+      <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
     </a>
     {% endfor %}
   </nav>
+
+  <div class="oversight-selection-heading">
+    <div>
+      <p class="edify-page-eyebrow">Selected owner</p>
+      <h2 class="edify-section-heading">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
+    </div>
+    <span class="pill pill-neutral">{{ period_label }}</span>
+  </div>
 
   {# ── The rows, grouped by the person answerable for them ──────────────── #}
   {% if groups %}

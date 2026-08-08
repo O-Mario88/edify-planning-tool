@@ -138,13 +138,66 @@ class RouteAccessTest(OversightPageFixture):
         """Supervising a team is not a country remit."""
         self.assertNotEqual(self.as_user(self.pl_user).get(CD_URL).status_code, 200)
 
-    def test_a_country_director_cannot_open_the_team_page(self):
-        self.assertNotEqual(self.as_user(self.cd_user).get(PL_URL).status_code, 200)
+    def test_a_country_director_opens_the_team_page_grouped_by_program_lead(self):
+        response = self.as_user(self.cd_user).get(PL_URL)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Programme Lead teams")
+        self.assertContains(response, "Team Lead")
+        self.assertContains(response, "Other Lead")
 
 
 class ScopeTest(OversightPageFixture):
-    def test_the_page_shows_supervised_work_and_not_another_team(self):
+    def test_programme_lead_tabs_are_people_not_workflow_statuses(self):
         body = self.as_user(self.pl_user).get(PL_URL).content.decode()
+
+        self.assertIn("My Work", body)
+        self.assertIn("James", body)
+        for removed in (
+            "All Planned Work",
+            "Partner Work",
+            "Needs Attention",
+            ">Completed<",
+        ):
+            with self.subTest(removed=removed):
+                self.assertNotIn(removed, body)
+
+    def test_selecting_a_cceo_opens_staff_and_partner_work_they_manage(self):
+        body = (
+            self.as_user(self.pl_user)
+            .get(PL_URL, {"owner": self.james.id})
+            .content.decode()
+        )
+
+        self.assertIn("Selected owner", body)
+        self.assertIn("Alpha Primary", body)
+        self.assertNotIn("Rival Primary", body)
+
+    def test_period_control_offers_week_month_quarter_and_fy(self):
+        body = self.as_user(self.pl_user).get(PL_URL).content.decode()
+
+        self.assertIn('name="period"', body)
+        self.assertIn('type="week"', body)
+        for value in ("week", "month", "quarter", "fy"):
+            with self.subTest(value=value):
+                self.assertIn(f'<option value="{value}"', body)
+
+    def test_week_period_reaches_the_selected_cceo_rows(self):
+        week = self.james_activity.planned_date.strftime("%G-W%V")
+        response = self.as_user(self.pl_user).get(
+            PL_URL,
+            {"owner": self.james.id, "period": "week", "week": week},
+        )
+
+        self.assertEqual(response.context["period"], "week")
+        self.assertContains(response, "Alpha Primary")
+
+    def test_the_page_shows_supervised_work_and_not_another_team(self):
+        body = (
+            self.as_user(self.pl_user)
+            .get(PL_URL, {"owner": self.james.id})
+            .content.decode()
+        )
 
         self.assertIn("Alpha Primary", body)
         self.assertNotIn("Rival Primary", body)
@@ -180,7 +233,11 @@ class ReadOnlyTest(OversightPageFixture):
     )
 
     def test_the_page_offers_no_control_that_changes_supervised_work(self):
-        body = self.as_user(self.pl_user).get(PL_URL).content.decode()
+        body = (
+            self.as_user(self.pl_user)
+            .get(PL_URL, {"owner": self.james.id})
+            .content.decode()
+        )
 
         for marker in self.MUTATION_MARKERS:
             route = marker.format(id=self.james_activity.id)
@@ -225,13 +282,21 @@ class MoneyOnThePageTest(OversightPageFixture):
             status="assigned",
         )
 
-        body = self.as_user(self.pl_user).get(PL_URL).content.decode()
+        body = (
+            self.as_user(self.pl_user)
+            .get(PL_URL, {"owner": self.james.id})
+            .content.decode()
+        )
 
         self.assertIn("Partner yet to schedule", body)
         self.assertIn("UGX 0", body)
 
     def test_the_headline_budget_equals_the_cost_lines_in_scope(self):
-        body = self.as_user(self.pl_user).get(PL_URL).content.decode()
+        body = (
+            self.as_user(self.pl_user)
+            .get(PL_URL, {"owner": self.james.id})
+            .content.decode()
+        )
 
         # James's activity is the only costed work in this PL's scope.
         self.assertIn("UGX 75,000", body)

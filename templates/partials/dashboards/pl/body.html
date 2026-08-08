@@ -2,7 +2,9 @@
 <div class="pl-dashboard-stack space-y-4">
 
   {# ── KPI strip ──────────────────────────────────────────────────────── #}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead_dashboard" %}
+  <div class="mobile-home-hide">
+    {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead_dashboard" %}
+  </div>
 
   {# ── Leadership Attention ───────────────────────────────────────────── #}
   {% if leadership_attention %}
@@ -45,6 +47,10 @@
     </div>
   </div>
   {% endif %}
+
+  <div class="mobile-home-only">
+    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Team pulse" drilldown_mode="program_lead_dashboard" %}
+  </div>
 
   {# ── Team Performance + Personal Targets ────────────────────────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
@@ -204,7 +210,7 @@
         { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
         { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
       ],
-      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
+      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
       stroke: { width: [0,0,0,2.25], curve: 'straight' },
       colors: window.EdifyChartSystem.mixedSeries,
       fill: { opacity: [1, 1, 1, 1] },

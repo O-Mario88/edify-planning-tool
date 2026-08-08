@@ -1,0 +1,25 @@
+{% comment %}
+Shared task/calendar card. Canonical keys are title, eyebrow/type_label,
+time/date_label, location, status, status_tone, url/action_url and action_label.
+The firstof fallbacks let existing server-owned queue dictionaries adopt the
+card without manufacturing a second presentation-only data model.
+{% endcomment %}
+<article class="mobile-agenda-card{% if item.status_tone %} mobile-agenda-card--{{ item.status_tone }}{% endif %}" data-mobile-agenda-card>
+  <span class="mobile-agenda-card__rail" aria-hidden="true"></span>
+  <div class="mobile-agenda-card__time">
+    {% if item.time or item.day %}<strong>{% firstof item.time item.day %}</strong>{% endif %}
+    {% if item.date_label or item.date or item.due or item.planned_date %}<small>{% firstof item.date_label item.date item.due item.planned_date %}</small>{% endif %}
+  </div>
+  <div class="mobile-agenda-card__body">
+    {% if item.eyebrow or item.type_label %}<p>{% firstof item.eyebrow item.type_label %}</p>{% endif %}
+    <h3>{% firstof item.title item.activity item.school item.cluster "Activity" %}</h3>
+    {% if item.location or item.where or item.district or item.purpose or item.desc %}<small>{% firstof item.location item.where item.district item.purpose item.desc %}</small>{% endif %}
+    {% if item.status %}<span class="mobile-agenda-card__status">{{ item.status }}</span>{% endif %}
+  </div>
+  {% if item.action_url or item.url %}
+  <a href="{% firstof item.action_url item.url %}" class="mobile-agenda-card__action" data-mobile-action="agenda-action">
+    <span class="sr-only">{% firstof item.action_label "Open" %} {% firstof item.title item.activity item.school item.cluster "activity" %}</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+  </a>
+  {% endif %}
+</article>

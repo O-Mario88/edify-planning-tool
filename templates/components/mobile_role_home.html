@@ -1,0 +1,24 @@
+{% comment %}
+Opening anatomy for a task-first role home. Page templates provide headline,
+description, primary action and optional period/status. The operational queue
+remains page-owned and follows this component in DOM/focus order.
+{% endcomment %}
+<header class="mobile-role-home edify-page-header" data-mobile-role-home>
+  <div class="mobile-role-home__copy">
+    {% if eyebrow %}<p>{{ eyebrow }}</p>{% endif %}
+    <h1>{{ headline }}</h1>
+    {% if description %}<span>{{ description }}</span>{% endif %}
+  </div>
+  {% if period_label or status_label %}
+  <div class="mobile-role-home__context">
+    {% if period_label %}<span>{{ period_label }}</span>{% endif %}
+    {% if status_label %}<strong>{{ status_label }}</strong>{% endif %}
+  </div>
+  {% endif %}
+  {% if primary_action %}
+  <a href="{{ primary_action.url }}" class="mobile-role-home__action" data-mobile-primary-action data-mobile-action="role-home-primary">
+    <span>{{ primary_action.label }}</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+  </a>
+  {% endif %}
+</header>

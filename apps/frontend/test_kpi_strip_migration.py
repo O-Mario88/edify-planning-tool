@@ -49,7 +49,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/partials/fund_requests/monthly_preview.html",
             "templates/partials/targets/my_body.html",
         ):
-            self.assertIn("legacy-kpi-strip", _read(template), template)
+            self.assertIn("edify-kpi-strip", _read(template), template)
 
     def test_specialised_workspaces_use_the_shared_component_not_an_adapter(self):
         migrated = (

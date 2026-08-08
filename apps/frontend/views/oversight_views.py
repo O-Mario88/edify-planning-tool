@@ -10,6 +10,8 @@ through the canonical TeamAction workflow rather than touching the activity.
 
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta
+
 from django.shortcuts import render
 from django.utils.html import escape
 from django.views.decorators.http import require_POST
@@ -152,85 +154,172 @@ def _kpi_items(summary, *, country: bool) -> list[dict]:
 
 
 def _period_filters(request) -> dict:
-    """Financial year, month and quarter, read the same way on both pages."""
+    """One explicit oversight period, shared by every page and export."""
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    raw_period = (request.GET.get("period") or "").strip().lower()
     raw_month = (request.GET.get("month") or "").strip()
     month = (
         int(raw_month) if raw_month.isdigit() and 1 <= int(raw_month) <= 12 else None
     )
-    quarter = (request.GET.get("quarter") or "").strip() or None
-    return {"fy": fy, "month": month, "quarter": quarter}
+    raw_quarter = (request.GET.get("quarter") or "").strip().upper()
+    quarter = raw_quarter if raw_quarter in {"Q1", "Q2", "Q3", "Q4"} else None
+
+    # Existing month/quarter URLs keep their meaning. New links state the
+    # period explicitly so only one temporal lens is active at a time.
+    period = raw_period if raw_period in {"week", "month", "quarter", "fy"} else ""
+    if not period:
+        period = "month" if month else "quarter" if quarter else "fy"
+
+    from apps.core.fy import get_fy_date_range, get_quarter_for_date
+
+    today = date.today()
+    fy_start, _ = get_fy_date_range(fy)
+    reference = today if get_operational_fy(today) == fy else fy_start.date()
+    raw_week = (request.GET.get("week") or "").strip() or reference.strftime("%G-W%V")
+    try:
+        week_start = datetime.strptime(f"{raw_week}-1", "%G-W%V-%u").date()
+    except ValueError:
+        raw_week = reference.strftime("%G-W%V")
+        week_start = datetime.strptime(f"{raw_week}-1", "%G-W%V-%u").date()
+
+    if month is None:
+        month = reference.month
+    if quarter is None:
+        quarter = get_quarter_for_date(reference)
+
+    date_start = week_start if period == "week" else None
+    date_end = week_start + timedelta(days=7) if period == "week" else None
+    active_month = month if period == "month" else None
+    active_quarter = quarter if period == "quarter" else None
+    period_label = {
+        "week": f"Week of {week_start:%d %b %Y}",
+        "month": datetime(2000, month, 1).strftime("%B") + f" · FY {fy}",
+        "quarter": f"{quarter} · FY {fy}",
+        "fy": f"FY {fy}",
+    }[period]
+    return {
+        "fy": fy,
+        "period": period,
+        "week": raw_week,
+        "month": active_month,
+        "selected_month": month,
+        "quarter": active_quarter,
+        "selected_quarter": quarter,
+        "date_start": date_start,
+        "date_end": date_end,
+        "period_label": period_label,
+    }
+
+
+def _service_period(period: dict) -> dict:
+    """Only the fields understood by the read services."""
+    return {
+        "fy": period["fy"],
+        "month": period["month"],
+        "quarter": period["quarter"],
+        "date_start": period["date_start"],
+        "date_end": period["date_end"],
+    }
 
 
 # ── Program Lead ─────────────────────────────────────────────────────────────
-# The tabs are backend-filtered datasets, not decoration: each one is a real
-# subset of the same item list, so a count on a tab and the rows behind it
-# cannot disagree.
-PL_TABS = (
-    ("all", "All Planned Work"),
-    ("mine", "My Work"),
-    ("cceo", "CCEO Work"),
-    ("partner", "Partner Work"),
-    ("attention", "Needs Attention"),
-    ("completed", "Completed"),
-)
+def _items_owned_by(items, owner_ids) -> list:
+    """Staff and partner work attributed to one person, in either id space."""
+    ids = {value for value in owner_ids if value}
+    return [
+        item
+        for item in items
+        if item.operational_owner_id in ids
+        or item.managing_staff_id in ids
+        or item.planned_by_id in ids
+    ]
 
 
-def _apply_pl_tab(split, items, tab):
-    if tab == "mine":
-        return split["own"]
-    if tab == "cceo":
-        return split["cceo"]
-    if tab == "partner":
-        return split["partner"]
-    if tab == "attention":
-        return [i for i in items if i.at_risk or i.cost_missing]
-    if tab == "completed":
-        return [i for i in items if i.is_completed]
-    return items
+def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list]:
+    members = _team_members(scope)
+    own_items = _items_owned_by(items, scope.own_ids)
+    tabs = [
+        {
+            "key": "mine",
+            "label": "My Work",
+            "count": len(own_items),
+            "items": own_items,
+        }
+    ]
+    for member in members:
+        member_items = _items_owned_by(items, member["owner_ids"])
+        tabs.append(
+            {
+                "key": member["id"],
+                "label": member["name"],
+                "count": len(member_items),
+                "items": member_items,
+            }
+        )
+    active = next((entry for entry in tabs if entry["key"] == selected), tabs[0])
+    for entry in tabs:
+        entry["is_active"] = entry is active
+    return tabs, active["key"], active["items"]
+
+
+def _program_lead_tabs(items, selected: str | None) -> tuple[list[dict], str, list]:
+    buckets: dict[tuple[str, str], list] = {}
+    for item in items:
+        key = item.supervising_pl_id or "unassigned"
+        label = item.supervising_pl_name or "Unassigned"
+        buckets.setdefault((key, label), []).append(item)
+    tabs = [
+        {
+            "key": key,
+            "label": label,
+            "count": len(group_items),
+            "items": group_items,
+        }
+        for (key, label), group_items in sorted(
+            buckets.items(),
+            key=lambda entry: (entry[0][1] == "Unassigned", entry[0][1]),
+        )
+    ]
+    if not tabs:
+        return [], "", []
+    active = next((entry for entry in tabs if entry["key"] == selected), tabs[0])
+    for entry in tabs:
+        entry["is_active"] = entry is active
+    return tabs, active["key"], active["items"]
 
 
 @require_page_permission("team_planning_oversight")
 def team_planning_oversight_view(request):
     """What my team has planned, who executes it, and where I must intervene."""
     period = _period_filters(request)
-    staff_id = (request.GET.get("team_member") or "").strip() or None
-    tab = (request.GET.get("tab") or "all").strip()
-    if tab not in dict(PL_TABS):
-        tab = "all"
-
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
     items = oversight.build_items(
-        request.user, staff_id=staff_id, filters=advanced, **period
+        request.user, filters=advanced, **_service_period(period)
     )
-    split = oversight.split_own_and_team(items, scope)
-    visible = _apply_pl_tab(split, items, tab)
+    country_lens = scope.is_country
+    selected = (
+        (request.GET.get("program_lead") or "").strip()
+        if country_lens
+        else (request.GET.get("owner") or "mine").strip()
+    )
+    if country_lens:
+        tabs, selected, visible = _program_lead_tabs(items, selected)
+    else:
+        tabs, selected, visible = _team_owner_tabs(scope, items, selected)
 
-    # Each tab carries its own count, built from the same fold that produces
-    # the rows behind it — so a tab badge and its table are one number.
-    tabs = [
-        {
-            "key": key,
-            "label": label,
-            "count": len(_apply_pl_tab(split, items, key)),
-            "is_active": key == tab,
-        }
-        for key, label in PL_TABS
-    ]
-
-    summary = oversight.summarize(items)
+    summary = oversight.summarize(visible)
     context = {
         **period,
-        "tab": tab,
+        "country_lens": country_lens,
+        "is_team_lens": not country_lens,
         "tabs": tabs,
-        "team_member": staff_id,
+        "owner": "" if country_lens else selected,
+        "program_lead": selected if country_lens else "",
         "summary": summary,
-        "kpis": _kpi_items(summary, country=False),
-        "visible_summary": oversight.summarize(visible),
+        "kpis": _kpi_items(summary, country=country_lens),
+        "visible_summary": summary,
         "groups": oversight.group_by_owner(visible),
-        "split": split,
-        "team_members": _team_members(scope),
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
@@ -248,7 +337,12 @@ def team_planning_oversight_view(request):
     }
 
     if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/oversight/pl_workspace.html", context)
+        template = (
+            "partials/oversight/team_country_workspace.html"
+            if country_lens
+            else "partials/oversight/pl_workspace.html"
+        )
+        return render(request, template, context)
     return render(request, "pages/oversight/team_planning.html", context)
 
 
@@ -257,16 +351,24 @@ def _team_members(scope) -> list[dict]:
     if scope.is_country or not scope.supervised_ids:
         return []
     from apps.accounts.models import StaffProfile
+    from apps.core.rbac import EdifyRole
+
+    from django.db.models import Q
 
     rows = (
-        StaffProfile.objects.filter(id__in=scope.supervised_ids)
+        StaffProfile.objects.filter(
+            Q(id__in=scope.supervised_ids) | Q(user_id__in=scope.supervised_ids),
+            user__active_role=EdifyRole.CCEO.value,
+        )
         .select_related("user")
+        .distinct()
         .order_by("user__name")
     )
     return [
         {
             "id": p.id,
             "name": getattr(p.user, "name", "") or getattr(p.user, "email", ""),
+            "owner_ids": {p.id, p.user_id},
         }
         for p in rows
     ]
@@ -287,7 +389,10 @@ def country_planning_oversight_view(request):
 
     advanced = oversight.read_filters(request)
     items = oversight.build_items(
-        request.user, program_lead_id=program_lead_id, filters=advanced, **period
+        request.user,
+        program_lead_id=program_lead_id,
+        filters=advanced,
+        **_service_period(period),
     )
 
     summary = oversight.summarize(items)
@@ -337,7 +442,9 @@ def country_planning_send_action_view(request):
     period = _period_filters(request)
 
     items = oversight.build_items(
-        request.user, program_lead_id=program_lead_id, **period
+        request.user,
+        program_lead_id=program_lead_id,
+        **_service_period(period),
     )
     if not items:
         return _action_response(
@@ -471,12 +578,17 @@ def team_planning_export_view(request):
         request.user,
         staff_id=(request.GET.get("team_member") or "").strip() or None,
         filters=oversight.read_filters(request),
-        **period,
+        **_service_period(period),
     )
     scope = oversight.resolve_oversight_scope(request.user)
-    split = oversight.split_own_and_team(items, scope)
-    tab = (request.GET.get("tab") or "all").strip()
-    visible = _apply_pl_tab(split, items, tab if tab in dict(PL_TABS) else "all")
+    if scope.is_country:
+        _, _, visible = _program_lead_tabs(
+            items, (request.GET.get("program_lead") or "").strip()
+        )
+    else:
+        _, _, visible = _team_owner_tabs(
+            scope, items, (request.GET.get("owner") or "mine").strip()
+        )
     return _export_response(visible, f"team-planning-oversight-{period['fy']}.csv")
 
 
@@ -489,7 +601,7 @@ def country_planning_export_view(request):
         request.user,
         program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
         filters=oversight.read_filters(request),
-        **period,
+        **_service_period(period),
     )
     return _export_response(items, f"country-planning-oversight-{period['fy']}.csv")
 
@@ -702,7 +814,9 @@ def country_planning_team_view(request, staff_id: str):
     than by trusting the id in the URL to be one the caller may read.
     """
     period = _period_filters(request)
-    items = oversight.build_items(request.user, program_lead_id=staff_id, **period)
+    items = oversight.build_items(
+        request.user, program_lead_id=staff_id, **_service_period(period)
+    )
 
     return render(
         request,
@@ -726,25 +840,61 @@ def partner_oversight_view(request):
     from apps.planning import partner_oversight_service as partner_oversight
 
     period = _period_filters(request)
-    partner_id = (request.GET.get("partner") or "").strip() or None
+    requested_partner = (request.GET.get("partner") or "all").strip() or "all"
+    requested_pl = (request.GET.get("program_lead") or "").strip()
 
     # Built for the whole period, then narrowed in Python. The dropdown's
     # options have to come from the unfiltered set: derived from the filtered
     # one, choosing a partner would collapse the list to that partner and
     # leave no way back to any other.
-    all_items = partner_oversight.build_items(
-        request.user, fy=period["fy"], month=period["month"]
+    all_items = partner_oversight.build_items(request.user, **_service_period(period))
+    country_lens = _partner_scope(request.user)["is_country"]
+    if country_lens:
+        program_lead_tabs, requested_pl, team_items = _program_lead_tabs(
+            all_items, requested_pl
+        )
+    else:
+        program_lead_tabs, team_items = [], all_items
+
+    partner_pairs = sorted(
+        {(i.partner_id, i.partner_name) for i in team_items if i.partner_id},
+        key=lambda pair: pair[1],
     )
+    partner_tabs = [
+        {
+            "key": "all",
+            "label": "All Partners",
+            "count": len(team_items),
+        }
+    ] + [
+        {
+            "key": partner_id,
+            "label": partner_name,
+            "count": len([i for i in team_items if i.partner_id == partner_id]),
+        }
+        for partner_id, partner_name in partner_pairs
+    ]
+    active_partner = next(
+        (entry for entry in partner_tabs if entry["key"] == requested_partner),
+        partner_tabs[0],
+    )
+    for entry in partner_tabs:
+        entry["is_active"] = entry is active_partner
+    partner_id = active_partner["key"]
     items = (
-        [i for i in all_items if i.partner_id == partner_id]
-        if partner_id
-        else all_items
+        team_items
+        if partner_id == "all"
+        else [i for i in team_items if i.partner_id == partner_id]
     )
     summary = partner_oversight.summarize(items)
 
     context = {
         **period,
+        "country_lens": country_lens,
+        "program_lead": requested_pl,
+        "program_lead_tabs": program_lead_tabs,
         "partner": partner_id,
+        "partner_tabs": partner_tabs,
         "summary": summary,
         "kpis": _partner_kpis(summary),
         "groups": partner_oversight.group_by_partner(items),
@@ -752,10 +902,7 @@ def partner_oversight_view(request):
         # above the partner groups because a decision somebody is waiting on
         # outranks routine monitoring.
         "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
-        "partners": sorted(
-            {(i.partner_id, i.partner_name) for i in all_items if i.partner_id},
-            key=lambda pair: pair[1],
-        ),
+        "partners": partner_pairs,
         "fy_options": fy_options(),
     }
 
@@ -978,11 +1125,14 @@ def partner_oversight_export_view(request):
     from apps.planning import partner_oversight_service as partner_oversight
 
     period = _period_filters(request)
+    partner_id = (request.GET.get("partner") or "").strip() or None
+    if partner_id == "all":
+        partner_id = None
     items = partner_oversight.build_items(
         request.user,
-        fy=period["fy"],
-        month=period["month"],
-        partner_id=(request.GET.get("partner") or "").strip() or None,
+        partner_id=partner_id,
+        program_lead_id=(request.GET.get("program_lead") or "").strip() or None,
+        **_service_period(period),
     )
 
     class _Echo:

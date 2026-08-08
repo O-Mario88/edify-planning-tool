@@ -1,0 +1,703 @@
+/* Edify mobile micro-interaction contract.
+ *
+ * This layer is intentionally shell-scoped rather than page-family-scoped:
+ * controls, pagination, forms, tables, feedback and focus behavior are basic
+ * product ergonomics, not an optional page treatment. Page-specific CSS can
+ * still specialize color and layout without shrinking the usable target.
+ */
+
+.edify-visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.edify-workspace :where(a, button, input, select, textarea, summary, [role="button"], [role="tab"]):focus-visible,
+.edify-bottom-nav :where(a, button):focus-visible {
+  outline: 3px solid var(--edify-accent);
+  outline-offset: 3px;
+}
+
+.edify-workspace :where(input, select, textarea):user-invalid {
+  border-color: var(--edify-danger) !important;
+  outline: 2px solid color-mix(in oklab, var(--edify-danger) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.edify-workspace :where(button, [role="button"], a[aria-disabled="true"]):disabled,
+.edify-workspace :where(button, [role="button"], a)[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.edify-workspace :where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: var(--edify-accent);
+}
+
+.edify-workspace :where(.edify-empty-state, [data-empty-state], .edify-mobile-table__empty) {
+  min-block-size: 8rem;
+  padding: 1.25rem;
+  border: 1px dashed var(--edify-border-strong);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  text-align: center;
+}
+
+.edify-workspace :where(.edify-empty-state, [data-empty-state]) > :first-child {
+  color: var(--edify-text);
+}
+
+/* Horizontally complex tables keep their real table anatomy. The region is
+   keyboard focusable and labelled by the enhancer; shadows are only shown
+   while more content exists in that direction. */
+.edify-table-scroll-region {
+  position: relative;
+  overflow: auto;
+  max-inline-size: 100%;
+  border-radius: var(--edify-radius-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--edify-border-strong) var(--edify-surface-muted);
+}
+
+.edify-table-scroll-region.can-scroll-inline-end {
+  box-shadow: inset -1rem 0 0.9rem -1rem var(--edify-text-muted);
+}
+
+.edify-table-scroll-region.can-scroll-inline-start {
+  box-shadow: inset 1rem 0 0.9rem -1rem var(--edify-text-muted);
+}
+
+.edify-mobile-table--scroll {
+  min-inline-size: max(44rem, 100%);
+}
+
+@media (max-width: 63.999rem) {
+  /* Buttons are controls even when their original utility classes describe a
+     32px desktop target. min-size lets long labels grow without clipping. */
+  .edify-workspace :where(button, [role="button"], summary, [role="tab"]),
+  .edify-workspace a:where(
+    .btn,
+    .edify-action-button,
+    .edify-primary-solid,
+    [role="button"],
+    [class~="h-8"],
+    [class~="h-9"],
+    [class~="min-h-8"],
+    [class~="min-h-9"]
+  ) {
+    min-block-size: 2.75rem !important;
+    min-inline-size: 2.75rem;
+  }
+
+  /* Text links are still touch controls. Keeping this rule workspace-scoped
+     gives compact dashboard actions the same target as buttons without
+     changing links in the desktop navigation or public pages. */
+  .edify-workspace a[href] {
+    display: inline-flex;
+    min-block-size: 2.75rem;
+    align-items: center;
+  }
+
+  #main-content.edify-workspace :where(
+    input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea
+  ) {
+    min-block-size: 2.75rem !important;
+    max-inline-size: 100%;
+    font-size: 16px !important;
+  }
+
+  .edify-workspace textarea {
+    resize: vertical;
+  }
+
+  .edify-workspace :where(label:has(input[type="checkbox"]), label:has(input[type="radio"])) {
+    display: flex;
+    min-block-size: 2.75rem;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .edify-workspace :where(input[type="checkbox"], input[type="radio"]) {
+    min-inline-size: 1.25rem;
+    min-block-size: 1.25rem;
+  }
+
+  /* Page-specific pagers and the shared pager both inherit the same target.
+     A current-page span has the same box as adjacent links for visual rhythm. */
+  .edify-workspace nav[aria-label*="page" i] :where(a, button, [aria-current="page"]),
+  .edify-workspace :where(.pagination, .pager) :where(a, button, [aria-current="page"]) {
+    display: inline-flex;
+    min-inline-size: 2.75rem !important;
+    min-block-size: 2.75rem !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .edify-workspace nav[aria-label*="page" i] {
+    align-items: flex-start;
+  }
+
+  .edify-workspace :where([role="tablist"], .edify-tabs, .tab-list) {
+    display: flex;
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  .edify-workspace :where([role="tablist"], .edify-tabs, .tab-list) > :where(a, button, [role="tab"]) {
+    min-block-size: 2.75rem !important;
+    flex: 0 0 auto;
+  }
+
+  /* The enhancer selects card mode only for simple data tables. Complex
+     matrices remain semantic scroll regions and never receive these rules. */
+  .edify-mobile-table--cards {
+    display: block !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    border-collapse: separate;
+  }
+
+  .edify-mobile-table--cards > caption {
+    display: block;
+  }
+
+  .edify-mobile-table--cards > thead {
+    position: absolute !important;
+    clip-path: inset(50%) !important;
+    overflow: hidden !important;
+    inline-size: 1px !important;
+    block-size: 1px !important;
+    white-space: nowrap !important;
+  }
+
+  .edify-mobile-table--cards > tbody,
+  .edify-mobile-table--cards > tbody > tr {
+    display: block !important;
+    inline-size: 100% !important;
+  }
+
+  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) {
+    margin-block: 0.7rem;
+    padding: 0.75rem;
+    border: 1px solid var(--edify-border) !important;
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface-raised);
+    box-shadow: var(--edify-shadow-xs);
+  }
+
+  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th) {
+    display: grid !important;
+    grid-template-columns: minmax(6.5rem, 0.85fr) minmax(0, 1.35fr);
+    min-block-size: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0 !important;
+    border-block-end: 1px solid var(--edify-border) !important;
+    overflow-wrap: anywhere;
+    text-align: start !important;
+  }
+
+  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th):last-child {
+    border-block-end: 0 !important;
+  }
+
+  .edify-mobile-table--cards [data-label]::before {
+    content: attr(data-label);
+    align-self: start;
+    color: var(--edify-text-muted);
+    font-size: var(--edify-text-micro-size);
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: start;
+  }
+
+  .edify-mobile-table--cards [data-record-title] {
+    color: var(--edify-text);
+    font-weight: 750;
+  }
+
+  .edify-mobile-table--cards [data-record-action] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .edify-mobile-table--cards [data-record-action]::before {
+    content: none;
+  }
+
+  .edify-mobile-table--cards [data-record-action] :where(a, button) {
+    min-block-size: 2.75rem !important;
+  }
+
+  .edify-mobile-table__empty-row {
+    display: block !important;
+  }
+
+  .edify-mobile-table__empty-row > td {
+    display: block !important;
+    inline-size: 100%;
+    margin-block: 0.75rem;
+  }
+
+  .edify-table-scroll-region {
+    padding-block-end: 0.35rem;
+  }
+
+  .edify-workspace [role="dialog"],
+  .edify-workspace [role="alertdialog"] {
+    max-block-size: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+.edify-workspace .edify-table-choice {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  min-block-size: 2.75rem;
+  min-inline-size: 2.75rem;
+}
+
+@media (pointer: coarse) {
+  .edify-workspace :where(button, [role="button"], summary, [role="tab"]),
+  .edify-workspace a:where(.btn, .edify-action-button, .edify-primary-solid, [role="button"]) {
+    min-block-size: 3rem;
+    min-inline-size: 3rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .edify-workspace :where(a, button, input, select, textarea, summary, [role="button"], [role="tab"]):focus-visible {
+    outline-color: Highlight;
+  }
+
+  .edify-mobile-table--cards > tbody > tr,
+  .edify-table-scroll-region {
+    border: 1px solid CanvasText !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-table-scroll-region,
+  .edify-mobile-table--cards * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Responsive density ----------------------------------------------------
+ * The first mobile pass used a 44–48px floor for every button and even every
+ * text link. On data-heavy directories that made two small actions taller
+ * than the record they belonged to, especially at tablet widths. This scale
+ * keeps controls comfortably above WCAG's 24px minimum while returning the
+ * interface to the compact rhythm expected of an operational workspace.
+ *
+ * List titles share the same contract across school, cluster, Planning,
+ * My Plan, oversight and enhanced table/card lists: smaller type, safe word
+ * wrapping, and no more than two visible lines on narrow screens. */
+@media (min-width: 64rem) {
+  :root:root:root {
+    --edify-action-button-block-size: 2rem;
+    --edify-action-button-padding-inline: 0.625rem;
+    --edify-action-button-icon-size: 0.875rem;
+    --edify-action-button-radius: var(--radius-control);
+    --edify-desktop-list-title-size: 0.9375rem;
+    --edify-desktop-list-icon-size: 2rem;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) {
+    block-size: var(--edify-action-button-block-size) !important;
+    height: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
+    gap: 0.35rem !important;
+    padding-block: 0 !important;
+    padding-inline: var(--edify-action-button-padding-inline) !important;
+    border-radius: var(--edify-action-button-radius) !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    [class~="h-8"],
+    [class~="h-9"],
+    [class~="min-h-8"],
+    [class~="min-h-9"]
+  ),
+  .edify-shell [role="tab"] {
+    block-size: var(--edify-action-button-block-size) !important;
+    height: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
+  }
+
+  .edify-shell [role="tab"] {
+    padding-block: 0 !important;
+    font-size: var(--edify-text-label-size) !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) svg,
+  .edify-shell :is(button, a):is([class~="h-8"], [class~="h-9"]) svg {
+    inline-size: var(--edify-action-button-icon-size) !important;
+    block-size: var(--edify-action-button-icon-size) !important;
+  }
+
+  .edify-shell :where(
+    .school-record-row__title,
+    [data-list-title],
+    [data-record-title]
+  ),
+  .edify-shell :where(ul, ol):not([role="tablist"]) > li :where(
+    h2,
+    h3,
+    h4,
+    p[class~="font-semibold"],
+    p[class~="font-bold"],
+    a[class~="font-semibold"],
+    a[class~="font-bold"]
+  ) {
+    overflow: hidden;
+    max-block-size: 2.6em;
+    overflow-wrap: anywhere;
+    font-size: var(--edify-desktop-list-title-size) !important;
+    line-height: 1.3 !important;
+  }
+
+  .edify-shell [data-mobile-family="directory"] [data-row-disclosure-summary] {
+    gap: 0.75rem !important;
+    padding: 0.625rem 0.875rem !important;
+  }
+
+  .school-record-row__summary--selectable {
+    grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+    column-gap: 0.625rem;
+  }
+
+  .school-record-row__select {
+    inline-size: 1.75rem;
+    block-size: var(--edify-desktop-list-icon-size);
+  }
+
+  .school-record-row__content {
+    grid-template-columns: var(--edify-desktop-list-icon-size) minmax(0, 1fr);
+    gap: 0.625rem;
+  }
+
+  .school-record-row__icon {
+    inline-size: var(--edify-desktop-list-icon-size);
+    block-size: var(--edify-desktop-list-icon-size);
+    border-radius: 0.625rem;
+  }
+
+  .school-record-row__icon svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  .school-record-row__actions {
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 63.999rem) {
+  :root:root:root {
+    --edify-action-button-block-size: 2.25rem;
+    --edify-action-button-padding-inline: 0.75rem;
+    --edify-action-button-icon-size: 0.9375rem;
+    --edify-action-button-radius: var(--radius-control);
+    --edify-mobile-list-title-size: 0.9375rem;
+    --edify-text-display-size: 1.5rem;
+    --edify-text-heading-size: 1.125rem;
+    --edify-text-title-size: 0.9375rem;
+    --edify-text-body-size: 0.875rem;
+    --edify-text-label-size: 0.8125rem;
+    --edify-text-card-heading-size: 1rem;
+    --edify-text-card-title-size: 0.9375rem;
+    --edify-text-tile-value-size: 1.125rem;
+    --edify-text-tile-label-size: 0.75rem;
+    --edify-text-tile-helper-size: 0.75rem;
+    --edify-text-table-size: 0.8125rem;
+  }
+
+  /* Bring legacy fixed-size utilities onto the same responsive type scale.
+   * Form controls are excluded so iOS keeps its zoom-safe input text size. */
+  .edify-shell :where(
+    .text-xs,
+    [class~="text-[12px]"],
+    [class~="text-[13px]"]
+  ):not(input, select, textarea) {
+    font-size: var(--edify-text-label-size) !important;
+  }
+
+  .edify-shell :where(
+    .text-sm,
+    [class~="text-[14px]"],
+    [class~="text-[15px]"]
+  ):not(input, select, textarea) {
+    font-size: var(--edify-text-body-size) !important;
+  }
+
+  .edify-shell :where(
+    .text-base,
+    [class~="text-[16px]"],
+    [class~="text-[17px]"]
+  ):not(input, select, textarea) {
+    font-size: var(--edify-text-title-size) !important;
+  }
+
+  .edify-shell :where(
+    .text-lg,
+    [class~="text-[18px]"],
+    [class~="text-[20px]"]
+  ):not(input, select, textarea) {
+    font-size: var(--edify-text-heading-size) !important;
+  }
+
+  .edify-shell :where(
+    .text-xl,
+    .text-2xl,
+    [class~="text-[21px]"],
+    [class~="text-[22px]"],
+    [class~="text-[24px]"]
+  ):not(input, select, textarea) {
+    font-size: var(--edify-text-display-size) !important;
+  }
+
+  .edify-shell :where(button, [role="button"], summary, [role="tab"]),
+  .edify-shell a:where(
+    .btn,
+    .edify-action-button,
+    .edify-primary-solid,
+    [role="button"],
+    [class~="h-8"],
+    [class~="h-9"],
+    [class~="min-h-8"],
+    [class~="min-h-9"]
+  ),
+  .edify-shell a[href] {
+    min-block-size: var(--edify-action-button-block-size) !important;
+    min-inline-size: var(--edify-action-button-block-size);
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) {
+    block-size: var(--edify-action-button-block-size) !important;
+    height: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
+    gap: 0.35rem !important;
+    padding-block: 0 !important;
+    padding-inline: var(--edify-action-button-padding-inline) !important;
+    border-radius: var(--edify-action-button-radius) !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    [class~="h-8"],
+    [class~="h-9"],
+    [class~="min-h-8"],
+    [class~="min-h-9"]
+  ) {
+    block-size: var(--edify-action-button-block-size) !important;
+    height: var(--edify-action-button-block-size) !important;
+  }
+
+  .edify-shell [role="tab"] {
+    block-size: var(--edify-action-button-block-size) !important;
+    height: var(--edify-action-button-block-size) !important;
+    min-block-size: var(--edify-action-button-block-size) !important;
+    padding-block: 0 !important;
+    font-size: var(--edify-text-label-size) !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) svg {
+    inline-size: var(--edify-action-button-icon-size) !important;
+    block-size: var(--edify-action-button-icon-size) !important;
+  }
+
+  .edify-shell :where(
+    .school-record-row__title,
+    [data-list-title]
+  ),
+  .edify-shell :where(ul, ol):not([role="tablist"]) > li :where(
+    h2,
+    h3,
+    h4,
+    p[class~="font-semibold"],
+    p[class~="font-bold"],
+    a[class~="font-semibold"],
+    a[class~="font-bold"]
+  ) {
+    display: -webkit-box;
+    overflow: hidden;
+    max-block-size: 2.6em;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
+    font-size: var(--edify-mobile-list-title-size) !important;
+    line-height: 1.3 !important;
+    text-wrap: wrap;
+  }
+
+  .edify-shell [data-record-title] {
+    overflow: hidden;
+    max-block-size: 2.6em;
+    overflow-wrap: anywhere;
+    font-size: var(--edify-mobile-list-title-size) !important;
+    line-height: 1.3 !important;
+  }
+
+  [data-mobile-family="directory"] [data-row-disclosure-summary] {
+    padding: 0.875rem !important;
+  }
+
+  .school-record-row__actions {
+    gap: 0.35rem;
+  }
+
+  .school-record-action {
+    padding-inline: 0.625rem !important;
+  }
+}
+
+@media (max-width: 36rem) {
+  :root:root:root {
+    --edify-action-button-block-size: 1.875rem;
+    --edify-action-button-padding-inline: 0.5rem;
+    --edify-action-button-icon-size: 0.75rem;
+    --edify-action-button-radius: var(--radius-control);
+    --edify-mobile-list-title-size: 0.875rem;
+    --edify-text-display-size: 1.375rem;
+    --edify-text-heading-size: 1rem;
+    --edify-text-title-size: 0.875rem;
+    --edify-text-body-size: 0.8125rem;
+    --edify-text-label-size: 0.75rem;
+    --edify-text-card-heading-size: 0.9375rem;
+    --edify-text-card-title-size: 0.875rem;
+    --edify-text-tile-value-size: 1rem;
+    --edify-text-table-size: 0.75rem;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) {
+    font-size: var(--edify-text-micro-size) !important;
+  }
+
+  [data-mobile-family="directory"] [data-row-disclosure-summary],
+  .school-record-row__summary {
+    gap: 0.625rem;
+    padding: 0.75rem !important;
+  }
+
+  .school-record-row__content {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .school-record-row__icon {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+  }
+
+  .school-record-row__actions,
+  .school-record-row__summary--selectable > .school-record-row__actions {
+    padding-inline-start: 2.8rem;
+  }
+}
+
+@media (max-width: 22.5rem) {
+  :root:root:root {
+    --edify-action-button-block-size: 1.75rem;
+    --edify-action-button-padding-inline: 0.45rem;
+    --edify-action-button-icon-size: 0.75rem;
+    --edify-action-button-radius: var(--radius-control);
+    --edify-mobile-list-title-size: 0.8125rem;
+    --edify-text-display-size: 1.25rem;
+    --edify-text-heading-size: 0.9375rem;
+    --edify-text-title-size: 0.8125rem;
+    --edify-text-body-size: 0.8125rem;
+    --edify-text-label-size: 0.75rem;
+    --edify-text-card-heading-size: 0.875rem;
+    --edify-text-card-title-size: 0.8125rem;
+    --edify-text-tile-value-size: 0.9375rem;
+  }
+
+  main > [data-mobile-family] {
+    padding-inline: 0.75rem !important;
+  }
+
+  .edify-shell :is(a, button, summary):is(
+    .btn,
+    .edify-action-button,
+    .btn-premium-primary,
+    .btn-premium-secondary,
+    .school-record-action,
+    .edify-primary-solid,
+    [role="button"]
+  ) {
+    font-size: var(--edify-text-micro-size) !important;
+  }
+
+  .school-record-row__content {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  .school-record-row__icon {
+    inline-size: 2rem;
+    block-size: 2rem;
+  }
+
+  .school-record-row__actions,
+  .school-record-row__summary--selectable > .school-record-row__actions {
+    padding-inline-start: 2.45rem;
+  }
+}

@@ -23,7 +23,7 @@
 {% else %}
 
 <!-- ── KPI strip: role-appropriate emphasis, one data source ─────────────── -->
-<section class="legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" aria-label="Visit effectiveness summary">
+<section class="edify-kpi-strip grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" aria-label="Visit effectiveness summary">
   <div class="edify-surface rounded-surface border border-slate-200 p-3">
     <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Comparable schools</p>
     <p class="text-[20px] font-bold edify-text">{{ d.cohort.comparable_schools }}</p>
@@ -206,14 +206,19 @@
 {% endif %}
 
 <!-- ── Method notes ──────────────────────────────────────────────────────── -->
-<section class="rounded-surface border border-slate-200 p-4 bg-slate-50/60">
-  <h2 class="text-[12px] font-bold uppercase tracking-wider edify-text-muted mb-2">How these numbers are computed</h2>
+<details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="visit-methodology">
+  <summary>
+    <span><strong>Methodology and limitations</strong><small>Comparison cohorts, exclusions and interpretation rules</small></span>
+    <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+  </summary>
+  <div class="analytics-evidence-disclosure__body">
   <ul class="space-y-1">
     {% for note in d.method_notes %}
     <li class="text-[12px] edify-text-muted">— {{ note }}</li>
     {% endfor %}
   </ul>
-</section>
+  </div>
+</details>
 
 {% endif %}
 </div>

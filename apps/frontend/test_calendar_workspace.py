@@ -82,6 +82,43 @@ class CalendarWorkspaceTest(TestCase):
         self.assertIn("Christmas Day", holiday_titles)
         self.assertNotIn("Presidential Inauguration", holiday_titles)
 
+    def test_mobile_calendar_places_connected_event_tabs_below_filters(self):
+        response = self.client.get(
+            "/calendar?year=2026&month=12&view=agenda&event_kind=holiday"
+        )
+        markup = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLess(
+            markup.index('class="calendar-workspace__filter-form'),
+            markup.index('class="calendar-workspace__filters"'),
+        )
+        self.assertLess(
+            markup.index('class="calendar-workspace__filters"'),
+            markup.index('class="calendar-mobile"'),
+        )
+        self.assertContains(response, 'class="calendar-mobile__month-grid"')
+        self.assertContains(response, "setEventFilter('holiday')")
+        self.assertContains(response, 'x-show="dayMatches(')
+        self.assertEqual(response.context["selected_event_kind"], "holiday")
+        self.assertIn("event_kind=holiday", response.context["next_qs"])
+        self.assertNotIn("event_kind", response.context["clear_qs"])
+
+    def test_mobile_calendar_days_expose_per_kind_counts(self):
+        PublicHoliday.objects.create(
+            name="Calendar mobile holiday", date=date(2026, 8, 8)
+        )
+
+        response = self.client.get("/calendar?year=2026&month=8")
+        agenda_day = next(
+            day
+            for day in response.context["agenda_days"]
+            if day["date"] == date(2026, 8, 8)
+        )
+
+        self.assertGreaterEqual(agenda_day["kind_counts"]["holiday"], 1)
+        self.assertEqual(agenda_day["kind_counts"]["all"], len(agenda_day["events"]))
+
     def test_government_can_add_a_one_off_inauguration_holiday(self):
         PublicHoliday.objects.create(
             name="Presidential Inauguration", date=date(2026, 5, 13)

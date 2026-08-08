@@ -1,0 +1,59 @@
+{% comment %}
+Accessible mobile filter sheet.
+
+Required context:
+  filter_sheet_id          unique dialog id
+  filter_content_template  include path containing the existing filter form
+
+Optional context:
+  filter_label             trigger/title label (default: Filters)
+  active_filter_count      applied filter count
+  filter_description       short guidance below the title
+
+The existing server-owned form is included unchanged. Native <dialog> owns
+focus containment and Escape; static/js/mobile-ux.js owns opening, focus
+return, and Safari's backdrop-dismiss fallback.
+{% endcomment %}
+<div class="mobile-filter-sheet lg:hidden" data-mobile-filter-sheet>
+  <button
+    type="button"
+    class="mobile-filter-sheet__trigger"
+    data-mobile-dialog-open="{{ filter_sheet_id }}"
+    data-mobile-action="open-filters"
+    aria-haspopup="dialog"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M7 12h10m-7 6h4" />
+    </svg>
+    <span>{{ filter_label|default:"Filters" }}</span>
+    {% if active_filter_count %}
+      <span class="mobile-filter-sheet__count" aria-label="{{ active_filter_count }} active filters">{{ active_filter_count }}</span>
+    {% endif %}
+  </button>
+
+  <dialog
+    id="{{ filter_sheet_id }}"
+    class="mobile-sheet"
+    closedby="any"
+    aria-labelledby="{{ filter_sheet_id }}-title"
+    data-mobile-sheet
+  >
+    <div class="mobile-sheet__surface">
+      <header class="mobile-sheet__header">
+        <div>
+          <h2 id="{{ filter_sheet_id }}-title">{{ filter_label|default:"Filters" }}</h2>
+          {% if filter_description %}<p>{{ filter_description }}</p>{% endif %}
+        </div>
+        <button type="button" class="mobile-sheet__close" data-mobile-dialog-close>
+          <span class="sr-only">Close {{ filter_label|default:"filters" }}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </header>
+      <div class="mobile-sheet__body">
+        {% include filter_content_template %}
+      </div>
+    </div>
+  </dialog>
+</div>

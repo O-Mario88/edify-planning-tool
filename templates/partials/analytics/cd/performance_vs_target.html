@@ -13,7 +13,7 @@
              { name: 'Completed Activities', type: 'column', data: {{ performance_vs_target.completed|escape }} },
              { name: 'Target Achievement %', type: 'line', data: {{ performance_vs_target.pct|escape }} }
            ],
-           chart: { height: 268, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif',
+           chart: { height: 268, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif',
                     events: { dataPointSelection: (e, ctx, cfg) => {
                       const m = cfg.dataPointIndex + 1;
                       window.htmx && window.htmx.ajax('GET',

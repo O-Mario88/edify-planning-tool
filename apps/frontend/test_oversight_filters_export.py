@@ -106,6 +106,7 @@ class FilterExportFixture(TestCase):
         return client
 
     def export_rows(self, **params):
+        params.setdefault("owner", self.james.id)
         response = self.as_pl().get(PL_EXPORT, params)
         self.assertEqual(response.status_code, 200)
         body = b"".join(response.streaming_content).decode()
@@ -129,9 +130,16 @@ class ExportScopeTest(FilterExportFixture):
 
         from apps.planning import oversight_service as svc
 
-        page_total = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))[
-            "planned_budget"
-        ]
+        page_items = svc.build_items(self.pl_user, fy=self.fy)
+        owner_ids = {self.james.id, self.james.user_id}
+        page_total = svc.summarize(
+            [
+                item
+                for item in page_items
+                if item.operational_owner_id in owner_ids
+                or item.managing_staff_id in owner_ids
+            ]
+        )["planned_budget"]
         self.assertEqual(exported_total, page_total)
 
     def test_the_export_names_every_attribution_column(self):
@@ -174,7 +182,14 @@ class FilterTest(FilterExportFixture):
     def test_an_applied_filter_changes_the_pages_totals_too(self):
         body = (
             self.as_pl()
-            .get(PL_URL, {"fy": self.fy, "activity_type": "training"})
+            .get(
+                PL_URL,
+                {
+                    "fy": self.fy,
+                    "owner": self.james.id,
+                    "activity_type": "training",
+                },
+            )
             .content.decode()
         )
 

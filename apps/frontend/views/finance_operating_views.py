@@ -321,6 +321,10 @@ def accountant_dashboard_view(request):
         "recon_stats": recon_stats,
         "analytics": finance_analytics,
         "fy": fy,
+        "mobile_primary_action": {
+            "label": "Open consolidated queue" if all_funds else "Create disbursement",
+            "url": "/disbursements" if all_funds else "/accounts/advances",
+        },
     }
     context["topbar_search"] = {
         "placeholder": "Search funds, people, activities…",

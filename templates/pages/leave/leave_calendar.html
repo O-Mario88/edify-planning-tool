@@ -2,10 +2,11 @@
 {% load static %}
 
 {% block title %}Team Availability Calendar — Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/fullcalendar.html" %}{% endblock %}
 
 {% block shell_content %}
 {% comment %}
-  FullCalendar is loaded once, globally, from base.html — self-hosted at
+  FullCalendar is loaded only for this calendar — self-hosted at
   6.1.11. This page used to pull 5.11.3 from a CDN on top of it, so two major
   versions of the same library raced to define window.FullCalendar and the
   winner depended on network timing.

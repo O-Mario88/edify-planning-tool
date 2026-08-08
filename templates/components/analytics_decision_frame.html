@@ -1,0 +1,32 @@
+{% comment %}
+Shared decision frame for every analytics surface. It answers the four trust
+questions a leader asks before acting on a chart: what decision is this page
+for, how current is it, what evidence is included, and how confident can I be?
+
+Usage:
+  {% include "components/analytics_decision_frame.html" with question="..." %}
+Optional: evidence, freshness, confidence, action_label, action_href.
+{% endcomment %}
+<aside class="analytics-decision-frame" aria-label="Decision and data context">
+  <div class="analytics-decision-frame__lead">
+    <span class="analytics-decision-frame__eyebrow">Decision frame</span>
+    <p class="analytics-decision-frame__question">{{ question }}</p>
+  </div>
+  <dl class="analytics-decision-frame__meta">
+    <div>
+      <dt>Evidence</dt>
+      <dd>{{ evidence|default:"Verified operational records" }}</dd>
+    </div>
+    <div>
+      <dt>Freshness</dt>
+      <dd>{{ freshness|default:"Live to current filters" }}</dd>
+    </div>
+    <div>
+      <dt>Confidence</dt>
+      <dd><span class="analytics-confidence-dot" aria-hidden="true"></span>{{ confidence|default:"Qualified" }}</dd>
+    </div>
+  </dl>
+  {% if action_href and action_label %}
+  <a class="analytics-decision-frame__action" href="{{ action_href }}">{{ action_label }}<span aria-hidden="true">→</span></a>
+  {% endif %}
+</aside>

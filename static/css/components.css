@@ -392,7 +392,7 @@ main .bg-white {
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
-/* Every workspace uses Geist Sans. Dark mode changes surfaces and contrast—not the
+/* Every workspace uses Inter Sans. Dark mode changes surfaces and contrast—not the
    product typeface—so moving between themes never changes the information
    density or visual language. */
 .theme-dark main h1,
@@ -620,14 +620,11 @@ main .pagination button:hover, main .pagination a:hover {
   justify-content: space-between;
   gap: var(--page-header-gap, 0.75rem);
   margin-bottom: clamp(1rem, 0.8rem + 0.6vw, 1.5rem);
-  /* The band bleeds outward by exactly its own inner padding plus its border,
-     so the title starts on the same vertical as the breadcrumb above it and
-     the cards below it. Without this the header is the one block on the page
-     whose text is inset, and it reads as an accidental indent rather than as
-     a band. Kept under the smallest page gutter (px-4 = 16px) so the bleed
-     eats into the gutter without ever reaching the viewport edge. */
-  margin-inline: calc(-1 * (var(--page-header-padding-x, 0.75rem) + 1px));
-  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 0.75rem);
+  /* The surface follows the page grid exactly. Its own consistent inner
+     gutter separates the title and controls from the card edge; the page
+     wrapper, not a negative margin, owns alignment with the body below. */
+  margin-inline: 0;
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem);
   border-radius: var(--page-header-radius, 12px);
   background: var(--page-header-surface);
   border: 1px solid var(--page-header-border);
@@ -1059,8 +1056,8 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 
 /* Budget category labels: distinguished in the dark header row by weight and
-   italic, on the platform's single UI font (Geist Sans). Serif was dropped to
-   satisfy the global Geist-only rule; the visual emphasis is preserved. */
+   italic, on the platform's single UI font (Inter Sans). Serif was dropped to
+   satisfy the global Inter-only rule; the visual emphasis is preserved. */
 .budget-category-name {
   font-style: italic !important;
   color: #ffffff !important;
@@ -1682,16 +1679,60 @@ select:not([multiple]):not(.select-native) {
   }
 }
 
-/* Phones never scroll a KPI strip horizontally. A single column gives labels
-   their full reading width and prevents narrow two-column cards from turning
-   one metric name into a stack of fragments. */
+/* Phones never scroll a KPI strip horizontally. Two compact tracks keep the
+   summary in the first viewport; labels get two balanced lines and the icon
+   yields. A single or odd final metric spans the row instead of leaving a
+   visual hole. */
 @media (max-width: 36rem) {
   .kpi-strip__grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem;
   }
 
   .kpi-strip__item {
     min-width: 0;
+    min-height: 5.75rem;
+    padding: 0.75rem;
+    justify-content: flex-start;
+  }
+
+  .kpi-strip__grid > .kpi-strip__item:only-child,
+  .kpi-strip__grid > .kpi-strip__item:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .kpi-strip__icon-container {
+    display: none;
+  }
+
+  .kpi-strip__item-body {
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .kpi-strip__label {
+    display: -webkit-box;
+    min-block-size: 2.4em;
+    margin-block-end: 0.25rem;
+    overflow: clip;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    text-overflow: clip;
+    text-wrap: balance;
+    white-space: normal;
+  }
+
+  .kpi-strip__value {
+    font-size: clamp(1.15rem, 1.05rem + 1.4vw, 1.45rem);
+  }
+
+  .kpi-strip__helper {
+    display: -webkit-box;
+    overflow: clip;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
@@ -1937,13 +1978,13 @@ select:not([multiple]):not(.select-native) {
   }
 
   .kpi-strip__item-body {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0;
   }
 
   .kpi-strip__item {
-    min-height: 8.25rem;
+    min-height: 5.75rem;
   }
 }
 
@@ -1994,6 +2035,68 @@ select:not([multiple]):not(.select-native) {
   scrollbar-width: thin;
 }
 
+.edify-section-nav__workspace {
+  display: grid;
+  gap: 2px;
+}
+
+.edify-section-nav__clusters {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-inline-size: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.edify-section-nav__clusters::-webkit-scrollbar {
+  display: none;
+}
+
+.edify-section-nav__cluster {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 34px;
+  padding-inline: 10px;
+  border-radius: var(--edify-radius-control);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.edify-section-nav__cluster:hover {
+  color: var(--edify-text);
+  background: var(--edify-surface-muted);
+}
+
+.edify-section-nav__cluster.is-active {
+  color: var(--edify-accent);
+  background: color-mix(in srgb, var(--edify-accent) 10%, transparent);
+}
+
+.edify-section-nav__cluster-count {
+  display: grid;
+  place-items: center;
+  min-inline-size: 19px;
+  block-size: 19px;
+  padding-inline: 4px;
+  border-radius: var(--edify-radius-pill);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1;
+}
+
+.edify-section-nav__inner--group {
+  gap: 3px;
+  min-block-size: 40px;
+  padding-inline-start: 0;
+}
+
 .edify-section-nav__eyebrow {
   flex: 0 0 auto;
   color: var(--brand-primary-text);
@@ -2037,6 +2140,27 @@ select:not([multiple]):not(.select-native) {
 /* Touch targets follow the platform's 44px floor. */
 @media (max-width: 48rem), (pointer: coarse) {
   .edify-section-nav__link { min-block-size: 44px; }
+  .edify-section-nav__cluster { min-block-size: 40px; }
+}
+
+@media (max-width: 48rem) {
+  .edify-section-nav__workspace {
+    gap: 0;
+  }
+
+  .edify-section-nav__clusters {
+    margin-inline: -2px;
+    padding-inline: 2px 18px;
+  }
+
+  .edify-section-nav__clusters .edify-section-nav__eyebrow,
+  .edify-section-nav__clusters .edify-section-nav__rule {
+    display: none;
+  }
+
+  .edify-section-nav__inner--group {
+    padding-inline-end: 18px;
+  }
 }
 
 .edify-section-nav__link:hover {

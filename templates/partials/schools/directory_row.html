@@ -1,5 +1,9 @@
 <li class="school-directory-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
-  <div class="school-record-row__summary">
+  <div
+    class="school-record-row__summary school-record-row__summary--selectable"
+    data-row-disclosure-summary
+    @click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
+  >
     <label class="school-record-row__select" for="select-school-{{ school.id }}">
       <input
         type="checkbox"
@@ -51,17 +55,20 @@
         <button
           type="button"
           class="school-record-action school-record-action--assign"
+          aria-label="Add {{ school.school_name }} to a cluster"
           hx-get="/schools/{{ school.id }}/add-to-cluster"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/></svg>
-          <span>Add to Cluster</span>
+          {% include "partials/schools/_cluster_action_icon.html" %}
+          <span class="school-record-action__label--full">Add to Cluster</span>
+          <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
         </button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" disabled>
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5.5h8M6.5 9.5h11M5 13.5h14M12 3v13m-3.5 3h7M12 16v6"/></svg>
-          <span>Add to Cluster</span>
+        <button type="button" class="school-record-action school-record-action--assign" aria-label="Add {{ school.school_name }} to a cluster unavailable" disabled>
+          {% include "partials/schools/_cluster_action_icon.html" %}
+          <span class="school-record-action__label--full">Add to Cluster</span>
+          <span class="school-record-action__label--compact" aria-hidden="true">Cluster</span>
         </button>
       {% endif %}
 
@@ -69,17 +76,20 @@
         <button
           type="button"
           class="school-record-action school-record-action--assign"
+          aria-label="Add {{ school.school_name }} to a project"
           hx-get="/schools/{{ school.id }}/assign-to-project"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 7.5h6l1.8 2h9.2v8.7a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8V7.5Zm0 0V5.8A1.8 1.8 0 0 1 5.3 4h4.2l1.8 2h7.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M12 12.5v4m-2-2h4"/></svg>
-          <span>Add to Project</span>
+          {% include "partials/schools/_project_action_icon.html" %}
+          <span class="school-record-action__label--full">Add to Project</span>
+          <span class="school-record-action__label--compact" aria-hidden="true">Project</span>
         </button>
       {% else %}
-        <button type="button" class="school-record-action school-record-action--assign" disabled>
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="2.7"/><path d="M3.5 19c.35-3.55 2.2-5.3 5.5-5.3 3.25 0 5.1 1.75 5.45 5.3"/></svg>
-          <span>Add to Project</span>
+        <button type="button" class="school-record-action school-record-action--assign" aria-label="Add {{ school.school_name }} to a project unavailable" disabled>
+          {% include "partials/schools/_project_action_icon.html" %}
+          <span class="school-record-action__label--full">Add to Project</span>
+          <span class="school-record-action__label--compact" aria-hidden="true">Project</span>
         </button>
       {% endif %}
     </div>

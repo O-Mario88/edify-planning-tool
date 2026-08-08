@@ -2,7 +2,7 @@
 {% load static %}
 
 <!-- KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+<div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
 
 <!-- Leadership Attention Alert Banner -->
 <div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
@@ -64,6 +64,10 @@
       </div>
     </a>
   </div>
+</div>
+
+<div class="mobile-home-only">
+  {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="People pulse" %}
 </div>
 
 <!-- Row 1: Workforce Overview Charts -->

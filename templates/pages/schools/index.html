@@ -13,6 +13,7 @@ bulkAssignProjectOpen: false,
 matchStaffOpen: false,
 addSchoolOpen: false
 }"
+data-mobile-family="directory"
 >
 <!-- Page Header -->
 <div class="edify-page-header">
@@ -75,6 +76,8 @@ addSchoolOpen: false
 {% endif %}
 
 <!-- Filters Bar -->
+<details class="mobile-family-filter" open>
+<summary><span>Directory filters</span><small>Fiscal year, district, ownership and status</small><span aria-hidden="true">⌄</span></summary>
 <div class="school-filter-canvas">
 <form
 id="filters-form"
@@ -141,11 +144,8 @@ class="school-filters-form space-y-3"
 <option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
 </select>
 </div>
-</div>
-
-<div class="flex items-center justify-between pt-1">
 <!-- Clear Filters -->
-<a href="/schools" class="edify-touch-target text-[12px] font-semibold edify-primary-text hover:underline flex items-center gap-1.5">
+<a href="/schools" class="school-filter-clear edify-touch-target text-[12px] font-semibold edify-primary-text hover:underline">
 <svg class="h-4 w-4 shrink-0 edify-primary-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 </svg>
@@ -154,6 +154,7 @@ class="school-filters-form space-y-3"
 </div>
 </form>
 </div>
+</details>
 
 <!-- KPI Row Container -->
 <div id="kpi-cards-row" class="w-full">

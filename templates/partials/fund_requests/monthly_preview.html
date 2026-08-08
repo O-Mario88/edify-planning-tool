@@ -3,9 +3,9 @@
      bordered card with its own padding -- five surfaces tall enough to crowd
      the page. One band now: icon, label, value, caption, divided by rules,
      in the pattern of the login page's stats strip but on the light surface.
-     The legacy-kpi-strip marker stays: the theme CSS exempts this strip's
+     The edify-kpi-strip marker stays: the theme CSS exempts this strip's
      children from its border overrides by that class. -->
-<div class="legacy-kpi-strip edify-surface rounded-surface border border-slate-100 shadow-sm px-2 py-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-y-4 lg:gap-y-0 lg:divide-x divide-slate-100"
+<div class="edify-kpi-strip edify-surface rounded-surface border border-slate-100 shadow-sm px-2 py-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-y-4 lg:gap-y-0 lg:divide-x divide-slate-100"
      aria-label="Monthly request summary">
   {% comment %}
     Items come from the metric registry (render_metric), so each carries its

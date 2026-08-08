@@ -1,0 +1,135 @@
+[data-oversight-workspace] {
+  --oversight-elevation: 0 10px 32px -24px rgba(15, 40, 55, .38);
+}
+
+[data-oversight-workspace] .oversight-period-filter {
+  display: flex;
+  align-items: end;
+  gap: .625rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+[data-oversight-workspace] .oversight-period-filter > * {
+  flex: 0 0 auto;
+}
+
+main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-header-control {
+  /* The shared filter contract lets generic fields grow. Period controls are
+     intentionally compact so they do not create dead space above the data. */
+  flex: 0 0 13rem !important;
+  inline-size: 13rem !important;
+  min-inline-size: 11rem !important;
+  max-inline-size: 14rem !important;
+}
+
+[data-oversight-workspace] .oversight-entity-tabs {
+  display: flex;
+  align-items: end;
+  gap: 1.125rem;
+  min-inline-size: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scroll-snap-type: inline proximity;
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__link {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .35rem;
+  min-block-size: 2.5rem;
+  padding: .35rem .05rem .55rem;
+  color: var(--edify-text-muted);
+  font-size: .75rem;
+  font-weight: 720;
+  text-decoration: none;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__link::after {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 2px;
+  border-radius: 999px;
+  background: transparent;
+  content: "";
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__link:hover,
+[data-oversight-workspace] .oversight-entity-tabs__link.is-active {
+  color: var(--brand-primary-text);
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__link.is-active::after {
+  background: var(--color-edify-primary);
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__count {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.35rem;
+  min-block-size: 1.35rem;
+  padding-inline: .3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-edify-primary) 10%, transparent);
+  color: inherit;
+  font-size: .625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-oversight-workspace] .oversight-selection-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-block: .15rem;
+}
+
+[data-oversight-workspace] :where(.card) {
+  box-shadow: var(--oversight-elevation);
+}
+
+[data-oversight-workspace] .oversight-entity-tabs__link:focus-visible {
+  border-radius: .25rem;
+  outline: 3px solid color-mix(in srgb, var(--color-edify-primary) 38%, white);
+  outline-offset: 2px;
+}
+
+@media (max-width: 47.99rem) {
+  [data-oversight-workspace] .oversight-period-filter {
+    margin-inline: 0;
+    padding-block-end: .45rem;
+  }
+
+  main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-header-control {
+    flex-basis: 10.5rem !important;
+    inline-size: 10.5rem !important;
+    min-inline-size: 10.5rem !important;
+  }
+
+  [data-oversight-workspace] .oversight-entity-tabs {
+    gap: .9rem;
+  }
+
+  [data-oversight-workspace] .oversight-entity-tabs__link {
+    min-block-size: 2.25rem;
+    font-size: .6875rem;
+  }
+
+  [data-oversight-workspace] .kpi-strip__value {
+    font-size: clamp(.875rem, 4.6vw, 1.125rem);
+    letter-spacing: -.035em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-oversight-workspace] .oversight-entity-tabs {
+    scroll-behavior: auto;
+  }
+}

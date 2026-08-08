@@ -1,0 +1,30 @@
+{% comment %}
+Compact replacement for wide mobile section scrollers.
+Items: [{label, url, active}]. Desktop retains the ordinary nav passed by the
+page; this component is the phone discovery surface.
+{% endcomment %}
+{% if items %}
+<details class="mobile-section-picker lg:hidden" data-mobile-section-picker>
+  <summary>
+    <span>
+      <small>{{ eyebrow|default:"Section" }}</small>
+      <strong>{% firstof active_label title "Choose section" %}</strong>
+    </span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+    </svg>
+  </summary>
+  <nav aria-label="{{ nav_label|default:'Page sections' }}">
+    <ul role="list">
+      {% for item in items %}
+      <li>
+        <a href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %} data-mobile-action="section-change">
+          <span>{{ item.label }}</span>
+          {% if item.badge %}<small>{{ item.badge }}</small>{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </nav>
+</details>
+{% endif %}

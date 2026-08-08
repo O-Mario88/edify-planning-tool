@@ -12,11 +12,11 @@
        class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Review →</a>
   </div>
 
-  <div class="flex items-center gap-1 bg-slate-50 rounded-surface p-0.5 w-fit edify-text-caption font-bold">
-    <button type="button" @click="tab='weekly'" :class="tab==='weekly' ? 'edify-surface text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-control transition-all">Weekly</button>
-    <button type="button" @click="tab='monthly'" :class="tab==='monthly' ? 'edify-surface text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-control transition-all">Monthly</button>
-    <button type="button" @click="tab='quarterly'" :class="tab==='quarterly' ? 'edify-surface text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-control transition-all">Quarterly</button>
-    <button type="button" @click="tab='fy'" :class="tab==='fy' ? 'edify-surface text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-control transition-all">FY</button>
+  <div data-edify-tablist class="flex items-center w-fit edify-text-caption font-bold">
+    <button data-edify-tab type="button" @click="tab='weekly'" :aria-pressed="tab === 'weekly'">Weekly</button>
+    <button data-edify-tab type="button" @click="tab='monthly'" :aria-pressed="tab === 'monthly'">Monthly</button>
+    <button data-edify-tab type="button" @click="tab='quarterly'" :aria-pressed="tab === 'quarterly'">Quarterly</button>
+    <button data-edify-tab type="button" @click="tab='fy'" :aria-pressed="tab === 'fy'">FY</button>
   </div>
 
   <div class="flex items-center gap-4 pt-1">

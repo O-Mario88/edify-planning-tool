@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Decision Log — Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="history" data-analytics-enterprise>
 
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
@@ -11,7 +13,9 @@
 <h1 class="edify-page-title edify-page-header__title">Decision Log</h1>
 <p class="edify-page-header__description">{{ log.scopeLabel }} · tamper-evident record, last {{ log.days }} days</p>
 </div>
-<form method="GET" class="edify-page-header__controls">
+</div>
+
+<form method="GET" class="edify-filter-bar" aria-label="Decision log filters">
 {% if log.activeGroup %}<input type="hidden" name="group" value="{{ log.activeGroup }}">{% endif %}
 <label class="sr-only" for="days-select">Period</label>
 {% comment %}@change rather than an inline onchange: the handler moves
@@ -21,7 +25,6 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% for option in log.dayOptions %}<option value="{{ option }}" {% if option == log.days %}selected{% endif %}>Last {{ option }} days</option>{% endfor %}
 </select>
 </form>
-</div>
 
 <div class="flex flex-wrap gap-1.5">
 <a href="?days={{ log.days }}" class="px-3 py-1.5 rounded-pill edify-text-caption font-bold border transition-colors {% if not log.activeGroup %}edify-primary-solid edify-primary-on-solid border-transparent{% else %}border-[var(--edify-border)] text-slate-600 hover:bg-slate-50{% endif %}">All</a>
@@ -32,10 +35,12 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 
 {% include "partials/analytics/section_nav.html" %}
 
+{% include "components/analytics_decision_frame.html" with question="What was decided, by whom, on what record, and with what stated reason?" evidence="Tamper-evident audit chain" freshness="Selected lookback window" confidence="System-recorded history" %}
+
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 {% if log.rows %}
 <div class="overflow-x-auto">
-<table class="w-full text-[12.5px]">
+<table class="edify-record-table w-full text-[12.5px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
 <th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">When</th>
@@ -49,7 +54,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% for r in log.rows %}
 <tr class="hover:bg-slate-50/40 {% if not r.success %}bg-rose-50/30{% endif %}">
 <td class="px-5 py-3 text-slate-500 whitespace-nowrap tabular-nums">{{ r.at|date:"j M, H:i" }}</td>
-<td class="px-4 py-3">
+<td class="px-4 py-3" data-record-title>
 <span class="font-bold text-slate-800 block leading-tight">{{ r.label }}</span>
 <span class="edify-text-caption text-slate-400 font-semibold">{{ r.group }}</span>
 </td>

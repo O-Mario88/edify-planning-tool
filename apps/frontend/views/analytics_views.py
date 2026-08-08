@@ -72,6 +72,28 @@ def analytics_dashboard_view(request):
         for item in data.get("kpi_strip_items", [])
         if CARD_CATEGORY.get(item.get("label"), "reach") in visible_cards
     ]
+    # The overview is a decision surface, so its first row carries four
+    # signals rather than every available reporting measure. The remaining
+    # metrics stay one disclosure away and keep respecting the user's card
+    # visibility preferences.
+    executive_labels = (
+        "Overall Target Achievement",
+        "SSA Average",
+        "Schools Impacted",
+        "Total Activities Completed",
+    )
+    items_by_label = {item.get("label"): item for item in data["kpi_strip_items"]}
+    executive_items = [
+        items_by_label[label] for label in executive_labels if label in items_by_label
+    ]
+    if len(executive_items) < 4:
+        executive_items.extend(
+            item for item in data["kpi_strip_items"] if item not in executive_items
+        )
+    data["executive_kpi_items"] = executive_items[:4]
+    data["additional_kpi_items"] = [
+        item for item in data["kpi_strip_items"] if item not in executive_items[:4]
+    ]
     analytics_layout = preference.layout if preference else "grid"
 
     # 3. Retrieve options list for dropdown filters

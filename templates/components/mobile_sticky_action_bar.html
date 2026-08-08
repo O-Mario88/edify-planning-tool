@@ -1,0 +1,20 @@
+{% comment %}
+Contextual phone action bar. Expected primary/secondary: {label, url}.
+Use form_id instead of url to submit an existing server-owned form.
+{% endcomment %}
+{% if primary or secondary %}
+<aside class="mobile-sticky-actions lg:hidden" aria-label="Available actions" data-mobile-sticky-actions>
+  {% if secondary %}
+    {% if secondary.form_id %}
+      <button type="submit" form="{{ secondary.form_id }}" class="mobile-sticky-actions__secondary" data-mobile-action="secondary-submit">{{ secondary.label }}</button>
+    {% else %}
+      <a href="{{ secondary.url }}" class="mobile-sticky-actions__secondary" data-mobile-action="secondary-action">{{ secondary.label }}</a>
+    {% endif %}
+  {% endif %}
+  {% if primary.form_id %}
+    <button type="submit" form="{{ primary.form_id }}" class="mobile-sticky-actions__primary" data-mobile-primary-action data-mobile-action="primary-submit">{{ primary.label }}</button>
+  {% else %}
+    <a href="{{ primary.url }}" class="mobile-sticky-actions__primary" data-mobile-primary-action data-mobile-action="primary-action">{{ primary.label }}</a>
+  {% endif %}
+</aside>
+{% endif %}

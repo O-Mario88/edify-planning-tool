@@ -1,21 +1,23 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 {% load table_pagination %}
 
 {% block title %}Reports & Performance — Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="edify-report-workspace text-[color:var(--edify-text)]">
+<div class="edify-report-workspace text-[color:var(--edify-text)]" data-analytics-enterprise>
 
 <header class="edify-page-header edify-report-header">
-<div class="edify-report-header__layout">
 <div class="edify-report-header__copy edify-page-header__lead">
 <p class="edify-page-eyebrow">Quality & Insights</p>
 <h1 class="edify-page-title edify-page-header__title">Reports & Performance</h1>
 <p class="edify-report-header__description edify-page-header__description">Track verified delivery against monthly, quarterly, mid-year and full-year targets from one accountable performance view.</p>
 </div>
+</header>
 
 <!-- FY Selection — driven by apps.core.fy.fy_options(), not a hardcoded year -->
-<form method="get" class="edify-report-header__controls">
+<form method="get" class="edify-filter-bar" aria-label="Report filters">
 <label for="reports-fiscal-year">Financial year</label>
 <select id="reports-fiscal-year" name="fy" @change="$el.form.requestSubmit()">
 {% for opt in fy_choices %}
@@ -23,10 +25,10 @@
 {% endfor %}
 </select>
 </form>
-</div>
-</header>
 
 {% include "partials/analytics/section_nav.html" %}
+
+{% include "components/analytics_decision_frame.html" with question="Are verified results accumulating fast enough to meet the approved reporting targets?" evidence="Verified delivery against approved FY targets" freshness="Selected financial year" confidence="Official reporting basis" %}
 
 
 <!-- ================= KPI TIMELINE ROW (Chevron Sequence) ================= -->
@@ -85,7 +87,7 @@
 </div>
 <p>Compare verified activity volumes with the approved FY{{ fy }} operating targets.</p>
 </header>
-<div class="edify-report-summary-grid legacy-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Core target summary">
+<div class="edify-report-summary-grid edify-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Core target summary">
 {% for card in core_cards %}
 <div class="edify-report-summary-card edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-3 flex flex-col justify-between">
 <div>
@@ -115,6 +117,12 @@
 
 
 <!-- ================= TIME PERIOD PROGRESS MATRIX ================= -->
+<details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="reports-period-matrix">
+<summary>
+<span><strong>Detailed period matrix</strong><small>Target and verified achievement for every reporting period</small></span>
+<svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="analytics-evidence-disclosure__body">
 <section class="edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden" aria-labelledby="reports-matrix-title">
 <header class="edify-report-matrix__heading">
 <div>
@@ -167,9 +175,17 @@
 {% include "components/table_pager.html" with pager=periods_pager param="periods_page" %}
 </div>
 </section>
+</div>
+</details>
 
 
 <!-- ================= BOTTOM CHARTS SECTION ================= -->
+<details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="reports-performance-insights">
+<summary>
+<span><strong>Performance insights</strong><small>Trend, target health and management priorities</small></span>
+<svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="analytics-evidence-disclosure__body" data-analytics-deferred>
 <section class="edify-report-section" aria-labelledby="reports-insights-title">
 <header class="edify-report-section__heading">
 <div>
@@ -290,6 +306,8 @@
 
 </div>
 </section>
+</div>
+</details>
 
 </div>
 {% endblock %}

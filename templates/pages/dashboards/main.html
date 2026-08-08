@@ -5,19 +5,37 @@
 Scoped here rather than loaded platform-wide: admin-dashboard.css is 29 KB
 and only this page and its own partials use it.
 {% endcomment %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260731readabletype1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260808planningtabs1">{% endblock %}
 
 {% block title %}Main Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="admin-command edify-page-canvas" id="main-dashboard-container">
-  <nav class="admin-command__breadcrumbs" aria-label="Breadcrumb">
+  {% if admin_ops %}
+    {% include "components/mobile_role_home.html" with eyebrow="Platform operations" headline="Admin decision desk" description="Resolve critical incidents and access risks before moving into business oversight." status_label=admin_ops.critical_incidents primary_action=mobile_primary_action %}
+    <div class="mobile-home-only">
+      <section class="mobile-home-section" aria-labelledby="admin-mobile-critical-title">
+        <div class="mobile-home-section__header"><h2 id="admin-mobile-critical-title">Critical now</h2><a href="/admin-ops/incidents">All incidents</a></div>
+        <div class="mobile-home-stack">
+          {% for item in admin_ops.critical_now|slice:":3" %}
+          <article class="mobile-record-card" data-mobile-record-card>
+            <header><div><p>{{ item.reference }}</p><h3>{{ item.title }}</h3><small>{{ item.get_category_display }}</small></div><span class="mobile-record-card__status">{% firstof item.next_action item.get_status_display %}</span></header>
+            <a href="/admin-ops/incidents" class="mobile-record-card__action"><span>Open incident desk</span><span aria-hidden="true">→</span></a>
+          </article>
+          {% empty %}<div class="edify-empty-state"><strong>No critical platform work</strong><span>New incidents and urgent tickets appear here automatically.</span></div>{% endfor %}
+        </div>
+      </section>
+      {% include "components/kpi_strip.html" with items=admin_ops_kpi_items density="compact" title="Platform pulse" %}
+    </div>
+  {% endif %}
+
+  <nav class="admin-command__breadcrumbs{% if admin_ops %} mobile-home-hide{% endif %}" aria-label="Breadcrumb">
     <a href="/dashboard">Home</a>
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m7 4 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span aria-current="page">Main Dashboard</span>
   </nav>
 
-  <header class="edify-page-header admin-command__header">
+  <header class="edify-page-header admin-command__header{% if admin_ops %} mobile-home-hide{% endif %}">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">{% if admin_ops %}Platform Operations{% else %}Main Dashboard{% endif %}</h1>
       <p class="edify-page-header__description">{% if admin_ops %}Full platform authority across programme delivery, finance, HR, verification, users and operations.{% else %}A complete view of execution, priorities, school improvement, and operational health.{% endif %}</p>
@@ -35,14 +53,16 @@ and only this page and its own partials use it.
   </header>
 
 {% if admin_ops %}
+  <div class="mobile-home-hide">
   {% include "partials/dashboards/admin/_platform_operations.html" %}
+  </div>
   <h2 class="admin-command__section-heading">Platform Business Overview</h2>
   <p class="admin-command__section-note">Use the business workspaces in the sidebar to read, write and execute actions across the platform.</p>
 {% endif %}
 
-  {% include "components/kpi_strip.html" with items=country_kpi_items title="Country operational summary" %}
+  <div{% if admin_ops %} class="mobile-home-hide"{% endif %}>{% include "components/kpi_strip.html" with items=country_kpi_items title="Country operational summary" %}</div>
 
-  <div class="admin-workspace">
+  <div class="admin-workspace mobile-home-deferred">
     <div class="admin-workspace__main">
       <div class="admin-grid admin-grid--top">
         <section class="admin-panel admin-priorities"
@@ -74,28 +94,30 @@ and only this page and its own partials use it.
 
         <section class="admin-panel admin-planning-progress"
                  {% include "components/registered_card_attrs.html" with card=cards.planning_progress %} aria-labelledby="admin-planning-title">
-          <header class="admin-panel__header">
+          <header class="admin-panel__header admin-planning-progress__header">
             <h2 id="admin-planning-title">Planning Progress</h2>
-            <a href="/planning">View Details</a>
+            <div class="admin-panel__header-actions">
+              {% comment %}
+                Real links keep every reporting period available without JS.
+                HTMX only replaces the chart; the pushed URL also drives the
+                active underline after a swap and through history navigation.
+              {% endcomment %}
+              <nav class="admin-period-switch" data-edify-tablist aria-label="Planning progress reporting period">
+                {% for tab in progress_tabs %}
+                <a href="?progress_period={{ tab.period }}"
+                   hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
+                   hx-target="#admin-planning-progress-body"
+                   hx-swap="outerHTML"
+                   hx-push-url="true"
+                   data-edify-tab
+                   data-admin-progress-period="{{ tab.period }}"
+                   class="{% if tab.active %}is-active{% endif %}"
+                   {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
+                {% endfor %}
+              </nav>
+              <a class="admin-panel__details-link" href="/planning">View Details</a>
+            </div>
           </header>
-          {% comment %}
-            These were four <span>s with no href, no handler and no target --
-            they could not be clicked, and the chart drew the same five weeks
-            whichever one looked active. They are real links now: the period
-            lives in the query string, so it survives a reload and a shared
-            link, and the page works with or without htmx.
-          {% endcomment %}
-          <div class="admin-period-switch" role="group" aria-label="Planning progress reporting period">
-            {% for tab in progress_tabs %}
-            <a href="?progress_period={{ tab.period }}"
-               hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
-               hx-target="#admin-planning-progress-body"
-               hx-swap="outerHTML"
-               hx-push-url="true"
-               class="{% if tab.active %}is-active{% endif %}"
-               {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
-            {% endfor %}
-          </div>
           {% include "partials/dashboards/admin/_planning_progress_body.html" %}
         </section>
       </div>
@@ -346,8 +368,23 @@ and only this page and its own partials use it.
     const drawAll = (root) =>
       (root || document).querySelectorAll('[data-admin-progress-chart]').forEach(draw);
 
+    const syncPeriodTabs = () => {
+      const selected = new URLSearchParams(window.location.search).get('progress_period') || 'week';
+      document.querySelectorAll('[data-admin-progress-period]').forEach((tab) => {
+        const active = tab.dataset.adminProgressPeriod === selected;
+        tab.classList.toggle('is-active', active);
+        if (active) tab.setAttribute('aria-current', 'true');
+        else tab.removeAttribute('aria-current');
+      });
+    };
+
     drawAll();
-    document.body.addEventListener('htmx:afterSettle', (event) => drawAll(event.target));
+    syncPeriodTabs();
+    document.body.addEventListener('htmx:afterSettle', (event) => {
+      drawAll(event.target);
+      syncPeriodTabs();
+    });
+    window.addEventListener('popstate', syncPeriodTabs);
   })();
 </script>
 {% endblock %}

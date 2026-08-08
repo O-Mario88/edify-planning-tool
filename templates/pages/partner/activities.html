@@ -13,8 +13,10 @@
       <h1 class="edify-page-title edify-page-header__title">Activity Log</h1>
       <p class="edify-page-header__description">{{ total }} recent activities assigned to your organization.</p>
     </div>
+  </div>
+
     <!-- Status filter — on the page background, per the platform filter-bar contract (consistency.css). -->
-    <form method="get" class="platform-filter-bar flex items-center gap-2 w-fit">
+    <form method="get" class="platform-filter-bar" aria-label="Activity filters">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
       <select aria-label="Status" name="status" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all cursor-pointer">
         <option value="">All</option>
@@ -23,7 +25,6 @@
         <option value="ia_verified" {% if status_filter == 'ia_verified' %}selected{% endif %}>IA Verified</option>
       </select>
     </form>
-  </div>
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     {% if assignments %}

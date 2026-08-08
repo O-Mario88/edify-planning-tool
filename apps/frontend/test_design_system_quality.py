@@ -49,29 +49,29 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
-    def test_geist_is_the_global_and_compiled_ui_font(self):
+    def test_inter_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
 
         self.assertIn("css/fonts.css", base)
-        self.assertIn("--edify-font-sans: 'Geist'", tokens)
-        self.assertRegex(compiled, r"--font-sans:\s*Geist,")
+        self.assertIn("--edify-font-sans: 'Inter'", tokens)
+        self.assertRegex(compiled, r"--font-sans:\s*Inter,")
 
-    def test_geist_is_self_hosted_on_every_entry_point(self):
+    def test_inter_is_self_hosted_on_every_entry_point(self):
         """The typeface must not depend on a third-party request.
 
-        Every type token is measured against Geist's metrics, so a Google Fonts
+        Every type token is measured against Inter's metrics, so a Google Fonts
         request that is slow or blocked rendered the whole product in
-        ui-sans-serif at Geist's measurements — the same CSS looking correct
+        ui-sans-serif at Inter's measurements — the same CSS looking correct
         locally and wrong in production on one cross-origin fetch.
 
-        This asserted `family=Geist` was present in base.html, which passed on
+        This asserted `family=Inter` was present in base.html, which passed on
         the CDN link that WAS the problem.
         """
         faces = _read("static/css/fonts.css")
         self.assertIn("@font-face", faces)
-        self.assertIn("Geist-Variable.woff2", faces)
+        self.assertIn("InterVariable.woff2", faces)
 
         # Relative, so ManifestStaticFilesStorage can rewrite it to the hashed
         # filename during collectstatic.
@@ -97,20 +97,20 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            "Geist is self-hosted; these still request it over the network: "
+            "Inter is self-hosted; these still request it over the network: "
             + ", ".join(offenders),
         )
 
     def test_no_unapproved_font_family_is_shipped(self):
         forbidden = re.compile(
-            r"\b(Inter|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
+            r"\b(Geist|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
             re.IGNORECASE,
         )
         # Tailwind's preflight writes `font-family: var(--default-font-family,
         # <generic stack>)`, and from 4.3.3 that stack is spelled out inline —
         # -apple-system, Segoe UI, Roboto, Arial and the rest. It is a fallback
         # for a variable the bundle defines two lines earlier as var(--font-sans),
-        # which is Geist, so none of those families can ever be applied. Scanning
+        # which is Inter, so none of those families can ever be applied. Scanning
         # it would fail the gate on text that cannot reach a screen; what the gate
         # is for is a real font sneaking into hand-written CSS or a template.
         unreachable_fallback = re.compile(r"var\(--default-font-family,[^)]*\)")
@@ -124,7 +124,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             violations, [], "Unapproved UI fonts: " + ", ".join(violations)
         )
 
-    def test_charts_explicitly_use_geist(self):
+    def test_charts_explicitly_use_inter(self):
         charts = "\n".join(
             path.read_text(encoding="utf-8")
             for path in (ROOT / "templates").rglob("*.html")
@@ -132,7 +132,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertNotIn("fontFamily: 'Outfit", charts)
         self.assertNotIn('fontFamily: "Outfit', charts)
-        self.assertIn("fontFamily: 'Geist", charts)
+        self.assertIn("fontFamily: 'Inter", charts)
 
     def test_content_cards_use_intrinsic_height_while_kpi_grids_stay_aligned(self):
         # Asserted against platform.css only: it is the stylesheet base.html
@@ -167,20 +167,25 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         cards = _read("templates/partials/analytics/kpi_cards.html")
         layout = _read("static/css/pages/analytics-dashboard.css")
 
+        self.assertIn("data-analytics-enterprise", page)
         self.assertIn("css/pages/analytics-dashboard.css", page)
         for band in (
+            "analytics-executive-pulse",
+            "analytics-row--geography",
             "analytics-row--overview",
             "analytics-row--decision",
             "analytics-impact-band",
             "analytics-row--compact",
-            "analytics-row--diagnostics",
+            "analytics-evidence-disclosure",
         ):
             self.assertIn(band, cards)
 
         self.assertLess(
-            cards.index("recommended_insights.html"),
             cards.index("target_by_district.html"),
+            cards.index("recommended_insights.html"),
         )
+        self.assertIn("items=executive_kpi_items", cards)
+        self.assertIn("items=additional_kpi_items", cards)
         self.assertNotIn("lg:col-span-4 space-y-6", cards)
         self.assertIn("container: analytics-dashboard / inline-size", layout)
         self.assertIn("container: analytics-impact / inline-size", layout)
@@ -306,7 +311,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             f"login.css must use the radius token scale, found: {off_system}",
         )
 
-    def test_dark_workspace_matches_the_flat_filter_surface_contract(self):
+    def test_dark_workspace_matches_the_elevated_surface_contract(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
         consistency = _read("static/css/consistency.css")
@@ -323,8 +328,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-button-primary-treatment: none",
             "--edify-button-secondary-treatment: none",
             "--edify-card-surface: var(--edify-surface)",
-            "--edify-card-border: var(--edify-border)",
-            "--edify-card-shadow: none",
+            "--edify-card-border: transparent",
+            "--edify-card-shadow:",
+            "--edify-card-shadow-hover:",
             "--edify-shadow-sm: none",
             "--edify-shadow-md: none",
             "--edify-shadow-lg: none",
@@ -347,7 +353,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn(
             "background-image: var(--edify-button-primary-treatment)", platform
         )
-        self.assertIn("DARK THEMES: FILTER-SURFACE CONTRACT", consistency)
+        self.assertIn("GLOBAL BORDERLESS SURFACE CONTRACT", consistency)
         self.assertIn(".kpi-strip__item", consistency)
         self.assertIn(".settings-detail-tile", consistency)
         self.assertIn(".premium-card-elevated", consistency)
@@ -360,7 +366,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("background-image: none !important", platform)
         self.assertIn("box-shadow: none !important", platform)
 
-    def test_blue_workspace_matches_the_flat_filter_surface_contract(self):
+    def test_blue_workspace_matches_the_elevated_surface_contract(self):
         tokens = _read("static/css/design-system.css")
         components = _read("static/css/components.css")
         consistency = _read("static/css/consistency.css")
@@ -378,8 +384,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-button-secondary-treatment: none",
             "--edify-glass-blur: 0px",
             "--edify-card-surface: var(--edify-surface)",
-            "--edify-card-border: var(--edify-border)",
-            "--edify-card-shadow: none",
+            "--edify-card-border: transparent",
+            "--edify-card-shadow:",
+            "--edify-card-shadow-hover:",
             "--edify-card-backdrop-filter: none",
             "--edify-table-canvas: var(--edify-surface)",
             "--edify-shadow-sm: none",
@@ -390,7 +397,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         ):
             self.assertIn(declaration, blue_tokens)
 
-        self.assertIn(":is(.theme-blue, .theme-dark) main :is(", consistency)
+        self.assertIn("GLOBAL BORDERLESS SURFACE CONTRACT", consistency)
         self.assertIn("Blue primary actions stay unmistakable", consistency)
         for surface in (
             ".platform-hero",
@@ -912,7 +919,7 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
         )
 
     def test_no_serif_or_hardcoded_font_family_in_templates(self):
-        """Geist Sans is the single UI font; a page must not smuggle in another
+        """Inter Sans is the single UI font; a page must not smuggle in another
         family (budgets/monthly.html previously rendered a group label in
         italic Times New Roman inside an operational table)."""
         import re
@@ -932,7 +939,7 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            f"Use var(--edify-font-sans); Geist Sans is the only approved UI font: {offenders}",
+            f"Use var(--edify-font-sans); Inter Sans is the only approved UI font: {offenders}",
         )
 
 
@@ -1396,9 +1403,9 @@ class StableTypographyContractTest(SimpleTestCase):
 
         # Containers still respond by changing layout, never the type scale.
         self.assertIn("container: kpi-card / inline-size", components)
-        self.assertIn("container: legacy-kpi-card / inline-size", consistency)
+        self.assertIn("container: edify-kpi-card / inline-size", consistency)
         self.assertIn("@container kpi-card (max-width: 16rem)", components)
-        self.assertIn("@container legacy-kpi-card (max-width: 16rem)", consistency)
+        self.assertIn("@container edify-kpi-card (max-width: 16rem)", consistency)
         self.assertIn("font-size: var(--edify-text-tile-value-size)", components)
         self.assertIn(
             "font-size: var(--edify-text-tile-value-size) !important",
@@ -1468,7 +1475,10 @@ class StableTypographyContractTest(SimpleTestCase):
         hcos = _read("static/css/hcos-workspace.css")
 
         self.assertIn("minmax(min(100%, 14rem), 1fr)", components)
-        self.assertIn("grid-template-columns: 1fr !important", components)
+        self.assertIn(
+            "grid-template-columns: repeat(2, minmax(0, 1fr)) !important",
+            components,
+        )
         self.assertRegex(
             components,
             r"\.kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
@@ -1476,7 +1486,7 @@ class StableTypographyContractTest(SimpleTestCase):
         )
         self.assertRegex(
             consistency,
-            r"\.legacy-kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
+            r"\.edify-kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
             r"[^}]*white-space:\s*nowrap;",
         )
         self.assertIn("container: metric-tile / inline-size", components)

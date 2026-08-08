@@ -14,7 +14,7 @@ These tests pin the mechanism, not the opinion:
     comparable;
   * the service worker is served uncacheable, because a cached worker is the
     classic way a PWA pins itself to a dead build;
-  * Geist is the single global UI font, so a second family cannot drift in.
+  * Inter is the single global UI font, so a second family cannot drift in.
 """
 
 from __future__ import annotations
@@ -150,6 +150,20 @@ class ImageBuildProvenanceTest(SimpleTestCase):
         self.assertIn("RUN python -m scripts.write_build_info", dockerfile)
         self.assertNotIn("RUN python - <<", dockerfile)
 
+    def test_dockerignore_excludes_local_workspaces_and_node_modules(self):
+        """Developer worktrees and build-only dependencies must not be copied
+        into the immutable runtime image."""
+        ignored = {
+            line.strip().rstrip("/")
+            for line in (REPO / ".dockerignore")
+            .read_text(encoding="utf-8")
+            .splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+        self.assertTrue(
+            {".agents", ".claude", ".codex", "node_modules"}.issubset(ignored)
+        )
+
     def test_manifest_identity_ignores_json_key_order_and_whitespace(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -215,7 +229,7 @@ class ServiceWorkerCacheTest(TestCase):
 
 
 class GlobalFontTest(SimpleTestCase):
-    """Geist is the single UI font.
+    """Inter is the single UI font.
 
     It is self-hosted deliberately (7401147a) after production was found
     falling back to a system font. The risk now is not the wrong font but a
@@ -224,9 +238,9 @@ class GlobalFontTest(SimpleTestCase):
     """
 
     #: Families that may legitimately appear in a font stack: the fallbacks
-    #: after Geist, and the generic keywords.
+    #: after Inter, and the generic keywords.
     ALLOWED = {
-        "geist",
+        "inter",
         "ui-sans-serif",
         "system-ui",
         "-apple-system",
@@ -256,10 +270,10 @@ class GlobalFontTest(SimpleTestCase):
         "revert",
     }
 
-    def test_geist_is_declared_and_self_hosted(self):
+    def test_inter_is_declared_and_self_hosted(self):
         fonts_css = (REPO / "static/css/fonts.css").read_text()
-        self.assertIn("Geist", fonts_css)
-        for weight in ("Geist-Variable.woff2",):
+        self.assertIn("Inter", fonts_css)
+        for weight in ("InterVariable.woff2",):
             self.assertTrue(
                 (REPO / "static/fonts" / weight).exists(),
                 f"{weight} must be committed — a CDN font is a third-party "

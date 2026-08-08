@@ -13,7 +13,7 @@
     </div>
   </header>
 
-  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Incident summary">
+  <div class="edify-kpi-strip grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Incident summary">
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Severity</p><p class="text-[15px] font-bold text-slate-800 mt-1">{{ incident.get_severity_display }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Occurrences</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ incident.occurrence_count }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">First Detected</p><p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ incident.first_detected_at|date:"d M H:i" }}</p></div>

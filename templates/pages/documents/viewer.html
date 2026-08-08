@@ -3,7 +3,7 @@
 {% block title %}{{ document.title }} — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-4"
+<div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-4" data-mobile-family="knowledge"
      x-data="documentViewer({ versionId: '{{ version.id|default:"" }}', pageCount: {{ version.page_count|default:0 }} })">
 
   <header class="edify-page-header">

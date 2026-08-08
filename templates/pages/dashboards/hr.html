@@ -2,12 +2,15 @@
 {% load frontend_filters %}
 
 {% block title %}HR Director Dashboard · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
 
+  {% include "components/mobile_role_home.html" with eyebrow="People operations" headline="People decision desk" description="Clear the most urgent people blocker, then review workforce health and upcoming deadlines." period_label="FY "|add:fy status_label=reviews_due primary_action=mobile_primary_action %}
+
   <!-- Header — premium glass band -->
-  <div class="edify-page-header">
+  <div class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
       <div class="flex items-center gap-2">
         <h1 class="edify-page-title edify-page-header__title">HR Director Dashboard</h1>
@@ -17,8 +20,17 @@
     </div>
 
     <div class="edify-page-header__controls">
+      <!-- Export button -->
+      <a href="{% querystring export='csv' %}"
+         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors shadow-sm edify-primary-solid">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export Report
+      </a>
+    </div>
+  </div>
+
       <form hx-get="/dashboard" hx-target="#hr-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
-            class="edify-filter-bar flex items-center gap-2 rounded-surface px-2.5 py-1.5 flex-wrap bg-white/10 border border-white/15">
+            class="edify-filter-bar" aria-label="HR dashboard filters">
 
         <!-- FY Select -->
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
@@ -60,15 +72,6 @@
           <option value="HR & People" {% if department == "HR & People" %}selected{% endif %} class="edify-text">HR &amp; People</option>
         </select>
       </form>
-
-      <!-- Export button -->
-      <a href="{% querystring export='csv' %}"
-         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors shadow-sm edify-primary-solid">
-        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export Report
-      </a>
-    </div>
-  </div>
 
   <!-- Body (HTMX swap target) -->
   <div id="hr-dashboard-body">

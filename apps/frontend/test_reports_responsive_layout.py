@@ -19,7 +19,9 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
 
         self.assertNotIn("max-w-[1500px]", template)
         self.assertNotIn("mx-auto", template)
-        self.assertIn("edify-report-header__layout", template)
+        self.assertIn("edify-page-header edify-report-header", template)
+        self.assertIn("edify-page-header__lead", template)
+        self.assertNotIn("edify-report-header__layout", template)
         self.assertIn(
             '<label for="reports-fiscal-year">Financial year</label>', template
         )
@@ -77,7 +79,7 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         adapter = _read("static/css/consistency.css")
         targets = _read("templates/partials/targets/my_body.html")
 
-        self.assertIn("legacy-kpi-strip--timeline", targets)
+        self.assertIn("edify-kpi-strip--timeline", targets)
         self.assertIn(
             "grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;",
             adapter,

@@ -15,8 +15,10 @@
       <p class="edify-page-header__description">Review leave requests, approve coverage, manage conflicts, and keep team operations running.</p>
     </div>
 
+  </div>
+
     <!-- Search & Filters -->
-    <form id="leave-approvals-filters" method="GET" class="edify-filter-bar flex flex-wrap items-center gap-3">
+    <form id="leave-approvals-filters" method="GET" class="edify-filter-bar" aria-label="Leave approval filters">
       <div class="relative">
         {% comment %}Search moved to the top bar.{% endcomment %}
         <span class="absolute left-2.5 top-2.5 text-slate-400">
@@ -57,7 +59,6 @@
       <a href="{% url 'frontend:leave_approvals' %}" class="text-xs font-bold edify-primary-text edify-primary-text-hover">Clear</a>
       {% endif %}
     </form>
-  </div>
 
   <!-- Messages -->
   {% if messages %}

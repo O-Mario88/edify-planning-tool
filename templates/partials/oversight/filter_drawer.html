@@ -15,9 +15,11 @@ selection can return an empty page and read as a broken one.
       hx-swap="innerHTML"
       hx-push-url="true">
   <input type="hidden" name="fy" value="{{ fy }}">
-  {% if month %}<input type="hidden" name="month" value="{{ month }}">{% endif %}
-  {% if tab %}<input type="hidden" name="tab" value="{{ tab }}">{% endif %}
-  {% if team_member %}<input type="hidden" name="team_member" value="{{ team_member }}">{% endif %}
+  <input type="hidden" name="period" value="{{ period }}">
+  <input type="hidden" name="week" value="{{ week }}">
+  <input type="hidden" name="month" value="{{ selected_month }}">
+  <input type="hidden" name="quarter" value="{{ selected_quarter }}">
+  {% if owner %}<input type="hidden" name="owner" value="{{ owner }}">{% endif %}
   {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
 
   <label class="block">
@@ -85,7 +87,7 @@ selection can return an empty page and read as a broken one.
 
   <div class="flex items-center gap-2 pt-1">
     <button type="submit" class="btn btn-primary h-9">Apply filters</button>
-    <a href="{{ target_url }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}"
+    <a href="{{ target_url }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}"
        class="btn h-9 inline-flex items-center">Clear</a>
   </div>
 </form>

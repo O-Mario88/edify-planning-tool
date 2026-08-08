@@ -1,10 +1,13 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 {% load frontend_filters %}
 
 {% block title %}Program Lead Analytics · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 max-w-[1440px] mx-auto space-y-5">
+<div class="px-4 sm:px-6 py-5 max-w-[1500px] mx-auto space-y-5" data-mobile-family="analytics" data-analytics-enterprise>
 
   <!-- Header -->
   <div class="edify-page-header">
@@ -35,7 +38,7 @@
         hx-get="/analytics/program-lead"
         hx-target="#pl-analytics-body" hx-swap="innerHTML"
         hx-trigger="change delay:80ms" hx-push-url="true"
-        class="flex flex-wrap items-center gap-2 edify-surface p-2.5 rounded-surface border border-slate-100 shadow-sm edify-text-caption font-bold text-slate-500">
+        class="analytics-filter-bar edify-text-caption font-bold text-slate-500">
 
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">FY</span>
@@ -101,6 +104,8 @@
   </form>
 
 {% include "partials/analytics/section_nav.html" %}
+
+  {% include "components/analytics_decision_frame.html" with question="Which schools, clusters and team members need my intervention this week?" evidence="My supervised portfolio and confirmed delivery" freshness="Live to the selected period" confidence="Role-scoped and verification-aware" action_label="Review risks" action_href="/analytics/program-lead/drilldown?drill=risk" %}
 
   <!-- Body (HTMX swap target) -->
   <div id="pl-analytics-body">

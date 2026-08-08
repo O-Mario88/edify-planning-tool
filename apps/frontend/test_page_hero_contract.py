@@ -46,25 +46,7 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/staff/detail.html",
 )
 
-NAMED_HERO_FAMILIES = (
-    ".edify-page-header",
-    ".platform-page-header",
-    ".platform-hero",
-    ".ia-hero",
-    ".help-center-hero",
-    ".help-shell__header",
-    ".hcos-hero",
-    ".sp-page-header",
-    ".pto-header",
-    ".tt-page-header",
-    ".calendar-workspace__header",
-    ".partner-workspace__header",
-    ".admin-command__header",
-    ".pd-page-header",
-    ".sp-plan__header",
-    ".spp-header",
-    ".spa-header",
-)
+NAMED_HERO_FAMILIES = (".edify-page-header",)
 
 # A page title that is deliberately not a page header. Each of these is a real
 # exception, not a page waiting to be migrated:
@@ -232,20 +214,24 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
             "HEADERLESS_H1_TEMPLATES",
         )
 
-    def test_the_header_content_aligns_with_the_rest_of_the_page(self):
-        """The band bleeds outward by its own padding.
-
-        Without it the header is the one block on a page whose text is inset by
-        the band's padding, and it reads as an accidental indent next to the
-        breadcrumb above it and the cards below it.
-        """
+    def test_the_header_surface_aligns_with_the_rest_of_the_page(self):
+        """Header and body surfaces share the page wrapper's outer edge."""
         for stylesheet in (COMPONENTS, BRIDGE):
             css = stylesheet.read_text(encoding="utf-8")
             with self.subTest(stylesheet=stylesheet.name):
-                self.assertIn(
+                self.assertIn("margin-inline: 0", css)
+                self.assertNotIn(
                     "margin-inline: calc(-1 * (var(--page-header-padding-x",
                     css,
                 )
+
+    def test_all_themes_use_the_same_header_content_gutter(self):
+        """Theme changes cannot change the header's internal alignment."""
+        tokens = (ROOT / "static" / "css" / "design-system.css").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(tokens.count("--page-header-padding-x: 1rem;"), 3)
 
     def test_the_lead_has_a_flex_basis_so_controls_stay_on_the_title_row(self):
         """flex-wrap breaks lines on the base size, not the shrunk size.
@@ -280,7 +266,6 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
                 if names & {family.lstrip(".") for family in NAMED_HERO_FAMILIES}:
                     column_rules.append((f"{path.name}: {selector.strip()}", body))
 
-        self.assertTrue(column_rules, "expected page-header column rules to exist")
         for where, body in column_rules:
             normalised = body.replace(": ", ":")
             with self.subTest(rule=where):

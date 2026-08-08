@@ -1,6 +1,8 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Closure Quality · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -15,7 +17,7 @@ on top of it inherits the error.
 Every tile counts rows that are listed further down the page, so a number can
 be followed to the closures it describes.
 {% endcomment %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
@@ -23,7 +25,10 @@ be followed to the closures it describes.
       <h1 class="edify-page-title edify-page-header__title">Closure Quality</h1>
       <p class="edify-page-header__description">Closure records that are wrong, unconfirmed or recorded late — and the schools behind them.</p>
     </div>
-    <form class="edify-page-header__controls"
+  </header>
+
+    <form class="edify-filter-bar"
+          aria-label="Closure quality filters"
           hx-get="/analytics/closure-quality"
           hx-target="#closure-quality-body"
           hx-swap="innerHTML"
@@ -42,7 +47,9 @@ be followed to the closures it describes.
         </select>
       </label>
     </form>
-  </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+  {% include "components/analytics_decision_frame.html" with question="Which closure records should not yet be trusted, and who needs to correct them?" evidence="Closure reasons, dates, enrolment and reopen history" freshness="Live closure ledger" confidence="Exceptions are explicitly flagged" %}
 
   <div id="closure-quality-body">
     {% include "partials/analytics/closure_quality_workspace.html" %}

@@ -1,11 +1,12 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}School Visit Effectiveness · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
   <header class="edify-page-header">
-    <div class="flex flex-wrap items-end justify-between gap-3">
       <div class="edify-page-header__lead">
         <p class="edify-page-eyebrow">Quality &amp; Insights</p>
         <h1 class="edify-page-title edify-page-header__title">School Visit Effectiveness</h1>
@@ -15,7 +16,9 @@
           {{ d.methodology.followup_fy }} follow-up, comparable schools only.
         </p>
       </div>
-      <form id="vfx-filters" class="edify-filter-bar flex flex-wrap items-center gap-2.5"
+  </header>
+
+      <form id="vfx-filters" class="edify-filter-bar" aria-label="Visit effectiveness filters"
             hx-get="/analytics/visit-effectiveness"
             hx-target="#vfx-workspace" hx-swap="outerHTML" hx-push-url="true">
         <div class="flex flex-col min-w-[140px]">
@@ -35,10 +38,10 @@
           </select>
         </div>
       </form>
-    </div>
-  </header>
 
   {% include "partials/analytics/section_nav.html" %}
+
+  {% include "components/analytics_decision_frame.html" with question="Are school visits reaching the right schools with enough quality and frequency to support improvement?" evidence="Delivered visits and comparable confirmed SSA cycles" freshness="Current comparison cohort" confidence="Association, not attribution" %}
 
   {% include "partials/analytics/visit_effectiveness_workspace.html" %}
 </div>

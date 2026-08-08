@@ -35,7 +35,7 @@
                  class="app-sidebar__item {% if item.active %}app-sidebar__item--active{% endif %}"
                  {% if item.active %}aria-current="page"{% endif %}
                  title="{{ item.label }}">
-                <div class="app-sidebar__item-icon">
+                <div class="app-sidebar__item-icon" aria-hidden="true">
                   {{ item.icon|safe }}
                 </div>
                 <span class="app-sidebar__item-label" x-show="!collapsed">{{ item.label }}</span>

@@ -1,0 +1,45 @@
+{% load frontend_filters %}
+<section class="space-y-4">
+  {% include "components/kpi_strip.html" with items=kpis %}
+
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <details class="oversight-filters">
+      <summary class="btn h-9 inline-flex items-center cursor-pointer">
+        Filters{% if advanced %} ({{ advanced|length }}){% endif %}
+      </summary>
+      <div class="card p-4 mt-2 max-w-md">
+        {% include "partials/oversight/filter_drawer.html" with target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
+      </div>
+    </details>
+    <a class="btn h-9 inline-flex items-center"
+       href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
+      Export CSV
+    </a>
+  </div>
+
+  {% if tabs %}
+  <nav class="oversight-entity-tabs" aria-label="Programme Lead teams">
+    {% for entry in tabs %}
+    <a class="oversight-entity-tabs__link{% if entry.is_active %} is-active{% endif %}"
+       href="?program_lead={{ entry.key }}&period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}"
+       {% if entry.is_active %}aria-current="page"{% endif %}>
+      <span>{{ entry.label }}</span>
+      <span class="oversight-entity-tabs__count">{{ entry.count }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+
+  <header class="oversight-selection-heading">
+    <div>
+      <p class="edify-page-eyebrow">Selected team</p>
+      <h2 class="edify-section-heading">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
+      <p class="edify-text-caption edify-text-muted">The Programme Lead’s own work and every supervised CCEO are grouped below.</p>
+    </div>
+    <span class="pill pill-neutral">{{ period_label }}</span>
+  </header>
+
+  {% include "partials/oversight/cd_team_detail.html" with owner_groups=groups %}
+  {% else %}
+    {% include "components/empty_state.html" with title="No Programme Lead work in this period" message="Choose another period when teams have planned work." %}
+  {% endif %}
+</section>

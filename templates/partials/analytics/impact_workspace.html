@@ -221,14 +221,19 @@
     </div>
   </section>
 
-  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2" aria-label="Methodology">
-    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">How these numbers are computed</h3>
+  <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="impact-methodology">
+    <summary>
+      <span><strong>Methodology and limitations</strong><small>How the cohorts, comparisons and confidence statements are computed</small></span>
+      <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="analytics-evidence-disclosure__body">
     <ul class="space-y-1">
       {% for note in dashboard.method_notes %}
       <li class="text-[12px] text-slate-500 leading-relaxed">· {{ note }}</li>
       {% endfor %}
     </ul>
-  </section>
+    </div>
+  </details>
 
   {% endif %}
 </div>

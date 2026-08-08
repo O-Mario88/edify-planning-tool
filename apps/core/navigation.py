@@ -90,7 +90,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # exports here now carry `@require_export_permission`, and the corrective
     # actions gate on their own authority rather than on page access — both
     # asserted in test_planning_oversight_access.py.
-    "team_planning_oversight": {PL, IA, ACCOUNTANT, ADMIN},
+    "team_planning_oversight": {PL, CD, RVP, IA, ACCOUNTANT, ADMIN},
     "country_planning_oversight": {CD, RVP, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
@@ -107,7 +107,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # person who knows the school is the first to notice a partner who has
     # gone quiet. The PL's decision queue is filtered by `supervising_pl_id`
     # and so stays empty for them: shared visibility, unchanged authority.
-    "partner_oversight": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
+    "partner_oversight": {CCEO, PL, CD, RVP, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -504,6 +504,33 @@ ICONS = {
     "ssa": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-8m3 8v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
 }
 
+# Keep every registered destination visually discoverable in the expanded,
+# collapsed and mobile navigation. These aliases intentionally reuse the
+# platform's established line-icon vocabulary instead of adding a second icon
+# library for conceptually identical actions.
+ICONS.update(
+    {
+        "team_planning_oversight": ICONS["planning"],
+        "country_planning_oversight": ICONS["work_plan"],
+        "partner_oversight": ICONS["partners"],
+        "my_actions": ICONS["todos"],
+        "actions_sent": ICONS["escalations"],
+        "uploads": ICONS["ia_upload_center"],
+        "closed_schools": ICONS["completed_archive"],
+        "leave_tracker": ICONS["team_availability"],
+        "admin_my_plan": ICONS["my_plan"],
+        "admin_planning": ICONS["planning"],
+        "admin_team_plans": ICONS["team_targets"],
+        "admin_incidents": ICONS["recovery_plans"],
+        "admin_maintenance": ICONS["calendar"],
+        "data_repair": ICONS["cost_settings"],
+        "leave_policies": ICONS["policies"],
+        "policy_compliance": ICONS["compliance_register"],
+    }
+)
+
+DEFAULT_SIDEBAR_ICON = ICONS["dashboard"]
+
 # ── The Analytics workspace ───────────────────────────────────────────────────
 # Every analysis surface in the platform, in one place. These used to be
 # eleven separate sidebar links plus two pages that had no link at all; they
@@ -789,6 +816,13 @@ LEAVE_SECTIONS = [
 ]
 
 # Every multi-page workspace, keyed by the eyebrow its section strip shows.
+WORKSPACE_CLUSTER_LABELS = {
+    "programme": "Programme Health",
+    "decisions": "Decisions",
+    "delivery": "Delivery & Quality",
+    "reporting": "Reporting",
+}
+
 WORKSPACES = {
     "ia": {"label": "Impact Assessment", "sections": IA_SECTIONS},
     "analytics": {"label": "Analytics", "sections": ANALYTICS_SECTIONS},
@@ -831,6 +865,16 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
         active = _path_matches(url, current_path, match) or (
             url != section["url"] and _path_matches(section["url"], current_path, match)
         )
+        # Admin can inspect every role-specific Overview cockpit directly.
+        # Those destinations are role overrides for their owning users rather
+        # than separate navigation sections, so without this check an Admin on
+        # /analytics/program-lead, /analytics/country-director or
+        # /projects/analytics lost the Analytics workspace strip entirely.
+        if role == ADMIN and not active:
+            active = any(
+                _path_matches(role_url, current_path, match)
+                for role_url in section.get("role_urls", {}).values()
+            )
         sections.append(
             {
                 "key": section["key"],
@@ -838,6 +882,11 @@ def build_sections(registry, user, current_path: str = "") -> list[dict]:
                 "url": url,
                 "description": section["description"],
                 "active": active,
+                "cluster": section["cluster"],
+                "cluster_label": WORKSPACE_CLUSTER_LABELS.get(
+                    section["cluster"],
+                    section["cluster"].replace("_", " ").title(),
+                ),
                 # First item of a new cluster gets the divider before it.
                 "starts_cluster": previous_cluster is not None
                 and section["cluster"] != previous_cluster,
@@ -873,7 +922,32 @@ def build_workspace(user, current_path: str = "") -> dict | None:
     for key, workspace in workspaces:
         sections = build_sections(workspace["sections"], user, current_path)
         if len(sections) > 1 and any(s["active"] for s in sections):
-            return {"key": key, "label": workspace["label"], "sections": sections}
+            groups_by_key: dict[str, dict] = {}
+            for section in sections:
+                cluster = section["cluster"]
+                group = groups_by_key.setdefault(
+                    cluster,
+                    {
+                        "key": cluster,
+                        "label": section["cluster_label"],
+                        "sections": [],
+                        "active": False,
+                    },
+                )
+                group["sections"].append(section)
+                group["active"] = group["active"] or section["active"]
+            groups = list(groups_by_key.values())
+            active_group = next(
+                (group["key"] for group in groups if group["active"]),
+                groups[0]["key"],
+            )
+            return {
+                "key": key,
+                "label": workspace["label"],
+                "sections": sections,
+                "groups": groups,
+                "active_group": active_group,
+            }
     return None
 
 
@@ -900,11 +974,6 @@ SIDEBAR_ITEMS = [
                 "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
-            },
-            {
-                "label": "Country Planning",
-                "url": "/country-planning-oversight/",
-                "page_key": "country_planning_oversight",
             },
             {
                 "label": "My Plan",
@@ -1508,6 +1577,23 @@ SIDEBAR_ITEMS = [
 ]
 
 
+# Navigation follows the operational journey, independent of the authoring
+# order of the registry below. Python's sort is stable, so every unlisted
+# section keeps its existing relative position after these three priorities.
+SIDEBAR_GROUP_PRIORITY = {
+    "SCHOOLS & FIELD": 0,
+    "MY WORK": 1,
+    "FINANCE & BUDGET": 2,
+}
+
+
+def _sidebar_sections_in_display_order() -> list[dict]:
+    return sorted(
+        SIDEBAR_ITEMS,
+        key=lambda section: SIDEBAR_GROUP_PRIORITY.get(section["group_label"], 3),
+    )
+
+
 # Legacy name retained for compatibility. Admin is the super-role and the
 # sidebar builder no longer restricts it to this set.
 ADMIN_NAV_PAGE_KEYS: set[str] = {
@@ -1565,7 +1651,9 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     # is the only registration of that page — but no page is ever offered
     # twice in one sidebar.
     _page_key_counts: dict[str, int] = {}
-    for _sec in SIDEBAR_ITEMS:
+    ordered_sections = _sidebar_sections_in_display_order()
+
+    for _sec in ordered_sections:
         _audience = _sec.get("visible_to")
         if role != ADMIN and _audience is not None and role not in _audience:
             continue
@@ -1575,7 +1663,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                 _page_key_counts[_key] = _page_key_counts.get(_key, 0) + 1
 
     sections = []
-    for sec in SIDEBAR_ITEMS:
+    for sec in ordered_sections:
         section_audience = sec.get("visible_to")
         if (
             role != ADMIN
@@ -1606,7 +1694,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     {
                         "label": home["label"] if only_one else item["label"],
                         "url": home["url"],
-                        "icon": ICONS.get(item["page_key"], ""),
+                        "icon": ICONS.get(item["page_key"], DEFAULT_SIDEBAR_ICON),
                         "active": any(s["active"] for s in analytics_sections),
                         "page_key": item["page_key"],
                     }
@@ -1668,7 +1756,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                         "url": url,
                         "icon": ICONS.get(
                             item.get("icon_key", item["page_key"]),
-                            "",
+                            DEFAULT_SIDEBAR_ICON,
                         ),
                         "active": is_active,
                         # Carried so the mobile bottom navigation can select
@@ -1828,7 +1916,7 @@ def build_mobile_nav_for_user(
             {
                 "label": spec["label"],
                 "url": url,
-                "icon": ICONS.get(key, ""),
+                "icon": ICONS.get(key, DEFAULT_SIDEBAR_ICON),
                 "active": _path_matches(url, current_path, spec["match"]),
                 "page_key": key,
             },

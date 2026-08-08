@@ -7,6 +7,10 @@ __pycache__/
 .env.local
 .git/
 .gitignore
+.agents/
+.claude/
+.codex/
+node_modules/
 *.log
 db.sqlite3
 staticfiles/

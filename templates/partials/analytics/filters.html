@@ -1,144 +1,112 @@
-<!-- Filter row for Analytics Dashboard -->
-<form
-id="analytics-filters-form"
-hx-get="/analytics"
-hx-trigger="change delay:100ms, keyup delay:200ms changed"
-hx-target="#analytics-kpi-and-content-container"
-hx-push-url="true"
-class="flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-surface  shadow-sm edify-text-caption font-bold text-slate-500 "
->
-<!-- FY selector -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>FY</span>
-<select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="2025" {% if filters.selected_fy == '2025' %}selected{% endif %}>2025</option>
-<option value="2026" {% if filters.selected_fy == '2026' %}selected{% endif %}>2026</option>
-</select>
-</div>
+<form id="analytics-filters-form"
+      hx-get="/analytics"
+      hx-trigger="change delay:100ms, keyup delay:200ms changed"
+      hx-target="#analytics-kpi-and-content-container"
+      hx-push-url="true"
+      class="analytics-filter-command edify-filter-bar">
+  <div class="analytics-filter-command__primary">
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Financial year</span>
+      <select aria-label="Fiscal year" name="fy">
+        <option value="2025" {% if filters.selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+        <option value="2026" {% if filters.selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+      </select>
+    </label>
 
-<!-- Quarter selector -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Quarter</span>
-<select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="Q1" {% if filters.selected_quarter == 'Q1' %}selected{% endif %}>Q1 (Oct-Dec)</option>
-<option value="Q2" {% if filters.selected_quarter == 'Q2' %}selected{% endif %}>Q2 (Jan-Mar)</option>
-<option value="Q3" {% if filters.selected_quarter == 'Q3' %}selected{% endif %}>Q3 (Apr-Jun)</option>
-<option value="Q4" {% if filters.selected_quarter == 'Q4' %}selected{% endif %}>Q4 (Jul-Sep)</option>
-</select>
-</div>
+    <label class="analytics-filter-field">
+      <span class="edify-filter-label">Period</span>
+      <select aria-label="Quarter" name="quarter">
+        <option value="Q1" {% if filters.selected_quarter == 'Q1' %}selected{% endif %}>Q1 · Oct–Dec</option>
+        <option value="Q2" {% if filters.selected_quarter == 'Q2' %}selected{% endif %}>Q2 · Jan–Mar</option>
+        <option value="Q3" {% if filters.selected_quarter == 'Q3' %}selected{% endif %}>Q3 · Apr–Jun</option>
+        <option value="Q4" {% if filters.selected_quarter == 'Q4' %}selected{% endif %}>Q4 · Jul–Sep</option>
+      </select>
+    </label>
 
-{% comment %}
-Region is deliberately absent. It asked the same question as District on a
-coarser grain, while a user's region is already fixed by their scope before
-any dropdown applies — the drilldown endpoints never accepted it either.
-{% endcomment %}
-{% comment %}
-Sub-Region sits above District because that is the order somebody narrows in —
-and because it is the SSA heatmap's top level, so the two read the same way.
-It joins through the district; School.sub_region_id is empty on every school.
-{% endcomment %}
-<!-- Sub-Region filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Sub-Region:</span>
-<select aria-label="Sub-Region" name="sub_region" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for sr in sub_regions %}
-<option value="{{ sr.id }}" {% if filters.selected_sub_region == sr.id %}selected{% endif %}>{{ sr.name }}</option>
-{% endfor %}
-</select>
-</div>
+    <label class="analytics-filter-field analytics-filter-field--geography">
+      <span class="edify-filter-label">Geography</span>
+      <select aria-label="Sub-Region" name="sub_region">
+        <option value="">All sub-regions</option>
+        {% for sr in sub_regions %}
+        <option value="{{ sr.id }}" {% if filters.selected_sub_region == sr.id %}selected{% endif %}>{{ sr.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
 
-<!-- District filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>District:</span>
-<select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for d in districts %}
-<option value="{{ d.id }}" {% if filters.selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
-{% endfor %}
-</select>
-</div>
+    <details class="analytics-more-filters"
+             {% if filters.selected_district or filters.selected_sub_county or filters.selected_cluster or filters.selected_staff or filters.selected_partner or filters.selected_school_type and filters.selected_school_type != 'All' or filters.selected_activity_type and filters.selected_activity_type != 'All' %}open{% endif %}>
+      <summary>
+        <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M3 5h14M5.5 10h9M8 15h4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7"/></svg>
+        More filters
+        <span aria-hidden="true">7</span>
+      </summary>
+      <div class="analytics-more-filters__panel">
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">District</span>
+          <select aria-label="District" name="district">
+            <option value="">All districts</option>
+            {% for d in districts %}<option value="{{ d.id }}" {% if filters.selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+          </select>
+        </label>
 
-{% comment %}
-Only the sub-counties schools are actually assigned to are listed, so every
-option returns rows. The map draws sub-county boundaries for the whole country
-from static GeoJSON, which makes coverage look complete — assignment on
-School.sub_county is a different thing and is set on far fewer schools. The
-option is prefixed with its district because sub-county names repeat across
-districts ("Central Division" exists in many).
-{% endcomment %}
-<!-- Sub-County filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Sub-County:</span>
-<select aria-label="Sub-County" name="sub_county" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for sc in sub_counties %}
-<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>
-{% endfor %}
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">Sub-county</span>
+          <select aria-label="Sub-County" name="sub_county">
+            <option value="">All sub-counties</option>
+            {% for sc in sub_counties %}<option value="{{ sc.id }}" {% if filters.selected_sub_county == sc.id %}selected{% endif %}>{{ sc.district.name }} · {{ sc.name }}</option>{% endfor %}
+          </select>
+        </label>
 
-<!-- Cluster filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Cluster:</span>
-<select aria-label="Cluster" name="cluster" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for c in clusters %}
-<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>
-{% endfor %}
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">Cluster</span>
+          <select aria-label="Cluster" name="cluster">
+            <option value="">All clusters</option>
+            {% for c in clusters %}<option value="{{ c.id }}" {% if filters.selected_cluster == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+          </select>
+        </label>
 
-<!-- Staff filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Staff:</span>
-<select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for s in staff_profiles %}
-<option value="{{ s.id }}" {% if filters.selected_staff == s.id %}selected{% endif %}>{{ s.user.name }}</option>
-{% endfor %}
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">Staff</span>
+          <select aria-label="Staff" name="staff">
+            <option value="">All staff</option>
+            {% for s in staff_profiles %}<option value="{{ s.id }}" {% if filters.selected_staff == s.id %}selected{% endif %}>{{ s.user.name }}</option>{% endfor %}
+          </select>
+        </label>
 
-<!-- Partner filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Partner:</span>
-<select aria-label="Partner" name="partner" class="bg-transparent focus:outline-none cursor-pointer text-slate-700 max-w-[100px] truncate">
-<option value="">All</option>
-{% for p in partners %}
-<option value="{{ p.id }}" {% if filters.selected_partner == p.id %}selected{% endif %}>{{ p.name }}</option>
-{% endfor %}
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">Partner</span>
+          <select aria-label="Partner" name="partner">
+            <option value="">All partners</option>
+            {% for p in partners %}<option value="{{ p.id }}" {% if filters.selected_partner == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+          </select>
+        </label>
 
-<!-- School Type filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>School Type:</span>
-<select aria-label="School type" name="school_type" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="All" {% if filters.selected_school_type == 'All' or not filters.selected_school_type %}selected{% endif %}>All</option>
-<option value="core" {% if filters.selected_school_type == 'core' %}selected{% endif %}>Core</option>
-<option value="champion" {% if filters.selected_school_type == 'champion' %}selected{% endif %}>Champion</option>
-<option value="client" {% if filters.selected_school_type == 'client' %}selected{% endif %}>Client</option>
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">School type</span>
+          <select aria-label="School type" name="school_type">
+            <option value="All" {% if filters.selected_school_type == 'All' or not filters.selected_school_type %}selected{% endif %}>All school types</option>
+            <option value="core" {% if filters.selected_school_type == 'core' %}selected{% endif %}>Core</option>
+            <option value="champion" {% if filters.selected_school_type == 'champion' %}selected{% endif %}>Champion</option>
+            <option value="client" {% if filters.selected_school_type == 'client' %}selected{% endif %}>Client</option>
+          </select>
+        </label>
 
-<!-- Activity Type filter -->
-<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface  hover:border-slate-300 transition-colors">
-<span>Activity Type:</span>
-<select aria-label="Activity type" name="activity_type" class="bg-transparent focus:outline-none cursor-pointer text-slate-700">
-<option value="All" {% if filters.selected_activity_type == 'All' or not filters.selected_activity_type %}selected{% endif %}>All</option>
-<option value="school_visit" {% if filters.selected_activity_type == 'school_visit' %}selected{% endif %}>School Visit</option>
-<option value="cluster_training" {% if filters.selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster Training</option>
-<option value="cluster_meeting" {% if filters.selected_activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster Meeting</option>
-<option value="ssa_activity" {% if filters.selected_activity_type == 'ssa_activity' %}selected{% endif %}>SSA Support</option>
-</select>
-</div>
+        <label class="analytics-filter-field">
+          <span class="edify-filter-label">Activity type</span>
+          <select aria-label="Activity type" name="activity_type">
+            <option value="All" {% if filters.selected_activity_type == 'All' or not filters.selected_activity_type %}selected{% endif %}>All activities</option>
+            <option value="school_visit" {% if filters.selected_activity_type == 'school_visit' %}selected{% endif %}>School visit</option>
+            <option value="cluster_training" {% if filters.selected_activity_type == 'cluster_training' %}selected{% endif %}>Cluster training</option>
+            <option value="cluster_meeting" {% if filters.selected_activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster meeting</option>
+            <option value="ssa_activity" {% if filters.selected_activity_type == 'ssa_activity' %}selected{% endif %}>SSA support</option>
+          </select>
+        </label>
+      </div>
+    </details>
 
-<!-- Clear Filters -->
-<a
-href="/analytics"
-class="ml-auto edify-primary-text hover:underline tracking-tight edify-text-caption"
->
-<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg> Clear Filters
-</a>
+    <a href="/analytics" class="analytics-filter-command__clear">
+      <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m6 6 8 8m0-8-8 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>
+      Clear
+    </a>
+  </div>
 </form>

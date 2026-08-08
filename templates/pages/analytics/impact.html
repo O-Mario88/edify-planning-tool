@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Impact Analytics · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<section class="sp-page edify-page-canvas" aria-labelledby="impact-analytics-title">
+<section class="sp-page edify-page-canvas" aria-labelledby="impact-analytics-title" data-mobile-family="analytics" data-analytics-enterprise>
   <header class="edify-page-header">
     <div class="flex flex-wrap items-start justify-between gap-3">
     <div class="lg:max-w-[560px] edify-page-header__lead">
@@ -19,6 +21,8 @@
   </header>
 
   {% include "partials/analytics/section_nav.html" %}
+
+  {% include "components/analytics_decision_frame.html" with question="Which interventions are credibly associated with school improvement, and where is the evidence still too weak to act?" evidence="Paired confirmed SSA, accepted spend and field dosage" freshness="Current assessment cohorts" confidence="Qualified, not causal" %}
 
   {% include "partials/analytics/impact_workspace.html" %}
 </section>

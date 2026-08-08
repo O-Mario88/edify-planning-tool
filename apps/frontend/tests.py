@@ -369,14 +369,16 @@ class FrontendViewsTestCase(TestCase):
 
         html = response.content.decode()
         # Admin's dashboard now leads with the Platform Operations command
-        # centre (7 metrics) and keeps the 7-metric country strip below it as
-        # observability. The two are counted separately so a change to either
-        # is visible here rather than hidden in a single total.
+        # centre (7 metrics), has a compact 7-metric mobile Platform pulse,
+        # and keeps the 7-metric country strip below it as observability. The
+        # three are counted separately so responsive markup cannot silently
+        # lose a metric family.
+        self.assertEqual(html.count('aria-label="Platform pulse"'), 1)
         self.assertEqual(html.count('aria-label="Platform operations summary"'), 1)
         self.assertEqual(html.count('aria-label="Country operational summary"'), 1)
         # Both strips now use the canonical independent KPI card rather than
         # the retired page-specific ``admin-kpi`` tile.
-        self.assertEqual(html.count('data-component="kpi-card"'), 14)
+        self.assertEqual(html.count('data-component="kpi-card"'), 21)
         # Renamed with the read-only labels (97770f39): Admin does business
         # work here, so the strip below the command centre is the platform's
         # business overview rather than something merely "observed".

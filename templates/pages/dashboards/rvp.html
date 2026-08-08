@@ -2,12 +2,15 @@
 {% load frontend_filters %}
 
 {% block title %}Regional Vice President Dashboard · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" x-data="{ showNote: false }">
 
+  {% include "components/mobile_role_home.html" with eyebrow="Executive oversight" headline="Regional decision digest" description="Review the most consequential approval or delivery exception before opening regional analytics." period_label="FY "|add:fy status_label=attention|length primary_action=mobile_primary_action %}
+
   <!-- Header -->
-  <div class="edify-page-header">
+  <div class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">Regional Vice President Dashboard</h1>
       <p class="edify-page-header__description">
@@ -15,12 +18,6 @@
       </p>
     </div>
     <div class="edify-page-header__controls">
-      <form method="get" class="flex items-center gap-2 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 edify-text-caption font-bold text-slate-500">
-        <span class="uppercase tracking-wider edify-text-caption">FY</span>
-        <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
-          {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-        </select>
-      </form>
       <a href="/reports" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
         Export
@@ -28,8 +25,15 @@
     </div>
   </div>
 
+  <form method="get" class="edify-filter-bar" aria-label="Regional dashboard filters">
+    <span class="uppercase tracking-wider edify-text-caption">FY</span>
+    <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+      {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+    </select>
+  </form>
+
   {# ── Executive KPI strip ─────────────────────────────────────────────────── #}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items %}
+  <div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
 
   {# ── Leadership Attention ────────────────────────────────────────────────── #}
   {% if attention %}
@@ -50,7 +54,11 @@
   </div>
   {% endif %}
 
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+  <div class="mobile-home-only">
+    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Regional pulse" %}
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mobile-home-deferred">
     <div class="lg:col-span-9 space-y-5 min-w-0">
 
       {# ── 1 + 2: overview chart · region ranking ─────────────────────────── #}
@@ -69,7 +77,7 @@
                      { name: 'Verified', type: 'column', data: {{ overview.verified }} },
                      { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
                    ],
-                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
+                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                    stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
                    colors: window.EdifyChartSystem.mixedSeries,
                    labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
@@ -470,14 +478,15 @@
 
   <!-- New strategy note -->
   <div x-show="showNote" x-cloak @click.self="showNote = false"
-       class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4">
+       class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"
+       role="dialog" aria-modal="true" aria-labelledby="strategy-note-title">
     <div class="edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-[14px] font-bold text-slate-800">New Strategy Note</h3>
+          <h3 id="strategy-note-title" class="text-[14px] font-bold text-slate-800">New Strategy Note</h3>
           <p class="edify-text-caption text-slate-400 font-medium">Accountable guidance — creates a Country Director To-Do and notification.</p>
         </div>
-        <button type="button" @click="showNote = false" class="text-slate-400 hover:text-slate-600 text-[18px] leading-none">&times;</button>
+        <button type="button" aria-label="Close strategy note form" @click="showNote = false" class="text-slate-400 hover:text-slate-600 text-[18px] leading-none">&times;</button>
       </div>
       <form method="post" action="/rvp/strategy-note" class="space-y-3">
         {% csrf_token %}
