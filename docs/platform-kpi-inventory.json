@@ -1832,7 +1832,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1552,
+   "line": 1561,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -1848,7 +1848,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1560,
+   "line": 1569,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -1864,7 +1864,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1568,
+   "line": 1577,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -1880,7 +1880,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1576,
+   "line": 1585,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -1896,7 +1896,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1584,
+   "line": 1593,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -1912,7 +1912,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1592,
+   "line": 1601,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -1928,7 +1928,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1600,
+   "line": 1609,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -1944,7 +1944,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1608,
+   "line": 1617,
    "label": "Pending Activities",
    "keys": [
     "helper",

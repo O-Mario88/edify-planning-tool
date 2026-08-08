@@ -3311,7 +3311,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 919,
+   "line": 949,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3320,7 +3320,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 952,
+   "line": 982,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -4082,7 +4082,7 @@
   },
   {
    "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 58,
+   "line": 61,
    "title": "Graduation Formula Weights",
    "heading_level": 3,
    "has_card_key": false,
@@ -4091,7 +4091,7 @@
   },
   {
    "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 132,
+   "line": 135,
    "title": "Graduation Gate Checklist",
    "heading_level": 3,
    "has_card_key": false,
