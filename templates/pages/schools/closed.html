@@ -1,0 +1,150 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters table_pagination %}
+
+{% block title %}Closed Schools · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The archive.
+
+Deliberately its own page rather than a filter on the School Directory. The
+requirement is that closed schools do not appear there, and a hidden filter
+default is a promise that breaks the first time somebody clears it — or lands
+on the directory from a saved link.
+
+Every school here is preserved in full. What it enrolled, what it received and
+what was spent on it are facts about periods already reported; closure ends the
+school's future, not its history.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">School lifecycle</p>
+      <h1 class="edify-page-title edify-page-header__title">Closed Schools</h1>
+      <p class="edify-page-header__description">Schools that have stopped operating. Their records, history and finance remain intact and readable here.</p>
+    </div>
+    {% comment %}
+    No search box here. The top bar's is the one search on every page, and this
+    view binds it through topbar_search — a second field competing with it is
+    the thing the search-consolidation contract exists to prevent.
+    {% endcomment %}
+    {% if q %}
+    <div class="edify-page-header__controls">
+      <a href="/schools/closed" class="btn h-9 inline-flex items-center gap-1.5">
+        Clear search<span class="edify-text-muted">“{{ q|truncatechars:24 }}”</span>
+      </a>
+    </div>
+    {% endif %}
+  </header>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div class="card p-4">
+      <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closed schools</p>
+      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ closed_count|intcomma }}</p>
+    </div>
+    <div class="card p-4">
+      <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Still active</p>
+      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ active_count|intcomma }}</p>
+    </div>
+    <div class="card p-4">
+      <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Enrolment removed</p>
+      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ enrollment_removed|intcomma }}</p>
+      <p class="edify-text-caption edify-text-muted">Learners, at the moment each school closed</p>
+    </div>
+  </div>
+
+  {% if rows %}
+  {% comment %}
+  One pager for both layouts. The table and the phone list are the same rows
+  at different breakpoints, so they must page together — two pagers would let
+  a phone and a desktop disagree about which page they are on.
+  {% endcomment %}
+  {% paginate rows "closed_page" as pager %}
+  <section class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto max-md:hidden">
+      <table class="w-full text-left">
+        <caption class="sr-only">Schools that have closed</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School</th>
+            <th scope="col" class="px-4 py-2 font-semibold">District</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Former owner</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Type</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Reason</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Enrolment</th>
+            <th scope="col" class="px-4 py-2 font-semibold"><span class="sr-only">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pager.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5">
+              <span class="font-semibold">{{ row.school.name }}</span>
+              <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
+            <td class="px-4 py-2.5 text-sm">{{ row.owner|default:"—" }}</td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
+            <td class="px-4 py-2.5">
+              <span class="pill">{{ row.closure.get_closure_type_display }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm">
+              {{ row.closure.get_reason_category_display }}
+              <span class="block edify-text-caption edify-text-muted">{{ row.closure.reason|truncatechars:90 }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap tabular-nums">
+              {% if row.enrollment %}{{ row.enrollment|intcomma }}{% else %}<span class="edify-text-muted" title="No enrolment count was recorded for this school">Not recorded</span>{% endif %}
+            </td>
+            <td class="px-4 py-2.5 whitespace-nowrap">
+              <a href="/schools/{{ row.school.school_id }}"
+                 class="text-sm font-semibold hover:underline edify-primary-text">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% comment %}
+    Phone: the same rows read down instead of across. An eight-column table on
+    a 375px screen is a horizontal scroll nobody performs.
+    {% endcomment %}
+    <ul class="md:hidden divide-y edify-border">
+      {% for row in pager.rows %}
+      <li class="p-4 space-y-1.5">
+        <div class="flex items-start justify-between gap-2">
+          <p class="font-semibold text-sm">{{ row.school.name }}</p>
+          <span class="pill whitespace-nowrap">{{ row.closure.get_closure_type_display }}</span>
+        </div>
+        <p class="edify-text-caption edify-text-muted">
+          {{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}
+          · closed {{ row.closure.effective_date|date:"j M Y" }}
+        </p>
+        <p class="edify-text-caption edify-text-muted">
+          {{ row.closure.get_reason_category_display }}
+          {% if row.enrollment %} · {{ row.enrollment|intcomma }} learners{% endif %}
+        </p>
+        <a href="/schools/{{ row.school.school_id }}"
+           class="text-sm font-semibold hover:underline edify-primary-text min-h-11 inline-flex items-center">View school</a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% include "components/table_pager.html" with pager=pager param="closed_page" %}
+  </section>
+  {% else %}
+  {% comment %}
+  A search that matched nothing is not an empty archive. Saying "no closed
+  schools" to somebody who has just searched for one reads as a claim about
+  the data rather than about their query.
+  {% endcomment %}
+  {% if q %}
+  {% include "components/empty_state.html" with title="No closed school matches that search" message="No closed school name contains that text. Clear the search to see the whole archive." %}
+  {% else %}
+  {% include "components/empty_state.html" with title="No closed schools" message="When a school stops operating and is closed from its profile, it moves here — with its enrolment, history and finance intact." %}
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

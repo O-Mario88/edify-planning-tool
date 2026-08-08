@@ -1,5 +1,5 @@
 """Exits non-zero when background automation is unhealthy -- for use as a
-Docker/Kubernetes/Railway health probe on the worker service, or a manual
+Docker/Kubernetes/App Platform health probe on the worker service, or a manual
 ops check. Prints a human-readable summary either way.
 
 Usage:

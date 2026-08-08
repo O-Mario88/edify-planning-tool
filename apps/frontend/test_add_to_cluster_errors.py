@@ -162,6 +162,13 @@ class AddToClusterErrorsAreShownNotThrownTest(TestCase):
             name="INC1 Elsewhere", district=self.district
         )
         cluster = self._cluster(district=self.district)
+        # Owned by this school's own staff owner. An ownerless cluster is no
+        # longer offered to anybody — a cluster belongs to the person
+        # responsible for its schools — and this test is about the annotation
+        # branch, not about ownership.
+        Cluster.objects.filter(id=cluster.id).update(
+            responsible_staff_id=self.profile.id
+        )
         ClusterSubCounty.objects.create(cluster=cluster, sub_county=other_sub_county)
 
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")

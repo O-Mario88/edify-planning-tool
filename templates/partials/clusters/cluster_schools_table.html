@@ -27,7 +27,7 @@
               @click="openSchoolId = openSchoolId === '{{ s.id }}' ? null : '{{ s.id }}'"
               @keydown.escape.window="openSchoolId = null"
               :aria-expanded="(openSchoolId === '{{ s.id }}').toString()"
-              :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide SSA details for {{ s.name|escapejs }}' : 'Show SSA details for {{ s.name|escapejs }}'"
+              :aria-label="openSchoolId === '{{ s.id }}' ? 'Hide details for {{ s.name|escapejs }}' : 'Show details for {{ s.name|escapejs }}'"
               aria-controls="cluster-school-details-{{ s.id }}"
             ></button>
             <span class="school-record-row__icon" aria-hidden="true">
@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <div id="cluster-school-details-{{ s.id }}" class="school-record-row__details" x-show="openSchoolId === '{{ s.id }}'" x-transition.opacity.duration.150ms x-cloak>
+        <div id="cluster-school-details-{{ s.id }}" class="school-record-row__details">
           {% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-school-details-"|add:s.id ssa_groups=s.ssaGroups has_ssa_scores=s.hasSsaScores %}
         </div>
       </li>

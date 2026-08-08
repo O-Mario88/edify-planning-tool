@@ -873,20 +873,40 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotContains(response, "bg-emerald-50")
 
     def test_add_to_cluster_drawer_shows_nearby_only_without_covering_cluster(self):
+        """The directory branch, under the eligibility rule.
+
+        This used to assert that a cluster in the district was offered even
+        though it covered a different sub-county. It is not any more — showing
+        another sub-county's clusters is the thing the rule forbids — so the
+        cluster offered here is a district-level one, which has claimed no
+        sub-county and is therefore not "another" one.
+        """
         uncovered_sub_county = SubCounty.objects.create(
             name="Uncovered Subcounty",
             district=self.district,
         )
         self.school.sub_county = uncovered_sub_county
+        self.school.account_owner_id = self.cceo_profile.id
         self.school.save()
+        district_level = Cluster.objects.create(
+            name="Kampola District Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+            responsible_staff_id=self.cceo_profile.id,
+        )
         self.client.force_login(self.cceo_user)
 
         response = self.client.get(f"/schools/{self.school.id}/add-to-cluster")
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["show_cluster_directory"])
-        self.assertContains(response, "Nearby clusters")
-        self.assertContains(response, self.cluster.name)
+        # "Your clusters", not "Nearby": the list is scoped to who is
+        # responsible for a cluster rather than to the district it sits in.
+        self.assertContains(response, "Your clusters")
+        self.assertContains(response, district_level.name)
+        # The sub-county rule at work: this one covers a different sub-county.
+        self.assertNotContains(response, self.cluster.name)
         self.assertContains(response, "Create new")
         self.assertNotContains(response, "Cluster selected automatically")
 

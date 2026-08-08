@@ -160,8 +160,12 @@ def schedule_activity(activity_id: str, data: dict, principal) -> dict:
 
 
 def eligible(query: dict) -> list[dict]:
-    """Partners eligible for a district + expertise."""
-    qs = Partner.objects.filter(deleted_at__isnull=True, active_status=True)
+    """Partners eligible for a district + expertise, and able to take new work.
+
+    Held partners are excluded here too — the API is a second door to the same
+    choice, and a rule enforced only in the HTML picker is not a rule.
+    """
+    qs = assignable_partners()
     district = query.get("districtName")
     if district:
         qs = qs.filter(coverage_districts__contains=[district])
@@ -521,3 +525,30 @@ def _notify_assignment_returned(assignment, principal, category, reason) -> None
         )
     except Exception:  # pragma: no cover — bookkeeping must not break the flow
         logger.warning("partner.assignment_returned notification failed", exc_info=True)
+
+
+def assignable_partners():
+    """Partners who may receive NEW work right now.
+
+    The one place that question is answered, because six views built the
+    picker independently and a held partner was still offered by all of them —
+    the assignment failed at save with a conflict, after the person had chosen
+    a school, an activity and a reason. Offering a choice the system will
+    refuse is a worse experience than not offering it, and it teaches people
+    that the error is arbitrary.
+
+    Excludes held partners. Does NOT exclude partners with withdrawn history:
+    a partner who lost one assignment to a closed school is not disqualified
+    from the next one, and quietly hiding them would be a performance
+    judgement made by a query.
+    """
+    from apps.partners.withdrawal_models import PartnerHold
+
+    held = PartnerHold.objects.filter(lifted_at__isnull=True).values_list(
+        "partner_id", flat=True
+    )
+    return (
+        Partner.objects.filter(deleted_at__isnull=True, active_status=True)
+        .exclude(id__in=held)
+        .order_by("name")
+    )

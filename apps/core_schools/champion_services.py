@@ -2,6 +2,7 @@ import logging
 from django.db import transaction
 from apps.schools.models import School
 from apps.core_schools.models import CoreSchoolProfile, CorePlan
+from apps.core.scoping import assert_may_write_school
 from apps.core_schools.services import CORE_SLOT_DONE_STATUSES, EXPECTED_CORE_SLOTS
 
 logger = logging.getLogger(__name__)
@@ -137,11 +138,21 @@ class ChampionEligibilityService:
 
     @staticmethod
     @transaction.atomic
-    def approve(school_id: str, user_id: str) -> bool:
-        """Approves a Potential Champion school to official Champion School status."""
+    def approve(school_id: str, principal) -> bool:
+        """Approves a Potential Champion school to official Champion School status.
+
+        Takes the acting principal rather than a bare user id. Graduation
+        rewrites `School.school_type`, and an id carries no authority to do
+        that: both this and :meth:`reject` accepted any school in the country
+        from any of the four roles holding the `core_schools` page permission.
+        The review drawer that leads here scoped its lookup and the POST behind
+        it did not — a hidden button, not a rule.
+        """
         school = School.objects.filter(school_id=school_id).first()
         if not school:
             return False
+
+        assert_may_write_school(principal, school, action="graduate")
 
         profile = CoreSchoolProfile.objects.filter(school_id=school_id).first()
         if not profile:
@@ -159,14 +170,28 @@ class ChampionEligibilityService:
         dummy_act = school.activities.first()
         if dummy_act:
             AuditTrailService.log_event(
-                dummy_act, "Champion School Approved", user_id, "Admin"
+                dummy_act,
+                "Champion School Approved",
+                principal.user_id,
+                "Admin",
             )
 
         return True
 
     @staticmethod
-    def reject(school_id: str) -> bool:
-        """Rejects a champion proposal and resets candidate status."""
+    def reject(school_id: str, principal) -> bool:
+        """Rejects a champion proposal and resets candidate status.
+
+        Scoped for the same reason as :meth:`approve` — rejecting somebody
+        else's candidate is as much a write into their portfolio as approving
+        it, and costs the school its graduation.
+        """
+        school = School.objects.filter(school_id=school_id).first()
+        if not school:
+            return False
+
+        assert_may_write_school(principal, school, action="review the candidacy of")
+
         profile = CoreSchoolProfile.objects.filter(school_id=school_id).first()
         if not profile:
             return False

@@ -21,7 +21,7 @@ def _login_stats():
     the login page is public. The page never substitutes demo/fabricated
     figures when the database is empty.
     """
-    from apps.schools.models import School
+    from apps.schools.lifecycle_service import active_schools
     from apps.activities.models import Activity
     from apps.analytics.pl_analytics_service import COMPLETED_STATUSES, VISIT_TYPES
     from apps.core.fy import get_operational_fy
@@ -72,7 +72,13 @@ def _login_stats():
     )
 
     stats = {
-        "stat_schools_reached": f"{School.objects.filter(deleted_at__isnull=True).count():,}",
+        # Schools the programme currently reaches, so a school that has closed
+        # stops counting. The alternative reading — lifetime reach, where a
+        # school worked in for three years still counts after it shuts — was
+        # considered and rejected: this sits beside live figures, and a number
+        # that only ever goes up next to ones that move would misread as
+        # current.
+        "stat_schools_reached": f"{active_schools().count():,}",
         "stat_field_visits": f"{completed.filter(activity_type__in=VISIT_TYPES).count():,}",
         "stat_tasks_completed": f"{task_completion_pct}%",
         "stat_target_progress": f"{target_progress_pct}%",

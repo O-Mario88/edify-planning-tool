@@ -57,6 +57,9 @@
             name="district_id"
             x-model="selectedDistrictId"
             @change="resetDistrict()"
+            hx-get="{% url 'frontend:eligible_staff_options' %}"
+            hx-trigger="change"
+            hx-target="#responsible-staff-select"
             required
           >
             <option value="">Select a district</option>
@@ -64,6 +67,31 @@
               <option value="{{ district.id }}">{{ district.name }}</option>
             {% endfor %}
           </select>
+        </div>
+
+        {% comment %}
+        Who owns the cluster, asked at creation.
+
+        `create_cluster_action` already read `responsible_staff_id` from the
+        POST and passed it to the service — but only the *edit* drawer ever
+        rendered the field, so every cluster was born ownerless and could gain
+        an owner only by being edited afterwards. That is why
+        `Cluster.responsible_staff_id` was null on every row in the database.
+
+        Same endpoint and same target id as the edit drawer, so choosing a
+        district refills the list from that district's staff.
+        {% endcomment %}
+        <div class="cluster-create-field">
+          <label for="responsible-staff-select">
+            Assigned staff <span class="cluster-create-count">(optional)</span>
+          </label>
+          <select id="responsible-staff-select" name="responsible_staff_id">
+            <option value="">No assigned staff</option>
+            {% for sp in staff %}
+              <option value="{{ sp.user.user_id }}">{{ sp.user.name }} ({{ sp.user.active_role }})</option>
+            {% endfor %}
+          </select>
+          <p class="cluster-create-help">CCEOs and Programme Leads with schools in the selected district.</p>
         </div>
 
         <fieldset

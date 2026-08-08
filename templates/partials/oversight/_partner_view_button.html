@@ -3,8 +3,23 @@ The one control every partner row carries. Included rather than repeated so
 the four lists cannot drift into offering different affordances for the same
 record.
 {% endcomment %}
-<button type="button"
-        class="text-sm font-semibold hover:underline edify-primary-text{% if mobile %} min-h-11{% endif %}"
-        hx-get="/partner-oversight/detail?assignment_id={{ item.partner_assignment_id }}"
-        hx-target="#drawer-container"
-        hx-swap="innerHTML">{% if mobile %}View details{% else %}View{% endif %}</button>
+<div class="inline-flex items-center gap-3">
+  <button type="button"
+          class="text-sm font-semibold hover:underline edify-primary-text{% if mobile %} min-h-11{% endif %}"
+          hx-get="/partner-oversight/detail?assignment_id={{ item.partner_assignment_id }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML">{% if mobile %}View details{% else %}View{% endif %}</button>
+  {% comment %}
+  A labelled action, never a red trash icon. The label comes from the server,
+  which derived it from this record's state — "Recall from partner" and
+  "Suspend and review" are different decisions and must not share a word.
+  Nothing here deletes.
+  {% endcomment %}
+  {% if item.withdrawal_label %}
+  <button type="button"
+          class="text-sm font-semibold hover:underline edify-text-muted{% if mobile %} min-h-11{% endif %}"
+          hx-get="/partner-oversight/withdraw?assignment_id={{ item.partner_assignment_id }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML">{{ item.withdrawal_label }}</button>
+  {% endif %}
+</div>

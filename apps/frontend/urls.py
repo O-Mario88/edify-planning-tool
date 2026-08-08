@@ -4,6 +4,8 @@ from .views import (
     action_views,
     work_plan_views,
     visit_effectiveness_views,
+    closure_quality_views,
+    closure_impact_views,
     pwa_views,
     rvp_views,
     auth_views,
@@ -225,8 +227,27 @@ urlpatterns = [
         school_views.school_intelligence_partial,
         name="school_intelligence_partial",
     ),
+    # ── School lifecycle ─────────────────────────────────────────────────────
+    # This MUST stay above the <str:school_id> detail route below. Move it
+    # after and "closed" is read as a school id, and the archive 404s.
+    path("schools/closed", school_views.closed_schools_view, name="closed_schools"),
     path(
         "schools/<str:school_id>", school_views.school_detail_view, name="school_detail"
+    ),
+    path(
+        "schools/<str:school_id>/close-drawer",
+        school_views.school_close_drawer,
+        name="school_close_drawer",
+    ),
+    path(
+        "schools/<str:school_id>/close",
+        school_views.school_close_action,
+        name="school_close",
+    ),
+    path(
+        "schools/<str:school_id>/reopen",
+        school_views.school_reopen_action,
+        name="school_reopen",
     ),
     path(
         "schools/<str:school_id>/delete",
@@ -395,6 +416,23 @@ urlpatterns = [
         "partner-oversight/export",
         oversight_views.partner_oversight_export_view,
         name="partner_oversight_export",
+    ),
+    # Taking work back. The preview is a GET because it changes nothing and
+    # must be safe to open; the two POSTs are the only writes.
+    path(
+        "partner-oversight/withdraw",
+        oversight_views.partner_withdrawal_preview_view,
+        name="partner_withdrawal_preview",
+    ),
+    path(
+        "partner-oversight/withdraw/submit",
+        oversight_views.partner_withdrawal_submit_view,
+        name="partner_withdrawal_submit",
+    ),
+    path(
+        "partner-oversight/withdraw/review",
+        oversight_views.partner_withdrawal_review_view,
+        name="partner_withdrawal_review",
     ),
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
@@ -1414,6 +1452,16 @@ urlpatterns = [
         "analytics/visit-effectiveness",
         visit_effectiveness_views.visit_effectiveness_view,
         name="visit_effectiveness",
+    ),
+    path(
+        "analytics/closure-quality",
+        closure_quality_views.closure_quality_view,
+        name="closure_quality",
+    ),
+    path(
+        "analytics/school-closures",
+        closure_impact_views.closure_impact_view,
+        name="closure_impact",
     ),
     path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),

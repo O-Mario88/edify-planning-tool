@@ -1,0 +1,57 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}School Closures · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The country picture of closure.
+
+Separate from Closure Quality on purpose. That page is a worklist of records to
+distrust; this one is country performance. A single page mixing work-to-fix
+with what-we-lost leaves nobody sure which numbers they are accountable for.
+
+The concentration question drives the layout: eight schools lost across eight
+districts is country-wide drift, eight lost in one district is a district in
+trouble, and a national total cannot tell them apart.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      {% comment %}
+      The eyebrow names whose ground this is. An RVP reading "the country lost
+      40 schools" would reasonably assume the country, when the figure covers
+      their regions — naming the scope is cheaper than the misread.
+      {% endcomment %}
+      <p class="edify-page-eyebrow">{{ scope_label }}</p>
+      <h1 class="edify-page-title edify-page-header__title">School Closures</h1>
+      <p class="edify-page-header__description">Where the programme is losing schools, how many learners that removed, and what closing them did to planned work.</p>
+    </div>
+    <form class="edify-page-header__controls"
+          hx-get="/analytics/school-closures"
+          hx-target="#closure-impact-body"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-push-url="true">
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Period</span>
+        <select name="period" aria-label="Period" class="focus:outline-none">
+          <option value="fy" {% if period != "all" %}selected{% endif %}>FY {{ fy }}</option>
+          <option value="all" {% if period == "all" %}selected{% endif %}>All time</option>
+        </select>
+      </label>
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Group by</span>
+        <select name="by" aria-label="Group by" class="focus:outline-none">
+          <option value="district" {% if grouping == "district" %}selected{% endif %}>District</option>
+          <option value="region" {% if grouping == "region" %}selected{% endif %}>Region</option>
+        </select>
+      </label>
+    </form>
+  </header>
+
+  <div id="closure-impact-body">
+    {% include "partials/analytics/closure_impact_workspace.html" %}
+  </div>
+</div>
+{% endblock %}

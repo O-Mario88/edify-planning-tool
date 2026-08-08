@@ -1,0 +1,201 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+{% comment %}
+Taking work back from a partner.
+
+The action's name comes from the server, which derived it from the record's
+current state — withdraw, recall, suspend, quality review. The template never
+decides: a page offering "Withdraw" while the service performs a suspension
+would be lying about what the button does.
+
+Everything under Impact is server-calculated from the same functions the
+service uses, so the amount shown here is the amount that will move. Nobody
+should confirm a budget change they have not seen.
+{% endcomment %}
+
+{% block drawer_title %}{% if preview %}{{ preview.kind_label }}{% else %}Not available{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if preview %}{{ preview.school }} · {{ preview.partner }}{% else %}This assignment is not in your scope, or no longer exists.{% endif %}{% endblock %}
+
+{% block drawer_body %}
+{% if not preview %}
+<p class="text-sm edify-text-muted">This assignment is not in your scope, or no longer exists.</p>
+{% elif not preview.available %}
+{% comment %}
+Paid and closed work is deliberately unreachable here. Rewriting a settled
+activity is not a supervision decision, and offering the control would invite
+somebody to try.
+{% endcomment %}
+<div class="space-y-3">
+  <p class="text-sm">This work can no longer be withdrawn.</p>
+  <p class="edify-text-caption edify-text-muted">
+    It has been paid or closed. A concern about work already settled goes
+    through a dispute, a reopening or a corrective follow-up, each of which
+    keeps the original record intact.
+  </p>
+</div>
+{% else %}
+<form hx-post="/partner-oversight/withdraw/submit"
+      hx-target="#withdrawal-result"
+      hx-swap="innerHTML"
+      class="space-y-4 pr-1 edify-drawer-scroll">
+  {% csrf_token %}
+  <input type="hidden" name="assignment_id" value="{{ preview.assignment_id }}">
+  {% if must_request %}<input type="hidden" name="intent" value="request">{% endif %}
+
+  {% if must_request %}
+  <p class="rounded-surface border p-3 edify-border text-sm">
+    {{ preview.partner }} has already scheduled this. Your Program Lead makes
+    the final decision on work a partner has planned around — this sends them
+    the request.
+  </p>
+  {% endif %}
+
+  {# ── What is being taken back ──────────────────────────────────────────── #}
+  <section aria-labelledby="wd-what">
+    <h3 id="wd-what" class="text-sm font-semibold mb-2">The assignment</h3>
+    <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">School</dt>
+        <dd>{{ preview.school|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Partner</dt>
+        <dd>{{ preview.partner|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Support slot</dt>
+        <dd>{{ preview.support_slot|replace_underscore|title }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Activity</dt>
+        <dd>{{ preview.activity_type|replace_underscore|title|default:"—" }}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Scheduled for</dt>
+        <dd>{% if preview.scheduled_date %}{{ preview.scheduled_date|date:"j M Y" }}{% else %}Not scheduled{% endif %}</dd></div>
+      <div><dt class="edify-text-caption edify-text-subtle uppercase">Current state</dt>
+        {% comment %}
+        firstof, not `default:`. A dotted filter argument is resolved eagerly
+        and raises VariableDoesNotExist rather than falling back, which would
+        500 this drawer the first time an unscheduled assignment opened it.
+        {% endcomment %}
+        {% firstof preview.activity_status preview.assignment_status as current_state %}
+        <dd>{{ current_state|replace_underscore|title }}</dd></div>
+    </dl>
+  </section>
+
+  {# ── What confirming does ──────────────────────────────────────────────── #}
+  <section aria-labelledby="wd-impact" class="rounded-surface border p-3 edify-border">
+    <h3 id="wd-impact" class="text-sm font-semibold mb-2">Impact</h3>
+    <ul class="space-y-1.5 text-sm">
+      <li class="flex items-start justify-between gap-3">
+        <span>Planned cost on this work</span>
+        <span class="tabular-nums font-semibold whitespace-nowrap">UGX {{ preview.planned_cost|intcomma }}</span>
+      </li>
+      <li class="flex items-start justify-between gap-3">
+        <span>Leaves the live budget</span>
+        <span class="tabular-nums font-semibold whitespace-nowrap">UGX {{ preview.budget_removed|intcomma }}</span>
+      </li>
+      {% if preview.activity_will_be_cancelled %}
+      <li class="edify-text-caption edify-text-muted">
+        The partner's scheduled activity is cancelled, not deleted. Its cost
+        lines stay as the record of what was planned; every total excludes them.
+      </li>
+      {% endif %}
+      {% if preview.budget_amendment_required %}
+      <li class="pt-1">
+        <span class="pill pill-warn">Budget amendment required</span>
+        <span class="block edify-text-caption edify-text-muted">
+          Money has already moved or been committed against this activity, so
+          the approved amount is not rewritten. A formal amendment records the
+          change and somebody has to approve it.
+        </span>
+      </li>
+      {% endif %}
+      {% if preview.slot_will_reopen %}
+      <li class="edify-text-caption edify-text-muted">
+        The school's support slot reopens — the same one, not a second
+        entitlement.
+      </li>
+      {% else %}
+      <li class="edify-text-caption edify-text-muted">
+        The support slot stays with this assignment while the review runs, so
+        a replacement cannot duplicate work that may still be finished.
+      </li>
+      {% endif %}
+    </ul>
+  </section>
+
+  {# ── Why ───────────────────────────────────────────────────────────────── #}
+  <section aria-labelledby="wd-reason" class="space-y-2">
+    <h3 id="wd-reason" class="text-sm font-semibold">Reason</h3>
+    <label class="block">
+      <span class="sr-only">Reason category</span>
+      <select name="reason_category" required
+              class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+        <option value="">Choose a reason…</option>
+        {% for value, label in reasons %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <p class="edify-text-caption edify-text-muted">
+      The category decides whether this counts towards the partner's
+      performance. A closed school or an assignment we got wrong does not.
+    </p>
+
+    <label class="block">
+      <span class="sr-only">Explanation for the partner</span>
+      <textarea name="partner_facing_reason" required rows="3" minlength="20" maxlength="600"
+                class="w-full px-3 py-2 rounded-control border edify-border text-sm"
+                placeholder="Briefly explain why this work is being withdrawn, what has happened so far, and what should happen next."></textarea>
+    </label>
+    <p class="edify-text-caption edify-text-muted">
+      The partner sees this. For a safeguarding or conduct concern it is
+      replaced with a neutral notice — put the detail in the internal note.
+    </p>
+
+    <label class="block">
+      <span class="sr-only">Internal note</span>
+      <textarea name="internal_note" rows="2" maxlength="2000"
+                class="w-full px-3 py-2 rounded-control border edify-border text-sm"
+                placeholder="Internal note (staff only — never shown to the partner)"></textarea>
+    </label>
+  </section>
+
+  {# ── What happens to the school's support ──────────────────────────────── #}
+  <section aria-labelledby="wd-next" class="space-y-2"
+           x-data="{ disposition: 'return_to_planning' }">
+    <h3 id="wd-next" class="text-sm font-semibold">What happens next</h3>
+    <label class="block">
+      <span class="sr-only">Next disposition</span>
+      <select name="disposition" required x-model="disposition"
+              class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+        {% for value, label in dispositions %}
+        <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <p class="edify-text-caption edify-text-muted">
+      Required. A withdrawal that does not say where the school's support goes
+      leaves the school worse off than before anyone intervened.
+    </p>
+
+    <div x-show="disposition === 'reassign_partner'" x-cloak class="space-y-1">
+      <label class="block">
+        <span class="sr-only">Replacement partner</span>
+        <select name="replacement_partner_id"
+                class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+          <option value="">Choose the partner taking this on…</option>
+          {% for p in partners %}
+          <option value="{{ p.id }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <p class="edify-text-caption edify-text-muted">
+        The replacement starts with no date and no cost. Its price is fetched
+        from their own rate when they schedule, so nothing is carried over.
+      </p>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap items-center gap-2 pt-1">
+    <button type="submit" class="btn btn-primary h-9">
+      {% if must_request %}Send request to Program Lead{% else %}{{ preview.kind_label }}{% endif %}
+    </button>
+  </div>
+  <div id="withdrawal-result" class="mt-1"></div>
+</form>
+{% endif %}
+{% endblock %}

@@ -17,7 +17,7 @@
         @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
         @keydown.escape.window="openSchoolId = null"
         :aria-expanded="(openSchoolId === '{{ school.id }}').toString()"
-        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide SSA details for {{ school.name|escapejs }}' : 'Show SSA details for {{ school.name|escapejs }}'"
+        :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'"
         aria-controls="planning-school-details-{{ school.id }}"
       ></button>
       <span class="school-record-row__icon" aria-hidden="true">
@@ -84,7 +84,7 @@
     </div>
   </div>
 
-  <div id="planning-school-details-{{ school.id }}" class="school-record-row__details" x-show="openSchoolId === '{{ school.id }}'" x-transition.opacity.duration.150ms x-cloak>
+  <div id="planning-school-details-{{ school.id }}" class="school-record-row__details">
     {% include "partials/schools/ssa_score_groups.html" with detail_id="planning-school-details-"|add:school.id ssa_groups=school.ssaGroups has_ssa_scores=school.hasSsaScores selected_fy=selected_fy %}
   </div>
 </li>

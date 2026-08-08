@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 552,
-  "templates": 192,
-  "distinct_titles": 526,
+  "titled_cards": 562,
+  "templates": 198,
+  "distinct_titles": 534,
   "with_card_key": 13,
-  "untitled_surfaces": 1022,
-  "untitled_chrome": 231,
-  "untitled_nested": 378,
-  "untitled_headless": 413,
+  "untitled_surfaces": 1049,
+  "untitled_chrome": 233,
+  "untitled_nested": 390,
+  "untitled_headless": 426,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 20,
+  "titles_in_several_templates": 22,
   "ambiguous_titles": 0
  },
  "same_page_duplicate_titles": {},
@@ -40,9 +40,17 @@
    "templates/partials/analytics/impact_workspace.html",
    "templates/partials/analytics/visit_effectiveness_workspace.html"
   ],
+  "impact": [
+   "templates/partials/oversight/withdrawal_drawer.html",
+   "templates/partials/schools/close_drawer.html"
+  ],
   "message rules": [
    "templates/pages/messages/index.html",
    "templates/pages/messages/new.html"
+  ],
+  "needs attention": [
+   "templates/pages/ia/analytics_dashboard.html",
+   "templates/partials/analytics/closure_quality_workspace.html"
   ],
   "plan breakdown by period": [
    "templates/partials/my_plan/period_breakdown.html",
@@ -2860,7 +2868,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 38,
+   "line": 104,
    "title": "School Demographics &amp; Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2869,7 +2877,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 119,
+   "line": 185,
    "title": "Intervention Impact Timeline",
    "heading_level": 3,
    "has_card_key": false,
@@ -2878,7 +2886,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 183,
+   "line": 249,
    "title": "Recent Field Work",
    "heading_level": 3,
    "has_card_key": false,
@@ -2887,21 +2895,21 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 233,
+   "line": 299,
    "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     11,
+     17,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 271,
+   "line": 337,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2910,7 +2918,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 311,
+   "line": 377,
    "title": "Current SSA Assessment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2919,42 +2927,42 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 345,
+   "line": 411,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     21,
+     27,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 365,
+   "line": 431,
    "title": "Historical Averages",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4",
    "branch_path": [
     [
-     22,
+     28,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 387,
+   "line": 453,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "bg-red-50/40 border border-red-100 rounded-surface p-5 shadow-sm space-y-4 mt-4",
    "branch_path": [
     [
-     23,
+     29,
      0
     ]
    ]
@@ -3303,7 +3311,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 919,
+   "line": 949,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3312,7 +3320,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 952,
+   "line": 982,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -3490,6 +3498,106 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 84,
+   "title": "By",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     4,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 140,
+   "title": "Why schools closed",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_impact_workspace.html",
+   "line": 183,
+   "title": "Closures by month",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-4",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_quality_workspace.html",
+   "line": 79,
+   "title": "Needs attention",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     3,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_quality_workspace.html",
+   "line": 164,
+   "title": "By reason",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/closure_quality_workspace.html",
+   "line": 211,
+   "title": "Reopened schools",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ],
+    [
+     15,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/partials/analytics/cluster_performance.html",
@@ -3974,7 +4082,7 @@
   },
   {
    "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 58,
+   "line": 61,
    "title": "Graduation Formula Weights",
    "heading_level": 3,
    "has_card_key": false,
@@ -3983,7 +4091,7 @@
   },
   {
    "template": "templates/partials/core_schools/champion_review_drawer.html",
-   "line": 132,
+   "line": 135,
    "title": "Graduation Gate Checklist",
    "heading_level": 3,
    "has_card_key": false,
@@ -5242,6 +5350,43 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/oversight/flagged_schools.html",
+   "line": 20,
+   "title": "Flagged schools",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/oversight/partner_workspace.html",
+   "line": 34,
+   "title": "Withdrawal requests ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/oversight/withdrawal_drawer.html",
+   "line": 79,
+   "title": "Impact",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-3 edify-border",
+   "branch_path": [
+    [
+     2,
+     2
+    ]
+   ]
+  },
+  {
    "template": "templates/partials/partners/create_partner_drawer.html",
    "line": 3,
    "title": "Onboard New Partner",
@@ -5657,7 +5802,7 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 50,
+   "line": 55,
    "title": "Cluster selected automatically",
    "heading_level": 3,
    "has_card_key": false,
@@ -5671,7 +5816,7 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 138,
+   "line": 188,
    "title": "Responsible Field Staff",
    "heading_level": 3,
    "has_card_key": false,
@@ -5686,6 +5831,20 @@
    "has_card_key": false,
    "classes": "p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-surface text-[12px] font-bold",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/schools/close_drawer.html",
+   "line": 52,
+   "title": "Impact",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-3 edify-border",
+   "branch_path": [
+    [
+     3,
+     3
+    ]
+   ]
   },
   {
    "template": "templates/partials/schools/directory_intelligence.html",

@@ -31,6 +31,7 @@ from django.db.models import Q, Avg, Count, Sum
 from datetime import date, timedelta
 
 from apps.ssa.models import SsaRecord
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.activities.models import Activity
 from apps.geography.models import District, Region
@@ -309,7 +310,7 @@ def ssa_master_view(request):
     avg_score = sum(r.average_score or 0 for r in records_list) / max(
         len(records_list), 1
     )
-    total_schools = School.objects.filter(deleted_at__isnull=True).count()
+    total_schools = active_schools().count()
     schools_with_ssa = records.values("school_id").distinct().count()
 
     context = {
@@ -333,7 +334,7 @@ def fy_overview_view(request):
     """Fiscal year overview — planning status, readiness, and timeline."""
     fy = get_operational_fy()
 
-    total_schools = School.objects.filter(deleted_at__isnull=True).count()
+    total_schools = active_schools().count()
     ssa_done = (
         SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True)
         .values("school_id")
@@ -917,7 +918,7 @@ def reports_view(request):
     requested_fy = request.GET.get("fy")
     fy = requested_fy if requested_fy in fy_choices else operational_fy
 
-    total_schools = School.objects.filter(deleted_at__isnull=True).count()
+    total_schools = active_schools().count()
     total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
     completed = Activity.objects.filter(
         status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
@@ -1133,7 +1134,7 @@ def reports_view(request):
 @require_page_permission("coverage")
 def coverage_view(request):
     """Coverage overview — CD/IA."""
-    total_schools = School.objects.filter(deleted_at__isnull=True).count()
+    total_schools = active_schools().count()
     visited = (
         Activity.objects.filter(
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
@@ -1151,7 +1152,7 @@ def coverage_view(request):
     clusters = list(Cluster.objects.filter(deleted_at__isnull=True).order_by("name"))
     school_counts = {
         row["cluster_id"]: row["count"]
-        for row in School.objects.filter(deleted_at__isnull=True)
+        for row in active_schools()
         .exclude(cluster_id__isnull=True)
         .exclude(cluster_id="")
         .values("cluster_id")
@@ -3338,7 +3339,7 @@ def unmatched_ssa_queue_view(request):
         page_number = 1
 
     records_page = unmatched_service.get_unmatched_queue(filters, page=page_number)
-    schools_list = School.objects.filter(deleted_at__isnull=True).order_by("name")
+    schools_list = active_schools().order_by("name")
 
     context = {
         "records_page": records_page,

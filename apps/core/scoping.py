@@ -35,6 +35,28 @@ COUNTRY_ROLES = {
     EdifyRole.PROGRAM_ACCOUNTANT.value,
     EdifyRole.ADMIN.value,
 }
+# Seeing the whole country is not the same as running it. Impact Assessment and
+# the Programme Accountant need country-wide *visibility* to do their jobs —
+# verifying completed work, confirming and paying accountabilities — and that is
+# what COUNTRY_ROLES grants. Neither owns programme decisions about a school, so
+# a guard that spends COUNTRY_ROLES as write authority hands them the Country
+# Director's powers as a side effect of letting them read.
+COUNTRY_WRITE_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.ADMIN.value,
+}
+# Who may place field work anywhere in the country. Impact Assessment does its
+# own field work — school visits and assessment training — so it schedules; the
+# Programme Accountant observes, pays and follows up accountabilities, and never
+# schedules anything. The two roles share country-wide *visibility* and split on
+# this, which is exactly why one set cannot serve both questions: reading
+# COUNTRY_ROLES here gave the Accountant a planning power that is not part of
+# the job, and reading COUNTRY_WRITE_ROLES would have taken IA's own work away.
+COUNTRY_SCHEDULING_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.ADMIN.value,
+}
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
 
 
@@ -487,27 +509,175 @@ def resolve_partner_ids(user) -> list[str]:
     return []
 
 
+def may_write_school(scope: UserScope, school) -> bool:
+    """Return whether this person may change the record of `school` itself.
+
+    The one place the direct-portfolio rule is expressed for schools, so that
+    every write surface asks the same question. Planning asks it through
+    `_assert_target_in_scope` and cluster membership through
+    `set_school_cluster_membership`; anything that edits the school row —
+    graduating it to Champion, changing its type — asks it here rather than
+    growing a fourth private copy that can drift from the other three.
+
+    The Country Director and Admin act everywhere, because the programme is
+    their remit. Everyone else acts on the schools in their own portfolio.
+
+    Two roles are deliberately absent from both halves. **Supervisors**: a
+    Programme Lead sees a CCEO's school on oversight and asks about it, which
+    is the whole distinction §7 draws. **Impact Assessment and the Programme
+    Accountant**: they hold country-wide visibility so they can verify and pay,
+    which is why this reads `COUNTRY_WRITE_ROLES` and not `country_scope` —
+    the latter would have let a verifier graduate a school.
+
+    Summary-only roles (RVP) are readers by construction and get nothing here —
+    `own_school_ids` is empty for them, so they fall through to False.
+    """
+    if getattr(scope, "active_role", None) in COUNTRY_WRITE_ROLES:
+        return True
+    school_id = getattr(school, "id", school)
+    return bool(scope.own_school_ids) and school_id in scope.own_school_ids
+
+
+def assert_may_write_school(principal, school, *, action: str = "change") -> None:
+    """Raise Forbidden unless `principal` owns `school` (or works country-wide)."""
+    from apps.core.exceptions import Forbidden
+
+    if not may_write_school(resolve_user_scope(principal), school):
+        raise Forbidden(
+            f"You can only {action} a school in your own portfolio. "
+            "This one belongs to another staff member — ask its owner, or a "
+            "country role, to act."
+        )
+
+
+def cluster_owner_ids(scope: UserScope) -> set[str]:
+    """Every id a cluster this person is responsible for could be filed under.
+
+    Two expansions, both load-bearing:
+
+    * **Both id spaces.** `Cluster.responsible_staff_id` is a plain CharField.
+      The edit drawer writes a *User* id; other paths write a StaffProfile id.
+      A set built from one space silently disowns the clusters filed under the
+      other — the trap `owner_ids` exists for.
+    * **The team.** A Programme Lead is responsible for their CCEOs' clusters,
+      so their supervisees' ids belong in the same set rather than in a second
+      branch that could drift from this one.
+    """
+    ids = {scope.user_id} | set(scope.staff_ids) | set(scope.supervised_staff_ids)
+    ids = {i for i in ids if i}
+    if not ids:
+        return set()
+    try:
+        from apps.accounts.models import StaffProfile  # type: ignore
+    except Exception:  # noqa: BLE001 - accounts may not be ready
+        return ids
+    # Profile id → user id, and user id → profile id, so either space resolves.
+    pairs = StaffProfile.objects.filter(Q(id__in=ids) | Q(user_id__in=ids)).values_list(
+        "id", "user_id"
+    )
+    for profile_id, user_id in pairs:
+        ids.update({i for i in (profile_id, user_id) if i})
+    return ids
+
+
 def cluster_in_scope(scope: UserScope, cluster) -> bool:
     """Return whether a cluster is inside an operational user's scope.
 
-    Clusters are assigned and managed at district level.  A CCEO or Program
-    Lead who has an assigned school in a district can work the district's
-    clusters, even before one of their individual schools has been added to a
-    particular cluster.  This mirrors the cluster list and assignment rules;
-    keeping the rule here prevents a drawer from offering a cluster that the
-    activity service later rejects.
+    **A cluster belongs to the person responsible for it, not to a district.**
+    The rule used to be geographic — anyone with a school in the district could
+    work every cluster in it — which meant four CCEOs sharing Mukono each saw
+    all fifteen of its clusters and could move a school into any of them. A
+    cluster is somebody's portfolio; sharing a district is not sharing it.
+
+    Country roles (CD, IA, Accountant, Admin) and summary-only roles (RVP) see
+    every cluster, because their job is the whole picture. Everyone else sees
+    the clusters they are responsible for — a Programme Lead's set includes
+    their CCEOs' — plus any cluster already holding one of their schools, which
+    is how a cluster becomes theirs in practice even before the column is set.
+
+    **Ownership binds only once it is set.** A cluster with no responsible
+    staff is unassigned, not somebody else's, and it stays reachable from its
+    district so it can be picked up. Without that carve-out the rule would have
+    been retroactive: every cluster created before the column was captured — all
+    of them — would have belonged to nobody and been schedulable by nobody, and
+    `test_cceo_can_schedule_a_cluster_in_their_assigned_district` says in as
+    many words that a not-yet-populated cluster must remain schedulable.
     """
-    if scope.country_scope:
+    # Soft-deleted first, and for everyone: `cluster_queryset` filters these
+    # out, so a predicate that let them through disagreed with its own set
+    # form — a retired cluster answered "in scope" to every caller that asked
+    # the question one record at a time.
+    if getattr(cluster, "deleted_at", None) is not None:
+        return False
+    if scope.country_scope or scope.can_view_summary_only:
         return True
     if getattr(cluster, "id", None) in scope.cluster_ids:
         return True
+    owner = (getattr(cluster, "responsible_staff_id", "") or "").strip()
+    if owner:
+        return owner in cluster_owner_ids(scope)
     return bool(
         getattr(cluster, "district_id", None)
         and cluster.district_id in scope.district_ids
     )
 
 
+def cluster_queryset(scope: UserScope, base=None):
+    """The clusters this user may pick, as a queryset.
+
+    The set form of `cluster_in_scope`, and it must stay the set form: four
+    pickers each re-derived "which clusters can I offer" and they did not
+    agree. The activity picker offered **every cluster in the country**, so a
+    CCEO chose one, and the service then refused it — the drawer promising what
+    the service rejects is precisely what `cluster_in_scope` says this rule
+    exists to prevent.
+
+    Fails closed. The repeated inline version read
+
+        if not scope.country_scope and scope.district_ids:
+            clusters = clusters.filter(district_id__in=scope.district_ids)
+
+    which skips the filter entirely when a user has no districts — so the one
+    person with no geography at all saw everyone's clusters. `cluster_in_scope`
+    returns False for that user, and this returns nothing, so the two agree.
+    Somebody with no clusters yet can still create one; the drawer's "new
+    cluster" path does not go through here.
+
+    A cluster with an owner reaches that owner's chain only. One with no owner
+    is unassigned rather than somebody else's, so it stays visible from its
+    district and can be picked up — `list_ownerless_clusters` names them.
+    """
+    cluster_model = _get_cluster_model()
+    if cluster_model is None:  # pragma: no cover - app not ready
+        return None
+
+    qs = base if base is not None else cluster_model.objects.all()
+    qs = qs.filter(deleted_at__isnull=True)
+    if scope.country_scope or scope.can_view_summary_only:
+        return qs
+    unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
+    return qs.filter(
+        Q(responsible_staff_id__in=cluster_owner_ids(scope))
+        | Q(id__in=scope.cluster_ids)
+        | (unassigned & Q(district_id__in=scope.district_ids))
+    )
+
+
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
+def _operationally_active(qs):
+    """Not deleted, and not closed.
+
+    Kept here rather than imported from apps.schools so core.scoping does not
+    take a dependency on an app it is scoping — the status values are a small
+    stable vocabulary and duplicating the tuple is cheaper than the import
+    cycle. The health check asserts the two agree.
+    """
+    return qs.filter(
+        deleted_at__isnull=True,
+        operational_status__in=("active", "reopened"),
+    )
+
+
 def school_queryset(scope: UserScope, *, direct_only: bool = False):
     """Return the base queryset for the School model, scope-constrained.
 
@@ -534,7 +704,13 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     school_model = _get_school_model()
     if school_model is None:
         return None
-    qs = school_model.objects.all()
+    # Operationally active only. This is the directory-and-planning queryset,
+    # and a school that has closed must not be offered for new work, counted
+    # in a current total, or listed as somebody's to visit. History does not
+    # come through here — `scoped_school_queryset` serves the analytics
+    # surfaces, and it deliberately keeps closed schools so a report about
+    # last quarter still counts a school that was open then.
+    qs = _operationally_active(school_model.objects.all())
     if scope.active_role == "CountryDirector":
         from django.conf import settings
 
@@ -627,6 +803,15 @@ def _get_school_model():
         from apps.schools.models import School  # type: ignore
 
         return School
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _get_cluster_model():
+    try:
+        from apps.clusters.models import Cluster  # type: ignore
+
+        return Cluster
     except Exception:  # noqa: BLE001
         return None
 

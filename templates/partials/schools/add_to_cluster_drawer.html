@@ -38,7 +38,12 @@
     hx-target="#drawer-container"
     class="edify-surface space-y-5 text-[12px] text-slate-600"
     x-data="{
-      actionType: '{% if existing_covering_cluster or show_cluster_directory %}existing{% else %}new{% endif %}',
+      {% comment %}
+      Land on the tab that can actually be completed. With no cluster assigned
+      to this person there is nothing to pick, and opening on an empty picker
+      makes the drawer look broken rather than pointing at the way forward.
+      {% endcomment %}
+      actionType: '{% if existing_covering_cluster or show_cluster_directory and all_clusters %}existing{% else %}new{% endif %}',
       selectedClusterId: '{{ existing_covering_cluster.id|default:"" }}'
     }"
   >
@@ -84,7 +89,8 @@
       </div>
 
       <div x-show="actionType === 'existing'" class="space-y-2">
-        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Nearby clusters</label>
+        <label for="all_cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Your clusters</label>
+        {% if all_clusters %}
         <select
           id="all_cluster_id"
           x-model="selectedClusterId"
@@ -92,10 +98,54 @@
         >
           <option value="">Select a cluster</option>
           {% for cluster in all_clusters %}
-          <option value="{{ cluster.id }}">{{ cluster.name }} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
+          {% comment %}
+          Enough context to choose without opening each one: §7 asks for the
+          sub-county and district beside the name, because "Chegere North" and
+          "Chegere South" are indistinguishable otherwise.
+          {% endcomment %}
+          <option value="{{ cluster.id }}">{{ cluster.name }}{% if cluster.sub_county.name %} · {{ cluster.sub_county.name }}{% endif %} · {{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</option>
           {% endfor %}
         </select>
-        <p class="edify-text-caption font-semibold text-slate-400">Only active clusters in {{ school.district.name }} are shown.</p>
+        <p class="edify-text-caption font-semibold text-slate-400">
+          {% if filtered_by_sub_county %}
+          Your active clusters in {{ school.sub_county.name }}, {{ school.district.name }}.
+          {% else %}
+          Your active clusters in {{ school.district.name }}.
+          {% endif %}
+        </p>
+        {% if sub_county_missing %}
+        {% comment %}
+        Named, not silently ignored. Without a sub-county the list can only be
+        narrowed to the district, so the person is told what is missing and
+        what completing it buys — rather than wondering why a neighbouring
+        sub-county's cluster is on offer.
+        {% endcomment %}
+        <p class="edify-text-caption font-semibold text-amber-700">
+          This school has no sub-county, so the list could only be narrowed to
+          the district. Add the sub-county on the school profile to see just
+          the clusters covering it.
+        </p>
+        {% endif %}
+        {% else %}
+        {% comment %}
+        An empty picker with no explanation reads as a broken page. A cluster
+        belongs to whoever is responsible for it, so having none here is a
+        fact about assignment rather than about this school — and the next
+        step is the one already on this drawer.
+        {% endcomment %}
+        {% if ineligibility_reason %}
+        <p class="edify-text-caption font-semibold text-amber-700">{{ ineligibility_reason }}</p>
+        {% else %}
+        <p class="edify-text-caption font-semibold text-slate-500">
+          No active cluster owned by {% firstof responsible_staff.user.name "this school's owner" %}
+          covers {% if filtered_by_sub_county %}{{ school.sub_county.name }}, {% endif %}{{ school.district.name }}.
+          A cluster belongs to the staff member responsible for its schools, so
+          another owner's cluster is not an option here — create one below,
+          {% if sub_county_missing %}complete the sub-county to widen the match,{% endif %}
+          or request a portfolio transfer.
+        </p>
+        {% endif %}
+        {% endif %}
       </div>
       {% endif %}
 

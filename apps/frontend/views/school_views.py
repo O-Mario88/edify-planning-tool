@@ -11,11 +11,12 @@ from apps.core.permissions import (
 )
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.html import escape
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
 from django.urls import reverse
 from urllib.parse import urlencode
 
@@ -28,6 +29,10 @@ from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.accounts.staff_matching import OWNER_ROLES, on_staff
+from apps.clusters.eligibility import (
+    eligible_clusters_for_school,
+    ineligibility_reason,
+)
 from apps.clusters.models import Cluster
 from apps.clusters.services import (
     assign_school as assign_school_to_cluster,
@@ -808,18 +813,15 @@ def add_to_cluster_drawer_view(request, school_id):
     )
 
     def drawer_context(validation_error=None):
+        # One canonical rule, not a filter assembled here: active, owned by
+        # this school's own staff owner, in its district, and in its sub-county
+        # when it has one. The scope narrows it further to what this caller may
+        # write, so the picker can never offer what the service will refuse.
         nearby_clusters = Cluster.objects.none()
         if show_cluster_directory:
-            nearby_clusters = (
-                Cluster.objects.filter(
-                    district_id=school.district_id,
-                    deleted_at__isnull=True,
-                    status="active",
-                )
-                .select_related("district", "sub_county")
-                .annotate(schools_count=Count("assignments", distinct=True))
-                .order_by("name")
-            )
+            nearby_clusters = eligible_clusters_for_school(
+                school, scope=resolve_user_scope(request.user)
+            ).annotate(schools_count=Count("assignments", distinct=True))
         return {
             "school": school,
             "responsible_staff": responsible_staff,
@@ -827,6 +829,13 @@ def add_to_cluster_drawer_view(request, school_id):
             "existing_covering_cluster": existing_covering_cluster,
             "show_cluster_directory": show_cluster_directory,
             "validation_error": validation_error,
+            # What the list was narrowed by, so the drawer can say why a
+            # cluster somebody expected is absent. An empty picker that
+            # explains nothing reads as a broken page rather than as a fact
+            # about this school's owner and geography.
+            "filtered_by_sub_county": bool(school.sub_county_id),
+            "sub_county_missing": not school.sub_county_id,
+            "ineligibility_reason": ineligibility_reason(school),
             "drawer_type": "center",
             "drawer_size": "md",
         }
@@ -862,14 +871,16 @@ def add_to_cluster_drawer_view(request, school_id):
                     ),
                 )
             cluster_id = request.POST.get("existing_cluster_id")
+            # The same rule on submit, because narrowing only the dropdown is
+            # not a rule — the id arrives in a POST body and a crafted one
+            # would otherwise land this school in another CCEO's cluster, or in
+            # the wrong sub-county. `set_school_cluster_membership` checks it a
+            # third time, for the write paths that never see this view.
             cluster = (
-                Cluster.objects.filter(
-                    id=cluster_id,
-                    district_id=school.district_id,
-                    deleted_at__isnull=True,
-                    status="active",
+                eligible_clusters_for_school(
+                    school, scope=resolve_user_scope(request.user)
                 )
-                .select_related("district")
+                .filter(id=cluster_id)
                 .first()
             )
             if cluster is None:
@@ -1661,13 +1672,18 @@ def school_edit_drawer_view(request, school_id):
     )
     districts = District.objects.select_related("region").order_by("name")
     clusters = (
-        Cluster.objects.filter(
-            deleted_at__isnull=True,
-            status="active",
-            district_id=selected_district_id,
-        )
-        .select_related("district")
-        .order_by("name")
+        # The same eligibility rule as the assignment drawer. This list was
+        # district-only, so the edit form quietly offered every cluster in the
+        # district including other CCEOs' — the fifth picker deriving its own
+        # answer to a question that has one canonical service.
+        #
+        # While the district select still shows the school's own district the
+        # school itself is the right subject. Once somebody changes it, no
+        # cluster is offered: a district change invalidates the membership
+        # (§17), and the new one is chosen after the move, not during it.
+        eligible_clusters_for_school(school, scope=resolve_user_scope(request.user))
+        if str(selected_district_id or "") == str(school.district_id or "")
+        else Cluster.objects.none()
     )
     staff = _school_owner_queryset()
     sub_counties = SubCounty.objects.filter(district_id=selected_district_id).order_by(
@@ -2003,3 +2019,188 @@ def school_onboard_drawer_view(request):
         "can_add_ssa": _may_upload_ssa(request),
     }
     return render(request, "partials/schools/onboard_drawer.html", context)
+
+
+# ── School lifecycle: closing, and the archive ───────────────────────────────
+@require_page_permission("school_profile")
+def school_close_drawer(request, school_id: str):
+    """What closing this school would do, before anybody confirms it.
+
+    Server-computed from the same functions the service uses, so the numbers
+    shown are the numbers that will move. Closing a school changes a country's
+    active enrolment and somebody's target denominator — nobody should confirm
+    that without having seen it.
+    """
+    from apps.core.exceptions import Forbidden, NotFoundError
+    from apps.schools import lifecycle_service
+    from apps.schools.lifecycle_models import ClosureReason, ClosureType
+
+    try:
+        preview = lifecycle_service.preview(school_id)
+    except NotFoundError:
+        return render(
+            request, "partials/schools/close_drawer.html", {"preview": None}, status=404
+        )
+
+    # Asked here so the drawer can explain the refusal rather than letting
+    # somebody fill the form and be rejected at submit.
+    denial = ""
+    try:
+        from apps.schools.models import School
+
+        school = School.objects.filter(
+            lifecycle_service.models_Q_id_or_ref(school_id)
+        ).first()
+        lifecycle_service.assert_may_close(request.user, school)
+    except Forbidden as exc:
+        denial = str(exc)
+
+    return render(
+        request,
+        "partials/schools/close_drawer.html",
+        {
+            "preview": preview,
+            "denial": denial,
+            "closure_types": ClosureType.choices,
+            "reasons": ClosureReason.choices,
+            "drawer_size": "md",
+            "drawer_type": "center",
+        },
+    )
+
+
+@require_page_permission("school_profile")
+@require_POST
+def school_close_action(request, school_id: str):
+    """Close the school, or say why it cannot be closed."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.schools import lifecycle_service
+
+    try:
+        closure = lifecycle_service.close_school(
+            school_id,
+            {
+                "closure_type": request.POST.get("closure_type"),
+                "reason_category": request.POST.get("reason_category"),
+                "reason": request.POST.get("reason"),
+                "effective_date": request.POST.get("effective_date"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _lifecycle_response(request, str(exc), ok=False)
+
+    return _lifecycle_response(
+        request,
+        f"{closure.school.name} is closed. "
+        f"{closure.activities_cancelled} future activity(s) cancelled.",
+    )
+
+
+@require_page_permission("school_profile")
+@require_POST
+def school_reopen_action(request, school_id: str):
+    """Bring a school back, without resurrecting the work that was stopped."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.schools import lifecycle_service
+
+    try:
+        lifecycle_service.reopen_school(
+            school_id,
+            {
+                "reason": request.POST.get("reason"),
+                "enrollment": request.POST.get("enrollment"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _lifecycle_response(request, str(exc), ok=False)
+
+    return _lifecycle_response(request, "School reopened.")
+
+
+def _lifecycle_response(request, message: str, *, ok: bool = True):
+    """A confirmation for the HTMX swap, or a redirect for a plain post."""
+    from urllib.parse import urlsplit
+
+    from django.contrib import messages
+    from django.http import HttpResponse
+    from django.utils.html import escape
+
+    from apps.core.redirects import local_redirect
+
+    if request.headers.get("HX-Request") == "true":
+        tone = "success" if ok else "danger"
+        response = HttpResponse(
+            f'<p class="pill pill-{tone}" role="status">{escape(message)}</p>'
+        )
+        if ok:
+            # The directory, the KPI strip and the profile banner all change.
+            # Reloading is cheaper to reason about than patching four fragments.
+            response["HX-Refresh"] = "true"
+        return response
+
+    messages.success(request, message) if ok else messages.error(request, message)
+    came_from = urlsplit(request.META.get("HTTP_REFERER") or "").path
+    return local_redirect(came_from, fallback="/schools")
+
+
+@require_page_permission("closed_schools")
+def closed_schools_view(request):
+    """The archive. Closed schools stay reachable — just not operationally.
+
+    Deliberately its own page rather than a filter on the directory. The
+    requirement is that closed schools do not appear there, and a hidden
+    filter default is a promise that breaks the first time somebody clears it.
+    """
+    from apps.schools import lifecycle_service
+    from apps.schools.lifecycle_models import SchoolClosure
+
+    closures = (
+        SchoolClosure.objects.filter(reopened_at__isnull=True)
+        .select_related("school", "school__district")
+        .order_by("-effective_date")
+    )
+    query = (request.GET.get("q") or "").strip()
+    if query:
+        closures = closures.filter(school__name__icontains=query)
+
+    # The KPIs aggregate in the database over every matching closure. Summing
+    # the rendered page instead would report a number that shrinks as somebody
+    # pages through the archive, and understate the enrolment lost the moment
+    # there are more closures than fit on one screen.
+    summary = closures.aggregate(
+        closed=Count("id"),
+        enrollment_removed=Sum("enrollment_at_closure"),
+    )
+
+    rows = [
+        {
+            "closure": c,
+            "school": c.school,
+            "district": getattr(c.school.district, "name", "") if c.school_id else "",
+            "enrollment": c.enrollment_at_closure,
+            "owner": c.owner_name_at_closure,
+        }
+        for c in closures[:500]
+    ]
+
+    totals = lifecycle_service.active_enrollment()
+    return render(
+        request,
+        "pages/schools/closed.html",
+        {
+            "rows": rows,
+            "q": query,
+            "closed_count": summary["closed"] or 0,
+            "active_count": totals["schools_active"],
+            "enrollment_removed": summary["enrollment_removed"] or 0,
+            # The one search is the top bar's. Binding it here keeps the
+            # archive searchable without growing a second search box.
+            "topbar_search": {
+                "placeholder": "Search closed schools…",
+                "value": query,
+                "action": "/schools/closed",
+            },
+        },
+    )

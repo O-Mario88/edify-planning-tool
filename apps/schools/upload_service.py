@@ -916,6 +916,15 @@ def import_school_batch(batch, user) -> dict:
                     if sub_county is not None
                     else None
                 )
+                # A school only ever joins a cluster in its own district.
+                # The sub-county index gets there transitively — a cluster's
+                # covered sub-counties are constrained to its district when it
+                # is created — but an upload writes `cluster_id` straight onto
+                # the row, bypassing `set_school_cluster_membership` where that
+                # rule is enforced. Checking it here makes the guarantee direct
+                # rather than inherited from an invariant two models away.
+                if cluster and district and cluster.district_id != district.id:
+                    cluster = None
                 saved_school = School(
                     school_id=r.school_id,
                     name=r.name,

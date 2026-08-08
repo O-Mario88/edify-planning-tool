@@ -137,12 +137,10 @@ def staff_directory_view(request):
     # Average coverage gap: % of schools org-wide without a completed SSA for
     # the current FY (School.current_fy_ssa_status == "done" is the same
     # source of truth used by apps.clusters.services / apps.analytics.services).
-    from apps.schools.models import School
+    from apps.schools.lifecycle_service import active_schools
 
-    all_schools_count = School.objects.filter(deleted_at__isnull=True).count()
-    schools_with_ssa = School.objects.filter(
-        deleted_at__isnull=True, current_fy_ssa_status="done"
-    ).count()
+    all_schools_count = active_schools().count()
+    schools_with_ssa = active_schools().filter(current_fy_ssa_status="done").count()
     average_coverage_gap = (
         round(100 - (schools_with_ssa / all_schools_count * 100), 1)
         if all_schools_count

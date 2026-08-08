@@ -103,6 +103,12 @@ class PartnerOversightItem:
     risks: list[dict] = field(default_factory=list)
     next_action_owner: str = ""
     next_action: str = ""
+    # The label of the withdrawal action this record's state permits, or "" if
+    # none does. Carried on the item so the row, the drawer and the service all
+    # name the same decision — a row offering "Withdraw" over work that is
+    # actually going to be suspended is a promise the service will break.
+    withdrawal_kind: str = ""
+    withdrawal_label: str = ""
 
     @property
     def is_scheduled(self) -> bool:
@@ -163,7 +169,18 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
     )
     if not scope["is_country"]:
         ids = scope["staff_ids"]
-        qs = qs.filter(Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids))
+        # School ownership is the third arm, and it is not redundant.
+        # `monitoring_staff_id` is nullable — every assignment written before
+        # that column existed has none, and falls back to the *assigner*. So a
+        # partner handed off by a PL to a CCEO's school resolves to the PL on
+        # those older rows, and the CCEO who owns the school would open this
+        # page to a blank list. Owning the school is the durable claim: it does
+        # not depend on who clicked Handoff or on when the row was written.
+        qs = qs.filter(
+            Q(monitoring_staff_id__in=ids)
+            | Q(assigning_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
+        )
     if partner_id:
         qs = qs.filter(partner_id=partner_id)
 
@@ -182,6 +199,9 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
     directory = _staff_directory(assignments)
 
     items = [_item_for(a, costs, directory) for a in assignments]
+    items += _unassigned_partner_activities(
+        scope, fy=fy, partner_id=partner_id, already=set(activity_ids)
+    )
     if month:
         items = [
             i
@@ -198,6 +218,100 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
 
     partner_risk_service.annotate(items)
     items.sort(key=lambda i: (i.partner_name, i.school_name))
+    return items
+
+
+def _unassigned_partner_activities(
+    scope, *, fy: str, partner_id, already: set
+) -> list[PartnerOversightItem]:
+    """Partner-delivered activities that no PartnerAssignment points at.
+
+    This page was built from PartnerAssignment alone, which was right while it
+    sat beside the Partners directory: the directory read Activity as well, so
+    between them every piece of partner work was visible somewhere. Merging the
+    two made that split a hole — `activity_services.create` stamps
+    `assigned_partner_id` straight onto an Activity without writing an
+    assignment row, so that work would have disappeared from the only remaining
+    partner page.
+
+    They arrive as scheduled-stage items with no assignment id. That is honest
+    rather than tidy: there is no handover record to open, and inventing one
+    would put a withdrawal control on a row the withdrawal service cannot act
+    on.
+    """
+    from apps.activities.models import Activity
+
+    qs = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+        )
+        .exclude(assigned_partner_id__isnull=True)
+        .exclude(assigned_partner_id="")
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .select_related("school", "school__district", "cluster")
+    )
+    if fy:
+        qs = qs.filter(fy=fy)
+    if partner_id:
+        qs = qs.filter(assigned_partner_id=partner_id)
+    if already:
+        qs = qs.exclude(id__in=already)
+    if not scope["is_country"]:
+        ids = scope["staff_ids"]
+        qs = qs.filter(
+            Q(monitored_by_staff_id__in=ids)
+            | Q(responsible_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
+        )
+
+    activities = list(qs)
+    if not activities:
+        return []
+
+    from apps.partners.models import Partner
+
+    names = dict(
+        Partner.all_objects.filter(
+            id__in={a.assigned_partner_id for a in activities}
+        ).values_list("id", "name")
+    )
+    costs = _cost_by_activity([a.id for a in activities])
+
+    items = []
+    for activity in activities:
+        entry = costs.get(activity.id)
+        cost, catalogue_id, catalogue_version = entry if entry else (0, None, None)
+        item = PartnerOversightItem(
+            stage=STAGE_SCHEDULED if activity.planned_date else STAGE_AWAITING_SCHEDULE,
+            partner_assignment_id="",
+            partner_activity_id=activity.id,
+            school_id=activity.school_id,
+            school_name=getattr(activity.school, "name", "") or "",
+            school_type=getattr(activity.school, "school_type", "") or "",
+            district=getattr(getattr(activity.school, "district", None), "name", "")
+            or "",
+            cluster_name=getattr(activity.cluster, "name", "") or "",
+            partner_id=activity.assigned_partner_id,
+            partner_name=names.get(activity.assigned_partner_id, ""),
+            responsible_cceo_id=activity.monitored_by_staff_id
+            or activity.responsible_staff_id,
+            activity_type=activity.activity_type or "",
+            target_intervention=activity.focus_intervention or "",
+            scheduled_date=activity.planned_date,
+            month=activity.planned_month,
+            quarter=activity.quarter or "",
+            financial_year=activity.fy or "",
+            activity_status=activity.status,
+            evidence_status=activity.evidence_status or "",
+            ia_status=activity.ia_verification_status or "",
+            payment_status=activity.payment_status or "",
+            planned_cost=cost,
+            cost_catalogue_id=catalogue_id,
+            cost_catalogue_version=catalogue_version,
+        )
+        _set_next_action(item)
+        items.append(item)
     return items
 
 
@@ -395,7 +509,51 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         )
 
     _set_next_action(item)
+    _set_withdrawal_action(item)
     return item
+
+
+def _set_withdrawal_action(item) -> None:
+    """Which controlled workflow this record's state permits, in words.
+
+    Asks the same resolver the service uses rather than re-deriving it here.
+    Two implementations of "what can be done to this" is how a page comes to
+    offer a control the service refuses.
+    """
+    from apps.partners.withdrawal_models import WithdrawalKind
+    from apps.partners.withdrawal_service import resolve_kind
+
+    # A lightweight stand-in: the resolver reads only status fields, and
+    # building it from the item avoids re-fetching the assignment row the
+    # oversight query already loaded.
+    # None when the partner has not scheduled — `resolve_kind` reads "no
+    # activity" as "still a plain handover", and handing it an empty stand-in
+    # instead made every unscheduled assignment look unwithdrawable.
+    activity = _ActivityView(item) if item.partner_activity_id else None
+    kind = resolve_kind(_AssignmentView(item), activity)
+    item.withdrawal_kind = kind
+    item.withdrawal_label = (
+        "" if kind == WithdrawalKind.BLOCKED else WithdrawalKind(kind).label
+    )
+
+
+class _AssignmentView:
+    """Just enough of an assignment for `resolve_kind` to read."""
+
+    def __init__(self, item):
+        self.status = item.assignment_status
+        self.scheduled_activity = (
+            _ActivityView(item) if item.partner_activity_id else None
+        )
+
+
+class _ActivityView:
+    """Just enough of an activity for `resolve_kind` to read."""
+
+    def __init__(self, item):
+        self.status = item.activity_status
+        self.evidence_status = item.evidence_status
+        self.payment_status = item.payment_status
 
 
 def _set_next_action(item) -> None:
@@ -606,6 +764,29 @@ def export_rows(items):
         )
 
 
+def _attach_partner_identity(groups: list[dict]) -> None:
+    """Fill each group's contact fields from one Partner query.
+
+    `ssa_intervention_label` is a property rather than a column, so the rows
+    have to be model instances — `.values()` would return the raw code and the
+    page would show `government_requirements` where it used to show a label.
+    """
+    from apps.partners.models import Partner
+
+    ids = [g["id"] for g in groups if g.get("id")]
+    if not ids:
+        return
+    by_id = {p.id: p for p in Partner.all_objects.filter(id__in=ids)}
+    for group in groups:
+        partner = by_id.get(group.get("id"))
+        if partner is None:
+            continue
+        group["contact_person"] = partner.contact_person or ""
+        group["phone"] = partner.phone or ""
+        group["region_name"] = partner.region_name or ""
+        group["intervention_label"] = partner.ssa_intervention_label or ""
+
+
 def group_by_partner(items) -> list[dict]:
     """The page's primary organisation: one group per partner."""
     buckets: dict[tuple, list] = {}
@@ -632,6 +813,12 @@ def group_by_partner(items) -> list[dict]:
                 "delivering": [i for i in group_items if i.is_scheduled],
             }
         )
+    # Who to call, in one query for the whole page. Carried over when the
+    # Partners directory merged into Partner Oversight: the directory was the
+    # only place a supervisor could find a partner's contact person, and losing
+    # it would have made the merge a net removal rather than a consolidation.
+    _attach_partner_identity(groups)
+
     groups.sort(key=lambda g: g["name"])
     # Two independently paged tables per partner — the handover list and the
     # delivery list. Positional keys, so paging one partner's work does not
@@ -640,3 +827,77 @@ def group_by_partner(items) -> list[dict]:
         group["awaiting_page_param"] = f"a{index}_page"
         group["scheduled_page_param"] = f"s{index}_page"
     return groups
+
+
+# ── Withdrawal queues ────────────────────────────────────────────────────────
+def withdrawal_requests(principal) -> list[dict]:
+    """Requests waiting on this Program Lead's decision.
+
+    Scoped by the supervisor recorded on the request rather than by re-deriving
+    the team, because supervision can change between the ask and the answer and
+    the request should stay with whoever it was addressed to.
+    """
+    from apps.partners.withdrawal_models import (
+        PartnerAssignmentWithdrawal,
+        WithdrawalState,
+    )
+
+    scope = _resolve_scope(principal)
+    qs = PartnerAssignmentWithdrawal.objects.filter(
+        state=WithdrawalState.REQUESTED
+    ).select_related("school", "partner", "assignment")
+
+    if not scope["is_country"]:
+        ids = scope["staff_ids"]
+        if not ids:
+            return []
+        qs = qs.filter(supervising_pl_id__in=ids)
+
+    return [
+        {
+            "id": w.id,
+            "school": getattr(w.school, "name", "") or "",
+            "partner": getattr(w.partner, "name", "") or "",
+            "kind_label": w.get_kind_display(),
+            "reason": w.get_reason_category_display(),
+            "explanation": w.partner_facing_reason,
+            "internal_note": w.internal_note,
+            "disposition": w.get_disposition_display(),
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "planned_cost": w.original_planned_cost,
+            "financially_locked": w.financial_state_at_withdrawal == "locked",
+            "requested_at": w.requested_at,
+            "assignment_id": w.assignment_id,
+        }
+        for w in qs.order_by("requested_at")[:100]
+    ]
+
+
+def withdrawal_history(assignment_id: str) -> list[dict]:
+    """Every withdrawal decision this assignment has been through.
+
+    A list rather than one record: an assignment can be suspended, resumed and
+    later recalled, and collapsing that to "the latest" loses the pattern a
+    performance review is actually looking at.
+    """
+    from apps.partners.withdrawal_models import PartnerAssignmentWithdrawal
+
+    return [
+        {
+            "id": w.id,
+            "kind_label": w.get_kind_display(),
+            "state_label": w.get_state_display(),
+            "reason": w.get_reason_category_display(),
+            "explanation": w.partner_facing_reason,
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "requested_at": w.requested_at,
+            "effective_at": w.effective_at,
+            "replacement_assignment_id": w.replacement_assignment_id,
+            "original_planned_cost": w.original_planned_cost,
+        }
+        for w in PartnerAssignmentWithdrawal.objects.filter(
+            assignment_id=assignment_id
+        ).order_by("requested_at")
+    ]

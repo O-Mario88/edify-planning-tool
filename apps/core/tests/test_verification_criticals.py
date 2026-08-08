@@ -351,8 +351,14 @@ class ExportPermissionTests(Fixture):
         )
 
     def test_page_load_without_export_still_works(self):
+        """Withholding data.export must cost the export, not the page.
+
+        Follows the redirect: /partners now sends staff to Partner Oversight,
+        the two having been merged into one page. The claim is unchanged — a
+        CCEO with no export permission still reads the page.
+        """
         self.client.force_login(self.cceo)
-        r = self.client.get("/partners")
+        r = self.client.get("/partners", follow=True)
         self.assertEqual(r.status_code, 200)
 
 

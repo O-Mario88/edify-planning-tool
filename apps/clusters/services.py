@@ -17,7 +17,7 @@ from django.db.models import Avg, Count, Max, Min, Prefetch, Q
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import Permission
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary
@@ -331,6 +331,29 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     if not cluster:
         raise NotFoundError("Cluster not found")
 
+    # Editing a cluster follows the person responsible for it. The only check
+    # here was on the *district* of an incoming change, so a CCEO could rename,
+    # retype and re-cover another CCEO's cluster in the same district — and
+    # doing nothing to the district skipped even that. Sharing a district is
+    # not sharing a portfolio.
+    #
+    # An unowned cluster stays editable so it can be picked up and given an
+    # owner; that is the same carve-out `cluster_in_scope` makes, and without
+    # it the 16 clusters that have never had an owner would be frozen.
+    from apps.core.scoping import cluster_owner_ids
+
+    current_owner = (cluster.responsible_staff_id or "").strip()
+    editor_scope = resolve_user_scope(principal)
+    if (
+        current_owner
+        and not editor_scope.country_scope
+        and current_owner not in cluster_owner_ids(editor_scope)
+    ):
+        raise Forbidden(
+            "That cluster belongs to another staff member. Ask them, or "
+            "transfer it through the cluster-transfer workflow."
+        )
+
     region_id = data.get("regionId")
     district_id = data.get("districtId")
     if district_id:
@@ -428,6 +451,34 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
         raise BadRequest("A school can only be assigned to an active cluster.")
     if cluster and school.district_id != cluster.district_id:
         raise BadRequest("A school can only be assigned within its own district.")
+
+    # Owner and sub-county, enforced here rather than only in the picker.
+    # Filtering a dropdown is not a rule: the cluster id arrives in a POST body,
+    # and every other write path — bulk assignment, the API, a management
+    # command — reaches this function without passing a dropdown at all.
+    if cluster:
+        from apps.clusters.eligibility import owner_id_variants
+
+        owners = owner_id_variants(getattr(school, "account_owner_id", ""))
+        cluster_owner = (cluster.responsible_staff_id or "").strip()
+        if cluster_owner and cluster_owner not in owners:
+            raise BadRequest(
+                "That cluster belongs to another staff member. A school joins "
+                "a cluster owned by the person responsible for the school; "
+                "moving it across portfolios needs a transfer."
+            )
+        # Only when both are known. A school with no sub-county is a data gap
+        # to complete, not grounds to refuse the district-level assignment it
+        # could always make.
+        if school.sub_county_id and cluster.sub_county_id:
+            covers = cluster.covered_sub_counties.filter(
+                sub_county_id=school.sub_county_id
+            ).exists()
+            if cluster.sub_county_id != school.sub_county_id and not covers:
+                raise BadRequest(
+                    "That cluster covers a different sub-county. A school "
+                    "joins a cluster covering its own sub-county."
+                )
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)
@@ -1200,13 +1251,22 @@ class ClusterDashboardService:
 
         scope = resolve_user_scope(user)
 
-        # 1. Base scoped query
+        # 1. Base scoped query.
+        #
+        # The Clusters page is an operational directory, so it shows the
+        # clusters this person is responsible for — `cluster_queryset` is the
+        # canonical set, shared with every picker and with the membership
+        # service that decides what a save will accept.
+        #
+        # It used to scope geographically, which is the rule §4 replaced: four
+        # CCEOs sharing Mukono each saw all fifteen of its clusters, and the
+        # page therefore disagreed with the drawers next to it about whose
+        # clusters they were. Unowned clusters stay visible from their district
+        # — that carve-out lives inside cluster_queryset — so nothing becomes
+        # unreachable while ownership is still being captured.
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        if not scope.country_scope:
-            # Fails CLOSED. The previous `and scope.district_ids` meant a user
-            # with no district assignment — true for most seeded CCEOs — fell
-            # through to every cluster in the country instead of none.
-            base_qs = base_qs.filter(district_id__in=scope.district_ids or ["__none__"])
+        scoped = cluster_queryset(scope, base=base_qs)
+        base_qs = scoped if scoped is not None else base_qs.none()
 
         # 2. Filters from request
         q = request.GET.get("q", "").strip()

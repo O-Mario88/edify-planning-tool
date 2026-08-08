@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 11,
   "labels_in_several_modules": 15,
-  "breakdown_rows": 102
+  "breakdown_rows": 104
  },
  "duplicated_labels": {
   "Accountability Pending": [
@@ -1811,9 +1811,28 @@
    "has_drilldown": false
   },
   {
+   "kind": "breakdown-row",
+   "module": "apps/clusters/portfolio_audit.py",
+   "line": 34,
+   "label": null,
+   "keys": [
+    "classification",
+    "clean",
+    "count",
+    "examples",
+    "expected",
+    "key",
+    "label",
+    "route",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1501,
+   "line": 1561,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -1829,7 +1848,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1509,
+   "line": 1569,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -1845,7 +1864,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1517,
+   "line": 1577,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -1861,7 +1880,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1525,
+   "line": 1585,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -1877,7 +1896,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1533,
+   "line": 1593,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -1893,7 +1912,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1541,
+   "line": 1601,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -1909,7 +1928,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1549,
+   "line": 1609,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -1925,7 +1944,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1557,
+   "line": 1617,
    "label": "Pending Activities",
    "keys": [
     "helper",
@@ -2607,7 +2626,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 657,
+   "line": 699,
    "label": null,
    "keys": [
     "label",
@@ -2619,7 +2638,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 91,
+   "line": 95,
    "label": null,
    "keys": [
     "amount",
@@ -2882,7 +2901,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1740,
+   "line": 1741,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2897,7 +2916,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2380,
+   "line": 2381,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -2913,7 +2932,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2388,
+   "line": 2389,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -2929,7 +2948,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2647,
+   "line": 2648,
    "label": null,
    "keys": [
     "label",
@@ -2941,7 +2960,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2819,
+   "line": 2820,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -2956,7 +2975,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2826,
+   "line": 2827,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -2971,7 +2990,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2833,
+   "line": 2834,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -2986,7 +3005,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2840,
+   "line": 2841,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3001,7 +3020,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2847,
+   "line": 2848,
    "label": "Missing Critical Data",
    "keys": [
     "helper",
@@ -3016,7 +3035,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1045,
+   "line": 1046,
    "label": null,
    "keys": [
     "achieved",
@@ -3574,7 +3593,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 175,
+   "line": 213,
    "label": null,
    "keys": [
     "count",
@@ -3588,7 +3607,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 451,
+   "line": 456,
    "label": "Total Schools",
    "keys": [
     "helper",
@@ -3604,7 +3623,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 459,
+   "line": 464,
    "label": "Client Schools",
    "keys": [
     "helper",
@@ -3620,7 +3639,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 467,
+   "line": 472,
    "label": "Core Schools",
    "keys": [
     "helper",
@@ -3636,7 +3655,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 475,
+   "line": 480,
    "label": "Unclustered",
    "keys": [
     "helper",
@@ -3652,7 +3671,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 483,
+   "line": 488,
    "label": "No SSA",
    "keys": [
     "helper",
@@ -3668,7 +3687,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 491,
+   "line": 496,
    "label": "Staff Required",
    "keys": [
     "helper",
@@ -3684,7 +3703,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 499,
+   "line": 504,
    "label": "Planning Ready",
    "keys": [
     "helper",
@@ -3700,7 +3719,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 507,
+   "line": 512,
    "label": "Duplicates",
    "keys": [
     "helper",
@@ -3716,7 +3735,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 652,
+   "line": 657,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -3734,7 +3753,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 614,
+   "line": 612,
    "label": null,
    "keys": [
     "achieved",
@@ -3750,7 +3769,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 881,
+   "line": 879,
    "label": "Total CCEOs",
    "keys": [
     "helper",
@@ -3766,7 +3785,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 889,
+   "line": 887,
    "label": "With Overdue",
    "keys": [
     "helper",
@@ -3782,7 +3801,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 897,
+   "line": 895,
    "label": "All Caught Up",
    "keys": [
     "helper",
@@ -6432,6 +6451,23 @@
    "has_drilldown": false
   },
   {
+   "kind": "other",
+   "module": "apps/schools/closure_analytics.py",
+   "line": 184,
+   "label": null,
+   "keys": [
+    "enrollment",
+    "is_weak_ground",
+    "key",
+    "label",
+    "missing_enrollment",
+    "reopened",
+    "total"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "kpi-tile",
    "module": "apps/system_health/page_inventory.py",
    "line": 769,
@@ -6446,7 +6482,25 @@
   {
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
-   "line": 55,
+   "line": 63,
+   "label": null,
+   "keys": [
+    "clean",
+    "count",
+    "examples",
+    "expected",
+    "key",
+    "label",
+    "route",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/system_health/school_closure_health.py",
+   "line": 26,
    "label": null,
    "keys": [
     "clean",

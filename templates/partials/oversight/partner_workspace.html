@@ -24,6 +24,65 @@ schedule, and none edits a CCEO's record.
     </a>
   </div>
 
+  {% comment %}
+  Withdrawal requests. A CCEO noticed a problem with work a partner had
+  already scheduled and asked for a decision — they cannot cancel that work
+  themselves, so this queue is the whole point of routing it here. Above the
+  partner groups because somebody is waiting.
+  {% endcomment %}
+  {% if withdrawal_requests %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="withdrawal-requests">
+    <header class="px-4 py-3 border-b edify-border">
+      <h2 id="withdrawal-requests" class="text-sm font-semibold">
+        Withdrawal requests ({{ withdrawal_requests|length }})
+      </h2>
+      <p class="edify-text-caption edify-text-muted">
+        Raised by a CCEO about work a partner has already scheduled. Your decision.
+      </p>
+    </header>
+    <ul class="divide-y edify-border">
+      {% for req in withdrawal_requests %}
+      <li class="p-4 space-y-2">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">{{ req.school }} · {{ req.partner }}</p>
+            <p class="edify-text-caption edify-text-muted">
+              {{ req.kind_label }} · {{ req.reason }}
+              {% if not req.counts_against_partner %}
+              · <span title="This reason is not attributed to the partner">{{ req.attribution }}</span>
+              {% endif %}
+            </p>
+            <p class="text-sm mt-1">{{ req.explanation }}</p>
+            {% if req.internal_note %}
+            <p class="edify-text-caption edify-text-muted mt-0.5">Note: {{ req.internal_note }}</p>
+            {% endif %}
+            <p class="edify-text-caption edify-text-muted mt-0.5">
+              Proposed next: {{ req.disposition }}
+              {% if req.planned_cost %} · UGX {{ req.planned_cost|intcomma }} planned{% endif %}
+              {% if req.financially_locked %} · <span class="pill pill-warn">Committed money</span>{% endif %}
+            </p>
+          </div>
+        </div>
+        <form hx-post="/partner-oversight/withdraw/review"
+              hx-target="#withdrawal-review-result-{{ forloop.counter }}"
+              hx-swap="innerHTML"
+              class="flex flex-wrap items-center gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="withdrawal_id" value="{{ req.id }}">
+          <label class="sr-only" for="review-note-{{ forloop.counter }}">Note</label>
+          <input id="review-note-{{ forloop.counter }}" name="note" type="text"
+                 class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
+                 placeholder="Add a note (optional)">
+          <button type="submit" name="decision" value="approve" class="btn btn-primary h-9">Approve</button>
+          <button type="submit" name="decision" value="reject" class="btn h-9">Reject</button>
+        </form>
+        <div id="withdrawal-review-result-{{ forloop.counter }}"></div>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
   {% if groups %}
   <div class="space-y-3">
     {% for group in groups %}
@@ -31,6 +90,21 @@ schedule, and none edits a CCEO's record.
       <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
         <div class="min-w-0">
           <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h2>
+          {% comment %}
+          Who to call, carried over when the Partners directory merged into
+          this page. Every control here asks somebody to act, and for a partner
+          that somebody is a person with a phone number — a page that says
+          "waiting on Partner X" without saying who X is makes you open another
+          page to finish the thought.
+          {% endcomment %}
+          {% if group.contact_person or group.phone or group.region_name or group.intervention_label %}
+          <p class="edify-text-caption edify-text-muted">
+            {% if group.contact_person %}{{ group.contact_person }}{% endif %}
+            {% if group.phone %} · {{ group.phone }}{% endif %}
+            {% if group.region_name %} · {{ group.region_name }}{% endif %}
+            {% if group.intervention_label %} · {{ group.intervention_label }}{% endif %}
+          </p>
+          {% endif %}
           <p class="edify-text-caption edify-text-muted">
             {{ group.summary.schools_assigned }} school{{ group.summary.schools_assigned|pluralize }} ·
             {{ group.summary.awaiting_schedule }} yet to schedule ·
@@ -91,9 +165,9 @@ schedule, and none edits a CCEO's record.
                 {% if item.assignment_date %}{{ item.assignment_date|date:"j M" }}{% else %}—{% endif %}
               </td>
               <td class="px-4 py-2.5">
-                <span class="pill pill-warning">{{ item.next_action_owner }}</span>
+                <span class="pill pill-warn">{{ item.next_action_owner }}</span>
                 {% for risk in item.risks %}
-                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
+                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
               </td>
@@ -116,9 +190,9 @@ schedule, and none edits a CCEO's record.
             {% if item.responsible_cceo_name %} · {{ item.responsible_cceo_name }}{% endif %}
           </p>
           <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span class="pill pill-warning">Waiting on {{ item.next_action_owner }}</span>
+            <span class="pill pill-warn">Waiting on {{ item.next_action_owner }}</span>
             {% for risk in item.risks %}
-            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
+            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
           {% include "partials/oversight/_partner_view_button.html" with mobile=1 %}
@@ -167,7 +241,7 @@ schedule, and none edits a CCEO's record.
               <td class="px-4 py-2.5">
                 <span class="pill">{{ item.activity_status|replace_underscore|title|default:"Scheduled" }}</span>
                 {% for risk in item.risks %}
-                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
+                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
               </td>
@@ -204,7 +278,7 @@ schedule, and none edits a CCEO's record.
           <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
             <span class="pill">{{ item.activity_status|replace_underscore|title|default:"Scheduled" }}</span>
             {% for risk in item.risks %}
-            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
+            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
           {% include "partials/oversight/_partner_view_button.html" with mobile=1 %}

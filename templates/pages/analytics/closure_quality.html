@@ -1,0 +1,51 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Closure Quality · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The IA lens on closure.
+
+Deliberately a worklist with a summary above it rather than a chart wall. The
+question here is not how many schools the country lost — leadership asks that —
+but which of these records should not be believed, because a duplicate counted
+as a closure reports a school loss that never happened and every figure built
+on top of it inherits the error.
+
+Every tile counts rows that are listed further down the page, so a number can
+be followed to the closures it describes.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Impact Assessment</p>
+      <h1 class="edify-page-title edify-page-header__title">Closure Quality</h1>
+      <p class="edify-page-header__description">Closure records that are wrong, unconfirmed or recorded late — and the schools behind them.</p>
+    </div>
+    <form class="edify-page-header__controls"
+          hx-get="/analytics/closure-quality"
+          hx-target="#closure-quality-body"
+          hx-swap="innerHTML"
+          hx-trigger="change"
+          hx-push-url="true">
+      <label class="edify-page-header-control">
+        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Period</span>
+        <select name="period" aria-label="Period" class="focus:outline-none">
+          {% comment %}
+          All time is the default on purpose. A data-quality queue that hid last
+          year's unresolved duplicates behind a period filter would show a clean
+          desk that is only clean because of where the window starts.
+          {% endcomment %}
+          <option value="all" {% if period != "fy" %}selected{% endif %}>All time</option>
+          <option value="fy" {% if period == "fy" %}selected{% endif %}>FY {{ fy }}</option>
+        </select>
+      </label>
+    </form>
+  </header>
+
+  <div id="closure-quality-body">
+    {% include "partials/analytics/closure_quality_workspace.html" %}
+  </div>
+</div>
+{% endblock %}

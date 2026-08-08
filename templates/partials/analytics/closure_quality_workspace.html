@@ -1,0 +1,253 @@
+{% load frontend_filters table_pagination %}
+{% comment %}
+The body of the closure-quality page, swapped on its own when the period
+changes. Kept out of the page shell so the header and its filter survive the
+swap — re-rendering the control that triggered the request is how a select
+loses focus mid-interaction.
+{% endcomment %}
+
+{% if summary.recorded %}
+<div class="space-y-4">
+
+  {# ── What was recorded, and what to believe ─────────────────────────────── #}
+  <section aria-labelledby="cq-summary" class="space-y-3">
+    <h2 id="cq-summary" class="sr-only">Summary</h2>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closures recorded</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.recorded|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Schools that stopped operating</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Stranded duplicates</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.stranded_duplicates|intcomma }}</p>
+        {% comment %}
+        Not a closure reason — the service refuses to record one of those. This
+        is a school closed while its own duplicate flag was still open, which
+        strands the merge: the record leaves the directory unreconciled.
+        {% endcomment %}
+        <p class="edify-text-caption edify-text-muted">Closed before the duplicate flag was resolved</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          {% if summary.reopening_rate is not None %}{{ summary.reopening_rate }}% of recorded closures{% else %}No closures to compare{% endif %}
+        </p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recording lag</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">
+          {% if summary.average_recording_lag is not None %}{{ summary.average_recording_lag }}<span class="text-sm font-semibold edify-text-muted"> days</span>{% else %}—{% endif %}
+        </p>
+        <p class="edify-text-caption edify-text-muted">Average between closing and being recorded</p>
+      </div>
+    </div>
+
+    {% comment %}
+    The second row is the honest-gap row: things the data cannot tell you, said
+    out loud rather than absorbed into the totals above.
+    {% endcomment %}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">No enrolment recorded</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.missing_enrollment|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Cannot say what the programme lost</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closed unconfirmed</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.weak_ground|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Absence of evidence, not evidence of closure</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recorded late</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.stale_recordings|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">More than {{ stale_days }} days after closing</p>
+      </div>
+      <div class="card p-4">
+        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Enrolment removed</p>
+        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.enrollment_removed|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">Learners, at the moment each school closed</p>
+      </div>
+    </div>
+  </section>
+
+  {# ── The worklist ───────────────────────────────────────────────────────── #}
+  {% if attention %}
+  {% paginate attention "attention_page" as pager %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="cq-attention">
+    <div class="p-4 border-b edify-border">
+      <h2 id="cq-attention" class="text-sm font-bold">Needs attention</h2>
+      <p class="edify-text-caption edify-text-muted mt-0.5">
+        Closures carrying at least one quality flag. A row can carry several, and each says what it is.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto max-md:hidden">
+      <table class="w-full text-left">
+        <caption class="sr-only">Closures needing review</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School</th>
+            <th scope="col" class="px-4 py-2 font-semibold">District</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Reason</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Flags</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Lag</th>
+            <th scope="col" class="px-4 py-2 font-semibold"><span class="sr-only">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pager.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5">
+              <span class="font-semibold">{{ row.school.name }}</span>
+              <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
+            <td class="px-4 py-2.5 text-sm">{{ row.closure.get_reason_category_display }}</td>
+            <td class="px-4 py-2.5">
+              <div class="flex flex-wrap gap-1">
+                {% for flag in row.flags %}
+                <span class="pill {% if flag.tone == 'danger' %}pill-danger{% else %}pill-warn{% endif %}">{{ flag.label }}</span>
+                {% endfor %}
+                {% if row.reopened %}<span class="pill pill-neutral">Reopened</span>{% endif %}
+              </div>
+            </td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap tabular-nums">
+              {% if row.lag_days is not None %}
+                <span {% if row.is_stale %}class="font-semibold"{% endif %}>{{ row.lag_days }} d</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="px-4 py-2.5 whitespace-nowrap">
+              <a href="/schools/{{ row.school.school_id }}"
+                 class="text-sm font-semibold hover:underline edify-primary-text">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="md:hidden divide-y edify-border">
+      {% for row in pager.rows %}
+      <li class="p-4 space-y-1.5">
+        <p class="font-semibold text-sm">{{ row.school.name }}</p>
+        <p class="edify-text-caption edify-text-muted">
+          {{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}
+          · closed {{ row.closure.effective_date|date:"j M Y" }}
+        </p>
+        <div class="flex flex-wrap gap-1">
+          {% for flag in row.flags %}
+          <span class="pill {% if flag.tone == 'danger' %}pill-danger{% else %}pill-warn{% endif %}">{{ flag.label }}</span>
+          {% endfor %}
+          {% if row.reopened %}<span class="pill pill-neutral">Reopened</span>{% endif %}
+        </div>
+        {% if row.lag_days is not None %}
+        <p class="edify-text-caption edify-text-muted">Recorded {{ row.lag_days }} day{{ row.lag_days|pluralize }} after closing</p>
+        {% endif %}
+        <a href="/schools/{{ row.school.school_id }}"
+           class="text-sm font-semibold hover:underline edify-primary-text min-h-11 inline-flex items-center">View school</a>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% include "components/table_pager.html" with pager=pager param="attention_page" %}
+  </section>
+  {% else %}
+  {% include "components/empty_state.html" with title="No closure records need attention" message="Every closure recorded so far names a reason, carries an enrolment count and was recorded promptly." %}
+  {% endif %}
+
+  {# ── Why schools are closing ────────────────────────────────────────────── #}
+  <section class="card p-0 overflow-hidden" aria-labelledby="cq-reasons">
+    <div class="p-4 border-b edify-border">
+      <h2 id="cq-reasons" class="text-sm font-bold">By reason</h2>
+      <p class="edify-text-caption edify-text-muted mt-0.5">
+        Each reason carries its own missing-enrolment count. A category where nobody records learner numbers is a training problem, not a data problem.
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <caption class="sr-only">Closures grouped by reason</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">Reason</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Closures</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">No enrolment</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Reopened</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Learners</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% comment %}
+          The slice can never bind. This is a GROUP BY over ClosureReason, which
+          has fifteen members, so twenty is a ceiling the query cannot reach —
+          it states the bound for the table-bounds check rather than truncating
+          anything. A pager on a table that cannot exceed fifteen rows would be
+          furniture.
+          {% endcomment %}
+          {% for row in by_reason|slice:":20" %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 text-sm">
+              {{ row.label }}
+              {% if row.is_weak_ground %}<span class="pill pill-warn ml-1">Unconfirmed</span>{% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.total|intcomma }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{% if row.missing_enrollment %}{{ row.missing_enrollment|intcomma }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{% if row.reopened %}{{ row.reopened|intcomma }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{{ row.enrollment|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {# ── Closures that were undone ──────────────────────────────────────────── #}
+  {% if reopenings %}
+  {% paginate reopenings "reopened_page" as reopened_pager %}
+  <section class="card p-0 overflow-hidden" aria-labelledby="cq-reopened">
+    <div class="p-4 border-b edify-border">
+      <h2 id="cq-reopened" class="text-sm font-bold">Reopened schools</h2>
+      <p class="edify-text-caption edify-text-muted mt-0.5">
+        A school that reopens is a closure that turned out to be wrong. Schools do resume, so this is not misconduct — it is the honest measure of how well closure decisions are being made.
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <caption class="sr-only">Schools that reopened after closing</caption>
+        <thead>
+          <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">School</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Reopened</th>
+            <th scope="col" class="px-4 py-2 font-semibold text-right">Days closed</th>
+            <th scope="col" class="px-4 py-2 font-semibold">Original reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in reopened_pager.rows %}
+          <tr class="border-t edify-border">
+            <td class="px-4 py-2.5">
+              <a href="/schools/{{ row.school.school_id }}" class="font-semibold hover:underline edify-primary-text">{{ row.school.name }}</a>
+              <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}</span>
+            </td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
+            <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.reopened_at|date:"j M Y" }}</td>
+            <td class="px-4 py-2.5 text-sm text-right tabular-nums">{% if row.days_closed is not None %}{{ row.days_closed }}{% else %}—{% endif %}</td>
+            <td class="px-4 py-2.5 text-sm">{{ row.closure.get_reason_category_display }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=reopened_pager param="reopened_page" %}
+  </section>
+  {% endif %}
+
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No schools have been closed" message="When a school is closed from its profile, its record appears here so the closure can be checked for duplicates, missing enrolment counts and late recording." %}
+{% endif %}

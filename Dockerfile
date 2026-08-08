@@ -77,7 +77,7 @@ RUN useradd --system --create-home --uid 10001 edify \
     && chmod 0444 /app/build-info.json
 USER edify
 
-# Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.
+# App Platform injects $PORT at runtime. Default to 4000 for local/docker-compose.
 ENV PORT=4000
 EXPOSE 4000
 # Apply migrations, optionally seed, then start the ASGI server (daphne for

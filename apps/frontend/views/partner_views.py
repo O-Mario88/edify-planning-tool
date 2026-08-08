@@ -8,8 +8,14 @@ import csv
 from collections import defaultdict
 
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404
-from apps.core.permissions import require_export_permission, require_page_permission
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from urllib.parse import urlencode
+from apps.core.permissions import (
+    RolePermissionService,
+    require_export_permission,
+    require_page_permission,
+)
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_partner_ids
 from django.db.models import Q
@@ -26,6 +32,11 @@ from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.schools.models import School
 
+#: Work a partner must not act on: stopped by staff, or already refused.
+#: Named once so every partner-facing list excludes the same set —
+#: "cancelled" alone would leave deferred and rejected work on somebody's day.
+STOPPED_ACTIVITY_STATUSES = ("cancelled", "deferred", "rejected")
+
 # Row-level scoping: a Partner-role login (no StaffProfile, no country/region
 # scope) must only ever see their OWN partner org — matching what the REST
 # endpoint already intends (PartnerListOnboardView/PartnerUpdateView require
@@ -38,11 +49,55 @@ PARTNER_ROLES = (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.
 @require_page_permission("partners")
 @require_export_permission
 def partners_list_view(request):
-    """Partner Activities workspace for staff and partner organisations.
+    """Partner Activities workspace for partner organisations.
 
-    The former directory only named organisations.  This view joins the
-    assignment queue with scheduled partner work so staff can see what is
-    assigned, scheduled, due, and funded without leaving the page.
+    Staff are redirected to Partner Oversight, which is now the single staff
+    view of partner work. The two pages answered the same question — which
+    schools are with which partner, who has scheduled, what it costs — from
+    two sidebar entries, and a supervisor had no way to tell which one to
+    trust. Oversight won because it also carries the withdrawal decisions and
+    the per-item risks.
+
+    The redirect is deliberately conditional rather than a route-level one.
+    `/partners` is ALL_ROLES and Partner Oversight is not, so redirecting
+    everybody would bounce three populations into a page that then refuses
+    them: the external partner organisations, for whom this is the only
+    directory they have, and HR, the RVP and the Project Coordinator, who hold
+    `partners` but not `partner_oversight`.
+
+    It asks `can_view_page` rather than listing roles, so the redirect and the
+    destination's own gate can never disagree — a hardcoded list here would
+    drift the first time either page's audience changed.
+    """
+    if RolePermissionService.can_view_page(request.user, "partner_oversight"):
+        # Carry the filters both pages read under the same names, so a saved
+        # link survives the merge — dropping them would silently reset somebody
+        # to the current period and look like the data had changed.
+        #
+        # Named individually rather than forwarded wholesale. Passing the whole
+        # query string put request data into a redirect target, which CodeQL
+        # flagged: the fixed `/partner-oversight/?` prefix meant it could not
+        # actually leave the site, but "cannot escape today" is a property of
+        # the prefix rather than of the code, and the next edit owns it. An
+        # allowlist cannot be argued with — and the directory's other params
+        # (`q`, `status`, `region`) mean nothing on the destination anyway.
+        carried = {
+            key: value
+            for key, value in ((k, request.GET.get(k)) for k in ("fy", "partner"))
+            if value
+        }
+        target = reverse("frontend:partner_oversight")
+        query = urlencode(carried)
+        return redirect(f"{target}?{query}" if query else target)
+    return _partner_workspace(request)
+
+
+def _partner_workspace(request):
+    """The partner-facing workspace body.
+
+    The former directory only named organisations. This view joins the
+    assignment queue with scheduled partner work so a partner organisation can
+    see what is assigned, scheduled, due, and funded without leaving the page.
     """
     search = request.GET.get("q", "").strip()
     selected_fy = request.GET.get("fy", get_operational_fy())
@@ -594,12 +649,18 @@ def partner_today_view(request):
     # link instead (same resolver used everywhere else a partner identity is
     # checked, e.g. apps/debriefs/field_debrief_service.py).
     partner_ids = resolve_partner_ids(user)
+    # Withdrawn work must leave the partner's day. Without the status
+    # exclusion a recalled activity dated today still appeared here, so a
+    # partner who had been told to stop was still being told to go — and any
+    # visit they made off the back of it would have had no assignment behind
+    # it, no evidence route and no way to pay them.
     today_activities = (
         Activity.objects.filter(
             assigned_partner_id__in=partner_ids,
             planned_date=today,
             deleted_at__isnull=True,
         )
+        .exclude(status__in=STOPPED_ACTIVITY_STATUSES)
         .select_related("school", "cluster")
         .order_by("activity_type")
     )
@@ -619,6 +680,13 @@ def partner_today_view(request):
         "today_activities": today_activities,
         "upcoming": upcoming,
         "today": today,
+        "is_partner_admin": user.active_role == EdifyRole.PARTNER_ADMIN.value,
+        "mobile_primary_action": {
+            "label": "Open today's plan"
+            if today_activities
+            else "View assigned schools",
+            "url": "/my-plan" if today_activities else "/partner/schools",
+        },
     }
     return render(request, "pages/partner/today.html", context)
 

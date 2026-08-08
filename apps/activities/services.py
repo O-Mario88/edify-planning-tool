@@ -18,7 +18,7 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import COUNTRY_SCHEDULING_ROLES, resolve_user_scope
 from apps.schools.models import School
 
 # REG-02 calendar policy. This module must run the gate, not merely borrow the
@@ -277,15 +277,51 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     raise Forbidden("Activity outside your scope.")
 
 
-def _assert_target_in_scope(
-    *, school: School | None, cluster_id: str | None, principal
-) -> None:
-    """Validate create-time targets before an Activity exists."""
+def _assert_may_schedule(activity: Activity, principal) -> None:
+    """Country visibility is not scheduling authority.
+
+    `_assert_in_scope` is the *read* gate, and it is right to let the Programme
+    Accountant through: confirming and paying an accountability means reading
+    activities across the whole country. Scheduling mutations reuse that gate,
+    so the same country flag that lets the Accountant read an activity also let
+    them move its date — a planning power that is not part of the job.
+
+    Deliberately narrow. It refuses only the case where country-wide visibility
+    was the *sole* reason the caller got this far; anyone who reached the
+    activity by owning it, monitoring it, or being its partner is unaffected,
+    and the supervisor question that §10 answers for `create` is left exactly
+    as `_assert_in_scope` had it rather than changed in passing.
+    """
     scope = resolve_user_scope(principal)
+    if scope.active_role in COUNTRY_SCHEDULING_ROLES:
+        return
     if scope.country_scope:
-        return
-    if school and scope.school_ids and school.id in scope.school_ids:
-        return
+        raise Forbidden(
+            "Your role reviews and pays for this work rather than scheduling "
+            "it. Ask the staff member who owns the activity to move it."
+        )
+
+
+def _target_in_direct_portfolio(scope, school: School | None, cluster_id) -> bool:
+    """Is this target inside the *direct* portfolio the scope describes?
+
+    Country-wide and summary-only readers have no portfolio at all, and both
+    have to be turned away before the cluster branch below. `cluster_in_scope`
+    answers True for every cluster in either case — the correct answer for a
+    *reader*, and the wrong one to spend as authority to schedule. It is the
+    one branch where a target need not be a school, so it stays open after the
+    `own_school_ids` test has already refused them.
+
+    Every role that may schedule country-wide has returned from
+    `_assert_target_in_scope` before reaching here, so a country scope arriving
+    at this function is precisely the Programme Accountant: country visibility,
+    no scheduling authority. The RVP arrives the same way. Neither should be
+    able to reach a cluster the school branch just refused them.
+    """
+    if getattr(scope, "can_view_summary_only", False) or scope.country_scope:
+        return False
+    if school and scope.own_school_ids and school.id in scope.own_school_ids:
+        return True
     if cluster_id:
         from apps.clusters.models import Cluster
         from apps.core.scoping import cluster_in_scope
@@ -296,7 +332,81 @@ def _assert_target_in_scope(
             .first()
         )
         if cluster and cluster_in_scope(scope, cluster):
-            return
+            return True
+    return False
+
+
+def _delegated_owner_scope(scope, principal, owner_id: str | None):
+    """The scope of a supervisee this principal may assign work to, or None.
+
+    Assigning work to someone else is not the same act as doing it yourself.
+    A supervisor accepting a Field Debrief recommendation creates an activity
+    the *submitter* will own, at the submitter's own school — the write lands
+    inside that person's portfolio, at their request, so it is their direct
+    ownership that decides whether the target is legitimate.
+
+    Two conditions, both required: the named owner must actually report to the
+    principal, and the target must sit in that owner's own portfolio. Without
+    the first, any staff member could plant work at a colleague's school by
+    naming them as owner; without the second, a supervisor could use a
+    supervisee as a pass-through to reach a school nobody owns.
+    """
+    if not owner_id:
+        return None
+    if owner_id in (principal.staff_profile_id, principal.user_id):
+        return None
+    supervised = {
+        *(scope.supervised_staff_ids or []),
+        *(scope.managed_staff_ids or []),
+    }
+    if not supervised:
+        return None
+    owner_user = _user_for_staff_identity(owner_id)
+    if owner_user is None:
+        return None
+    if owner_user.staff_profile_id not in supervised and owner_id not in supervised:
+        return None
+    return resolve_user_scope(owner_user)
+
+
+def _assert_target_in_scope(
+    *, school: School | None, cluster_id: str | None, principal, owner_id=None
+) -> None:
+    """Validate create-time targets before an Activity exists.
+
+    Planning follows **direct** ownership, so this reads `own_school_ids` and
+    not `school_ids`. The latter unions in the schools of everyone a supervisor
+    supervises, which let a Programme Lead schedule work at a CCEO's school
+    purely because that CCEO reports to them — supervision acting as ownership.
+    A PL supervising two CCEOs could plan across 1,030 schools that were not
+    theirs.
+
+    The PL still sees that work: it is on Team Planning Oversight, read-only,
+    where the response to a problem is to ask the person who owns it rather
+    than to reach past them. `own_school_ids` is populated for the CCEO and the
+    Project Coordinator alike, so narrowing changes the supervisor's reach and
+    nobody else's.
+
+    `owner_id` covers the one legitimate case where the two come apart — see
+    :func:`_delegated_owner_scope`.
+
+    The country bypass reads `COUNTRY_SCHEDULING_ROLES`, not `country_scope`.
+    Impact Assessment and the Programme Accountant both see the whole country,
+    and until now both could therefore schedule anywhere in it — but the
+    Accountant observes, pays and follows up accountabilities and schedules
+    nothing, while IA does its own field visits and assessment training. One
+    flag could not tell those two apart, so it granted the union.
+    """
+    scope = resolve_user_scope(principal)
+    if scope.active_role in COUNTRY_SCHEDULING_ROLES:
+        return
+    if _target_in_direct_portfolio(scope, school, cluster_id):
+        return
+    owner_scope = _delegated_owner_scope(scope, principal, owner_id)
+    if owner_scope is not None and _target_in_direct_portfolio(
+        owner_scope, school, cluster_id
+    ):
+        return
     raise Forbidden("Activity target outside your scope.")
 
 
@@ -848,7 +958,10 @@ def create(
         # enforced by planning.schedule_programme_activity, plus the
         # responsible-person assignment rules below.
         _assert_target_in_scope(
-            school=school, cluster_id=cluster_id, principal=principal
+            school=school,
+            cluster_id=cluster_id,
+            principal=principal,
+            owner_id=data.get("responsibleStaffId"),
         )
     _assert_schedule_entitlement(
         activity_type,
@@ -1859,6 +1972,7 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
 
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
+    _assert_may_schedule(a, principal)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
@@ -2084,7 +2198,17 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
         if pa.status in ("partner_scheduled", "scheduled", "completed"):
             raise BadRequest("This assignment is already scheduled.")
         scope = resolve_user_scope(principal)
-        if not scope.country_scope:
+        if scope.active_role not in COUNTRY_SCHEDULING_ROLES:
+            if scope.country_scope:
+                # Country-wide reach without scheduling authority — the
+                # Accountant reviews and pays for partner work rather than
+                # dating it. Same rule as _assert_may_schedule; spelled out
+                # here because this path validates a PartnerAssignment, which
+                # has no Activity for that helper to take.
+                raise Forbidden(
+                    "Your role reviews and pays for this work rather than "
+                    "scheduling it."
+                )
             if scope.partner_ids:
                 if pa.partner_id not in scope.partner_ids:
                     raise Forbidden("Assignment belongs to another partner.")
@@ -2270,6 +2394,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
 
     with transaction.atomic():
         a = _get_in_scope(activity_id, principal)
+        _assert_may_schedule(a, principal)
         new_date = _parse_date(data["scheduledDate"])
 
         # REG-02 gate (restored; deleted from this module by b4fc9570).

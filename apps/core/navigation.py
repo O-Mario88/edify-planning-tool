@@ -81,8 +81,17 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # page resolves a team only for a Program Lead, and the country page is a
     # leadership review surface, not a field-planning one. Neither grants any
     # write access to the work it shows.
-    "team_planning_oversight": {PL, ADMIN},
-    "country_planning_oversight": {CD, ADMIN},
+    # Cluster Oversight is a section on these two pages rather than a page of
+    # its own, so the roles that need it are here. IA and the Accountant read
+    # the team lens; the RVP reads the country one.
+    #
+    # Widening a page permission widens every route behind it, which is how the
+    # partner-oversight export hole opened earlier in this branch. The two
+    # exports here now carry `@require_export_permission`, and the corrective
+    # actions gate on their own authority rather than on page access — both
+    # asserted in test_planning_oversight_access.py.
+    "team_planning_oversight": {PL, IA, ACCOUNTANT, ADMIN},
+    "country_planning_oversight": {CD, RVP, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
     # the same records through the school they manage, so they do not need a
@@ -93,7 +102,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # the partner's work, and both were previously named as responsible on a
     # page neither could open. Their lens is country-wide, matching the queues
     # they already work from.
-    "partner_oversight": {PL, CD, IA, ACCOUNTANT, ADMIN},
+    # The CCEO is here to help the PL monitor, not to be monitored. They see
+    # partner work at their own schools — the service scopes it — because the
+    # person who knows the school is the first to notice a partner who has
+    # gone quiet. The PL's decision queue is filtered by `supervising_pl_id`
+    # and so stays empty for them: shared visibility, unchanged authority.
+    "partner_oversight": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "my_performance": {
         CCEO,
         PL,
@@ -189,6 +203,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "core_schools": {CCEO, PL, IA, ADMIN},
     "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
     "school_profile": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
+    # The archive. IA and CD are here because closure data quality and country
+    # closure trends are theirs to watch; RVP works from aggregates and is not.
+    "closed_schools": {CCEO, PL, IA, CD, ADMIN},
     "school_action_drawer": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
     "school_upload": {IA, ADMIN},
     "clusters": {CCEO, PL, IA, PARTNER, CD, ADMIN},
@@ -310,6 +327,22 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # by typing the URL — it had no key and no navigation. Named explicitly now
     # that it is an Analytics section.
     "ia_dashboard": {IA, ADMIN},
+    # Closure quality. IA and Admin only: this is a data-quality worklist about
+    # which closure records to distrust, not a report on how many schools the
+    # country lost. Leadership gets that from the closure analytics on their own
+    # surfaces, which count real closures and exclude the record errors listed
+    # here — the same numbers with the corrections already applied.
+    "closure_quality": {IA, ADMIN},
+    # Where the country is losing schools, and what closing them did to the
+    # plan. Deliberately a different page from closure_quality above: that one
+    # is a worklist of records to distrust, this one is country performance,
+    # and a single page mixing them leaves nobody sure which numbers they own.
+    # RVP is here because the page carries no school-level rows: every table
+    # aggregates to a district, region, reason or month, and the service scopes
+    # to their assigned regions through scoped_school_queryset. A test asserts
+    # no school name reaches an RVP's render, so adding a per-school list later
+    # fails loudly rather than leaking quietly.
+    "closure_impact": {CD, RVP, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
@@ -578,6 +611,22 @@ ANALYTICS_SECTIONS = [
         "description": "Evidence quality and verification throughput.",
     },
     {
+        "key": "closure_quality",
+        "label": "Closure Quality",
+        "url": "/analytics/closure-quality",
+        "page_key": "closure_quality",
+        "cluster": "delivery",
+        "description": "Closure records to distrust: wrong, unconfirmed or late.",
+    },
+    {
+        "key": "closure_impact",
+        "label": "School Closures",
+        "url": "/analytics/school-closures",
+        "page_key": "closure_impact",
+        "cluster": "programme",
+        "description": "Where the country is losing schools, and what it cost the plan.",
+    },
+    {
         "key": "completed_work",
         # Sidebar visibility used to be gated on `completed_archive` ({IA,
         # ADMIN}) while the route gates on `completed_activities` ({CCEO, PL,
@@ -844,7 +893,11 @@ SIDEBAR_ITEMS = [
                 "page_key": "team_targets",
             },
             {
-                "label": "Team Planning",
+                # Team oversight is one surface, not one per subject. Plans,
+                # clusters and flagged schools are three lenses on the same
+                # team, and splitting them into separate pages would make a
+                # supervisor visit three places to answer one question.
+                "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
             },
@@ -852,11 +905,6 @@ SIDEBAR_ITEMS = [
                 "label": "Country Planning",
                 "url": "/country-planning-oversight/",
                 "page_key": "country_planning_oversight",
-            },
-            {
-                "label": "Partner Oversight",
-                "url": "/partner-oversight/",
-                "page_key": "partner_oversight",
             },
             {
                 "label": "My Plan",
@@ -951,6 +999,15 @@ SIDEBAR_ITEMS = [
                 "page_key": "schools",
             },
             {
+                # Its own entry, not a filter on the directory. The rule is
+                # that closed schools do not appear there, and a hidden filter
+                # default is a promise that breaks the first time somebody
+                # clears it or arrives from a saved link.
+                "label": "Closed Schools",
+                "url": "/schools/closed",
+                "page_key": "closed_schools",
+            },
+            {
                 "label": "Core Schools",
                 "url": "/core-schools",
                 "page_key": "core_schools",
@@ -961,9 +1018,20 @@ SIDEBAR_ITEMS = [
                 "page_key": "clusters",
             },
             {
+                # One Partners entry, not a directory beside an oversight page
+                # answering the same question from two places in the sidebar.
+                #
+                # It stays on `/partners` — ALL_ROLES, so nobody loses the link
+                # — and the view redirects whoever may open Partner Oversight.
+                # Pointing the item straight at `/partner-oversight/` would
+                # have offered it to HR, the RVP and the Project Coordinator,
+                # who hold `partners` but not `partner_oversight`, and to the
+                # partner organisations themselves. `extra_active_paths` keeps
+                # the entry highlighted once the redirect has happened.
                 "label": "Partners",
                 "url": "/partners",
                 "page_key": "partners",
+                "extra_active_paths": ["/partner-oversight/"],
             },
             {
                 "label": "Projects",
@@ -1582,6 +1650,17 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     is_active = current_path == url
                 else:
                     is_active = current_path.startswith(url)
+
+                # An item whose view redirects elsewhere still owns the page it
+                # sends you to. "Partners" points at /partners and bounces
+                # staff to /partner-oversight/, and without this the sidebar
+                # would highlight nothing once they arrived — the one entry for
+                # partner work looking unselected on the partner page.
+                if not is_active:
+                    is_active = any(
+                        current_path.startswith(extra)
+                        for extra in item.get("extra_active_paths", ())
+                    )
 
                 visible_items.append(
                     {

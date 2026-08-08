@@ -11,7 +11,9 @@
       <h1 class="edify-page-title edify-page-header__title">Team Planning Oversight</h1>
       <p class="edify-page-header__description">Monitor your own work, supervised CCEO plans and Partner delivery from Planning through execution and closure.</p>
     </div>
-    <form class="edify-page-header__controls"
+  </header>
+
+    <form class="edify-filter-bar" aria-label="Team planning filters"
           hx-get="/team-planning-oversight/"
           hx-target="#oversight-workspace"
           hx-swap="innerHTML"
@@ -56,10 +58,33 @@
       </label>
       {% endif %}
     </form>
-  </header>
 
   <div id="oversight-workspace">
     {% include "partials/oversight/pl_workspace.html" %}
   </div>
+
+  {% comment %}
+  Cluster Oversight — who is carrying which clusters.
+
+  A section here rather than a page of its own: the roles that need it already
+  come to planning oversight, and a second page would split "what is planned"
+  from "who holds the ground it is planned on".
+  {% endcomment %}
+  <section aria-labelledby="cluster-oversight-heading" class="pt-2">
+    <h2 id="cluster-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">Cluster Oversight</h2>
+    {% include "partials/clusters/oversight_workspace.html" with groups=cluster_oversight.groups total_clusters=cluster_oversight.total_clusters total_schools=cluster_oversight.total_schools unassigned=cluster_oversight.unassigned is_team_lens=True %}
+  </section>
+
+  {% comment %}
+  School Oversight — the third lens on the same team, and the reason this page
+  is called Team Oversight rather than Team Planning. Plans say what the team
+  intends; clusters say what ground they hold; this says which of their schools
+  is in trouble. Three pages would have made a supervisor visit three places to
+  answer one question.
+  {% endcomment %}
+  <section aria-labelledby="school-oversight-heading" class="pt-2">
+    <h2 id="school-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">School Oversight</h2>
+    {% include "partials/oversight/flagged_schools.html" %}
+  </section>
 </div>
 {% endblock %}

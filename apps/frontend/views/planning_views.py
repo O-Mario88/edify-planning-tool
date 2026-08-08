@@ -16,9 +16,11 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
+from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
     PARTNER_VISIT_PURPOSES,
     STAFF_VISIT_PURPOSES,
@@ -214,9 +216,7 @@ def special_projects_bulk_partner_view(request):
     if not assignments:
         return HttpResponse("No in-scope project schools were selected.", status=400)
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
     if request.method == "GET":
         catalogue_items, _ = _common_project_recommendations(
             assignments,
@@ -397,9 +397,13 @@ def planning_dashboard_view(request):
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset
 
-    _planning_schools = school_queryset(resolve_user_scope(request.user)).filter(
-        deleted_at__isnull=True
-    )
+    # direct_only, to match the create-time guard. Offering a supervised
+    # CCEO's school in a planning dropdown and then refusing the save is the
+    # drawer-promises-what-the-service-rejects shape; the team's work belongs
+    # on Team Planning Oversight, read-only.
+    _planning_schools = school_queryset(
+        resolve_user_scope(request.user), direct_only=True
+    ).filter(deleted_at__isnull=True)
 
     districts = (
         District.objects.filter(id__in=_planning_schools.values("district_id"))
@@ -430,9 +434,7 @@ def planning_dashboard_view(request):
         .select_related("user")
         .order_by("user__name")
     )
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
 
     # Pagination pages list
     total_pages = data["total_pages"]
@@ -565,9 +567,7 @@ def schedule_modal_view(request):
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
         action = request.GET.get("action", "training")
-        partners = Partner.objects.filter(
-            deleted_at__isnull=True, active_status=True
-        ).order_by("name")
+        partners = assignable_partners()
         from apps.clusters.services import active_school_count
 
         context = {
@@ -641,9 +641,7 @@ def schedule_modal_view(request):
             if len(recommendations) == 3:
                 break
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
 
     school_activity_types = {
         ActivityType.SCHOOL_VISIT,
@@ -923,9 +921,7 @@ def assign_partner_modal_view(request):
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
 
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    partners = assignable_partners()
     project_id = request.GET.get("project_id", "")
     partner_catalogue_recommendations = None
     if school:
@@ -975,8 +971,43 @@ def assign_partner_modal_view(request):
         # belongs to somebody, so asking again invites a different answer from
         # the assignment record and two versions of who is accountable.
         "monitoring_staff_name": resolve_monitoring_staff(school, request.user)[1],
+        # What happened to this school's partner work before. Shown because
+        # the person choosing a partner is the one who most needs to know the
+        # last one was withdrawn for capacity — and because handing the same
+        # school back to the partner it was just taken from is a mistake worth
+        # catching before it is made rather than after.
+        "prior_withdrawals": _prior_withdrawals(school),
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
+
+
+def _prior_withdrawals(school):
+    """This school's withdrawal history, newest first.
+
+    Attribution travels with each one, so a partner withdrawn because the
+    school was closed does not read here as a partner who failed.
+    """
+    if school is None:
+        return []
+    from apps.partners.withdrawal_models import (
+        PartnerAssignmentWithdrawal,
+        WithdrawalState,
+    )
+
+    return [
+        {
+            "partner": getattr(w.partner, "name", ""),
+            "kind": w.get_kind_display(),
+            "reason": w.get_reason_category_display(),
+            "attribution": w.get_attribution_display(),
+            "counts_against_partner": w.counts_against_partner,
+            "when": w.effective_at or w.requested_at,
+        }
+        for w in PartnerAssignmentWithdrawal.objects.filter(school=school)
+        .exclude(state__in=(WithdrawalState.REJECTED, WithdrawalState.CANCELLED))
+        .select_related("partner")
+        .order_by("-requested_at")[:5]
+    ]
 
 
 def resolve_monitoring_staff(school, actor):
@@ -1574,21 +1605,25 @@ def schedule_activity_form_view(request):
     school_id = request.GET.get("school", "")
     cluster_id = request.GET.get("cluster", "")
 
-    # Populate lookups
-    schools = School.objects.filter(deleted_at__isnull=True).order_by("name")
-    clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-    partners = Partner.objects.filter(
-        deleted_at__isnull=True, active_status=True
-    ).order_by("name")
+    from apps.core.scoping import cluster_queryset, resolve_user_scope
+
+    # Populate lookups. Schools were scoped here and clusters were not — the
+    # picker offered every cluster in the country beside a correctly narrowed
+    # school list, so the two dropdowns on one form disagreed about whose work
+    # this is.
+    scope = resolve_user_scope(request.user)
+    schools = active_schools().order_by("name")
+    clusters = cluster_queryset(scope).order_by("name")
+    partners = assignable_partners()
 
     selected_school = (
         School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
         if school_id
         else None
     )
-    selected_cluster = (
-        Cluster.objects.filter(id=cluster_id).first() if cluster_id else None
-    )
+    # Read back through the same scope: a cluster id arriving in the query
+    # string must not preselect what the dropdown would not have listed.
+    selected_cluster = clusters.filter(id=cluster_id).first() if cluster_id else None
 
     # Resolve focus recommendations if school chosen
     recommendations = []

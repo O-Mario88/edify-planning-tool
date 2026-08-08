@@ -107,12 +107,12 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
               </td>
               <td class="px-4 py-2.5">
                 {% if item.is_awaiting_partner_schedule %}
-                <span class="pill pill-warning">Partner yet to schedule</span>
+                <span class="pill pill-warn">Partner yet to schedule</span>
                 {% else %}
                 <span class="pill">{{ item.activity_status|replace_underscore|title }}</span>
                 {% endif %}
                 {% for risk in item.risks %}
-                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}"
+                <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}"
                       title="{{ risk.reason }}">{{ risk.recommended_action }}</span>
                 {% endfor %}
                 {% if item.next_action_owner_name %}
@@ -160,12 +160,12 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
           </p>
           <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
             {% if item.is_awaiting_partner_schedule %}
-            <span class="pill pill-warning">Partner yet to schedule</span>
+            <span class="pill pill-warn">Partner yet to schedule</span>
             {% else %}
             <span class="pill">{{ item.activity_status|replace_underscore|title }}</span>
             {% endif %}
             {% for risk in item.risks %}
-            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warning{% endif %}">{{ risk.recommended_action }}</span>
+            <span class="pill {% if risk.severity == 'critical' %}pill-danger{% else %}pill-warn{% endif %}">{{ risk.recommended_action }}</span>
             {% endfor %}
           </div>
           {% if item.next_action_owner_name %}

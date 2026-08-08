@@ -723,6 +723,7 @@ class Command(BaseCommand):
         from apps.activities.models import Activity, ActivityScheduleCostLine
         from apps.budget.costing_service import apply_to_activity
         from apps.clusters.models import Cluster
+        from apps.core.enums import ClusterRecordStatus
         from datetime import datetime, timezone
 
         schools = list(School.objects.all())
@@ -735,7 +736,14 @@ class Command(BaseCommand):
                 defaults={
                     "district": dist,
                     "region": dist.region,
-                    "status": "clustered",
+                    # "clustered" is a ClusterStatus — a *school's* clustering
+                    # state — and was never a valid ClusterRecordStatus. Django
+                    # does not enforce choices at the database level, so all 15
+                    # seeded clusters saved happily and then matched no filter:
+                    # every cluster surface selects active/needs_review, so the
+                    # seed produced a country with 16 clusters of which one was
+                    # visible.
+                    "status": ClusterRecordStatus.ACTIVE,
                 },
             )
             clusters.append(cluster)

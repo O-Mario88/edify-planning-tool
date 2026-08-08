@@ -16,7 +16,13 @@ from django.views.decorators.http import require_POST
 
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
-from apps.core.permissions import require_any_page_permission, require_page_permission
+from apps.core.permissions import (
+    require_any_page_permission,
+    require_export_permission,
+    require_page_permission,
+)
+from apps.clusters.oversight_service import grouped_clusters
+from apps.planning.flagged_schools import team_flagged_schools
 from apps.planning import oversight_actions
 from apps.planning import oversight_service as oversight
 from apps.planning.action_service import ActionError
@@ -28,6 +34,38 @@ from apps.planning.action_service import ActionError
 TEAM_OVERSIGHT_PATH = "/team-planning-oversight/"
 COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
+
+
+def may_delegate(user, *, country: bool) -> bool:
+    """Whether this person may send a corrective action from these pages.
+
+    Delegation follows the reporting line: a Programme Lead asks their CCEOs,
+    a Country Director asks their Programme Leads. Reading the page is a
+    different thing from being able to hand somebody work off it.
+
+    Impact Assessment and the Accountant sit at the *end* of the chain, not
+    above it: IA verifies completed work and the Accountant confirms it and
+    releases payment or chases the accountability. Neither supervises anybody,
+    so neither hands work out. The RVP reads the country picture.
+
+    This became load-bearing when Cluster Oversight was added as a section
+    here and those three were given the pages to reach it.
+    `send_risk_to_owner` constrains delegation with `within_staff_ids`, and the
+    view passes `scope.supervised_ids or None` — where None means *no
+    constraint*. Roles that supervise nobody would therefore have been able to
+    delegate to anyone, which is a wider authority than the page was widened
+    for. `ACTIVITY_ASSIGN` cannot express this: the Country Director does not
+    hold it and must still be able to send.
+    """
+    from apps.core.rbac import EdifyRole
+
+    role = getattr(user, "active_role", "") or ""
+    allowed = (
+        {EdifyRole.COUNTRY_DIRECTOR.value}
+        if country
+        else {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
+    )
+    return role in allowed | {EdifyRole.ADMIN.value}
 
 
 def _kpi_items(summary, *, country: bool) -> list[dict]:
@@ -196,6 +234,17 @@ def team_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
+        # IA and the Accountant read this page for Cluster Oversight below.
+        # The send controls are theirs to see refused, so they are not drawn:
+        # a control that answers "not you" is worse than no control.
+        "may_delegate": may_delegate(request.user, country=False),
+        "cluster_oversight": grouped_clusters(request.user),
+        # §12's Team School Oversight, as a section rather than a page: plans,
+        # clusters and flagged schools are three lenses on one team, and a
+        # supervisor should not visit three pages to answer one question.
+        "flagged_schools": team_flagged_schools(
+            request.user, fy=period["fy"], month=period.get("month")
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -252,6 +301,10 @@ def country_planning_oversight_view(request):
         "advanced": advanced,
         "filter_options": _filter_options(items),
         "fy_options": fy_options(),
+        # The RVP reads this page for Cluster Oversight below and does not
+        # delegate from it.
+        "may_delegate": may_delegate(request.user, country=True),
+        "cluster_oversight": grouped_clusters(request.user),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -268,6 +321,15 @@ def country_planning_send_action_view(request):
     Director cannot raise a backlog that is not there.
     """
     from apps.accounts.models import StaffProfile
+
+    if not may_delegate(request.user, country=True):
+        return _action_response(
+            request,
+            "Delegating work here belongs to the Country Director. You can "
+            "read this page but not send from it.",
+            ok=False,
+            fallback=COUNTRY_OVERSIGHT_PATH,
+        )
 
     issue_key = (request.POST.get("issue") or "").strip()
     program_lead_id = (request.POST.get("program_lead") or "").strip()
@@ -401,6 +463,7 @@ def _export_response(items, filename: str):
 
 
 @require_page_permission("team_planning_oversight")
+@require_export_permission
 def team_planning_export_view(request):
     """The Program Lead's current view, as CSV. Same scope, same filters."""
     period = _period_filters(request)
@@ -418,6 +481,7 @@ def team_planning_export_view(request):
 
 
 @require_page_permission("country_planning_oversight")
+@require_export_permission
 def country_planning_export_view(request):
     """The country plan, as CSV, honouring the current filters."""
     period = _period_filters(request)
@@ -458,7 +522,17 @@ def oversight_detail_view(request):
     return render(
         request,
         "partials/oversight/detail_drawer.html",
-        {"item": item, "lineage": _lineage_for(item), "can_send": not scope.is_country},
+        {
+            "item": item,
+            "lineage": _lineage_for(item),
+            # `not scope.is_country` was enough while only the Programme Lead
+            # reached this drawer. IA and the Accountant now do, for Cluster
+            # Oversight, and they are not country-scoped in the sense that
+            # check meant — so the send button would have drawn for them and
+            # the endpoint refused it.
+            "can_send": not scope.is_country
+            and may_delegate(request.user, country=False),
+        },
     )
 
 
@@ -514,6 +588,14 @@ def team_planning_send_action_view(request):
     Program Lead cannot send an action about a record outside their team by
     editing the form.
     """
+    if not may_delegate(request.user, country=False):
+        return _action_response(
+            request,
+            "Delegating work here belongs to the Programme Lead who supervises "
+            "the team. You can read this page but not send from it.",
+            ok=False,
+        )
+
     risk_key = (request.POST.get("risk") or "").strip()
     activity_id = (request.POST.get("activity_id") or "").strip() or None
     assignment_id = (request.POST.get("assignment_id") or "").strip() or None
@@ -666,6 +748,10 @@ def partner_oversight_view(request):
         "summary": summary,
         "kpis": _partner_kpis(summary),
         "groups": partner_oversight.group_by_partner(items),
+        # Requests a CCEO raised that this Program Lead has to answer. Kept
+        # above the partner groups because a decision somebody is waiting on
+        # outranks routine monitoring.
+        "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
         "partners": sorted(
             {(i.partner_id, i.partner_name) for i in all_items if i.partner_id},
             key=lambda pair: pair[1],
@@ -882,6 +968,7 @@ def partner_oversight_send_action_view(request):
 
 
 @require_page_permission("partner_oversight")
+@require_export_permission
 def partner_oversight_export_view(request):
     """The current partner view, as CSV. Same scope, same period, same rows."""
     import csv
@@ -911,3 +998,145 @@ def partner_oversight_export_view(request):
         f'attachment; filename="partner-oversight-{period["fy"]}.csv"'
     )
     return response
+
+
+# ── Taking work back from a partner ──────────────────────────────────────────
+@require_page_permission("partner_oversight")
+def partner_withdrawal_preview_view(request):
+    """What confirming would actually do, computed on the server.
+
+    A preview built in the browser could disagree with what the service then
+    does; this asks the same functions the service asks, so the number shown
+    is the number that will move.
+    """
+    from apps.partners import withdrawal_service
+
+    item = _partner_item_in_scope(
+        request.user, (request.GET.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return render(
+            request,
+            "partials/oversight/withdrawal_drawer.html",
+            {"preview": None},
+            status=404,
+        )
+
+    from apps.partners.withdrawal_models import WithdrawalDisposition, WithdrawalReason
+
+    preview = withdrawal_service.preview(request.user, item.partner_assignment_id)
+    return render(
+        request,
+        "partials/oversight/withdrawal_drawer.html",
+        {
+            "preview": preview,
+            "item": item,
+            "reasons": WithdrawalReason.choices,
+            "dispositions": WithdrawalDisposition.choices,
+            "partners": _eligible_replacements(item),
+            # A CCEO looking at work a partner has already scheduled gets the
+            # request form, not the withdraw form. Decided here from the same
+            # rule the service enforces, so the page cannot offer a control
+            # the service will refuse.
+            "must_request": _must_request(request.user, item, preview),
+        },
+    )
+
+
+def _eligible_replacements(item) -> list[dict]:
+    """Active partners other than the one the work is being taken from."""
+    from apps.partners.models import Partner
+
+    return [
+        {"id": p.id, "name": p.name}
+        for p in Partner.objects.filter(active_status=True, deleted_at__isnull=True)
+        .exclude(id=item.partner_id)
+        .order_by("name")[:100]
+    ]
+
+
+def _must_request(user, item, preview) -> bool:
+    """True when this reader may only ask, not decide."""
+    from apps.core.rbac import EdifyRole
+    from apps.partners.withdrawal_models import WithdrawalKind
+
+    role = getattr(user, "active_role", "") or ""
+    return (
+        role == EdifyRole.CCEO.value
+        and preview["kind"] != WithdrawalKind.WITHDRAW_UNSCHEDULED
+    )
+
+
+@require_page_permission("partner_oversight")
+@require_POST
+def partner_withdrawal_submit_view(request):
+    """Withdraw, or request withdrawal — the service decides which is allowed."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners import withdrawal_service
+
+    item = _partner_item_in_scope(
+        request.user, (request.POST.get("assignment_id") or "").strip()
+    )
+    if item is None:
+        return _action_response(
+            request,
+            "That assignment is not in your team.",
+            ok=False,
+            fallback=PARTNER_OVERSIGHT_PATH,
+        )
+
+    data = {
+        "reason_category": request.POST.get("reason_category"),
+        "partner_facing_reason": request.POST.get("partner_facing_reason"),
+        "internal_note": request.POST.get("internal_note"),
+        "disposition": request.POST.get("disposition"),
+        "replacement_partner_id": request.POST.get("replacement_partner_id"),
+    }
+    requesting = (request.POST.get("intent") or "") == "request"
+
+    try:
+        if requesting:
+            withdrawal_service.request_withdrawal(
+                item.partner_assignment_id, data, request.user
+            )
+            message = "Sent to your Program Lead for a decision."
+        else:
+            result = withdrawal_service.withdraw(
+                item.partner_assignment_id, data, request.user
+            )
+            message = f"{result.get_kind_display()} — {result.get_state_display()}."
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _action_response(
+            request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+        )
+
+    return _action_response(request, message, fallback=PARTNER_OVERSIGHT_PATH)
+
+
+@require_page_permission("partner_oversight")
+@require_POST
+def partner_withdrawal_review_view(request):
+    """The supervising Program Lead answers a CCEO's request."""
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
+    from apps.partners import withdrawal_service
+
+    try:
+        result = withdrawal_service.review_request(
+            (request.POST.get("withdrawal_id") or "").strip(),
+            {
+                "decision": request.POST.get("decision"),
+                "note": request.POST.get("note"),
+                "replacement_partner_id": request.POST.get("replacement_partner_id"),
+            },
+            request.user,
+        )
+    except (BadRequest, ConflictError, Forbidden, NotFoundError) as exc:
+        return _action_response(
+            request, str(exc), ok=False, fallback=PARTNER_OVERSIGHT_PATH
+        )
+
+    return _action_response(
+        request,
+        f"Request {result.get_state_display().lower()}.",
+        fallback=PARTNER_OVERSIGHT_PATH,
+    )

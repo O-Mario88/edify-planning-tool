@@ -33,6 +33,14 @@ def report() -> dict:
         _partner_activities_no_assignment_claims(),
         _partners_holding_work_with_no_login_account(),
         _role_queues_with_no_active_holder(),
+        # Withdrawal touches an assignment, an activity, a budget and an
+        # entitlement at once; these are the ways that combination comes apart
+        # without anything visibly breaking.
+        _withdrawn_work_still_executable(),
+        _two_live_assignments_on_one_slot(),
+        _replacement_carrying_inherited_cost(),
+        _locked_withdrawal_without_amendment(),
+        _performance_attributed_to_the_wrong_party(),
     ]
     issues = sum(check["count"] for check in checks)
     return {
@@ -574,4 +582,244 @@ def _role_queues_with_no_active_holder() -> dict:
         count=len(empty),
         examples=empty,
         route="/admin-panel/users",
+    )
+
+
+# ── Partner withdrawal ───────────────────────────────────────────────────────
+# Withdrawal is the one operation that touches an assignment, an activity, a
+# budget and a school's entitlement at once. Each check below is a way that
+# combination can come apart without anything visibly breaking: the page still
+# renders, the totals still add up, and a school is quietly owed support
+# nobody owns.
+def _withdrawn_work_still_executable() -> dict:
+    """A withdrawn assignment whose activity a partner could still deliver.
+
+    The worst failure of the lot: the partner's My Plan still shows the work,
+    they do it, and there is no longer any assignment saying it was theirs to
+    do — so no evidence route, no verification and no way to pay them for it.
+    """
+    from apps.activities.models import Activity
+    from apps.partners.withdrawal_models import (
+        PartnerAssignmentWithdrawal,
+        WithdrawalKind,
+    )
+
+    live = []
+    settled = (
+        PartnerAssignmentWithdrawal.objects.filter(
+            kind__in=(
+                WithdrawalKind.WITHDRAW_UNSCHEDULED,
+                WithdrawalKind.RECALL_SCHEDULED,
+            )
+        )
+        .exclude(linked_activity__isnull=True)
+        .select_related("linked_activity", "school", "partner")[:500]
+    )
+    for w in settled:
+        activity = w.linked_activity
+        if activity is None or activity.status in ("cancelled", "deferred", "rejected"):
+            continue
+        if not Activity.objects.filter(
+            pk=activity.pk, deleted_at__isnull=True
+        ).exists():
+            continue
+        live.append(
+            {
+                "id": w.id,
+                "school": getattr(w.school, "name", ""),
+                "partner": getattr(w.partner, "name", ""),
+                "actual": (
+                    f"withdrawn {w.requested_at:%-d %b} but activity {activity.id} "
+                    f"is still {activity.status}"
+                ),
+            }
+        )
+
+    return _finding(
+        key="withdrawn_work_still_executable",
+        label="Withdrawn partner work whose activity is still live",
+        severity="error",
+        expected="A withdrawn assignment's activity is cancelled, not left runnable",
+        count=len(live),
+        examples=live[:10],
+        route="/partner-oversight/",
+    )
+
+
+def _two_live_assignments_on_one_slot() -> dict:
+    """Two partners each believing they own the same piece of support.
+
+    Both schedule, both deliver, both bill. The replacement path guards
+    against it at creation; this catches rows that predate the guard or were
+    written by another path.
+    """
+    from collections import defaultdict
+
+    from apps.partners.models import PartnerAssignment
+
+    holders = defaultdict(list)
+    live = PartnerAssignment.objects.exclude(
+        status=PartnerAssignment.STATUS_RETURNED_TO_STAFF
+    ).values(
+        "id",
+        "school_id",
+        "school__name",
+        "support_type",
+        "visit_number",
+        "training_number",
+        "partner__name",
+    )[:5000]
+    for row in live:
+        if not row["school_id"]:
+            continue
+        slot = (
+            row["school_id"],
+            row["support_type"] or "",
+            row["visit_number"] or "",
+            row["training_number"] or "",
+        )
+        holders[slot].append(row)
+
+    clashes = [rows for rows in holders.values() if len(rows) > 1]
+    return _finding(
+        key="duplicate_support_slot_holders",
+        label="Support slots held by more than one live assignment",
+        severity="error",
+        expected="At most one live assignment holds a school's support slot",
+        count=len(clashes),
+        examples=[
+            {
+                "id": rows[0]["id"],
+                "school": rows[0]["school__name"],
+                "actual": (
+                    f"{len(rows)} live assignments on "
+                    f"{rows[0]['support_type'] or 'support'}: "
+                    + ", ".join(r["partner__name"] or "?" for r in rows)
+                ),
+            }
+            for rows in clashes[:10]
+        ],
+        route="/partner-oversight/",
+    )
+
+
+def _replacement_carrying_inherited_cost() -> dict:
+    """A replacement assignment that acquired a cost before anyone scheduled it.
+
+    The price depends on which partner does the work and when, so a
+    replacement holding cost before its partner has picked a date means the
+    old partner's number was copied forward — a figure nobody quoted, sitting
+    in a live budget.
+    """
+    from django.db.models import Sum
+
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.partners.models import PartnerAssignment
+
+    offenders = []
+    replacements = PartnerAssignment.objects.filter(
+        replaces_assignment__isnull=False,
+        status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
+        scheduled_activity__isnull=False,
+    ).select_related("school", "partner")[:200]
+    for r in replacements:
+        total = (
+            ActivityScheduleCostLine.objects.filter(
+                activity_id=r.scheduled_activity_id
+            ).aggregate(t=Sum("amount"))["t"]
+            or 0
+        )
+        if total:
+            offenders.append(
+                {
+                    "id": r.id,
+                    "school": getattr(r.school, "name", ""),
+                    "partner": getattr(r.partner, "name", ""),
+                    "actual": f"unscheduled replacement already carrying UGX {total:,}",
+                }
+            )
+
+    return _finding(
+        key="replacement_inherited_cost",
+        label="Replacement assignments carrying cost before scheduling",
+        severity="error",
+        expected="A replacement has no cost until its own partner schedules it",
+        count=len(offenders),
+        examples=offenders,
+        route="/partner-oversight/",
+    )
+
+
+def _locked_withdrawal_without_amendment() -> dict:
+    """Money had moved, the work stopped, and no formal adjustment was made.
+
+    The amount stays approved and the work will never happen, so a budget
+    reports committed spend against something cancelled. This is the case the
+    withdrawal service deliberately does NOT resolve silently.
+    """
+    from apps.partners.withdrawal_models import PartnerAssignmentWithdrawal
+
+    rows = (
+        PartnerAssignmentWithdrawal.objects.filter(
+            financial_state_at_withdrawal="locked", budget_amendment__isnull=True
+        )
+        .exclude(state__in=("rejected", "cancelled"))
+        .select_related("school", "partner")
+    )
+
+    return _finding(
+        key="locked_withdrawal_without_amendment",
+        label="Locked withdrawals with no budget amendment",
+        severity="error",
+        expected="A withdrawal against committed money creates a formal amendment",
+        count=rows.count(),
+        examples=[
+            {
+                "id": w.id,
+                "school": getattr(w.school, "name", ""),
+                "partner": getattr(w.partner, "name", ""),
+                "actual": f"UGX {w.original_planned_cost:,} committed, no amendment",
+            }
+            for w in rows[:10]
+        ],
+        route="/budget/amendments",
+    )
+
+
+def _performance_attributed_to_the_wrong_party() -> dict:
+    """A partner carrying a mark for something that was not their doing.
+
+    Attribution is set from the reason in code rather than chosen, so a
+    mismatch means a row was written by a path that bypassed the service.
+    Reported because an unfair performance record is not self-correcting —
+    nobody reviews a number that looks plausible.
+    """
+    from apps.partners.withdrawal_models import (
+        REASON_ATTRIBUTION,
+        PartnerAssignmentWithdrawal,
+    )
+
+    wrong = []
+    for w in PartnerAssignmentWithdrawal.objects.select_related("partner")[:1000]:
+        expected = REASON_ATTRIBUTION.get(w.reason_category)
+        if expected and w.attribution != expected:
+            wrong.append(
+                {
+                    "id": w.id,
+                    "partner": getattr(w.partner, "name", ""),
+                    "actual": (
+                        f"{w.get_reason_category_display()} recorded as "
+                        f"{w.attribution}, should be {expected}"
+                    ),
+                }
+            )
+
+    return _finding(
+        key="withdrawal_attribution_mismatch",
+        label="Withdrawals attributed against the reason's own mapping",
+        severity="warning",
+        expected="Attribution follows the reason, so nobody is marked down by hand",
+        count=len(wrong),
+        examples=wrong[:10],
+        route="/partner-oversight/",
     )

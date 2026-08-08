@@ -16,7 +16,11 @@ from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import (
+    cluster_queryset,
+    resolve_user_scope,
+    school_queryset,
+)
 from apps.core.enums import SsaIntervention
 
 from apps.clusters.services import (
@@ -385,11 +389,7 @@ def cluster_schedule_activity_view(request):
             messages.error(request, f"Failed to schedule activity: {e}")
             if request.headers.get("HX-Request") == "true":
                 scope = resolve_user_scope(request.user)
-                clusters = Cluster.objects.filter(
-                    deleted_at__isnull=True, status="active"
-                )
-                if not scope.country_scope and scope.district_ids:
-                    clusters = clusters.filter(district_id__in=scope.district_ids)
+                clusters = cluster_queryset(scope).filter(status="active")
 
                 selected_cluster = clusters.filter(id=cluster_id).first()
                 rec = None
@@ -454,6 +454,27 @@ def cluster_impact_partial(request, cluster_id):
     return render(request, "partials/clusters/impact_panel.html", context)
 
 
+def _default_cluster_owner(user):
+    """Who owns a cluster when the creator did not name anybody.
+
+    A field role gets themselves: a cluster is scoped to whoever is responsible
+    for it, so a CCEO who created one and left the field blank would build a
+    cluster that immediately vanished from their own pickers.
+
+    An oversight role gets nobody. A Country Director creating a cluster is
+    setting it up for a team, and quietly filing it under the CD would hide it
+    from the field and make the CD the responsible party for work they do not
+    do. It stays unowned and visible in `list_ownerless_clusters` until
+    somebody assigns it.
+    """
+    from apps.core.scoping import resolve_user_scope
+
+    scope = resolve_user_scope(user)
+    if scope.country_scope or scope.can_view_summary_only:
+        return None
+    return getattr(user, "user_id", None) or getattr(user, "id", None)
+
+
 @require_page_permission("planning")
 def create_cluster_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
@@ -487,6 +508,22 @@ def create_cluster_view(request):
                 "clusterType": cluster_type,
                 "clusterLeaderName": cluster_leader_name or None,
                 "clusterLeaderPhone": cluster_leader_phone or None,
+                # Neither this view nor the create form carried the cluster's
+                # owner, so every cluster was created ownerless and
+                # `responsible_staff_id` was null on every row in the table.
+                # `create_cluster` has always accepted it — only the edit
+                # drawer ever sent it, so an owner could be added afterwards
+                # but never chosen at the point the cluster was made.
+                #
+                # Falling back to the creator matters now that a cluster is
+                # scoped to whoever is responsible for it: a CCEO who made one
+                # and left the field alone would otherwise build a cluster they
+                # could not then see. An oversight role creating on somebody
+                # else's behalf picks the owner explicitly.
+                "responsibleStaffId": (
+                    request.POST.get("responsible_staff_id", "").strip()
+                    or _default_cluster_owner(request.user)
+                ),
             }
             try:
                 cluster_data = create_cluster_service(payload, request.user)
@@ -602,6 +639,10 @@ def create_cluster_drawer_view(request):
         "districts": districts,
         "sub_counties_json": json.dumps(sub_counties_list),
         "selected_district_id": selected_district_id,
+        # The create form reads responsible_staff_id on POST but never offered
+        # it, so every cluster was created ownerless. Seeded for the district
+        # the drawer opens on; the district select refills it from there.
+        "staff": get_eligible_staff(selected_district_id),
         "drawer_size": "xl",
         "drawer_type": "center",
         "assign_school_id": request.GET.get("assign_school_id", "").strip(),
@@ -615,10 +656,11 @@ def planner_drawer_view(request):
     activity_type = request.GET.get("activity_type", "training").strip()
     fixed_cluster = request.GET.get("fixed_cluster", "false").strip().lower() == "true"
 
+    # Was: skip the filter when `scope.district_ids` is empty — which handed
+    # every cluster in the country to the one user who has no geography at all.
+    # `cluster_queryset` fails closed instead, agreeing with `cluster_in_scope`.
     scope = resolve_user_scope(request.user)
-    clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-    if not scope.country_scope and scope.district_ids:
-        clusters = clusters.filter(district_id__in=scope.district_ids)
+    clusters = cluster_queryset(scope).filter(status="active")
 
     selected_cluster = None
     if cluster_id:

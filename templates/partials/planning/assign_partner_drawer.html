@@ -85,6 +85,34 @@ recommendationReason: '{% if primary_catalogue_items %}{{ primary_catalogue_item
 </div>
 {% endif %}
 
+{% comment %}
+This school's partner history, when it has one. Shown to the person choosing
+the next partner because they are the one who most needs to know the last was
+withdrawn for capacity — and because handing a school straight back to the
+partner it was just taken from is a mistake worth catching before it is made.
+
+Attribution travels with each line, so a partner withdrawn because the school
+was closed does not read here as a partner who failed.
+{% endcomment %}
+{% if prior_withdrawals %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3">
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-amber-800">
+    Partner work previously withdrawn here
+  </p>
+  <ul class="mt-1.5 space-y-1">
+    {% for w in prior_withdrawals %}
+    <li class="text-[12px] text-amber-900">
+      <span class="font-semibold">{{ w.partner }}</span> — {{ w.kind }}: {{ w.reason }}
+      {% if not w.counts_against_partner %}
+      <span class="edify-text-caption">({{ w.attribution }}, not the partner's doing)</span>
+      {% endif %}
+      {% if w.when %}<span class="edify-text-caption">· {{ w.when|date:"j M Y" }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 <div>
 <label for="partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner</label>
 <select name="partner_id" id="partner_id" required

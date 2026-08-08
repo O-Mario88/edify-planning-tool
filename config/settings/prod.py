@@ -172,14 +172,12 @@ def _platform_hostname(value: str | None) -> str:
 
 
 # App Platform's APP_DOMAIN bindable value is assigned to
-# DIGITALOCEAN_APP_DOMAIN in the service configuration. Railway support
-# remains for existing deployments, while explicit ALLOWED_HOSTS is accepted
-# for custom domains on either platform.
+# DIGITALOCEAN_APP_DOMAIN in the service configuration; explicit ALLOWED_HOSTS
+# is accepted for custom domains.
 _platform_domains = {
     _platform_hostname(
         os.environ.get("DIGITALOCEAN_APP_DOMAIN") or os.environ.get("APP_DOMAIN")
     ),
-    _platform_hostname(os.environ.get("RAILWAY_PUBLIC_DOMAIN")),
 }
 for _platform_domain in sorted(_platform_domains - {""}):
     if _platform_domain not in ALLOWED_HOSTS:
@@ -192,7 +190,7 @@ for _platform_domain in sorted(_platform_domains - {""}):
 if not ALLOWED_HOSTS:
     _issues.append(
         "ALLOWED_HOSTS must be set to explicit hosts in production "
-        "(or DIGITALOCEAN_APP_DOMAIN/RAILWAY_PUBLIC_DOMAIN must be present)."
+        "(or DIGITALOCEAN_APP_DOMAIN must be present)."
     )
     sys.stderr.write(
         "Production environment is not safe:\n" + "\n".join(_issues) + "\n"

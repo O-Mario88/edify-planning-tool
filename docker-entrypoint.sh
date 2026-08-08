@@ -4,7 +4,7 @@
 set -e
 
 # Migrating on container start is right for single-instance deployments
-# (docker-compose, Railway) where nothing else will do it. It is wrong on a
+# (docker-compose) where nothing else will do it. It is wrong on a
 # platform that can start several replicas at once: they would each run
 # `migrate` against the same database simultaneously.
 #

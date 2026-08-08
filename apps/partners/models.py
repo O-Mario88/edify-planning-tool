@@ -229,6 +229,55 @@ class PartnerAssignment(TimeStampedModel):
     training_number = models.CharField(max_length=16, null=True, blank=True)
     support_type = models.CharField(max_length=32, null=True, blank=True)
 
+    # ── Reassignment lineage ─────────────────────────────────────────────────
+    # When work is taken back from one partner and given to another, the old
+    # assignment is NOT edited to name the new partner. It stays exactly as it
+    # was — that is the history of what the first partner was asked to do — and
+    # a new assignment is created pointing back at it.
+    #
+    # Two consequences worth stating, because both are the reason for doing it
+    # this way rather than in place:
+    #
+    #   * the school does not acquire a second entitlement. The replacement
+    #     carries the same slot identifiers (school, support_type, visit or
+    #     training number, project) and the withdrawn one no longer counts, so
+    #     exactly one assignment holds the slot at any moment.
+    #   * the replacement starts with no activity and no cost. The price
+    #     depends on who schedules it and when, so it cannot be known until the
+    #     new partner picks a date.
+    replaces_assignment = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="replaced_by",
+    )
+    # 0 for an assignment nobody has replaced, 1 for the first replacement, and
+    # so on. Denormalised so "this school has been through three partners" is
+    # answerable without walking the chain.
+    reassignment_sequence = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        """Refuse a NEW assignment to a partner who is on hold.
+
+        At the model rather than at each call site: there are seven places
+        that create assignments — planning, clusters, core schools, projects,
+        bulk actions — and a guard in six of them is a guard in none. A hidden
+        dropdown option is not a rule either; the direct URL and the API reach
+        this too.
+
+        Insert only. An existing assignment continues untouched, which is the
+        entire distinction between holding a partner and withdrawing their
+        work.
+        """
+        if self._state.adding and self.partner_id:
+            from apps.partners.withdrawal_service import (
+                assert_partner_accepts_new_work,
+            )
+
+            assert_partner_accepts_new_work(self.partner_id)
+        return super().save(*args, **kwargs)
+
     class Meta:
         db_table = "partner_assignment"
         ordering = ["-created_at"]
@@ -264,3 +313,22 @@ class PartnerActivityAllowance(TimeStampedModel):
 
 
 __all__ = ["Partner", "PartnerAssignment", "PartnerActivityAllowance"]
+
+
+# The withdrawal record and its vocabularies live in their own module — the
+# lifecycle of taking work back is a subject of its own, and inlining ~300
+# lines of it here would bury the assignment model it hangs off. Imported so
+# Django's app registry sees it.
+from apps.partners.withdrawal_models import (  # noqa: E402,F401
+    OPEN_WITHDRAWAL_STATES,
+    REASON_ATTRIBUTION,
+    RESTRICTED_PARTNER_MESSAGE,
+    RESTRICTED_REASONS,
+    PartnerAssignmentWithdrawal,
+    PartnerHold,
+    WithdrawalAttribution,
+    WithdrawalDisposition,
+    WithdrawalKind,
+    WithdrawalReason,
+    WithdrawalState,
+)

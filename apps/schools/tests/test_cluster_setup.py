@@ -504,14 +504,30 @@ class ClusterSetupTest(APITestCase):
             ).exists()
         )
 
-        sync_school_cluster_assignment(school, self.cluster2, self.user.user_id)
+        # The move has to be one the membership rules actually permit, or this
+        # test proves row hygiene on a transition that can no longer happen:
+        # a school joins a cluster covering its OWN sub-county, so the second
+        # cluster here covers sub_county1 too rather than reusing cluster2.
+        peer_cluster = Cluster.objects.create(
+            name="Ntunga Peer Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county1,
+            cluster_type="mixed",
+            status="active",
+        )
+        ClusterSubCounty.objects.create(
+            cluster=peer_cluster, sub_county=self.sub_county1
+        )
+
+        sync_school_cluster_assignment(school, peer_cluster, self.user.user_id)
 
         rows = list(SchoolClusterAssignment.objects.filter(school=school))
         self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0].cluster_id, self.cluster2.id)
+        self.assertEqual(rows[0].cluster_id, peer_cluster.id)
 
         # Idempotent: calling again with the same cluster doesn't duplicate.
-        sync_school_cluster_assignment(school, self.cluster2, self.user.user_id)
+        sync_school_cluster_assignment(school, peer_cluster, self.user.user_id)
         self.assertEqual(
             SchoolClusterAssignment.objects.filter(school=school).count(), 1
         )
