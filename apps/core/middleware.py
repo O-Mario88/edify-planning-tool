@@ -444,7 +444,7 @@ class ContentSecurityPolicyMiddleware:
     # Every external origin the application actually loads, and nothing else.
     #
     # That list is now one entry: the OpenStreetMap tiles, which are data
-    # fetched per map view and cannot be vendored. Everything else — Geist,
+    # fetched per map view and cannot be vendored. Everything else — Inter,
     # htmx, Alpine, ApexCharts, FullCalendar, Leaflet — is served from this
     # origin, so unpkg, jsdelivr and the two Google Fonts hosts have been
     # removed rather than left as standing permission for requests nothing

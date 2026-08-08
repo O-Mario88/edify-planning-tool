@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 {% if selected %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden"
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm h-full flex flex-col overflow-hidden" data-messages-plane
      x-data>
 
   <!-- Thread header -->
@@ -79,7 +79,7 @@
   <!-- Message timeline -->
   <div class="p-5 space-y-1 flex-1 min-h-0 overflow-y-auto" id="message-timeline">
     {% for m in selected.messages %}
-    <div class="rounded-surface border {% if m.is_system %}border-slate-200 bg-slate-50/60{% else %}border-slate-100 edify-surface{% endif %} p-4">
+    <div class="rounded-surface border {% if m.is_system %}border-slate-200 bg-slate-50/60{% else %}border-slate-100 edify-surface{% endif %} p-4" data-messages-tile>
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
           <div class="h-9 w-9 rounded-pill {% if m.is_system %}bg-slate-800 text-white{% else %}bg-[var(--edify-primary)]/10 text-[var(--edify-primary)]{% endif %} flex items-center justify-center edify-text-caption font-bold shrink-0">
@@ -236,7 +236,7 @@
 {% endif %}
 
 {% else %}
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm h-full flex items-center justify-center">
+<div class="edify-surface rounded-surface border border-slate-100 shadow-sm h-full flex items-center justify-center" data-messages-plane>
   {% include "components/empty_state.html" with title="Select a conversation" message="Pick a thread from the list, or start a new context-linked message." cta_label="New Message" cta_href="/messages/new/" %}
 </div>
 {% endif %}

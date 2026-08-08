@@ -9,7 +9,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* The typeface itself is declared once, in css/fonts.css, which every entry
-   point loads before this file. Tokens here are measured against Geist's
+   point loads before this file. Tokens here are measured against Inter's
    metrics and assume it is present. */
 
 :root {
@@ -205,13 +205,14 @@
      opacity on the header would fade the title and the controls with it,
      and the whole point is a quiet surface carrying legible content. */
   --page-header-surface: color-mix(in oklab, #ffffff 46%, var(--edify-bg));
-  --page-header-border: color-mix(in oklab, var(--brand-primary) 12%, transparent);
-  --page-header-shadow: 0 8px 24px rgba(20, 55, 75, 0.05);
+  --page-header-border: transparent;
+  --page-header-shadow:
+    0 18px 44px -28px rgba(18, 74, 112, 0.42),
+    0 5px 16px -10px rgba(18, 74, 112, 0.16);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
-     by this value plus its border so its content lines up with the rest of
-     the page, and that bleed must stay inside the gutter. */
-  --page-header-padding-x: 0.75rem;
+  /* One stable content gutter for every header family. The page wrapper owns
+     the surface edge, so this padding never changes its outer alignment. */
+  --page-header-padding-x: 1rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #f2f5f6;
@@ -226,8 +227,13 @@
   /* Shared card contract. Component CSS consumes these through the platform
      layer so a new card cannot accidentally reintroduce a heavy outline. */
   --edify-card-surface: var(--edify-surface-raised);
-  --edify-card-border: color-mix(in oklab, var(--edify-border) 36%, transparent);
-  --edify-card-shadow: var(--edify-shadow-sm);
+  --edify-card-border: transparent;
+  --edify-card-shadow:
+    0 18px 44px -28px rgba(18, 74, 112, 0.42),
+    0 5px 16px -10px rgba(18, 74, 112, 0.16);
+  --edify-card-shadow-hover:
+    0 22px 52px -28px rgba(18, 74, 112, 0.48),
+    0 8px 20px -12px rgba(18, 74, 112, 0.22);
   --edify-card-backdrop-filter: none;
   /* Buttons are deliberately flat in light mode. The reference treatment is
      a confident Edify blue or a quiet blue outline — gradients introduced
@@ -252,7 +258,7 @@
   --border-strong: var(--edify-border-strong);
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
-     Geist Sans — the platform typeface for data-dense premium dashboards.
+     Inter Sans — the platform typeface for data-dense premium dashboards.
      Type uses stable semantic steps instead of viewport/container arithmetic.
      Layout may reflow responsively; a label, table cell or KPI does not change
      size merely because its card or browser happens to be a few pixels wider.
@@ -262,7 +268,7 @@
        body    → default text and long-form copy (15px)
        label   → controls, table cells and secondary copy (14px)
        micro   → short overlines and compact badges only (12px) */
-  --edify-font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
@@ -523,13 +529,14 @@
      opacity on the header would fade the title and the controls with it,
      and the whole point is a quiet surface carrying legible content. */
   --page-header-surface: color-mix(in oklab, #ffffff 7%, var(--edify-bg));
-  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
-  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-border: transparent;
+  --page-header-shadow:
+    0 22px 50px -26px rgba(0, 0, 0, 0.72),
+    0 7px 18px -10px rgba(0, 0, 0, 0.52);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
-     by this value plus its border so its content lines up with the rest of
-     the page, and that bleed must stay inside the gutter. */
-  --page-header-padding-x: 0.75rem;
+  /* One stable content gutter for every header family. The page wrapper owns
+     the surface edge, so this padding never changes its outer alignment. */
+  --page-header-padding-x: 1rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-canvas-treatment:
@@ -546,11 +553,16 @@
   --edify-glass-saturation: 100%;
   --edify-glass-highlight: transparent;
 
-  /* Exact blue filter-control treatment: translucent navy, one thin sky
-     hairline, compact corners supplied by components, and no elevation. */
+  /* Content planes float above the classroom canvas without decorative
+     outlines. Controls and tables continue to use --edify-border. */
   --edify-card-surface: var(--edify-surface);
-  --edify-card-border: var(--edify-border);
-  --edify-card-shadow: none;
+  --edify-card-border: transparent;
+  --edify-card-shadow:
+    0 22px 50px -26px rgba(0, 0, 0, 0.72),
+    0 7px 18px -10px rgba(0, 0, 0, 0.52);
+  --edify-card-shadow-hover:
+    0 26px 58px -26px rgba(0, 0, 0, 0.78),
+    0 10px 24px -10px rgba(0, 0, 0, 0.58);
   --edify-card-backdrop-filter: none;
 
   /* Blue-theme tables need their own surface ladder. Reusing the transparent
@@ -683,13 +695,14 @@ html.theme-blue body {
      opacity on the header would fade the title and the controls with it,
      and the whole point is a quiet surface carrying legible content. */
   --page-header-surface: color-mix(in oklab, #ffffff 9%, var(--edify-bg));
-  --page-header-border: color-mix(in oklab, #ffffff 12%, transparent);
-  --page-header-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --page-header-border: transparent;
+  --page-header-shadow:
+    0 22px 50px -26px rgba(0, 0, 0, 0.72),
+    0 7px 18px -10px rgba(0, 0, 0, 0.52);
   --page-header-radius: var(--edify-radius-surface, 12px);
-  /* Under the smallest page gutter (px-4 = 16px): the header bleeds outward
-     by this value plus its border so its content lines up with the rest of
-     the page, and that bleed must stay inside the gutter. */
-  --page-header-padding-x: 0.75rem;
+  /* One stable content gutter for every header family. The page wrapper owns
+     the surface edge, so this padding never changes its outer alignment. */
+  --page-header-padding-x: 1rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
   --edify-section-bg: #000000;
@@ -714,11 +727,16 @@ html.theme-blue body {
   --edify-button-secondary-treatment: none;
   --edify-glass-highlight: rgba(255, 255, 255, 0.055);
 
-  /* This is the exact filter-control treatment: near-black surface, one quiet
-     hairline, no gradient, blur, glow or elevation. */
+  /* Near-black content planes rely on elevation, while fields and tables
+     retain their functional boundaries. */
   --edify-card-surface: var(--edify-surface);
-  --edify-card-border: var(--edify-border);
-  --edify-card-shadow: none;
+  --edify-card-border: transparent;
+  --edify-card-shadow:
+    0 22px 50px -26px rgba(0, 0, 0, 0.82),
+    0 7px 18px -10px rgba(0, 0, 0, 0.62);
+  --edify-card-shadow-hover:
+    0 26px 58px -26px rgba(0, 0, 0, 0.88),
+    0 10px 24px -10px rgba(0, 0, 0, 0.68);
   --edify-card-backdrop-filter: none;
   --edify-font-display-family: var(--edify-font-sans);
   --color-edify-divider: var(--edify-divider);
@@ -775,6 +793,18 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 @media (prefers-reduced-motion: reduce) {
   html.theme-fade :where(body, main, header, aside, nav, section, article, table, input, select, textarea, button, a, .card, .bg-white) {
     transition-duration: 0ms;
+  }
+}
+
+/* Shadows cannot communicate a boundary in forced-colors mode. Restore a
+   system outline for cards and page headers without changing their geometry. */
+@media (forced-colors: active) {
+  :root {
+    --edify-card-border: CanvasText;
+    --edify-card-shadow: none;
+    --edify-card-shadow-hover: none;
+    --page-header-border: CanvasText;
+    --page-header-shadow: none;
   }
 }
 

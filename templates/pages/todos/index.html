@@ -3,11 +3,27 @@
 {% block title %}To-Do — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 "
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6"
+     data-mobile-family="workday"
      x-data="{ cat: 'all', prio: 'all' }">
 
+  <header class="mobile-role-home edify-page-header" data-mobile-role-home>
+    <div class="mobile-role-home__copy"><p>My work</p><h1 class="edify-page-title">Action queue</h1><span>Start with the highest-priority task; workflow state closes it automatically.</span></div>
+    <div class="mobile-role-home__context"><span>Open</span><strong>{{ counts.total }}</strong></div>
+    {% if todos.0 %}<a href="{{ todos.0.action_url }}" class="mobile-role-home__action" data-mobile-primary-action><span>{{ todos.0.action_label }}</span><span aria-hidden="true">→</span></a>{% endif %}
+  </header>
+
+  {% if total %}
+  <section class="mobile-home-only mobile-home-section" aria-labelledby="todos-mobile-next-title">
+    <div class="mobile-home-section__header"><h2 id="todos-mobile-next-title">Do next</h2><span>{{ total }} open</span></div>
+    <div class="card px-3 divide-y divide-slate-50">
+      {% for t in todos|slice:":3" %}{% include "partials/todos/row.html" with t=t %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   <!-- Header -->
-  <div class="edify-page-header">
+  <div class="edify-page-header mobile-home-hide">
     <div class="min-w-0 edify-page-header__lead">
       <p class="edify-page-eyebrow">My Work</p>
       <h1 class="edify-page-title edify-page-header__title">To-Do</h1>
@@ -16,7 +32,7 @@
   </div>
 
   <!-- KPI strip -->
-  <div class="legacy-kpi-strip grid grid-cols-3 sm:grid-cols-6 gap-3" aria-label="To-do summary">
+  <div class="edify-kpi-strip grid grid-cols-3 sm:grid-cols-6 gap-3" aria-label="To-do summary">
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ counts.total }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Critical</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.critical }}</p></div>
     <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Due Today</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ counts.due_today }}</p></div>

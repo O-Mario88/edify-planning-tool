@@ -152,6 +152,18 @@ class TheReadingRolesStillReachThePagesTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Cluster Oversight", response.content.decode())
 
+    def test_country_reading_roles_open_team_oversight_with_a_country_lens(self):
+        for user in (self.ia, self.accountant, self.rvp):
+            with self.subTest(role=user.active_role):
+                response = self._get(user, "/team-planning-oversight/")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("Programme Lead", response.content.decode())
+
+    def test_the_rvp_can_open_partner_oversight(self):
+        response = self._get(self.rvp, "/partner-oversight/")
+
+        self.assertEqual(response.status_code, 200)
+
     def test_a_cceo_still_reaches_neither(self):
         """The widening names three roles. It must not have opened the door."""
         for url in ("/team-planning-oversight/", "/country-planning-oversight/"):

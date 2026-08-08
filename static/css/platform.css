@@ -23,7 +23,7 @@
   --edify-action-button-block-size: 2.75rem;
   --edify-action-button-padding-inline: 1.125rem;
   --edify-action-button-icon-size: 1.125rem;
-  --edify-action-button-radius: 1rem;
+  --edify-action-button-radius: var(--radius-control);
   --edify-panel-padding: clamp(0.75rem, 0.66rem + 0.35vw, 1.0625rem);
   --edify-panel-gap: clamp(0.6875rem, 0.61rem + 0.28vw, 0.9375rem);
   --edify-focus-outline: 2px solid var(--edify-accent);
@@ -863,27 +863,44 @@ main :where(.overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="ta
    (a `bg-slate-100 p-1 rounded-surface` container class outranks these low
    specificity selectors otherwise), which is the same reason the filter-bar
    contract above uses them. */
-main :where([role="tablist"], .edify-tab-container) {
+main :where(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs
+) {
   display: flex;
-  align-items: stretch;
-  gap: 2px;
+  align-items: center;
+  gap: 1.25rem;
   padding: 0 !important;
   border: 0 !important;
-  border-block-end: 1px solid var(--edify-border) !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 0.5rem;
   scrollbar-width: thin;
 }
 
-main :where([role="tab"], .edify-tab-btn) {
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button
+) {
   display: inline-flex;
   align-items: center;
-  min-block-size: 42px;
+  min-block-size: 44px;
   flex: 0 0 auto;
-  padding-inline: 10px;
+  padding: 0.125rem 0 0.5rem !important;
   border: 0 !important;
   border-block-end: 2px solid transparent !important;
   border-radius: 0 !important;
@@ -896,9 +913,18 @@ main :where([role="tab"], .edify-tab-btn) {
   transition: color .15s ease, border-color .15s ease;
 }
 
-main :where([role="tab"], .edify-tab-btn):hover {
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button
+):hover {
   color: var(--edify-text) !important;
-  border-block-end-color: var(--edify-border) !important;
+  border-block-end-color: transparent !important;
+  background: transparent !important;
 }
 
 main [role="tabpanel"]:focus-visible {
@@ -906,16 +932,55 @@ main [role="tabpanel"]:focus-visible {
   outline-offset: 3px;
 }
 
-main :where([role="tab"], .edify-tab-btn):focus-visible {
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button
+):focus-visible {
   outline: var(--edify-focus-outline);
-  outline-offset: -3px;
+  outline-offset: 3px;
 }
 
-main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+main :where(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active
+) {
   background: transparent !important;
   color: var(--edify-accent) !important;
   border-block-end-color: var(--edify-accent) !important;
   box-shadow: none !important;
+}
+
+/* Counts belong to the tab label rather than sitting in a second pill. */
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button
+) :where(.rounded-pill, b, .messages-inbox-tab__count) {
+  min-inline-size: auto !important;
+  block-size: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: currentColor !important;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.78;
 }
 
 main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
@@ -1386,20 +1451,79 @@ main .platform-responsive-table [data-priority="low"] {
   box-shadow: inset 3px 0 0 var(--edify-sky-400);
 }
 
-.theme-dark main :where([role="tablist"], .edify-tab-container) {
+.theme-dark main :where(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs
+) {
   background: transparent !important;
-  border-block-end-color: var(--edify-border) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
 /* --edify-accent is a brand blue built for fills; as text on the night surface
    it measures under AA. The underline keeps the accent, the label takes the
    theme's blue-on-dark text tone — same rule as the section navigation. */
-.theme-dark main :where([role="tab"][aria-selected="true"], .edify-tab-btn.active) {
+.theme-dark main :where(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active
+) {
   background: transparent !important;
   color: var(--edify-info) !important;
   border-block-end-color: var(--edify-accent) !important;
   box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main :where(
+    [role="tablist"],
+    .edify-tab-container,
+    [data-edify-tablist],
+    .messages-inbox-tabs,
+    .pto-tabs,
+    .sp-period-tabs,
+    .spp-tabs
+  ) {
+    scroll-behavior: auto;
+  }
+
+  main :where(
+    [role="tab"],
+    .edify-tab-btn,
+    [data-edify-tab],
+    .messages-inbox-tab,
+    .pto-tabs > button,
+    .sp-period-tabs > button,
+    .spp-tabs > button
+  ) {
+    transition: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  main :where(
+    [role="tab"][aria-selected="true"],
+    .edify-tab-btn.active,
+    [data-edify-tab][aria-pressed="true"],
+    [data-edify-tab].is-active,
+    .messages-inbox-tab[aria-pressed="true"],
+    .pto-tabs > button.is-active,
+    .sp-period-tabs > button.is-active,
+    .spp-tabs > button.is-active
+  ) {
+    color: Highlight !important;
+    border-block-end-color: Highlight !important;
+  }
 }
 
 .theme-dark .drawer-surface {
@@ -1660,6 +1784,53 @@ main .platform-responsive-table [data-priority="low"] {
    ════════════════════════════════════════════════════════════════════════════ */
 .school-directory-shell {
   overflow: visible;
+}
+
+/* Directory filter toolbar: one full-width grid, never a grid nested inside
+   a half-width form cell. Six fields share the available space and the reset
+   action closes the row at its intrinsic width. Narrow screens retain the
+   existing 1/2/4-column progression from the design-system baseline. */
+main [data-mobile-family="directory"] #filters-form.school-filters-form {
+  display: block !important;
+}
+
+.school-filter-grid {
+  inline-size: 100%;
+  align-items: end;
+}
+
+.school-filter-grid > div {
+  min-inline-size: 0;
+  max-inline-size: none !important;
+}
+
+.school-filter-clear {
+  display: inline-flex;
+  min-block-size: var(--edify-action-button-block-size);
+  align-items: center;
+  justify-content: center;
+  align-self: end;
+  justify-self: start;
+  gap: 0.4rem;
+  padding-inline: 0.45rem;
+  white-space: nowrap;
+}
+
+@media (min-width: 56rem) {
+  .school-filter-grid {
+    grid-template-columns: repeat(6, minmax(6.5rem, 1fr)) max-content !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (max-width: 63.999rem) {
+  main [data-mobile-family="directory"] .mobile-family-filter > summary {
+    padding: 0.875rem 1rem;
+  }
+
+  main [data-mobile-family="directory"] #filters-form.school-filters-form {
+    padding: 0.875rem 1rem 1rem !important;
+  }
 }
 
 .school-directory-listbar {
@@ -2675,6 +2846,11 @@ main .platform-responsive-table [data-priority="low"] {
   padding: clamp(1rem, 1.7vw, 1.5rem);
 }
 
+.school-record-row__summary--selectable {
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+}
+
 /* Collapsed by default: a school row is its name and its actions, and
    everything else waits to be asked for. Eleven metadata pairs per row meant
    roughly five schools filled a screen; collapsed, the same screen holds the
@@ -2735,26 +2911,38 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 .school-record-row__select {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  inset-block-start: 0.85rem;
-  inset-inline-start: 1.95rem;
+  grid-column: 1;
+  grid-row: 1;
   display: grid;
+  align-self: start;
   place-items: center;
-  inline-size: 1.1rem;
-  block-size: 1.1rem;
-  border-radius: 999px;
-  background: var(--edify-surface-raised);
-  box-shadow: 0 1px 4px rgba(15, 37, 58, .14);
+  inline-size: 2rem;
+  block-size: 2.8rem;
+  margin: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
 }
 
 .school-record-row__select input {
-  inline-size: 0.8rem;
-  block-size: 0.8rem;
+  inline-size: 1rem;
+  block-size: 1rem;
   margin: 0;
   accent-color: var(--edify-accent);
   cursor: pointer;
+}
+
+.school-record-row__summary--selectable > .school-record-row__content {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.school-record-row__summary--selectable > .school-record-row__actions {
+  grid-column: 3;
+  grid-row: 1;
 }
 
 .school-record-row__icon {
@@ -2791,6 +2979,9 @@ main .platform-responsive-table [data-priority="low"] {
 .school-record-row__title a {
   position: relative;
   z-index: 3;
+  display: inline-flex;
+  min-block-size: 1.5rem;
+  align-items: center;
   color: inherit;
   text-decoration: none;
   pointer-events: auto;
@@ -2874,6 +3065,8 @@ main .platform-responsive-table [data-priority="low"] {
   inline-size: var(--edify-action-button-icon-size);
   block-size: var(--edify-action-button-icon-size);
 }
+
+.school-record-action__label--compact { display: none; }
 
 .school-record-action:disabled {
   border-color: color-mix(in oklab, var(--edify-border) 72%, transparent);
@@ -3138,6 +3331,8 @@ main .platform-responsive-table [data-priority="low"] {
 @media (max-width: 52rem) {
   .school-record-row__summary { grid-template-columns: 1fr; }
   .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr); }
+  .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 2; grid-row: 2; }
   .school-ssa-groups { grid-template-columns: 1fr; }
 }
 
@@ -3146,11 +3341,12 @@ main .platform-responsive-table [data-priority="low"] {
   .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
   .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
   .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
-  .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
   .school-record-row__title { font-size: 1.13rem; }
   .school-record-row__metadata { gap: .38rem .75rem; }
   .school-record-action { padding-inline: .65rem; }
   .school-record-action span { font-size: var(--edify-text-micro-size); }
+  .school-record-action__label--full { display: none; }
+  .school-record-action__label--compact { display: inline; }
   .school-record-row__actions { padding-inline-start: 3.15rem; }
   .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
 }
@@ -3159,6 +3355,8 @@ main .platform-responsive-table [data-priority="low"] {
   @container school-record (max-width: 58rem) {
     .school-record-row__summary { grid-template-columns: 1fr; }
     .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+    .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr); }
+    .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 2; grid-row: 2; }
   }
 
   @container school-record (max-width: 38rem) {
@@ -3166,11 +3364,12 @@ main .platform-responsive-table [data-priority="low"] {
     .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
     .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
     .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
-    .school-record-row__select { inset-inline-start: 1.7rem; inset-block-start: .75rem; }
     .school-record-row__title { font-size: 1.13rem; }
     .school-record-row__metadata { gap: .38rem .75rem; }
     .school-record-action { padding-inline: .65rem; }
     .school-record-action span { font-size: var(--edify-text-micro-size); }
+    .school-record-action__label--full { display: none; }
+    .school-record-action__label--compact { display: inline; }
     .school-record-row__actions { padding-inline-start: 3.15rem; }
     .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
     .school-ssa-groups { grid-template-columns: 1fr; }

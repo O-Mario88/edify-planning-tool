@@ -428,8 +428,8 @@ class OperatingQueueTest(PageFixture):
 
 
 class PartnerFilterTest(PageFixture):
-    def test_choosing_a_partner_keeps_every_partner_in_the_dropdown(self):
-        """Derived from the filtered set, the control would erase its own options."""
+    def test_choosing_a_partner_keeps_every_partner_in_the_tabs(self):
+        """Derived from the filtered set, the navigation would erase its siblings."""
         self.assign(partner=self.partner)
         self.assign(partner=self.other_partner)
         self.sign_in(self.pl_user)
@@ -438,8 +438,8 @@ class PartnerFilterTest(PageFixture):
             f"/partner-oversight/?partner={self.partner.id}"
         ).content.decode()
 
-        self.assertIn("Partner Y", body, "the other partner left the dropdown")
-        self.assertIn(f'value="{self.other_partner.id}"', body)
+        self.assertIn("Partner Y", body, "the other partner left the tabs")
+        self.assertIn(f"?partner={self.other_partner.id}", body)
 
     def test_choosing_a_partner_narrows_the_rows_to_that_partner(self):
         self.assign(partner=self.partner)
@@ -452,7 +452,30 @@ class PartnerFilterTest(PageFixture):
         ).content.decode()
 
         self.assertIn("Partner X", body)
-        self.assertNotIn("Partner Y", body)
+        self.assertNotIn(">Partner Y</h2>", body)
+
+    def test_country_roles_choose_a_programme_lead_before_a_partner(self):
+        ia = self._staff("ia-tabs@p.test", "IA Officer", EdifyRole.IMPACT_ASSESSMENT)[0]
+        self.assign()
+        self.assign(cceo=self.rival_cceo, school=self.rival_school)
+        self.sign_in(ia)
+
+        body = self.client.get("/partner-oversight/").content.decode()
+
+        self.assertIn('aria-label="Programme Lead teams"', body)
+        self.assertIn("Mary", body)
+        self.assertIn("Other Lead", body)
+        self.assertIn('aria-label="Partners"', body)
+
+    def test_partner_page_offers_all_four_period_lenses(self):
+        self.assign()
+        self.sign_in(self.pl_user)
+
+        body = self.client.get("/partner-oversight/").content.decode()
+
+        for value in ("week", "month", "quarter", "fy"):
+            with self.subTest(value=value):
+                self.assertIn(f'<option value="{value}"', body)
 
 
 class RoleQueueTest(PageFixture):

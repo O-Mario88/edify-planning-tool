@@ -97,12 +97,9 @@ class AnalyticsDashboardTest(TestCase):
         self.assertContains(response, "Analytics")
         # District still renders; it is a filter the page offers.
         self.assertContains(response, "Kampala")
-        # "Central Region" is deliberately absent. It only ever appeared here as
-        # an option inside the Region dropdown, and Region was removed from
-        # every filter row: it asked the same question as District on a coarser
-        # grain while a user's region was already fixed by their scope. Asserting
-        # on it now would pin a control the platform no longer has.
-        self.assertNotContains(response, "Central Region")
+        # Preserve the original map at every breakpoint. The region name is map
+        # content, not a reinstated Region filter.
+        self.assertContains(response, "Central Region")
         self.assertContains(response, "Download CSV")
         self.assertContains(response, "Send to Inbox")
 

@@ -293,6 +293,16 @@ def dashboard_view(request):
             "today_context": today_context,
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
+            "mobile_primary_action": {
+                "label": (
+                    (data.get("leadership_attention") or [{}])[0].get("action")
+                    or "Open country analytics"
+                ),
+                "url": (
+                    (data.get("leadership_attention") or [{}])[0].get("link")
+                    or "/analytics/country-director"
+                ),
+            },
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/dashboards/cd/body.html", context)
@@ -320,6 +330,19 @@ def dashboard_view(request):
         urgent_pagination_query = {"fy": fy}
         if filters["activity_type"]:
             urgent_pagination_query["activity_type"] = filters["activity_type"]
+        leadership_attention = data.get("leadership_attention") or []
+        if leadership_attention:
+            first_attention = leadership_attention[0]
+            attention_link = first_attention.get("link") or "?drill=attention"
+            mobile_primary_action = {
+                "label": first_attention.get("action") or "Review team attention",
+                "url": f"/dashboard/pl-drilldown{attention_link}&fy={fy}",
+            }
+        else:
+            mobile_primary_action = {
+                "label": "Open team plan",
+                "url": "/my-plan",
+            }
         context = {
             **data,
             "role": role,
@@ -328,6 +351,7 @@ def dashboard_view(request):
             "today_context": today_context,
             "fy_options": fy_options(),
             "urgent_pagination_query": urlencode(urgent_pagination_query),
+            "mobile_primary_action": mobile_primary_action,
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/dashboards/pl/body.html", context)
@@ -351,6 +375,15 @@ def dashboard_view(request):
             "avatar_initials": avatar_initials,
             "today_context": today_context,
             "fy_options": fy_options(),
+            "mobile_primary_action": {
+                "label": (
+                    (data.get("attention") or [{}])[0].get("action")
+                    or "Open executive reports"
+                ),
+                "url": "/rvp/approvals"
+                if (data.get("attention") or [{}])[0].get("drill") == "approvals"
+                else "/reports",
+            },
         }
         return render(request, "pages/dashboards/rvp.html", context)
 
@@ -403,6 +436,18 @@ def dashboard_view(request):
             "department": department,
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
+            "mobile_primary_action": {
+                "label": "Review overdue performance"
+                if data.get("reviews_due")
+                else (
+                    "Open recruitment pipeline"
+                    if data.get("open_positions")
+                    else "Open people directory"
+                ),
+                "url": "/performance-reviews"
+                if data.get("reviews_due")
+                else ("/recruitment" if data.get("open_positions") else "/staff"),
+            },
         }
         if request.headers.get("HX-Request") == "true":
             return render(request, "partials/dashboards/hr/body.html", context)
@@ -761,6 +806,27 @@ def dashboard_view(request):
 
         todo_data = get_todos(user)
 
+        if overdue_last_week:
+            mobile_primary_action = {
+                "label": overdue_last_week[0]["action_label"],
+                "url": overdue_last_week[0]["action_url"],
+            }
+        elif school_visits_week:
+            mobile_primary_action = {
+                "label": school_visits_week[0]["action_label"],
+                "url": school_visits_week[0]["action_url"],
+            }
+        elif cluster_activities_week:
+            mobile_primary_action = {
+                "label": cluster_activities_week[0]["action_label"],
+                "url": cluster_activities_week[0]["action_url"],
+            }
+        else:
+            mobile_primary_action = {
+                "label": "Plan this week",
+                "url": "/planning",
+            }
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -838,6 +904,7 @@ def dashboard_view(request):
             "can_assign_partner": RolePermissionService.can_assign_to_partner(
                 request.user
             ),
+            "mobile_primary_action": mobile_primary_action,
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
@@ -922,6 +989,10 @@ def dashboard_view(request):
             "partners_assigned": partners_assigned,
             "project_schools": project_schools,
             "project_partners": project_partners,
+            "mobile_primary_action": {
+                "label": "Open project portfolio",
+                "url": "/projects",
+            },
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 
@@ -1109,6 +1180,14 @@ def dashboard_view(request):
                 drilldown_url="/admin-ops/maintenance",
             ),
         ]
+        context["mobile_primary_action"] = {
+            "label": "Resolve critical platform work"
+            if admin_ops["critical_now"]
+            else "Open admin work plan",
+            "url": "/admin-ops/incidents"
+            if admin_ops["critical_now"]
+            else "/admin-ops/my-plan",
+        }
 
     return render(request, "pages/dashboards/main.html", context)
 

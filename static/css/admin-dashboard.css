@@ -264,41 +264,56 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 /* Planning chart */
 .admin-planning-progress { padding-block-end: 0.55rem; }
-.admin-period-switch {
-  width: min(100% - 1.9rem, 18rem);
-  margin: 0.72rem 0.95rem 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding: 0.22rem;
-  border-radius: 0.55rem;
-  background: var(--edify-surface-muted);
+.admin-planning-progress__header { flex-wrap: wrap; }
+.admin-panel__header-actions {
+  min-inline-size: 0;
+  display: flex;
+  align-items: safe center;
+  justify-content: flex-end;
+  gap: 0.95rem;
+  margin-inline-start: auto;
 }
-/* The period tabs are real links now, not decorative spans, so they need the
-   states an interactive control has: a hover affordance, a visible focus ring
-   for keyboard users, and a target big enough to hit. The old 0.58rem sat
-   below the platform's smallest type tier -- fine for a label nobody could
-   click, not fine for a control. */
-.admin-period-switch a {
+.admin-period-switch {
+  min-inline-size: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-block-size: 1.75rem;
-  padding: 0.32rem 0.48rem;
-  border-radius: 0.4rem;
-  color: var(--edify-text-muted);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 650;
-  text-align: center;
-  text-decoration: none;
-  transition: background-color .15s ease, color .15s ease;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
 }
-.admin-period-switch a:hover { color: var(--edify-text); background: var(--edify-surface); }
+.admin-period-switch a {
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0.125rem 0 0.5rem;
+  border-block-end: 2px solid transparent;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s ease, border-color .15s ease;
+}
+.admin-period-switch a:hover { color: var(--edify-text); }
 .admin-period-switch a:focus-visible {
   outline: var(--edify-focus-outline);
-  outline-offset: 1px;
+  outline-offset: 3px;
 }
 .admin-period-switch .is-active,
-.admin-period-switch .is-active:hover { color: var(--edify-on-accent); background: var(--edify-accent); box-shadow: var(--edify-shadow-sm); }
+.admin-period-switch .is-active:hover {
+  color: var(--edify-accent);
+  border-block-end-color: var(--edify-accent);
+}
+.admin-panel__details-link {
+  flex: 0 0 auto;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-panel__details-link:hover { text-decoration: underline; text-underline-offset: 0.18rem; }
 .admin-line-figure { padding: 0.2rem 0.8rem 0; }
 .admin-line-chart { width: 100%; height: 8rem; overflow: visible; }
 .admin-line-chart__grid line { stroke: var(--edify-border); stroke-width: 1; }
@@ -427,7 +442,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
   backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
 }
-.theme-blue .admin-command :is(.admin-mini, .admin-budget-grid article, .admin-period-switch) { background: var(--edify-glass-tile-treatment); }
+.theme-blue .admin-command :is(.admin-mini, .admin-budget-grid article) { background: var(--edify-glass-tile-treatment); }
 .theme-blue .admin-button--primary { color: var(--edify-on-accent); background: var(--edify-button-primary-treatment); }
 .theme-blue .admin-button--secondary { background: var(--edify-button-secondary-treatment); }
 .theme-dark .admin-command :is(.admin-panel, .admin-kpi) { background: var(--edify-surface-treatment); box-shadow: var(--edify-shadow-md); }
@@ -483,6 +498,16 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   .admin-execution { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-execution > div:nth-child(2) { border-right: 0; }
   .admin-execution > div:nth-child(-n + 2) { border-bottom: 1px solid var(--edify-border); }
+
+  .admin-planning-progress__header { align-items: flex-start; }
+  .admin-planning-progress__header > h2 { flex: 1 0 100%; }
+  .admin-panel__header-actions {
+    inline-size: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-inline-start: 0;
+  }
+  .admin-period-switch { flex: 1 1 auto; }
 
   .admin-priorities .admin-table-wrap {
     padding: 0.65rem 0.8rem;

@@ -228,9 +228,13 @@ def resolve_oversight_scope(principal) -> OversightScope:
     # Before resolving the team, not after: a country lens does not need a
     # supervisee list, and building one cost two queries on every load of the
     # largest page in the product.
-    if role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value) or getattr(
-        principal, "is_superuser", False
-    ):
+    if role in (
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+        EdifyRole.ADMIN.value,
+    ) or getattr(principal, "is_superuser", False):
         return OversightScope(kind="country")
 
     scope = resolve_user_scope(principal)
@@ -250,6 +254,8 @@ def build_items(
     fy: str,
     month: int | None = None,
     quarter: str | None = None,
+    date_start: date | None = None,
+    date_end: date | None = None,
     staff_id: str | None = None,
     program_lead_id: str | None = None,
     filters: dict | None = None,
@@ -264,8 +270,22 @@ def build_items(
     if scope.kind == "pl" and not scope.team_ids:
         return []
 
-    activities = _activities_in_scope(scope, fy=fy, month=month, quarter=quarter)
-    assignments = _unscheduled_assignments_in_scope(scope, fy=fy)
+    activities = _activities_in_scope(
+        scope,
+        fy=fy,
+        month=month,
+        quarter=quarter,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    assignments = _unscheduled_assignments_in_scope(
+        scope,
+        fy=fy,
+        month=month,
+        quarter=quarter,
+        date_start=date_start,
+        date_end=date_end,
+    )
 
     directory = _StaffDirectory(activities, assignments)
     costs = _cost_by_activity([a.id for a in activities])
@@ -347,7 +367,9 @@ def build_item_by_reference(
     return item
 
 
-def _activities_in_scope(scope: OversightScope, *, fy, month, quarter):
+def _activities_in_scope(
+    scope: OversightScope, *, fy, month, quarter, date_start=None, date_end=None
+):
     from apps.activities.models import Activity
 
     qs = (
@@ -395,6 +417,10 @@ def _activities_in_scope(scope: OversightScope, *, fy, month, quarter):
         qs = qs.filter(planned_month=month)
     if quarter:
         qs = qs.filter(quarter=quarter)
+    if date_start:
+        qs = qs.filter(planned_date__gte=date_start)
+    if date_end:
+        qs = qs.filter(planned_date__lt=date_end)
 
     if not scope.is_country:
         ids = scope.team_ids
@@ -404,7 +430,15 @@ def _activities_in_scope(scope: OversightScope, *, fy, month, quarter):
     return list(qs)
 
 
-def _unscheduled_assignments_in_scope(scope: OversightScope, *, fy):
+def _unscheduled_assignments_in_scope(
+    scope: OversightScope,
+    *,
+    fy,
+    month=None,
+    quarter=None,
+    date_start=None,
+    date_end=None,
+):
     """Partner assignments the partner has not scheduled yet.
 
     Scheduled ones are deliberately absent: they are represented by the
@@ -454,6 +488,16 @@ def _unscheduled_assignments_in_scope(scope: OversightScope, *, fy):
         from apps.core.fy import get_operational_fy
 
         rows = [r for r in rows if get_operational_fy(r.created_at.date()) == fy]
+    if month:
+        rows = [r for r in rows if r.created_at.date().month == month]
+    if quarter:
+        from apps.core.fy import get_quarter_for_date
+
+        rows = [r for r in rows if get_quarter_for_date(r.created_at) == quarter]
+    if date_start:
+        rows = [r for r in rows if r.created_at.date() >= date_start]
+    if date_end:
+        rows = [r for r in rows if r.created_at.date() < date_end]
     return rows
 
 

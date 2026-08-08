@@ -25,7 +25,7 @@ summary and the detail are the same numbers by construction.
       </div>
     </details>
     <a class="btn h-9 inline-flex items-center"
-       href="/country-planning-oversight/export?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
+       href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
     </a>
   </div>
@@ -55,7 +55,7 @@ summary and the detail are the same numbers by construction.
             <td class="px-4 py-3">
               <button type="button"
                       class="text-sm font-semibold hover:underline edify-primary-text"
-                      hx-get="/country-planning-oversight/team/{{ group.id }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}"
+                      hx-get="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
                       hx-target="#team-detail-{{ forloop.counter }}"
                       hx-swap="innerHTML"
                       @click="open = (open === {{ forloop.counter }} ? null : {{ forloop.counter }})"
@@ -135,7 +135,7 @@ summary and the detail are the same numbers by construction.
       </p>
       <button type="button"
               class="text-sm font-semibold hover:underline edify-primary-text min-h-11"
-              hx-get="/country-planning-oversight/team/{{ group.id }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}"
+              hx-get="/country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}"
               hx-target="#team-card-{{ forloop.counter }}"
               hx-swap="innerHTML">Open team</button>
       <div id="team-card-{{ forloop.counter }}"></div>

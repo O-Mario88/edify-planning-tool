@@ -1,0 +1,64 @@
+<form class="edify-filter-bar oversight-period-filter"
+      aria-label="{{ filter_label }}"
+      x-data="{ period: '{{ period }}' }"
+      hx-get="{{ target_url }}"
+      hx-target="{{ target_id }}"
+      hx-swap="innerHTML"
+      hx-trigger="change"
+      hx-push-url="true">
+  {% if owner %}<input type="hidden" name="owner" value="{{ owner }}">{% endif %}
+  {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
+  {% if partner %}<input type="hidden" name="partner" value="{{ partner }}">{% endif %}
+
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">View</span>
+    <select name="period" x-model="period" aria-label="Time period">
+      <option value="week">Week</option>
+      <option value="month">Month</option>
+      <option value="quarter">Quarter</option>
+      <option value="fy">Financial year</option>
+    </select>
+  </label>
+
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
+    <select name="fy" aria-label="Financial year">
+      {% for option in fy_options %}
+      <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="edify-page-header-control" x-show="period === 'week'">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Week</span>
+    <input type="week" name="week" value="{{ week }}" aria-label="Week">
+  </label>
+
+  <label class="edify-page-header-control" x-show="period === 'month'">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Month</span>
+    <select name="month" aria-label="Month">
+      <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+      <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+      <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+      <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+      <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+      <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+      <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+      <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+      <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+      <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+      <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+      <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+    </select>
+  </label>
+
+  <label class="edify-page-header-control" x-show="period === 'quarter'">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Quarter</span>
+    <select name="quarter" aria-label="Financial quarter">
+      <option value="Q1" {% if selected_quarter == "Q1" %}selected{% endif %}>Q1 · Oct–Dec</option>
+      <option value="Q2" {% if selected_quarter == "Q2" %}selected{% endif %}>Q2 · Jan–Mar</option>
+      <option value="Q3" {% if selected_quarter == "Q3" %}selected{% endif %}>Q3 · Apr–Jun</option>
+      <option value="Q4" {% if selected_quarter == "Q4" %}selected{% endif %}>Q4 · Jul–Sep</option>
+    </select>
+  </label>
+</form>

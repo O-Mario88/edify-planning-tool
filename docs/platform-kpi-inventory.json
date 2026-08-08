@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 11,
   "labels_in_several_modules": 15,
-  "breakdown_rows": 104
+  "breakdown_rows": 108
  },
  "duplicated_labels": {
   "Accountability Pending": [
@@ -974,7 +974,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1009,
+   "line": 1081,
    "label": "Schools without SSA",
    "keys": [
     "color",
@@ -990,7 +990,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1017,
+   "line": 1089,
    "label": "Schools not visited",
    "keys": [
     "color",
@@ -1006,7 +1006,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1025,
+   "line": 1097,
    "label": "Schools not trained",
    "keys": [
     "color",
@@ -1022,7 +1022,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1033,
+   "line": 1105,
    "label": "High-risk districts",
    "keys": [
     "color",
@@ -1038,7 +1038,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1041,
+   "line": 1113,
    "label": "Clusters needing attention",
    "keys": [
     "color",
@@ -2504,7 +2504,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 148,
+   "line": 170,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",
@@ -2785,7 +2785,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 728,
+   "line": 773,
    "label": "Completed Tasks",
    "keys": [
     "helper",
@@ -2800,7 +2800,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 735,
+   "line": 780,
    "label": "In Progress",
    "keys": [
     "helper",
@@ -2815,7 +2815,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 742,
+   "line": 787,
    "label": "Planned Tasks",
    "keys": [
     "helper",
@@ -2830,7 +2830,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 749,
+   "line": 794,
    "label": "Overdue Tasks",
    "keys": [
     "helper",
@@ -2845,7 +2845,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 792,
+   "line": 858,
    "label": "Completed",
    "keys": [
     "color",
@@ -2859,7 +2859,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 798,
+   "line": 864,
    "label": "In Progress",
    "keys": [
     "color",
@@ -2873,7 +2873,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 804,
+   "line": 870,
    "label": "Planned",
    "keys": [
     "color",
@@ -2887,7 +2887,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 810,
+   "line": 876,
    "label": "Overdue",
    "keys": [
     "color",
@@ -2901,7 +2901,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1741,
+   "line": 1760,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2916,7 +2916,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2381,
+   "line": 2400,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -2932,7 +2932,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2389,
+   "line": 2408,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -2948,7 +2948,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2648,
+   "line": 2667,
    "label": null,
    "keys": [
     "label",
@@ -2960,7 +2960,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2820,
+   "line": 2839,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -2975,7 +2975,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2827,
+   "line": 2846,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -2990,7 +2990,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2834,
+   "line": 2853,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -3005,7 +3005,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2841,
+   "line": 2860,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3020,7 +3020,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2848,
+   "line": 2867,
    "label": "Missing Critical Data",
    "keys": [
     "helper",
@@ -3035,7 +3035,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1046,
+   "line": 1065,
    "label": null,
    "keys": [
     "achieved",
@@ -3593,11 +3593,65 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 213,
+   "line": 242,
+   "label": "My Work",
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/oversight_views.py",
+   "line": 272,
    "label": null,
    "keys": [
     "count",
-    "is_active",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/oversight_views.py",
+   "line": 252,
+   "label": null,
+   "keys": [
+    "count",
+    "items",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/oversight_views.py",
+   "line": 864,
+   "label": "All Partners",
+   "keys": [
+    "count",
+    "key",
+    "label"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/oversight_views.py",
+   "line": 870,
+   "label": null,
+   "keys": [
+    "count",
     "key",
     "label"
    ],

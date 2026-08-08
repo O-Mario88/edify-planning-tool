@@ -61,7 +61,7 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn("--edify-button-primary-treatment: none;", tokens)
         self.assertIn("--edify-button-secondary-treatment: none;", tokens)
         self.assertIn("--edify-action-button-block-size: 2.75rem;", platform)
-        self.assertIn("--edify-action-button-radius: 1rem;", platform)
+        self.assertIn("--edify-action-button-radius: var(--radius-control);", platform)
         self.assertIn(
             "border: 1px solid var(--brand-primary-border) !important;", bridge
         )
@@ -116,7 +116,7 @@ class DesignSystemContractTest(SimpleTestCase):
 
         Each metric reads as its own themed card (white in Light, dark in Dark,
         blue glass in Blue) via design tokens — no hardcoded navy panel — and
-        narrow screens collapse to one readable column instead of a carousel.
+        narrow screens use a compact two-column summary instead of a carousel.
         """
 
         components = (ROOT / "static/css/components.css").read_text()
@@ -143,10 +143,14 @@ class DesignSystemContractTest(SimpleTestCase):
         # pinned both themes to --edify-kpi-strip-background must not return.)
         self.assertNotIn("background: var(--edify-kpi-strip-background)", components)
 
-        # Mobile never scrolls a strip sideways: one full-width tile keeps a
-        # metric title readable without wrapping it into fragments.
+        # Mobile never scrolls a strip sideways: a compact 2x2 summary keeps
+        # the operating queue in the first viewport and gives labels two lines.
         self.assertNotIn("scroll-snap-type: inline mandatory", components)
-        self.assertIn("grid-template-columns: 1fr !important", components)
+        self.assertIn(
+            "grid-template-columns: repeat(2, minmax(0, 1fr)) !important",
+            components,
+        )
+        self.assertIn("-webkit-line-clamp: 2", components)
 
         # Legacy overrides must not sneak the navy treatment back in.
         self.assertNotIn(".dark .kpi-strip", legacy_css)

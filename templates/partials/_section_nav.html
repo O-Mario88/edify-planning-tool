@@ -19,6 +19,40 @@ because they are tabs.
 {% endcomment %}
 {% if workspace %}
 <nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
+{% if workspace.key == "analytics" and workspace.groups|length > 1 %}
+<div class="edify-section-nav__workspace"
+     x-data="{ group: '{{ workspace.active_group|escapejs }}' }">
+  <div class="edify-section-nav__clusters" aria-label="Analytics areas">
+    <span class="edify-section-nav__eyebrow">{{ workspace.label }}</span>
+    <span class="edify-section-nav__rule" aria-hidden="true"></span>
+    {% for group in workspace.groups %}
+    <button type="button"
+            class="edify-section-nav__cluster"
+            :class="group === '{{ group.key|escapejs }}' && 'is-active'"
+            :aria-pressed="(group === '{{ group.key|escapejs }}').toString()"
+            @click="group = '{{ group.key|escapejs }}'">
+      {{ group.label }}
+      <span class="edify-section-nav__cluster-count" aria-hidden="true">{{ group.sections|length }}</span>
+    </button>
+    {% endfor %}
+  </div>
+
+  {% for group in workspace.groups %}
+  <div class="edify-section-nav__inner edify-section-nav__inner--group"
+       data-section-group="{{ group.key }}"
+       x-show="group === '{{ group.key|escapejs }}'"
+       x-cloak x-data
+       x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (!active) return; const activeEnd = active.offsetLeft + active.offsetWidth; if (activeEnd > $el.clientWidth) $el.scrollLeft = Math.max(0, activeEnd - $el.clientWidth + 16) })">
+    {% for section in group.sections %}
+    <a href="{{ section.url }}"
+       class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
+       title="{{ section.description }}"
+       {% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
 {% comment %}
 With ten or more sections the strip scrolls, so a user landing directly on a
 late section would otherwise arrive with the page they are on scrolled out of
@@ -37,5 +71,6 @@ title="{{ section.description }}"
 {% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
 {% endfor %}
 </div>
+{% endif %}
 </nav>
 {% endif %}

@@ -207,6 +207,23 @@ class AnalyticsWorkspaceActiveStateTest(TestCase):
                     ]
                     self.assertEqual(active, ["overview"], f"path {path}")
 
+    def test_admin_keeps_overview_active_on_role_specific_cockpits(self):
+        for path in (
+            "/analytics/program-lead",
+            "/analytics/country-director",
+            "/projects/analytics",
+        ):
+            with self.subTest(path=path):
+                active = [
+                    s["key"]
+                    for s in build_analytics_sections(self.admin, path)
+                    if s["active"]
+                ]
+                self.assertEqual(active, ["overview"])
+                workspace = build_workspace(self.admin, path)
+                self.assertIsNotNone(workspace)
+                self.assertEqual(workspace["key"], "analytics")
+
     def test_nested_non_analytics_routes_do_not_claim_a_section(self):
         # /ssa/upload/ is the IA upload centre, not SSA Performance.
         for path in ("/ssa/upload/", "/dashboard", "/schools"):

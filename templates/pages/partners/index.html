@@ -4,14 +4,16 @@
 {% block title %}Partner Activities — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="partner-workspace edify-page-canvas">
+<div class="partner-workspace edify-page-canvas" data-mobile-family="directory">
   <header class="edify-page-header partner-workspace__header">
     <div class="edify-page-header__lead">
       <p class="partner-workspace__eyebrow">Delivery partners</p>
       <h1 class="edify-page-title edify-page-header__title">Partner Activities</h1>
       <p class="edify-page-header__description">See assigned schools, confirm delivery dates, monitor support, and follow up before work falls behind.</p>
     </div>
-    <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters">
+  </header>
+
+    <form id="partner-activity-filters" method="get" class="edify-filter-bar partner-workspace__filters" aria-label="Partner activity filters">
       <label>
         <span>Financial Year</span>
         <select name="fy" aria-label="Financial Year">
@@ -41,7 +43,6 @@
         Export
       </button>
     </form>
-  </header>
 
   <div class="partner-workspace__layout">
     <section class="partner-workspace__main" aria-label="Partner activity records">

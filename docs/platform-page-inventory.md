@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **305**
-- Full pages: **325**
-- Partials and drawers: **158**
+- Shared component templates: **318**
+- Full pages: **326**
+- Partials and drawers: **157**
 - Permission-gated surfaces: **489**
 - Referenced by automated tests: **463**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -141,7 +141,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /api/analytics/map-subcounties | Map Subcounty Metrics | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
-| /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.4 | 0 | referenced by automated test |
+| /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.6 | 0 | referenced by automated test |
 | /candidate-pipeline | Candidate Pipeline | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /change-password | Change Password | Unmapped | pages/auth/change_password.html | 9.6 | 0 | referenced by automated test |
 | /clusters | Clusters | ADMIN, CCEO, CD, IA, PARTNER, PL | partials/clusters/htmx_response.html<br>pages/clusters/index.html | 9.6 | 0 | referenced by automated test |
@@ -192,7 +192,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /country-budget/history/<str:budget_id> | FY | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/finance/country_budget_submission.html | 9.4 | 0 | referenced by automated test |
 | /country-budget/plan-sources | Country Budget Plan Sources | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/plan_sources_drawer.html | 9.6 | 0 | referenced by automated test |
 | /country-budget/return | Country Budget Return Drawer | ACCOUNTANT, ADMIN, CD, IA, RVP | partials/finance/country_budget/return_drawer.html | 9.4 | 0 | referenced by automated test |
-| /country-planning-oversight/ | Country Planning | ADMIN, CD, RVP | partials/oversight/cd_workspace.html<br>pages/oversight/country_planning.html | 9.4 | 0 | referenced by automated test |
+| /country-planning-oversight/ | Country Planning Oversight · Edify | ADMIN, CD, RVP | partials/oversight/cd_workspace.html<br>pages/oversight/country_planning.html | 9.4 | 0 | referenced by automated test |
 | /country-planning-oversight/export | Country Planning Oversight Export | ADMIN, CD, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /country-planning-oversight/send | Country Planning Oversight Send | ADMIN, CD, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | ADMIN, CD, RVP | partials/oversight/cd_team_detail.html | 9.4 | 0 | coverage review required |
@@ -379,13 +379,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /org-structure | Organization Structure | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/clusters/cluster_schools_table.html | 9.6 | 0 | referenced by automated test |
 | /partials/costing/preview | Cost Preview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | partials/cost_preview.html | 9.6 | 0 | referenced by automated test |
-| /partner-oversight/ | Partner Oversight · Edify | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/partner_workspace.html<br>pages/oversight/partner_oversight.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw | Partner Withdrawal Preview | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | partials/oversight/withdrawal_drawer.html | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw/review | Partner Withdrawal Review | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partner-oversight/withdraw/submit | Partner Withdrawal Submit | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/ | Partner Oversight · Edify | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | partials/oversight/partner_workspace.html<br>pages/oversight/partner_oversight.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/detail | Partner Oversight Detail | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | partials/oversight/partner_detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/export | Partner Oversight Export | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/send | Partner Oversight Send | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw | Partner Withdrawal Preview | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | partials/oversight/withdrawal_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/review | Partner Withdrawal Review | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partner-oversight/withdraw/submit | Partner Withdrawal Submit | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/activities | Activities · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/activities.html | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-action | Partner Return Assignment Action | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/assignments/<str:assignment_id>/return-drawer | Partner Return Assignment Drawer | ADMIN, PARTNER | partials/partners/return_assignment_drawer.html | 9.7 | 0 | referenced by automated test |
@@ -394,7 +394,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partner/evidence | Evidence · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/evidence.html | 9.4 | 0 | referenced by automated test |
 | /partner/my-plan | Partner My Plan | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/schools | Assigned Schools · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/schools.html | 9.4 | 0 | referenced by automated test |
-| /partner/today | Today · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/today.html | 9.4 | 0 | referenced by automated test |
+| /partner/today | Today · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/today.html | 9.6 | 0 | referenced by automated test |
 | /partners | Partners | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partners/<str:partner_id> | Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/partners/detail.html | 9.4 | 0 | referenced by automated test |
 | /partners/create | Create Partner | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/partners/create_partner_drawer.html | 9.4 | 0 | referenced by automated test |
@@ -496,10 +496,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
-| /team-planning-oversight/ | Team Oversight | ACCOUNTANT, ADMIN, IA, PL | partials/oversight/pl_workspace.html<br>pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, IA, PL | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /team-planning-oversight/send | Team Planning Oversight Send | ACCOUNTANT, ADMIN, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/ | Team Planning Oversight · Edify | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/send | Team Planning Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/ | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/catchup | Team Targets Catchup Create | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

@@ -2,6 +2,7 @@
 {% load frontend_filters %}
 
 {% block title %}Planning — Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/fullcalendar.html" %}{% endblock %}
 
 {% block shell_content %}
 <div
@@ -16,6 +17,7 @@ showAssignPartnerForm: false
 @select-school.window="selectedSchoolId = $event.detail.id;"
 class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
 id="planning-main-container"
+data-mobile-family="workday"
 >
 
 <!-- Breadcrumb -->
@@ -132,13 +134,11 @@ Clear Filters
 </a>
 </form>
 
-<!-- KPI cards Row -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
-
-
-
 <!-- Planning Copilot Banner -->
 {% include "partials/planning/right_panel.html" %}
+
+<!-- KPI cards Row -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Main Content Column -->
 <div class="space-y-6">

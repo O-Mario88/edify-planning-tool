@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Declining Schools — Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
 
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
@@ -13,7 +15,9 @@
 Confirmed SSA movement, FY {{ d.prevFy }} → FY {{ d.fy }} · ranked by drop, not by absolute score
 </p>
 </div>
-<form method="GET" class="edify-page-header__controls">
+</div>
+
+<form method="GET" class="edify-filter-bar" aria-label="Declining school filters">
 <label class="sr-only" for="fy-select">Financial year</label>
 {% comment %}@change rather than an inline onchange: the handler moves
 into the Alpine layer the rest of the app uses, and requestSubmit()
@@ -22,9 +26,10 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% for option in fy_options %}<option value="{{ option }}" {% if option == d.fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
 </select>
 </form>
-</div>
 
 {% include "partials/analytics/section_nav.html" %}
+
+{% include "components/analytics_decision_frame.html" with question="Which schools are losing ground fastest, where is decline concentrated, and what support failed to arrest it?" evidence="Schools with two confirmed consecutive SSA cycles" freshness="Selected financial year comparison" confidence="Confirmed paired assessments" %}
 
 {% if d.empty %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-12 text-center">

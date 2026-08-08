@@ -1,6 +1,7 @@
 {% extends "layouts/shell.html" %}
 
 {% block title %}Field Debrief Dashboard · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -34,9 +35,10 @@
   {% endif %}
 
   <!-- Filters — on the page background, per the platform filter-bar contract (consistency.css). -->
-  <form id="debrief-filters" hx-get="/debriefs" hx-target="#debrief-dashboard-body" hx-swap="innerHTML"
+  <form id="debrief-filters" x-data hx-get="/debriefs" hx-target="#debrief-dashboard-body" hx-swap="innerHTML"
         hx-trigger="change, search" hx-push-url="true"
-        class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        data-component="filter-toolbar"
+        class="platform-filter-bar">
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
       <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
@@ -58,13 +60,27 @@
         {% for did, dname in district_options %}<option value="{{ did }}" {% if did == district_id %}selected{% endif %}>{{ dname }}</option>{% endfor %}
       </select>
     </label>
-    <label class="block">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Risk Level</span>
-      <select aria-label="Risk level" name="risk_level" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
-        <option value="">Any</option>
-        {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
-      </select>
-    </label>
+    <button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog" @click="$refs.debriefAdvancedFilters.showModal()">
+      More filters{% if risk_level %} · Applied{% endif %}
+    </button>
+    <dialog x-ref="debriefAdvancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="debrief-advanced-filter-title">
+      <header class="edify-filter-drawer__header">
+        <div><p class="edify-page-eyebrow">Field Debriefs</p><h2 id="debrief-advanced-filter-title">Advanced filters</h2></div>
+        <button type="button" class="btn btn-ghost h-9 w-9 px-0" aria-label="Close advanced filters" @click="$refs.debriefAdvancedFilters.close()">×</button>
+      </header>
+      <div class="edify-filter-drawer__body">
+        <label class="block">
+          <span class="edify-filter-label">Risk level</span>
+          <select aria-label="Risk level" name="risk_level">
+            <option value="">Any</option>
+            {% for key, label in risk_level_options %}<option value="{{ key }}" {% if key == risk_level %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <footer class="edify-filter-drawer__footer">
+        <button type="button" class="btn btn-primary h-10" @click="$refs.debriefAdvancedFilters.close()">Apply filters</button>
+      </footer>
+    </dialog>
     {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}
   </form>
 

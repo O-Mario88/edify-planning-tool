@@ -1,36 +1,89 @@
-<div class="edify-surface rounded-surface  p-4 shadow-sm space-y-4">
-<div class="flex items-center justify-between border-b border-slate-50 pb-2">
-<div>
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
-<span>Target Achievement by District</span>
-<span class="edify-text-caption text-slate-400 cursor-help" title="Percentage of assigned targets achieved by schools in each district">ℹ️</span>
-</h3>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">District targets achievement progress</p>
-</div>
+<section class="analytics-priority-card edify-surface rounded-surface p-4 shadow-sm"
+         aria-labelledby="district-priorities-title"
+         x-data="{ filter: 'all' }">
+  <header class="analytics-priority-card__header">
+    <div>
+      <p class="analytics-band-eyebrow">Geographic priorities</p>
+      <h3 id="district-priorities-title">District delivery gaps</h3>
+      <p>Ranked by urgency and grouped by sub-region.</p>
+    </div>
+    <a href="/reports" class="analytics-text-link">View reports</a>
+  </header>
 
-<select aria-label="Reporting period" class="bg-slate-50  rounded-control edify-text-caption font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
-<option>This Quarter</option>
-</select>
-</div>
+  {% if target_by_district_groups %}
+  <div class="analytics-priority-filters" aria-label="District priority status">
+    <button type="button" @click="filter = 'all'"
+            :class="filter === 'all' && 'is-active'"
+            :aria-pressed="(filter === 'all').toString()">All sub-regions</button>
+    <button type="button" @click="filter = 'attention'"
+            :class="filter === 'attention' && 'is-active'"
+            :aria-pressed="(filter === 'attention').toString()">Needs attention</button>
+    <button type="button" @click="filter = 'critical'"
+            :class="filter === 'critical' && 'is-active'"
+            :aria-pressed="(filter === 'critical').toString()">Critical</button>
+  </div>
 
-<div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-{% if target_by_district %}
-{% for dist in target_by_district %}
-<div class="space-y-1">
-<div class="flex items-center justify-between edify-text-caption font-bold text-slate-600">
-<span class="truncate">{{ dist.name }}</span>
-<div class="flex items-center gap-2">
-<span class="edify-text-caption text-slate-400 font-semibold">({{ dist.achieved }}/{{ dist.planned }})</span>
-<span class="font-semibold text-slate-800">{{ dist.pct }}%</span>
-</div>
-</div>
-<div class="h-1.5 w-full rounded-pill overflow-hidden" style="background:var(--edify-chart-bar-track)">
-<div class="h-full rounded-pill" style="width: {{ dist.pct }}%; background:var(--edify-chart-series-primary)"></div>
-</div>
-</div>
-{% endfor %}
-{% else %}
-<p class="edify-text-caption text-slate-500 font-bold text-center py-6">No targets or activities in this period.</p>
-{% endif %}
-</div>
-</div>
+  <div class="analytics-priority-groups">
+    {% for group in target_by_district_groups %}
+    <details class="analytics-priority-group"
+             {% if forloop.first %}open{% endif %}
+             x-show="filter === 'all' || (filter === 'critical' && {{ group.critical_count }} > 0) || (filter === 'attention' && {{ group.critical_count|add:group.watch_count }} > 0)">
+      <summary>
+        <span class="analytics-priority-group__identity">
+          <strong>{{ group.name }}</strong>
+          <small>{{ group.region }} · {{ group.districts|length }} district{{ group.districts|length|pluralize }}</small>
+        </span>
+        <span class="analytics-priority-group__signal">
+          {% if group.critical_count %}<b class="is-critical">{{ group.critical_count }} critical</b>{% endif %}
+          {% if group.watch_count %}<b class="is-watch">{{ group.watch_count }} watch</b>{% endif %}
+          {% if group.pct is not None %}<small>{{ group.pct }}% delivered</small>{% else %}<small>No activity plan</small>{% endif %}
+        </span>
+        <svg aria-hidden="true" viewBox="0 0 20 20"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>
+      </summary>
+
+      <div class="analytics-priority-group__meta">
+        <span>{{ group.schools }} school{{ group.schools|pluralize }}</span>
+        <span>{{ group.achieved }}/{{ group.planned }} activities delivered</span>
+        {% if group.gap is not None %}<span>{{ group.gap }}% remaining gap</span>{% endif %}
+      </div>
+
+      <div class="analytics-priority-group__rows" x-data="{ expanded: false }">
+        {% for district in group.districts %}
+        <article class="analytics-district-row is-{{ district.status }}"
+                 data-district-status="{{ district.status }}"
+                 x-show="(filter === 'all' || (filter === 'critical' && '{{ district.status }}' === 'critical') || (filter === 'attention' && ['critical', 'watch'].includes('{{ district.status }}'))) && (expanded || {{ forloop.counter }} <= 5)">
+          <div class="analytics-district-row__main">
+            <span class="analytics-district-row__rank">{{ forloop.counter }}</span>
+            <span>
+              <strong>{{ district.name }}</strong>
+              <small>{{ district.schools }} school{{ district.schools|pluralize }} · {{ district.achieved }}/{{ district.planned }} delivered</small>
+            </span>
+          </div>
+          <div class="analytics-district-row__status">
+            <span class="analytics-status-chip is-{{ district.status }}">{{ district.status_label }}</span>
+            {% if district.gap is not None %}<strong>{{ district.gap }}% gap</strong>{% else %}<strong>—</strong>{% endif %}
+          </div>
+          <div class="analytics-district-row__track" aria-hidden="true">
+            <span style="inline-size: {{ district.pct }}%"></span>
+          </div>
+        </article>
+        {% endfor %}
+
+        {% if group.districts|length > 5 %}
+        <button type="button" class="analytics-priority-group__more"
+                @click="expanded = !expanded"
+                :aria-expanded="expanded.toString()">
+          <span x-text="expanded ? 'Show fewer districts' : 'View all {{ group.districts|length }} districts'"></span>
+        </button>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="analytics-empty-state">
+    <strong>No district activity plan in this scope</strong>
+    <p>Adjust the filters or configure district targets to compare delivery.</p>
+  </div>
+  {% endif %}
+</section>

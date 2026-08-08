@@ -8,12 +8,13 @@ subTableLoaded: false
 x-init="$watch('cardExpanded', value => { if (value && !subTableLoaded) { htmx.trigger($refs.schoolsContainer, 'load-schools'); subTableLoaded = true; } })"
 >
 <div
-@click="if (!$event.target.closest('button')) cardExpanded = !cardExpanded"
+@click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) cardExpanded = !cardExpanded"
 class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
+data-row-disclosure-summary
 >
 <div class="space-y-1.5 flex-1 min-w-0">
 <div class="flex items-center gap-2.5 flex-wrap">
-<h3 class="text-[18px] font-semibold leading-tight">
+<h3 class="text-[18px] font-semibold leading-tight" data-list-title>
   {% comment %}The cluster profile existed at /clusters/<id> with nothing linking to it, so the page was only reachable by typing the URL — the same affordance a school name already carries in the directory.{% endcomment %}
   <a href="/clusters/{{ cluster.id }}" class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
 </h3>
@@ -111,14 +112,23 @@ Assign
 </button>
 {% endif %}
 
-<svg class="h-5 w-5 text-slate-400 transition-transform duration-300" :class="cardExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<button
+type="button"
+class="grid h-9 w-9 shrink-0 place-items-center rounded-control text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+@click="cardExpanded = !cardExpanded"
+:aria-expanded="cardExpanded.toString()"
+aria-controls="cluster-details-{{ cluster.id }}"
+:aria-label="cardExpanded ? 'Hide details for {{ cluster.name|escapejs }}' : 'Show details for {{ cluster.name|escapejs }}'"
+>
+<svg aria-hidden="true" class="h-5 w-5 transition-transform duration-300" :class="cardExpanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
 </svg>
+</button>
 </div>
 </div>
 
 <!-- Expanded details block -->
-<div x-show="cardExpanded" x-cloak class="border-t border-slate-100 p-5 space-y-5">
+<div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-cloak class="border-t border-slate-100 p-5 space-y-5">
   <section class="cluster-ssa-summary" aria-labelledby="cluster-{{ cluster.id }}-ssa-title">
     <h3 id="cluster-{{ cluster.id }}-ssa-title" class="sr-only">Cluster SSA intervention recommendations</h3>
     {% include "partials/ssa/score_group_columns.html" with detail_id="cluster-ssa-"|add:cluster.id ssa_groups=cluster.ssa_groups has_ssa_scores=cluster.has_ssa_scores %}

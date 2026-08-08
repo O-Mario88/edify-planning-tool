@@ -1,0 +1,25 @@
+{% comment %}
+Shared compact directory/queue record. Expected record keys: title, eyebrow,
+subtitle, status, status_tone, metric_label, metric_value, url, action_label.
+{% endcomment %}
+<article class="mobile-record-card{% if record.status_tone %} mobile-record-card--{{ record.status_tone }}{% endif %}" data-mobile-record-card>
+  <header>
+    <div>
+      {% if record.eyebrow %}<p>{{ record.eyebrow }}</p>{% endif %}
+      <h3>{{ record.title }}</h3>
+      {% if record.subtitle %}<small>{{ record.subtitle }}</small>{% endif %}
+    </div>
+    {% if record.status %}<span class="mobile-record-card__status">{{ record.status }}</span>{% endif %}
+  </header>
+  {% if record.metric_label or record.metric_value %}
+  <dl>
+    <div><dt>{{ record.metric_label }}</dt><dd>{{ record.metric_value }}</dd></div>
+  </dl>
+  {% endif %}
+  {% if record.url %}
+  <a href="{{ record.url }}" class="mobile-record-card__action" data-mobile-action="record-open">
+    <span>{% firstof record.action_label "Open details" %}</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+  </a>
+  {% endif %}
+</article>

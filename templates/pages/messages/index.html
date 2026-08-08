@@ -4,12 +4,12 @@
 {% block title %}Messages — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-4 sm:p-6 max-w-7xl mx-auto flex flex-col gap-4 lg:h-full min-h-0 "
+<div id="messages-page" class="messages-page p-4 sm:p-6 max-w-7xl mx-auto flex flex-col gap-4 lg:h-full min-h-0"
      x-data="{ mobilePane: 'list', composeOpen: false, activeMessageTab: '{{ active_tab|escapejs }}' }"
      @open-compose.window="composeOpen = true">
 
   <!-- Header -->
-  <div class="shrink-0 edify-page-header">
+  <div class="shrink-0 edify-page-header" data-messages-plane>
     <div class="min-w-0 edify-page-header__lead">
       <p class="edify-page-eyebrow">Communication</p>
       <h1 class="edify-page-title edify-page-header__title">Messages</h1>
@@ -30,11 +30,12 @@
   </div>
 
   <!-- Filter strip (full width, replaces the KPI strip) -->
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-2.5 flex flex-col lg:flex-row lg:items-center gap-2.5 shrink-0">
-    <nav class="flex items-center gap-1 flex-nowrap flex-1 min-w-0 overflow-x-auto scrollbar-none pb-1 lg:pb-0" aria-label="Message inbox views">
+  <div class="platform-filter-bar shrink-0" data-messages-plane aria-label="Message filters">
+    <nav data-edify-tablist class="messages-inbox-tabs flex items-center flex-nowrap flex-1 min-w-0 overflow-x-auto scrollbar-none" aria-label="Message inbox views">
       {% for key, label in tabs %}
         <button
           type="button"
+          data-edify-tab
           id="messages-tab-{{ key }}"
           :aria-pressed="activeMessageTab === '{{ key }}'"
           hx-get="/messages"
@@ -44,12 +45,11 @@
           hx-push-url="true"
           hx-indicator="#messages-tab-loading"
           @click="activeMessageTab = '{{ key }}'; document.getElementById('messages-active-tab').value = '{{ key }}'"
-          :class="activeMessageTab === '{{ key }}' ? 'edify-primary-soft edify-primary-text ring-1 edify-primary-ring' : 'text-slate-500 hover:bg-slate-50'"
-          class="shrink-0 min-h-11 lg:min-h-8 px-3 lg:px-2.5 rounded-control edify-text-caption font-bold transition-all inline-flex items-center gap-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 edify-primary-focus-visible">
+          class="messages-inbox-tab shrink-0 min-h-11 lg:min-h-8 edify-text-caption font-bold inline-flex items-center gap-1.5">
           {{ label }}
-          {% if key == 'all' %}<span :class="activeMessageTab === '{{ key }}' ? 'edify-primary-soft edify-primary-text' : 'bg-slate-100 text-slate-500'" class="px-1.5 py-px rounded-pill edify-text-caption">{{ tab_counts.all }}</span>
-          {% elif key == 'unread' %}<span :class="activeMessageTab === '{{ key }}' ? 'edify-primary-soft edify-primary-text' : 'bg-slate-100 text-slate-500'" class="px-1.5 py-px rounded-pill edify-text-caption">{{ tab_counts.unread }}</span>
-          {% elif key == 'assigned' %}<span :class="activeMessageTab === '{{ key }}' ? 'edify-primary-soft edify-primary-text' : 'bg-slate-100 text-slate-500'" class="px-1.5 py-px rounded-pill edify-text-caption">{{ tab_counts.assigned }}</span>{% endif %}
+          {% if key == 'all' %}<span class="messages-inbox-tab__count">{{ tab_counts.all }}</span>
+          {% elif key == 'unread' %}<span class="messages-inbox-tab__count">{{ tab_counts.unread }}</span>
+          {% elif key == 'assigned' %}<span class="messages-inbox-tab__count">{{ tab_counts.assigned }}</span>{% endif %}
         </button>
       {% endfor %}
     </nav>
@@ -110,7 +110,7 @@
         {% include "partials/messages/context_panel.html" %}
       </div>
       <!-- Message Rules (below the workflow context) -->
-      <div class="shrink-0 edify-surface rounded-surface border border-slate-100 shadow-sm p-4">
+      <div class="shrink-0 edify-surface rounded-surface border border-slate-100 shadow-sm p-4" data-messages-plane>
         <div class="flex items-center gap-1.5 mb-2.5">
           <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Message Rules</h3>
           <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>

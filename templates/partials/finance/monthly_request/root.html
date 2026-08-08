@@ -19,7 +19,10 @@
         <h1 class="edify-page-title edify-page-header__title">Monthly Team Budget Request</h1>
         <p class="edify-page-header__description">{{ month_label }} · FY {{ fy }} · Program Lead team</p>
       </div>
-      <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="edify-filter-bar grid grid-cols-2 gap-2 rounded-surface border border-white/10 bg-white/5 p-2.5 sm:flex sm:items-end">
+    </div>
+  </section>
+
+      <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="edify-filter-bar" aria-label="Monthly budget request filters">
         <label class="block min-w-0">
           <span class="block px-1 edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
           <select name="month" aria-label="Month" class="mt-1 h-9 w-full rounded-control border border-white/15 bg-slate-800 px-2.5 text-[12px] font-semibold text-white edify-primary-focus focus:outline-none">
@@ -33,8 +36,6 @@
           </select>
         </label>
       </form>
-    </div>
-  </section>
 
   <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Monthly request progress">
     <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">

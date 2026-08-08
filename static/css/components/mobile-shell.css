@@ -24,6 +24,40 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Phones keep one contextual search plus notifications and account. Messages
+ * already has a role-aware bottom-navigation destination, while appearance
+ * lives in Settings; duplicating both in the app bar consumed the width the
+ * current task needs. The classes are explicit so a shell without bottom nav
+ * retains its only Messages entry point. */
+@media (max-width: 47.5rem) {
+  .edify-topbar {
+    min-block-size: calc(3.25rem + env(safe-area-inset-top, 0px));
+    block-size: auto;
+    gap: 0.5rem;
+    padding-inline: max(0.75rem, env(safe-area-inset-left, 0px)) max(0.75rem, env(safe-area-inset-right, 0px));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .edify-topbar > :first-child {
+    min-inline-size: 0;
+    gap: 0.5rem;
+  }
+
+  .edify-topbar__search {
+    max-inline-size: none;
+  }
+
+  .edify-topbar > :last-child {
+    gap: 0.25rem;
+  }
+
+  .edify-topbar__utility--mobile-redundant,
+  .edify-topbar__utility--theme {
+    display: none !important;
+  }
+}
+
 /* Landscape puts the notch on a side, where the topbar's own controls are. */
 @media (orientation: landscape) {
   .edify-topbar {

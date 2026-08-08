@@ -580,6 +580,14 @@ urlpatterns = [
         my_plan_views.confirm_reimbursement_receipt_action,
         name="confirm_reimbursement_receipt_action",
     ),
+    # The static queue route must precede the generic activity detail route;
+    # otherwise the word "closure" is consumed as an activity id.
+    path(
+        "activities/closure",
+        closure_views.closure_readiness_queue_view,
+        name="closure_readiness",
+    ),
+    path("activities/closure/", closure_views.closure_readiness_queue_view),
     path(
         "activities/<str:activity_id>",
         my_plan_views.activity_detail_view,
@@ -1349,12 +1357,6 @@ urlpatterns = [
     ),
     path("accounts/weekly-requests/", finance_operating_views.weekly_requests_view),
     # ── Controlled Activity Closure Workflow ──────────────────────────────────
-    path(
-        "activities/closure",
-        closure_views.closure_readiness_queue_view,
-        name="closure_readiness",
-    ),
-    path("activities/closure/", closure_views.closure_readiness_queue_view),
     path(
         "activities/<str:activity_id>/closure",
         closure_views.activity_closure_detail_view,

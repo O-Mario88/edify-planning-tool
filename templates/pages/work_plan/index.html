@@ -106,16 +106,14 @@ Submit completed plan to RVP
 </select>
 </label>
 
+{% if view == "month" or view == "quarter" %}
+<label class="flex flex-col min-w-[150px] edify-text-caption font-bold text-slate-500">{% if view == "month" %}Month{% else %}Quarter{% endif %}
+<select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
 {% if view == "month" %}
-<label class="flex flex-col min-w-[150px] edify-text-caption font-bold text-slate-500">Month
-<select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
 {% for m in month_options %}<option value="{{ m.val }}" {% if period == m.val %}selected{% endif %}>{{ m.label }}</option>{% endfor %}
-</select>
-</label>
-{% elif view == "quarter" %}
-<label class="flex flex-col min-w-[110px] edify-text-caption font-bold text-slate-500">Quarter
-<select name="period" class="mt-1 h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none">
+{% else %}
 {% for q in quarter_options %}<option value="{{ q }}" {% if period == q %}selected{% endif %}>{{ q }}</option>{% endfor %}
+{% endif %}
 </select>
 </label>
 {% endif %}

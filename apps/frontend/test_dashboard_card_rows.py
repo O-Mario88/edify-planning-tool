@@ -53,10 +53,15 @@ class DashboardCardRowContractTest(SimpleTestCase):
         )
         self.assertIn("lg:flex-row lg:items-center", source)
 
-    def test_cd_analytics_pairs_cards_by_natural_height(self):
+    def test_cd_analytics_groups_supporting_evidence_by_decision_context(self):
         source = self._source("templates/partials/analytics/cd/body.html")
+        self.assertIn("Leadership priorities", source)
+        self.assertIn('data-analytics-id="cd-performance-drivers"', source)
+        self.assertIn('data-analytics-id="cd-impact-delivery"', source)
+        self.assertIn('data-analytics-id="cd-people-oversight"', source)
+        self.assertIn('data-analytics-id="cd-finance-reporting"', source)
         self.assertEqual(source.count("data-cd-analytics-row"), 6)
-        self.assertEqual(source.count("data-cd-analytics-wide-card"), 2)
+        self.assertEqual(source.count("data-cd-analytics-wide-card"), 1)
         self.assertNotIn("lg:grid-cols-3 gap-5 items-start", source)
 
     def test_pl_dashboard_rows_fill_the_twelve_column_grid(self):

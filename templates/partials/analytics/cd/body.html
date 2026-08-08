@@ -1,61 +1,82 @@
 {% load frontend_filters %}
-<div class="space-y-5">
+<div class="analytics-command-layer">
 
-  {# ── Country-health KPI strip ─────────────────────────────────────────── #}
+  {# Executive health and geography stay visible at every visit. #}
   {% include "components/kpi_strip.html" with items=kpi_strip_items %}
-
-  {# Shared country geography; identical system data for every authorized role. #}
   {% include "partials/analytics/regional_performance.html" %}
 
-  {# ── Row 1 | 2 : Performance vs Target · SSA by Intervention ──────────── #}
-  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {% include "partials/analytics/cd/performance_vs_target.html" %}
-    {% include "partials/analytics/cd/ssa_interventions.html" %}
-  </div>
-
-  {# ── Row 3 | 4 : Target delivery · verified impact ────────────────────── #}
-  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {% include "partials/analytics/cd/target_by_pl.html" %}
-    {% include "partials/analytics/cd/impact_summary.html" %}
-  </div>
-
-  {# ── Row 5 | 6 : District signals · recommended actions ───────────────── #}
-  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {% include "partials/analytics/cd/district_heatmap.html" %}
-    {% include "partials/analytics/cd/recommended_actions.html" %}
-  </div>
-
-  {# ── Row 7 | 8 : Partner · cluster performance ────────────────────────── #}
-  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {% include "partials/analytics/cd/partner_performance.html" %}
-    {% include "partials/analytics/cd/cluster_performance.html" %}
-  </div>
-
-  {# ── Row 9 | 10 : PL oversight · regional summary ─────────────────────── #}
-  <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    {% include "partials/analytics/cd/pl_oversight.html" %}
-    {% include "partials/analytics/cd/regional_summary.html" %}
-  </div>
-
-  {# ── Row 11 | 12 : CCEO execution detail · validated ranking ──────────── #}
-  <div data-cd-cceo-performance-row
-       data-cd-analytics-row
-       class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-    <div class="min-w-0 flex items-stretch">
-      {% include "partials/analytics/cd/cceo_snapshot.html" %}
+  <section class="analytics-decision-section" aria-labelledby="cd-priority-title">
+    <header class="analytics-section-heading">
+      <div>
+        <span class="analytics-section-heading__eyebrow">Do next</span>
+        <h2 id="cd-priority-title">Leadership priorities</h2>
+      </div>
+      <p>The recommended actions and operational risks remain visible; supporting evidence is grouped below.</p>
+    </header>
+    <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {% include "partials/analytics/cd/recommended_actions.html" %}
+      {% include "partials/analytics/cd/operational_risk.html" %}
     </div>
-    <div class="min-w-0 flex items-stretch">
-      {% include "partials/analytics/cd/cceo_leaderboard.html" %}
-    </div>
-  </div>
-  {# CCEO performance row end #}
+  </section>
 
-  {# Wide analytical cards retain their natural content height. #}
-  <div data-cd-analytics-wide-card>
-    {% include "partials/analytics/cd/budget_finance.html" %}
-  </div>
-  <div data-cd-analytics-wide-card>
-    {% include "partials/analytics/cd/operational_risk.html" %}
-  </div>
+  <div class="analytics-evidence-stack" aria-label="Supporting country analytics">
+    <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="cd-performance-drivers">
+      <summary>
+        <span><strong>Performance drivers</strong><small>Target delivery, SSA, Program Leads and district signals</small></span>
+        <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <div class="analytics-evidence-disclosure__body">
+        <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {% include "partials/analytics/cd/performance_vs_target.html" %}
+          {% include "partials/analytics/cd/ssa_interventions.html" %}
+        </div>
+        <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {% include "partials/analytics/cd/target_by_pl.html" %}
+          {% include "partials/analytics/cd/district_heatmap.html" %}
+        </div>
+      </div>
+    </details>
 
+    <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="cd-impact-delivery">
+      <summary>
+        <span><strong>Impact and delivery network</strong><small>Verified impact, partner delivery, clusters and regional context</small></span>
+        <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
+        <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {% include "partials/analytics/cd/impact_summary.html" %}
+          {% include "partials/analytics/cd/partner_performance.html" %}
+        </div>
+        <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {% include "partials/analytics/cd/cluster_performance.html" %}
+          {% include "partials/analytics/cd/regional_summary.html" %}
+        </div>
+      </div>
+    </details>
+
+    <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="cd-people-oversight">
+      <summary>
+        <span><strong>People and portfolio oversight</strong><small>PL accountability and CCEO execution detail</small></span>
+        <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
+        <div data-cd-analytics-row>{% include "partials/analytics/cd/pl_oversight.html" %}</div>
+        <div data-cd-cceo-performance-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+          <div class="min-w-0 flex items-stretch">{% include "partials/analytics/cd/cceo_snapshot.html" %}</div>
+          <div class="min-w-0 flex items-stretch">{% include "partials/analytics/cd/cceo_leaderboard.html" %}</div>
+        </div>
+        {# CCEO performance row end #}
+      </div>
+    </details>
+
+    <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="cd-finance-reporting">
+      <summary>
+        <span><strong>Finance and reporting evidence</strong><small>Budget execution and the financial context behind delivery</small></span>
+        <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
+        <div data-cd-analytics-wide-card>{% include "partials/analytics/cd/budget_finance.html" %}</div>
+      </div>
+    </details>
+  </div>
 </div>

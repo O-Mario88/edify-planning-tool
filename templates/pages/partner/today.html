@@ -6,7 +6,37 @@
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-  <div class="edify-page-header">
+  {% if is_partner_admin %}
+    {% include "components/mobile_role_home.html" with eyebrow="Partner operations" headline="Portfolio day" description="See today's organization-wide field work and move evidence into review." period_label=today|date:"D, j M" status_label=today_activities|length primary_action=mobile_primary_action %}
+  {% else %}
+    {% include "components/mobile_role_home.html" with eyebrow="Field day" headline="Your work today" description="Follow the route, complete assigned work and upload evidence before you close the day." period_label=today|date:"D, j M" status_label=today_activities|length primary_action=mobile_primary_action %}
+  {% endif %}
+
+  <div class="mobile-home-only">
+    <section class="mobile-home-section" aria-labelledby="partner-mobile-agenda-title">
+      <div class="mobile-home-section__header">
+        <h2 id="partner-mobile-agenda-title">Today's agenda</h2>
+        <a href="/my-plan">Open plan</a>
+      </div>
+      <div class="mobile-home-stack">
+        {% for a in today_activities %}
+        <article class="mobile-agenda-card{% if a.status == 'completed' %} mobile-agenda-card--success{% elif a.status == 'scheduled' %} mobile-agenda-card--warning{% endif %}" data-mobile-agenda-card>
+          <span class="mobile-agenda-card__rail" aria-hidden="true"></span>
+          <div class="mobile-agenda-card__time"><strong>Today</strong><small>{{ a.status|cut:"_"|title }}</small></div>
+          <div class="mobile-agenda-card__body"><p>{{ a.activity_type|cut:"_"|title }}</p><h3>{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}Activity{% endif %}</h3>{% if a.focus_intervention %}<small>{{ a.focus_intervention|cut:"_"|title }}</small>{% endif %}</div>
+        </article>
+        {% empty %}
+        <div class="edify-empty-state"><strong>Nothing scheduled today</strong><span>Assigned activities will appear here automatically.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="mobile-home-metrics" aria-label="Partner work summary">
+      <div class="mobile-home-metric"><span>Scheduled today</span><strong>{{ today_activities|length }}</strong></div>
+      <div class="mobile-home-metric"><span>Coming up</span><strong>{{ upcoming|length }}</strong></div>
+    </section>
+  </div>
+
+  <div class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Partner Portal</p>
       <h1 class="edify-page-title edify-page-header__title">Today</h1>
@@ -18,7 +48,7 @@
     </a>
   </div>
 
-  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+  <div class="mobile-home-hide grid grid-cols-2 sm:grid-cols-3 gap-3">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Scheduled Today</p>
       <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ today_activities|length }}</p>
@@ -36,7 +66,7 @@
     </a>
   </div>
 
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface mobile-home-hide rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Today's Activities</h2>
     {% if today_activities %}
     <div class="divide-y divide-slate-50">
@@ -56,7 +86,7 @@
     {% endif %}
   </div>
 
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+  <div class="edify-surface mobile-home-deferred rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Coming Up</h2>
     {% if upcoming %}
     <div class="divide-y divide-slate-50">

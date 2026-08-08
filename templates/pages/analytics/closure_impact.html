@@ -1,6 +1,8 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}School Closures · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
 {% comment %}
@@ -14,7 +16,7 @@ The concentration question drives the layout: eight schools lost across eight
 districts is country-wide drift, eight lost in one district is a district in
 trouble, and a national total cannot tell them apart.
 {% endcomment %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
@@ -27,7 +29,10 @@ trouble, and a national total cannot tell them apart.
       <h1 class="edify-page-title edify-page-header__title">School Closures</h1>
       <p class="edify-page-header__description">Where the programme is losing schools, how many learners that removed, and what closing them did to planned work.</p>
     </div>
-    <form class="edify-page-header__controls"
+  </header>
+
+    <form class="edify-filter-bar"
+          aria-label="School closure filters"
           hx-get="/analytics/school-closures"
           hx-target="#closure-impact-body"
           hx-swap="innerHTML"
@@ -48,7 +53,9 @@ trouble, and a national total cannot tell them apart.
         </select>
       </label>
     </form>
-  </header>
+
+  {% include "partials/analytics/section_nav.html" %}
+  {% include "components/analytics_decision_frame.html" with question="Where are school closures concentrated, what capacity was lost, and how did they change the delivery plan?" evidence="Closed-school ledger, enrolment and planned work" freshness="Live to the selected period" confidence="Qualified by closure data quality" %}
 
   <div id="closure-impact-body">
     {% include "partials/analytics/closure_impact_workspace.html" %}

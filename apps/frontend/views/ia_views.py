@@ -1541,6 +1541,12 @@ def ia_dashboard_view(request):
         "avg_resolution_days": avg_resolution_days,
         "verification_sla": verification_sla,
         "field_debrief_intel": field_debrief_intel,
+        "mobile_primary_action": {
+            "label": "Review oldest record"
+            if queue_items
+            else "Open verification queue",
+            "url": queue_items[0]["review_url"] if queue_items else "/ia/verification/",
+        },
     }
     return render(request, "pages/ia/analytics_dashboard.html", context)
 

@@ -380,6 +380,9 @@ def calendar_view(request):
     selected_status = request.GET.get("status", "")
     if selected_status not in _CALENDAR_STATUS_FAMILIES:
         selected_status = ""
+    selected_event_kind = request.GET.get("event_kind", "all")
+    if selected_event_kind not in {"all", "activity", "leave", "holiday"}:
+        selected_event_kind = "all"
 
     month_start = date(year, month, 1)
     month_end = date(
@@ -635,6 +638,15 @@ def calendar_view(request):
     for day_events in events_by_date.values():
         day_events.sort(key=lambda event: (event_order[event["kind"]], event["title"]))
 
+    def kind_counts(day_events):
+        """Small per-day projection shared by the mobile grid and agenda."""
+        return {
+            "all": len(day_events),
+            "activity": sum(event["kind"] == "activity" for event in day_events),
+            "leave": sum(event["kind"] == "leave" for event in day_events),
+            "holiday": sum(event["kind"] == "holiday" for event in day_events),
+        }
+
     calendar_weeks = []
     for week in calendar.Calendar(firstweekday=0).monthdatescalendar(year, month):
         calendar_weeks.append(
@@ -642,6 +654,7 @@ def calendar_view(request):
                 {
                     "date": day,
                     "events": events_by_date.get(day, []),
+                    "kind_counts": kind_counts(events_by_date.get(day, [])),
                     "is_current_month": day.month == month,
                     "is_today": day == today,
                 }
@@ -655,6 +668,7 @@ def calendar_view(request):
         {
             "date": day,
             "events": events_by_date[day],
+            "kind_counts": kind_counts(events_by_date[day]),
             "is_today": day == today,
         }
         for day in sorted(events_by_date)
@@ -677,6 +691,8 @@ def calendar_view(request):
         keep_params["activity_type"] = selected_type
     if selected_status:
         keep_params["status"] = selected_status
+    if selected_event_kind != "all":
+        keep_params["event_kind"] = selected_event_kind
     view_params = dict(keep_params)
     if view_mode == "agenda":
         keep_params["view"] = "agenda"
@@ -700,7 +716,10 @@ def calendar_view(request):
         "status_options": _CALENDAR_STATUS_OPTIONS,
         "selected_type": selected_type,
         "selected_status": selected_status,
-        "filters_active": bool(selected_type or selected_status),
+        "selected_event_kind": selected_event_kind,
+        "filters_active": bool(
+            selected_type or selected_status or selected_event_kind != "all"
+        ),
         "prev_month": prev_month,
         "prev_year": prev_year,
         "next_month": next_month,
@@ -721,7 +740,7 @@ def calendar_view(request):
                 **{
                     key: value
                     for key, value in keep_params.items()
-                    if key not in ("activity_type", "status")
+                    if key not in ("activity_type", "status", "event_kind")
                 },
             }
         ),

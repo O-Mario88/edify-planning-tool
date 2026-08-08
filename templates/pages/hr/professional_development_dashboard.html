@@ -1,9 +1,10 @@
 {% extends "layouts/shell.html" %}
 
 {% block title %}Professional Development Dashboard · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="performance">
 
   <!-- Header -->
   <div class="edify-page-header">

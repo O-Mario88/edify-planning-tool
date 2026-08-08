@@ -429,11 +429,11 @@ main .edify-selected-surface,
 
 main .edify-selected-surface *,
 .edify-selected-surface *,
-.edify-selected-surface :is(strong, .legacy-kpi-strip__value, .legacy-kpi-strip__icon, .legacy-kpi-strip__label, .legacy-kpi-strip__helper, h1, h2, h3, p, span, small, svg) {
+.edify-selected-surface :is(strong, .edify-kpi-strip__value, .edify-kpi-strip__icon, .edify-kpi-strip__label, .edify-kpi-strip__helper, h1, h2, h3, p, span, small, svg) {
   color: #ffffff !important;
 }
 
-main .edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100, .legacy-kpi-strip__label, .legacy-kpi-strip__helper, small) {
+main .edify-selected-surface :is(.text-slate-400, .text-slate-500, .text-blue-100, .edify-kpi-strip__label, .edify-kpi-strip__helper, small) {
   color: rgba(255, 255, 255, 0.92) !important;
 }
 
@@ -474,7 +474,7 @@ main table tbody tr:hover,
   --edify-action-button-block-size: 2.75rem;
   --edify-action-button-padding-inline: 1.125rem;
   --edify-action-button-icon-size: 1.125rem;
-  --edify-action-button-radius: 1rem;
+  --edify-action-button-radius: var(--radius-control);
 }
 
 :root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
@@ -584,7 +584,7 @@ main table tbody tr:hover,
   [class*="border-indigo-"][class*="rounded"]
 ):not(.btn-danger):not(.btn-success):not(.btn-warning):not(
   :where(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -611,7 +611,7 @@ main table tbody tr:hover,
   [class*="border-indigo-"][class*="rounded"]
 ):not(.btn-danger):not(.btn-success):not(.btn-warning):not(
   :where(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -742,15 +742,28 @@ main :is(.tabular-nums, [data-kpi-value], [data-currency], .currency, .amount) {
    this shared stylesheet, but must still follow the platform contract. */
 main :is(
   .platform-filter-bar,
+  .edify-filter-bar,
   .sp-filter-panel,
   .spp-filter-panel,
   .spa-filter-panel,
   .tt-filter-panel,
   #filters-form,
+  #core-filters-form,
   #analytics-filters-form,
   #pl-analytics-filters,
   #cd-analytics-filters,
   #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"],
   .school-filters-form,
   .school-filter-canvas
 ) {
@@ -766,15 +779,28 @@ main :is(
 
 main :is(
   .platform-filter-bar,
+  .edify-filter-bar,
   .sp-filter-panel,
   .spp-filter-panel,
   .spa-filter-panel,
   .tt-filter-panel,
   #filters-form,
+  #core-filters-form,
   #analytics-filters-form,
   #pl-analytics-filters,
   #cd-analytics-filters,
   #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"],
   .school-filters-form,
   .school-filter-canvas
 ) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
@@ -788,15 +814,28 @@ main :is(
 
 main :is(
   .platform-filter-bar,
+  .edify-filter-bar,
   .sp-filter-panel,
   .spp-filter-panel,
   .spa-filter-panel,
   .tt-filter-panel,
   #filters-form,
+  #core-filters-form,
   #analytics-filters-form,
   #pl-analytics-filters,
   #cd-analytics-filters,
   #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"],
   .school-filters-form,
   .school-filter-canvas
 ) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
@@ -806,15 +845,28 @@ main :is(
 
 main :is(
   .platform-filter-bar,
+  .edify-filter-bar,
   .sp-filter-panel,
   .spp-filter-panel,
   .spa-filter-panel,
   .tt-filter-panel,
   #filters-form,
+  #core-filters-form,
   #analytics-filters-form,
   #pl-analytics-filters,
   #cd-analytics-filters,
   #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"],
   .school-filters-form,
   .school-filter-canvas
 ) :is(input, select, textarea):disabled {
@@ -822,6 +874,207 @@ main :is(
   border-color: var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
   cursor: not-allowed !important;
+}
+
+/* ── Page-canvas filter toolbar contract. ────────────────────────────────
+   Filter controls are one content-first toolbar, not a responsive card grid.
+   Keeping the row intact makes every page scan in the same left-to-right
+   order. On a viewport that cannot hold the controls, only this toolbar
+   scrolls horizontally; the page itself never overflows and DOM/tab order is
+   unchanged. Popover toolbars keep visible overflow so their anchored panel
+   is not clipped. */
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) {
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: flex-end !important;
+  justify-content: flex-start !important;
+  gap: 0.75rem !important;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+):not(:has(.work-plan-filter-popover)) {
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 0.25rem;
+}
+
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > :is(label, div):has(> :is(select, input:not([type="hidden"]), textarea)) {
+  display: flex;
+  flex: 1 0 7.5rem;
+  min-inline-size: 7.5rem;
+  max-inline-size: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Labels and field groups are layout only. Legacy analytics, planning,
+   cluster, core-school and finance templates previously put a small card
+   around each actual field; the native field is now the only bounded layer. */
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > :is(label, div):has(> :is(select, input:not([type="hidden"]), textarea))
+  > span:not(.sr-only) {
+  white-space: nowrap;
+}
+
+main :is(.platform-filter-bar, .edify-filter-bar, [data-component="filter-toolbar"])
+  > :is(button, a, .edify-filter-actions) {
+  flex: 0 0 auto;
+}
+
+/* Directory pages opt into the canonical toolbar too. The earlier mobile
+   family rule treated these filters as two-column grids and therefore won on
+   selector specificity even after a form adopted .edify-filter-bar. Keep the
+   DOM order and one-row contract intact; the toolbar itself owns any narrow
+   viewport overflow. */
+main [data-mobile-family] :is(
+  #project-filters,
+  #cluster-filters,
+  .partner-workspace__filters,
+  .school-filters-form,
+  .school-filter-grid,
+  .platform-filter-bar,
+  .edify-filter-bar,
+  [data-component="filter-toolbar"]
+) {
+  display: flex !important;
+  grid-template-columns: none !important;
+}
+
+/* The mobile disclosure remains useful, but it belongs to the page canvas as
+   well. Its summary is a plain disclosure label and its contents add only
+   breathing room—not a bordered card, divider, or raised background. */
+main .mobile-family-filter {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 63.999rem) {
+  main .mobile-family-filter > summary {
+    padding-inline: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  main .mobile-family-filter > :not(summary) {
+    margin: 0 !important;
+    padding: 0.75rem 0 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
 }
 
 /* Special Projects uses the shared cockpit anatomy rather than a parallel
@@ -916,7 +1169,7 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
    falls back to a loose grid of unrelated KPI tiles. The strip container is a
    transparent grid; each cell reads as its own themed card. */
 main :is(
-  .legacy-kpi-strip,
+  .edify-kpi-strip,
   .admin-kpi-strip,
   .partner-kpi-grid,
   .tt-kpi-strip,
@@ -927,10 +1180,10 @@ main :is(
 ) {
   /* Repointed to design tokens so the strip follows the active theme —
      white/light cards in Light, dark cards in Dark, blue glass in Blue. */
-  --legacy-kpi-strip-label: var(--edify-text-muted);
-  --legacy-kpi-strip-value: var(--edify-text);
-  --legacy-kpi-strip-helper: var(--edify-text-subtle);
-  --legacy-kpi-strip-icon: var(--edify-accent);
+  --edify-kpi-strip-label: var(--edify-text-muted);
+  --edify-kpi-strip-value: var(--edify-text);
+  --edify-kpi-strip-helper: var(--edify-text-subtle);
+  --edify-kpi-strip-icon: var(--edify-accent);
   display: grid !important;
   gap: 0.75rem !important;
   min-inline-size: 0 !important;
@@ -956,7 +1209,7 @@ main :is(
    here instead would just be the same intent written in two places, waiting to
    disagree. */
 main :is(
-  .legacy-kpi-strip,
+  .edify-kpi-strip,
   .admin-kpi-strip,
   .partner-kpi-grid,
   .tt-kpi-strip,
@@ -971,17 +1224,17 @@ main :is(
 /* Period timelines retain chronological DOM order but wrap as a compact grid.
    A forced 1400px rail made ordinary report and target pages look zoomed-in
    and cut the first/last period off-screen. */
-main .legacy-kpi-strip.legacy-kpi-strip--timeline {
+main .edify-kpi-strip.edify-kpi-strip--timeline {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;
   overflow: visible !important;
 }
-main .legacy-kpi-strip.legacy-kpi-strip--timeline > * {
+main .edify-kpi-strip.edify-kpi-strip--timeline > * {
   min-inline-size: 0 !important;
 }
 
 main :is(
-  .legacy-kpi-strip > *,
+  .edify-kpi-strip > *,
   .admin-kpi,
   .partner-kpi-card,
   .tt-kpi,
@@ -991,7 +1244,7 @@ main :is(
   .spa-kpi
 ) {
   position: relative !important;
-  container: legacy-kpi-card / inline-size;
+  container: edify-kpi-card / inline-size;
   display: flex !important;
   grid-column: auto !important;
   min-inline-size: 0 !important;
@@ -1007,7 +1260,7 @@ main :is(
   background: var(--edify-surface) !important;
   background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment)) !important;
   box-shadow: var(--edify-shadow-sm) !important;
-  color: var(--legacy-kpi-strip-value) !important;
+  color: var(--edify-kpi-strip-value) !important;
 }
 
 /*
@@ -1015,7 +1268,7 @@ main :is(
   These descendants are cells inside one strip, never standalone surfaces.
 */
 main :is(
-  .legacy-kpi-strip.legacy-kpi-strip > *,
+  .edify-kpi-strip.edify-kpi-strip > *,
   .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
   .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
   .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
@@ -1032,7 +1285,7 @@ main :is(
 }
 
 main :is(
-  .legacy-kpi-strip.legacy-kpi-strip > :first-child,
+  .edify-kpi-strip.edify-kpi-strip > :first-child,
   .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
   .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
   .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
@@ -1049,7 +1302,7 @@ main :is(
    sidebar and reduce columns before labels wrap. */
 @media (min-width: 36.01rem) and (max-width: 59.99rem) {
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1064,7 +1317,7 @@ main :is(
 
 @media (min-width: 60rem) and (max-width: 79.99rem) {
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1079,7 +1332,7 @@ main :is(
 
 @media (min-width: 80rem) and (max-width: 94.99rem) {
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1094,7 +1347,7 @@ main :is(
 
 @media (min-width: 95rem) {
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1107,7 +1360,7 @@ main :is(
   }
 
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1121,7 +1374,7 @@ main :is(
 }
 
 main :is(
-  .legacy-kpi-strip,
+  .edify-kpi-strip,
   .admin-kpi-strip,
   .partner-kpi-grid,
   .tt-kpi-strip,
@@ -1134,7 +1387,7 @@ main :is(
 }
 
 main :is(
-  .legacy-kpi-strip,
+  .edify-kpi-strip,
   .admin-kpi-strip,
   .partner-kpi-grid,
   .tt-kpi-strip,
@@ -1149,7 +1402,7 @@ main :is(
 }
 
 main :is(
-  .legacy-kpi-strip,
+  .edify-kpi-strip,
   .admin-kpi-strip,
   .partner-kpi-grid,
   .tt-kpi-strip,
@@ -1164,13 +1417,13 @@ main :is(
 }
 
 /* Direct-template labels, values and helper lines. */
-main .legacy-kpi-strip > * :is(
+main .edify-kpi-strip > * :is(
   .uppercase,
   .edify-kpi-label,
   .card-kpi > div > div > p:first-child
 ) {
   max-inline-size: 100%;
-  color: var(--legacy-kpi-strip-label) !important;
+  color: var(--edify-kpi-strip-label) !important;
   font-weight: 700 !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
   overflow: hidden;
@@ -1182,7 +1435,7 @@ main .legacy-kpi-strip > * :is(
   word-break: normal;
 }
 
-main .legacy-kpi-strip > * :is(
+main .edify-kpi-strip > * :is(
   h3,
   h4,
   strong,
@@ -1197,37 +1450,37 @@ main .legacy-kpi-strip > * :is(
   [class*="text-[26px]"],
   [class*="text-[28px]"]
 ) {
-  color: var(--legacy-kpi-strip-value) !important;
+  color: var(--edify-kpi-strip-value) !important;
   font-variant-numeric: tabular-nums;
 }
 
-main .legacy-kpi-strip > * :is(
+main .edify-kpi-strip > * :is(
   .edify-text-caption:not(.uppercase):not(.edify-kpi-label),
   .card-kpi > div > div > p:last-child
 ) {
-  color: var(--legacy-kpi-strip-helper) !important;
+  color: var(--edify-kpi-strip-helper) !important;
 }
 
-main .legacy-kpi-strip--value-first > * > p:first-child {
-  color: var(--legacy-kpi-strip-value) !important;
+main .edify-kpi-strip--value-first > * > p:first-child {
+  color: var(--edify-kpi-strip-value) !important;
   font-size: clamp(1.55rem, 1.25rem + 0.85vw, 2rem) !important;
   line-height: 1 !important;
 }
 
-main .legacy-kpi-strip--value-first > * > p:last-child {
-  color: var(--legacy-kpi-strip-label) !important;
+main .edify-kpi-strip--value-first > * > p:last-child {
+  color: var(--edify-kpi-strip-label) !important;
 }
 
-main .legacy-kpi-strip--tabs > [role="tab"][aria-selected="true"] {
+main .edify-kpi-strip--tabs > [role="tab"][aria-selected="true"] {
   background: var(--brand-primary-soft) !important;
   box-shadow: inset 0 -3px 0 var(--edify-accent) !important;
 }
 
-main .legacy-kpi-strip--timeline {
+main .edify-kpi-strip--timeline {
   min-inline-size: 0 !important;
 }
 
-main .legacy-kpi-strip--timeline > :is(span, div.hidden, div[class*="hidden"]) {
+main .edify-kpi-strip--timeline > :is(span, div.hidden, div[class*="hidden"]) {
   display: none !important;
 }
 
@@ -1242,7 +1495,7 @@ main :is(
   .spa-kpi small
 ) {
   min-block-size: 0 !important;
-  color: var(--legacy-kpi-strip-label) !important;
+  color: var(--edify-kpi-strip-label) !important;
   font-size: var(--edify-text-tile-label-size) !important;
   font-weight: 700 !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
@@ -1266,7 +1519,7 @@ main :is(
   .spp-kpi,
   .spa-kpi
 ) strong {
-  color: var(--legacy-kpi-strip-value) !important;
+  color: var(--edify-kpi-strip-value) !important;
   font-size: var(--edify-text-tile-value-size) !important;
   font-weight: 600 !important;
   line-height: 1 !important;
@@ -1287,7 +1540,7 @@ main :is(
 ) {
   min-block-size: 0 !important;
   margin-block-start: 0.4rem !important;
-  color: var(--legacy-kpi-strip-helper) !important;
+  color: var(--edify-kpi-strip-helper) !important;
   font-size: var(--edify-text-tile-helper-size) !important;
   font-weight: 500 !important;
   line-height: 1.25 !important;
@@ -1303,8 +1556,8 @@ main :is(
   .sp-kpi__icon,
   .spp-kpi__icon,
   .spa-kpi > span,
-  .legacy-kpi-strip__icon,
-  .legacy-kpi-strip .kpi-icon-circle
+  .edify-kpi-strip__icon,
+  .edify-kpi-strip .kpi-icon-circle
 ) {
   width: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
   height: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
@@ -1313,7 +1566,7 @@ main :is(
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: var(--legacy-kpi-strip-icon) !important;
+  color: var(--edify-kpi-strip-icon) !important;
 }
 
 main :is(
@@ -1323,23 +1576,23 @@ main :is(
   .sp-kpi__icon,
   .spp-kpi__icon,
   .spa-kpi > span,
-  .legacy-kpi-strip__icon,
-  .legacy-kpi-strip .kpi-icon-circle
+  .edify-kpi-strip__icon,
+  .edify-kpi-strip .kpi-icon-circle
 ) svg {
   width: 100% !important;
   height: 100% !important;
   stroke-width: 1.65;
 }
 
-.legacy-kpi-strip__copy {
+.edify-kpi-strip__copy {
   display: flex;
   min-inline-size: 0;
   flex: 1 1 auto;
   flex-direction: column;
 }
 
-.legacy-kpi-strip__label {
-  color: var(--legacy-kpi-strip-label) !important;
+.edify-kpi-strip__label {
+  color: var(--edify-kpi-strip-label) !important;
   font-size: var(--edify-text-tile-label-size);
   font-weight: 700;
   letter-spacing: var(--edify-kpi-label-tracking);
@@ -1354,9 +1607,9 @@ main :is(
   word-break: normal;
 }
 
-.legacy-kpi-strip__value {
+.edify-kpi-strip__value {
   margin-block-start: 0.2rem;
-  color: var(--legacy-kpi-strip-value) !important;
+  color: var(--edify-kpi-strip-value) !important;
   font-size: var(--edify-text-tile-value-size) !important;
   font-weight: 600;
   line-height: 1;
@@ -1365,9 +1618,9 @@ main :is(
   white-space: nowrap;
 }
 
-.legacy-kpi-strip__helper {
+.edify-kpi-strip__helper {
   margin-block-start: 0.4rem;
-  color: var(--legacy-kpi-strip-helper) !important;
+  color: var(--edify-kpi-strip-helper) !important;
   font-size: var(--edify-text-tile-helper-size);
   font-weight: 500;
   line-height: 1.25;
@@ -1376,7 +1629,7 @@ main :is(
   word-break: normal;
 }
 
-@container legacy-kpi-card (max-width: 16rem) {
+@container edify-kpi-card (max-width: 16rem) {
   main :is(
     .admin-kpi__icon,
     .partner-kpi-card__icon,
@@ -1384,42 +1637,42 @@ main :is(
     .sp-kpi__icon,
     .spp-kpi__icon,
     .spa-kpi > span,
-    .legacy-kpi-strip__icon,
-    .legacy-kpi-strip .kpi-icon-circle
+    .edify-kpi-strip__icon,
+    .edify-kpi-strip .kpi-icon-circle
   ) {
     display: none !important;
   }
 }
 
-main .legacy-kpi-strip--finance > * {
+main .edify-kpi-strip--finance > * {
   gap: clamp(0.65rem, 0.55rem + 0.25vw, 0.85rem) !important;
   padding-inline: clamp(0.8rem, 0.68rem + 0.3vw, 1rem) !important;
 }
 
-main .legacy-kpi-strip--finance .legacy-kpi-strip__icon {
+main .edify-kpi-strip--finance .edify-kpi-strip__icon {
   width: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
   height: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
 }
 
-main .legacy-kpi-strip--finance .legacy-kpi-strip__value {
+main .edify-kpi-strip--finance .edify-kpi-strip__value {
   font-size: clamp(1rem, calc(0.9375rem + 2cqi), 1.28rem) !important;
 }
 
-main .legacy-kpi-strip .card-kpi > .flex {
+main .edify-kpi-strip .card-kpi > .flex {
   align-items: center !important;
   gap: 1rem !important;
 }
 
-main .legacy-kpi-strip .card-kpi {
+main .edify-kpi-strip .card-kpi {
   min-block-size: 8rem !important;
 }
 
-/* ═══ DARK THEMES: FILTER-SURFACE CONTRACT ══════════════════════════════════
-   Night and Edify Blue both take their visual language from their filter
-   controls: one quiet translucent plane, one thin hairline and no elevation.
-   Shared and legacy KPI families consume the same contract as larger panels.
-   Semantic icon fills, alerts, selected states and focus rings remain intact. */
-:is(.theme-blue, .theme-dark) main :is(
+/* ═══ GLOBAL BORDERLESS SURFACE CONTRACT ════════════════════════════════════
+   Cards and content tiles use surface contrast plus theme-aware elevation,
+   not decorative outlines. The border remains one pixel but transparent so
+   migrating a page never changes its geometry. Form controls, tables, alerts,
+   focus indicators and semantic badges keep their functional boundaries. */
+main :is(
   .card:not(.card-alert),
   .card-elevated,
   .card-flat,
@@ -1444,8 +1697,10 @@ main .legacy-kpi-strip .card-kpi {
   .pto-recommendation,
   .pto-signal,
   .pto-constraint,
+  .edify-tile,
   [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]):not(.edify-risk-card),
   [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]):not([class*="filter"]),
+  [class*="-tile"]:not([class*="-tile-"]):not([class*="-tile__"]),
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   div.edify-surface[class*="rounded"],
   section.edify-surface[class*="rounded"],
@@ -1458,7 +1713,11 @@ main .legacy-kpi-strip .card-kpi {
   div.bg-white[class*="rounded"],
   section.bg-white[class*="rounded"],
   article.bg-white[class*="rounded"],
-  aside.bg-white[class*="rounded"]
+  aside.bg-white[class*="rounded"],
+  div.rounded-surface.border:not([class*="w-"][class*="h-"]),
+  section.rounded-surface.border,
+  article.rounded-surface.border,
+  aside.rounded-surface.border
 ) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
@@ -1466,7 +1725,7 @@ main .legacy-kpi-strip .card-kpi {
   border-style: solid !important;
   border-width: 1px !important;
   border-radius: var(--edify-radius-sm) !important;
-  box-shadow: none !important;
+  box-shadow: var(--edify-card-shadow) !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
@@ -1484,10 +1743,10 @@ main .legacy-kpi-strip .card-kpi {
   backdrop-filter: none !important;
 }
 
-:is(.theme-blue, .theme-dark) main :is(
+main :is(
   .kpi-strip__item,
   .settings-detail-tile,
-  .legacy-kpi-strip.legacy-kpi-strip > *,
+  .edify-kpi-strip.edify-kpi-strip > *,
   .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
   .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
   .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
@@ -1697,7 +1956,7 @@ main .edify-card-action {
 
 :is(.theme-blue, .theme-dark) .kpi-strip--band .kpi-strip__item,
 :is(.theme-blue, .theme-dark) main :is(
-  .legacy-kpi-strip.legacy-kpi-strip > :first-child,
+  .edify-kpi-strip.edify-kpi-strip > :first-child,
   .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
   .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
   .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
@@ -1709,23 +1968,25 @@ main .edify-card-action {
   border-color: var(--edify-card-border) !important;
 }
 
-/* Resting chrome may be almost invisible; an actionable tile must still reveal
-   itself decisively when a pointer or keyboard user reaches it. */
-:is(.theme-blue, .theme-dark) main :is(
+/* Interactive cards strengthen their elevation and surface on hover/focus;
+   they do not bring the removed outline back. */
+main :is(
   .card-interactive,
   a.card,
   button.card,
   .kpi-strip__item:has(.kpi-strip__item-body--link)
 ):is(:hover, :focus-within) {
   background-color: var(--edify-surface-hover) !important;
-  border-color: var(--edify-border-strong) !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow: var(--edify-card-shadow-hover) !important;
 }
 
-/* Phones never scroll a KPI strip horizontally. One full-width card preserves
-   a readable title line and matches the shared KPI component contract. */
+/* Legacy KPI families follow the shared phone summary: two compact columns,
+   with an odd final metric spanning the row. This removes the 700–900px wall
+   of one-card-per-row summaries while preserving DOM order and touch targets. */
 @media (max-width: 36rem) {
   main :is(
-    .legacy-kpi-strip,
+    .edify-kpi-strip,
     .admin-kpi-strip,
     .partner-kpi-grid,
     .tt-kpi-strip,
@@ -1735,11 +1996,12 @@ main .edify-card-action {
     .spa-kpi-grid
   ) {
     display: grid !important;
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
   }
 
   main :is(
-    .legacy-kpi-strip > *,
+    .edify-kpi-strip > *,
     .admin-kpi,
     .partner-kpi-card,
     .tt-kpi,
@@ -1749,7 +2011,33 @@ main .edify-card-action {
     .spa-kpi
   ) {
     min-inline-size: 0 !important;
-    min-block-size: 7.5rem !important;
+    min-block-size: 5.75rem !important;
+    padding: 0.75rem !important;
+  }
+
+  main :is(
+    .edify-kpi-strip,
+    .admin-kpi-strip,
+    .partner-kpi-grid,
+    .tt-kpi-strip,
+    .sp-kpis,
+    .sp-kpi-grid,
+    .spp-kpi-grid,
+    .spa-kpi-grid
+  ) > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .edify-kpi-strip__label {
+    display: -webkit-box;
+    min-block-size: 2.4em;
+    overflow: clip;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    text-overflow: clip;
+    text-wrap: balance;
+    white-space: normal;
   }
 }
 
@@ -1805,12 +2093,11 @@ main :is(
    removed card. Their page wrappers already own the layout gutters and rhythm,
    so reset every one of them to the same content edge.
 
-   Padding and bleed are on the whole family, not just the four card-derived
-   heroes: sixteen headers sharing one surface but keeping sixteen paddings
-   still put the title on a different vertical on every page, which is the
-   thing a shared header is for. The bleed is the padding plus the border, so
-   the title lines up with the breadcrumb above it and the cards below it
-   instead of sitting one indent to their right. */
+   Padding belongs to the whole family, not just the four card-derived heroes:
+   eighteen headers sharing one surface but keeping eighteen paddings still
+   puts the title on a different vertical on every page. The surface itself
+   stays on the wrapper grid; a negative margin would make it wider than the
+   body cards even when their content gutters were otherwise consistent. */
 main :is(
   .edify-page-hero,
   .edify-page-header,
@@ -1833,8 +2120,8 @@ main :is(
 ) {
   /* Canonical padding, not zero. Zero would put the title hard against the
      surface edge now that these carry the tonal surface again. */
-  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 0.75rem) !important;
-  margin-inline: calc(-1 * (var(--page-header-padding-x, 0.75rem) + 1px)) !important;
+  padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem) !important;
+  margin-inline: 0 !important;
   /* Through a variable, because the families that turn the header into a
      column at their own breakpoint need flex-start there — and centring a
      column is what indented their titles into the middle of the band. Those

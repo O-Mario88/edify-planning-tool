@@ -2,7 +2,7 @@
 {% load table_pagination %}
 {% block title %}Performance Cycle Console · Edify{% endblock %}
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" data-mobile-family="performance">
 
   <div class="edify-page-header">
     <div class="edify-page-header__lead">
@@ -24,7 +24,7 @@
   {% endif %}
 
   {# ── Readiness strip (§6) ──────────────────────────────────────────── #}
-  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Cycle readiness">
+  <section class="mobile-performance-readiness grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Cycle readiness">
     <article class="edify-surface rounded-surface border border-slate-100 p-4">
       <p class="edify-text-caption uppercase text-slate-400">Cycle</p>
       <p class="mt-1 text-[15px] font-bold {% if cycle %}text-emerald-600{% else %}text-slate-400{% endif %}">{% if cycle %}Open{% else %}Not opened{% endif %}</p>

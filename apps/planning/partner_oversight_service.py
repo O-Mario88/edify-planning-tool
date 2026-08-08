@@ -145,7 +145,17 @@ class PartnerOversightItem:
         return "scheduled"
 
 
-def build_items(principal, *, fy: str, month: int | None = None, partner_id=None):
+def build_items(
+    principal,
+    *,
+    fy: str,
+    month: int | None = None,
+    quarter: str | None = None,
+    date_start: date | None = None,
+    date_end: date | None = None,
+    partner_id=None,
+    program_lead_id=None,
+):
     """Every partner handover this principal may oversee, for the period.
 
     One bulk query per source. The partner group expansion on the page reuses
@@ -213,6 +223,39 @@ def build_items(principal, *, fy: str, month: int | None = None, partner_id=None
                 and i.assignment_date.month == month
             )
         ]
+    if quarter:
+        from apps.core.fy import get_quarter_for_date
+
+        items = [
+            i
+            for i in items
+            if i.quarter == quarter
+            or (
+                not i.quarter
+                and (i.scheduled_date or i.assignment_date)
+                and get_quarter_for_date(i.scheduled_date or i.assignment_date)
+                == quarter
+            )
+        ]
+    if date_start:
+        items = [
+            i
+            for i in items
+            if (i.scheduled_date or i.assignment_date)
+            and (i.scheduled_date or i.assignment_date) >= date_start
+        ]
+    if date_end:
+        items = [
+            i
+            for i in items
+            if (i.scheduled_date or i.assignment_date)
+            and (i.scheduled_date or i.assignment_date) < date_end
+        ]
+    if program_lead_id:
+        from apps.planning.oversight_service import _both_id_spaces
+
+        wanted = _both_id_spaces({program_lead_id})
+        items = [i for i in items if i.supervising_pl_id in wanted]
 
     from apps.planning import partner_risk_service
 
@@ -349,6 +392,7 @@ def _resolve_scope(principal) -> dict:
     # is stuck" rather than "you were shown nothing".
     if role in (
         EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
         EdifyRole.ADMIN.value,
         EdifyRole.IMPACT_ASSESSMENT.value,
         EdifyRole.PROGRAM_ACCOUNTANT.value,

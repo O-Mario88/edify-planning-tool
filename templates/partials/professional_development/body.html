@@ -224,11 +224,11 @@
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" x-data="{ tab: 'all' }">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">My Courses</h2>
-      <div class="flex items-center gap-1 bg-slate-100 rounded-surface p-1">
-        <button type="button" @click="tab = 'all'" :class="tab === 'all' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">All ({{ courses|length }})</button>
-        <button type="button" @click="tab = 'in_progress'" :class="tab === 'in_progress' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">In Progress ({{ in_progress_count }})</button>
-        <button type="button" @click="tab = 'completed'" :class="tab === 'completed' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Completed ({{ completed_count }})</button>
-        <button type="button" @click="tab = 'cancelled'" :class="tab === 'cancelled' ? 'edify-surface shadow-sm text-slate-800' : 'text-slate-500'" class="px-2.5 h-7 rounded-control edify-text-caption font-bold transition-colors">Cancelled ({{ cancelled_count }})</button>
+      <div data-edify-tablist class="flex items-center edify-text-caption font-bold">
+        <button data-edify-tab type="button" @click="tab = 'all'" :aria-pressed="tab === 'all'">All ({{ courses|length }})</button>
+        <button data-edify-tab type="button" @click="tab = 'in_progress'" :aria-pressed="tab === 'in_progress'">In Progress ({{ in_progress_count }})</button>
+        <button data-edify-tab type="button" @click="tab = 'completed'" :aria-pressed="tab === 'completed'">Completed ({{ completed_count }})</button>
+        <button data-edify-tab type="button" @click="tab = 'cancelled'" :aria-pressed="tab === 'cancelled'">Cancelled ({{ cancelled_count }})</button>
       </div>
     </div>
     {% if courses %}

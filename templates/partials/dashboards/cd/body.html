@@ -6,7 +6,7 @@
   {% endif %}
 
   {# ── Executive KPI strip ──────────────────────────────────────────────── #}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items %}
+  <div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
 
   {# ── Leadership Attention ──────────────────────────────────────────────── #}
   {% if leadership_attention %}
@@ -28,6 +28,10 @@
   </div>
   {% endif %}
 
+  <div class="mobile-home-only">
+    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Country pulse" %}
+  </div>
+
   {# ── Country Performance Overview | Regional Performance ──────────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5">
     <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
@@ -44,7 +48,7 @@
                  { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
                  { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
                ],
-               chart: { height: 265, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
+               chart: { height: 265, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
                colors: window.EdifyChartSystem.mixedSeries,
                dataLabels: { enabled: false },

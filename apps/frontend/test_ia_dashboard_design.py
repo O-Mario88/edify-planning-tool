@@ -32,7 +32,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
         )
         self.assertEqual(self.template.count('id="ia-queue-title"'), 1)
         self.assertEqual(self.template.count("<h3>Queue ownership</h3>"), 1)
-        self.assertNotIn("legacy-kpi-strip", self.template)
+        self.assertNotIn("edify-kpi-strip", self.template)
         self.assertNotIn("Quick Actions / Workflows", self.template)
 
     def test_summary_metrics_use_the_one_approved_kpi_component(self):
@@ -42,7 +42,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
         and the 2026-07-31 consistency mandate is explicit: one approved
         independent KPI Strip, page-local tiles migrated onto it rather than
         maintained beside it. The strip is the real component, not the
-        `legacy-kpi-strip` adapter that wraps older bespoke grids.
+        `edify-kpi-strip` adapter that wraps older bespoke grids.
         """
         self.assertIn('include "components/kpi_strip.html"', self.template)
         self.assertNotIn("ia-metric-grid", self.template)

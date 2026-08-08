@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}SSA Performance · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<section class="sp-page edify-page-canvas" aria-labelledby="ssa-performance-title">
+<section class="sp-page edify-page-canvas" aria-labelledby="ssa-performance-title" data-analytics-enterprise>
   <header class="edify-page-header sp-page-header">
     <div class="edify-page-header__lead">
       <span class="sp-eyebrow">School intelligence</span>
@@ -27,6 +29,8 @@
   </header>
 
   {% include "partials/analytics/section_nav.html" %}
+
+  {% include "components/analytics_decision_frame.html" with question="Which schools and interventions are furthest from the SSA standard, and where should support be concentrated?" evidence="Confirmed SSA assessments across eight interventions" freshness="Current filters and confirmed cycles" confidence="Coverage-qualified" %}
 
   {% include "partials/ssa/performance_workspace.html" %}
 </section>

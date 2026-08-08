@@ -629,55 +629,127 @@ class AnalyticsDashboardService:
             )
 
         # 7. Target Achievement by District
+        #
+        # The overview used to take the first eight district names in
+        # alphabetical order. That made the card a directory sample rather
+        # than an analytical view: a district with a severe delivery gap could
+        # disappear simply because its name started late in the alphabet.
+        # Build the complete role- and filter-scoped set once, then group it by
+        # the operational sub-region and rank the groups by attention needed.
         districts_perf = []
-        all_districts = District.objects.all().order_by("name")
-        if not scope.country_scope and scope.district_ids:
-            all_districts = all_districts.filter(id__in=scope.district_ids)
-
-        shown_districts = list(all_districts[:8])
+        scoped_districts = list(
+            District.objects.filter(id__in=schools_qs.values("district_id"))
+            .select_related("region", "sub_region")
+            .distinct()
+            .order_by("region__name", "sub_region__name", "name")
+        )
+        scoped_district_ids = [district.id for district in scoped_districts]
         district_counts = {
             row["school__district_id"]: row
-            for row in activities_qs.filter(
-                school__district_id__in=[d.id for d in shown_districts]
-            )
+            for row in activities_qs.filter(school__district_id__in=scoped_district_ids)
             .values("school__district_id")
             .annotate(
                 planned=Count("id"),
                 achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
             )
         }
+        district_school_counts = {
+            row["district_id"]: row["count"]
+            for row in schools_qs.filter(district_id__in=scoped_district_ids)
+            .values("district_id")
+            .annotate(count=Count("id"))
+        }
 
-        for dist in shown_districts:
+        for dist in scoped_districts:
             row = district_counts.get(dist.id)
             planned_d = row["planned"] if row else 0
             achieved_d = row["achieved"] if row else 0
             pct_d = round((achieved_d / planned_d * 100)) if planned_d > 0 else 0
-
-            status_color = "text-emerald-600 bg-emerald-50 border-emerald-200"
-            bar_color = "bg-emerald-500"
-            if pct_d >= 80:
-                status_color = "text-emerald-600 bg-emerald-50"
-                bar_color = "bg-emerald-500"
-            elif pct_d >= 60:
-                status_color = "edify-primary-text edify-primary-soft"
-                bar_color = "edify-primary-solid"
-            elif pct_d >= 40:
-                status_color = "text-amber-600 bg-amber-50"
-                bar_color = "bg-amber-500"
+            if planned_d == 0:
+                status = "untracked"
+                status_label = "No plan"
+                sort_rank = 3
+            elif pct_d >= 80:
+                status = "on_track"
+                status_label = "On track"
+                sort_rank = 2
+            elif pct_d >= 50:
+                status = "watch"
+                status_label = "Watch"
+                sort_rank = 1
             else:
-                status_color = "text-rose-600 bg-rose-50"
-                bar_color = "bg-rose-500"
+                status = "critical"
+                status_label = "Critical"
+                sort_rank = 0
 
             districts_perf.append(
                 {
+                    "id": dist.id,
                     "name": dist.name,
+                    "region": dist.region.name,
+                    "sub_region": (
+                        dist.sub_region.name if dist.sub_region else "Other districts"
+                    ),
                     "pct": pct_d,
+                    "gap": max(0, 100 - pct_d) if planned_d else None,
                     "planned": planned_d,
                     "achieved": achieved_d,
-                    "status_color": status_color,
-                    "bar_color": bar_color,
+                    "schools": district_school_counts.get(dist.id, 0),
+                    "status": status,
+                    "status_label": status_label,
+                    "sort_rank": sort_rank,
                 }
             )
+
+        district_groups_by_key: dict[tuple[str, str], dict] = {}
+        for district in districts_perf:
+            key = (district["region"], district["sub_region"])
+            group = district_groups_by_key.setdefault(
+                key,
+                {
+                    "region": district["region"],
+                    "name": district["sub_region"],
+                    "districts": [],
+                    "critical_count": 0,
+                    "watch_count": 0,
+                    "on_track_count": 0,
+                    "untracked_count": 0,
+                    "planned": 0,
+                    "achieved": 0,
+                    "schools": 0,
+                },
+            )
+            group["districts"].append(district)
+            group[f'{district["status"]}_count'] += 1
+            group["planned"] += district["planned"]
+            group["achieved"] += district["achieved"]
+            group["schools"] += district["schools"]
+
+        target_by_district_groups = list(district_groups_by_key.values())
+        for group in target_by_district_groups:
+            group["districts"].sort(
+                key=lambda district: (
+                    district["sort_rank"],
+                    -(district["gap"] or 0),
+                    district["name"],
+                )
+            )
+            group["pct"] = (
+                round(group["achieved"] / group["planned"] * 100)
+                if group["planned"]
+                else None
+            )
+            group["gap"] = 100 - group["pct"] if group["pct"] is not None else None
+
+        target_by_district_groups.sort(
+            key=lambda group: (
+                -group["critical_count"],
+                -group["watch_count"],
+                -(group["gap"] or 0),
+                group["region"],
+                group["name"],
+            )
+        )
 
         # 8. Regional Performance (Map or list representation)
         regional_perf = []
@@ -1068,6 +1140,7 @@ class AnalyticsDashboardService:
             "performance_overview": chart_performance,
             "ssa_performance": ssa_scores_list,
             "target_by_district": districts_perf,
+            "target_by_district_groups": target_by_district_groups,
             "regional_performance": regional_perf,
             # The geography card is a shared country-level system view for
             # every authorized analytics role. Dashboard KPIs remain scoped;

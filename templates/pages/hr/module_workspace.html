@@ -5,12 +5,15 @@
 hcos-workspace.css is used by this workspace alone; it used to load on
 every authenticated page.
 {% endcomment %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260731nowraptiles1">{% endblock %}
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260731nowraptiles1">
+{% if workspace.key == "analytics" %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endif %}
+{% endblock %}
 
 {% block title %}{{ title }} · Edify{% endblock %}
 
 {% block shell_content %}
-<section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title">
+<section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title" data-mobile-family="performance"{% if workspace.key == "analytics" %} data-analytics-enterprise{% endif %}>
   <nav class="hcos-breadcrumbs" aria-label="Breadcrumb">
     <a href="/dashboard">Human Capital</a>
     <span aria-hidden="true">/</span>
@@ -33,6 +36,10 @@ every authenticated page.
   </header>
 
   {% include "partials/analytics/section_nav.html" %}
+
+  {% if workspace.key == "analytics" %}
+  {% include "components/analytics_decision_frame.html" with question="Where are workforce capacity, review workload or compliance gaps most likely to constrain delivery?" evidence="Live workforce, review and compliance records" freshness="Current operational scope" confidence="No unsupported demographic inference" %}
+  {% endif %}
 
   {% include "components/kpi_strip.html" with items=metrics title=title|add:" summary" %}
 

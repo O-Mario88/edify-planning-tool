@@ -1,0 +1,858 @@
+/*
+ * Edify mobile-first product patterns.
+ *
+ * These components own their responsive behaviour. Page templates provide
+ * server-scoped data and workflow URLs; CSS never changes permission or DOM
+ * order. Every literal dimension is structural, while colour/elevation comes
+ * from the semantic Edify token layer.
+ */
+
+/* ── Task-first role home ──────────────────────────────────────────────── */
+.mobile-role-home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.875rem;
+  align-items: start;
+  margin-block-end: 1rem;
+  padding: clamp(1rem, 0.85rem + 0.5vw, 1.35rem);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+.mobile-role-home__copy {
+  min-inline-size: 0;
+}
+
+.mobile-role-home__copy > p {
+  margin: 0 0 0.25rem;
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mobile-role-home__copy > h1 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: clamp(1.35rem, 1.15rem + 1.1vw, 2rem);
+  font-weight: 780;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.mobile-role-home__copy > span {
+  display: block;
+  max-inline-size: 58ch;
+  margin-block-start: 0.375rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.mobile-role-home__context {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  white-space: nowrap;
+}
+
+.mobile-role-home__context strong {
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+}
+
+.mobile-role-home__action {
+  grid-column: 1 / -1;
+  display: flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.875rem;
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.mobile-role-home__action:hover {
+  background: var(--edify-accent-hover);
+  color: var(--edify-on-accent);
+}
+
+.mobile-role-home__action svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  flex: 0 0 auto;
+}
+
+/* Page-level responsive composition. Desktop markup remains untouched while
+   role homes can place the next decision ahead of analytical context. */
+.mobile-home-only {
+  display: none;
+}
+
+.mobile-home-section {
+  display: grid;
+  gap: 0.65rem;
+  margin-block-end: 1rem;
+}
+
+.mobile-home-section__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-home-section__header h2 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: 0.9375rem;
+  font-weight: 760;
+  letter-spacing: -0.01em;
+}
+
+.mobile-home-section__header :is(a, span) {
+  color: var(--edify-accent);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.mobile-home-stack {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.mobile-home-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.mobile-home-metric {
+  min-inline-size: 0;
+  min-block-size: 5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+}
+
+.mobile-home-metric > span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mobile-home-metric > strong {
+  display: block;
+  margin-block-start: 0.3rem;
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-family-filter > summary {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .mobile-family-filter:not([open]) > :not(summary) {
+    display: block;
+  }
+}
+
+/* ── Native mobile filter sheet ────────────────────────────────────────── */
+.mobile-filter-sheet__trigger {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding-inline: 0.8rem;
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+}
+
+.mobile-filter-sheet__trigger svg,
+.mobile-sheet__close svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.mobile-filter-sheet__count {
+  min-inline-size: 1.25rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font-size: var(--edify-text-micro-size);
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.mobile-sheet {
+  inline-size: min(100%, 36rem);
+  max-inline-size: none;
+  max-block-size: min(88dvh, 48rem);
+  margin: auto 0 0;
+  padding: 0;
+  border: 1px solid var(--edify-border-strong);
+  border-block-end: 0;
+  border-radius: var(--edify-radius-overlay) var(--edify-radius-overlay) 0 0;
+  background: transparent;
+  color: var(--edify-text);
+  box-shadow: var(--edify-shadow-xl);
+  overflow: clip;
+}
+
+.mobile-sheet[open] {
+  display: block;
+}
+
+.mobile-sheet::backdrop {
+  background: color-mix(in srgb, var(--edify-overlay-backdrop, var(--edify-text)) 68%, transparent);
+}
+
+.mobile-sheet__surface {
+  display: flex;
+  max-block-size: min(88dvh, 48rem);
+  flex-direction: column;
+  background: var(--edify-surface);
+}
+
+.mobile-sheet__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem var(--edify-page-gutter);
+  border-block-end: 1px solid var(--edify-border);
+}
+
+.mobile-sheet__header h2 {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: 1.125rem;
+  font-weight: 760;
+}
+
+.mobile-sheet__header p {
+  max-inline-size: 56ch;
+  margin: 0.2rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.mobile-sheet__close {
+  display: grid;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+}
+
+.mobile-sheet__body {
+  min-block-size: 0;
+  padding: 1rem var(--edify-page-gutter) calc(1rem + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.mobile-sheet__body :is(form, fieldset) {
+  inline-size: 100%;
+}
+
+/* ── Mobile section picker ─────────────────────────────────────────────── */
+.mobile-section-picker {
+  position: relative;
+  margin-block-end: 1rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+}
+
+.mobile-section-picker > summary {
+  display: flex;
+  min-block-size: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.mobile-section-picker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-section-picker > summary > span {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+}
+
+.mobile-section-picker > summary small {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+}
+
+.mobile-section-picker > summary strong {
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-section-picker > summary svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex: 0 0 auto;
+  transition: rotate var(--edify-transition-fast);
+}
+
+.mobile-section-picker[open] > summary svg {
+  rotate: 180deg;
+}
+
+.mobile-section-picker nav {
+  padding: 0 0.4rem 0.4rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.mobile-section-picker ul {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.4rem 0 0;
+  list-style: none;
+}
+
+.mobile-section-picker a {
+  display: flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: var(--edify-radius-sm);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.mobile-section-picker a[aria-current="page"] {
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.mobile-section-picker a small {
+  color: inherit;
+}
+
+/* ── Agenda and record cards ───────────────────────────────────────────── */
+.mobile-agenda-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-block-size: 5.25rem;
+  padding: 0.8rem 0.75rem 0.8rem 1rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+}
+
+.mobile-agenda-card__rail {
+  position: absolute;
+  inset-block: 0.75rem;
+  inset-inline-start: 0;
+  inline-size: 0.2rem;
+  border-radius: 0 var(--edify-radius-pill) var(--edify-radius-pill) 0;
+  background: var(--edify-accent);
+}
+
+.mobile-agenda-card--success .mobile-agenda-card__rail { background: var(--edify-success); }
+.mobile-agenda-card--warning .mobile-agenda-card__rail { background: var(--edify-warning); }
+.mobile-agenda-card--danger .mobile-agenda-card__rail { background: var(--edify-danger); }
+
+.mobile-agenda-card__time {
+  display: flex;
+  min-inline-size: 3.25rem;
+  flex-direction: column;
+  color: var(--edify-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mobile-agenda-card__time strong { font-size: var(--edify-text-label-size); }
+.mobile-agenda-card__time small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
+.mobile-agenda-card__body { min-inline-size: 0; }
+.mobile-agenda-card__body p { margin: 0 0 0.15rem; color: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 750; }
+.mobile-agenda-card__body h3 { margin: 0; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-agenda-card__body small { display: block; margin-block-start: 0.15rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); text-overflow: ellipsis; white-space: nowrap; }
+
+.mobile-agenda-card__status,
+.mobile-record-card__status {
+  display: inline-flex;
+  inline-size: fit-content;
+  margin-block-start: 0.35rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.mobile-agenda-card__action {
+  display: grid;
+  min-inline-size: 2.75rem;
+  min-block-size: 2.75rem;
+  place-items: center;
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-accent-light);
+  color: var(--edify-accent);
+}
+
+.mobile-agenda-card__action svg,
+.mobile-record-card__action svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.mobile-record-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+}
+
+.mobile-record-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-record-card > header > div { min-inline-size: 0; }
+.mobile-record-card > header p { margin: 0 0 0.15rem; color: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 750; }
+.mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: 0.9375rem; font-weight: 740; line-height: 1.25; }
+.mobile-record-card > header small { display: block; margin-block-start: 0.2rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
+
+.mobile-record-card dl,
+.mobile-record-card dl > div { margin: 0; }
+.mobile-record-card dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding-block-start: 0.6rem; border-block-start: 1px solid var(--edify-border); }
+.mobile-record-card dt { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
+.mobile-record-card dd { margin: 0; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 720; font-variant-numeric: tabular-nums; }
+
+.mobile-record-card__action {
+  display: flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-inline: 0.75rem;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-surface-muted);
+  color: var(--edify-accent);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ── Sticky contextual actions ─────────────────────────────────────────── */
+.mobile-sticky-actions {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(56px + env(safe-area-inset-bottom, 0px));
+  z-index: 25;
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+  gap: 0.5rem;
+  padding: 0.55rem max(var(--edify-page-gutter), env(safe-area-inset-left, 0px));
+  border-block-start: 1px solid var(--edify-border);
+  background: color-mix(in srgb, var(--edify-surface) 94%, transparent);
+  box-shadow: var(--edify-shadow-lg);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+
+.mobile-sticky-actions:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.mobile-sticky-actions > :is(a, button) {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.75rem;
+  border-radius: var(--edify-radius-md);
+  font-size: var(--edify-text-label-size);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.mobile-sticky-actions__primary {
+  border: 1px solid var(--edify-accent);
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+.mobile-sticky-actions__secondary {
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+}
+
+.edify-workspace:has(.mobile-sticky-actions) {
+  padding-block-end: calc(56px + 4.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Confirmed below-fold heavy regions opt in explicitly. The intrinsic size
+   prevents scroll-thumb jumps; unsupported browsers render normally. */
+@supports (content-visibility: auto) {
+  .mobile-deferred {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 32rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .mobile-role-home {
+    display: none;
+  }
+}
+
+@media (max-width: 63.999rem) {
+  .mobile-home-only {
+    display: block;
+  }
+
+  .mobile-home-hide {
+    display: none !important;
+  }
+
+  .mobile-home-deferred {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 40rem;
+  }
+
+  /* ── Phase 4 page-family contracts ────────────────────────────────────
+     These roots are explicit opt-ins on the corresponding templates. They
+     normalize mobile anatomy without widening role scope or replacing the
+     server-owned forms and workflow actions. */
+  [data-mobile-family] .edify-page-header__controls {
+    inline-size: 100%;
+    justify-content: flex-start;
+  }
+
+  [data-mobile-family] .edify-page-header__controls :is(a, button, select) {
+    min-block-size: 2.75rem;
+  }
+
+  [data-mobile-family="workday"] :is(.btn, .edify-action-button) {
+    min-block-size: 2.75rem;
+  }
+
+  [data-mobile-family="directory"] :is(
+    .school-filters-form,
+    .school-filter-grid,
+    .partner-workspace__filters,
+    #project-filters,
+    #cluster-filters
+  ) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem !important;
+  }
+
+  [data-mobile-family="directory"] :is(
+    .school-filters-form,
+    .school-filter-grid,
+    .partner-workspace__filters,
+    #project-filters,
+    #cluster-filters
+  ) :is(label, select, input) {
+    min-inline-size: 0;
+    inline-size: 100%;
+  }
+
+  [data-mobile-family="directory"] :is(
+    .school-filters-form,
+    .school-filter-grid,
+    .partner-workspace__filters,
+    #project-filters,
+    #cluster-filters
+  ) :is(select, input, button) {
+    min-block-size: 2.75rem;
+  }
+
+  .mobile-family-filter {
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface);
+  }
+
+  .mobile-family-filter > summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-block-size: 2.75rem;
+    align-items: center;
+    gap: 0.1rem 0.75rem;
+    padding: 0.65rem 0.8rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .mobile-family-filter > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-family-filter > summary > span:first-child {
+    color: var(--edify-text);
+    font-size: var(--edify-text-label-size);
+    font-weight: 740;
+  }
+
+  .mobile-family-filter > summary > small {
+    grid-column: 1;
+    color: var(--edify-text-muted);
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .mobile-family-filter > summary > span:last-child {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    color: var(--edify-accent);
+    transition: rotate var(--edify-transition-fast);
+  }
+
+  .mobile-family-filter[open] > summary > span:last-child {
+    rotate: 180deg;
+  }
+
+  .mobile-family-filter > :not(summary) {
+    margin: 0;
+    padding: 0.75rem;
+    border-block-start: 1px solid var(--edify-border);
+  }
+
+  [data-mobile-family="directory"] :is(.edify-page-header, .platform-page-header),
+  [data-mobile-family="finance"] .edify-page-header,
+  [data-mobile-family="verification"] .edify-page-header {
+    padding: 1rem;
+  }
+
+  /* Directory cards carry their own contextual metric. Large analytical
+     strips belong after the roster on desktop and are deliberately omitted
+     from the phone opening so results begin immediately after filters. */
+  [data-mobile-family="directory"] :is(
+    #kpi-cards-row,
+    #clusters-kpi-row,
+    .edify-kpi-strip
+  ) {
+    display: none !important;
+  }
+
+  /* Shared record tables become stacked records. Existing data-label spans
+     remain the accessible names; actions stay inside their owning record. */
+  [data-mobile-family] .edify-record-table {
+    display: block !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  [data-mobile-family] .edify-record-table > thead {
+    display: none !important;
+  }
+
+  [data-mobile-family] .edify-record-table > tbody,
+  [data-mobile-family] .edify-record-table > tbody > tr {
+    display: block !important;
+    inline-size: 100% !important;
+  }
+
+  [data-mobile-family] .edify-record-table > tbody > tr {
+    margin: 0.65rem 0;
+    padding: 0.75rem !important;
+    border: 1px solid var(--edify-border) !important;
+    border-radius: var(--edify-radius-md);
+    background: var(--edify-surface);
+  }
+
+  [data-mobile-family] .edify-record-table > tbody > tr > td {
+    display: flex !important;
+    min-block-size: 2.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0 !important;
+    border-block-end: 1px solid var(--edify-border);
+    text-align: end;
+  }
+
+  [data-mobile-family] .edify-record-table > tbody > tr > td:last-child {
+    min-block-size: 2.75rem;
+    border-block-end: 0;
+  }
+
+  [data-mobile-family="finance"] .edify-record-table [data-record-action] :is(button, a),
+  [data-mobile-family="verification"] .edify-record-table [data-record-action] :is(button, a) {
+    min-block-size: 2.75rem;
+  }
+
+  [data-mobile-family="verification"] > :first-child :is(a, button) {
+    min-block-size: 2.75rem;
+  }
+
+  /* ── Phase 5 long-tail family contracts ──────────────────────────────
+     These families reuse the same compact anatomy as the role homes: one
+     decision surface, small two-column summaries, and records instead of
+     desktop-width tables. */
+  [data-mobile-family="analytics"] :is(
+    .edify-page-header,
+    .analytics-dashboard__header
+  ),
+  [data-mobile-family="performance"] .edify-page-header,
+  [data-mobile-family="settings"] .edify-page-header,
+  [data-mobile-family="upload"] .edify-page-header,
+  [data-mobile-family="history"] .edify-page-header,
+  [data-mobile-family="closure"] .edify-page-header {
+    padding: 1rem;
+  }
+
+  [data-mobile-family="analytics"] :is(
+    .edify-page-header a,
+    .edify-page-header button,
+    select,
+    input
+  ),
+  [data-mobile-family="performance"] :is(a, button, select, input),
+  [data-mobile-family="settings"] :is(.btn, button, select, input),
+  [data-mobile-family="upload"] :is(.btn, button, select, input),
+  [data-mobile-family="history"] :is(a, button, select, input),
+  [data-mobile-family="closure"] :is(a, button, select, input) {
+    min-block-size: 2.75rem;
+  }
+
+  [data-mobile-family="analytics"] .mobile-family-filter + nav {
+    margin-block-start: 0;
+  }
+
+  [data-mobile-family="analytics"] :is(canvas, .chart-container, [data-chart]) {
+    max-inline-size: 100%;
+  }
+
+  [data-mobile-family="performance"] .mobile-performance-readiness {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-mobile-family="performance"] .mobile-performance-readiness > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  [data-mobile-family="performance"] form.flex {
+    inline-size: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  [data-mobile-family="performance"] form.flex > :is(label, button) {
+    inline-size: 100%;
+  }
+
+  [data-mobile-family="knowledge"] .help-shell__header {
+    padding: 1rem;
+  }
+
+  [data-mobile-family="knowledge"] :is(a, button, input, select) {
+    min-block-size: 2.75rem;
+  }
+
+  [data-mobile-family="knowledge"] :is(article, .document-body, .help-article) {
+    overflow-wrap: anywhere;
+  }
+
+  [data-mobile-family="settings"] > :is(section, article),
+  [data-mobile-family="upload"] > :is(section, article),
+  [data-mobile-family="history"] > :is(section, article),
+  [data-mobile-family="closure"] > :is(section, article) {
+    scroll-margin-block-start: 5rem;
+  }
+
+  [data-mobile-family="upload"] :is(.upload-dropzone, [data-dropzone]) {
+    min-block-size: 9rem;
+    inline-size: 100%;
+  }
+
+  [data-mobile-family="closure"] .mobile-sticky-actions,
+  [data-mobile-family="performance"] .mobile-sticky-actions {
+    z-index: var(--edify-z-sticky, 30);
+  }
+}
+
+@media (max-width: 36rem) {
+  .mobile-role-home {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: var(--edify-radius-md);
+  }
+
+  .mobile-role-home__context {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-role-home__action {
+    grid-column: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-section-picker > summary svg {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :is(.mobile-role-home, .mobile-agenda-card, .mobile-record-card, .mobile-section-picker) {
+    border-color: var(--edify-text-muted);
+  }
+}

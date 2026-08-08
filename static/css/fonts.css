@@ -1,13 +1,13 @@
 /* ════════════════════════════════════════════════════════════════════════════
-   GEIST SANS — THE ONE PLACE THE TYPEFACE IS DECLARED
+   INTER SANS — THE ONE PLACE THE TYPEFACE IS DECLARED
    ════════════════════════════════════════════════════════════════════════════
-   Geist is the single product typeface, served from this origin rather than
+   Inter is the single product typeface, served from this origin rather than
    fonts.googleapis.com.
 
-   Every type token in design-system.css is measured against Geist's metrics.
+   Every type token in design-system.css is measured against Inter's metrics.
    Loading it from a third party made the typeface a network dependency: with
    `display=swap`, a request that was slow or blocked rendered the whole
-   product in ui-sans-serif at Geist's measurements. That is why production
+   product in ui-sans-serif at Inter's measurements. That is why production
    could look wrong while local looked right — same CSS, different luck on one
    cross-origin request. Self-hosting removes the failure mode rather than
    narrowing it.
@@ -19,7 +19,7 @@
    and broken in the fifth.
 
    One variable file per style covers 100..900, so weights cost no extra
-   requests. Licence: OFL-1.1 — static/fonts/GEIST-LICENSE.txt.
+   requests. Licence: OFL-1.1 — static/fonts/INTER-LICENSE.txt.
 
    Relative url() on purpose: ManifestStaticFilesStorage rewrites it to the
    hashed filename during collectstatic, which an absolute /static/ path would
@@ -27,18 +27,18 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 @font-face {
-  font-family: "Geist";
-  src: url("../fonts/Geist-Variable.woff2") format("woff2-variations"),
-       url("../fonts/Geist-Variable.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("../fonts/InterVariable.woff2") format("woff2-variations"),
+       url("../fonts/InterVariable.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Geist";
-  src: url("../fonts/Geist-Italic-Variable.woff2") format("woff2-variations"),
-       url("../fonts/Geist-Italic-Variable.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("../fonts/InterVariable-Italic.woff2") format("woff2-variations"),
+       url("../fonts/InterVariable-Italic.woff2") format("woff2");
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;

@@ -2,7 +2,7 @@
 <div class="space-y-5">
 
   {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
-  <div class="legacy-kpi-strip legacy-kpi-strip--timeline flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
+  <div class="edify-kpi-strip edify-kpi-strip--timeline flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
     {% for c in period_cards %}
     <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
@@ -79,7 +79,7 @@
 
   {# ── User-owned performance priority cards ─────────────────────────────── #}
   {% if area_cards %}
-  <div class="legacy-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Performance priority summary">
+  <div class="edify-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Performance priority summary">
     {% for a in area_cards %}
     <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
          hx-target="#drawer-container" hx-swap="innerHTML"
@@ -175,7 +175,7 @@
                  { name: 'Actual', data: {{ trend.actual_json|escape }} },
                  { name: 'Expected Target Pace', data: {{ trend.expected_json|escape }} }
                ],
-               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Geist, sans-serif' },
+               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
                stroke: { width: [2.25, 2], curve: 'straight', dashArray: [0, 6] },
                colors: ['var(--edify-chart-blue)', 'var(--edify-text-subtle)'],
                markers: { size: [3, 0] },

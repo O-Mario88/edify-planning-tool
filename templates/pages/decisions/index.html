@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Decision Intelligence — Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
@@ -12,15 +14,6 @@
 <p class="edify-page-header__description">Signals the platform detected on its own — each one recommends, you decide</p>
 </div>
 <div class="edify-page-header__controls">
-<form method="GET" class="flex items-center gap-2">
-<label class="sr-only" for="fy-select">Financial year</label>
-{% comment %}@change rather than an inline onchange: the handler moves
-into the Alpine layer the rest of the app uses, and requestSubmit()
-runs the form's own validation where submit() skips it.{% endcomment %}
-<select id="fy-select" name="fy" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
-{% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
-</select>
-</form>
 <form method="POST" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="recompute">
@@ -29,7 +22,19 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </div>
 </div>
 
+<form method="GET" class="edify-filter-bar" aria-label="Decision intelligence filters">
+<label class="sr-only" for="fy-select">Financial year</label>
+{% comment %}@change rather than an inline onchange: the handler moves
+into the Alpine layer the rest of the app uses, and requestSubmit()
+runs the form's own validation where submit() skips it.{% endcomment %}
+<select id="fy-select" name="fy" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px] font-semibold">
+{% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
+</select>
+</form>
+
 {% include "partials/analytics/section_nav.html" %}
+
+{% include "components/analytics_decision_frame.html" with question="What is leadership being asked to decide now, what evidence supports it, and what happens if we wait?" evidence="Rule-generated operational and financial signals" freshness="Rescanned for the selected FY" confidence="Recommendation requires human decision" %}
 
 {% if messages %}
 {% for message in messages %}

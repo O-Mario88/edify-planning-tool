@@ -4,18 +4,37 @@
 {% block title %}Impact Assessment Dashboard — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260731compacttype1">
+<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260808mobilephase2">
+<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260808enterprise3">
 {% endblock %}
 
 {% block shell_content %}
-<div class="ia-dashboard edify-page-canvas">
+<div class="ia-dashboard edify-page-canvas" data-analytics-enterprise>
+  {% include "components/mobile_role_home.html" with eyebrow="Quality operations" headline="Verification desk" description="Review the oldest submission first and keep evidence, SSA and Salesforce records moving." period_label=date_range status_label=kpis.waiting primary_action=mobile_primary_action %}
+
+  <div class="mobile-home-only">
+    <section class="mobile-home-section" aria-labelledby="ia-mobile-queue-title">
+      <div class="mobile-home-section__header">
+        <h2 id="ia-mobile-queue-title">Oldest waiting records</h2>
+        <a href="/ia/verification/">Full queue</a>
+      </div>
+      <div class="mobile-home-stack">
+        {% for item in queue_items|slice:":3" %}
+          {% include "components/mobile_agenda_card.html" with item=item %}
+        {% empty %}
+          <div class="edify-empty-state"><strong>Verification queue is clear</strong><span>New submissions will appear here automatically.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Verification workload" %}
+  </div>
   {% comment %}
   The canonical page header (§8) — the same surface every major page uses,
   rather than the page-specific `ia-hero` this dashboard used to carry. The
   right-hand slot holds context and one primary action; search is deliberately
   absent here because the top bar owns it.
   {% endcomment %}
-  <header class="edify-page-header">
+  <header class="edify-page-header mobile-home-hide">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="lg:max-w-[560px] edify-page-header__lead">
         <p class="edify-page-eyebrow">Quality operations</p>
@@ -42,15 +61,21 @@
 
   {% include "partials/analytics/section_nav.html" %}
 
+  <div class="mobile-home-hide">
+    {% include "components/analytics_decision_frame.html" with question="What must Impact Assessment verify next, where is quality risk accumulating, and what is blocking trusted reporting?" evidence="Verification queues, evidence quality and SSA coverage" freshness=date_range confidence="Verification-controlled" action_label="Open verification queue" action_href="/ia/verification/" %}
+  </div>
+
   {% comment %}
   Six tiles, one per IA decision question, built by apps.core.metrics so the
   definition, period and drilldown live with the metric rather than in this
   template. Replaces the page-local `ia-metric` tiles.
   {% endcomment %}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items title="Verification workload" %}
+  <div class="mobile-home-hide">
+    {% include "components/kpi_strip.html" with items=kpi_strip_items title="Verification workload" %}
+  </div>
 
   <div class="ia-focus-grid">
-    <section class="ia-panel ia-queue" aria-labelledby="ia-queue-title">
+    <section class="ia-panel ia-queue mobile-home-hide" aria-labelledby="ia-queue-title">
       <header class="ia-panel__header">
         <div>
           <p class="ia-section-kicker">Do next</p>
@@ -183,6 +208,13 @@
     </aside>
   </div>
 
+  <div class="analytics-evidence-stack mobile-home-hide" aria-label="Verification evidence and performance detail">
+  <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="ia-country-performance">
+    <summary>
+      <span><strong>Country performance oversight</strong><small>Activity flow, regions, districts and leadership portfolios</small></span>
+      <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="analytics-evidence-disclosure__body">
   <section class="ia-section ia-performance" aria-labelledby="ia-performance-title">
     <header class="ia-section__header">
       <div>
@@ -255,7 +287,15 @@
       </article>
     </div>
   </section>
+    </div>
+  </details>
 
+  <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="ia-quality-coverage">
+    <summary>
+      <span><strong>Quality and coverage</strong><small>SSA coverage, evidence decisions and reporting integrity</small></span>
+      <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
   <section class="ia-section" aria-labelledby="ia-quality-title">
     <header class="ia-section__header">
       <div>
@@ -359,7 +399,15 @@
       </article>
     </div>
   </section>
+    </div>
+  </details>
 
+  <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="ia-operational-context">
+    <summary>
+      <span><strong>Operational context</strong><small>Queue ownership, recent decisions and field signals</small></span>
+      <svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
   <section class="ia-section" aria-labelledby="ia-operations-title">
     <header class="ia-section__header">
       <div>
@@ -446,5 +494,8 @@
     </dl>
     <span class="ia-field-signals__arrow" aria-hidden="true">→</span>
   </a>
+    </div>
+  </details>
+  </div>
 </div>
 {% endblock %}

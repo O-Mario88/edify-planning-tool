@@ -1,9 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Country Planning Oversight · Edify{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260808people2">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
@@ -11,51 +13,9 @@
       <h1 class="edify-page-title edify-page-header__title">Country Planning Oversight</h1>
       <p class="edify-page-header__description">Review the complete country plan, team distribution, Partner delivery, budget readiness, execution progress and operational risks.</p>
     </div>
-    <form class="edify-page-header__controls"
-          hx-get="/country-planning-oversight/"
-          hx-target="#country-workspace"
-          hx-swap="innerHTML"
-          hx-trigger="change"
-          hx-push-url="true">
-      <label class="edify-page-header-control">
-        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">FY</span>
-        <select name="fy" aria-label="Financial year" class="focus:outline-none">
-          {% for option in fy_options %}
-          <option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label class="edify-page-header-control">
-        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Month</span>
-        <select name="month" aria-label="Month" class="focus:outline-none">
-          <option value="">All</option>
-          <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
-          <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
-          <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
-          <option value="4" {% if month == 4 %}selected{% endif %}>April</option>
-          <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
-          <option value="6" {% if month == 6 %}selected{% endif %}>June</option>
-          <option value="7" {% if month == 7 %}selected{% endif %}>July</option>
-          <option value="8" {% if month == 8 %}selected{% endif %}>August</option>
-          <option value="9" {% if month == 9 %}selected{% endif %}>September</option>
-          <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
-          <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
-          <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
-        </select>
-      </label>
-      {% if program_leads %}
-      <label class="edify-page-header-control">
-        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Program Lead</span>
-        <select name="program_lead" aria-label="Program Lead" class="focus:outline-none">
-          <option value="">All teams</option>
-          {% for lead in program_leads %}
-          <option value="{{ lead.id }}" {% if lead.id == program_lead %}selected{% endif %}>{{ lead.name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      {% endif %}
-    </form>
   </header>
+
+  {% include "partials/oversight/period_filter_bar.html" with filter_label="Country oversight period" target_url="/country-planning-oversight/" target_id="#country-workspace" %}
 
   <div id="country-workspace">
     {% include "partials/oversight/cd_workspace.html" %}

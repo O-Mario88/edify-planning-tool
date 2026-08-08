@@ -19,21 +19,21 @@
     {% pager_query param as base %}
     {% if pager.has_previous %}
     <a href="?{{ base }}{{ param }}={{ pager.previous_page }}" rel="prev"
-       class="h-8 min-w-8 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Prev</a>
+       class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Prev</a>
     {% endif %}
     {% for p in pager.pages %}
       {% if p == "..." %}
       <span class="edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">…</span>
       {% elif p == pager.page %}
-      <span aria-current="page" class="h-8 min-w-8 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ p }}</span>
+      <span aria-current="page" aria-label="Page {{ p }}, current page" class="min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ p }}</span>
       {% else %}
       <a href="?{{ base }}{{ param }}={{ p }}"
-         class="h-8 min-w-8 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center">{{ p }}</a>
+         aria-label="Page {{ p }}" class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center">{{ p }}</a>
       {% endif %}
     {% endfor %}
     {% if pager.has_next %}
     <a href="?{{ base }}{{ param }}={{ pager.next_page }}" rel="next"
-       class="h-8 min-w-8 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Next</a>
+       class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Next</a>
     {% endif %}
   </div>
 </nav>

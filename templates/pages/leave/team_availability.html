@@ -15,20 +15,21 @@
     </div>
 
     <div class="edify-page-header__controls">
-      <form method="GET" class="flex items-center gap-2">
-        <label class="sr-only" for="weeks-select">Window</label>
-        {% comment %}@change rather than an inline onchange: the handler moves
-        into the Alpine layer the rest of the app uses, and requestSubmit()
-        runs the form's own validation where submit() skips it.{% endcomment %}
-        <select id="weeks-select" name="weeks" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-1.5 text-[12px] font-semibold">
-          {% for w in week_options %}<option value="{{ w }}" {% if w == week_count %}selected{% endif %}>Next {{ w }} weeks</option>{% endfor %}
-        </select>
-      </form>
       <div class="flex items-center gap-2 edify-text-caption font-bold text-slate-500 bg-slate-50 border px-3 py-1.5 rounded-surface">
         <span>Scoping: {{ role }}</span>
       </div>
     </div>
   </div>
+
+  <form method="GET" class="edify-filter-bar" aria-label="Team availability filters">
+    <label class="sr-only" for="weeks-select">Window</label>
+    {% comment %}@change rather than an inline onchange: the handler moves
+    into the Alpine layer the rest of the app uses, and requestSubmit()
+    runs the form's own validation where submit() skips it.{% endcomment %}
+    <select id="weeks-select" name="weeks" x-data @change="$el.form.requestSubmit()" class="border border-[var(--edify-border)] rounded-control px-3 py-1.5 text-[12px] font-semibold">
+      {% for w in week_options %}<option value="{{ w }}" {% if w == week_count %}selected{% endif %}>Next {{ w }} weeks</option>{% endfor %}
+    </select>
+  </form>
 
   {% if collisions.visits_at_risk %}
   <div class="edify-surface rounded-surface border border-rose-200 bg-rose-50/40 shadow-sm">

@@ -1,6 +1,14 @@
 {
   "components": [
     {
+      "bytes": 1335,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/analytics_decision_frame.html"
+    },
+    {
       "bytes": 424,
       "findings": [],
       "forms": 0,
@@ -65,12 +73,20 @@
       "template": "components/kpi_card.html"
     },
     {
-      "bytes": 5348,
+      "bytes": 5437,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
       "tables": 0,
       "template": "components/kpi_strip.html"
+    },
+    {
+      "bytes": 1899,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_agenda_card.html"
     },
     {
       "bytes": 3727,
@@ -79,6 +95,46 @@
       "htmx_controls": 0,
       "tables": 0,
       "template": "components/mobile_bottom_nav.html"
+    },
+    {
+      "bytes": 2288,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_filter_sheet.html"
+    },
+    {
+      "bytes": 1223,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_record_card.html"
+    },
+    {
+      "bytes": 1182,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_role_home.html"
+    },
+    {
+      "bytes": 1115,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_section_picker.html"
+    },
+    {
+      "bytes": 1132,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "components/mobile_sticky_action_bar.html"
     },
     {
       "bytes": 1612,
@@ -121,7 +177,7 @@
       "template": "components/school_list_card.html"
     },
     {
-      "bytes": 6667,
+      "bytes": 6686,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -129,7 +185,7 @@
       "template": "components/sidebar.html"
     },
     {
-      "bytes": 2190,
+      "bytes": 2280,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -153,7 +209,7 @@
       "template": "partials/_search_icon.html"
     },
     {
-      "bytes": 2077,
+      "bytes": 3806,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -185,7 +241,7 @@
       "template": "partials/analytics/cd/_target_area_badges.html"
     },
     {
-      "bytes": 3035,
+      "bytes": 5128,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -193,7 +249,7 @@
       "template": "partials/analytics/cd/body.html"
     },
     {
-      "bytes": 4245,
+      "bytes": 3868,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -369,7 +425,7 @@
       "template": "partials/analytics/drilldown_drawer.html"
     },
     {
-      "bytes": 7817,
+      "bytes": 6540,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -385,7 +441,7 @@
       "template": "partials/analytics/impact_summary.html"
     },
     {
-      "bytes": 17810,
+      "bytes": 18164,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -393,7 +449,7 @@
       "template": "partials/analytics/impact_workspace.html"
     },
     {
-      "bytes": 2327,
+      "bytes": 3575,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -441,7 +497,7 @@
       "template": "partials/analytics/pl/activity_tracking.html"
     },
     {
-      "bytes": 2839,
+      "bytes": 4243,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -553,7 +609,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 85846,
+      "bytes": 85915,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -593,7 +649,7 @@
       "template": "partials/analytics/staff_partner_performance.html"
     },
     {
-      "bytes": 1692,
+      "bytes": 4860,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -601,7 +657,7 @@
       "template": "partials/analytics/target_by_district.html"
     },
     {
-      "bytes": 15367,
+      "bytes": 15724,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -617,7 +673,7 @@
       "template": "partials/budgets/budget_group_tables.html"
     },
     {
-      "bytes": 1038,
+      "bytes": 1487,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -649,7 +705,7 @@
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 8480,
+      "bytes": 9041,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -785,7 +841,7 @@
       "template": "partials/core_schools/champion_review_drawer.html"
     },
     {
-      "bytes": 3799,
+      "bytes": 3912,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -849,7 +905,7 @@
       "template": "partials/core_schools/schedule_activity_drawer.html"
     },
     {
-      "bytes": 14353,
+      "bytes": 14466,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -857,7 +913,7 @@
       "template": "partials/core_schools/schedule_training_drawer.html"
     },
     {
-      "bytes": 14689,
+      "bytes": 14796,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -873,7 +929,7 @@
       "template": "partials/core_schools/school_row.html"
     },
     {
-      "bytes": 3951,
+      "bytes": 4064,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -921,7 +977,7 @@
       "template": "partials/dashboards/admin/_platform_operations.html"
     },
     {
-      "bytes": 29342,
+      "bytes": 29534,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -929,7 +985,7 @@
       "template": "partials/dashboards/cd/body.html"
     },
     {
-      "bytes": 24754,
+      "bytes": 24939,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -953,7 +1009,7 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 13467,
+      "bytes": 13704,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1217,7 +1273,7 @@
       "template": "partials/finance/country_budget/return_drawer.html"
     },
     {
-      "bytes": 27957,
+      "bytes": 27956,
       "findings": [],
       "forms": 3,
       "htmx_controls": 7,
@@ -1265,7 +1321,7 @@
       "template": "partials/finance/fund_allocation_table.html"
     },
     {
-      "bytes": 15328,
+      "bytes": 15273,
       "findings": [],
       "forms": 1,
       "htmx_controls": 4,
@@ -1337,7 +1393,7 @@
       "template": "partials/fund_requests/kpis.html"
     },
     {
-      "bytes": 3909,
+      "bytes": 3907,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1473,7 +1529,7 @@
       "template": "partials/messages/compose_modal.html"
     },
     {
-      "bytes": 10675,
+      "bytes": 10794,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1497,7 +1553,7 @@
       "template": "partials/messages/context_summary.html"
     },
     {
-      "bytes": 18573,
+      "bytes": 18632,
       "findings": [],
       "forms": 4,
       "htmx_controls": 5,
@@ -1529,7 +1585,7 @@
       "template": "partials/messages/recipient_suggestions.html"
     },
     {
-      "bytes": 6827,
+      "bytes": 6847,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1649,7 +1705,7 @@
       "template": "partials/my_plan/evidence_drawer.html"
     },
     {
-      "bytes": 6151,
+      "bytes": 7157,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1753,7 +1809,7 @@
       "template": "partials/my_plan/timeline_drawer.html"
     },
     {
-      "bytes": 1496,
+      "bytes": 1593,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1793,7 +1849,7 @@
       "template": "partials/oversight/cd_team_detail.html"
     },
     {
-      "bytes": 8361,
+      "bytes": 8514,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1809,7 +1865,7 @@
       "template": "partials/oversight/detail_drawer.html"
     },
     {
-      "bytes": 4417,
+      "bytes": 4649,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1833,7 +1889,7 @@
       "template": "partials/oversight/partner_detail_drawer.html"
     },
     {
-      "bytes": 17423,
+      "bytes": 18990,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1841,12 +1897,28 @@
       "template": "partials/oversight/partner_workspace.html"
     },
     {
-      "bytes": 10456,
+      "bytes": 3623,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/oversight/period_filter_bar.html"
+    },
+    {
+      "bytes": 10588,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 2,
       "tables": 1,
       "template": "partials/oversight/pl_workspace.html"
+    },
+    {
+      "bytes": 2344,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/oversight/team_country_workspace.html"
     },
     {
       "bytes": 10025,
@@ -1857,7 +1929,7 @@
       "template": "partials/oversight/withdrawal_drawer.html"
     },
     {
-      "bytes": 4941,
+      "bytes": 5078,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1929,7 +2001,7 @@
       "template": "partials/planning/schedule_drawer.html"
     },
     {
-      "bytes": 5331,
+      "bytes": 5370,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1969,7 +2041,7 @@
       "template": "partials/professional_development/allocation_history_drawer.html"
     },
     {
-      "bytes": 21430,
+      "bytes": 20951,
       "findings": [],
       "forms": 0,
       "htmx_controls": 8,
@@ -2089,7 +2161,7 @@
       "template": "partials/projects/plan_activity_table.html"
     },
     {
-      "bytes": 574,
+      "bytes": 361,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2145,6 +2217,22 @@
       "template": "partials/pwa_head.html"
     },
     {
+      "bytes": 322,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/schools/_cluster_action_icon.html"
+    },
+    {
+      "bytes": 367,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/schools/_project_action_icon.html"
+    },
+    {
       "bytes": 11920,
       "findings": [],
       "forms": 1,
@@ -2177,7 +2265,7 @@
       "template": "partials/schools/directory_intelligence.html"
     },
     {
-      "bytes": 5341,
+      "bytes": 5819,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2305,7 +2393,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 22536,
+      "bytes": 22533,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2423,6 +2511,22 @@
       "htmx_controls": 0,
       "tables": 2,
       "template": "partials/upload_result.html"
+    },
+    {
+      "bytes": 91,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/vendor/apexcharts.html"
+    },
+    {
+      "bytes": 93,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/vendor/fullcalendar.html"
     },
     {
       "bytes": 10009,
@@ -9047,7 +9151,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.calendar_view",
       "charts": false,
@@ -9110,7 +9214,7 @@
         "apps.targets.models"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
         "error": false,
         "loading": false
@@ -10778,7 +10882,7 @@
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Core Assessment Drawer",
       "permission_key": "core_schools",
@@ -11154,7 +11258,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Core Schedule Training Drawer",
       "permission_key": "core_schools",
@@ -11278,7 +11382,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Core Schedule Visit Drawer",
       "permission_key": "core_schools",
@@ -11400,7 +11504,7 @@
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Core Strategy Playbook Drawer",
       "permission_key": "core_schools",
@@ -12045,15 +12149,14 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "GET /country-planning-oversight/team/{{ group.id }}?fy={{ fy }}{% if month %}&month={{ month }}{% endif %}",
-        "POST /country-planning-oversight/send",
-        "GET /country-planning-oversight/"
+        "GET /country-planning-oversight/team/{{ group.id }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}",
+        "POST /country-planning-oversight/send"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Country Planning",
+      "page_title": "Country Planning Oversight \u00b7 Edify",
       "permission_key": "country_planning_oversight",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -12560,7 +12663,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": true,
       "page_title": "Dashboard",
       "permission_key": "dashboard",
@@ -13314,7 +13417,7 @@
       "backend_module": "apps.frontend.views.debrief_views",
       "backend_view": "apps.frontend.views.debrief_views.field_debrief_dashboard_view",
       "charts": true,
-      "drawers": false,
+      "drawers": true,
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
@@ -13329,11 +13432,11 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": true,
       "page_title": "Field Debrief",
       "permission_key": "debriefs_list",
-      "primary_action": "Requires manual product review",
+      "primary_action": "Apply filters",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Requires product-purpose documentation",
       "responsive_state": "detected",
@@ -21333,7 +21436,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "My Professional Development",
       "permission_key": "my_professional_development",
@@ -21398,7 +21501,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "My Professional Development",
       "permission_key": "my_professional_development",
@@ -21955,7 +22058,7 @@
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "My Targets",
       "permission_key": "my_target",
@@ -22846,8 +22949,7 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "POST /partner-oversight/withdraw/review",
-        "GET /partner-oversight/"
+        "POST /partner-oversight/withdraw/review"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -22865,7 +22967,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/",
       "route_name": "partner_oversight",
@@ -22925,7 +23028,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/detail",
       "route_name": "partner_oversight_detail",
@@ -22982,7 +23086,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/export",
       "route_name": "partner_oversight_export",
@@ -23035,7 +23140,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/send",
       "route_name": "partner_oversight_send",
@@ -23090,7 +23196,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/withdraw",
       "route_name": "partner_withdrawal_preview",
@@ -23147,7 +23254,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/withdraw/review",
       "route_name": "partner_withdrawal_review",
@@ -23200,7 +23308,8 @@
         "CCEO",
         "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/partner-oversight/withdraw/submit",
       "route_name": "partner_withdrawal_submit",
@@ -23674,7 +23783,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partner_today_view",
       "charts": false,
@@ -23712,7 +23821,7 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": false,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -23863,7 +23972,7 @@
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Create Partner",
       "permission_key": "partners",
@@ -25757,9 +25866,9 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
+        "GET /projects/create",
         "GET /projects/filter",
-        "GET /projects/filters-drawer",
-        "GET /projects/create"
+        "GET /projects/filters-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -26293,9 +26402,9 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
+        "GET /projects/create",
         "GET /projects/filter",
-        "GET /projects/filters-drawer",
-        "GET /projects/create"
+        "GET /projects/filters-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
@@ -26760,7 +26869,7 @@
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Calendar Blocks & Public Holidays",
       "permission_key": "public_holidays",
@@ -26819,7 +26928,7 @@
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Calendar Blocks & Public Holidays",
       "permission_key": "public_holidays",
@@ -30027,19 +30136,15 @@
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.team_planning_oversight_view",
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "findings": [],
-      "forms": true,
-      "htmx_endpoints": [
-        "GET /team-planning-oversight/?tab={{ entry.key }}&fy={{ fy }}{% if month %}&month={{ month }}{% endif %}{% if team_member %}&team_member={{ team_member }}{% endif %}",
-        "GET /team-planning-oversight/detail?{% if item.activity_id %}activity_id={{ item.activity_id }}{% else %}assignment_id={{ item.partner_assignment_id }}{% endif %}",
-        "GET /team-planning-oversight/"
-      ],
+      "forms": false,
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Team Oversight",
+      "page_title": "Team Planning Oversight \u00b7 Edify",
       "permission_key": "team_planning_oversight",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -30048,8 +30153,10 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/team-planning-oversight/",
       "route_name": "team_planning_oversight",
@@ -30067,10 +30174,9 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "partial",
-      "tables": true,
+      "surface_kind": "page",
+      "tables": false,
       "templates": [
-        "partials/oversight/pl_workspace.html",
         "pages/oversight/team_planning.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -30104,8 +30210,10 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/team-planning-oversight/detail",
       "route_name": "team_planning_oversight_detail",
@@ -30159,8 +30267,10 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/team-planning-oversight/export",
       "route_name": "team_planning_oversight_export",
@@ -30210,8 +30320,10 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "CD",
         "IA",
-        "PL"
+        "PL",
+        "RVP"
       ],
       "route": "/team-planning-oversight/send",
       "route_name": "team_planning_oversight_send",
@@ -45374,7 +45486,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.team_planning_oversight_view",
-      "kind": "partial",
+      "kind": "page",
       "methods": [
         "GET"
       ],
@@ -45383,7 +45495,6 @@
       "route": "/team-planning-oversight/",
       "route_name": "team_planning_oversight",
       "templates": [
-        "partials/oversight/pl_workspace.html",
         "pages/oversight/team_planning.html"
       ]
     },
@@ -45801,9 +45912,9 @@
     "activity_states": 23,
     "all_routes": 901,
     "api_routes": 293,
-    "component_templates": 305,
-    "full_pages": 325,
-    "partials_and_drawers": 158,
+    "component_templates": 318,
+    "full_pages": 326,
+    "partials_and_drawers": 157,
     "permission_gated": 489,
     "permission_keys": 70,
     "roles": 11,

@@ -34,7 +34,7 @@
 {% endblock %}
 
 {% block shell_content %}
-<div class="edify-page-canvas priority-setting-workspace space-y-5" aria-labelledby="priority-setting-title">
+<div class="edify-page-canvas priority-setting-workspace space-y-5" aria-labelledby="priority-setting-title" data-mobile-family="performance">
   <header class="edify-page-header">
     <div class="min-w-0 max-w-3xl edify-page-header__lead">
       <p class="edify-page-eyebrow">Strategy · RVP decision workspace</p>
@@ -44,22 +44,23 @@
       </p>
     </div>
     <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
-      {% if cycle_years %}
-      {% comment %}Auto-submits on change, the same way the calendar filter form
-      does. The empty x-data gives Alpine a scope to bind @change in; without it
-      the directive is inert.{% endcomment %}
-      <form method="get" action="/strategic-priorities" class="w-full sm:w-36" x-data @change="$el.submit()">
-        <label for="priority-fy" class="mb-1 block text-[12px] font-semibold text-slate-500">Financial year</label>
-        <select id="priority-fy" name="fy" class="h-9 w-full rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-700">
-          {% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}
-        </select>
-      </form>
-      {% endif %}
       {% if cycle %}
       <span class="edify-badge h-9 self-start px-3 sm:self-end" {% if cycle.status == "approved" or cycle.status == "active" or cycle.status == "allocated" %}data-tone="success"{% elif cycle.status == "rvp_review" %}data-tone="info"{% else %}data-tone="warning"{% endif %}>{{ cycle.get_status_display }}</span>
       {% endif %}
     </div>
   </header>
+
+  {% if cycle_years %}
+  {% comment %}Auto-submits on change, the same way the calendar filter form
+  does. The empty x-data gives Alpine a scope to bind @change in; without it
+  the directive is inert.{% endcomment %}
+  <form method="get" action="/strategic-priorities" class="edify-filter-bar" aria-label="Priority filters" x-data @change="$el.submit()">
+    <label for="priority-fy" class="mb-1 block text-[12px] font-semibold text-slate-500">Financial year</label>
+    <select id="priority-fy" name="fy" class="h-9 rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-700">
+      {% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}
+    </select>
+  </form>
+  {% endif %}
 
   {% if messages %}
     {% for message in messages %}

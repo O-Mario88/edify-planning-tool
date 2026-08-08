@@ -7,6 +7,7 @@
 <div
 x-data="{}"
 class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
+data-mobile-family="directory"
  >
 <!-- Breadcrumb -->
 <nav class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -90,7 +91,10 @@ Export
 {% endif %}
 
 <!-- Filters Row -->
+<details class="mobile-family-filter" open>
+<summary><span>Cluster filters</span><small>Narrow the operational roster</small><span aria-hidden="true">⌄</span></summary>
 {% include "partials/clusters/filters.html" %}
+</details>
 
 <!-- 8 KPI Cards Grid -->
 <div id="clusters-kpi-row" class="w-full">

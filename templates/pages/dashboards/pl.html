@@ -2,9 +2,12 @@
 {% load frontend_filters %}
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
+
+  {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Move the team forward" description="Resolve the highest-risk team issue, then review performance and approvals." period_label="FY "|add:fy status_label=scope_meta.school_count primary_action=mobile_primary_action %}
 
   {% comment %}
   The canonical page header. This markup used to carry the surface inline —
@@ -13,15 +16,17 @@
   literal. It looked right and was unavailable to every other page. The
   surface now lives in .edify-page-header and real tokens.
   {% endcomment %}
-  <header class="edify-page-header">
+  <header class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-header__title edify-page-title">Program Lead Dashboard</h1>
       <p class="edify-page-header__description">Team execution, approvals, targets, planning quality &amp; operations.</p>
     </div>
+  </header>
+
     <form id="pl-dashboard-filters"
           hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
           hx-trigger="change delay:80ms" hx-push-url="false"
-          class="edify-page-header__controls">
+          class="edify-filter-bar" aria-label="Program lead dashboard filters">
       <div class="edify-page-header-control">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
         <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
@@ -42,7 +47,6 @@
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools
       </span>
     </form>
-  </header>
 
   <div id="pl-dashboard-body">
     {% include "partials/dashboards/pl/body.html" %}
