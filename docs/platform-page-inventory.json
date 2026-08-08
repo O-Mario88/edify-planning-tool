@@ -1817,6 +1817,14 @@
       "template": "partials/oversight/filter_drawer.html"
     },
     {
+      "bytes": 5060,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 1,
+      "template": "partials/oversight/flagged_schools.html"
+    },
+    {
       "bytes": 10786,
       "findings": [],
       "forms": 2,
@@ -22845,7 +22853,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Partner Oversight",
+      "page_title": "Partner Oversight \u00b7 Edify",
       "permission_key": "partner_oversight",
       "primary_action": "Approve",
       "primary_user_decision": "Requires manual product review",
@@ -23721,23 +23729,23 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partners_list_view",
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": true,
+      "forms": false,
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Partner Activities",
+      "page_title": "Partners",
       "permission_key": "partners",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Partner Activities workspace for staff and partner organisations.",
+      "purpose": "Partner Activities workspace for partner organisations.",
       "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
@@ -23767,15 +23775,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "page",
-      "tables": true,
-      "templates": [
-        "pages/partners/index.html"
-      ],
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -30033,7 +30039,7 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Team Planning",
+      "page_title": "Team Oversight",
       "permission_key": "team_planning_oversight",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
@@ -43901,9 +43907,7 @@
       "required_permissions": [],
       "route": "/partners",
       "route_name": "partners_list",
-      "templates": [
-        "pages/partners/index.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.partner_views.partner_detail_view",
@@ -45797,7 +45801,7 @@
     "activity_states": 23,
     "all_routes": 901,
     "api_routes": 293,
-    "component_templates": 304,
+    "component_templates": 305,
     "full_pages": 325,
     "partials_and_drawers": 158,
     "permission_gated": 489,

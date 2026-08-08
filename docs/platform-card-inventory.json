@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 561,
-  "templates": 197,
-  "distinct_titles": 533,
+  "titled_cards": 562,
+  "templates": 198,
+  "distinct_titles": 534,
   "with_card_key": 13,
   "untitled_surfaces": 1049,
   "untitled_chrome": 233,
@@ -5347,6 +5347,15 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/oversight/flagged_schools.html",
+   "line": 20,
+   "title": "Flagged schools",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "card p-0 overflow-hidden",
    "branch_path": []
   },
   {
