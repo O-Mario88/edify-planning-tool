@@ -487,6 +487,15 @@ def create_cluster_view(request):
                 "clusterType": cluster_type,
                 "clusterLeaderName": cluster_leader_name or None,
                 "clusterLeaderPhone": cluster_leader_phone or None,
+                # Neither this view nor the create form carried the cluster's
+                # owner, so every cluster was created ownerless and
+                # `responsible_staff_id` was null on every row in the table.
+                # `create_cluster` has always accepted it — only the edit
+                # drawer ever sent it, so an owner could be added afterwards
+                # but never chosen at the point the cluster was made.
+                "responsibleStaffId": (
+                    request.POST.get("responsible_staff_id", "").strip() or None
+                ),
             }
             try:
                 cluster_data = create_cluster_service(payload, request.user)
@@ -602,6 +611,10 @@ def create_cluster_drawer_view(request):
         "districts": districts,
         "sub_counties_json": json.dumps(sub_counties_list),
         "selected_district_id": selected_district_id,
+        # The create form reads responsible_staff_id on POST but never offered
+        # it, so every cluster was created ownerless. Seeded for the district
+        # the drawer opens on; the district select refills it from there.
+        "staff": get_eligible_staff(selected_district_id),
         "drawer_size": "xl",
         "drawer_type": "center",
         "assign_school_id": request.GET.get("assign_school_id", "").strip(),

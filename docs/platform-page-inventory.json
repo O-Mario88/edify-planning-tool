@@ -681,10 +681,10 @@
       "template": "partials/clusters/cluster_schools_table.html"
     },
     {
-      "bytes": 8674,
+      "bytes": 10067,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "tables": 0,
       "template": "partials/clusters/create_cluster_drawer.html"
     },
@@ -9625,7 +9625,9 @@
       "drawers": true,
       "findings": [],
       "forms": true,
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {% url "
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,

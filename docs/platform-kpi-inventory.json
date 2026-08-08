@@ -2607,7 +2607,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 658,
+   "line": 671,
    "label": null,
    "keys": [
     "label",
