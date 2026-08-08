@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 11,
   "labels_in_several_modules": 15,
-  "breakdown_rows": 103
+  "breakdown_rows": 104
  },
  "duplicated_labels": {
   "Accountability Pending": [
@@ -1811,9 +1811,28 @@
    "has_drilldown": false
   },
   {
+   "kind": "breakdown-row",
+   "module": "apps/clusters/portfolio_audit.py",
+   "line": 34,
+   "label": null,
+   "keys": [
+    "classification",
+    "clean",
+    "count",
+    "examples",
+    "expected",
+    "key",
+    "label",
+    "route",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1501,
+   "line": 1552,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -1829,7 +1848,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1509,
+   "line": 1560,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -1845,7 +1864,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1517,
+   "line": 1568,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -1861,7 +1880,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1525,
+   "line": 1576,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -1877,7 +1896,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1533,
+   "line": 1584,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -1893,7 +1912,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1541,
+   "line": 1592,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -1909,7 +1928,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1549,
+   "line": 1600,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -1925,7 +1944,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1557,
+   "line": 1608,
    "label": "Pending Activities",
    "keys": [
     "helper",
@@ -3588,7 +3607,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 452,
+   "line": 456,
    "label": "Total Schools",
    "keys": [
     "helper",
@@ -3604,7 +3623,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 460,
+   "line": 464,
    "label": "Client Schools",
    "keys": [
     "helper",
@@ -3620,7 +3639,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 468,
+   "line": 472,
    "label": "Core Schools",
    "keys": [
     "helper",
@@ -3636,7 +3655,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 476,
+   "line": 480,
    "label": "Unclustered",
    "keys": [
     "helper",
@@ -3652,7 +3671,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 484,
+   "line": 488,
    "label": "No SSA",
    "keys": [
     "helper",
@@ -3668,7 +3687,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 492,
+   "line": 496,
    "label": "Staff Required",
    "keys": [
     "helper",
@@ -3684,7 +3703,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 500,
+   "line": 504,
    "label": "Planning Ready",
    "keys": [
     "helper",
@@ -3700,7 +3719,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/school_views.py",
-   "line": 508,
+   "line": 512,
    "label": "Duplicates",
    "keys": [
     "helper",
@@ -3716,7 +3735,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 653,
+   "line": 657,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",

@@ -2137,7 +2137,7 @@
       "template": "partials/pwa_head.html"
     },
     {
-      "bytes": 10288,
+      "bytes": 11920,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,

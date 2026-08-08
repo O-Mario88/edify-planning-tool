@@ -5807,7 +5807,7 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 157,
+   "line": 188,
    "title": "Responsible Field Staff",
    "heading_level": 3,
    "has_card_key": false,
