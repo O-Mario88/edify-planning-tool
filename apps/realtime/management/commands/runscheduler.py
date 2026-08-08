@@ -1,7 +1,7 @@
 """The ONE dedicated scheduler process. Run this as its own deployment
 service/process — never inside a web worker (see apps/realtime/apps.py for
 why). Blocks in the foreground until terminated (SIGTERM/SIGINT), so a
-process supervisor (Railway, systemd, Docker) can manage it exactly like any
+process supervisor (App Platform, systemd, Docker) can manage it exactly like any
 other long-running service.
 
 Usage:

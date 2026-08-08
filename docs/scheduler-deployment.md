@@ -6,11 +6,9 @@ Achievement Ledger, PD reminders, Field Debrief recurring-issue detection,
 weekly fund requests, monthly work-plan envelopes, notification escalation,
 and the daily digest all depend on this being running.
 
-> This document supersedes the "Worker/Cron: optional" line in the older
-> `docs/railway-deployment.md`, which describes the retired NestJS+Next.js
-> split-service architecture. The current deployment is a single Django
-> monolith (see `Dockerfile`) with **two processes**: the web app and this
-> scheduler worker.
+> The current deployment is a single Django monolith (see `Dockerfile`) with
+> **two processes**: the web app and this scheduler worker. Both are declared
+> in `.do/app.yaml` — the web app as a `service`, this one as a `worker`.
 
 ## Why a second process, not a background thread in the web app
 
@@ -38,42 +36,39 @@ scheduler process is ever accidentally started (e.g. a deploy misconfigured
 to scale the worker service to 2 replicas), the second one's job triggers
 are skipped rather than double-executing.
 
-## Railway setup (2 services from 1 repo)
+## App Platform setup (2 components from 1 repo)
 
-1. **Web service** (already exists): uses the repo's `Dockerfile`, default
-   start command (`daphne ...`, from `CMD` / `Procfile`'s `web:` line).
-   Leave `ENABLE_BACKGROUND_JOBS` **unset/false** here — the web process
-   never runs jobs regardless of this flag now, so there's no benefit to
+Both components are already declared in `.do/app.yaml`; this section explains
+what they are and how to change them. **Do not apply that file to the running
+app** — see the banner at the top of it and `.do/README.md`.
+
+1. **Web service** (`services: - name: web`): uses the repo's `Dockerfile` and
+   the default start command (`daphne ...`, from `CMD` / `Procfile`'s `web:`
+   line). Leave `ENABLE_BACKGROUND_JOBS` **unset/false** here — the web process
+   never runs jobs regardless of this flag now, so there is no benefit to
    setting it, but it costs nothing either way.
 
-2. **Worker service** (new): in the Railway dashboard, "New Service" →
-   "Deploy from same repo" → same Dockerfile. Under **Settings → Deploy**,
-   override the **Custom Start Command** to:
+2. **Scheduler worker** (`workers: - name: scheduler`): same repo, same
+   Dockerfile, with
+
    ```
-   python manage.py runscheduler
-   ```
-   Set environment variables (mirror the web service's `DATABASE_URL`,
-   `JWT_SECRET`, etc., plus):
-   ```
-   ENABLE_BACKGROUND_JOBS=true
+   run_command: python manage.py runscheduler
    ```
 
-   **Do not expose a public port** for this service (it serves no HTTP
-   traffic) — remove/skip domain generation.
-   For the worker service's own health probe (separate from the web
-   service's `/api/health`), use:
+   and `ENABLE_BACKGROUND_JOBS=true` in its own env. The flag is read per
+   process, so setting it anywhere else does nothing.
+
+   A worker has no public port and no domain, which is what you want: it
+   serves no HTTP traffic. For its own health probe — separate from the web
+   service's `/api/health` — run
+
    ```
    python manage.py scheduler_health_check
    ```
-   as a periodic Railway cron-check or an external uptime monitor hitting a
-   small wrapper, since `scheduler_health_check` exits non-zero when
-   unhealthy (job failed, overdue, or the scheduler process itself hasn't
-   run anything recently).
 
-3. Both services share the same Postgres database (`DATABASE_URL`) — the
-   lock/execution-history tables (`scheduled_job_lock`,
-   `scheduled_job_execution`) live there, which is how locking works across
-   process/service boundaries.
+   from a scheduled check or an external uptime monitor. It exits non-zero
+   when unhealthy (a job failed, is overdue, or the scheduler process itself
+   has not run anything recently).
 
 ## Deliberate design decision: this does NOT hard-block web boot
 

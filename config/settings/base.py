@@ -235,7 +235,7 @@ IS_TESTING = _is_testing
 ADMIN_OPS_DETECTION_ENABLED = not _is_testing
 FISCAL_YEAR_ROLLOVER_ENABLED = not _is_testing
 
-# Parse DigitalOcean/Railway DATABASE_URL values, including managed-Postgres
+# Parse DigitalOcean DATABASE_URL values, including managed-Postgres
 # query parameters such as sslmode=require. The settings below layer the
 # application's bounded connection/query policy onto the parsed URL.
 _db_config = dj_database_url.parse(_db_url)

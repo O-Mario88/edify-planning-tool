@@ -281,7 +281,7 @@ class AdminJourneyFlowTest(BaseFlowTest):
 
 
 class HealthCheckFlowTest(TestCase):
-    """The /api/health endpoint Railway probes."""
+    """The /api/health endpoint App Platform probes."""
 
     def test_health_endpoint_returns_200(self):
         r = self.client.get("/api/health")

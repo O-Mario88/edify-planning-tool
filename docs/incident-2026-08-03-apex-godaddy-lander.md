@@ -42,7 +42,7 @@ zero matches. The path is entirely GoDaddy's.
 
 ### Why the forwarding was there
 
-`DEPLOY_DIGITALOCEAN.md` §3a and `.do/app.yaml` lines 37–47 document option A,
+`DEPLOY.md` §3a and `.do/app.yaml` lines 37–47 document option A,
 "keep DNS at GoDaddy":
 
 > GoDaddy cannot CNAME the apex. Use GoDaddy's Forwarding feature to send

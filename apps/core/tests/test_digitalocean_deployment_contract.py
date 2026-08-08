@@ -465,8 +465,9 @@ class MigrationOwnershipTest(SimpleTestCase):
         self.assertIn('"${RUN_MIGRATIONS:-true}" = "true"', entrypoint)
 
     def test_entrypoint_still_migrates_by_default(self):
-        """docker-compose and Railway have no pre-deploy hook; they rely on
-        this default, so the flag must be opt-out rather than opt-in."""
+        """docker-compose has no pre-deploy hook and relies on this default,
+        so the flag must be opt-out rather than opt-in. App Platform runs
+        migrations as a PRE_DEPLOY job and sets RUN_MIGRATIONS=false."""
         entrypoint = _read("docker-entrypoint.sh")
         self.assertIn("RUN_MIGRATIONS:-true", entrypoint)
 
@@ -504,7 +505,3 @@ class MigrationOwnershipTest(SimpleTestCase):
         self.assertTrue(docker_components)
         for component in docker_components:
             self.assertEqual(component["dockerfile_path"], "Dockerfile")
-
-        railway = __import__("json").loads(_read("railway.json"))
-        self.assertEqual(railway["build"]["builder"], "DOCKERFILE")
-        self.assertEqual(railway["build"]["dockerfilePath"], "Dockerfile")
