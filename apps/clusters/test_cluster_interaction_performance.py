@@ -10,7 +10,11 @@ from django.test.utils import CaptureQueriesContext
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity
 from apps.clusters.models import Cluster
-from apps.clusters.services import cluster_detail, cluster_schools
+from apps.clusters.services import (
+    cluster_detail,
+    cluster_schools,
+    set_school_cluster_membership,
+)
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 
@@ -26,7 +30,7 @@ class ClusterInteractionQueryShapeTest(TestCase):
             active_role="CountryDirector",
             is_active=True,
         )
-        StaffProfile.objects.create(
+        cls.profile = StaffProfile.objects.create(
             id="cluster-interaction-staff", user=cls.user, title="CD"
         )
         cls.region = Region.objects.create(name="Interaction Region")
@@ -110,6 +114,19 @@ class ClusterInteractionQueryShapeTest(TestCase):
             f"detail grew from {small} to {large} queries when schools were added",
         )
 
+    def test_first_member_makes_portfolio_owner_the_cluster_owner(self):
+        School.objects.filter(id=self.first_school.id).update(
+            account_owner_id=self.profile.id
+        )
+        self.first_school.refresh_from_db()
+        Cluster.objects.filter(id=self.cluster.id).update(responsible_staff_id=None)
+        self.cluster.refresh_from_db()
+
+        set_school_cluster_membership(self.first_school, self.cluster, self.user.id)
+
+        self.cluster.refresh_from_db()
+        self.assertEqual(self.cluster.responsible_staff_id, self.profile.id)
+
     def test_prefetched_activity_dates_are_preserved(self):
         school = cluster_schools(self.cluster.id, self.user)[0]
         self.assertEqual(school["lastVisitDate"], "2026-07-03")
@@ -125,6 +142,9 @@ class ClusterInteractionQueryShapeTest(TestCase):
         )
         second_school = self._make_school(1)
         School.objects.filter(id=second_school.id).update(enrollment=80)
+        Cluster.objects.filter(id=self.cluster.id).update(
+            responsible_staff_id=self.user.id
+        )
         ssa = SsaRecord.objects.create(
             school=self.first_school,
             date_of_ssa=timezone.now(),
@@ -139,6 +159,7 @@ class ClusterInteractionQueryShapeTest(TestCase):
         detail = cluster_detail(self.cluster.id, self.user)
         self.assertEqual(detail["schoolCount"], 2)
         self.assertEqual(detail["studentImpact"], 500)
+        self.assertEqual(detail["assignedStaff"], "Cluster Interaction CD")
 
         self.client.force_login(self.user)
         response = self.client.get(f"/clusters/{self.cluster.id}")

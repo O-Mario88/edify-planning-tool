@@ -496,16 +496,6 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
     # and every other write path — bulk assignment, the API, a management
     # command — reaches this function without passing a dropdown at all.
     if cluster:
-        from apps.clusters.eligibility import owner_id_variants
-
-        owners = owner_id_variants(getattr(school, "account_owner_id", ""))
-        cluster_owner = (cluster.responsible_staff_id or "").strip()
-        if cluster_owner and cluster_owner not in owners:
-            raise BadRequest(
-                "That cluster belongs to another staff member. A school joins "
-                "a cluster owned by the person responsible for the school; "
-                "moving it across portfolios needs a transfer."
-            )
         # Only when both are known. A school with no sub-county is a data gap
         # to complete, not grounds to refuse the district-level assignment it
         # could always make.
@@ -521,6 +511,38 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)
+        if cluster:
+            from apps.clusters.eligibility import (
+                owner_id_variants,
+                portfolio_owner_profile_id,
+            )
+
+            cluster = Cluster.objects.select_for_update().get(pk=cluster.pk)
+            portfolio_owner_id = portfolio_owner_profile_id(school)
+            owner_variants = owner_id_variants(portfolio_owner_id or "")
+            cluster_owner = (cluster.responsible_staff_id or "").strip()
+            has_other_members = (
+                School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
+                .exclude(pk=school.pk)
+                .exists()
+            )
+
+            # The first school claims a new/empty cluster for its portfolio
+            # owner. Later members must agree, so a mixed portfolio can never
+            # silently transfer an established cluster.
+            if portfolio_owner_id and (not cluster_owner or not has_other_members):
+                if cluster_owner != portfolio_owner_id:
+                    cluster.responsible_staff_id = portfolio_owner_id
+                    cluster.save(update_fields=["responsible_staff_id", "updated_at"])
+                cluster_owner = portfolio_owner_id
+
+            if cluster_owner and cluster_owner not in owner_variants:
+                raise BadRequest(
+                    "That cluster belongs to another staff member. A school joins "
+                    "a cluster owned by the person responsible for the school; "
+                    "moving it across portfolios needs a transfer."
+                )
+
         old_cluster_id = school.cluster_id
         target_cluster_id = cluster.id if cluster else None
         school.cluster_id = target_cluster_id
@@ -873,11 +895,16 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     if cluster.responsible_staff_id:
         from apps.accounts.models import StaffProfile
 
-        staff = StaffProfile.objects.filter(
-            staff_id=cluster.responsible_staff_id
-        ).first()
+        staff = (
+            StaffProfile.objects.filter(
+                Q(id=cluster.responsible_staff_id)
+                | Q(user_id=cluster.responsible_staff_id)
+            )
+            .select_related("user")
+            .first()
+        )
         if staff:
-            assigned_staff = staff.user.name if staff.user else staff.staff_id
+            assigned_staff = staff.user.name if staff.user else staff.id
 
     return {
         "id": cluster.id,

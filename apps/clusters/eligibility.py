@@ -85,6 +85,22 @@ def school_owner_ids(school) -> set[str]:
     return owner_id_variants(assigned[0]) if len(assigned) == 1 else set()
 
 
+def portfolio_owner_profile_id(school) -> str | None:
+    """Return the school's portfolio owner in the canonical StaffProfile space."""
+    ids = school_owner_ids(school)
+    if not ids:
+        return None
+    try:
+        from apps.accounts.models import StaffProfile
+    except Exception:  # noqa: BLE001 - accounts may not be ready
+        return None
+    return (
+        StaffProfile.objects.filter(Q(id__in=ids) | Q(user_id__in=ids))
+        .values_list("id", flat=True)
+        .first()
+    )
+
+
 def eligible_clusters_for_school(school, *, scope=None):
     """Clusters this school may join, narrowed as far as its data allows.
 
