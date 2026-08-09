@@ -97,8 +97,8 @@ class SidebarSettingsMarkupTest(TestCase):
         self.assertIn('role="dialog"', drawer)
         self.assertIn('aria-modal="true"', drawer)
         self.assertIn('@keydown.tab="trapFocus($event)"', drawer)
-        self.assertIn("backgroundNodes.forEach", drawer)
-        self.assertIn("node.inert = true", drawer)
+        self.assertIn("__edifyDrawerBackground?.lock()", drawer)
+        self.assertIn("__edifyDrawerBackground?.release()", drawer)
         self.assertIn("target?.isConnected", drawer)
 
 

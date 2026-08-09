@@ -108,7 +108,7 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
         self.assertIn("platform.css' %}?v=20260809clustercard1", base)
         self.assertIn("mobile-micro-ux.css' %}?v=20260809micro19", base)
-        self.assertIn("micro-ux.js' %}?v=20260809micro12", base)
+        self.assertIn("micro-ux.js' %}?v=20260809micro13", base)
 
     def test_failed_dashboard_tables_choose_non_scrolling_mobile_modes(self):
         for path, mode in (

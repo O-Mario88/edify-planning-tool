@@ -1,7 +1,10 @@
 {% load frontend_filters %}
 <!-- Activity Detail Floating Drawer with Backdrop Blur -->
 <div
-x-data="{ activeTab: 'details', closeDrawer() { document.getElementById('drawer-container')?.replaceChildren(); document.body.style.overflow = '' } }"
+{# Releasing through the one background owner, not by hand: clearing #}
+{# body.overflow alone left the shell's `inert` in place, so the page kept #}
+{# refusing clicks after this drawer closed. See static/js/drawer-background.js #}
+x-data="{ activeTab: 'details', closeDrawer() { window.__edifyDrawerBackground?.release(); document.getElementById('drawer-container')?.replaceChildren(); } }"
 @keydown.escape.window="closeDrawer()"
 class="fixed inset-0 z-50 flex justify-end"
 aria-labelledby="slide-over-title"

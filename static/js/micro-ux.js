@@ -318,23 +318,42 @@
     dialog.setAttribute('aria-labelledby', heading.id);
   }
 
+  /* Take ownership of a node only if nothing else already holds it.
+   *
+   * This used to snapshot whatever it found and restore that on close, which
+   * is only correct when this module is the sole owner of `inert`. It is not:
+   * the drawer system inerts the whole shell while a drawer is open, and a
+   * confirmation dialog INSIDE that drawer would then record `inert: true` as
+   * the background's natural state — and re-assert it after the drawer had
+   * already released the page. The result was a shell that accepted no clicks
+   * at all until a reload, reached by the most ordinary path there is: type
+   * into a drawer, press Escape, confirm discard.
+   *
+   * A node that is already inert belongs to an outer layer, which will clear
+   * it when that layer closes. So this neither sets nor restores it — the
+   * only states recorded here are ones this module actually created.
+   */
+  function claim(states, node) {
+    if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
+    if (node.inert) return;
+    states.push({ node: node, ariaHidden: node.getAttribute('aria-hidden') });
+    node.inert = true;
+    node.setAttribute('aria-hidden', 'true');
+  }
+
   function inertOutside(dialog) {
     var states = [];
     var node = dialog;
     while (node.parentElement && node.parentElement !== document.body) {
       Array.from(node.parentElement.children).forEach(function (sibling) {
-        if (sibling === node || sibling.tagName === 'SCRIPT' || sibling.tagName === 'STYLE') return;
-        states.push({ node: sibling, inert: sibling.inert, ariaHidden: sibling.getAttribute('aria-hidden') });
-        sibling.inert = true;
-        sibling.setAttribute('aria-hidden', 'true');
+        if (sibling === node) return;
+        claim(states, sibling);
       });
       node = node.parentElement;
     }
     Array.from(document.body.children).forEach(function (sibling) {
-      if (sibling === node || sibling.tagName === 'SCRIPT' || sibling.tagName === 'STYLE') return;
-      states.push({ node: sibling, inert: sibling.inert, ariaHidden: sibling.getAttribute('aria-hidden') });
-      sibling.inert = true;
-      sibling.setAttribute('aria-hidden', 'true');
+      if (sibling === node) return;
+      claim(states, sibling);
     });
     return states;
   }
@@ -342,7 +361,7 @@
   function restoreOutside(states) {
     states.forEach(function (state) {
       if (!state.node.isConnected) return;
-      state.node.inert = state.inert;
+      state.node.inert = false;
       if (state.ariaHidden === null) state.node.removeAttribute('aria-hidden');
       else state.node.setAttribute('aria-hidden', state.ariaHidden);
     });

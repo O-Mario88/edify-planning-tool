@@ -267,7 +267,7 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260731typefloor1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260809drawerbg1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -277,12 +277,21 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
+{% comment %}
+Owns the background state while a drawer is open (inert + scroll lock), so no
+drawer has to remember to undo it. Each drawer used to snapshot and restore
+the background itself, which meant a drawer opening over another one recorded
+"already inert" as the state to restore — and restored the page to inert on
+close, leaving it unclickable until a reload. Loaded before Alpine so the
+controller exists by the time a drawer's x-init runs.
+{% endcomment %}
+<script defer src="{% static 'js/drawer-background.js' %}?v=20260809drawerbg1"></script>
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260809micro12"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260809micro13"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

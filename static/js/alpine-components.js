@@ -343,15 +343,21 @@ document.addEventListener('alpine:init', () => {
   }));
 
   // Drawer / Slide-over Control
+  //
+  // The scroll lock is delegated rather than set here. Two components each
+  // writing body.style.overflow means the first one to close clears a lock
+  // the other still needs, and a component destroyed while open leaves the
+  // page permanently unscrollable. static/js/drawer-background.js owns it,
+  // counts nothing twice, and releases from the container's actual contents.
   Alpine.data('drawer', (initialOpen = false) => ({
     open: initialOpen,
     openDrawer() {
       this.open = true;
-      document.body.style.overflow = 'hidden';
+      window.__edifyDrawerBackground?.lock();
     },
     closeDrawer() {
       this.open = false;
-      document.body.style.overflow = '';
+      window.__edifyDrawerBackground?.release();
       this.$dispatch('drawer-closed');
     }
   }));

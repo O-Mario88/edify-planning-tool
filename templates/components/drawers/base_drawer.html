@@ -6,8 +6,6 @@ type: '{{ drawer_type|default:'center' }}',
 isDirty: false,
 confirmDiscard: false,
 previousFocus: null,
-backgroundNodes: [],
-backgroundStates: [],
 {# One close path for the backdrop, the Escape key, the header button and #}
 {# every footer Cancel. It was the same seven-line confirm() block copied #}
 {# into all of them, three times here and once in each child drawer. #}
@@ -31,13 +29,14 @@ const last = items[items.length - 1];
 if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
 else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 },
+{# Background state (inert siblings + scroll lock) belongs to ONE owner, #}
+{# static/js/drawer-background.js. It used to be snapshot and restored #}
+{# here, per drawer instance, which had two ways to strand the page: a #}
+{# drawer opening over another recorded "already inert" as the state to #}
+{# restore, and a drawer whose DOM was swapped away never restored at all. #}
+{# Either left the shell unclickable until a reload. #}
 restoreBackground() {
-this.backgroundNodes.forEach((node, index) => {
-const state = this.backgroundStates[index];
-node.inert = state.inert;
-if (state.ariaHidden === null) node.removeAttribute('aria-hidden');
-else node.setAttribute('aria-hidden', state.ariaHidden);
-});
+window.__edifyDrawerBackground?.release();
 },
 finishClose() {
 this.restoreBackground();
@@ -51,18 +50,8 @@ if (target?.isConnected) target.focus();
 x-init="
 previousFocus = document.activeElement;
 $nextTick(() => {
-const host = $el.parentElement;
-backgroundNodes = [...host.parentElement.children].filter((node) => node !== host);
-backgroundStates = backgroundNodes.map((node) => ({
-inert: node.inert,
-ariaHidden: node.getAttribute('aria-hidden')
-}));
-backgroundNodes.forEach((node) => {
-node.inert = true;
-node.setAttribute('aria-hidden', 'true');
-});
+window.__edifyDrawerBackground?.lock();
 active = true;
-document.body.style.overflow = 'hidden';
 $nextTick(() => {
 setTimeout(() => {
 $refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body select, .drawer-body textarea, .drawer-body button, .drawer-close-btn')?.focus();
@@ -72,7 +61,6 @@ $refs.surface.querySelector('.drawer-body input:not([type=hidden]), .drawer-body
 "
 @close-drawer.window="
 active = false;
-document.body.style.overflow = '';
 finishClose();
 "
 @keydown.escape.window="
