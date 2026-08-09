@@ -23,7 +23,9 @@
     '.sp-period-tabs',
     '.spp-tabs',
     '.tt-segmented',
-    '.oversight-entity-tabs'
+    '.oversight-entity-tabs',
+    '.edify-section-nav__clusters',
+    '.edify-section-nav__inner'
   ].join(', ');
   var tabSelector = [
     '[role="tab"]',
@@ -34,7 +36,9 @@
     '.sp-period-tabs > button',
     '.spp-tabs > button',
     '.tt-segmented > button',
-    '.oversight-entity-tabs__link'
+    '.oversight-entity-tabs__link',
+    '.edify-section-nav__cluster',
+    '.edify-section-nav__link'
   ].join(', ');
 
   function cleanText(value) {
@@ -147,8 +151,12 @@
       var isSingleCellEmptyState = row && row.closest('tbody') && row.children.length === 1;
       return cell.hasAttribute('rowspan') || cell.closest('thead') || !isSingleCellEmptyState;
     });
+    /* Operational records become labelled cards on narrow screens even when
+       they have many columns. Column count alone is not a reason to force a
+       phone user into a 44rem horizontal canvas. Only true comparison
+       matrices and structurally grouped tables keep horizontal scrolling. */
     var complex = !forceCards && (
-      headerCells.length === 0 || headerCells.length > 5 || Boolean(
+      headerCells.length === 0 || Boolean(
         structuralSpan ||
         table.matches('.edify-report-matrix__table, [data-mobile-table="scroll"]')
       )
@@ -203,7 +211,7 @@
     var tablist = tab && tab.closest(tablistSelector);
     if (!tablist || tablist.scrollWidth <= tablist.clientWidth + 2) return;
 
-    requestAnimationFrame(function () {
+    function alignTab() {
       if (!visible(tab) || !visible(tablist)) return;
       var tabs = availableTabs(tablist);
       var index = tabs.indexOf(tab);
@@ -221,11 +229,21 @@
       }
 
       if (Math.abs(delta) < 1) return;
-      tablist.scrollBy({
-        left: delta,
+      var maximum = Math.max(0, tablist.scrollWidth - tablist.clientWidth);
+      var destination = Math.max(0, Math.min(maximum, tablist.scrollLeft + delta));
+      tablist.scrollTo({
+        left: destination,
         behavior: immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
       });
+    }
+
+    /* Alpine and HTMX can update active state and element width in the same
+       click. Two frames let that settle before measuring. The short follow-up
+       closes any remaining pixel gap after smooth scrolling or font loading. */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(alignTab);
     });
+    if (!immediate) window.setTimeout(alignTab, 220);
   }
 
   function enhanceTabReveal(tablist) {
@@ -250,7 +268,8 @@
       '.messages-inbox-tab[aria-pressed="true"], .pto-tabs > button.is-active, ' +
       '.sp-period-tabs > button.is-active, .spp-tabs > button.is-active, ' +
       '.tt-segmented > button.is-active, .tt-segmented > button[aria-pressed="true"]'
-      + ', .oversight-entity-tabs__link.is-active'
+      + ', .oversight-entity-tabs__link.is-active, .edify-section-nav__cluster.is-active, '
+      + '.edify-section-nav__link.is-active'
     );
     if (active) revealTab(active, true, true);
   }

@@ -83,8 +83,19 @@ class TabContractTest(SimpleTestCase):
             ".oversight-entity-tabs",
             ".oversight-entity-tabs__link.is-active",
             ".oversight-entity-tabs__count",
+            ".edify-section-nav__clusters",
+            ".edify-section-nav__inner",
+            ".edify-section-nav__cluster.is-active",
+            ".edify-section-nav__link.is-active",
         ):
             self.assertIn(selector, contract)
+
+    def test_analytics_route_navigation_has_no_legacy_underline(self):
+        contract = self.css.split("Tabs, pills and workflow state", 1)[1]
+
+        self.assertIn("main .edify-section-nav {", contract)
+        self.assertIn("border: 0 !important", contract)
+        self.assertIn("border-block-end-color: transparent !important", contract)
 
     def test_night_mode_uses_a_readable_blue_for_the_selected_label(self):
         """--edify-accent as text on the night surface falls under AA."""

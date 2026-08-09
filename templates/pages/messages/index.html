@@ -30,7 +30,7 @@
   </div>
 
   <!-- Filter strip (full width, replaces the KPI strip) -->
-  <div class="platform-filter-bar shrink-0" data-messages-plane aria-label="Message filters">
+  <div class="platform-filter-bar messages-filter-bar shrink-0" data-messages-plane aria-label="Message filters">
     <nav data-edify-tablist class="messages-inbox-tabs flex items-center flex-nowrap flex-1 min-w-0 overflow-x-auto scrollbar-none" aria-label="Message inbox views">
       {% for key, label in tabs %}
         <button
@@ -55,7 +55,7 @@
     </nav>
     <span id="messages-tab-loading" class="htmx-indicator sr-only" role="status">Updating message list…</span>
 
-    <form id="messages-filter-state" method="get" action="/messages" class="flex items-center gap-2 w-full lg:w-auto shrink-0">
+    <form id="messages-filter-state" method="get" action="/messages" class="messages-filter-state flex items-center gap-2 w-full lg:w-auto shrink-0">
       <input id="messages-active-tab" type="hidden" name="tab" :value="activeMessageTab">
       {% comment %}Thread search lives in the TOP BAR (topbar_search context)
       — the mandate allows exactly one persistent search per page and the

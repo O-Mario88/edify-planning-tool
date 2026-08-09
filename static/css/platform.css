@@ -871,7 +871,9 @@ main :where(
   .sp-period-tabs,
   .spp-tabs,
   .tt-segmented,
-  .oversight-entity-tabs
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
 ) {
   display: flex !important;
   align-items: stretch !important;
@@ -899,7 +901,9 @@ main :where(
   .sp-period-tabs > button,
   .spp-tabs > button,
   .tt-segmented > button,
-  .oversight-entity-tabs__link
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
 ) {
   display: inline-flex !important;
   align-items: center !important;
@@ -933,7 +937,9 @@ main :where(
   .sp-period-tabs > button,
   .spp-tabs > button,
   .tt-segmented > button,
-  .oversight-entity-tabs__link
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
 ):hover:not(:disabled) {
   color: var(--edify-text) !important;
   border-color: transparent !important;
@@ -954,7 +960,9 @@ main :where(
   .sp-period-tabs > button,
   .spp-tabs > button,
   .tt-segmented > button,
-  .oversight-entity-tabs__link
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
 ):focus-visible {
   outline: var(--edify-focus-outline);
   outline-offset: 3px;
@@ -973,7 +981,9 @@ main :where(
   .spp-tabs > button.is-active,
   .tt-segmented > button.is-active,
   .tt-segmented > button[aria-pressed="true"],
-  .oversight-entity-tabs__link.is-active
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
 ) {
   background: var(--edify-surface-raised) !important;
   color: var(--edify-accent) !important;
@@ -991,8 +1001,10 @@ main :where(
   .sp-period-tabs > button,
   .spp-tabs > button,
   .tt-segmented > button,
-  .oversight-entity-tabs__link
-) :where(.rounded-pill, b, .messages-inbox-tab__count, .oversight-entity-tabs__count) {
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) :where(.rounded-pill, b, .messages-inbox-tab__count, .oversight-entity-tabs__count, .edify-section-nav__cluster-count) {
   min-inline-size: auto !important;
   block-size: auto !important;
   padding: 0 !important;
@@ -1010,6 +1022,22 @@ main :where(
    underline marker so active state has one signal, not two. */
 main .oversight-entity-tabs__link::after {
   content: none !important;
+}
+
+/* Analytics uses real route links for its section switcher, but visually it
+   belongs to the same tab system. Remove the legacy underline/bar anatomy so
+   route navigation and in-page tabs no longer look like different products. */
+main .edify-section-nav {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+main .edify-section-nav :where(.edify-section-nav__eyebrow, .edify-section-nav__rule, .edify-section-nav__divider) {
+  display: none !important;
+}
+
+main .edify-section-nav :where(.edify-section-nav__cluster, .edify-section-nav__link) {
+  border-block-end-color: transparent !important;
 }
 
 main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notification-badge) {
@@ -1194,6 +1222,45 @@ main .platform-filter-bar > :where(label, div) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   box-shadow: none;
+}
+
+/* Messages combines a long tab rail with a compact sort/compose form. Below
+   the desktop breakpoint they occupy two deliberate rows, so the form can no
+   longer collapse the tab rail to a few pixels. */
+main .messages-filter-bar {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+main .messages-filter-bar > .messages-inbox-tabs {
+  flex: 1 1 auto;
+  inline-size: auto;
+}
+
+main .messages-filter-bar > .messages-filter-state {
+  flex: 0 0 auto;
+  inline-size: auto !important;
+}
+
+@media (max-width: 63.9375rem) {
+  main .messages-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  main .messages-filter-bar > :where(.messages-inbox-tabs, .messages-filter-state) {
+    inline-size: 100% !important;
+    min-inline-size: 0;
+  }
+
+  main .messages-filter-bar > .messages-filter-state {
+    justify-content: flex-end;
+  }
+
+  main .messages-filter-bar #messages-sort {
+    min-inline-size: 0;
+    flex: 1 1 auto;
+  }
 }
 
 /* Intentional dark-blue hero for high-trust operational consoles. */
@@ -1489,7 +1556,9 @@ main .platform-responsive-table [data-priority="low"] {
   .sp-period-tabs,
   .spp-tabs,
   .tt-segmented,
-  .oversight-entity-tabs
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
 ) {
   background: var(--edify-surface-muted) !important;
   border-color: var(--edify-border) !important;
@@ -1511,7 +1580,9 @@ main .platform-responsive-table [data-priority="low"] {
   .spp-tabs > button.is-active,
   .tt-segmented > button.is-active,
   .tt-segmented > button[aria-pressed="true"],
-  .oversight-entity-tabs__link.is-active
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
 ) {
   background: var(--edify-surface-raised) !important;
   color: var(--edify-info) !important;
@@ -1529,7 +1600,9 @@ main .platform-responsive-table [data-priority="low"] {
     .sp-period-tabs,
     .spp-tabs,
     .tt-segmented,
-    .oversight-entity-tabs
+    .oversight-entity-tabs,
+    .edify-section-nav__clusters,
+    .edify-section-nav__inner
   ) {
     scroll-behavior: auto;
   }
@@ -1543,7 +1616,9 @@ main .platform-responsive-table [data-priority="low"] {
     .sp-period-tabs > button,
     .spp-tabs > button,
     .tt-segmented > button,
-    .oversight-entity-tabs__link
+    .oversight-entity-tabs__link,
+    .edify-section-nav__cluster,
+    .edify-section-nav__link
   ) {
     transition: none !important;
   }
@@ -1563,7 +1638,9 @@ main .platform-responsive-table [data-priority="low"] {
     .spp-tabs > button.is-active,
     .tt-segmented > button.is-active,
     .tt-segmented > button[aria-pressed="true"],
-    .oversight-entity-tabs__link.is-active
+    .oversight-entity-tabs__link.is-active,
+    .edify-section-nav__cluster.is-active,
+    .edify-section-nav__link.is-active
   ) {
     color: Highlight !important;
     border-color: Highlight !important;
@@ -1861,10 +1938,29 @@ main [data-mobile-family="directory"] #filters-form.school-filters-form {
   white-space: nowrap;
 }
 
-@media (min-width: 56rem) {
-  .school-filter-grid {
-    grid-template-columns: repeat(6, minmax(6.5rem, 1fr)) max-content !important;
+main [data-mobile-family="directory"] .school-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+main [data-mobile-family="directory"] .school-filter-grid :where(select, input) {
+  min-inline-size: 0;
+  inline-size: 100%;
+  text-overflow: ellipsis;
+}
+
+main [data-mobile-family="directory"] .school-filter-clear {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 48rem) {
+  main [data-mobile-family="directory"] .school-filter-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) max-content !important;
     gap: 0.75rem !important;
+  }
+
+  main [data-mobile-family="directory"] .school-filter-clear {
+    grid-column: auto;
   }
 }
 
@@ -1875,6 +1971,41 @@ main [data-mobile-family="directory"] #filters-form.school-filters-form {
 
   main [data-mobile-family="directory"] #filters-form.school-filters-form {
     padding: 0.875rem 1rem 1rem !important;
+  }
+}
+
+/* The calendar's four event tabs are compact enough to fit at phone width.
+   Keep them as a four-column segmented control rather than letting the global
+   rail minimums clip the final Holidays tab. */
+@media (max-width: 44rem) {
+  main .calendar-workspace__filters {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow: visible !important;
+  }
+
+  main .calendar-workspace__filters > [role="tab"] {
+    min-inline-size: 0 !important;
+    inline-size: 100%;
+    flex: initial !important;
+    padding-inline: 0.2rem !important;
+  }
+}
+
+@media (max-width: 63.999rem) {
+  main .pl-ssa-matrix.edify-mobile-table--fit :is(th, td) {
+    min-inline-size: 0 !important;
+    padding-inline: 0.125rem !important;
+    font-size: 0.625rem !important;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  main .pl-ssa-matrix.edify-mobile-table--fit :is(th, td):first-child {
+    inline-size: 26%;
+    padding-inline-start: 0.25rem !important;
+    text-align: start;
   }
 }
 

@@ -48,7 +48,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn("ensureTableCaption", behavior)
         self.assertIn("header.setAttribute('scope', 'col')", behavior)
         self.assertIn("cell.setAttribute('data-label', headers[index])", behavior)
-        self.assertIn("headerCells.length > 5", behavior)
+        self.assertNotIn("headerCells.length > 5", behavior)
+        self.assertIn("Column count alone is not a reason", behavior)
         self.assertIn("isSingleCellEmptyState", behavior)
         self.assertIn("structuralSpan", behavior)
         self.assertIn("enhanceTableChoices(table)", behavior)
@@ -76,7 +77,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
             "enhanceTabReveal",
             "revealTab(selected, true)",
             "revealTab(focused, false)",
-            "tablist.scrollBy",
+            "tablist.scrollTo",
+            "requestAnimationFrame(alignTab)",
+            "window.setTimeout(alignTab, 220)",
             "revealRect.right - stripRect.right",
             "revealTab(active, true, true)",
             "prefers-reduced-motion: reduce",
@@ -103,8 +106,30 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260809tabs2", base)
-        self.assertIn("micro-ux.js' %}?v=20260809micro11", base)
+        self.assertIn("platform.css' %}?v=20260809tabs3", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260809micro19", base)
+        self.assertIn("micro-ux.js' %}?v=20260809micro12", base)
+
+    def test_failed_dashboard_tables_choose_non_scrolling_mobile_modes(self):
+        for path, mode in (
+            ("templates/partials/dashboards/pl/cceo_performance.html", "cards"),
+            ("templates/partials/dashboards/urgent_schools_table.html", "cards"),
+            ("templates/partials/dashboards/pl/ssa_intelligence.html", "fit"),
+            ("templates/partials/oversight/cd_workspace.html", "cards"),
+            ("templates/partials/oversight/pl_workspace.html", "cards"),
+        ):
+            with self.subTest(path=path):
+                self.assertIn(f'data-mobile-table="{mode}"', _read(path))
+
+    def test_message_and_calendar_tab_rails_cannot_collapse_or_clip(self):
+        styles = _read("static/css/platform.css")
+        messages = _read("templates/pages/messages/index.html")
+
+        self.assertIn("messages-filter-bar", messages)
+        self.assertIn("flex-direction: column", styles)
+        self.assertIn("main .calendar-workspace__filters", styles)
+        self.assertIn("grid-template-columns: repeat(4, minmax(0, 1fr))", styles)
+        self.assertIn("min-inline-size: 0 !important", styles)
 
     def test_feedback_and_accessible_name_auditing_are_centralized(self):
         base = _read("templates/base.html")

@@ -175,6 +175,7 @@
     inline-size: 100% !important;
     min-inline-size: 0 !important;
     border-collapse: separate;
+    white-space: normal !important;
   }
 
   .edify-mobile-table--cards > caption {
@@ -208,6 +209,8 @@
   .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th) {
     display: grid !important;
     grid-template-columns: minmax(6.5rem, 0.85fr) minmax(0, 1.35fr);
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
     min-block-size: 2.75rem;
     align-items: center;
     gap: 0.75rem;
@@ -215,6 +218,11 @@
     border-block-end: 1px solid var(--edify-border) !important;
     overflow-wrap: anywhere;
     text-align: start !important;
+  }
+
+  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th) > * {
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th):last-child {
@@ -270,6 +278,15 @@
   }
 }
 
+@media (max-width: 47.999rem) {
+  /* Some oversight pages already author a dedicated phone list. Preserve that
+     source-level choice instead of allowing card mode to unhide the tablet
+     table and duplicate every record. */
+  .edify-mobile-table--cards[class~="max-md:hidden"] {
+    display: none !important;
+  }
+}
+
 .edify-workspace .edify-table-choice {
   align-items: center;
   cursor: pointer;
@@ -302,6 +319,52 @@
   .edify-table-scroll-region,
   .edify-mobile-table--cards * {
     scroll-behavior: auto !important;
+  }
+}
+
+/* Loaded after the legacy consistency bridge: this is the final directory
+   geometry contract. It prevents that bridge from turning the school filter
+   grid back into a nowrap flex row and pushing Clear Filters off tablet. */
+main #filters-form .school-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+main #filters-form .school-filter-grid > * {
+  min-inline-size: 0;
+}
+
+@media (min-width: 48rem) {
+  main #filters-form .school-filter-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) max-content !important;
+  }
+}
+
+@media (max-width: 63.9375rem) {
+  main #messages-page .messages-filter-bar {
+    flex-flow: column nowrap !important;
+    align-items: stretch !important;
+  }
+
+  main #messages-page .messages-filter-bar > :where(.messages-inbox-tabs, .messages-filter-state) {
+    flex: 0 0 auto !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+}
+
+@media (max-width: 44rem) {
+  main .calendar-workspace__filters {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    overflow: visible !important;
+  }
+
+  main .calendar-workspace__filters > [role="tab"] {
+    min-inline-size: 0 !important;
+    flex: initial !important;
   }
 }
 
