@@ -111,6 +111,33 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
     }
 
 
+def _cost_preview_participants(request, activity_type):
+    """Return the participant count the cost preview must price.
+
+    Group-training totals are derived from the two values the planner actually
+    chooses.  The hidden total is only an Alpine-rendered convenience and can
+    be one event behind when HTMX serializes the form.
+    """
+
+    raw_total = request.GET.get("expected_participants", "50").strip()
+    fallback = int(raw_total) if raw_total.isdigit() else 50
+
+    if activity_type != "training":
+        return fallback
+
+    raw_per_school = request.GET.get("participants_per_school", "").strip()
+    raw_schools_invited = request.GET.get("schools_invited", "").strip()
+    if not raw_per_school.isdigit() or not raw_schools_invited.isdigit():
+        return fallback
+
+    per_school = int(raw_per_school)
+    schools_invited = int(raw_schools_invited)
+    if per_school < 1 or schools_invited < 1:
+        return fallback
+
+    return per_school * schools_invited
+
+
 def get_cluster_impact_data(cluster_id, focus_intervention, principal):
     from apps.clusters.services import cluster_activity_impact
 
@@ -318,8 +345,7 @@ def cluster_schools_partial(request, cluster_id):
 @require_page_permission("planning")
 def cluster_cost_preview_partial(request):
     activity_type = request.GET.get("activity_type", "training").strip()
-    participants_str = request.GET.get("expected_participants", "50").strip()
-    participants = int(participants_str) if participants_str.isdigit() else 50
+    participants = _cost_preview_participants(request, activity_type)
     cluster_id = request.GET.get("cluster_id", "").strip()
 
     try:

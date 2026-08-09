@@ -218,7 +218,7 @@ class="h-5 w-5 text-[var(--edify-chart-blue)] border-slate-300 focus:ring-[var(-
       <input aria-label="Participants per school" type="number" min="1" step="1" required
         id="participants_per_school" name="participants_per_school" x-model.number="perSchool"
         hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
-        hx-trigger="change delay:200ms, keyup delay:200ms" hx-include="#action-planner-form"
+        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
     </div>
     <div>
@@ -227,7 +227,7 @@ class="h-5 w-5 text-[var(--edify-chart-blue)] border-slate-300 focus:ring-[var(-
         :max="clusterSchools"
         id="schools_invited" name="schools_invited" x-model.number="schoolsInvited"
         hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
-        hx-trigger="change delay:200ms, keyup delay:200ms" hx-include="#action-planner-form"
+        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
       <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
         Of <span x-text="clusterSchools"></span> in this cluster. Lower it when some do not qualify &mdash; a Literacy session does not reach secondary or vocational members.
@@ -242,10 +242,9 @@ class="h-5 w-5 text-[var(--edify-chart-blue)] border-slate-300 focus:ring-[var(-
     <span class="text-[14px] font-bold edify-text tabular-nums" x-text="total.toLocaleString()"></span>
   </div>
   {% comment %}
-    Carried so the existing cost-preview endpoint and scheduler keep working
-    unchanged. It is a preview: the backend recounts the cluster and
-    recomputes the total from per-school × invited at submission, so a drawer
-    left open while membership changes cannot price an activity.
+    Carried for progressive enhancement and form submission. It is a preview:
+    both the cost-preview endpoint and the scheduler recompute the total from
+    per-school × invited, and submission also recounts cluster membership.
   {% endcomment %}
   <input type="hidden" name="expected_participants" :value="total">
 </div>
@@ -261,7 +260,7 @@ name="expected_participants"
 x-model.number="participants"
 hx-get="/clusters/cost-preview"
 hx-target="#planner-cost-preview-container"
-hx-trigger="change delay:200ms, keyup delay:200ms"
+hx-trigger="input changed delay:250ms, change"
 hx-include="#action-planner-form"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none"
 >

@@ -16,6 +16,7 @@ from __future__ import annotations
 import datetime
 import json
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.management import call_command
 from django.test import Client, TestCase
@@ -325,6 +326,53 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn('name="participants_per_school"', html)
         self.assertNotIn("Purpose for Meeting / Training", html)
         self.assertNotIn("Session Goal", html)
+
+    def test_cluster_card_cost_preview_refreshes_for_numeric_input(self):
+        html = self._cluster_card_drawer()
+        self.assertEqual(
+            html.count('hx-trigger="input changed delay:250ms, change"'), 2
+        )
+
+    def test_cost_preview_derives_training_total_from_source_fields(self):
+        client = Client()
+        client.force_login(self.user)
+        with patch(
+            "apps.frontend.views.cluster_views._get_cost_preview_data",
+            return_value={
+                "catalogue_version": "test",
+                "lines": [],
+                "amount": 0,
+                "can_schedule": True,
+                "blockers": [],
+            },
+        ) as preview:
+            response = client.get(
+                "/clusters/cost-preview",
+                {
+                    "activity_type": "training",
+                    "cluster_id": self.cluster.id,
+                    # Deliberately stale: Alpine may not have updated this
+                    # hidden field when HTMX starts serializing the form.
+                    "expected_participants": "60",
+                    "participants_per_school": "3",
+                    "schools_invited": "12",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        preview.assert_called_once_with("training", 36, self.cluster.id)
+
+    def _cluster_card_drawer(self) -> str:
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(
+            f"/clusters/planner-drawer?cluster_id={self.cluster.id}"
+            "&activity_type=training&fixed_cluster=true",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode("utf-8")
 
     def test_training_post_cannot_bypass_the_required_project(self):
         client = Client()
