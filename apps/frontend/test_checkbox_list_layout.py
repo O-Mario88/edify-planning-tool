@@ -23,10 +23,29 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
                 row.index("school-record-row__title"),
             )
 
+        self.assertLess(
+            directory.index("school-record-row__icon"),
+            directory.index("school-record-row__school-id"),
+        )
+        self.assertLess(
+            directory.index("school-record-row__school-id"),
+            directory.index("school-record-row__title"),
+        )
+        self.assertIn("school-record-row__content--with-id", directory)
+
         self.assertIn("grid-template-columns: 2rem minmax(0, 1fr) auto", css)
         self.assertIn("grid-column: 1;", css)
         self.assertIn("background: transparent;", css)
         self.assertNotIn("inset-inline-start: 1.7rem", css)
+
+    def test_school_id_has_a_bounded_responsive_identity_track(self):
+        css = (ROOT / "static/css/platform.css").read_text()
+        mobile_css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
+
+        self.assertIn(".school-record-row__school-id", css)
+        self.assertIn("fit-content(7.5rem) minmax(0, 1fr)", css)
+        self.assertIn("fit-content(6rem) minmax(0, 1fr)", mobile_css)
+        self.assertIn("fit-content(5rem) minmax(0, 1fr)", mobile_css)
 
     def test_directory_actions_have_compact_mobile_labels_and_consistent_icons(self):
         directory = (ROOT / "templates/partials/schools/directory_row.html").read_text()

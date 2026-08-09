@@ -439,6 +439,8 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, '@click.outside="openSchoolId = null"')
         self.assertContains(response, "openSchoolId ===")
         self.assertContains(response, "Kampola High School")
+        self.assertContains(response, 'class="school-record-row__school-id"')
+        self.assertContains(response, self.school.school_id)
         self.assertContains(response, "Not assessed")
         self.assertContains(response, "Visit:")
         self.assertContains(response, "Training:")

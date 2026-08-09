@@ -237,6 +237,8 @@ class BulkAssignmentTests(TestCase):
         response = self.client.get("/core-schools?page=1")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 10)
+        self.assertContains(response, 'class="school-record-row__school-id"', count=10)
+        self.assertContains(response, response.context["matrix_rows"][0]["school_id"])
         self.assertTrue(response.context["is_paginated"])
         self.assertIn(1, response.context["pages_list"])
         self.assertIn(2, response.context["pages_list"])

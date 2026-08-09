@@ -67,14 +67,21 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertIn("grid-template-columns: minmax(0, 1fr) auto", css)
         self.assertIn("container: cluster-card / inline-size", css)
 
-    def test_mobile_cluster_card_details_use_scannable_definition_groups(self):
+    def test_mobile_cluster_card_matches_school_record_detail_rhythm(self):
         cluster = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        self.assertIn('class="cluster-card__facts"', cluster)
-        self.assertIn('class="cluster-card__readiness"', cluster)
-        self.assertIn("cluster-card__next-action", cluster)
+        self.assertIn("school-record-row__metadata cluster-card__metadata", cluster)
+        self.assertNotIn("cluster-card__facts", cluster)
+        self.assertNotIn("cluster-card__readiness", cluster)
+        self.assertNotIn("cluster-card__next-action", cluster)
+        self.assertNotIn("school-record-row__select", cluster)
+        self.assertNotIn("school-record-row__icon", cluster)
+        self.assertNotIn('type="checkbox"', cluster)
+        self.assertLess(cluster.index("cluster-card__metadata"), cluster.index("cluster-ssa-summary"))
+        self.assertLess(cluster.index("cluster-ssa-summary"), cluster.index("expanded-schools-"))
         self.assertIn("@container cluster-card (max-width: 30rem)", css)
+        self.assertIn("grid-template-columns: max-content minmax(0, 1fr)", css)
         self.assertNotIn("gap-2 md:gap-4", cluster)
 
     def test_oversight_pages_opt_into_shared_mobile_density(self):
