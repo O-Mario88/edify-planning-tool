@@ -115,6 +115,40 @@ class ClusterInteractionQueryShapeTest(TestCase):
         self.assertEqual(school["lastVisitDate"], "2026-07-03")
         self.assertEqual(school["lastTrainingDate"], "2026-07-08")
 
+    def test_cluster_profile_populates_roster_and_student_impact(self):
+        from django.utils import timezone
+
+        from apps.ssa.models import SsaRecord, SsaScore
+
+        School.objects.filter(id=self.first_school.id).update(
+            enrollment=420, planning_readiness="ready_for_support_planning"
+        )
+        second_school = self._make_school(1)
+        School.objects.filter(id=second_school.id).update(enrollment=80)
+        ssa = SsaRecord.objects.create(
+            school=self.first_school,
+            date_of_ssa=timezone.now(),
+            fy="2026",
+            quarter="Q1",
+            average_score=6.4,
+            verification_status="confirmed",
+            uploaded_by=self.user.id,
+        )
+        SsaScore.objects.create(ssa_record=ssa, intervention="leadership", score=6.4)
+
+        detail = cluster_detail(self.cluster.id, self.user)
+        self.assertEqual(detail["schoolCount"], 2)
+        self.assertEqual(detail["studentImpact"], 500)
+
+        self.client.force_login(self.user)
+        response = self.client.get(f"/clusters/{self.cluster.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "500 Students Impacted")
+        self.assertContains(response, "6.4/10")
+        self.assertContains(response, "2026-07-03")
+        self.assertContains(response, "2026-07-08")
+        self.assertContains(response, "Ready for Support Planning")
+
     @patch(
         "apps.frontend.views.cluster_views.ClusterImpactService.get_impact_data",
         side_effect=AssertionError("unused impact panel work must stay lazy"),

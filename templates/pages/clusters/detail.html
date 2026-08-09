@@ -81,21 +81,25 @@ Schedule Cluster Meeting
 
 <!-- Schools in Cluster Table -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--edify-border)] flex items-center justify-between">
+<div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-wrap items-center justify-between gap-3">
 <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Assigned Roster</h3>
+<div class="flex flex-wrap items-center gap-2">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
+<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold bg-sky-50 text-sky-700 border border-sky-100 tabular-nums">{{ cluster.studentImpact|intcomma }} Students Impacted</span>
+</div>
 </div>
 <div class="overflow-x-auto">
 {% paginate schools "schools_page" as schools_pager %}
 <table class="edify-record-table edify-data-table w-full text-left text-[12px] border-collapse">
+<caption class="sr-only">Assigned schools with their latest confirmed SSA average, most recent completed visit and training, and planning readiness.</caption>
 <thead>
 <tr class="bg-slate-50 border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider text-left">
-<th class="px-4 py-2.5">School ID</th>
-<th class="px-4 py-2.5">School Name</th>
-<th class="px-4 py-2.5">SSA Average</th>
-<th class="px-4 py-2.5">Last Visit</th>
-<th class="px-4 py-2.5">Last Training</th>
-<th class="px-4 py-2.5">Readiness</th>
+<th scope="col" class="px-4 py-2.5">School ID</th>
+<th scope="col" class="px-4 py-2.5">School Name</th>
+<th scope="col" class="px-4 py-2.5">SSA Average</th>
+<th scope="col" class="px-4 py-2.5">Last Visit</th>
+<th scope="col" class="px-4 py-2.5">Last Training</th>
+<th scope="col" class="px-4 py-2.5">Readiness</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
@@ -106,12 +110,12 @@ Schedule Cluster Meeting
 <td class="px-4 py-3" data-label="School Name">
 <a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
 </td>
-<td class="px-4 py-3 font-semibold text-slate-800" data-label="SSA Average">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
-<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Visit">{{ s.last_visit_date }}</td>
-<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Training">{{ s.last_training_date }}</td>
+<td class="px-4 py-3 font-semibold text-slate-800 tabular-nums" data-label="SSA Average">{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:1 }}/10{% else %}Not assessed{% endif %}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Visit">{{ s.lastVisitDate }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Training">{{ s.lastTrainingDate }}</td>
 <td class="px-4 py-3" data-label="Readiness">
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
-{{ s.planning_status }}
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if s.planningStatus == 'ready_for_support_planning' %}bg-emerald-50 text-emerald-700{% elif s.planningStatus == 'ready_for_baseline_ssa' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+{{ s.planningStatusLabel }}
 </span>
 </td>
 </tr>

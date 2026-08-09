@@ -12,7 +12,7 @@ from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from collections import defaultdict
 
 from django.db import transaction
-from django.db.models import Avg, Count, Max, Min, Prefetch, Q
+from django.db.models import Avg, Count, Max, Min, Prefetch, Q, Sum
 
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -781,6 +781,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "lastVisitDate": last_visit_date,
                 "lastTrainingDate": last_training_date,
                 "planningStatus": s.planning_readiness,
+                "planningStatusLabel": s.get_planning_readiness_display(),
                 "ssaStatus": s.current_fy_ssa_status,
                 "recommendedAction": rec_action,
                 "meetings_attended": attended_meetings,
@@ -821,7 +822,11 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     cluster = _scoped_cluster(cluster_id, principal)
 
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
-    school_count = schools.count()
+    school_totals = schools.aggregate(
+        school_count=Count("id"), student_impact=Sum("enrollment")
+    )
+    school_count = school_totals["school_count"]
+    student_impact = school_totals["student_impact"] or 0
 
     # Resolve every school's latest confirmed SSA in one batched read. The
     # previous loop performed one lookup per school before the roster itself
@@ -882,6 +887,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
         "district": {"name": cluster.district.name} if cluster.district else None,
         "subCounty": {"name": cluster.sub_county.name} if cluster.sub_county else None,
         "schoolCount": school_count,
+        "studentImpact": student_impact,
         "assignedStaff": assigned_staff,
         "averageSsa": avg_ssa,
         "lastMeeting": last_meeting_str,
