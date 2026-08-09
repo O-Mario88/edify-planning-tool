@@ -59,16 +59,23 @@ class MobileDensityContractTests(SimpleTestCase):
 
     def test_mobile_cluster_card_keeps_name_and_actions_on_one_row(self):
         cluster = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()
+        css = (ROOT / "static/css/platform.css").read_text()
 
-        self.assertIn(
-            "flex flex-row items-start md:items-center justify-between gap-2 md:gap-4",
-            cluster,
-        )
+        self.assertIn('class="cluster-card__summary"', cluster)
         self.assertNotIn("flex flex-col md:flex-row", cluster)
-        self.assertIn(
-            'class="shrink-0 flex items-center gap-1.5 sm:gap-2 md:gap-3"',
-            cluster,
-        )
+        self.assertIn('class="cluster-card__actions"', cluster)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) auto", css)
+        self.assertIn("container: cluster-card / inline-size", css)
+
+    def test_mobile_cluster_card_details_use_scannable_definition_groups(self):
+        cluster = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()
+        css = (ROOT / "static/css/platform.css").read_text()
+
+        self.assertIn('class="cluster-card__facts"', cluster)
+        self.assertIn('class="cluster-card__readiness"', cluster)
+        self.assertIn("cluster-card__next-action", cluster)
+        self.assertIn("@container cluster-card (max-width: 30rem)", css)
+        self.assertNotIn("gap-2 md:gap-4", cluster)
 
     def test_oversight_pages_opt_into_shared_mobile_density(self):
         for name in (

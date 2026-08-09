@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div
-class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
+class="cluster-card edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
 x-data="{
 cardExpanded: false,
 subTableLoaded: false
@@ -9,12 +9,12 @@ x-init="$watch('cardExpanded', value => { if (value && !subTableLoaded) { htmx.t
 >
 <div
 @click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) cardExpanded = !cardExpanded"
-class="p-5 flex flex-row items-start md:items-center justify-between gap-2 md:gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
+class="cluster-card__summary"
 data-row-disclosure-summary
 >
-<div class="space-y-1.5 flex-1 min-w-0">
-<div class="flex items-center gap-2.5 flex-wrap">
-<h3 class="text-[18px] font-semibold leading-tight" data-list-title>
+<div class="cluster-card__identity">
+<div class="cluster-card__title-row">
+<h3 class="cluster-card__title" data-list-title>
   {% comment %}The cluster profile existed at /clusters/<id> with nothing linking to it, so the page was only reachable by typing the URL — the same affordance a school name already carries in the directory.{% endcomment %}
   <a href="/clusters/{{ cluster.id }}" class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
 </h3>
@@ -27,58 +27,9 @@ data-row-disclosure-summary
 <span class="edify-status-badge success">Healthy</span>
 {% endif %}
 </div>
-
-{% comment %}
-Everything below the name collapses with the card. A cluster row is its name,
-its risk and its actions; the eleven metadata pairs, the coverage block and the
-next action are what you open it for.
-
-x-show on `cardExpanded`, the state this card already had, rather than a second
-mechanism — and deliberately without a transition. The school rows carried
-`x-transition.opacity.duration.150ms` and it left the panel stuck at
-`display:none; opacity:0` with the state correct, so the details never opened
-at all. x-cloak keeps these hidden until Alpine boots, which now works because
-the `[x-cloak]` rule finally exists.
-{% endcomment %}
-<div x-show="cardExpanded" x-cloak class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-500 font-semibold">
-<span>Location: <span class="font-bold text-slate-800">{{ cluster.district }}, {{ cluster.sub_county }}</span></span>
-<span>Cluster Leader: <span class="font-bold text-slate-800">{{ cluster.cluster_leader_name }}</span></span>
-<span>Cluster Leader Phone: <span class="font-bold text-slate-800">{{ cluster.cluster_leader_phone }}</span></span>
-<span>Schools: <span class="font-bold text-slate-800">{{ cluster.schools_count }}</span></span>
-<span>Assigned Staff: <span class="font-bold text-slate-800">{{ cluster.staff_count }}</span></span>
-<span class="flex items-center gap-1">
-Avg SSA: <span class="font-bold text-slate-800">{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</span>
-{% if cluster.avg_ssa %}
-<span class="h-1.5 w-1.5 rounded-pill {% if cluster.risk == 'critical' %}bg-rose-500{% elif cluster.risk == 'needs_attention' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
-{% endif %}
-</span>
-<span>Meetings (FY): <span class="font-bold text-slate-800">{{ cluster.meeting_count_fy }}</span></span>
-<span>Last Meeting: <span class="font-bold text-slate-800">{{ cluster.last_meeting_date }}</span></span>
-<span>Last Training: <span class="font-bold text-slate-800">{{ cluster.last_training_date }}</span></span>
 </div>
 
-<!-- Setup & SSA Coverage metrics block -->
-<div x-show="cardExpanded" x-cloak class="flex flex-wrap items-center gap-x-4 gap-y-1.5 edify-text-caption text-slate-500 font-bold border-t border-slate-100/60 pt-2 mt-1">
-<span>SSA Coverage: <span class="text-[var(--edify-primary)] font-semibold">{{ cluster.planning.schoolsWithSsa|default:"0" }}/{{ cluster.schools_count }} ({{ cluster.planning.ssaCoveragePct|default:"0" }}%)</span></span>
-<span>Without SSA: <span class="text-amber-600 font-semibold">{{ cluster.planning.schoolsWithoutSsa|default:"0" }} schools</span></span>
-<span>SSA Required: <span class="text-rose-600 font-semibold">{{ cluster.planning.needingBaselineCount|default:"0" }}</span></span>
-<span>Needing Cleanup: <span class="text-slate-600 font-semibold">{{ cluster.planning.needingCleanupCount|default:"0" }}</span></span>
-<span>Ready for Planning: <span class="text-emerald-600 font-semibold">{{ cluster.planning.readySchoolsCount|default:"0" }}</span></span>
-</div>
-
-<div x-show="cardExpanded" x-cloak class="text-[12px] font-semibold flex items-center gap-1 {% if cluster.risk == 'critical' %}text-rose-600{% elif cluster.risk == 'needs_attention' %}text-amber-600{% else %}text-emerald-600{% endif %}">
-{% if cluster.risk == 'critical' %}
-<svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-{% elif cluster.risk == 'needs_attention' %}
-<svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-{% else %}
-<svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-{% endif %}
-Next Action: {{ cluster.next_action }}
-</div>
-</div>
-
-<div class="shrink-0 flex items-center gap-1.5 sm:gap-2 md:gap-3">
+<div class="cluster-card__actions">
 {% comment %}
 Was a list of role names this button did NOT want to see. That list only
 ever grows, and it was already wrong: it named the two partner roles and so
@@ -92,11 +43,12 @@ hx-get="/clusters/planner-drawer?cluster_id={{ cluster.id }}&activity_type=train
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="school-record-action school-record-action--schedule"
+aria-label="Schedule training for {{ cluster.name }}"
 >
 <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 </svg>
-Schedule
+<span class="cluster-card__action-label">Schedule</span>
 </button>
 
 <button
@@ -104,17 +56,18 @@ hx-get="/planning/assign-partner-modal?cluster_id={{ cluster.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 class="school-record-action school-record-action--assign"
+aria-label="Assign staff to {{ cluster.name }}"
 >
 <svg aria-hidden="true" class="school-record-action__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m12-11a4 4 0 10-8 0 4 4 0 008 0zm4 1v6m3-3h-6" />
 </svg>
-Assign
+<span class="cluster-card__action-label">Assign</span>
 </button>
 {% endif %}
 
 <button
 type="button"
-class="grid h-9 w-9 shrink-0 place-items-center rounded-control text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+class="cluster-card__toggle"
 @click="cardExpanded = !cardExpanded"
 :aria-expanded="cardExpanded.toString()"
 aria-controls="cluster-details-{{ cluster.id }}"
@@ -128,7 +81,90 @@ aria-controls="cluster-details-{{ cluster.id }}"
 </div>
 
 <!-- Expanded details block -->
-<div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-cloak class="border-t border-slate-100 p-5 space-y-5">
+<div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-cloak class="cluster-card__details">
+  <section class="cluster-card__overview" aria-labelledby="cluster-{{ cluster.id }}-overview-title">
+    <div class="cluster-card__section-heading">
+      <div>
+        <p class="cluster-card__eyebrow">At a glance</p>
+        <h3 id="cluster-{{ cluster.id }}-overview-title">Cluster overview</h3>
+      </div>
+      <span class="cluster-card__school-count">{{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</span>
+    </div>
+
+    <dl class="cluster-card__facts">
+      <div class="cluster-card__fact cluster-card__fact--location">
+        <dt>Location</dt>
+        <dd>{{ cluster.district }}, {{ cluster.sub_county }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Cluster leader</dt>
+        <dd>{{ cluster.cluster_leader_name }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Leader phone</dt>
+        <dd>{{ cluster.cluster_leader_phone }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Assigned staff</dt>
+        <dd>{{ cluster.staff_count }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Average SSA</dt>
+        <dd class="cluster-card__ssa-value">
+          {% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}
+          {% if cluster.avg_ssa %}<span class="cluster-card__risk-dot cluster-card__risk-dot--{{ cluster.risk }}" aria-hidden="true"></span>{% endif %}
+        </dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>FY meetings</dt>
+        <dd>{{ cluster.meeting_count_fy }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Last meeting</dt>
+        <dd>{{ cluster.last_meeting_date }}</dd>
+      </div>
+      <div class="cluster-card__fact">
+        <dt>Last training</dt>
+        <dd>{{ cluster.last_training_date }}</dd>
+      </div>
+    </dl>
+
+    <div class="cluster-card__readiness" aria-label="SSA planning readiness">
+      <div class="cluster-card__readiness-item cluster-card__readiness-item--coverage">
+        <span>SSA coverage</span>
+        <strong>{{ cluster.planning.schoolsWithSsa|default:"0" }}/{{ cluster.schools_count }} <small>({{ cluster.planning.ssaCoveragePct|default:"0" }}%)</small></strong>
+      </div>
+      <div class="cluster-card__readiness-item is-warning">
+        <span>Without SSA</span>
+        <strong>{{ cluster.planning.schoolsWithoutSsa|default:"0" }} <small>schools</small></strong>
+      </div>
+      <div class="cluster-card__readiness-item is-danger">
+        <span>SSA required</span>
+        <strong>{{ cluster.planning.needingBaselineCount|default:"0" }}</strong>
+      </div>
+      <div class="cluster-card__readiness-item">
+        <span>Needs cleanup</span>
+        <strong>{{ cluster.planning.needingCleanupCount|default:"0" }}</strong>
+      </div>
+      <div class="cluster-card__readiness-item is-success">
+        <span>Ready to plan</span>
+        <strong>{{ cluster.planning.readySchoolsCount|default:"0" }}</strong>
+      </div>
+    </div>
+
+    <div class="cluster-card__next-action cluster-card__next-action--{{ cluster.risk }}">
+      {% if cluster.risk == 'critical' or cluster.risk == 'needs_attention' %}
+      <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      {% else %}
+      <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      {% endif %}
+      <div>
+        <span>Next action</span>
+        <strong>{{ cluster.next_action }}</strong>
+      </div>
+    </div>
+  </section>
+
   <section class="cluster-ssa-summary" aria-labelledby="cluster-{{ cluster.id }}-ssa-title">
     <h3 id="cluster-{{ cluster.id }}-ssa-title" class="sr-only">Cluster SSA intervention recommendations</h3>
     {% include "partials/ssa/score_group_columns.html" with detail_id="cluster-ssa-"|add:cluster.id ssa_groups=cluster.ssa_groups has_ssa_scores=cluster.has_ssa_scores %}

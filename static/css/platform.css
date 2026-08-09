@@ -3251,6 +3251,402 @@ main [data-mobile-family="directory"] .school-filter-clear {
   cursor: not-allowed;
 }
 
+/* Cluster directory card
+ *
+ * The card owns its responsive behaviour through a container query because it
+ * also appears inside narrower planning workspaces. The collapsed row stays a
+ * single decision line; expanded data uses definition groups so long labels
+ * and values never compete for the same inline space. */
+.cluster-card {
+  container: cluster-card / inline-size;
+}
+
+.cluster-card__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: background-color var(--edify-transition-fast);
+}
+
+@media (hover: hover) {
+  .cluster-card__summary:hover {
+    background: color-mix(in oklab, var(--edify-surface-muted) 48%, transparent);
+  }
+}
+
+.cluster-card__identity,
+.cluster-card__title,
+.cluster-card__title a {
+  min-inline-size: 0;
+}
+
+.cluster-card__identity {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cluster-card__title-row {
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+}
+
+.cluster-card__title {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-heading-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: 1.25;
+}
+
+.cluster-card__title a {
+  color: inherit;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.cluster-card__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.cluster-card__toggle {
+  display: grid;
+  inline-size: var(--edify-action-button-block-size);
+  block-size: var(--edify-action-button-block-size);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--edify-text-subtle);
+  transition: background-color var(--edify-transition-fast), color var(--edify-transition-fast);
+}
+
+.cluster-card__toggle:hover {
+  background: var(--edify-surface-muted);
+  color: var(--edify-text);
+}
+
+.cluster-card__toggle svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  transition: transform var(--edify-transition);
+}
+
+.cluster-card__details {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border-block-start: 1px solid var(--edify-border);
+}
+
+.cluster-card__overview {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-surface);
+  background: color-mix(in oklab, var(--edify-surface-muted) 58%, var(--edify-surface));
+}
+
+.cluster-card__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cluster-card__section-heading h3,
+.cluster-card__eyebrow {
+  margin: 0;
+}
+
+.cluster-card__section-heading h3 {
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: 1.3;
+}
+
+.cluster-card__eyebrow,
+.cluster-card__fact dt,
+.cluster-card__readiness-item > span,
+.cluster-card__next-action span {
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.cluster-card__eyebrow {
+  margin-block-end: 0.15rem;
+}
+
+.cluster-card__school-count {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-pill);
+  background: var(--edify-surface);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cluster-card__facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.cluster-card__fact {
+  min-inline-size: 0;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--edify-border) 72%, transparent);
+  border-radius: var(--radius-control);
+  background: var(--edify-surface);
+}
+
+.cluster-card__fact--location {
+  grid-column: span 2;
+}
+
+.cluster-card__fact dt,
+.cluster-card__fact dd {
+  margin: 0;
+}
+
+.cluster-card__fact dd {
+  margin-block-start: 0.28rem;
+  overflow-wrap: anywhere;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.cluster-card__ssa-value {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cluster-card__risk-dot {
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--edify-success);
+}
+
+.cluster-card__risk-dot--critical { background: var(--edify-danger); }
+.cluster-card__risk-dot--needs_attention { background: var(--edify-warning); }
+
+.cluster-card__readiness {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-surface);
+}
+
+.cluster-card__readiness-item {
+  min-inline-size: 0;
+  padding: 0.65rem 0.7rem;
+  border-inline-start: 1px solid var(--edify-border);
+}
+
+.cluster-card__readiness-item:first-child {
+  border-inline-start: 0;
+}
+
+.cluster-card__readiness-item > span,
+.cluster-card__readiness-item strong {
+  display: block;
+}
+
+.cluster-card__readiness-item strong {
+  margin-block-start: 0.25rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  line-height: 1.2;
+}
+
+.cluster-card__readiness-item small {
+  color: currentColor;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+}
+
+.cluster-card__readiness-item--coverage strong { color: var(--edify-primary); }
+.cluster-card__readiness-item.is-warning strong { color: var(--edify-warning); }
+.cluster-card__readiness-item.is-danger strong { color: var(--edify-danger); }
+.cluster-card__readiness-item.is-success strong { color: var(--edify-success); }
+
+.cluster-card__next-action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in oklab, var(--edify-success) 22%, var(--edify-border));
+  border-radius: var(--radius-control);
+  background: color-mix(in oklab, var(--edify-success) 7%, var(--edify-surface));
+  color: var(--edify-success);
+}
+
+.cluster-card__next-action--critical {
+  border-color: color-mix(in oklab, var(--edify-danger) 24%, var(--edify-border));
+  background: color-mix(in oklab, var(--edify-danger) 6%, var(--edify-surface));
+  color: var(--edify-danger);
+}
+
+.cluster-card__next-action--needs_attention {
+  border-color: color-mix(in oklab, var(--edify-warning) 28%, var(--edify-border));
+  background: color-mix(in oklab, var(--edify-warning) 7%, var(--edify-surface));
+  color: var(--edify-warning);
+}
+
+.cluster-card__next-action svg {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+}
+
+.cluster-card__next-action strong {
+  display: block;
+  margin-block-start: 0.12rem;
+  overflow-wrap: anywhere;
+  color: currentColor;
+  font-size: var(--edify-text-label-size);
+  line-height: 1.35;
+}
+
+@container cluster-card (max-width: 42rem) {
+  .cluster-card__summary {
+    gap: 0.65rem;
+    padding: 0.875rem;
+  }
+
+  .cluster-card__actions {
+    gap: 0.35rem;
+  }
+
+  .cluster-card__details {
+    gap: 1rem;
+    padding: 0.875rem;
+  }
+
+  .cluster-card__overview {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .cluster-card__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cluster-card__readiness {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cluster-card__readiness-item {
+    border-block-start: 1px solid var(--edify-border);
+    border-inline-start: 1px solid var(--edify-border);
+  }
+
+  .cluster-card__readiness-item--coverage {
+    grid-column: 1 / -1;
+    border-block-start: 0;
+    border-inline-start: 0;
+  }
+
+  .cluster-card__readiness-item--coverage + .cluster-card__readiness-item {
+    border-block-start: 1px solid var(--edify-border);
+    border-inline-start: 0;
+  }
+
+  .cluster-card__readiness-item:nth-child(3),
+  .cluster-card__readiness-item:nth-child(5) {
+    border-inline-start: 1px solid var(--edify-border);
+  }
+
+  .cluster-card__readiness-item:nth-child(4) {
+    border-inline-start: 0;
+  }
+}
+
+@container cluster-card (max-width: 30rem) {
+  .cluster-card__summary {
+    gap: 0.45rem;
+    padding: 0.75rem;
+  }
+
+  .cluster-card__title-row {
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .cluster-card__title {
+    font-size: var(--edify-mobile-list-title-size);
+  }
+
+  .cluster-card__actions {
+    gap: 0.25rem;
+  }
+
+  .cluster-card__actions .school-record-action {
+    padding-inline: 0.5rem !important;
+  }
+
+  .cluster-card__school-count {
+    font-size: var(--edify-text-micro-size);
+  }
+
+  .cluster-card__fact {
+    padding: 0.58rem 0.62rem;
+  }
+
+  .cluster-card__fact--location {
+    grid-column: 1 / -1;
+  }
+}
+
+@container cluster-card (max-width: 20rem) {
+  .cluster-card__action-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .cluster-card__actions .school-record-action {
+    inline-size: var(--edify-action-button-block-size);
+    padding-inline: 0 !important;
+  }
+
+  .cluster-card__section-heading {
+    align-items: flex-start;
+  }
+}
+
 .school-record-row__details {
   margin: 0 clamp(1rem, 1.7vw, 1.5rem);
   padding: clamp(1rem, 1.7vw, 1.35rem) 0 clamp(1rem, 1.7vw, 1.5rem);
