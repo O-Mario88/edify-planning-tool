@@ -8,7 +8,11 @@ active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 
 from __future__ import annotations
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    COMPLETED_WORK_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 from collections import defaultdict
 
 from django.db import transaction
@@ -641,11 +645,7 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
             Prefetch(
                 "activities",
                 queryset=Activity.objects.filter(
-                    activity_type__in=[
-                        "school_visit",
-                        "training",
-                        "school_improvement_training",
-                    ],
+                    activity_type__in=[*VISIT_TYPES, *TRAINING_TYPES],
                     status__in=COMPLETED_WORK_STATUSES,
                     deleted_at__isnull=True,
                 ).only("id", "school_id", "activity_type", "planned_date"),
@@ -722,13 +722,12 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         visit_dates = [
             activity.planned_date
             for activity in s.completed_school_activities
-            if activity.activity_type == "school_visit" and activity.planned_date
+            if activity.activity_type in VISIT_TYPES and activity.planned_date
         ]
         training_dates = [
             activity.planned_date
             for activity in s.completed_school_activities
-            if activity.activity_type in ["training", "school_improvement_training"]
-            and activity.planned_date
+            if activity.activity_type in TRAINING_TYPES and activity.planned_date
         ]
         last_visit_date = (
             max(visit_dates).strftime("%Y-%m-%d") if visit_dates else "Never"
@@ -857,7 +856,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     # Last training
     last_training = (
         cluster.activities.filter(
-            activity_type__in=["training", "school_improvement_training"],
+            activity_type__in=TRAINING_TYPES,
             status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
         )

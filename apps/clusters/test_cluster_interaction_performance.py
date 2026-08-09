@@ -47,7 +47,7 @@ class ClusterInteractionQueryShapeTest(TestCase):
         Activity.objects.create(
             school=cls.first_school,
             cluster=cls.cluster,
-            activity_type="school_visit",
+            activity_type="coaching_visit",
             fy="2026",
             quarter="Q1",
             status="ia_verified",
@@ -56,7 +56,7 @@ class ClusterInteractionQueryShapeTest(TestCase):
         Activity.objects.create(
             school=cls.first_school,
             cluster=cls.cluster,
-            activity_type="training",
+            activity_type="in_school_training",
             fy="2026",
             quarter="Q1",
             status="ia_verified",
