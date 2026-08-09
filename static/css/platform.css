@@ -910,7 +910,12 @@ main :where(
   justify-content: center !important;
   min-inline-size: 7rem !important;
   min-block-size: 2.375rem !important;
-  flex: 1 0 7rem !important;
+  /* Size from the complete label before sharing any spare rail width. The
+     old fixed 7rem basis made long nowrap labels paint outside their active
+     surface, so the highlight appeared shorter than its text. `auto` keeps
+     the raised surface at least as wide as its content; crowded rails use the
+     existing horizontal-scroll and reveal behaviour instead of clipping. */
+  flex: 1 0 auto !important;
   gap: 0.375rem !important;
   padding: 0.5rem 0.875rem !important;
   border: 1px solid transparent !important;

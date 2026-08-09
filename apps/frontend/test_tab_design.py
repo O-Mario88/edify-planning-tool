@@ -61,6 +61,18 @@ class TabContractTest(SimpleTestCase):
         self.assertIn("background: var(--edify-surface-muted) !important", contract)
         self.assertIn("border-radius: var(--edify-radius-sm) !important", contract)
 
+    def test_every_tab_surface_grows_from_its_complete_label(self):
+        """A nowrap label must never paint outside its selected surface."""
+        contract = self.css.split("Tabs, pills and workflow state", 1)[1]
+
+        self.assertIn("flex: 1 0 auto !important", contract)
+        self.assertIn("white-space: nowrap", contract)
+        self.assertNotIn(
+            "flex: 1 0 7rem !important",
+            contract,
+            "a fixed flex basis can be narrower than a long tab label",
+        )
+
     def test_the_selected_tab_is_a_raised_active_surface(self):
         contract = self.css.split("Tabs, pills and workflow state", 1)[1]
 
