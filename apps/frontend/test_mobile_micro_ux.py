@@ -57,8 +57,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn(".edify-table-choice", styles)
         self.assertIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
-        self.assertIn('table.matches(\'[data-mobile-table="fit"]\')', behavior)
-        self.assertIn('table.matches(\'[data-mobile-table="cards"]\')', behavior)
+        self.assertIn("table.matches('[data-mobile-table=\"fit\"]')", behavior)
+        self.assertIn("table.matches('[data-mobile-table=\"cards\"]')", behavior)
         self.assertIn("edify-mobile-table--fit", styles)
         self.assertIn("Scrollable table:", behavior)
 
