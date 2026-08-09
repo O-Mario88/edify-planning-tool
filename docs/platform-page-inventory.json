@@ -385,7 +385,7 @@
       "template": "partials/analytics/closure_quality_workspace.html"
     },
     {
-      "bytes": 3099,
+      "bytes": 3132,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -449,7 +449,7 @@
       "template": "partials/analytics/impact_workspace.html"
     },
     {
-      "bytes": 3575,
+      "bytes": 3839,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -609,7 +609,7 @@
       "template": "partials/analytics/recommended_insights.html"
     },
     {
-      "bytes": 85915,
+      "bytes": 86512,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
