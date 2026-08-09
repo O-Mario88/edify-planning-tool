@@ -19,7 +19,9 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("items=executive_kpi_items", cards)
         self.assertIn("items=additional_kpi_items", cards)
         self.assertIn("analytics-row--geography", cards)
-        geography = cards.split('class="analytics-layout-row analytics-row--geography"', 1)[1]
+        geography = cards.split(
+            'class="analytics-layout-row analytics-row--geography"', 1
+        )[1]
         geography = geography.split("</div>", 2)[0]
         self.assertIn("regional_performance.html", geography)
         self.assertNotIn("target_by_district.html", geography)
