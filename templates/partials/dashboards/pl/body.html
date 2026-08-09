@@ -97,22 +97,15 @@
     </div>
   </div>
 
-  {# ── CCEO Performance + Approval Queue + Backlog ─────────────────────── #}
-  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
-    <div class="lg:col-span-7 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
-      <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">CCEO Performance</h2></div>
+  {# ── CCEO Performance owns the full row ─────────────────────────── #}
+  <div data-pl-cceo-performance-row class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <section class="lg:col-span-12 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-cceo-performance-title">
+      <div class="p-4 pb-2"><h2 id="pl-cceo-performance-title" class="text-[13px] font-semibold edify-text">CCEO Performance</h2></div>
       <div class="overflow-x-auto flex-1">
         {% include "partials/dashboards/pl/cceo_performance.html" %}
       </div>
       <div class="p-3 pt-2"><a href="/analytics/program-lead" class="text-[12px] font-semibold no-underline edify-primary-text">View all CCEOs performance &rarr;</a></div>
-    </div>
-    <div class="lg:col-span-5 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
-      <div class="p-4 pb-2 flex items-center justify-between">
-        <h2 class="text-[13px] font-semibold edify-text">Approval Queue</h2>
-        {% if approval_queue.total %}<span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-text-caption font-bold edify-warning-soft edify-warning-text">{{ approval_queue.total }}</span>{% endif %}
-      </div>
-      {% include "partials/dashboards/pl/approval_queue.html" %}
-    </div>
+    </section>
   </div>
 
   {% comment %}

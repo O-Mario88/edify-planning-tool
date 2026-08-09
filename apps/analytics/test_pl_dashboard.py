@@ -377,8 +377,13 @@ class PLDashboardTest(TestCase):
 
     # ── 5. approval queue scoped ─────────────────────────────────────────────
     def test_pl_approval_queue_only_supervised_cceo_items(self):
-        d = self._dash(self.pl_a)
-        staff = {r["staff"] for r in d["approval_queue"]["rows"]}
+        from apps.analytics.pl_analytics_service import resolve_pl_scope
+
+        dashboard = self._dash(self.pl_a)
+        queue = S.approval_queue(self.pl_a, resolve_pl_scope(self.pl_a), FY)
+        staff = {r["staff"] for r in queue["rows"]}
+
+        self.assertNotIn("approval_queue", dashboard)
         self.assertIn("CCEO A1", staff)
         self.assertNotIn("CCEO B1", staff)
 

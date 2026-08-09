@@ -67,10 +67,20 @@ class DashboardCardRowContractTest(SimpleTestCase):
     def test_pl_dashboard_rows_fill_the_twelve_column_grid(self):
         source = self._source("templates/partials/dashboards/pl/body.html")
         team_row = source[source.index("Team Performance + Personal Targets") :]
-        team_row = team_row[: team_row.index("CCEO Performance + Approval Queue")]
+        team_row = team_row[: team_row.index("CCEO Performance owns the full row")]
         self.assertIn("lg:col-span-7", team_row)
         self.assertIn("lg:col-span-5", team_row)
         self.assertNotIn("lg:col-span-4", team_row)
+
+    def test_pl_cceo_performance_owns_full_row_without_approval_queue(self):
+        source = self._source("templates/partials/dashboards/pl/body.html")
+        cceo_row = source[source.index("data-pl-cceo-performance-row") :]
+        cceo_row = cceo_row[: cceo_row.index("Schools Needing Urgent Attention")]
+
+        self.assertIn("lg:col-span-12", cceo_row)
+        self.assertIn('aria-labelledby="pl-cceo-performance-title"', cceo_row)
+        self.assertNotIn("Approval Queue", cceo_row)
+        self.assertNotIn("dashboards/pl/approval_queue.html", cceo_row)
 
     def test_cd_program_lead_surfaces_show_supervised_cceo_area_results(self):
         dashboard = self._source("templates/partials/dashboards/cd/body.html")

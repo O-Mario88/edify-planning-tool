@@ -4,12 +4,12 @@ Strictly scoped to the PL's supervised team (never country-wide, never another
 PL's portfolio). Reuses PLAnalyticsService for the overlapping analytics
 (CCEO performance, risk list, SSA, team performance, cluster matrix) and adds
 the command-center sections: leadership attention, PL personal targets,
-approval queue, backlog snapshot, route/capacity, funding & execution.
+backlog snapshot, route/capacity, funding & execution.
 
 Every dataset is a real backend query. Personal targets (the PL's own work)
 are computed separately from the supervised-team target progress — the two are
-never mixed. The PL never sees accountant-only disbursement controls, and the
-approval queue never contains the PL's own fund requests (those go to the CD).
+never mixed. The PL never sees accountant-only disbursement controls. Approval
+work remains available through the separately scoped approvals workflow.
 """
 
 from __future__ import annotations
@@ -98,7 +98,6 @@ class ProgramLeadDashboardService:
             "cceo_performance": ProgramLeadDashboardService.cceo_performance(
                 pls, fy, filters, acts
             ),
-            "approval_queue": ProgramLeadDashboardService.approval_queue(user, pls, fy),
             "backlog_snapshot": ProgramLeadDashboardService.backlog_snapshot(
                 pls, fy, filters, acts
             ),
