@@ -605,7 +605,11 @@ def _scoped_cluster(cluster_id: str, principal):
     """
     from apps.core.scoping import cluster_in_scope, resolve_user_scope
 
-    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    cluster = (
+        Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True)
+        .select_related("district", "sub_county")
+        .first()
+    )
     if not cluster:
         raise NotFoundError("Cluster not found.")
     if principal is not None and not cluster_in_scope(
@@ -617,6 +621,8 @@ def _scoped_cluster(cluster_id: str, principal):
 
 def cluster_schools(cluster_id: str, principal) -> list[dict]:
     """Schools in a cluster, enriched with 14 requested properties."""
+    from apps.activities.models import Activity
+
     cluster = _scoped_cluster(cluster_id, principal)
     schools = (
         School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
@@ -632,14 +638,24 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 .order_by("-date_of_ssa", "-created_at"),
                 to_attr="confirmed_ssa_records",
             ),
-            "activities",
+            Prefetch(
+                "activities",
+                queryset=Activity.objects.filter(
+                    activity_type__in=[
+                        "school_visit",
+                        "training",
+                        "school_improvement_training",
+                    ],
+                    status__in=COMPLETED_WORK_STATUSES,
+                    deleted_at__isnull=True,
+                ).only("id", "school_id", "activity_type", "planned_date"),
+                to_attr="completed_school_activities",
+            ),
         )
         .order_by("name")
     )
 
     # Query completed cluster activities to compute attendance rate
-    from apps.activities.models import Activity
-
     cluster_activities = list(
         Activity.objects.filter(
             cluster=cluster,
@@ -699,36 +715,26 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 else:
                     rec_action = f"Schedule {weakest_label}-focused school visit."
 
-        # Fetch last completed visit
-        last_visit = (
-            s.activities.filter(
-                activity_type="school_visit",
-                status__in=COMPLETED_WORK_STATUSES,
-                deleted_at__isnull=True,
-            )
-            .order_by("-planned_date")
-            .first()
-        )
+        # The relevant activities are prefetched once for the entire roster.
+        # Filtering the related manager here used to issue two queries per
+        # school (60 extra round trips for a 30-school cluster), even though
+        # the unfiltered relation had already been prefetched.
+        visit_dates = [
+            activity.planned_date
+            for activity in s.completed_school_activities
+            if activity.activity_type == "school_visit" and activity.planned_date
+        ]
+        training_dates = [
+            activity.planned_date
+            for activity in s.completed_school_activities
+            if activity.activity_type in ["training", "school_improvement_training"]
+            and activity.planned_date
+        ]
         last_visit_date = (
-            last_visit.planned_date.strftime("%Y-%m-%d")
-            if last_visit and last_visit.planned_date
-            else "Never"
-        )
-
-        # Fetch last completed training
-        last_training = (
-            s.activities.filter(
-                activity_type__in=["training", "school_improvement_training"],
-                status__in=COMPLETED_WORK_STATUSES,
-                deleted_at__isnull=True,
-            )
-            .order_by("-planned_date")
-            .first()
+            max(visit_dates).strftime("%Y-%m-%d") if visit_dates else "Never"
         )
         last_training_date = (
-            last_training.planned_date.strftime("%Y-%m-%d")
-            if last_training and last_training.planned_date
-            else "Never"
+            max(training_dates).strftime("%Y-%m-%d") if training_dates else "Never"
         )
 
         # Assigned staff
@@ -817,12 +823,14 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     schools = School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
     school_count = schools.count()
 
-    # Calculate average SSA
-    latest_ssas = []
-    for s in schools:
-        latest = _latest_confirmed_ssa(s)
-        if latest and latest.average_score is not None:
-            latest_ssas.append(latest.average_score)
+    # Resolve every school's latest confirmed SSA in one batched read. The
+    # previous loop performed one lookup per school before the roster itself
+    # was even built.
+    latest_ssas = [
+        record.average_score
+        for record in _latest_confirmed_ssa_map(schools).values()
+        if record.average_score is not None
+    ]
     avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
 
     # Last meeting
@@ -1011,6 +1019,16 @@ def _intervention_summary_from_stats(stats: dict[str, dict]) -> list[dict]:
 def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
     cluster = _scoped_cluster(cluster_id, principal)
     return _intervention_summary_from_stats(_cluster_ssa_stats(cluster.id))
+
+
+def cluster_intervention_overview(cluster_id: str, principal) -> dict:
+    """Build both cluster SSA panels from one scoped aggregate read."""
+    cluster = _scoped_cluster(cluster_id, principal)
+    stats = _cluster_ssa_stats(cluster.id)
+    return {
+        "weakest": _weakest_from_stats(stats),
+        "summary": _intervention_summary_from_stats(stats),
+    }
 
 
 def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:

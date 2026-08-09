@@ -27,8 +27,7 @@ from apps.core.enums import SsaIntervention
 from apps.clusters.services import (
     cluster_schools,
     cluster_detail,
-    cluster_weakest_interventions,
-    cluster_intervention_summary,
+    cluster_intervention_overview,
     cluster_activity_impact,
     assign_school as assign_school_to_cluster,
     cluster_creation_district_ids,
@@ -184,44 +183,6 @@ def cluster_list_view(request):
         )
     )
 
-    # Selected cluster
-    selected_cluster = None
-    selected_cluster_id = request.GET.get("selected_cluster_id", "").strip()
-    if not selected_cluster_id and page_obj.object_list:
-        selected_cluster_id = page_obj.object_list[0]["id"]
-
-    if selected_cluster_id:
-        selected_cluster = next(
-            (c for c in cards if c["id"] == selected_cluster_id), None
-        )
-        if not selected_cluster and page_obj.object_list:
-            selected_cluster = page_obj.object_list[0]
-
-    # Planner Cost Preview
-    cost_preview = None
-    if selected_cluster:
-        cost_preview = ClusterCostPreviewService.preview_cost(
-            "training", 50, selected_cluster["id"]
-        )
-
-    # Cluster progress
-    cluster_progress = []
-    if selected_cluster:
-        from apps.schools.models import School
-        from apps.ssa.services import get_ssa_progress_by_fy
-
-        schools = School.objects.filter(
-            cluster_id=selected_cluster["id"], deleted_at__isnull=True
-        )
-        cluster_progress = get_ssa_progress_by_fy(schools)
-
-    # Impact data
-    impact_data = None
-    if selected_cluster:
-        impact_data = ClusterImpactService.get_impact_data(
-            selected_cluster["id"], "leadership", user
-        )
-
     # Export handling
     export_format = request.GET.get("export", "").strip()
     if export_format in ["csv", "xlsx"]:
@@ -279,10 +240,6 @@ def cluster_list_view(request):
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
         "risk_counts": risk_counts,
-        "selected_cluster": selected_cluster,
-        "cost_preview": cost_preview,
-        "impact_data": impact_data,
-        "cluster_progress": cluster_progress,
         "districts": districts,
         "sub_counties": sub_counties,
         "staff_profiles": staff_profiles,
@@ -630,8 +587,7 @@ def create_cluster_view(request):
 def cluster_detail_view(request, cluster_id):
     try:
         detail = cluster_detail(cluster_id, request.user)
-        weakest = cluster_weakest_interventions(cluster_id, request.user)
-        summary = cluster_intervention_summary(cluster_id, request.user)
+        intervention_overview = cluster_intervention_overview(cluster_id, request.user)
         impact = cluster_activity_impact(cluster_id, request.user)
         schools = cluster_schools(cluster_id, request.user)
     except Exception as e:
@@ -640,8 +596,8 @@ def cluster_detail_view(request, cluster_id):
 
     context = {
         "cluster": detail,
-        "weakest_interventions": weakest,
-        "intervention_summary": summary,
+        "weakest_interventions": intervention_overview["weakest"],
+        "intervention_summary": intervention_overview["summary"],
         "activity_impact": impact,
         "schools": schools,
         # The same check edit_cluster_drawer_view enforces. Asking the
