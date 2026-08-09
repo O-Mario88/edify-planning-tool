@@ -18,7 +18,6 @@ is reused unchanged; this service wraps it with catalogue resolution + persisten
 from __future__ import annotations
 
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -26,15 +25,27 @@ from apps.core.exceptions import BadRequest
 
 from .costing import ActivityCost, CostLine, cost_for_activity
 from .models import CostCatalogue, CostSetting
+from .reference import CANONICAL_RATE_KEYS
 
 
 # ── Catalogue + rate resolution ──────────────────────────────────────────────
 def active_catalogue(fy: str | None = None) -> CostCatalogue | None:
-    """The active CD Cost Catalogue for a fiscal year (default = operational FY)."""
-    qs = CostCatalogue.objects.filter(is_active=True)
-    if fy:
-        qs = qs.filter(fy=fy)
-    return qs.order_by("-version").first()
+    """The active CD Cost Catalogue used by the management page and pricing."""
+    from django.conf import settings
+
+    from apps.core.fy import get_operational_fy
+
+    resolved_fy = str(fy or get_operational_fy())
+    country = getattr(settings, "COUNTRY", "Uganda")
+    return (
+        CostCatalogue.objects.filter(
+            country=country,
+            fy=resolved_fy,
+            is_active=True,
+        )
+        .order_by("-version")
+        .first()
+    )
 
 
 def _rate_card(
@@ -42,26 +53,20 @@ def _rate_card(
 ) -> tuple[dict[str, int], dict[str, CostSetting]]:
     """Return (rates dict, settings-by-key) for pricing.
 
-    Prefers rates attached to the active catalogue; MERGES in any unattached
-    CostSetting rows (back-compat for rates created before a catalogue existed
-    or in tests that create rates directly). This keeps a single source of truth
-    — the rate value is always the latest CostSetting for a key — while still
-    recognizing the catalogue concept for provenance/versioning."""
-    # Only rates belonging to THIS catalogue (plus unattached back-compat rows)
-    # may price the activity — otherwise the catalogue id/version stamped onto
-    # the budget line would not describe the rates actually used. Unattached
-    # rows load first so a catalogue-attached key always wins.
-    if catalogue is not None:
-        qs = CostSetting.objects.filter(
-            Q(catalogue=catalogue) | Q(catalogue__isnull=True)
+    Only rows attached to this exact catalogue may price work. An orphaned or
+    differently-versioned row is not visible on the active CD Cost Catalogue
+    page, so accepting it here would make that page cease to be authoritative.
+    """
+    if catalogue is None:
+        return {}, {}
+
+    settings = {
+        setting.key: setting
+        for setting in CostSetting.objects.filter(
+            catalogue=catalogue,
+            key__in=CANONICAL_RATE_KEYS,
         )
-        settings: dict[str, CostSetting] = {}
-        for s in qs:
-            # Catalogue-attached keys always win; unattached rows only fill gaps.
-            if s.catalogue_id == catalogue.id or s.key not in settings:
-                settings[s.key] = s
-    else:
-        settings = {s.key: s for s in CostSetting.objects.all()}
+    }
     rates = {key: s.unit_cost for key, s in settings.items()}
     return rates, settings
 

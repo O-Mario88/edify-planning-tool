@@ -137,18 +137,24 @@ def ensure_active_catalogue():
 
     from apps.budget.models import CostCatalogue
 
-    active = (
-        CostCatalogue.objects.filter(is_active=True).order_by("-fy", "-version").first()
-    )
-    if active is not None:
-        return active
-
     fy = getattr(settings, "OPERATIONAL_FY", None)
     if not fy:
         from apps.core.fy import get_operational_fy
 
         fy = get_operational_fy()
     country = getattr(settings, "COUNTRY", "Uganda")
+    active = (
+        CostCatalogue.objects.filter(
+            country=country,
+            fy=str(fy),
+            is_active=True,
+        )
+        .order_by("-version")
+        .first()
+    )
+    if active is not None:
+        return active
+
     return CostCatalogue.objects.create(
         country=country,
         fy=str(fy),
@@ -175,9 +181,9 @@ def ensure_cost_reference(catalogue=None) -> int:
                 "catalogue": catalogue,
             },
         )
-        if not was_created and rate.catalogue_id is None:
+        if not was_created and rate.catalogue_id != catalogue.id:
             rate.catalogue = catalogue
-            rate.fy = rate.fy or catalogue.fy
+            rate.fy = catalogue.fy
             rate.save(update_fields=["catalogue", "fy", "updated_at"])
         created += int(was_created)
     return created
@@ -185,13 +191,16 @@ def ensure_cost_reference(catalogue=None) -> int:
 
 def cost_reference_is_complete() -> bool:
     """Read-only counterpart to ``ensure_cost_reference``."""
-    from apps.budget.models import CostCatalogue, CostSetting
+    from apps.budget.costing_service import active_catalogue
+    from apps.budget.models import CostSetting
 
-    if not CostCatalogue.objects.filter(is_active=True).exists():
+    catalogue = active_catalogue()
+    if catalogue is None:
         return False
     present = set(
-        CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS).values_list(
-            "key", flat=True
-        )
+        CostSetting.objects.filter(
+            catalogue=catalogue,
+            key__in=CANONICAL_RATE_KEYS,
+        ).values_list("key", flat=True)
     )
     return present == CANONICAL_RATE_KEYS

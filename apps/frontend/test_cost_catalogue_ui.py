@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import Http404
 from django.test import RequestFactory, TestCase
 
 from apps.budget.models import CostSetting, CostSettingHistory
@@ -124,3 +125,11 @@ class CostCatalogueRowUiTest(TestCase):
         """History is a query per row; the register lists 24 of them."""
         body = self._call(query="?mode=view").content.decode()
         self.assertNotIn("Change history", body)
+
+    def test_the_editor_cannot_update_a_rate_outside_the_active_catalogue(self):
+        self.setting.refresh_from_db()
+        self.setting.catalogue = None
+        self.setting.save(update_fields=["catalogue", "updated_at"])
+
+        with self.assertRaises(Http404):
+            self._call(query="?mode=edit")

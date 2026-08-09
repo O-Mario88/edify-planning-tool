@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
@@ -45,9 +45,15 @@ def list_cost_settings(principal, query: dict) -> dict:
     # The registry is an allow-list, rather than merely excluding known old
     # keys. This prevents an ad-hoc alias from creating another editable source
     # for an allowance that already exists.
-    qs = CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS).order_by("label")
-    if query.get("fy"):
-        qs = qs.filter(Q(fy=query["fy"]) | Q(fy__isnull=True))
+    from .costing_service import active_catalogue
+
+    catalogue = active_catalogue(query.get("fy"))
+    qs = CostSetting.objects.none()
+    if catalogue is not None:
+        qs = CostSetting.objects.filter(
+            catalogue=catalogue,
+            key__in=CANONICAL_RATE_KEYS,
+        ).order_by("label")
     settings_list = [
         {
             "id": c.id,
@@ -86,9 +92,24 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         raise BadRequest("unitCost is required.")
     fy = data.get("fy")
 
+    from .costing_service import active_catalogue
+
+    catalogue = active_catalogue(fy)
+    if catalogue is None:
+        raise BadRequest(
+            "No active CD Cost Catalogue exists for this fiscal year. "
+            "Publish the catalogue before setting rates."
+        )
+
     with transaction.atomic():
         existing = CostSetting.objects.filter(key=key).first()
         if existing:
+            if existing.catalogue_id != catalogue.id:
+                raise BadRequest(
+                    "This cost item is not attached to the active CD Cost "
+                    "Catalogue. Initialize or repair the active catalogue "
+                    "before editing it."
+                )
             old_cost = existing.unit_cost
             existing.label = label
             existing.unit_cost = new_cost
@@ -121,9 +142,10 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                 key=key,
                 label=label,
                 unit_cost=new_cost,
-                fy=fy,
+                fy=catalogue.fy,
                 created_by=principal.user_id,
                 version=1,
+                catalogue=catalogue,
             )
             CostSettingHistory.objects.create(
                 key=key,

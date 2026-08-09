@@ -70,6 +70,101 @@ class CostReferenceTest(TestCase):
         self.assertEqual(visible_keys, CANONICAL_RATE_KEYS)
         self.assertTrue(visible_keys.isdisjoint(RETIRED_COST_SETTING_KEYS))
 
+    def test_default_catalogue_resolution_stays_in_the_operational_fy(self):
+        from django.conf import settings
+
+        from apps.budget.costing_service import active_catalogue
+        from apps.core.fy import get_operational_fy
+
+        operational = active_catalogue()
+        self.assertIsNotNone(operational)
+        CostCatalogue.objects.create(
+            country=getattr(settings, "COUNTRY", "Uganda"),
+            fy=str(int(get_operational_fy()) + 1),
+            version=99,
+            is_active=True,
+            label="Future catalogue that must not price current work",
+        )
+
+        self.assertEqual(active_catalogue().id, operational.id)
+
+    def test_costing_ignores_a_rate_not_shown_in_the_active_catalogue(self):
+        from apps.budget.costing_service import preview
+
+        key = "group_training_participant_meal_cost_per_head"
+        rate = CostSetting.objects.get(key=key)
+        rate.catalogue = None
+        rate.save(update_fields=["catalogue", "updated_at"])
+
+        result = preview(
+            {
+                "activityType": "cluster_training",
+                "expectedParticipants": 10,
+            }
+        )
+
+        meal_line = next(line for line in result["lines"] if line["key"] == key)
+        self.assertTrue(meal_line["missing"])
+        self.assertIn(key, result["missingItems"])
+        self.assertFalse(result["canSchedule"])
+
+    def test_cost_settings_api_ignores_orphaned_rows(self):
+        from apps.budget.services import list_cost_settings
+
+        key = "group_training_venue_cost"
+        rate = CostSetting.objects.get(key=key)
+        rate.catalogue = None
+        rate.save(update_fields=["catalogue", "updated_at"])
+
+        visible_keys = {
+            item["key"]
+            for item in list_cost_settings(principal=None, query={})["settings"]
+        }
+        self.assertNotIn(key, visible_keys)
+
+    def test_a_hidden_legacy_rate_cannot_replace_a_missing_cd_page_rate(self):
+        from apps.budget.costing_service import active_catalogue, preview
+
+        canonical_key = "primary_transport_per_day"
+        legacy_key = "staff_visit_transport_primary"
+        canonical = CostSetting.objects.get(key=canonical_key)
+        canonical.catalogue = None
+        canonical.save(update_fields=["catalogue", "updated_at"])
+        CostSetting.objects.update_or_create(
+            key=legacy_key,
+            defaults={
+                "label": "Hidden legacy transport",
+                "unit_cost": 999_999,
+                "catalogue": active_catalogue(),
+            },
+        )
+
+        result = preview(
+            {
+                "activityType": "school_visit",
+                "deliveryType": "staff",
+                "districtType": "primary",
+            }
+        )
+
+        self.assertIn(canonical_key, result["missingItems"])
+        self.assertNotIn(legacy_key, {line["key"] for line in result["lines"]})
+        self.assertFalse(result["canSchedule"])
+
+    def test_missing_activity_specific_rate_is_not_replaced_by_visit_costs(self):
+        from apps.budget.costing_service import preview
+
+        key = "core_school_training"
+        rate = CostSetting.objects.get(key=key)
+        rate.catalogue = None
+        rate.save(update_fields=["catalogue", "updated_at"])
+
+        result = preview({"activityType": "core_training"})
+
+        self.assertEqual(result["missingItems"], [key])
+        self.assertEqual([line["key"] for line in result["lines"]], [key])
+        self.assertFalse(result["canSchedule"])
+
     def test_cost_catalogue_projects_coverage_for_all_governed_activities(self):
         from apps.activity_catalogue.services import effective_items
         from apps.budget.costing_service import activity_cost_coverage

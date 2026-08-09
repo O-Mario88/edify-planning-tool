@@ -395,7 +395,6 @@ def _workflow_issues() -> dict:
     """Detect data/workflow + finance-integrity conditions that make a demo or
     approval chain unsafe. Every check is a DB aggregation, not a Python loop."""
     from apps.activities.models import Activity, ActivityScheduleCostLine
-    from apps.budget.models import CostCatalogue
     from apps.evidence.models import EvidenceRecord
 
     active = Activity.objects.filter(deleted_at__isnull=True)
@@ -462,10 +461,12 @@ def _workflow_issues() -> dict:
         .count()
     )
 
-    # No active CD Cost Catalogue.
-    missing_active_catalogue = (
-        0 if CostCatalogue.objects.filter(is_active=True).exists() else 1
-    )
+    # Use the same operational-FY catalogue resolver as previews and schedule
+    # writes. A catalogue for another FY must not make this health check green.
+    from apps.budget.costing_service import active_catalogue as _active_catalogue
+
+    _active_cat = _active_catalogue()
+    missing_active_catalogue = 0 if _active_cat else 1
 
     # Advance disbursed before responsible confirmation (finance-safety breach).
     from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
@@ -940,16 +941,13 @@ def _workflow_issues() -> dict:
     _all_required_batch_keys = set(REQUIRED_KEYS["primary"]) | set(
         REQUIRED_KEYS["secondary"]
     )
-    _active_cat = (
-        CostCatalogue.objects.filter(is_active=True).order_by("-version").first()
-    )
     if _active_cat:
         from apps.budget.models import CostSetting as _CostSetting
 
         _present_keys = set(
-            _CostSetting.objects.filter(
-                Q(catalogue=_active_cat) | Q(catalogue__isnull=True)
-            ).values_list("key", flat=True)
+            _CostSetting.objects.filter(catalogue=_active_cat).values_list(
+                "key", flat=True
+            )
         )
         catalogue_missing_batch_keys = len(_all_required_batch_keys - _present_keys)
     else:

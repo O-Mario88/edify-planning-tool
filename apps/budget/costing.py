@@ -116,15 +116,6 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             )
         )
 
-    def current_or_legacy(canonical_key: str, legacy_key: str) -> str:
-        """Prefer the unified catalogue key, with upgrade-only compatibility.
-
-        The fallback lets historical/test databases that have not restored the
-        canonical registry remain costable.  Normal application databases
-        always contain the canonical key via ``ensure_cost_reference``.
-        """
-        return canonical_key if canonical_key in rates else legacy_key
-
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
@@ -168,27 +159,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add("Venue fee", "group_training_venue_cost", days)
 
     elif is_partner:
-        # Determine the key, basis, and label
-        if "partner_visit_rate" in rates:
-            key = "partner_visit_rate"
-            basis = "per visit"
-            label = "Partner visit rate"
-        elif "partner_school_visit_rate" in rates:
-            key = "partner_school_visit_rate"
-            basis = "per school"
-            label = "Partner School Visit"
-        elif activity_type in TRAINING_TYPES and "partner_training_lump_sum" in rates:
+        # Each partner workflow has one canonical, CD-visible rate. Do not
+        # substitute a different activity's rate merely because the required
+        # row is missing; `add` will mark that exact item as a blocker.
+        if activity_type in TRAINING_TYPES:
             key = "partner_training_lump_sum"
             basis = "per training"
             label = "Partner training rate"
-        elif (
-            activity_type == "cluster_meeting"
-            and "partner_cluster_activity_rate" in rates
-        ):
-            key = "partner_cluster_activity_rate"
-            basis = "per cluster activity"
-            label = "Partner cluster activity rate"
-        elif a.get("projectId") and "project_partner_lump_sum" in rates:
+        elif a.get("projectId"):
             key = "project_partner_lump_sum"
             basis = "project-specific"
             label = "Project partner rate"
@@ -200,96 +178,37 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         label_with_basis = f"{label} [Rate basis: {basis}]"
         add(label_with_basis, key)
 
-    elif activity_type == "baseline_ssa_visit" and "ssa_visit_rate" in rates:
-        # SSA Visit uses a separate rate if configured.
+    elif activity_type == "baseline_ssa_visit":
         add("SSA Visit", "ssa_visit_rate")
 
-    elif activity_type == "core_visit" and "core_school_visit" in rates:
-        # Core School Visit fetches from Cost Catalogue if defined
+    elif activity_type == "core_visit":
         add("Core School Visit", "core_school_visit")
 
-    elif activity_type == "core_training" and "core_school_training" in rates:
-        # Core School Training fetches from Cost Catalogue if defined
+    elif activity_type == "core_training":
         add("Core School Training", "core_school_training")
 
     elif activity_type in VISIT_TYPES:
         if is_secondary:
-            if (
-                "school_visit_cost_per_school_secondary" in rates
-                or "school_visit_cost_per_school" in rates
-            ):
-                key = (
-                    "school_visit_cost_per_school_secondary"
-                    if "school_visit_cost_per_school_secondary" in rates
-                    else "school_visit_cost_per_school"
-                )
-                add("School visit (secondary)", key)
-            else:
+            add("Transport (secondary)", "secondary_transport_per_day")
+            add("Breakfast", "secondary_breakfast_per_day")
+            add("Lunch", "secondary_lunch_per_day")
+            add("Dinner", "secondary_overnight_dinner_per_day")
+            # A secondary-district visit day is an overnight by policy — the
+            # Daily Visit Batch pool always carries one night's accommodation.
+            nights = a.get("nights")
+            try:
+                nights = 1 if nights is None else max(0, int(nights))
+            except (TypeError, ValueError):
+                nights = 1
+            if nights > 0:
                 add(
-                    "Transport (secondary)",
-                    current_or_legacy(
-                        "secondary_transport_per_day",
-                        "staff_visit_transport_secondary",
-                    ),
+                    "Accommodation",
+                    "secondary_accommodation_per_night",
+                    nights,
                 )
-                add(
-                    "Breakfast",
-                    current_or_legacy("secondary_breakfast_per_day", "breakfast"),
-                )
-                add(
-                    "Lunch",
-                    current_or_legacy("secondary_lunch_per_day", "lunch"),
-                )
-                add(
-                    "Dinner",
-                    current_or_legacy(
-                        "secondary_overnight_dinner_per_day",
-                        "dinner",
-                    ),
-                )
-                # A secondary-district visit day is an overnight by policy —
-                # the Daily Visit Batch pool always carries one night's
-                # accommodation, but this itemized path only added it when the
-                # caller sent "nights", which no form ever does. Default to
-                # one night for parity; an explicit nights=0 still means a
-                # same-day return.
-                nights = a.get("nights")
-                try:
-                    nights = 1 if nights is None else max(0, int(nights))
-                except (TypeError, ValueError):
-                    nights = 1
-                if nights > 0:
-                    add(
-                        "Accommodation",
-                        current_or_legacy(
-                            "secondary_accommodation_per_night",
-                            "accommodation",
-                        ),
-                        nights,
-                    )
         else:
-            if (
-                "school_visit_cost_per_school_primary" in rates
-                or "school_visit_cost_per_school" in rates
-            ):
-                key = (
-                    "school_visit_cost_per_school_primary"
-                    if "school_visit_cost_per_school_primary" in rates
-                    else "school_visit_cost_per_school"
-                )
-                add("School visit (primary)", key)
-            else:
-                add(
-                    "Transport (primary)",
-                    current_or_legacy(
-                        "primary_transport_per_day",
-                        "staff_visit_transport_primary",
-                    ),
-                )
-                add(
-                    "Lunch",
-                    current_or_legacy("primary_lunch_per_day", "lunch"),
-                )
+            add("Transport (primary)", "primary_transport_per_day")
+            add("Lunch", "primary_lunch_per_day")
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
         days = _days_of(a)
@@ -302,25 +221,12 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add("Venue fee", "group_training_venue_cost", days)
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
-        key = (
-            project_key
-            if (project_key and rates.get(project_key) is not None)
-            else "partner_visit_lump_sum"
-        )
+        key = project_key or "partner_visit_lump_sum"
         add("Partner/project lump sum", key)
     else:
         # ssa_activity and anything else default to a staff visit cost.
-        add(
-            "Transport",
-            current_or_legacy(
-                "primary_transport_per_day",
-                "staff_visit_transport_primary",
-            ),
-        )
-        add(
-            "Lunch",
-            current_or_legacy("primary_lunch_per_day", "lunch"),
-        )
+        add("Transport", "primary_transport_per_day")
+        add("Lunch", "primary_lunch_per_day")
 
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)

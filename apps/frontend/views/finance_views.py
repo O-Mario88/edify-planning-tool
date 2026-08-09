@@ -551,13 +551,16 @@ def budget_overview_view(request):
 def cost_settings_view(request):
     """CD Cost Catalogue management."""
     from apps.budget.reference import CANONICAL_RATE_KEYS
-    from apps.budget.costing_service import activity_cost_coverage
+    from apps.budget.costing_service import (
+        active_catalogue as get_active_cost_catalogue,
+        activity_cost_coverage,
+    )
     from apps.activity_catalogue.services import effective_items
 
     fy = get_operational_fy()
 
     catalogues = CostCatalogue.objects.filter(fy=fy).order_by("-version")
-    active_catalogue = catalogues.filter(is_active=True).first()
+    active_catalogue = get_active_cost_catalogue(fy)
 
     cost_items = []
     if active_catalogue:
@@ -908,13 +911,21 @@ def cost_setting_row_view(request, key):
     from django.http import HttpResponse
     from apps.budget.models import CostSetting
     from apps.budget import services as budget_services
+    from apps.budget.costing_service import active_catalogue
     from apps.budget.reference import CANONICAL_RATE_KEYS
 
     if request.user.active_role not in ("CountryDirector", "Admin"):
         return HttpResponse("Forbidden", status=403)
 
+    catalogue = active_catalogue()
+    if catalogue is None:
+        return HttpResponse("No active CD Cost Catalogue", status=409)
+
     setting = get_object_or_404(
-        CostSetting.objects.filter(key__in=CANONICAL_RATE_KEYS),
+        CostSetting.objects.filter(
+            catalogue=catalogue,
+            key__in=CANONICAL_RATE_KEYS,
+        ),
         key=key,
     )
     mode = request.GET.get("mode", "view")
@@ -938,7 +949,7 @@ def cost_setting_row_view(request, key):
                 },
                 request.user,
             )
-            setting = CostSetting.objects.get(key=key)
+            setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
         except ValueError:
             return HttpResponse("Invalid cost value", status=400)

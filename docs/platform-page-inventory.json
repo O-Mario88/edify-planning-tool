@@ -697,7 +697,7 @@
       "template": "partials/clusters/bulk_assign_drawer.html"
     },
     {
-      "bytes": 26219,
+      "bytes": 25434,
       "findings": [],
       "forms": 1,
       "htmx_controls": 7,
@@ -1985,7 +1985,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 13386,
+      "bytes": 16574,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -9370,7 +9370,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9432,7 +9431,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9493,7 +9491,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9551,7 +9548,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9610,7 +9606,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9667,7 +9662,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9724,7 +9718,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9783,7 +9776,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9842,7 +9834,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9899,7 +9890,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9956,7 +9946,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10016,7 +10005,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10060,7 +10048,7 @@
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Requires product-purpose documentation",
-      "responsive_state": "manual-review-required",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -10079,7 +10067,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10123,7 +10110,7 @@
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Requires product-purpose documentation",
-      "responsive_state": "manual-review-required",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CCEO",
@@ -10142,7 +10129,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10199,7 +10185,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10254,7 +10239,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -22872,7 +22856,6 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -25501,7 +25484,7 @@
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
       "purpose": "Requires product-purpose documentation",
-      "responsive_state": "manual-review-required",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CCEO",

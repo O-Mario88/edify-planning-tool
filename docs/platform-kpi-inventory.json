@@ -1809,7 +1809,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 284,
+   "line": 289,
    "label": null,
    "keys": [
     "amount",
@@ -1826,7 +1826,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 289,
+   "line": 311,
    "label": null,
    "keys": [
     "amount",
@@ -1841,7 +1841,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 481,
+   "line": 503,
    "label": "Week of {\u2026}",
    "keys": [
     "amount",
@@ -1858,7 +1858,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1550,
+   "line": 1572,
    "label": null,
    "keys": [
     "amount",
@@ -1874,7 +1874,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 181,
+   "line": 203,
    "label": null,
    "keys": [
     "amount",
@@ -1890,7 +1890,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 440,
+   "line": 462,
    "label": null,
    "keys": [
     "amount",
@@ -1906,7 +1906,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 629,
+   "line": 651,
    "label": null,
    "keys": [
     "amount",
@@ -1919,7 +1919,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 641,
+   "line": 663,
    "label": null,
    "keys": [
     "amount",
@@ -1933,7 +1933,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1062,
+   "line": 1084,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1950,7 +1950,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1171,
+   "line": 1193,
    "label": null,
    "keys": [
     "activity_count",
@@ -1968,7 +1968,7 @@
   {
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1113,
+   "line": 1135,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2824,7 +2824,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 715,
+   "line": 756,
    "label": null,
    "keys": [
     "label",
@@ -2850,7 +2850,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 429,
+   "line": 455,
    "label": null,
    "keys": [
     "label",
@@ -3309,7 +3309,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1058,
+   "line": 1069,
    "label": "Search planned activities by item or responsible staff",
    "keys": [
     "action",
@@ -3325,7 +3325,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1125,
+   "line": 1136,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
