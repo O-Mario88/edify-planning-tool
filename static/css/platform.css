@@ -3251,6 +3251,77 @@ main [data-mobile-family="directory"] .school-filter-clear {
   cursor: not-allowed;
 }
 
+/* Core-school row toolbar
+ * Keep the two operational decisions attached to the school name instead of
+ * aligning them against the full identity/metadata block. The row itself is
+ * the sizing context because this matrix also lives in a narrower dashboard
+ * column on desktop. */
+.core-school-row {
+  container: core-school-row / inline-size;
+}
+
+.core-school-row .school-record-row__summary {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.core-school-row__headline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.65rem;
+  min-inline-size: 0;
+}
+
+.core-school-row__headline .school-record-row__title {
+  min-inline-size: 0;
+}
+
+.core-school-row__headline .school-record-row__actions {
+  position: relative;
+  z-index: 3;
+  flex-wrap: nowrap;
+  max-inline-size: none;
+  padding-block-start: 0;
+  padding-inline-start: 0;
+  pointer-events: auto;
+}
+
+.core-school-row__headline .school-record-action {
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+@container core-school-row (max-width: 30rem) {
+  .core-school-row__headline {
+    gap: 0.4rem;
+  }
+
+  .core-school-row__headline .school-record-row__actions {
+    gap: 0.25rem;
+  }
+
+  .core-school-row__headline .school-record-action {
+    padding-inline: 0.5rem !important;
+  }
+}
+
+@container core-school-row (max-width: 17rem) {
+  .core-school-row__action-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .core-school-row__headline .school-record-action {
+    inline-size: var(--edify-action-button-block-size);
+    padding-inline: 0 !important;
+  }
+}
+
 /* Cluster directory card
  *
  * The card owns its responsive behaviour through a container query because it

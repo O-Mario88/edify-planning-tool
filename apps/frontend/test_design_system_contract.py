@@ -281,9 +281,24 @@ class DesignSystemContractTest(SimpleTestCase):
             "{{ school.scheduled_training_count }}/{{ school.trainings_target }}", row
         )
         self.assertNotIn("4 visits and 4 trainings", row)
-        self.assertIn("<span>Schedule</span>", row)
-        self.assertIn("<span>Assign</span>", row)
+        self.assertIn(">Schedule</span>", row)
+        self.assertIn(">Assign</span>", row)
         self.assertNotIn("Schedule Now", row)
+
+    def test_core_school_actions_share_the_school_name_row(self):
+        row = (ROOT / "templates/partials/core_schools/school_row.html").read_text()
+        css = (ROOT / "static/css/platform.css").read_text()
+
+        headline = row.index('class="core-school-row__headline"')
+        title = row.index('class="school-record-row__title"', headline)
+        actions = row.index('class="school-record-row__actions core-school-row__actions"', title)
+        metadata = row.index('class="school-record-row__metadata"', actions)
+
+        self.assertLess(title, actions)
+        self.assertLess(actions, metadata)
+        self.assertIn("container: core-school-row / inline-size", css)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) auto", css)
+        self.assertIn("@container core-school-row (max-width: 30rem)", css)
 
     def test_frontend_source_uses_semantic_primary_utilities(self):
         """A new page cannot quietly reintroduce a framework-blue primary."""
