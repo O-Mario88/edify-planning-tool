@@ -270,6 +270,19 @@ class Activity(SoftDeleteModel):
     # Null on rows created before the distinction existed; those are read as
     # "the whole cluster was invited", which is exactly what they meant.
     schools_invited = models.IntegerField(null=True, blank=True)
+    # The planned COMPOSITION of the room, stated per member school. A cluster
+    # meeting invites the head and one teacher; a Literacy training invites
+    # three teachers and nobody else — and "3 per school" cannot tell the two
+    # apart, which is what catering, facilitation and reporting all need to
+    # know. ``participants_per_school`` is the sum of these three and is
+    # derived, never typed.
+    #
+    # Deliberately separate from the ``*_attended`` fields below: those are
+    # what happened, recorded at completion. Storing a plan in an attendance
+    # field is how a planned figure gets read as a verified one.
+    teachers_per_school = models.IntegerField(null=True, blank=True)
+    leaders_per_school = models.IntegerField(null=True, blank=True)
+    other_per_school = models.IntegerField(null=True, blank=True)
     teachers_attended = models.IntegerField(null=True, blank=True)
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 563,
+  "titled_cards": 562,
   "templates": 199,
-  "distinct_titles": 536,
+  "distinct_titles": 535,
   "with_card_key": 13,
   "untitled_surfaces": 1046,
-  "untitled_chrome": 234,
+  "untitled_chrome": 233,
   "untitled_nested": 390,
-  "untitled_headless": 422,
+  "untitled_headless": 423,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 21,
   "ambiguous_titles": 1
@@ -729,7 +729,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
    "branch_path": [
     [
-     6,
+     4,
      0
     ]
    ]
@@ -743,7 +743,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     11,
+     9,
      0
     ]
    ]
@@ -757,7 +757,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     12,
+     10,
      0
     ]
    ]
@@ -854,7 +854,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 131,
+   "line": 135,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -863,7 +863,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 166,
+   "line": 170,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -872,7 +872,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 189,
+   "line": 193,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -4442,21 +4442,12 @@
    "title": "CCEO Performance",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-7 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm",
+   "classes": "lg:col-span-12 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 109,
-   "title": "Approval Queue",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "lg:col-span-5 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/pl/body.html",
-   "line": 124,
+   "line": 117,
    "title": "Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4465,7 +4456,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 145,
+   "line": 138,
    "title": "SSA Intelligence",
    "heading_level": 2,
    "has_card_key": false,
@@ -4474,7 +4465,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 153,
+   "line": 146,
    "title": "Team Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4483,7 +4474,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 157,
+   "line": 150,
    "title": "Smart Route &amp; Capacity",
    "heading_level": 2,
    "has_card_key": false,
@@ -4492,7 +4483,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 164,
+   "line": 157,
    "title": "Funding &amp; Execution",
    "heading_level": 2,
    "has_card_key": false,
@@ -5223,7 +5214,7 @@
   },
   {
    "template": "templates/partials/my_plan/activity_detail_drawer.html",
-   "line": 121,
+   "line": 124,
    "title": "System Workflow Auditing",
    "heading_level": 4,
    "has_card_key": false,
@@ -5232,7 +5223,7 @@
   },
   {
    "template": "templates/partials/my_plan/activity_detail_drawer.html",
-   "line": 144,
+   "line": 147,
    "title": "Budget Line Verification",
    "heading_level": 4,
    "has_card_key": false,

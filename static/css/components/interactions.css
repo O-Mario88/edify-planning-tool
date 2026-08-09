@@ -1,0 +1,483 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY INTERACTION CONTRACT
+   How every control answers a pointer: what it does on hover, and what it does
+   while it is being pressed.
+
+   One file, loaded last, on purpose. The hover colours for buttons were
+   previously stated in eight places across four stylesheets — three theme
+   scopes in consistency.css plus the family-specific rules in components.css
+   and platform.css — so "what happens when you hover a primary button" had no
+   single answer and drifted per family. The look of a control still belongs to
+   its own component block; only its RESPONSE lives here.
+
+   Two rules, applied everywhere:
+
+     Hover inverts.  A blue control turns white with blue ink; a white control
+                     turns blue with white ink. The pair is always one of the
+                     platform's checked contrast pairs, never a new colour.
+
+     Press pushes.   The control moves down 1px and loses its lift, so a click
+                     reads as a physical press rather than a colour flicker.
+                     Removed entirely under prefers-reduced-motion.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── The two inversion pairs, per theme ────────────────────────────────────
+   Named once so every rule below is theme-agnostic. "Fill" is the blue state
+   and "surface" is the white one; each theme supplies the ink that reads on
+   it. Light uses the brand ramp; blue and dark use their accent ramps, whose
+   pairs are the ones already measured for AA on those backgrounds. */
+:root {
+  --edify-press-shift: 1px;
+  --edify-invert-fill: var(--brand-primary);
+  --edify-invert-fill-ink: var(--brand-primary-on-solid);
+  --edify-invert-surface: var(--edify-surface-raised);
+  --edify-invert-surface-ink: var(--brand-primary-text);
+  --edify-invert-border: var(--brand-primary);
+}
+
+.theme-blue,
+.theme-dark {
+  --edify-invert-fill: var(--edify-accent);
+  --edify-invert-fill-ink: var(--edify-on-accent);
+  --edify-invert-surface: var(--edify-surface-raised);
+  /* --edify-accent is built for fills; as ink on the night/blue surface it
+     measures under AA, so the inverted label takes the theme's readable
+     blue — the same substitution the active tab already makes. */
+  --edify-invert-surface-ink: var(--edify-info);
+  --edify-invert-border: var(--edify-accent);
+}
+
+/* ── Who is a control ──────────────────────────────────────────────────────
+   The solid (blue) families and the quiet (white) families, named the same way
+   the component API names them. A family listed in neither is left alone:
+   status buttons, danger actions and chips keep their own ramps. */
+
+/* Blue on rest → white on hover. */
+@media (hover: hover) {
+  :is(button, a, input):is(
+    .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+    .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+    .pto-button--primary, .sp-button--primary, .spa-button--primary,
+    .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+    .admin-button--primary,
+    /* Buttons written as raw utilities rather than through the component API.
+       They are blue by any other name, and a user hovering one has no way to
+       know which of the two spellings the page happened to use. Scoped to
+       button/a by the outer :is(), so a blue CARD keeps its fill. */
+    .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
+    .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
+    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+    .bg-sky-600, .bg-sky-700
+  ):hover:not(:disabled):not([aria-disabled="true"]) {
+    color: var(--edify-invert-surface-ink) !important;
+    background-color: var(--edify-invert-surface) !important;
+    background-image: none !important;
+    border-color: var(--edify-invert-border) !important;
+  }
+
+  /* Icons and helper spans inherit the inverted ink, or a nested utility
+     colour repaints the label back to white on a white surface. */
+  :is(button, a, input):is(
+    .btn-primary, .btn-premium-primary, .edify-action-button.primary,
+    .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+    .pto-button--primary, .sp-button--primary, .spa-button--primary,
+    .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+    .admin-button--primary,
+    /* Buttons written as raw utilities rather than through the component API.
+       They are blue by any other name, and a user hovering one has no way to
+       know which of the two spellings the page happened to use. Scoped to
+       button/a by the outer :is(), so a blue CARD keeps its fill. */
+    .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
+    .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
+    .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+    .bg-sky-600, .bg-sky-700
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, b) {
+    color: var(--edify-invert-surface-ink) !important;
+  }
+
+  /* White on rest → blue on hover. */
+  :is(button, a, input):is(
+    .btn-ghost, .btn-secondary, .btn-premium-secondary,
+    .edify-action-button.secondary, .school-record-action--assign,
+    .premium-button-secondary, .premium-button-outline, .btn-smooth,
+    .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+    .spp-button--secondary, .tt-button--secondary, .hcos-button--secondary,
+    .admin-button--secondary,
+    /* The same courtesy for quiet buttons spelled as utilities. */
+    .bg-white, .bg-\[var\(--edify-surface\)\], .bg-\[var\(--edify-surface-raised\)\]
+  ),
+  /* And for the commonest spelling of all: a bordered control with no
+     background class at all. `.rounded-control` + `.border` is this
+     codebase's signature for a quiet button — deliberately narrower than
+     "anything with a light hover", which would also catch table rows and
+     menu items and turn a whole list blue under the pointer. */
+  :is(button, a):is(.rounded-control):is(.border):not(
+    [class*="danger"], [class*="rose"], [class*="red"], [class*="amber"],
+    [class*="emerald"], [class*="green"], [class*="success"], [class*="warning"]
+  ):hover:not(:disabled):not([aria-disabled="true"]) {
+    color: var(--edify-invert-fill-ink) !important;
+    background-color: var(--edify-invert-fill) !important;
+    background-image: none !important;
+    border-color: var(--edify-invert-fill) !important;
+  }
+
+  :is(button, a, input):is(
+    .btn-ghost, .btn-secondary, .btn-premium-secondary,
+    .edify-action-button.secondary, .school-record-action--assign,
+    .premium-button-secondary, .premium-button-outline, .btn-smooth,
+    .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
+    .spp-button--secondary, .tt-button--secondary, .hcos-button--secondary,
+    .admin-button--secondary,
+    /* The same courtesy for quiet buttons spelled as utilities. */
+    .bg-white, .bg-\[var\(--edify-surface\)\], .bg-\[var\(--edify-surface-raised\)\]
+  ),
+  /* And for the commonest spelling of all: a bordered control with no
+     background class at all. `.rounded-control` + `.border` is this
+     codebase's signature for a quiet button — deliberately narrower than
+     "anything with a light hover", which would also catch table rows and
+     menu items and turn a whole list blue under the pointer. */
+  :is(button, a):is(.rounded-control):is(.border):not(
+    [class*="danger"], [class*="rose"], [class*="red"], [class*="amber"],
+    [class*="emerald"], [class*="green"], [class*="success"], [class*="warning"]
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, b) {
+    color: var(--edify-invert-fill-ink) !important;
+  }
+}
+
+/* ── Tabs: a segmented rail, not a row of buttons ──────────────────────────
+   The rail is one control with divisions in it — a white track, hairline
+   separators between segments, and the selected segment filled blue. The
+   previous treatment raised the active segment into a white card on a grey
+   track, which read as "a button someone left pressed" rather than as one
+   choice out of three.
+
+   The selector lists mirror platform.css, which owns the rail's LAYOUT
+   (sizes, scrolling, count chips). Only surface, separators and response are
+   restated here. */
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) {
+  gap: 0 !important;
+  padding: 0.1875rem !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background: var(--edify-surface) !important;
+}
+
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) {
+  position: relative;
+  /* Square, because a segment is a division of one rail rather than a pill
+     sitting on it. Only the two extreme ends curve, and they curve to the
+     same radius a button uses (--radius-control) so a rail and a button read
+     as the same family of control — a selected middle segment is a rectangle
+     between two straight rules, and a selected end segment is flush into the
+     corner it occupies. */
+  border-radius: 0 !important;
+  transition: color .15s ease, background-color .15s ease,
+              border-color .15s ease, box-shadow .15s ease,
+              transform .09s ease !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :first-child {
+  border-start-start-radius: var(--edify-radius-sm) !important;
+  border-end-start-radius: var(--edify-radius-sm) !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :last-child {
+  border-start-end-radius: var(--edify-radius-sm) !important;
+  border-end-end-radius: var(--edify-radius-sm) !important;
+}
+
+/* The divider between two segments: a short hairline, inset from the rail's
+   top and bottom so it reads as a division inside one control rather than as
+   a border around several. It hangs off the segment to its right, which is
+   what makes "no rule before the first one" a one-line rule below. */
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+)::before {
+  content: "";
+  position: absolute;
+  inset-block: 22%;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  background: var(--edify-segment-rule, var(--edify-border));
+  pointer-events: none;
+}
+
+/* No rule before the first segment, and none touching a filled one — a
+   hairline running into the blue pill reads as a rendering fault. */
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :first-child,
+main :is(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
+),
+main :is(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
+) + *,
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+):hover,
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+):hover + * {
+  --edify-segment-rule: transparent;
+}
+
+/* The selected segment is filled, not raised. */
+main :is(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
+),
+.theme-dark main :is(
+  [role="tab"][aria-selected="true"],
+  .edify-tab-btn.active,
+  [data-edify-tab][aria-pressed="true"],
+  [data-edify-tab][aria-current="true"],
+  [data-edify-tab][aria-current="page"],
+  [data-edify-tab].is-active,
+  .messages-inbox-tab[aria-pressed="true"],
+  .pto-tabs > button.is-active,
+  .sp-period-tabs > button.is-active,
+  .spp-tabs > button.is-active,
+  .tt-segmented > button.is-active,
+  .tt-segmented > button[aria-pressed="true"],
+  .oversight-entity-tabs__link.is-active,
+  .edify-section-nav__cluster.is-active,
+  .edify-section-nav__link.is-active
+) {
+  background: var(--edify-invert-fill) !important;
+  color: var(--edify-invert-fill-ink) !important;
+  border-color: var(--edify-invert-fill) !important;
+  box-shadow: none !important;
+}
+
+/* ── Tabs do not invert on hover ───────────────────────────────────────────
+   A rail is a set of choices, and only one of them is true. Filling a segment
+   blue under the pointer says "this is selected" about four things at once,
+   and the rail flashes as the mouse crosses it. Hovering a tab is not an
+   action; it is passing over one. The quiet grey hover in platform.css is
+   left to do that job.
+
+   Inversion is for BUTTONS, where hover means "this is the thing you are
+   about to do".
+
+   What is restated here is only that the selected segment does not lose its
+   fill when the pointer lands on it — otherwise platform.css's generic tab
+   hover would repaint the one segment that is actually selected. */
+@media (hover: hover) {
+  main :is(
+    [role="tab"][aria-selected="true"],
+    .edify-tab-btn.active,
+    [data-edify-tab][aria-pressed="true"],
+    [data-edify-tab][aria-current="true"],
+    [data-edify-tab][aria-current="page"],
+    [data-edify-tab].is-active,
+    .messages-inbox-tab[aria-pressed="true"],
+    .pto-tabs > button.is-active,
+    .sp-period-tabs > button.is-active,
+    .spp-tabs > button.is-active,
+    .tt-segmented > button.is-active,
+    .tt-segmented > button[aria-pressed="true"],
+    .oversight-entity-tabs__link.is-active,
+    .edify-section-nav__cluster.is-active,
+    .edify-section-nav__link.is-active
+  ):hover:not(:disabled),
+  .theme-dark main :is(
+    [role="tab"][aria-selected="true"],
+    .edify-tab-btn.active,
+    [data-edify-tab][aria-pressed="true"],
+    [data-edify-tab][aria-current="true"],
+    [data-edify-tab][aria-current="page"],
+    [data-edify-tab].is-active,
+    .messages-inbox-tab[aria-pressed="true"],
+    .pto-tabs > button.is-active,
+    .sp-period-tabs > button.is-active,
+    .spp-tabs > button.is-active,
+    .tt-segmented > button.is-active,
+    .tt-segmented > button[aria-pressed="true"],
+    .oversight-entity-tabs__link.is-active,
+    .edify-section-nav__cluster.is-active,
+    .edify-section-nav__link.is-active
+  ):hover:not(:disabled) {
+    background: var(--edify-invert-fill) !important;
+    color: var(--edify-invert-fill-ink) !important;
+    border-color: var(--edify-invert-fill) !important;
+  }
+}
+
+/* ── Press ────────────────────────────────────────────────────────────────
+   The whole control moves, including its shadow, so the surface reads as
+   going INTO the page rather than dimming. `transform: none !important` is
+   set on several button families to kill legacy hover lifts, so the press
+   has to be !important to exist at all.
+
+   Links that are plainly links (inline text) are excluded — text does not
+   depress. Anything shaped like a control does. */
+@media (prefers-reduced-motion: no-preference) {
+  :is(button, a, input, [role="tab"]):is(
+    .btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-smooth,
+    .btn-premium-primary, .btn-premium-secondary,
+    .edify-action-button, .edify-primary-solid, .edify-card-action,
+    .premium-button-primary, .premium-button-secondary, .premium-button-outline,
+    .school-record-action--schedule, .school-record-action--assign,
+    .pto-button--primary, .pto-button--secondary,
+    .sp-button--primary, .sp-button--secondary,
+    .spa-button--primary, .spa-button--secondary,
+    .spp-button--primary, .spp-button--secondary,
+    .tt-button--primary, .tt-button--secondary,
+    .hcos-button--primary, .hcos-button--secondary,
+    .admin-button--primary, .admin-button--secondary,
+    .edify-tab-btn, [data-edify-tab], .messages-inbox-tab,
+    .oversight-entity-tabs__link, .edify-section-nav__cluster,
+    .edify-section-nav__link
+  ):active:not(:disabled):not([aria-disabled="true"]) {
+    transform: translateY(var(--edify-press-shift)) !important;
+    box-shadow: none !important;
+    transition-duration: 60ms !important;
+  }
+
+  main :is(
+    [role="tab"],
+    .edify-tab-btn,
+    [data-edify-tab],
+    .messages-inbox-tab,
+    .pto-tabs > button,
+    .sp-period-tabs > button,
+    .spp-tabs > button,
+    .tt-segmented > button,
+    .oversight-entity-tabs__link,
+    .edify-section-nav__cluster,
+    .edify-section-nav__link
+  ):active:not(:disabled) {
+    transform: translateY(var(--edify-press-shift)) !important;
+    box-shadow: none !important;
+    transition-duration: 60ms !important;
+  }
+}

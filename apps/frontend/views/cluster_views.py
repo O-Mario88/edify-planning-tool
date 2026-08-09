@@ -110,28 +110,53 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
     }
 
 
+def _per_school_from_categories(source) -> int:
+    """Teachers + school leaders + other, per school, or 0 when none stated.
+
+    The drawer asks who is invited from each school and never asks for the
+    per-school total, so every consumer of that figure — preview and scheduler
+    alike — adds the same three numbers up rather than trusting a rendered one.
+    """
+    total = 0
+    for key in ("teachers_per_school", "leaders_per_school", "other_per_school"):
+        raw = str(source.get(key, "") or "").strip()
+        if raw.isdigit():
+            total += int(raw)
+    return total
+
+
 def _cost_preview_participants(request, activity_type):
     """Return the participant count the cost preview must price.
 
-    Group-training totals are derived from the two values the planner actually
-    chooses.  The hidden total is only an Alpine-rendered convenience and can
-    be one event behind when HTMX serializes the form.
+    Cluster totals are derived from the values the planner actually chooses.
+    The hidden total is only an Alpine-rendered convenience and can be one
+    event behind when HTMX serializes the form.
     """
 
     raw_total = request.GET.get("expected_participants", "50").strip()
     fallback = int(raw_total) if raw_total.isdigit() else 50
 
+    per_school = _per_school_from_categories(request.GET)
+    if per_school < 1:
+        raw_per_school = request.GET.get("participants_per_school", "").strip()
+        if not raw_per_school.isdigit() or int(raw_per_school) < 1:
+            return fallback
+        per_school = int(raw_per_school)
+
     if activity_type != "training":
-        return fallback
+        # A meeting invites the whole cluster, so the multiplier is live
+        # membership rather than anything the form carries.
+        from apps.clusters.services import active_school_count
 
-    raw_per_school = request.GET.get("participants_per_school", "").strip()
+        schools = active_school_count(request.GET.get("cluster_id", "").strip())
+        return per_school * schools if schools else fallback
+
     raw_schools_invited = request.GET.get("schools_invited", "").strip()
-    if not raw_per_school.isdigit() or not raw_schools_invited.isdigit():
+    if not raw_schools_invited.isdigit():
         return fallback
 
-    per_school = int(raw_per_school)
     schools_invited = int(raw_schools_invited)
-    if per_school < 1 or schools_invited < 1:
+    if schools_invited < 1:
         return fallback
 
     return per_school * schools_invited
@@ -359,10 +384,19 @@ def cluster_schedule_activity_view(request):
             "assignedPartnerId": assigned_partner_id or None,
             "deliveryType": "partner" if assigned_partner_id else "staff",
         }
-        # Group Training plans people per school across the schools actually
-        # invited. Both are passed raw: the service validates them, recounts
-        # the cluster, and recomputes the total — the browser's arithmetic
-        # above is a preview and never the number that gets costed.
+        # Cluster work plans people per school, by category, across the schools
+        # actually invited. All of it is passed raw: the service validates the
+        # categories, adds them into the per-school figure, recounts the
+        # cluster and recomputes the total — the browser's arithmetic above is
+        # a preview and never the number that gets costed.
+        for post_key, payload_key in (
+            ("teachers_per_school", "teachersPerSchool"),
+            ("leaders_per_school", "leadersPerSchool"),
+            ("other_per_school", "otherPerSchool"),
+        ):
+            raw = request.POST.get(post_key, "").strip()
+            if raw:
+                data[payload_key] = raw
         per_school = request.POST.get("participants_per_school", "").strip()
         if per_school:
             data["participantsPerSchool"] = per_school
@@ -439,7 +473,18 @@ def cluster_schedule_activity_view(request):
                     "partners": partners,
                     "interventions": interventions,
                     "expected_participants": participants,
-                    "participants_per_school": per_school or 2,
+                    # Give the planner back exactly what they typed; a failed
+                    # submit must not silently reset the room they planned.
+                    "teachers_per_school": request.POST.get(
+                        "teachers_per_school", ""
+                    ).strip()
+                    or 0,
+                    "leaders_per_school": request.POST.get(
+                        "leaders_per_school", ""
+                    ).strip()
+                    or 0,
+                    "other_per_school": request.POST.get("other_per_school", "").strip()
+                    or 0,
                     "schools_invited": schools_invited or cluster_school_count,
                     "cluster_school_count": cluster_school_count,
                     "projects": project_options,
@@ -717,12 +762,22 @@ def planner_drawer_view(request):
     cluster_school_count = (
         active_school_count(selected_cluster.id) if selected_cluster else 0
     )
-    raw_per_school = request.GET.get("participants_per_school", "").strip()
-    participants_per_school = (
-        int(raw_per_school)
-        if raw_per_school.isdigit() and int(raw_per_school) > 0
-        else 2
-    )
+    # Who the planner is inviting from each school. The drawer re-renders on
+    # every cluster / activity-type change, so these come back from the form
+    # rather than resetting to the defaults each time.
+    per_school_categories = {
+        key: (
+            int(request.GET.get(key, "").strip())
+            if request.GET.get(key, "").strip().isdigit()
+            else default
+        )
+        for key, default in (
+            ("teachers_per_school", 2 if activity_type == "training" else 0),
+            ("leaders_per_school", 0 if activity_type == "training" else 2),
+            ("other_per_school", 0),
+        )
+    }
+    participants_per_school = sum(per_school_categories.values()) or 2
     raw_schools_invited = request.GET.get("schools_invited", "").strip()
     schools_invited = (
         int(raw_schools_invited)
@@ -734,6 +789,11 @@ def planner_drawer_view(request):
     raw_participants = request.GET.get("expected_participants", "").strip()
     if activity_type == "training":
         participants = participants_per_school * schools_invited
+    elif cluster_school_count:
+        # A meeting invites the whole cluster, so its total is per-school ×
+        # live membership on the same basis as a training's — not a number
+        # typed into a box that no longer exists.
+        participants = participants_per_school * cluster_school_count
     elif raw_participants.isdigit():
         participants = int(raw_participants)
     else:
@@ -781,7 +841,7 @@ def planner_drawer_view(request):
         "projects": project_options,
         "projects_json": json.dumps(project_options),
         "selected_project_id": selected_project_id,
-        "participants_per_school": participants_per_school,
+        **per_school_categories,
         "schools_invited": schools_invited,
         # Read-only, from the canonical counter. It is the ceiling on schools
         # invited and the default when the planner invites everyone; the

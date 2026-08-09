@@ -640,7 +640,7 @@ def schedule_modal_view(request):
             "action": action,
             "partners": partners,
             "interventions": SsaIntervention.choices,
-            "drawer_size": "lg",
+            "drawer_size": "md",
             # Read-only, and from the canonical counter. The drawer shows it so
             # the multiplication is visible; the backend recomputes it at
             # submission so a stale drawer cannot price an activity.
@@ -781,12 +781,16 @@ def schedule_modal_view(request):
         fallback_activity_type=recommended_activity_type,
     )
 
+    from apps.projects.presentation import training_project_options
+
+    project_options = training_project_options()
+
     context = {
         "school": school,
         "recommendations": recommendations,
         "interventions": SsaIntervention.choices,
         "partners": partners,
-        "drawer_size": "lg",
+        "drawer_size": "md",
         "recommended_activity_type": recommended_activity_type,
         "recommended_activity_label": recommended_activity_label,
         "activity_type_options": activity_type_options,
@@ -808,6 +812,13 @@ def schedule_modal_view(request):
         "purpose_profiles": json.dumps(
             _purpose_workflow_profiles(STAFF_VISIT_PURPOSES)
         ),
+        # In-school Training is frequently a Project's own curriculum. The
+        # picker is the same honest inventory the Group Training drawer uses —
+        # every Project listed, unusable ones disabled with the reason — and
+        # the Project's configured intervention fills the field below it, so
+        # Project reporting and intervention reporting cannot drift apart.
+        "projects": project_options,
+        "projects_json": json.dumps(project_options),
         "certified_agencies": _certified_agency_options(
             district_name=(school.district.name if school.district_id else "")
         ),
@@ -841,6 +852,12 @@ def schedule_action_view(request):
     expected_participants = request.POST.get("expected_participants", "").strip()
     participants_per_school = request.POST.get("participants_per_school", "").strip()
     schools_invited = request.POST.get("schools_invited", "").strip()
+    # Cluster work is planned per member school, and by category: who is
+    # invited from each school, not just how many. The per-school figure is
+    # their sum and is derived in the service, so the drawer never sends one.
+    teachers_per_school = request.POST.get("teachers_per_school", "").strip()
+    leaders_per_school = request.POST.get("leaders_per_school", "").strip()
+    other_per_school = request.POST.get("other_per_school", "").strip()
     teachers_attended = request.POST.get("teachers_attended", "").strip()
     leaders_attended = request.POST.get("leaders_attended", "").strip()
     other_participants = request.POST.get("other_participants", "").strip()
@@ -982,6 +999,13 @@ def schedule_action_view(request):
         payload["participantsPerSchool"] = participants_per_school
     if schools_invited:
         payload["schoolsInvited"] = schools_invited
+    for key, raw in (
+        ("teachersPerSchool", teachers_per_school),
+        ("leadersPerSchool", leaders_per_school),
+        ("otherPerSchool", other_per_school),
+    ):
+        if raw:
+            payload[key] = raw
     for key, raw in (
         ("teachersAttended", teachers_attended),
         ("leadersAttended", leaders_attended),

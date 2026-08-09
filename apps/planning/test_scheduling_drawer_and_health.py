@@ -118,7 +118,13 @@ class AvailableActivityTypeServiceTest(TestCase):
         }
         self.assertEqual(rows["school_visit"]["participantMode"], ParticipantMode.NONE)
         self.assertFalse(rows["school_visit"]["requiresParticipants"])
-        self.assertTrue(rows["in_school_training"]["requiresParticipants"])
+        # School-level support is planned by purpose, not by audience: the
+        # participant question moved to cluster work, where a room is filled
+        # from many schools and the composition has to be stated.
+        self.assertEqual(
+            rows["in_school_training"]["participantMode"], ParticipantMode.NONE
+        )
+        self.assertFalse(rows["in_school_training"]["participantCategories"])
 
 
 class ScheduleDrawerFieldsTest(TestCase):
@@ -163,16 +169,32 @@ class ScheduleDrawerFieldsTest(TestCase):
         hidden with x-show does exist, and does submit."""
         html = self._drawer()
         self.assertIn('name="expected_participants"', html)
-        for needle in (
-            'x-if="showCategories"',
-            'x-if="showParticipants && !showCategories"',
-        ):
-            self.assertIn(needle, html, "participant fields are not profile-gated")
+        self.assertIn(
+            'x-if="showParticipants"',
+            html,
+            "the participant field is not profile-gated",
+        )
         self.assertNotIn(
             "x-show=\"['training', 'in_school_training',",
             html,
             "the old always-rendered participant field is still in the drawer",
         )
+
+    def test_school_support_is_never_planned_by_participant_category(self):
+        """Who is in the room is a CLUSTER question.
+
+        The three category boxes wrote a plan into the same columns that
+        completion records attendance in, so a planned figure and a verified
+        headcount could not be told apart on a single-school training.
+        """
+        html = self._drawer()
+        for needle in (
+            'name="teachers_attended"',
+            'name="leaders_attended"',
+            'name="other_participants"',
+        ):
+            self.assertNotIn(needle, html, "a participant category survived")
+        self.assertNotIn("School leaders", html)
 
     def test_the_drawer_carries_a_workflow_profile_for_every_purpose(self):
         html = self._drawer()
@@ -183,7 +205,6 @@ class ScheduleDrawerFieldsTest(TestCase):
     def test_switching_purpose_clears_participant_state(self):
         html = self._drawer()
         self.assertIn("this.plannedParticipants = ''", html)
-        self.assertIn("this.teacherCount = ''", html)
 
     def test_switching_delivery_away_from_agency_clears_the_agency(self):
         html = self._drawer()
@@ -297,7 +318,9 @@ class ClusterDrawerDeliveryTest(TestCase):
 
     def test_training_asks_for_a_created_project_and_invited_school_count(self):
         html = self._drawer()
-        self.assertIn('name="participants_per_school"', html)
+        self.assertIn('name="teachers_per_school"', html)
+        self.assertIn('name="leaders_per_school"', html)
+        self.assertIn('name="other_per_school"', html)
         self.assertIn('name="schools_invited"', html)
         self.assertIn('max="3"', html)
         self.assertIn('name="project_id"', html)
@@ -323,14 +346,16 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn("EdTech Foundations", html)
         self.assertIn("EdTech Integration", html)
         self.assertIn('name="schools_invited"', html)
-        self.assertIn('name="participants_per_school"', html)
+        self.assertIn('name="teachers_per_school"', html)
         self.assertNotIn("Purpose for Meeting / Training", html)
         self.assertNotIn("Session Goal", html)
 
     def test_cluster_card_cost_preview_refreshes_for_numeric_input(self):
         html = self._cluster_card_drawer()
+        # Teachers, school leaders, other — and the schools invited they are
+        # multiplied by. Every input that moves the total re-prices it.
         self.assertEqual(
-            html.count('hx-trigger="input changed delay:250ms, change"'), 2
+            html.count('hx-trigger="input changed delay:250ms, change"'), 4
         )
 
     def test_cost_preview_derives_training_total_from_source_fields(self):
@@ -363,6 +388,39 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200)
         preview.assert_called_once_with("training", 36, self.cluster.id)
 
+    def test_cost_preview_adds_the_per_school_categories_up_itself(self):
+        """The drawer asks who comes from each school and never asks for the
+        per-school total, so the preview adds the three numbers rather than
+        pricing a rendered figure that can be one keystroke behind."""
+        client = Client()
+        client.force_login(self.user)
+        with patch(
+            "apps.frontend.views.cluster_views._get_cost_preview_data",
+            return_value={
+                "catalogue_version": "test",
+                "lines": [],
+                "amount": 0,
+                "can_schedule": True,
+                "blockers": [],
+            },
+        ) as preview:
+            response = client.get(
+                "/clusters/cost-preview",
+                {
+                    "activity_type": "training",
+                    "cluster_id": self.cluster.id,
+                    "expected_participants": "999",
+                    "teachers_per_school": "2",
+                    "leaders_per_school": "1",
+                    "other_per_school": "0",
+                    "schools_invited": "3",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        preview.assert_called_once_with("training", 9, self.cluster.id)
+
     def _cluster_card_drawer(self) -> str:
         client = Client()
         client.force_login(self.user)
@@ -390,6 +448,37 @@ class ClusterDrawerDeliveryTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Select the Project", response.content.decode("utf-8"))
+
+    def test_the_posted_categories_become_the_per_school_figure(self):
+        """The whole seam, drawer to database: the form posts who comes from
+        each school and nothing else, and the view/service pair derive the
+        per-school figure and the total from it."""
+        client = Client()
+        client.force_login(self.user)
+        scheduled = timezone.localdate() + datetime.timedelta(days=2)
+        while scheduled.weekday() == 6:
+            scheduled += datetime.timedelta(days=1)
+        response = client.post(
+            "/planning/schedule-action",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "cluster_training",
+                "project_id": self.edtech_foundations.id,
+                "scheduled_date": scheduled.isoformat(),
+                "teachers_per_school": "3",
+                "leaders_per_school": "1",
+                "other_per_school": "0",
+                "schools_invited": "2",
+                "delivery_type": "staff",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        activity = Activity.objects.get(project_id=self.edtech_foundations.id)
+        self.assertEqual(activity.teachers_per_school, 3)
+        self.assertEqual(activity.leaders_per_school, 1)
+        self.assertEqual(activity.participants_per_school, 4)
+        self.assertEqual(activity.expected_participants, 8)
 
     def test_project_training_post_schedules_with_derived_intervention_and_total(self):
         client = Client()
@@ -553,15 +642,30 @@ class RepairCommandTest(TestCase):
         self.assertEqual(activity.expected_participants, 30)
 
     def test_it_clears_stale_visit_participants_and_is_idempotent(self):
+        from apps.audit.models import AuditLog
+
         activity = self._stale_visit()
         first = self._run()
         self.assertEqual(first["repaired"]["visitParticipantsCleared"], 1)
         activity.refresh_from_db()
         self.assertIsNone(activity.expected_participants)
         self.assertIsNone(activity.teachers_attended)
+        audit = AuditLog.objects.get(
+            action="data_repair.scheduling_rules.visit_participants_cleared",
+            subject_id=activity.id,
+        )
+        self.assertEqual(audit.payload["before"]["expected_participants"], 30)
+        self.assertIsNone(audit.payload["after"]["expected_participants"])
 
         second = self._run()
         self.assertEqual(second["repaired"]["visitParticipantsCleared"], 0)
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action="data_repair.scheduling_rules.visit_participants_cleared",
+                subject_id=activity.id,
+            ).count(),
+            1,
+        )
 
     def test_an_artificial_looking_project_is_reported_never_unlinked(self):
         """§31 — the correct value here depends on what a person intended.

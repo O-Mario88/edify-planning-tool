@@ -584,7 +584,14 @@ STANDARD_SUPPORT_ITEMS = [
         evidence_profile="TRAINING_ATTENDANCE",
         salesforce_record_type="TRAINING",
         salesforce_expected_prefix="TS-",
-        participant_mode=ParticipantMode.BY_CATEGORY,
+        # Standard in-school training is planned for one school, by purpose,
+        # not by audience: the drawer asks no participant question at all.
+        # It used to ask for teachers + school leaders + other, which wrote a
+        # PLAN into the same columns completion records ATTENDANCE in — so a
+        # planned figure and a verified headcount could not be told apart.
+        # Who is in the room is a cluster question; see the per-school
+        # categories on ParticipantMode.PER_SCHOOL.
+        participant_mode=ParticipantMode.NONE,
         certified_agency=True,
         description=(
             "Training delivered at one school against a target intervention, "

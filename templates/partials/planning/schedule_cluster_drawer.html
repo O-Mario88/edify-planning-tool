@@ -171,7 +171,13 @@ the planner do the arithmetic the system already has the inputs for — and a
 typed total is unverifiable: 47 for a 30-school cluster could be a considered
 figure or a slip, and nothing downstream can tell.
 
-The number shown here is a preview. The backend recounts the cluster and
+They are also planned BY CATEGORY, because "2 per school" does not say who is
+coming: a leadership meeting invites the head and the director, a Literacy
+training invites two teachers, and catering, facilitation and reporting all
+need to tell those apart. The per-school figure is the sum of the three boxes,
+so there is no total anywhere on this form for someone to contradict.
+
+The numbers shown here are a preview. The backend recounts the cluster and
 recomputes the total at submission, so a drawer left open while membership
 changes cannot price an activity on a stale count.
 {% endcomment %}
@@ -183,59 +189,90 @@ changes cannot price an activity on a stale count.
     <span id="cluster-school-count" class="text-[13px] font-bold edify-text tabular-nums">{{ cluster_school_count }}</span>
   </div>
 
-  <div x-data="{ perSchool: 2, schools: {{ cluster_school_count|default:0 }}, schoolsInvited: {{ cluster_school_count|default:0 }} }">
-    <div class="{% if action == 'meeting' %}block{% else %}grid grid-cols-1 sm:grid-cols-2 gap-3{% endif %}">
+  <div x-data="{
+    teachers: {% if action == 'meeting' %}0{% else %}2{% endif %},
+    leaders: {% if action == 'meeting' %}2{% else %}0{% endif %},
+    other: 0,
+    schools: {{ cluster_school_count|default:0 }},
+    schoolsInvited: {{ cluster_school_count|default:0 }},
+    get perSchool() { return Number(this.teachers || 0) + Number(this.leaders || 0) + Number(this.other || 0); }
+  }">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Per school <span class="text-rose-500">*</span></p>
+    <div class="mt-1 grid grid-cols-3 gap-2">
       <div>
-        <label for="participants_per_school" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-          Participants per School <span class="text-rose-500">*</span>
-        </label>
+        <label for="teachers_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">Teachers</label>
         <input
           type="number"
-          name="participants_per_school"
-          id="participants_per_school"
-          min="1"
+          name="teachers_per_school"
+          id="teachers_per_school"
+          min="0"
           step="1"
           required
-          x-model.number="perSchool"
-          placeholder="e.g. 2"
+          x-model.number="teachers"
           class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
           aria-describedby="participants-help participants-total"
         >
       </div>
-      {% if action != 'meeting' %}
       <div>
-        <label for="schools_invited" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-          Schools Invited <span class="text-rose-500">*</span>
-        </label>
+        <label for="leaders_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">School leaders</label>
         <input
           type="number"
-          name="schools_invited"
-          id="schools_invited"
-          min="1"
-          max="{{ cluster_school_count|default:0 }}"
+          name="leaders_per_school"
+          id="leaders_per_school"
+          min="0"
           step="1"
           required
-          x-model.number="schoolsInvited"
+          x-model.number="leaders"
           class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
-          aria-describedby="schools-invited-help participants-total"
+          aria-describedby="participants-help participants-total"
         >
       </div>
-      {% endif %}
+      <div>
+        <label for="other_per_school" class="block edify-text-caption font-medium normal-case tracking-normal text-slate-500">Other</label>
+        <input
+          type="number"
+          name="other_per_school"
+          id="other_per_school"
+          min="0"
+          step="1"
+          required
+          x-model.number="other"
+          class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+          aria-describedby="participants-help participants-total"
+        >
+      </div>
     </div>
     <p id="participants-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-      How many people you intend to invite from each school. Edify calculates the total.
+      Who you intend to invite from each school. Edify adds them up and calculates the total.
     </p>
     {% if action != 'meeting' %}
-    <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-      Invite fewer than all {{ cluster_school_count }} schools when the Project does not apply to every school type.
-    </p>
+    <div class="mt-3">
+      <label for="schools_invited" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+        Schools Invited <span class="text-rose-500">*</span>
+      </label>
+      <input
+        type="number"
+        name="schools_invited"
+        id="schools_invited"
+        min="1"
+        max="{{ cluster_school_count|default:0 }}"
+        step="1"
+        required
+        x-model.number="schoolsInvited"
+        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+        aria-describedby="schools-invited-help participants-total"
+      >
+      <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+        Invite fewer than all {{ cluster_school_count }} schools when the Project does not apply to every school type.
+      </p>
+    </div>
     {% endif %}
 
     <div id="participants-total" class="mt-2 flex items-center justify-between gap-3 rounded-control bg-white/70 px-3 py-2" aria-live="polite">
       <span class="text-[12px] font-medium edify-text-muted">
-        <span x-text="{% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %}"></span> schools invited &times; <span x-text="perSchool || 0"></span> per school
+        <span x-text="{% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %}"></span> schools invited &times; <span x-text="perSchool"></span> per school
       </span>
-      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="({% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %} * (perSchool || 0)).toLocaleString()"></span>
+      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="({% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %} * perSchool).toLocaleString()"></span>
     </div>
   </div>
 </div>

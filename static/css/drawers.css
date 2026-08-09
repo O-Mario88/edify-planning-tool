@@ -156,8 +156,11 @@
 }
 
 /* ── Drawer Header ─────────────────────────────────────────────────────── */
+/* Chrome, not content. Every drawer paid 40px of vertical padding for the
+   header alone before a single field appeared, which is what made short
+   dialogs read as heavy. Trimmed once here rather than per drawer. */
 .drawer-header {
-  padding: 20px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--edify-border);
   display: flex;
   align-items: flex-start;
@@ -171,7 +174,7 @@
 
 /* ── Drawer Body ───────────────────────────────────────────────────────── */
 .drawer-body {
-  padding: 20px 24px;
+  padding: 16px 20px;
   flex: 1;
   overflow-y: auto;
 }
@@ -343,7 +346,7 @@
 
 /* ── Drawer Footer ─────────────────────────────────────────────────────── */
 .drawer-footer {
-  padding: 16px 24px;
+  padding: 12px 20px;
   border-top: 1px solid var(--edify-border);
   background: var(--edify-surface-muted);
   display: flex;

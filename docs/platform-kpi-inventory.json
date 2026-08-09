@@ -471,7 +471,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 190,
+   "line": 199,
    "label": "Catalogue items without a stable code",
    "keys": [
     "count",
@@ -485,7 +485,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 196,
+   "line": 205,
    "label": "Duplicate Catalogue stable codes",
    "keys": [
     "count",
@@ -499,7 +499,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 202,
+   "line": 211,
    "label": "Complete governed 28-item Catalogue seed",
    "keys": [
     "count",
@@ -513,7 +513,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 208,
+   "line": 217,
    "label": "Active items missing type, delivery, evidence, Salesforce or costing metadata",
    "keys": [
     "count",
@@ -527,7 +527,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 214,
+   "line": 223,
    "label": "Active items missing an intervention classification",
    "keys": [
     "count",
@@ -541,7 +541,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 220,
+   "line": 229,
    "label": "Fixed mappings without an approved intervention",
    "keys": [
     "count",
@@ -555,7 +555,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 226,
+   "line": 235,
    "label": "Dynamic follow-up items not requiring a source Activity",
    "keys": [
     "count",
@@ -569,7 +569,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 234,
+   "line": 243,
    "label": "SSA Completion item incorrectly mapped as an intervention",
    "keys": [
     "count",
@@ -583,7 +583,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 240,
+   "line": 249,
    "label": "Catalogue Activities missing immutable snapshots",
    "keys": [
     "count",
@@ -597,7 +597,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 246,
+   "line": 255,
    "label": "Legacy Activities awaiting Catalogue backfill",
    "keys": [
     "count",
@@ -611,7 +611,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 252,
+   "line": 261,
    "label": "Ambiguous Catalogue mappings awaiting review",
    "keys": [
     "count",
@@ -625,7 +625,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 258,
+   "line": 267,
    "label": "Dynamic follow-up missing source Activity",
    "keys": [
     "count",
@@ -639,7 +639,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 264,
+   "line": 273,
    "label": "Project Activity using an unapproved Catalogue item",
    "keys": [
     "count",
@@ -653,7 +653,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 270,
+   "line": 279,
    "label": "Partner Activity using a Partner-disallowed item",
    "keys": [
     "count",
@@ -667,7 +667,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 276,
+   "line": 285,
    "label": "Staff Activity using a staff-disallowed item",
    "keys": [
     "count",
@@ -681,7 +681,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 282,
+   "line": 291,
    "label": "Activity intervention inconsistent with its fixed mapping",
    "keys": [
     "count",
@@ -695,7 +695,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 288,
+   "line": 297,
    "label": "Partner Assignment missing Catalogue reference without review",
    "keys": [
     "count",
@@ -709,7 +709,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 294,
+   "line": 303,
    "label": "Legacy Partner Assignment awaiting governed mapping review",
    "keys": [
     "count",
@@ -723,7 +723,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 300,
+   "line": 309,
    "label": "Partner Assignment using a Partner-disallowed Catalogue item",
    "keys": [
     "count",
@@ -737,7 +737,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 308,
+   "line": 317,
    "label": "Partner intervention-choice Assignment without approved choices",
    "keys": [
     "count",
@@ -751,7 +751,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 314,
+   "line": 323,
    "label": "Partner Activity using a non-Partner cost rate",
    "keys": [
     "count",
@@ -765,7 +765,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 320,
+   "line": 329,
    "label": "Staff Activity using a Partner cost rate",
    "keys": [
     "count",
@@ -779,7 +779,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 326,
+   "line": 335,
    "label": "Cost line missing Activity Catalogue provenance",
    "keys": [
     "count",
@@ -793,7 +793,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 332,
+   "line": 341,
    "label": "Administrative Activity incorrectly carrying SSA impact",
    "keys": [
     "count",
@@ -807,7 +807,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/health.py",
-   "line": 338,
+   "line": 347,
    "label": "Inactive or retired item used for new Planning",
    "keys": [
     "count",
@@ -821,7 +821,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 158,
+   "line": 160,
    "label": "Standard support with no schedulable Catalogue item",
    "keys": [
     "count",
@@ -836,7 +836,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 165,
+   "line": 167,
    "label": "More than one standard item costing the same activity type",
    "keys": [
     "count",
@@ -851,7 +851,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 172,
+   "line": 174,
    "label": "Project-required Activity scheduled without a Project",
    "keys": [
     "count",
@@ -865,7 +865,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 178,
+   "line": 180,
    "label": "SSA-guided support with no target intervention",
    "keys": [
     "count",
@@ -879,7 +879,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 184,
+   "line": 186,
    "label": "Visit carrying participant values",
    "keys": [
     "count",
@@ -893,7 +893,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 190,
+   "line": 192,
    "label": "Training with no planned participants",
    "keys": [
     "count",
@@ -907,7 +907,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 196,
+   "line": 198,
    "label": "Cluster total does not equal per-school \u00d7 schools invited",
    "keys": [
     "count",
@@ -921,7 +921,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 202,
+   "line": 204,
    "label": "More schools invited than the cluster holds",
    "keys": [
     "count",
@@ -935,7 +935,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 208,
+   "line": 210,
    "label": "Certified agency booking with no agency selected",
    "keys": [
     "count",
@@ -949,7 +949,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 214,
+   "line": 216,
    "label": "Agency booking held by a partner that is not certified",
    "keys": [
     "count",
@@ -963,7 +963,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 220,
+   "line": 222,
    "label": "Booked agency still being asked to schedule",
    "keys": [
     "count",
@@ -977,7 +977,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 228,
+   "line": 230,
    "label": "Agency delivery also executable work in a staff My Plan",
    "keys": [
     "count",
@@ -991,7 +991,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 236,
+   "line": 238,
    "label": "Scheduled agency booking with no ActivityBudgetLines",
    "keys": [
     "count",
@@ -1005,7 +1005,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/activity_catalogue/scheduling_health.py",
-   "line": 242,
+   "line": 244,
    "label": "Agency executor not carrying Partner delivery type",
    "keys": [
     "count",
@@ -1493,7 +1493,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/impact_engine.py",
-   "line": 758,
+   "line": 773,
    "label": "FY {\u2026}",
    "keys": [
     "label",
@@ -1505,7 +1505,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/impact_engine.py",
-   "line": 737,
+   "line": 752,
    "label": null,
    "keys": [
     "count",
@@ -1605,7 +1605,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 307,
+   "line": 306,
    "label": null,
    "keys": [
     "helper",
@@ -1622,7 +1622,7 @@
   {
    "kind": "other",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 773,
+   "line": 772,
    "label": null,
    "keys": [
     "done",
@@ -1638,7 +1638,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 988,
+   "line": 987,
    "label": null,
    "keys": [
     "icon",
@@ -1653,7 +1653,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 1302,
+   "line": 1301,
    "label": null,
    "keys": [
     "amount",
@@ -2030,7 +2030,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1596,
+   "line": 1642,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -2046,7 +2046,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1604,
+   "line": 1650,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -2062,7 +2062,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1612,
+   "line": 1658,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -2078,7 +2078,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1620,
+   "line": 1666,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -2094,7 +2094,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1628,
+   "line": 1674,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -2110,7 +2110,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1636,
+   "line": 1682,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -2126,7 +2126,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1644,
+   "line": 1690,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -2142,7 +2142,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1652,
+   "line": 1698,
    "label": "Pending Activities",
    "keys": [
     "helper",
@@ -2824,7 +2824,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 756,
+   "line": 757,
    "label": null,
    "keys": [
     "label",
@@ -2836,7 +2836,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 97,
+   "line": 96,
    "label": null,
    "keys": [
     "amount",
@@ -2850,7 +2850,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 455,
+   "line": 446,
    "label": null,
    "keys": [
     "label",
@@ -4427,7 +4427,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/fund_requests/services.py",
-   "line": 545,
+   "line": 543,
    "label": null,
    "keys": [
     "amount",

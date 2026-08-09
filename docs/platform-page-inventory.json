@@ -41,7 +41,7 @@
       "template": "components/card.html"
     },
     {
-      "bytes": 5234,
+      "bytes": 5046,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -321,7 +321,7 @@
       "template": "partials/analytics/cd/partner_performance.html"
     },
     {
-      "bytes": 3347,
+      "bytes": 3352,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -361,7 +361,7 @@
       "template": "partials/analytics/cd/ssa_interventions.html"
     },
     {
-      "bytes": 4156,
+      "bytes": 4161,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -457,7 +457,7 @@
       "template": "partials/analytics/kpi_cards.html"
     },
     {
-      "bytes": 3419,
+      "bytes": 3439,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -521,7 +521,7 @@
       "template": "partials/analytics/pl/cluster_performance.html"
     },
     {
-      "bytes": 3194,
+      "bytes": 3199,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -585,7 +585,7 @@
       "template": "partials/analytics/pl/ssa_interventions.html"
     },
     {
-      "bytes": 2069,
+      "bytes": 2074,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -593,7 +593,7 @@
       "template": "partials/analytics/pl/staff_partner.html"
     },
     {
-      "bytes": 2974,
+      "bytes": 2979,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -697,15 +697,15 @@
       "template": "partials/clusters/bulk_assign_drawer.html"
     },
     {
-      "bytes": 25434,
+      "bytes": 29584,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 7,
+      "htmx_controls": 11,
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 9070,
+      "bytes": 7547,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -921,7 +921,7 @@
       "template": "partials/core_schools/schedule_visit_drawer.html"
     },
     {
-      "bytes": 4829,
+      "bytes": 5400,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -977,7 +977,7 @@
       "template": "partials/dashboards/admin/_platform_operations.html"
     },
     {
-      "bytes": 29534,
+      "bytes": 29539,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1009,7 +1009,7 @@
       "template": "partials/dashboards/pl/backlog_snapshot.html"
     },
     {
-      "bytes": 13704,
+      "bytes": 13255,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1057,7 +1057,7 @@
       "template": "partials/dashboards/pl/ssa_intelligence.html"
     },
     {
-      "bytes": 2700,
+      "bytes": 2705,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1129,7 +1129,7 @@
       "template": "partials/debriefs/autosave_chip.html"
     },
     {
-      "bytes": 13398,
+      "bytes": 13413,
       "findings": [],
       "forms": 2,
       "htmx_controls": 0,
@@ -1481,7 +1481,7 @@
       "template": "partials/hr/pd_dashboard/adjust_allocation_drawer.html"
     },
     {
-      "bytes": 22198,
+      "bytes": 22208,
       "findings": [],
       "forms": 5,
       "htmx_controls": 1,
@@ -1625,7 +1625,7 @@
       "template": "partials/my_plan/accountability_drawer.html"
     },
     {
-      "bytes": 12287,
+      "bytes": 12529,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1985,7 +1985,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 16574,
+      "bytes": 18273,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1993,7 +1993,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 25880,
+      "bytes": 28454,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -2265,7 +2265,7 @@
       "template": "partials/schools/directory_intelligence.html"
     },
     {
-      "bytes": 5819,
+      "bytes": 6031,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2393,7 +2393,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 22533,
+      "bytes": 22538,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -9370,8 +9370,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9431,8 +9430,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9491,8 +9489,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": true,
@@ -9548,8 +9545,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9606,8 +9602,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9662,8 +9657,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9718,8 +9712,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9776,8 +9769,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": true,
@@ -9834,8 +9826,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9890,8 +9881,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -9946,8 +9936,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10005,8 +9994,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10067,8 +10055,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": true,
@@ -10129,8 +10116,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": true,
@@ -10185,8 +10171,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -10239,8 +10224,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -22856,8 +22840,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
-        "apps.schools.models",
-        "apps.ssa.services"
+        "apps.schools.models"
       ],
       "state_coverage": {
         "disabled": true,
@@ -31695,7 +31678,7 @@
       "templates": [
         "partials/work_plan/non_school_cost_preview.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "todos": false
     },
@@ -45926,6 +45909,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 463
+    "test_referenced": 464
   }
 }

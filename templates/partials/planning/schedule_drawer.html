@@ -1,6 +1,14 @@
 {% extends "components/drawers/base_drawer.html" %}
 
-{% block drawer_title %}{% if reschedule_mode %}Reschedule {{ recommended_activity_label|default:"Activity" }}{% else %}Schedule {{ recommended_activity_label|default:"School Visit" }}{% endif %}{% endblock %}
+{% comment %}
+  The heading names the school, never a catalogue item. It used to read
+  "Schedule EdTech Foundations" because the SSA recommendation's title was
+  used as the drawer's name — so the drawer went on announcing a recommended
+  training after the planner had chosen a different purpose entirely. What is
+  being scheduled is decided by the Purpose of Visit field below, and that is
+  where it stays visible.
+{% endcomment %}
+{% block drawer_title %}{% if reschedule_mode %}Reschedule {{ recommended_activity_label|default:"Activity" }}{% else %}Schedule Activity{% endif %}{% endblock %}
 {% block drawer_subtitle %}{% if reschedule_mode %}Update the planned date for {{ schedule_subject_name }} without creating another activity.{% else %}Configure activity details for {{ school.name }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
@@ -25,6 +33,19 @@ alternative: false,
   selectively hidden, because a hidden input still submits: switching
   Training -> Visit used to post the participant count typed a moment before.
 {% endcomment %}
+projects: {{ projects_json|default:'[]' }},
+projectId: '',
+get selectedProject() { return this.projects.find(project => project.id === this.projectId) || null; },
+get projectInterventionLabels() { return this.selectedProject ? this.selectedProject.interventionLabels : []; },
+get projectIntervention() { return this.selectedProject ? this.selectedProject.primaryIntervention : ''; },
+{% comment %}
+  A Project declares which SSA interventions it exists to move, so once one is
+  chosen the intervention is shown rather than asked. Asking for both is two
+  answers to one question, and when they disagree intervention analytics
+  credit the training to something the Project is not trying to change.
+{% endcomment %}
+get showProjectPicker() { return this.purposeOfVisit === 'in_school_training'; },
+get interventionFromProject() { return this.showProjectPicker && this.projectIntervention !== ''; },
 profiles: {{ purpose_profiles|default:'{}' }},
 get profile() {
   return this.profiles[this.purposeOfVisit] || {
@@ -35,7 +56,6 @@ get profile() {
   };
 },
 get showParticipants() { return this.profile.requiresParticipants === true; },
-get showCategories() { return this.profile.participantCategories === true; },
 get showAgency() { return this.executorType === 'certified_partner_agency'; },
 {% comment %}
   §13 — clearing is the rule, not a nicety. A value that no longer has a
@@ -43,13 +63,8 @@ get showAgency() { return this.executorType === 'certified_partner_agency'; },
   clears it again on arrival so an API client gains nothing by keeping it.
 {% endcomment %}
 onPurposeChange() {
-  if (!this.showParticipants) {
-    this.plannedParticipants = '';
-    this.teacherCount = '';
-    this.leaderCount = '';
-    this.otherCount = '';
-  }
-  if (!this.showCategories) { this.teacherCount = ''; this.leaderCount = ''; this.otherCount = ''; }
+  if (!this.showParticipants) { this.plannedParticipants = ''; }
+  if (!this.showProjectPicker) { this.projectId = ''; }
   if (!this.profile.certifiedAgencyDeliveryAllowed) { this.onDeliveryChange('staff'); }
 },
 onDeliveryChange(value) {
@@ -57,10 +72,7 @@ onDeliveryChange(value) {
   this.delivery = (value === 'staff') ? 'staff' : 'partner';
   if (value !== 'certified_partner_agency') { this.selectedAgency = ''; }
 },
-plannedParticipants: '',
-teacherCount: '',
-leaderCount: '',
-otherCount: ''
+plannedParticipants: ''
 }"
 >
 {% csrf_token %}
@@ -186,6 +198,57 @@ its costing on, so the costing link is derived server-side and never asked for.
      x-text="profile.unavailableReason" role="alert"></p>
 </div>
 
+{% if not project_id %}
+{% comment %}
+  In-school Training is often a Project's own curriculum — EdTech Foundations,
+  Literacy, Discipleship Dynamics. Naming the Project here is what makes the
+  training show up in that Project's plan, budget and reporting instead of
+  floating loose, and the Project already declares the intervention it exists
+  to move, so the intervention below stops being a question and becomes an
+  answer. Optional: ordinary school support that belongs to no Project is
+  scheduled exactly as before.
+{% endcomment %}
+<template x-if="showProjectPicker">
+<div>
+  <label for="training_project_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project</label>
+  <select
+    name="project_id"
+    id="training_project_id"
+    x-model="projectId"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
+  >
+    <option value="">No Project — standard school support</option>
+    {% for project in projects %}
+    <option value="{{ project.id }}" {% if not project.selectable %}disabled{% endif %}>{{ project.name }}{% if project.code %} ({{ project.code }}){% endif %}{% if project.unavailableReason %} — {{ project.unavailableReason }}{% endif %}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+    {% if projects %}Choosing a Project sets the SSA intervention it targets.{% else %}No Project has been created yet. This training can still be scheduled as standard school support.{% endif %}
+  </p>
+</div>
+</template>
+{% endif %}
+
+{% comment %}
+  Two mutually exclusive renderings of ONE field, and both are <template x-if>
+  rather than x-show: a hidden input still submits, so an x-show pair would
+  post the manual choice alongside the Project's own intervention and leave
+  the server to guess which one the planner meant.
+{% endcomment %}
+<template x-if="interventionFromProject">
+<div>
+  <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</span>
+  <div class="mt-1 flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-control border border-slate-200 bg-slate-50 px-3 py-2" aria-live="polite">
+    <template x-for="(label, index) in projectInterventionLabels" :key="index">
+      <span class="inline-block rounded-pill border border-emerald-100 bg-emerald-50 px-2 py-0.5 edify-text-caption font-semibold text-emerald-700" x-text="label"></span>
+    </template>
+  </div>
+  <input type="hidden" name="focus_intervention" :value="projectIntervention">
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Set by the Project this training delivers.</p>
+</div>
+</template>
+
+<template x-if="!interventionFromProject">
 <div>
   <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
   <select
@@ -201,6 +264,7 @@ its costing on, so the costing link is derived server-side and never asked for.
   </select>
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
 </div>
+</template>
 {% else %}
 <div class="edify-primary-soft border edify-primary-border rounded-surface p-3 text-[12px] font-semibold">
 <span class="edify-text-caption uppercase tracking-wider edify-primary-text font-bold">Scheduled activity</span>
@@ -357,39 +421,16 @@ x-text="day"
   field is rendered at all, its values are cleared when the purpose changes,
   and the backend clears them again on arrival. A visit's cost has no
   participant component and no API client can give it one.
-{% endcomment %}
-{% comment %}
-  Wrapper, not a spanning grid child: `col-span-3` is not among the compiled
-  Tailwind utilities, so it would render as nothing while looking deliberate
-  (the uncompiled-utilities lint exists because that failure is invisible).
-{% endcomment %}
-<template x-if="showCategories">
-<div>
-<div class="grid grid-cols-3 gap-2">
-  <div>
-    <label for="teachers_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers</label>
-    <input type="number" min="0" name="teachers_attended" id="teachers_attended" x-model="teacherCount"
-      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
-  </div>
-  <div>
-    <label for="leaders_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School leaders</label>
-    <input type="number" min="0" name="leaders_attended" id="leaders_attended" x-model="leaderCount"
-      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
-  </div>
-  <div>
-    <label for="other_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Other</label>
-    <input type="number" min="0" name="other_participants" id="other_participants" x-model="otherCount"
-      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
-  </div>
-</div>
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-  Planned total: <strong x-text="(Number(teacherCount||0) + Number(leaderCount||0) + Number(otherCount||0))"></strong>.
-  The backend calculates the stored total from these three numbers.
-</p>
-</div>
-</template>
 
-<template x-if="showParticipants && !showCategories">
+  There is no Teachers / School leaders / Other breakdown on this form. Who is
+  in the room is a CLUSTER planning question — a cluster activity invites
+  people from many schools and has to know which people — while school-level
+  support goes to one school and is planned by its purpose, not its audience.
+  Asking for the split here also collided with completion: the three inputs
+  wrote to the same columns attendance is later recorded in, so a plan and a
+  verified headcount became indistinguishable.
+{% endcomment %}
+<template x-if="showParticipants">
 <div>
   <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned Participants</label>
   <input type="number" min="1" name="expected_participants" id="expected_participants" x-model="plannedParticipants"

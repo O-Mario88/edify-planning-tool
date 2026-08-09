@@ -867,6 +867,18 @@ PARTICIPANT_INPUT_KEYS = (
     "teachersAttended",
     "leadersAttended",
     "otherParticipants",
+    "teachersPerSchool",
+    "leadersPerSchool",
+    "otherPerSchool",
+)
+
+#: The planned composition of a cluster room, stated per member school. The
+#: per-school figure is their SUM — the drawer never asks for it, because a
+#: typed total that disagrees with its own breakdown is not a number to keep.
+PER_SCHOOL_CATEGORY_KEYS = (
+    "teachersPerSchool",
+    "leadersPerSchool",
+    "otherPerSchool",
 )
 
 
@@ -946,6 +958,9 @@ _CATEGORY_LABELS = {
     "teachersAttended": "teachers",
     "leadersAttended": "school leaders",
     "otherParticipants": "other participants",
+    "teachersPerSchool": "teachers per school",
+    "leadersPerSchool": "school leaders per school",
+    "otherPerSchool": "other participants per school",
 }
 
 
@@ -968,6 +983,39 @@ def _validated_participant_category(raw, key: str) -> int:
             f"The number of {_CATEGORY_LABELS.get(key, key)} is implausibly large."
         )
     return value
+
+
+def _validated_per_school_categories(data: dict) -> dict:
+    """The planned per-school composition, or ``{}`` when none was stated.
+
+    Cluster work is planned per member school, and who is invited from each
+    school is a different question from how many: two people per school is a
+    head and a teacher for a leadership meeting and two teachers for a Literacy
+    session. The three categories are what the drawer asks for; the per-school
+    figure is their sum, so nobody types a number that can disagree with its
+    own breakdown.
+
+    Absent categories are not an error — an API client may still state
+    ``participantsPerSchool`` directly, which is how every activity scheduled
+    before this existed was planned.
+    """
+    supplied = {
+        key: data.get(key)
+        for key in PER_SCHOOL_CATEGORY_KEYS
+        if data.get(key) not in (None, "")
+    }
+    if not supplied:
+        return {}
+    categories = {
+        key: _validated_participant_category(data.get(key), key)
+        for key in PER_SCHOOL_CATEGORY_KEYS
+    }
+    if sum(categories.values()) < 1:
+        raise BadRequest(
+            "Enter how many teachers, school leaders or other participants to "
+            "invite from each school."
+        )
+    return categories
 
 
 def _validated_schools_invited(raw, cluster_school_count: int) -> int:
@@ -1140,8 +1188,17 @@ def create(
     participants_per_school = None
     cluster_school_count = None
     schools_invited = None
+    per_school_categories = {}
     if activity_type in CLUSTER_PARTICIPANT_ACTIVITY_TYPES and cluster_id:
-        raw_per_school = data.get("participantsPerSchool")
+        # Teachers + school leaders + other, per school. Their sum IS the
+        # per-school figure, so a stated breakdown wins over any total the
+        # request also happened to carry.
+        per_school_categories = _validated_per_school_categories(data)
+        raw_per_school = (
+            sum(per_school_categories.values())
+            if per_school_categories
+            else data.get("participantsPerSchool")
+        )
         if raw_per_school not in (None, ""):
             participants_per_school = _validated_participants_per_school(raw_per_school)
             from apps.clusters.services import active_school_count
@@ -1845,6 +1902,9 @@ def create(
             participants_per_school=participants_per_school,
             cluster_school_count_snapshot=cluster_school_count,
             schools_invited=schools_invited,
+            teachers_per_school=per_school_categories.get("teachersPerSchool"),
+            leaders_per_school=per_school_categories.get("leadersPerSchool"),
+            other_per_school=per_school_categories.get("otherPerSchool"),
             teachers_attended=data.get("teachersAttended"),
             leaders_attended=data.get("leadersAttended"),
             other_participants=data.get("otherParticipants"),

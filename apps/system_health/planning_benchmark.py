@@ -205,7 +205,15 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         "assigned_partner_id",
         "responsible_staff_id",
         "staff_id",
-        "participants_per_school",
+        # Who is invited from each member school. Three questions rather than
+        # one because "2 per school" cannot say whether that is two teachers
+        # or a head and a director, and the room is catered, facilitated and
+        # reported for the people actually in it. The per-school figure and
+        # the total are both derived from these, so neither is ever asked.
+        "teachers_per_school",
+        "leaders_per_school",
+        "other_per_school",
+        "schools_invited",
         # The partner drawer names the same two inputs differently -- see
         # FIELD_NAME_ALIASES below. Both are sanctioned; the inconsistency is
         # recorded there rather than silently absorbed here.

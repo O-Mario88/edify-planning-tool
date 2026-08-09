@@ -118,10 +118,9 @@
     controls no panel on this page, so role="tab" would promise a screen-reader
     user a widget that does not exist. aria-current marks the one they are on.
   {% endcomment %}
-  <nav class="flex items-center gap-1.5 flex-wrap" aria-label="Upload categories">
+  <nav data-edify-tablist aria-label="Upload categories">
     {% for t in tabs %}
-    <a href="?tab={{ t.key }}"{% if tab == t.key %} aria-current="page"{% endif %}
-       class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all inline-flex items-center {% if tab == t.key %}edify-primary-soft edify-primary-text ring-1 edify-primary-ring{% else %}text-slate-500 hover:bg-slate-50{% endif %}">{{ t.label }}</a>
+    <a href="?tab={{ t.key }}" data-edify-tab{% if tab == t.key %} aria-current="page"{% endif %}>{{ t.label }}</a>
     {% endfor %}
   </nav>
 

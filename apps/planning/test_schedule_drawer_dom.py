@@ -122,6 +122,10 @@ class ScheduleDrawerDomIntegrityTest(TestCase):
         names = set()
         for block in blocks:
             names.update(re.findall(r"(\w+)\s*:", block))
+            # A getter is a declaration too. Reading `get projectIntervention()`
+            # as undeclared would fail the drawer for using the one construct
+            # that keeps derived values derived.
+            names.update(re.findall(r"\bget\s+(\w+)\s*\(", block))
         for bound in re.findall(r':value="(\w+)"', region):
             self.assertIn(
                 bound,

@@ -22,6 +22,7 @@ from django.test import TestCase
 from apps.activities.services import (
     CLUSTER_PARTICIPANT_ACTIVITY_TYPES,
     _validated_participants_per_school,
+    _validated_per_school_categories,
 )
 from apps.clusters.models import Cluster
 from apps.clusters.services import active_school_count
@@ -146,8 +147,61 @@ class TheArithmeticTest(TestCase):
                 self.assertNotIn(excluded, CLUSTER_PARTICIPANT_ACTIVITY_TYPES)
 
 
-class DrawerAsksForOneNumberTest(TestCase):
-    def test_the_drawer_no_longer_offers_a_total_participant_field(self):
+class PerSchoolCategoryValidationTest(TestCase):
+    """Who comes from each school, not just how many.
+
+    "2 per school" is a head and a teacher at a leadership meeting and two
+    teachers at a Literacy session — different rooms, catered and facilitated
+    differently. The per-school figure is the sum of the three categories, so
+    nothing anywhere asks for a number that can disagree with its breakdown.
+    """
+
+    def test_the_three_categories_add_up_to_the_per_school_figure(self):
+        categories = _validated_per_school_categories(
+            {"teachersPerSchool": "2", "leadersPerSchool": "1", "otherPerSchool": "0"}
+        )
+        self.assertEqual(sum(categories.values()), 3)
+
+    def test_an_unstated_category_counts_as_none_rather_than_blocking(self):
+        """A Literacy training invites teachers and nobody else."""
+        categories = _validated_per_school_categories({"teachersPerSchool": "3"})
+        self.assertEqual(
+            categories,
+            {"teachersPerSchool": 3, "leadersPerSchool": 0, "otherPerSchool": 0},
+        )
+
+    def test_stating_nothing_is_not_a_breakdown(self):
+        """An API client may still state participantsPerSchool directly, which
+        is how every activity scheduled before this existed was planned."""
+        self.assertEqual(_validated_per_school_categories({}), {})
+        self.assertEqual(
+            _validated_per_school_categories({"teachersPerSchool": ""}), {}
+        )
+
+    def test_an_all_zero_breakdown_is_refused(self):
+        with self.assertRaises(BadRequest) as caught:
+            _validated_per_school_categories(
+                {
+                    "teachersPerSchool": "0",
+                    "leadersPerSchool": "0",
+                    "otherPerSchool": "0",
+                }
+            )
+        self.assertIn("invite", str(caught.exception))
+
+    def test_a_decimal_or_negative_category_is_refused(self):
+        for key, value in (
+            ("teachersPerSchool", "2.5"),
+            ("leadersPerSchool", "-1"),
+            ("otherPerSchool", "two"),
+        ):
+            with self.subTest(value=value):
+                with self.assertRaises(BadRequest):
+                    _validated_per_school_categories({key: value})
+
+
+class DrawerAsksWhoComesFromEachSchoolTest(TestCase):
+    def test_the_drawer_offers_the_three_categories_and_no_total(self):
         from pathlib import Path
 
         from django.conf import settings
@@ -156,12 +210,37 @@ class DrawerAsksForOneNumberTest(TestCase):
             Path(settings.BASE_DIR)
             / "templates/partials/planning/schedule_cluster_drawer.html"
         ).read_text()
-        self.assertIn('name="participants_per_school"', source)
+        for needle in (
+            'name="teachers_per_school"',
+            'name="leaders_per_school"',
+            'name="other_per_school"',
+        ):
+            self.assertIn(needle, source)
+        self.assertNotIn(
+            'name="participants_per_school"',
+            source,
+            "the per-school figure is the sum of the categories, never typed",
+        )
         self.assertNotIn(
             'name="expected_participants"',
             source,
             "a manually typed total is the thing this replaces",
         )
+
+    def test_the_meeting_drawer_asks_the_same_three_questions(self):
+        """A Cluster Meeting has no Schools Invited question — it invites the
+        whole cluster — but who comes from each school is just as real."""
+        from pathlib import Path
+
+        from django.conf import settings
+
+        source = (
+            Path(settings.BASE_DIR)
+            / "templates/partials/clusters/cluster_action_planner_drawer.html"
+        ).read_text()
+        self.assertEqual(source.count('name="teachers_per_school"'), 2)
+        self.assertEqual(source.count('name="leaders_per_school"'), 2)
+        self.assertEqual(source.count('name="other_per_school"'), 2)
 
     def test_the_drawer_shows_the_calculation_rather_than_hiding_it(self):
         from pathlib import Path

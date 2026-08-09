@@ -86,11 +86,18 @@ Submit completed plan to RVP
 <!-- Primary filters: FY · period tabs · period · status -->
 <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
 
-<nav aria-label="Work plan view" class="inline-flex items-center gap-1 p-1 rounded-control border border-slate-200 edify-surface self-start">
+{% comment %}
+  Marked as a tab rail so it takes the platform's segmented treatment rather
+  than restating one page's idea of what a selected tab looks like. The old
+  inline classes said "solid blue pill with a shadow" here and "soft blue with
+  a ring" on the Upload Center, which is how one control ends up with two
+  designs. Selection, fill, dividers and corners now come from
+  static/css/components/interactions.css.
+{% endcomment %}
+<nav aria-label="Work plan view" data-edify-tablist class="self-start">
 {% for tab in view_tabs %}
-<a href="{{ tab.url }}"
-   {% if tab.active %}aria-current="page"{% endif %}
-   class="px-3.5 py-1.5 rounded-control text-[12px] font-bold transition-colors {% if tab.active %}edify-primary-solid text-white shadow-sm{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+<a href="{{ tab.url }}" data-edify-tab
+   {% if tab.active %}aria-current="page"{% endif %}>
 {{ tab.label }}
 </a>
 {% endfor %}

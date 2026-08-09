@@ -15,7 +15,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Full pages: **326**
 - Partials and drawers: **157**
 - Permission-gated surfaces: **489**
-- Referenced by automated tests: **463**
+- Referenced by automated tests: **464**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -521,7 +521,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /work-plan | Work Plan | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/work_plan/index.html | 9.6 | 0 | referenced by automated test |
 | /work-plan/ | Work Plan | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/work_plan/index.html | 9.6 | 0 | referenced by automated test |
 | /work-plan/add | Non School Activity Drawer | Unmapped | partials/work_plan/non_school_activity_drawer.html | 9.7 | 0 | referenced by automated test |
-| /work-plan/add/preview | Non School Activity Preview | Unmapped | partials/work_plan/non_school_cost_preview.html | 9.4 | 0 | coverage review required |
+| /work-plan/add/preview | Non School Activity Preview | Unmapped | partials/work_plan/non_school_cost_preview.html | 9.4 | 0 | referenced by automated test |
 | /workforce-planning | Workforce Planning | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 
 ## Machine-readable source

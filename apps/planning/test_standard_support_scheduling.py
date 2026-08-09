@@ -279,6 +279,42 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         self.assertNotEqual(activity.project_id, project.id)
         self.assertEqual(activity.planning_source, "school_planning")
 
+    def test_a_named_project_carries_its_own_ssa_intervention(self):
+        """In-school Training is often a Project's own curriculum.
+
+        Naming the Project is what puts the training in that Project's plan,
+        budget and reporting instead of leaving it loose — and the Project
+        already declares the intervention it exists to move, so the drawer
+        shows that intervention rather than asking for it a second time.
+        """
+        project = Project.objects.create(
+            name="Discipleship Dynamics",
+            code="SP-DD",
+            status="active",
+            category="intervention_specific",
+            intervention=SsaIntervention.LEADERSHIP,
+        )
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
+            projectId=project.id,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.project_id, project.id)
+        self.assertEqual(activity.focus_intervention, SsaIntervention.LEADERSHIP)
+
+    def test_standard_support_without_a_project_is_still_schedulable(self):
+        """The Project picker is an option, not a gate. Ordinary school
+        support that belongs to no Project is scheduled exactly as before."""
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
+            focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertIsNone(activity.project_id)
+        self.assertEqual(activity.status, "scheduled")
+
     def test_a_project_required_activity_still_refuses_without_one(self):
         """Relaxing the default must not remove the real rule."""
         item = self.item("STANDARD_IN_SCHOOL_TRAINING")
@@ -325,10 +361,10 @@ class ParticipantModeTest(StandardSupportBase):
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_SCHOOL_VISIT").id,
             focusIntervention=SsaIntervention.LEADERSHIP,
-            expectedParticipants=30,
-            teachersAttended=25,
-            leadersAttended=5,
-            participantsPerSchool=4,
+            expectedParticipants="30",
+            teachersAttended="25",
+            leadersAttended="5",
+            participantsPerSchool="4",
         )
         activity = Activity.objects.get(id=result["id"])
         self.assertIsNone(activity.expected_participants)
@@ -363,19 +399,29 @@ class ParticipantModeTest(StandardSupportBase):
             self.assertIsNone(payload.get("expectedParticipants"))
             self.assertIsNone(payload.get("teachersAttended"))
 
-    def test_training_totals_are_summed_from_categories_by_the_backend(self):
+    def test_school_level_training_plans_no_participant_quantity(self):
+        """The drawer asks no participant question for a single-school
+        training, and the API half of that rule is enforced here.
+
+        The three categories used to be planned into the same columns that
+        completion records attendance in, so a plan and a verified headcount
+        were indistinguishable. Who is in the room is a cluster question now,
+        planned per member school.
+        """
         result = self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
             focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
-            teachersAttended=12,
-            leadersAttended=3,
-            otherParticipants=2,
-            # A disagreeing total from a stale browser preview loses.
-            expectedParticipants=99,
+            teachersAttended="12",
+            leadersAttended="3",
+            otherParticipants="2",
+            expectedParticipants="99",
         )
         activity = Activity.objects.get(id=result["id"])
-        self.assertEqual(activity.expected_participants, 17)
+        self.assertIsNone(activity.expected_participants)
+        self.assertIsNone(activity.teachers_attended)
+        self.assertIsNone(activity.leaders_attended)
+        self.assertIsNone(activity.other_participants)
 
     def test_a_cluster_total_is_derived_not_accepted(self):
         result = self.schedule(
@@ -387,6 +433,36 @@ class ParticipantModeTest(StandardSupportBase):
         )
         activity = Activity.objects.get(id=result["id"])
         self.assertEqual(activity.expected_participants, 15)
+
+    def test_a_cluster_room_is_planned_by_category_per_school(self):
+        """Teachers + school leaders + other, from each member school.
+
+        The categories are the input and the per-school figure is their sum,
+        so the planner never types a number that can contradict its own
+        breakdown — and the composition survives on the record rather than
+        collapsing into one anonymous count.
+        """
+        result = self.schedule(
+            clusterId=self.cluster.id,
+            catalogueItemId=self.item("STANDARD_CLUSTER_TRAINING").id,
+            focusIntervention=SsaIntervention.LEADERSHIP,
+            teachersPerSchool="2",
+            leadersPerSchool="1",
+            otherPerSchool="0",
+            # Both a stale per-school figure and a stale total lose to the
+            # breakdown the planner actually stated.
+            participantsPerSchool=9,
+            expectedParticipants=999,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.teachers_per_school, 2)
+        self.assertEqual(activity.leaders_per_school, 1)
+        self.assertEqual(activity.other_per_school, 0)
+        self.assertEqual(activity.participants_per_school, 3)
+        self.assertEqual(activity.expected_participants, 15)
+        # The plan never lands in the columns completion records attendance in.
+        self.assertIsNone(activity.teachers_attended)
+        self.assertIsNone(activity.leaders_attended)
 
     def test_a_bare_cluster_total_is_kept_rather_than_replaced_by_a_default(self):
         """§11 is a rule about the DRAWER, which has no total field.

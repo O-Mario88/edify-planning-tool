@@ -24,9 +24,9 @@
     </div>
     {% if is_program_lead %}
     {# Selected tab uses the shared edify-selected-surface, not a hand-rolled pill: one selected state across period cards, tabs and workflow stages. #}
-    <nav class="mt-5 inline-flex rounded-control border border-white/15 bg-slate-950/25 p-1" aria-label="Budget view">
-      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'my' %}edify-selected-surface{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
-      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" class="rounded-control px-3 py-2 text-[12px] font-bold transition-colors {% if budget_scope == 'team' %}edify-selected-surface{% else %}text-slate-300 hover:bg-white/10 hover:text-white{% endif %}" {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
+    <nav class="mt-5" data-edify-tablist aria-label="Budget view">
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" data-edify-tab {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" data-edify-tab {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
     </nav>
     {% endif %}
   </div>

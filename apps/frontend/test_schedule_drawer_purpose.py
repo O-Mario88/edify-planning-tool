@@ -67,6 +67,31 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertIn('name="focus_intervention"', source)
         self.assertIn("{% for code, label in interventions %}", source)
 
+    def test_the_heading_never_names_a_recommended_catalogue_item(self):
+        """ "Schedule EdTech Foundations" went on announcing a recommended
+        training after the planner had chosen a different purpose. The drawer
+        is named for what it does; the purpose field says what is scheduled."""
+        source = _drawer_source()
+        title = source.split("{% block drawer_title %}")[1].split("{% endblock %}")[0]
+        self.assertNotIn("recommended_activity_label", title.split("{% else %}")[1])
+
+    def test_in_school_training_offers_the_project_inventory(self):
+        """In-school Training is often a Project's own curriculum, and the
+        Project declares the intervention it exists to move."""
+        source = _drawer_source()
+        self.assertIn('x-if="showProjectPicker"', source)
+        self.assertIn('name="project_id"', source)
+        self.assertIn("{% for project in projects %}", source)
+        self.assertIn("purposeOfVisit === 'in_school_training'", source)
+
+    def test_the_two_intervention_renderings_are_x_if_not_x_show(self):
+        """A field hidden with x-show still submits, so an x-show pair would
+        post the manual choice alongside the Project's own intervention."""
+        source = _drawer_source()
+        self.assertIn('x-if="interventionFromProject"', source)
+        self.assertIn('x-if="!interventionFromProject"', source)
+        self.assertNotIn('x-show="interventionFromProject"', source)
+
 
 class PurposeDrivesCostingTest(TestCase):
     """The costing seam. Removing the catalogue picker must not remove the
