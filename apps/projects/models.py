@@ -99,6 +99,20 @@ class Project(SoftDeleteModel):
             merged.append(self.intervention)
         return merged
 
+    def intervention_plan(self) -> tuple[str | None, list[str]]:
+        """Return the project's primary and supporting SSA interventions.
+
+        New projects preserve the order chosen in ``target_interventions``;
+        legacy projects may instead carry the single ``intervention`` field.
+        When both exist, that explicit legacy primary remains primary and the
+        other targets become supporting interventions.
+        """
+        targets = list(dict.fromkeys(self.target_intervention_list()))
+        if not targets:
+            return None, []
+        primary = self.intervention if self.intervention in targets else targets[0]
+        return primary, [target for target in targets if target != primary]
+
     @property
     def accepts_new_work(self) -> bool:
         """Whether new schools/activities may be attached. A paused or closed

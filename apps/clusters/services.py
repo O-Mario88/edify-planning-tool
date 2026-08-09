@@ -68,6 +68,40 @@ def _scope_filter(principal):
     return Q(district_id__in=["__none__"]), scope
 
 
+def cluster_creation_district_ids(principal) -> set[str]:
+    """Districts where ``principal`` may create a cluster.
+
+    ``scope.district_ids`` is a read scope: for a Program Lead it contains the
+    districts of every supervised CCEO as well as the lead's own portfolio.
+    Creating a cluster is a write, so any user who actually has a school
+    portfolio is limited to districts represented by their directly assigned,
+    operational schools. A user without a school portfolio receives no
+    creation districts; broad oversight visibility is not cluster-creation
+    authority.
+    """
+    from apps.accounts.models import StaffSchoolAssignment
+
+    staff_id = getattr(principal, "staff_profile_id", None)
+    if not staff_id:
+        return set()
+
+    assignments = StaffSchoolAssignment.objects.filter(staff_id=staff_id)
+    if not assignments.exists():
+        return set()
+
+    assigned_school_ids = assignments.values("school_id")
+    return set(
+        School.objects.filter(
+            id__in=assigned_school_ids,
+            deleted_at__isnull=True,
+            operational_status__in=("active", "reopened"),
+        )
+        .exclude(district_id__isnull=True)
+        .values_list("district_id", flat=True)
+        .distinct()
+    )
+
+
 def list_clusters(principal) -> list[dict]:
     """List active/needs_review clusters within scope, with school counts + SSA."""
     scope_q, scope = _scope_filter(principal)
@@ -251,9 +285,10 @@ def create_cluster(data: dict, principal) -> dict:
     if not district or district.region_id != region_id:
         raise BadRequest("district does not belong to region")
 
-    scope = resolve_user_scope(principal)
-    if not scope.country_scope and district_id not in scope.district_ids:
+    allowed_district_ids = cluster_creation_district_ids(principal)
+    if district_id not in allowed_district_ids:
         raise Forbidden("District outside your scope")
+    scope = resolve_user_scope(principal)
 
     sub_ids = []
     if data.get("subCountyIds"):
@@ -1687,6 +1722,18 @@ class ClusterActionPlannerService:
     def _schedule_activity_locked(data: dict, user) -> dict:
         from apps.activities.services import create as create_activity
 
+        if data.get("activityType") == "cluster_training":
+            if not data.get("projectId"):
+                raise BadRequest("Select the Project this Group Training delivers.")
+            # The Project is the source of truth for intervention attribution.
+            # Ignore a hidden-field value from the browser and let the Activity
+            # service derive the configured primary/supporting interventions.
+            data = {
+                **data,
+                "focusIntervention": None,
+                "purposeIntervention": None,
+            }
+
         act_dict = create_activity(data, user)
 
         # If assigned partner, make sure PartnerAssignment is created
@@ -1830,6 +1877,7 @@ __all__ = [
     "list_clusters",
     "recommendations",
     "eligible_for_school",
+    "cluster_creation_district_ids",
     "create_cluster",
     "create_from_school",
     "assign_school",

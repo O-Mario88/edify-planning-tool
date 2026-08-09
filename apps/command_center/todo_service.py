@@ -43,6 +43,9 @@ ACTIONABLE = {
     # compute_next_action but absent here, so neither ever became a task.
     "reimbursement_receipt",
     "review_partner_evidence",
+    # A booked partner activity ahead of its date. Real, dated, budgeted work
+    # the agency has to get ready for — not a status to watch.
+    "prepare",
 }
 WAITING = {"view_status"}  # done my part — blocked on IA/accounts/finance
 
@@ -58,6 +61,7 @@ ACTION_META = {
     "accountability": ("Finance", "Submit Accountability"),
     "reimbursement_receipt": ("Finance", "Confirm Receipt"),
     "review_partner_evidence": ("Partner", "Review Evidence"),
+    "prepare": ("Execution", "Prepare"),
     "view_status": ("Execution", "View"),
 }
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -127,14 +131,26 @@ def _activity_todos(principal, scope, today, fy):
     from apps.my_plan.services import compute_next_action
 
     owner_ids = _owner_ids(principal, scope)
-    if not owner_ids:
+    # A partner organisation owns work through `assigned_partner_id`, never
+    # through a staff identifier — so scoping on staff ids alone gave a
+    # delivery partner an empty To-Do list. That was survivable while every
+    # partner activity began as an assignment the partner had to accept, but
+    # a certified agency BOOKED onto a date has no assignment step: the
+    # notification was the only thing telling them, and nothing carried the
+    # obligation forward. My Plan already scopes this way (my_plan.services).
+    partner_ids = list(getattr(scope, "partner_ids", None) or [])
+    if not owner_ids and not partner_ids:
         return []
+    ownership = Q(pk__in=[])
+    if owner_ids:
+        ownership |= Q(responsible_staff_id__in=owner_ids) | Q(
+            monitored_by_staff_id__in=owner_ids, delivery_type="partner"
+        )
+    if partner_ids:
+        ownership |= Q(assigned_partner_id__in=partner_ids)
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-        .filter(
-            Q(responsible_staff_id__in=owner_ids)
-            | Q(monitored_by_staff_id__in=owner_ids, delivery_type="partner")
-        )
+        .filter(ownership)
         .exclude(status__in=["closed", "cancelled", "rejected", "not_planned"])
         .select_related("school", "cluster")
         .prefetch_related("schedule_cost_lines__advance_requests")[:120]

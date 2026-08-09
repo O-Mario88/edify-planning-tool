@@ -81,7 +81,11 @@ class CostReferenceTest(TestCase):
         )
         coverage = activity_cost_coverage(items)
 
-        self.assertEqual(len(coverage), 28)
+        # 28 governed curriculum titles + 12 standard field support items.
+        # Standard support draws from the same CD rate card as everything
+        # else — a school visit that nothing in the catalogue can price is
+        # exactly the state that made ordinary support unschedulable.
+        self.assertEqual(len(coverage), 40)
         self.assertEqual(
             {row["stable_code"] for row in coverage},
             {item.stable_code for item in items},

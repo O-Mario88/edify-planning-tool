@@ -5,7 +5,12 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.core.enums import ActivityType, SsaIntervention
+from apps.core.enums import (
+    ActivityType,
+    PARTICIPANT_BEARING_MODES,
+    ParticipantMode,
+    SsaIntervention,
+)
 from apps.core.models import CuidField, TimeStampedModel
 
 
@@ -47,6 +52,24 @@ class MappingMode(models.TextChoices):
         "SSA completion prerequisite",
     )
     ADMINISTRATIVE = "administrative", "Administrative"
+    # Ordinary field support — a school visit, an in-school training, a
+    # cluster meeting — is not the property of one intervention. The planner
+    # names which of the canonical eight the work is meant to move, and any
+    # of them is a valid answer. Modelling that as eight FIXED mappings would
+    # say the same thing eight times and still imply the catalogue chose.
+    ANY_SSA_INTERVENTION = (
+        "any_ssa_intervention",
+        "Any SSA intervention (planner selects)",
+    )
+
+
+#: Mapping modes that carry no intervention of their own on the mapping row.
+NULL_INTERVENTION_MODES = (
+    MappingMode.SSA_COMPLETION_PREREQUISITE,
+    MappingMode.ADMINISTRATIVE,
+    MappingMode.INHERIT_FROM_SOURCE_ACTIVITY,
+    MappingMode.ANY_SSA_INTERVENTION,
+)
 
 
 class ProjectMappingRequirement(models.TextChoices):
@@ -78,9 +101,22 @@ class ActivityCatalogueItem(TimeStampedModel):
 
     staff_delivery_allowed = models.BooleanField(default=True)
     partner_delivery_allowed = models.BooleanField(default=True)
+    # A certified partner AGENCY is booked onto a date by Edify staff; an
+    # ordinary partner picks its own. Two workflows, so two permissions —
+    # partner_delivery_allowed alone must not authorise direct booking.
+    certified_agency_delivery_allowed = models.BooleanField(default=False)
     individual_school_allowed = models.BooleanField(default=True)
     cluster_delivery_allowed = models.BooleanField(default=False)
     project_delivery_allowed = models.BooleanField(default=True)
+
+    # Ordinary field support: schedulable in its planning context on the
+    # strength of a target intervention and a stated rationale alone. It does
+    # not have to be the SSA engine's top-ranked pick and it never requires a
+    # Special Project. This is the flag that separates "the programme's
+    # governed named interventions" (EdTech Foundations, TAM I) from "a
+    # school visit" — both are catalogue-governed and both are costed from
+    # the CD catalogue, but only the first is a curriculum choice.
+    standard_support = models.BooleanField(default=False)
 
     requires_school = models.BooleanField(default=True)
     requires_cluster = models.BooleanField(default=False)
@@ -92,6 +128,15 @@ class ActivityCatalogueItem(TimeStampedModel):
     non_school_allowed = models.BooleanField(default=False)
     multi_day_allowed = models.BooleanField(default=False)
     requires_participant_counts = models.BooleanField(default=False)
+    # How the planned participant total is established for this activity —
+    # and, for ParticipantMode.NONE, the authority for refusing participant
+    # input at the drawer, the serializer AND the costing engine. Hiding a
+    # field in JavaScript is not a rule; this is.
+    participant_mode = models.CharField(
+        max_length=16,
+        choices=ParticipantMode.choices,
+        default=ParticipantMode.NONE,
+    )
     # §25 — verification requirements are configuration, not hardcoded per
     # workflow. Defaults preserve the platform-wide behaviour that predates
     # these flags (Salesforce ID + IA verification required).
@@ -140,10 +185,57 @@ class ActivityCatalogueItem(TimeStampedModel):
                 ),
                 name="active_catalogue_profiles_required",
             ),
+            # The standard-support item for a workflow kind is what the
+            # scheduling drawer derives its costing from when the planner
+            # picks a purpose rather than a catalogue row. Two of them for
+            # one kind reintroduces exactly the ambiguity that made ordinary
+            # support unschedulable — the resolver cannot choose, so it
+            # returns nothing and the drawer refuses.
+            models.UniqueConstraint(
+                fields=["workflow_kind"],
+                condition=Q(standard_support=True, status=CatalogueStatus.ACTIVE),
+                name="uniq_active_standard_support_per_workflow_kind",
+            ),
         ]
 
     def __str__(self) -> str:
         return f"{self.stable_code} · {self.display_name}"
+
+    def workflow_profile(self) -> dict:
+        """The field configuration the scheduling drawer is generated from.
+
+        §7 — a drawer is built from this, never from a hardcoded universal
+        form. Everything a planner is asked for, and everything the backend
+        will accept, comes from one place.
+        """
+        mode = self.participant_mode
+        return {
+            "catalogueItemId": self.id,
+            "stableCode": self.stable_code,
+            "displayName": self.display_name,
+            "workflowKind": self.workflow_kind,
+            "standardSupport": self.standard_support,
+            "requiresSchool": self.requires_school,
+            "requiresCluster": self.requires_cluster,
+            "requiresProject": self.requires_project,
+            "requiresCurrentSsa": self.requires_current_ssa,
+            "requiresSourceActivity": self.requires_source_activity,
+            "participantMode": mode,
+            "requiresParticipants": mode in PARTICIPANT_BEARING_MODES,
+            "participantsPerSchool": mode == ParticipantMode.PER_SCHOOL,
+            "participantCategories": mode == ParticipantMode.BY_CATEGORY,
+            "multiDayAllowed": self.multi_day_allowed,
+            "staffDeliveryAllowed": self.staff_delivery_allowed,
+            "partnerDeliveryAllowed": self.partner_delivery_allowed,
+            "certifiedAgencyDeliveryAllowed": self.certified_agency_delivery_allowed,
+            "clusterDeliveryAllowed": self.cluster_delivery_allowed,
+            "individualSchoolAllowed": self.individual_school_allowed,
+            "nonSchoolAllowed": self.non_school_allowed,
+            "salesforceIdRequired": self.salesforce_id_required,
+            "iaVerificationRequired": self.ia_verification_required,
+            "evidenceProfile": self.evidence_profile,
+            "costingProfile": self.costing_profile,
+        }
 
     def is_selectable_on(self, on_date=None) -> bool:
         on_date = on_date or timezone.localdate()
@@ -170,6 +262,9 @@ class ActivityCatalogueItem(TimeStampedModel):
             "evidenceProfile": self.evidence_profile,
             "costingProfile": self.costing_profile,
             "supportObjective": self.support_objective,
+            "standardSupport": self.standard_support,
+            "participantMode": self.participant_mode,
+            "certifiedAgencyDeliveryAllowed": self.certified_agency_delivery_allowed,
             "mappingModes": list(mapping.values_list("mapping_mode", flat=True)),
             "interventions": list(
                 mapping.exclude(intervention__isnull=True).values_list(
@@ -205,11 +300,7 @@ class ActivityInterventionMapping(TimeStampedModel):
             models.CheckConstraint(
                 condition=(
                     Q(
-                        mapping_mode__in=[
-                            MappingMode.SSA_COMPLETION_PREREQUISITE,
-                            MappingMode.ADMINISTRATIVE,
-                            MappingMode.INHERIT_FROM_SOURCE_ACTIVITY,
-                        ],
+                        mapping_mode__in=list(NULL_INTERVENTION_MODES),
                         intervention__isnull=True,
                     )
                     | Q(
@@ -366,5 +457,6 @@ __all__ = [
     "CatalogueStatus",
     "DeliveryMethod",
     "MappingMode",
+    "NULL_INTERVENTION_MODES",
     "ProjectMappingRequirement",
 ]

@@ -234,6 +234,66 @@ class DeliveryType(models.TextChoices):
     PARTNER = "partner", "Partner"
 
 
+class ExecutorType(models.TextChoices):
+    """WHO performs the work — a finer distinction than DeliveryType.
+
+    DeliveryType stays the two-valued staff/partner axis every existing
+    surface keys on (My Plan scoping, oversight, costing, partner payment),
+    so it must not grow a third value. But "partner" covers two workflows
+    that are not the same commitment:
+
+      • PARTNER — an assigned partner that still has to choose its own date.
+        The Activity does not exist until the partner schedules it.
+      • CERTIFIED_PARTNER_AGENCY — a certified agency that Edify staff book
+        directly onto a chosen date. The Activity is scheduled the moment
+        staff confirm, and lands in the agency's My Plan already dated.
+
+    Conflating them is what made a booked agency see a "Schedule" action for
+    work Edify had already scheduled.
+    """
+
+    STAFF = "staff", "Internal Staff"
+    PARTNER = "partner", "Assigned Partner — Partner Selects Schedule"
+    CERTIFIED_PARTNER_AGENCY = (
+        "certified_partner_agency",
+        "Certified Partner Agency",
+    )
+
+
+#: Executor types that are delivered by a partner organisation, and therefore
+#: carry DeliveryType.PARTNER on the Activity.
+PARTNER_EXECUTOR_TYPES = frozenset(
+    {ExecutorType.PARTNER, ExecutorType.CERTIFIED_PARTNER_AGENCY}
+)
+
+
+class ParticipantMode(models.TextChoices):
+    """How an activity's planned participant count is established.
+
+    A visit is not scheduled on a participant basis: one officer goes to one
+    school. Asking for a participant number there invents a quantity nobody
+    measured and — because participant counts multiply into cost — prices the
+    visit off it. NONE is therefore a real mode with teeth, not an absence of
+    configuration: the backend clears participant values and the costing
+    engine ignores them.
+    """
+
+    NONE = "none", "No participants"
+    DIRECT_TOTAL = "direct_total", "Total entered directly"
+    PER_SCHOOL = "per_school", "Participants per school × active schools"
+    BY_CATEGORY = "by_category", "Teachers + leaders + other"
+
+
+#: Participant modes whose total is a planned scheduling quantity.
+PARTICIPANT_BEARING_MODES = frozenset(
+    {
+        ParticipantMode.DIRECT_TOTAL,
+        ParticipantMode.PER_SCHOOL,
+        ParticipantMode.BY_CATEGORY,
+    }
+)
+
+
 class ProgrammeActivityType(models.TextChoices):
     """Leadership reporting categories for non-school Work Plan activities."""
 

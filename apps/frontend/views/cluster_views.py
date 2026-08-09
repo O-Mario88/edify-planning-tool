@@ -10,6 +10,7 @@ from apps.core.permissions import (
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 import csv
+import json
 from datetime import datetime, timedelta
 
 from apps.clusters.models import Cluster, ClusterSubCounty
@@ -30,6 +31,7 @@ from apps.clusters.services import (
     cluster_intervention_summary,
     cluster_activity_impact,
     assign_school as assign_school_to_cluster,
+    cluster_creation_district_ids,
     create_cluster as create_cluster_service,
     ClusterDashboardService,
     ClusterPlanningService,
@@ -374,6 +376,21 @@ def cluster_schedule_activity_view(request):
             "assignedPartnerId": assigned_partner_id or None,
             "deliveryType": "partner" if assigned_partner_id else "staff",
         }
+        # Group Training plans people per school across the schools actually
+        # invited. Both are passed raw: the service validates them, recounts
+        # the cluster, and recomputes the total — the browser's arithmetic
+        # above is a preview and never the number that gets costed.
+        per_school = request.POST.get("participants_per_school", "").strip()
+        if per_school:
+            data["participantsPerSchool"] = per_school
+        schools_invited = request.POST.get("schools_invited", "").strip()
+        if schools_invited:
+            data["schoolsInvited"] = schools_invited
+        # Optional Project attribution. The service derives the target
+        # intervention from it when the planner did not name one.
+        planner_project_id = request.POST.get("project_id", "").strip()
+        if planner_project_id:
+            data["projectId"] = planner_project_id
 
         try:
             ClusterActionPlannerService.schedule_activity(data, request.user)
@@ -411,6 +428,15 @@ def cluster_schedule_activity_view(request):
                 interventions = [
                     {"value": key.value, "label": key.label} for key in SsaIntervention
                 ]
+                from apps.clusters.services import active_school_count
+                from apps.projects.presentation import training_project_options
+
+                cluster_school_count = (
+                    active_school_count(selected_cluster.id) if selected_cluster else 0
+                )
+                project_options = (
+                    training_project_options() if activity_type == "training" else []
+                )
 
                 cost_preview = None
                 if selected_cluster:
@@ -430,6 +456,12 @@ def cluster_schedule_activity_view(request):
                     "partners": partners,
                     "interventions": interventions,
                     "expected_participants": participants,
+                    "participants_per_school": per_school or 2,
+                    "schools_invited": schools_invited or cluster_school_count,
+                    "cluster_school_count": cluster_school_count,
+                    "projects": project_options,
+                    "projects_json": json.dumps(project_options),
+                    "selected_project_id": planner_project_id,
                     "cost_preview": cost_preview,
                     "error_msg": str(e),
                 }
@@ -602,10 +634,9 @@ def cluster_detail_view(request, cluster_id):
 def create_cluster_drawer_view(request):
     import json
 
-    scope = resolve_user_scope(request.user)
     districts = District.objects.all()
-    if not scope.country_scope:
-        districts = districts.filter(id__in=scope.district_ids)
+    allowed_district_ids = cluster_creation_district_ids(request.user)
+    districts = districts.filter(id__in=allowed_district_ids)
     districts = districts.order_by("name")
 
     district_ids = list(districts.values_list("id", flat=True))
@@ -699,11 +730,32 @@ def planner_drawer_view(request):
         {"value": key.value, "label": key.label} for key in SsaIntervention
     ]
 
+    from apps.clusters.services import active_school_count
+
+    cluster_school_count = (
+        active_school_count(selected_cluster.id) if selected_cluster else 0
+    )
+    raw_per_school = request.GET.get("participants_per_school", "").strip()
+    participants_per_school = (
+        int(raw_per_school)
+        if raw_per_school.isdigit() and int(raw_per_school) > 0
+        else 2
+    )
+    raw_schools_invited = request.GET.get("schools_invited", "").strip()
+    schools_invited = (
+        int(raw_schools_invited)
+        if raw_schools_invited.isdigit() and int(raw_schools_invited) > 0
+        else cluster_school_count
+    )
+    schools_invited = min(schools_invited, cluster_school_count)
+
     raw_participants = request.GET.get("expected_participants", "").strip()
-    if raw_participants.isdigit():
+    if activity_type == "training":
+        participants = participants_per_school * schools_invited
+    elif raw_participants.isdigit():
         participants = int(raw_participants)
     else:
-        participants = 25 if activity_type == "training" else 10
+        participants = 10
 
     import datetime
     from django.utils import timezone
@@ -716,6 +768,19 @@ def planner_drawer_view(request):
         cost_preview = ClusterCostPreviewService.preview_cost(
             activity_type, participants, selected_cluster.id
         )
+
+    # This is the Project table, not strategic priorities. "EdTech" can stay
+    # a priority grouping while concrete Projects such as EdTech Foundations
+    # and EdTech Integration appear here as their own records.
+    from apps.projects.presentation import training_project_options
+
+    project_options = training_project_options() if activity_type == "training" else []
+    selectable_project_ids = {
+        str(option["id"]) for option in project_options if option["selectable"]
+    }
+    selected_project_id = request.GET.get("project_id", "").strip()
+    if selected_project_id not in selectable_project_ids:
+        selected_project_id = ""
 
     context = {
         "clusters": clusters,
@@ -731,6 +796,15 @@ def planner_drawer_view(request):
         "cost_preview": cost_preview,
         "default_date": default_date,
         "drawer_type": "center",
+        "projects": project_options,
+        "projects_json": json.dumps(project_options),
+        "selected_project_id": selected_project_id,
+        "participants_per_school": participants_per_school,
+        "schools_invited": schools_invited,
+        # Read-only, from the canonical counter. It is the ceiling on schools
+        # invited and the default when the planner invites everyone; the
+        # backend recounts at submission so a stale drawer cannot price work.
+        "cluster_school_count": cluster_school_count,
     }
 
     return render(

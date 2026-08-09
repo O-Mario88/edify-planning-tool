@@ -6,7 +6,13 @@ from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
 from django.utils import timezone
 
-from apps.core.enums import ActivityStatus, DeliveryType, SsaIntervention
+from apps.core.enums import (
+    ActivityStatus,
+    DeliveryType,
+    ExecutorType,
+    PARTNER_EXECUTOR_TYPES,
+    SsaIntervention,
+)
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 
@@ -79,13 +85,28 @@ def resolve_item_for_workflow_kind(
     already keys its costing on — so the link is derivable and does not need
     to be a question.
 
-    Returns None rather than guessing when the catalogue offers more than one
-    item for the same workflow kind: two costings for one purpose is a
+    The STANDARD-SUPPORT item for a kind wins outright when one exists. That
+    is what it is for: an in-school training has five governed curriculum
+    titles costing it (EdTech Foundations, CC-SEL, …), and "more than one, so
+    refuse" meant a planner choosing the purpose "In-school Training" was told
+    no approved activity costs it — while five did. The standard item is the
+    unnamed, general-purpose response, and the database allows exactly one
+    active one per kind, so this is a resolution rather than a guess.
+
+    Returns None rather than guessing when the catalogue offers several
+    non-standard items and no standard one: two costings for one purpose is a
     governance question for the Country Director, and silently picking the
     first would put money against an activity nobody chose.
     """
     if not workflow_kind:
         return None
+    standard = list(
+        effective_items(on_date)
+        .filter(workflow_kind=workflow_kind, standard_support=True)
+        .order_by("stable_code")[:2]
+    )
+    if len(standard) == 1:
+        return standard[0]
     matches = list(
         effective_items(on_date)
         .filter(workflow_kind=workflow_kind)
@@ -123,6 +144,17 @@ def resolve_activity_intervention(
     if not mappings:
         raise BadRequest("This Catalogue item has no active intervention mapping.")
     mode = mappings[0].mapping_mode
+    if mode == MappingMode.ANY_SSA_INTERVENTION:
+        # Standard support belongs to no single intervention. The planner
+        # names the one the work is meant to move, and the catalogue does not
+        # second-guess it — but it must still be one of the canonical eight,
+        # because everything downstream (intervention analytics, the SSA
+        # lineage stamped in apply_catalogue_snapshot) is keyed on them.
+        if not requested_intervention:
+            return None
+        if requested_intervention not in SsaIntervention.values:
+            raise BadRequest("Choose a valid canonical SSA intervention.")
+        return requested_intervention
     if mode in {
         MappingMode.SSA_COMPLETION_PREREQUISITE,
         MappingMode.ADMINISTRATIVE,
@@ -181,7 +213,24 @@ def validate_context(
     still be approved for it (``non_school_allowed``); the per-school
     requirements below then do not apply, because there is no school to which
     they could refer.
+
+    A Project is required ONLY where ``item.requires_project`` says so (§2).
+    There is no rule anywhere in this function that a selected intervention
+    must belong to a Project, and there must never be one: an intervention
+    may inform a Project, but a Project does not own it.
     """
+    executor_type = executor_type or DeliveryType.STAFF
+    is_partner_delivery = executor_type in PARTNER_EXECUTOR_TYPES
+    if executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY:
+        if not item.certified_agency_delivery_allowed:
+            raise Forbidden(
+                "This Catalogue Activity is not approved for Certified "
+                "Partner Agency delivery."
+            )
+        if not item.partner_delivery_allowed:
+            raise Forbidden(
+                "This Catalogue Activity is not approved for Partner delivery."
+            )
     if non_school:
         if not item.non_school_allowed:
             raise BadRequest(
@@ -189,7 +238,7 @@ def validate_context(
                 "Cluster planning and cannot be planned as a standalone "
                 "programme activity."
             )
-        if executor_type == DeliveryType.PARTNER and not item.partner_delivery_allowed:
+        if is_partner_delivery and not item.partner_delivery_allowed:
             raise Forbidden(
                 "This Catalogue Activity is not approved for Partner delivery."
             )
@@ -214,7 +263,7 @@ def validate_context(
         raise BadRequest(
             "This Catalogue Activity is not approved for Cluster delivery."
         )
-    if executor_type == DeliveryType.PARTNER and not item.partner_delivery_allowed:
+    if is_partner_delivery and not item.partner_delivery_allowed:
         raise Forbidden("This Catalogue Activity is not approved for Partner delivery.")
     if executor_type == DeliveryType.STAFF and not item.staff_delivery_allowed:
         raise Forbidden("This Catalogue Activity is not approved for Staff delivery.")
@@ -255,14 +304,22 @@ def validate_context(
             catalogue_item=item,
             active=True,
         ).first()
-        if not mapping:
+        # The approved-activity list governs which of the programme's NAMED
+        # curriculum titles a Project funds — EdTech Foundations belongs to
+        # the EdTech project and not to Literacy, and that is a real rule.
+        #
+        # It says nothing useful about ordinary support. A Literacy project
+        # running a cluster training is running a cluster training; requiring
+        # someone to first map "Cluster Training" into all five projects adds
+        # a setup step whose only outcome is that scheduling fails until it
+        # is done. Here the Project is attribution, not a menu.
+        if not mapping and not item.standard_support:
             raise BadRequest(
                 "This Activity is not approved in the selected Special Project."
             )
-        if (
-            executor_type == DeliveryType.PARTNER
-            and not mapping.partner_delivery_allowed
-        ):
+        if not mapping:
+            return
+        if is_partner_delivery and not mapping.partner_delivery_allowed:
             raise Forbidden(
                 "The Project does not allow Partner delivery for this Activity."
             )
@@ -718,6 +775,12 @@ def recommend_activities(
     # own responses are unavailable, so the choice is the planner's.
     top_need = ranked_needs[0]
     unmet_priority = None
+    # Standard field support answers ANY intervention, so its availability is
+    # what decides whether the top need is actually unaddressable here or
+    # merely has no NAMED curriculum title. Before standard support existed
+    # those were the same thing, and the banner said "no activity addresses
+    # this" when the honest statement was "no curriculum training does".
+    standard_support_available = qs.filter(standard_support=True).exists()
     if top_need["intervention"] not in directly_addressed:
         blocked = []
         for item in (
@@ -756,10 +819,15 @@ def recommend_activities(
                     "route": route,
                 }
             )
-        unmet_priority = {"need": top_need, "blockedBy": blocked}
+        unmet_priority = {
+            "need": top_need,
+            "blockedBy": blocked,
+            "standardSupportAvailable": standard_support_available,
+        }
 
     return {
         "hasApplicableSsa": True,
+        "standardSupportAvailable": standard_support_available,
         "sourceSsaId": source_ssa.id,
         "verificationState": source_ssa.verification_status,
         "ssaDate": source_ssa.date_of_ssa,

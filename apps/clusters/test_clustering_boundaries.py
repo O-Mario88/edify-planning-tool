@@ -19,10 +19,10 @@ from __future__ import annotations
 from django.core.management import call_command
 from django.test import TestCase
 
-from apps.accounts.models import User
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.clusters.services import covered_sub_counties
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.geography.models import District, Region, SubCounty
 from apps.planning.planning_service import PlanningDashboardService
 from apps.schools.models import School
@@ -63,6 +63,26 @@ class ClusteringBoundaryTest(TestCase):
             active_role="Admin",
             is_active=True,
             status="active",
+        )
+        cls.admin_profile = StaffProfile.objects.create(
+            id="clusterbound-admin-profile",
+            user=cls.admin,
+            title="Admin",
+        )
+        cls.portfolio_school = School.objects.create(
+            school_id="BOUND-PORTFOLIO",
+            name="Boundary Portfolio School",
+            region=cls.region,
+            district=cls.district,
+            sub_county=cls.free_sc,
+        )
+        StaffSchoolAssignment.objects.create(
+            staff=cls.admin_profile,
+            school_id=cls.portfolio_school.id,
+        )
+        cls.outside_district = District.objects.create(
+            name="Outside Boundary District",
+            region=cls.region,
         )
 
     def _school(self, ref, *, clustered: bool):
@@ -123,6 +143,42 @@ class ClusteringBoundaryTest(TestCase):
             self.admin,
         )
         self.assertTrue(result["id"])
+
+    def test_country_role_drawer_is_limited_to_its_direct_portfolio(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/clusters/create-drawer")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["districts"].values_list("id", flat=True)),
+            [self.district.id],
+        )
+        self.assertNotContains(response, self.outside_district.name)
+
+    def test_country_role_without_a_portfolio_cannot_create_a_cluster(self):
+        unassigned_admin = User.objects.create(
+            id="clusterbound-unassigned-admin",
+            email="clusterbound-unassigned@edify.org",
+            name="Unassigned Cluster Boundary Admin",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True,
+            status="active",
+        )
+
+        with self.assertRaisesMessage(Forbidden, "District outside your scope"):
+            from apps.clusters.services import create_cluster
+
+            create_cluster(
+                {
+                    "name": "Unowned Admin Cluster",
+                    "regionId": self.region.id,
+                    "districtId": self.district.id,
+                    "subCountyIds": [self.free_sc.id],
+                },
+                unassigned_admin,
+            )
 
     # ── 2. Schools offered for clustering ────────────────────────────────────
 

@@ -305,12 +305,41 @@ def compute_next_action(a, today) -> dict:
         }
 
     # 2. Due today and not started -> Start
-    if a.status == "scheduled" and a.planned_date == today:
+    #
+    # `partner_scheduled` counts. It is a dated, committed activity exactly
+    # like `scheduled` — whether the partner picked the date themselves or
+    # Edify booked a certified agency onto it. Omitting it meant a partner
+    # opened My Plan on the morning of their own training and were offered
+    # "View Details", while start_completion would have accepted them all
+    # along (see STARTABLE_STATUSES).
+    if a.status in ("scheduled", "partner_scheduled") and a.planned_date == today:
         return {
             "text": "Start",
             "action": "start",
             "url": f"/activities/{a.id}/start",
             "description": "Due today",
+        }
+
+    # 2.5 A dated partner booking that has not arrived yet -> Prepare.
+    #
+    # A certified agency booked by Edify has a real obligation from the moment
+    # it is created — it is dated, budgeted, and a school is expecting someone.
+    # Falling through to the generic "View Details" default meant the To-Do
+    # service (which lists only actionable or waiting next actions) produced
+    # nothing at all for the agency until the morning of the activity, so the
+    # booking notification was the single thing carrying it. Partner-delivered
+    # only: a staff member's own scheduled visit already reads correctly.
+    if (
+        a.status == "partner_scheduled"
+        and a.delivery_type == "partner"
+        and a.planned_date
+        and a.planned_date > today
+    ):
+        return {
+            "text": "Prepare",
+            "action": "prepare",
+            "url": f"/my-plan/{a.id}",
+            "description": "Booked — review the plan and prepare",
         }
 
     # 3. Started but not completed -> Complete Activity

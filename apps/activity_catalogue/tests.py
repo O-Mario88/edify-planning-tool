@@ -43,15 +43,36 @@ class CatalogueSeedContractTests(TestCase):
         seed_activity_catalogue(actor_id="test")
         seed_activity_catalogue(actor_id="test")
 
-        self.assertEqual(ActivityCatalogueItem.objects.count(), 28)
+        self.assertEqual(ActivityCatalogueItem.objects.count(), 40)
         self.assertEqual(
             ActivityCatalogueItem.objects.values("stable_code").distinct().count(),
+            40,
+        )
+        # The programme's 28 named interventions, unchanged. Standard field
+        # support (school visit, in-school training, cluster meeting) is
+        # counted separately because it is not a curriculum title.
+        self.assertEqual(
+            ActivityCatalogueItem.objects.filter(standard_support=False).count(),
             28,
         )
         self.assertEqual(
-            ActivityCatalogueItem.objects.filter(non_school_allowed=True).count(),
+            ActivityCatalogueItem.objects.filter(standard_support=True).count(),
+            12,
+        )
+        self.assertEqual(
+            ActivityCatalogueItem.objects.filter(
+                non_school_allowed=True, standard_support=False
+            ).count(),
             28,
             "Every governed title must also be available for dated central budgeting.",
+        )
+        # Standard support is school/cluster work. Planning it as a standalone
+        # dated programme line at a venue would let "School Visit" be budgeted
+        # centrally against no school at all.
+        self.assertFalse(
+            ActivityCatalogueItem.objects.filter(
+                standard_support=True, non_school_allowed=True
+            ).exists()
         )
         self.assertFalse(
             ActivityInterventionMapping.objects.filter(
@@ -420,13 +441,38 @@ class CatalogueImportAndBackfillTests(TestCase):
         )
 
     def test_ambiguous_legacy_activity_enters_review_queue(self):
-        activity = Activity.objects.create(activity_type="school_visit")
+        # A bare "Training" is genuinely ambiguous: youth camps, leadership
+        # camps, conference camps and the ECE project all cost that workflow
+        # kind, and no standard-support item claims it. Nothing may guess.
+        activity = Activity.objects.create(activity_type="training")
         call_command("backfill_activity_catalogue")
         self.assertTrue(
             ActivityCatalogueReviewQueue.objects.filter(
                 source_model="activities.Activity",
                 source_record_id=activity.id,
                 status="needs_review",
+            ).exists()
+        )
+
+    def test_legacy_standard_visit_now_resolves_instead_of_queueing(self):
+        """The other half of the same rule.
+
+        A plain school visit used to reach the review queue for the reason
+        ordinary support could not be scheduled at all: no Catalogue item
+        costed ``school_visit``, so there was nothing to match it to. With the
+        standard-support item present it resolves deterministically, and a
+        human is not asked to adjudicate the most ordinary activity Edify
+        performs.
+        """
+        activity = Activity.objects.create(activity_type="school_visit")
+        call_command("backfill_activity_catalogue")
+        activity.refresh_from_db()
+        self.assertIsNotNone(activity.catalogue_item_id)
+        self.assertEqual(activity.catalogue_item.stable_code, "STANDARD_SCHOOL_VISIT")
+        self.assertFalse(
+            ActivityCatalogueReviewQueue.objects.filter(
+                source_model="activities.Activity",
+                source_record_id=activity.id,
             ).exists()
         )
 

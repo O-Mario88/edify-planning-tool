@@ -16,6 +16,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.core.enums import ExecutorType, PARTNER_EXECUTOR_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import COUNTRY_SCHEDULING_ROLES, resolve_user_scope
@@ -139,6 +140,46 @@ def _notify_chain(activity, event_type, title, body, recipients, priority="norma
         )
     except Exception:  # noqa: BLE001 - never block the transition
         pass
+
+
+def _notify_certified_agency_booking(activity, agency, principal) -> None:
+    """§21 — an agency must not discover a booking by browsing My Plan.
+
+    Staff booked this agency onto a date the agency did not choose. The
+    obligation is real the moment it is created — budget moves, the school
+    expects someone — so the agency is told, in the same terms the booking
+    was made, and the staff member who made it is confirmed.
+
+    Best-effort, like every other notification in this module: a messaging
+    failure must never roll back a committed schedule.
+    """
+    if agency is None:
+        return
+    where = _where(activity)
+    when = (
+        f"{activity.planned_date:%-d %b %Y}" if activity.planned_date else "a set date"
+    )
+    what = activity.activity_name_snapshot or activity.get_activity_type_display()
+    agency_user_id = getattr(agency, "user_id", None)
+    _notify_chain(
+        activity,
+        "partner_booking_created",
+        "Edify has booked you to deliver work",
+        (
+            f"You have been booked to deliver {what} for {where} on {when}. "
+            "Open My Plan to review the intervention focus, participant plan "
+            "and preparation requirements."
+        ),
+        [agency_user_id],
+        priority="high",
+    )
+    _notify_chain(
+        activity,
+        "partner_booking_confirmed",
+        "Certified agency booked",
+        f"{agency.name} is booked to deliver {what} for {where} on {when}.",
+        [getattr(principal, "user_id", None)],
+    )
 
 
 def _where(activity) -> str:
@@ -704,6 +745,264 @@ CLUSTER_PARTICIPANT_ACTIVITY_TYPES = {
 }
 
 
+def _resolved_executor_type(data: dict) -> str:
+    """Which of the three delivery models this request is asking for.
+
+    Accepts the explicit ``executorType`` the refreshed drawer sends, and
+    keeps resolving the historic shape (``deliveryType`` plus a partner id)
+    so existing API clients and every already-shipped surface keep working.
+    An unrecognised value is refused rather than silently downgraded to
+    staff — quietly making Edify the executor of partner work is the failure
+    this field exists to prevent.
+    """
+    requested = (data.get("executorType") or data.get("executor_type") or "").strip()
+    if requested:
+        if requested not in ExecutorType.values:
+            raise BadRequest(
+                "Unknown delivery type. Choose Internal Staff, Assigned "
+                "Partner, or Certified Partner Agency."
+            )
+        if requested in PARTNER_EXECUTOR_TYPES and not data.get("assignedPartnerId"):
+            raise BadRequest("Select the Partner organisation delivering this work.")
+        if requested == ExecutorType.STAFF and data.get("assignedPartnerId"):
+            # Contradictory: staff delivery with a partner attached. The old
+            # shape inferred "partner" from the id alone, so honouring the
+            # explicit choice here without saying anything would silently
+            # produce an activity that is staff-delivered but partner-stamped
+            # — invisible to partner oversight and payment, yet counted
+            # against the school's partner allowance.
+            raise BadRequest(
+                "Internal Staff delivery cannot name a Partner organisation. "
+                "Choose a Partner delivery type, or clear the Partner."
+            )
+        return requested
+    if data.get("deliveryType") == "partner" or data.get("assignedPartnerId"):
+        return ExecutorType.PARTNER
+    return ExecutorType.STAFF
+
+
+def _assert_bookable_certified_agency(
+    partner_id,
+    *,
+    activity_type: str,
+    catalogue_item=None,
+    school=None,
+    scheduled_date=None,
+):
+    """§16 — the agency must actually be one, and be free to take this date.
+
+    Staff booking an agency directly is a commitment made on the agency's
+    behalf: it lands dated in their My Plan and draws budget immediately.
+    Every condition that would otherwise be discovered by the agency after
+    the fact is checked before the Activity exists.
+    """
+    from apps.partners.models import Partner
+    from apps.partners.services import bookable_certified_agencies
+
+    if not partner_id:
+        raise BadRequest(
+            "Select the Certified Partner Agency that will deliver this work."
+        )
+    partner = Partner.objects.filter(id=partner_id, deleted_at__isnull=True).first()
+    if partner is None:
+        raise BadRequest("Unknown Partner organisation.")
+    if not partner.is_certified:
+        raise BadRequest(
+            f"{partner.name} is not a Certified Partner Agency. Certified "
+            "agencies are the only partners Edify may book onto a date "
+            "directly; assign the school to the partner instead and let them "
+            "schedule it."
+        )
+    # Same query the picker is built from, so nothing offered can fail here
+    # and nothing refused here could have been offered.
+    if not bookable_certified_agencies().filter(id=partner.id).exists():
+        raise BadRequest(
+            f"{partner.name} cannot take new bookings right now (inactive, on "
+            "hold, or certification not current)."
+        )
+    if (
+        catalogue_item is not None
+        and not catalogue_item.certified_agency_delivery_allowed
+    ):
+        raise BadRequest(
+            f"{catalogue_item.display_name} is not approved for Certified "
+            "Partner Agency delivery."
+        )
+    if school is not None and partner.coverage_districts and school.district_id:
+        district_name = getattr(school.district, "name", None)
+        if district_name and district_name not in partner.coverage_districts:
+            raise BadRequest(
+                f"{partner.name} does not cover {district_name}. Choose an "
+                "agency certified for this district."
+            )
+    if scheduled_date is not None:
+        # §19.10 — an agency cannot be in two places on one day. This is the
+        # agency's own calendar, not Edify's: work another CCEO booked counts.
+        clash = (
+            Activity.objects.filter(
+                assigned_partner_id=partner.id,
+                planned_date=scheduled_date.date(),
+                deleted_at__isnull=True,
+            )
+            .exclude(status__in=("cancelled", "rejected", "deferred", "rescheduled"))
+            .exists()
+        )
+        if clash:
+            raise BadRequest(
+                f"{partner.name} already has work booked on "
+                f"{scheduled_date:%-d %b %Y}. Choose another date or another "
+                "certified agency."
+            )
+    return partner
+
+
+#: Every request key that carries a planned participant quantity. A drawer
+#: that hides a field with x-show still SUBMITS it, so switching Training →
+#: Visit posted the 30 participants typed a moment earlier. Naming them in one
+#: place is what makes "a visit has no participants" enforceable rather than
+#: aspirational.
+PARTICIPANT_INPUT_KEYS = (
+    "expectedParticipants",
+    "participantsPerSchool",
+    "teachersAttended",
+    "leadersAttended",
+    "otherParticipants",
+)
+
+
+def _participant_mode_for(catalogue_item, activity_type: str) -> str:
+    """The participant mode governing this activity.
+
+    The Catalogue item is the Workflow Profile and wins. Activities created
+    before the profile existed — and API clients posting a bare activity type
+    with no catalogue item — fall back to the same derivation the seed uses,
+    so an uncatalogued visit is still a visit with no participants.
+    """
+    from apps.activity_catalogue.seed_data import default_participant_mode
+    from apps.core.enums import ParticipantMode
+
+    if catalogue_item is not None and catalogue_item.participant_mode:
+        return catalogue_item.participant_mode
+    if not activity_type:
+        return ParticipantMode.NONE
+    return default_participant_mode(activity_type, False)
+
+
+def _apply_participant_mode(data: dict, mode: str) -> dict:
+    """Normalize participant input to what this activity actually plans.
+
+    §9 — enforced here, at the service, not in the drawer's JavaScript. An API
+    client posting ``expectedParticipants`` on a school visit must not be able
+    to move that visit's cost, and a stale value left over from a previous
+    drawer selection must not be stored as though somebody meant it.
+    """
+    from apps.core.enums import ParticipantMode
+
+    if mode == ParticipantMode.NONE:
+        # Cleared, not rejected: the value is almost always a stale artifact
+        # of the drawer rather than an assertion, and refusing the submission
+        # would turn a UI leftover into a failed schedule. What matters is
+        # that it reaches neither the cost engine nor the stored record.
+        return {**data, **{key: None for key in PARTICIPANT_INPUT_KEYS}}
+
+    if mode == ParticipantMode.PER_SCHOOL:
+        # Deliberately NOT cleared, even though the total is derived from live
+        # cluster membership further down and a supplied total is overwritten
+        # whenever `participantsPerSchool` is present.
+        #
+        # Clearing it looks like the stricter, safer rule and is the opposite.
+        # `apps.budget.costing._participants_of` falls back to
+        # DEFAULT_TRAINING_PARTICIPANTS (25) when no count reaches it, so
+        # discarding a stated 15 did not price zero participants — it priced
+        # twenty-five, and quietly raised the budget line by 120,000 UGX. A
+        # figure someone actually stated beats a hardcoded default.
+        #
+        # The rule the drawer enforces (§11 — never ask for a total) is a
+        # drawer rule, and the drawer has no total field for cluster work.
+        return data
+
+    if mode == ParticipantMode.BY_CATEGORY:
+        categories = ("teachersAttended", "leadersAttended", "otherParticipants")
+        supplied = [data.get(key) for key in categories]
+        if any(value not in (None, "") for value in supplied):
+            total = 0
+            for key in categories:
+                total += _validated_participant_category(data.get(key), key)
+            if total < 1:
+                raise BadRequest(
+                    "Enter how many teachers, school leaders or other "
+                    "participants are planned for this training."
+                )
+            # The backend calculates the total (§10) — a typed total that
+            # disagrees with its own breakdown is not a number to preserve.
+            return {**data, "expectedParticipants": total}
+        return {**data, "participantsPerSchool": None}
+
+    # DIRECT_TOTAL
+    return {**data, "participantsPerSchool": None}
+
+
+_CATEGORY_LABELS = {
+    "teachersAttended": "teachers",
+    "leadersAttended": "school leaders",
+    "otherParticipants": "other participants",
+}
+
+
+def _validated_participant_category(raw, key: str) -> int:
+    if raw in (None, ""):
+        return 0
+    text = str(raw).strip()
+    try:
+        value = int(text)
+    except (TypeError, ValueError) as exc:
+        raise BadRequest(
+            f"The number of {_CATEGORY_LABELS.get(key, key)} must be a whole number."
+        ) from exc
+    if value < 0:
+        raise BadRequest(
+            f"The number of {_CATEGORY_LABELS.get(key, key)} cannot be negative."
+        )
+    if value > 100000:
+        raise BadRequest(
+            f"The number of {_CATEGORY_LABELS.get(key, key)} is implausibly large."
+        )
+    return value
+
+
+def _validated_schools_invited(raw, cluster_school_count: int) -> int:
+    """How many member schools are actually being invited.
+
+    Defaults to the whole cluster, which is what every activity scheduled
+    before this input existed meant. The ceiling is the live membership: a
+    cluster of eight cannot invite nine, and accepting it would cater and
+    budget for a school that does not exist. The floor is one, for the same
+    reason a zero-participant training is not a training.
+    """
+    if raw in (None, ""):
+        return cluster_school_count
+    text = str(raw).strip()
+    try:
+        value = int(text)
+    except (TypeError, ValueError) as exc:
+        raise BadRequest(
+            "The number of schools invited must be a whole number."
+        ) from exc
+    if str(value) != text.lstrip("+"):
+        raise BadRequest("The number of schools invited must be a whole number.")
+    if value < 1:
+        raise BadRequest(
+            "Invite at least one school, or schedule this as school-level support."
+        )
+    if value > cluster_school_count:
+        raise BadRequest(
+            f"This cluster has {cluster_school_count} active school"
+            f"{'' if cluster_school_count == 1 else 's'}, so it cannot invite "
+            f"{value}."
+        )
+    return value
+
+
 def _validated_participants_per_school(raw) -> int:
     """A positive whole number, or a refusal that says which rule was broken.
 
@@ -824,6 +1123,15 @@ def create(
         if not data.get("districtType") and school.district_id:
             data = {**data, "districtType": school.district.district_type}
 
+    # ── Participant mode ─────────────────────────────────────────────────
+    # What this activity actually plans in people, per its Workflow Profile.
+    # Applied only to school/cluster work: non-school programme activities
+    # (camps, conferences) run their own participant rules further down, and
+    # those have their own required quantities.
+    participant_mode = _participant_mode_for(catalogue_item, activity_type)
+    if school_id_str or cluster_id:
+        data = _apply_participant_mode(data, participant_mode)
+
     # ── Cluster participant planning ─────────────────────────────────────
     # The user states how many people to invite per school. The total is
     # derived HERE, from the cluster's live membership, and never taken from
@@ -831,6 +1139,7 @@ def create(
     # thing it multiplies into is a budget line.
     participants_per_school = None
     cluster_school_count = None
+    schools_invited = None
     if activity_type in CLUSTER_PARTICIPANT_ACTIVITY_TYPES and cluster_id:
         raw_per_school = data.get("participantsPerSchool")
         if raw_per_school not in (None, ""):
@@ -844,11 +1153,18 @@ def create(
                     "invite. Add schools to the cluster before planning a "
                     "cluster activity for it."
                 )
+            # Not every member school qualifies for every session — a Literacy
+            # training does not reach the secondary and vocational schools in a
+            # mixed cluster. Left unstated, the whole cluster is invited, which
+            # is what this has always meant.
+            schools_invited = _validated_schools_invited(
+                data.get("schoolsInvited"), cluster_school_count
+            )
             # Overwrites whatever the form sent. The browser's arithmetic is a
             # preview; this is the number that gets costed and stored.
             data = {
                 **data,
-                "expectedParticipants": participants_per_school * cluster_school_count,
+                "expectedParticipants": participants_per_school * schools_invited,
             }
 
     non_school = bool(
@@ -972,9 +1288,29 @@ def create(
         catalogue_item=catalogue_item,
     )
 
-    is_partner = data.get("deliveryType") == "partner" or bool(
-        data.get("assignedPartnerId")
-    )
+    # ── Who executes ─────────────────────────────────────────────────────
+    # Two partner workflows, one delivery type. `is_partner` keeps its
+    # historic meaning (a partner organisation delivers this) because every
+    # downstream surface reads it; `executor_type` records WHICH partner
+    # workflow, which is what decides whether the partner still has to pick a
+    # date or has already been booked onto one.
+    executor_type = _resolved_executor_type(data)
+    is_partner = executor_type in PARTNER_EXECUTOR_TYPES
+    is_certified_agency_booking = executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY
+    certified_agency = None
+    if is_certified_agency_booking:
+        certified_agency = _assert_bookable_certified_agency(
+            data.get("assignedPartnerId"),
+            activity_type=activity_type,
+            catalogue_item=catalogue_item,
+            school=school,
+            scheduled_date=scheduled_date,
+        )
+        if scheduled_date is None:
+            raise BadRequest(
+                "A Certified Partner Agency booking needs the date Edify is "
+                "booking the agency for."
+            )
     # The "owner" identifier the rest of the app uses for staff attribution.
     # Prefer the StaffProfile CUID (what scoping.resolve_user_scope returns as
     # staff_id); fall back to the User CUID so that users without a StaffProfile
@@ -1025,6 +1361,37 @@ def create(
         if project is None:
             raise BadRequest("Unknown project.")
         assert_accepts_new_work(project)
+        # A Project already declares which SSA interventions it exists to
+        # move, so asking the planner to restate them invites disagreement.
+        # The project's explicit primary (or first ordered target for newer
+        # records) becomes the Activity focus; the remaining targets are
+        # retained as supporting interventions. A caller that deliberately
+        # states a different focus is still respected by this general service.
+        primary_target, supporting_targets = project.intervention_plan()
+        if activity_type == "cluster_training" and not primary_target:
+            raise BadRequest(
+                f"'{project.name}' does not have an SSA intervention configured. "
+                "Configure the Project before scheduling its Group Training."
+            )
+        if not focus and not data.get("purposeIntervention") and primary_target:
+            focus = primary_target
+            data = {
+                **data,
+                "focusIntervention": focus,
+                "secondaryFocusInterventions": supporting_targets,
+            }
+        elif (
+            focus == primary_target
+            and supporting_targets
+            and not data.get("secondaryFocusInterventions")
+        ):
+            data = {**data, "secondaryFocusInterventions": supporting_targets}
+        # Selecting the Project replaces the drawer's free-text purpose. Keep
+        # the Project name on the Activity so My Plan, exports and evidence
+        # have a human-readable purpose without asking the planner twice.
+        if not p_text:
+            p_text = project.name
+            data = {**data, "activityPurposeText": p_text}
 
     source_ssa = None
     source_activity = None
@@ -1087,7 +1454,7 @@ def create(
             school=school,
             cluster=(None if cluster_id is None else catalogue_cluster),
             project=project,
-            executor_type="partner" if is_partner else "staff",
+            executor_type=executor_type,
             non_school=non_school,
         )
         validate_frequency(
@@ -1098,11 +1465,28 @@ def create(
             on_date=scheduled_date.date() if scheduled_date else None,
         )
         mapping_modes = set(mapping_modes)
-        if school is not None and not mapping_modes.intersection(
-            {
-                MappingMode.ADMINISTRATIVE,
-                MappingMode.SSA_COMPLETION_PREREQUISITE,
-            }
+        # §5 — the recommendation gate applies to the programme's NAMED
+        # curriculum titles, where choosing EdTech Foundations over TAM I for
+        # a school is a judgement the SSA should govern. It must not apply to
+        # ordinary support. A school visit is not a curriculum choice, and
+        # requiring one to be "a primary SSA recommendation" is what made
+        # ordinary work unschedulable: five of the eight interventions have no
+        # school-level named response at all, so their schools were told to
+        # find a Project or a Cluster to attach the work to.
+        #
+        # What standard support still carries is everything analytics needs —
+        # the target intervention, the source SSA, the planning-time score and
+        # classification — all stamped by apply_catalogue_snapshot below.
+        governance_gated = not catalogue_item.standard_support
+        if (
+            governance_gated
+            and school is not None
+            and not mapping_modes.intersection(
+                {
+                    MappingMode.ADMINISTRATIVE,
+                    MappingMode.SSA_COMPLETION_PREREQUISITE,
+                }
+            )
         ):
             from apps.activity_catalogue.services import recommend_activities
 
@@ -1171,11 +1555,15 @@ def create(
                 "executorType": "partner" if is_partner else "staff",
                 "context": "cluster" if cluster_id else "school",
             }
-        elif catalogue_cluster is not None and not mapping_modes.intersection(
-            {
-                MappingMode.ADMINISTRATIVE,
-                MappingMode.SSA_COMPLETION_PREREQUISITE,
-            }
+        elif (
+            governance_gated
+            and catalogue_cluster is not None
+            and not mapping_modes.intersection(
+                {
+                    MappingMode.ADMINISTRATIVE,
+                    MappingMode.SSA_COMPLETION_PREREQUISITE,
+                }
+            )
         ):
             from apps.activity_catalogue.services import (
                 recommend_cluster_activities,
@@ -1242,6 +1630,33 @@ def create(
                 "executorType": "partner" if is_partner else "staff",
                 "context": "cluster",
             }
+        elif not governance_gated:
+            # §28 — standard support skips the curriculum recommendation gate,
+            # not the audit trail. It still records WHY it was scheduled, what
+            # it targets, and which SSA informed it, so intervention analytics
+            # can read it exactly like governed support.
+            target = focus or data.get("purposeIntervention")
+            rationale = (
+                data.get("supportRationale") or data.get("recommendationReason") or ""
+            ).strip()
+            governed_recommendation_reason = rationale or (
+                f"Standard field support targeting "
+                f"{str(target).replace('_', ' ').title()}."
+                if target
+                else "Standard field support."
+            )
+            governed_recommendation_source = {
+                "engine": "standard_support",
+                "sourceSsaId": getattr(source_ssa, "id", None),
+                "verificationState": getattr(source_ssa, "verification_status", "none"),
+                "catalogueItemId": catalogue_item.id,
+                "recommended": False,
+                "standardSupport": True,
+                "targetIntervention": target,
+                "projectId": project.id if project else None,
+                "executorType": executor_type,
+                "context": "cluster" if cluster_id else "school",
+            }
 
     # Funded-scheduling gate: a dated activity must be priceable from the CD
     # Cost Catalogue BEFORE it is persisted. Previously a missing rate wrote
@@ -1276,11 +1691,18 @@ def create(
                 "Cost Catalogue first."
             )
 
-    status = (
-        "assigned_to_partner"
-        if is_partner
-        else ("scheduled" if scheduled_date else "planned")
-    )
+    if is_certified_agency_booking:
+        # §15B / §20 — staff chose the date, so the work IS scheduled. Landing
+        # it in the agency's My Plan as "assigned_to_partner" would show them a
+        # Schedule action for an activity Edify had already scheduled, and ask
+        # them to pick a date that was never theirs to pick.
+        status = "partner_scheduled"
+    else:
+        status = (
+            "assigned_to_partner"
+            if is_partner
+            else ("scheduled" if scheduled_date else "planned")
+        )
     # The Activity row and its initial cost snapshot (budget lines + weekly
     # fund request sync) must succeed or fail together — otherwise a costing
     # failure right after creation leaves a scheduled Activity persisted with
@@ -1408,6 +1830,7 @@ def create(
             monitored_by_staff_id=monitored_by_staff_id,
             assigned_partner_id=data.get("assignedPartnerId"),
             delivery_type="partner" if is_partner else "staff",
+            executor_type=executor_type,
             cluster_slot=data.get("clusterSlot"),
             purpose_intervention=focus or data.get("purposeIntervention"),
             activity_purpose_text=p_text,
@@ -1421,6 +1844,7 @@ def create(
             # cluster later cannot re-price work already approved.
             participants_per_school=participants_per_school,
             cluster_school_count_snapshot=cluster_school_count,
+            schools_invited=schools_invited,
             teachers_attended=data.get("teachersAttended"),
             leaders_attended=data.get("leadersAttended"),
             other_participants=data.get("otherParticipants"),
@@ -1503,11 +1927,14 @@ def create(
                     activity.planned_date.isoformat() if activity.planned_date else None
                 ),
                 "delivery_type": activity.delivery_type,
+                "executor_type": activity.executor_type,
                 "focus_intervention": activity.focus_intervention or "",
             },
         )
     except Exception:  # pragma: no cover — audit must never break scheduling
         pass
+    if is_certified_agency_booking:
+        _notify_certified_agency_booking(activity, certified_agency, principal)
     return _serialize(activity)
 
 
@@ -2110,7 +2537,34 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
                 a, old_date, new_date, data.get("reason", "Rescheduling")
             )
 
+    # §25 — the partner delivering this did not move it and must not find out
+    # by opening My Plan on the old morning. One Activity, moved; no second
+    # record, and the notification names both dates so the change is legible.
+    if a.delivery_type == "partner" and a.assigned_partner_id and old_date != new_date:
+        _notify_partner_schedule_change(
+            a,
+            "partner_booking_rescheduled",
+            "A booking you hold has been moved",
+            (
+                f"{a.activity_name_snapshot or a.get_activity_type_display()} for "
+                f"{_where(a)} has moved from "
+                f"{old_date:%-d %b %Y} to {new_date:%-d %b %Y}. "
+                f"{(data.get('reason') or '').strip()}".strip()
+            ),
+        )
     return _serialize(a)
+
+
+def _notify_partner_schedule_change(activity, event_type, title, body) -> None:
+    """Tell the partner organisation, through its login user."""
+    from apps.partners.models import Partner
+
+    user_id = (
+        Partner.objects.filter(id=activity.assigned_partner_id)
+        .values_list("user_id", flat=True)
+        .first()
+    )
+    _notify_chain(activity, event_type, title, body, [user_id], priority="high")
 
 
 def reassign(activity_id: str, data: dict, principal) -> dict:
@@ -2525,6 +2979,24 @@ def _cancel_or_defer(activity_id: str, data: dict, principal, new_status: str) -
         ).delete()
         sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
         sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+    # §26 — the record is preserved (never deleted) and the cancelled status
+    # is what removes it from the partner's active My Plan. What was missing
+    # was telling them: a partner could otherwise travel to a school for work
+    # Edify had called off.
+    if a.delivery_type == "partner" and a.assigned_partner_id:
+        _notify_partner_schedule_change(
+            a,
+            f"partner_booking_{new_status}",
+            f"A booking you hold has been {new_status}",
+            (
+                f"{a.activity_name_snapshot or a.get_activity_type_display()} for "
+                f"{_where(a)} on "
+                f"{a.planned_date:%-d %b %Y} has been {new_status}. "
+                f"{(data.get('reason') or '').strip()}".strip()
+                if a.planned_date
+                else f"Work for {_where(a)} has been {new_status}."
+            ),
+        )
     return _serialize(a)
 
 

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 562,
+  "titled_cards": 563,
   "templates": 199,
-  "distinct_titles": 535,
+  "distinct_titles": 536,
   "with_card_key": 13,
-  "untitled_surfaces": 1043,
-  "untitled_chrome": 233,
-  "untitled_nested": 389,
-  "untitled_headless": 421,
+  "untitled_surfaces": 1046,
+  "untitled_chrome": 234,
+  "untitled_nested": 390,
+  "untitled_headless": 422,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 21,
   "ambiguous_titles": 1
@@ -3291,7 +3291,7 @@
   {
    "template": "templates/pages/system_health/index.html",
    "line": 86,
-   "title": "Background Automation",
+   "title": "Scheduling Rules",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "p-4 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-semibold border border-rose-150",
@@ -3299,7 +3299,16 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 109,
+   "line": 114,
+   "title": "Background Automation",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 130,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3308,7 +3317,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 125,
+   "line": 146,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3317,7 +3326,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 146,
+   "line": 167,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3326,7 +3335,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 949,
+   "line": 970,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3335,7 +3344,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 982,
+   "line": 1003,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,

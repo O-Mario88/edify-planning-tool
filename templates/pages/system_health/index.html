@@ -89,6 +89,27 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 {% endif %}
 </div>
 
+<!-- Scheduling rules: can ordinary support still be scheduled, do participant
+     quantities match the activities that carry them, and did certified
+     agency bookings reach the agency. -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Scheduling Rules</h3>
+<div class="space-y-2">
+{% for c in health.schedulingRules.checks %}
+<div class="p-3 rounded-surface {% if c.status == 'pass' %}bg-emerald-50{% elif c.status == 'warn' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="flex items-center justify-between gap-3">
+<div class="text-[12px] font-semibold {% if c.status == 'pass' %}text-emerald-800{% elif c.status == 'warn' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.label }}</div>
+<span class="shrink-0 edify-text-caption font-bold {% if c.status == 'pass' %}text-emerald-700{% elif c.status == 'warn' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.actual }}</span>
+</div>
+{% if c.detail %}<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.detail }}</div>{% endif %}
+{% if c.status != 'pass' %}<div class="edify-text-caption text-slate-400 mt-0.5">Expected {{ c.expected }} · {{ c.owner }}</div>{% endif %}
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">No checks available.</div>
+{% endfor %}
+</div>
+</div>
+
 <!-- Background Automation (scheduler + jobs) health -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Background Automation</h3>

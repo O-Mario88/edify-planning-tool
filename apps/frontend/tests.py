@@ -1230,8 +1230,11 @@ class FrontendViewsTestCase(TestCase):
 
         page = self.client.get("/cost-settings")
         self.assertEqual(page.status_code, 200)
-        self.assertEqual(page.context["governed_activity_count"], 28)
-        self.assertEqual(len(page.context["activity_cost_coverage"]), 28)
+        # 28 governed curriculum titles + 12 standard field support items.
+        # Standard support is costed from the same CD catalogue as everything
+        # else — that is what makes a school visit fundable at all.
+        self.assertEqual(page.context["governed_activity_count"], 40)
+        self.assertEqual(len(page.context["activity_cost_coverage"]), 40)
         self.assertContains(page, "All approved budget activities")
 
         # 1. Initialize default catalogue

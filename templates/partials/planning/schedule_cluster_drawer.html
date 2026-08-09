@@ -183,82 +183,166 @@ changes cannot price an activity on a stale count.
     <span id="cluster-school-count" class="text-[13px] font-bold edify-text tabular-nums">{{ cluster_school_count }}</span>
   </div>
 
-  <div x-data="{ perSchool: 2, schools: {{ cluster_school_count|default:0 }} }">
-    <label for="participants_per_school" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-      Participants per School <span class="text-rose-500">*</span>
-    </label>
-    <input
-      type="number"
-      name="participants_per_school"
-      id="participants_per_school"
-      min="1"
-      step="1"
-      required
-      x-model.number="perSchool"
-      placeholder="e.g. 2"
-      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
-      aria-describedby="participants-help participants-total"
-    >
+  <div x-data="{ perSchool: 2, schools: {{ cluster_school_count|default:0 }}, schoolsInvited: {{ cluster_school_count|default:0 }} }">
+    <div class="{% if action == 'meeting' %}block{% else %}grid grid-cols-1 sm:grid-cols-2 gap-3{% endif %}">
+      <div>
+        <label for="participants_per_school" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+          Participants per School <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="number"
+          name="participants_per_school"
+          id="participants_per_school"
+          min="1"
+          step="1"
+          required
+          x-model.number="perSchool"
+          placeholder="e.g. 2"
+          class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+          aria-describedby="participants-help participants-total"
+        >
+      </div>
+      {% if action != 'meeting' %}
+      <div>
+        <label for="schools_invited" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+          Schools Invited <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="number"
+          name="schools_invited"
+          id="schools_invited"
+          min="1"
+          max="{{ cluster_school_count|default:0 }}"
+          step="1"
+          required
+          x-model.number="schoolsInvited"
+          class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
+          aria-describedby="schools-invited-help participants-total"
+        >
+      </div>
+      {% endif %}
+    </div>
     <p id="participants-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-      How many people you intend to invite from each school in this cluster. Edify calculates the total.
+      How many people you intend to invite from each school. Edify calculates the total.
     </p>
+    {% if action != 'meeting' %}
+    <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+      Invite fewer than all {{ cluster_school_count }} schools when the Project does not apply to every school type.
+    </p>
+    {% endif %}
 
     <div id="participants-total" class="mt-2 flex items-center justify-between gap-3 rounded-control bg-white/70 px-3 py-2" aria-live="polite">
       <span class="text-[12px] font-medium edify-text-muted">
-        <span x-text="schools"></span> schools &times; <span x-text="perSchool || 0"></span> per school
+        <span x-text="{% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %}"></span> schools invited &times; <span x-text="perSchool || 0"></span> per school
       </span>
-      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="(schools * (perSchool || 0)).toLocaleString()"></span>
+      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="({% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %} * (perSchool || 0)).toLocaleString()"></span>
     </div>
   </div>
 </div>
 
-<!-- Delivery Type selection -->
-<div x-data="{ delivery: 'staff' }">
+{% comment %}
+  §15 — this control said "Certified Partner Agency" and submitted the
+  ASSIGNED-partner workflow, which left the activity awaiting a date the
+  agency was supposed to choose. Two different commitments under one label.
+  Booking a certified agency means staff have chosen the date: it submits
+  executor_type=certified_partner_agency, the Activity is scheduled on save,
+  and it lands dated in the agency's My Plan. The picker therefore lists only
+  agencies that are actually certified and free to take the work.
+{% endcomment %}
+<div x-data="{
+  executorType: 'staff',
+  get isAgency() { return this.executorType === 'certified_partner_agency'; },
+  onDeliveryChange(value) {
+    this.executorType = value;
+    if (!this.isAgency) { this.selectedAgency = ''; }
+  },
+  selectedAgency: ''
+}">
 <label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
 <select
-name="delivery_type"
 id="delivery_type"
-x-model="delivery"
+@change="onDeliveryChange($event.target.value)"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
-<option value="partner">Certified Partner Agency</option>
+<option value="certified_partner_agency">Certified Partner Agency</option>
 </select>
+<input type="hidden" name="executor_type" :value="executorType">
+<input type="hidden" name="delivery_type" :value="isAgency ? 'partner' : 'staff'">
 
-<!-- Partner dropdown if selected -->
-<div x-show="delivery === 'partner'" class="mt-3" style="display: none;">
-<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assigned Partner Agency</label>
+<template x-if="isAgency">
+<div class="mt-3">
+<label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Certified Partner Agency <span class="text-rose-500">*</span></label>
 <select
 name="assigned_partner_id"
 id="assigned_partner_id"
+x-model="selectedAgency"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
-<option value="">Select Partner...</option>
-{% for p in partners %}
+<option value="">Select a certified agency…</option>
+{% for p in certified_agencies %}
 <option value="{{ p.id }}">{{ p.name }}</option>
 {% endfor %}
 </select>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+  Booking an agency schedules this now on the date you chose and puts it on their My&nbsp;Plan. They do not schedule it again.
+</p>
+{% if not certified_agencies %}
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No certified agency is available for this cluster. Choose Internal Field Staff, or ask the Country Director to certify one.</p>
+{% endif %}
 </div>
+</template>
 </div>
 
 {% if action != 'meeting' %}
-<!-- Focus Intervention (required for training; meetings default to operational/admin) -->
+{% comment %}
+The actual Project is the planner's choice. Its configured SSA intervention is
+displayed and submitted automatically, so Project reporting and intervention
+reporting cannot drift apart.
+{% endcomment %}
+<div
+x-data="{
+projects: {{ projects_json|default:'[]' }},
+projectId: '',
+get project() { return this.projects.find(project => project.id === this.projectId) || null; },
+get interventionLabels() { return this.project ? this.project.interventionLabels : []; },
+get primaryIntervention() { return this.project ? this.project.primaryIntervention : ''; }
+}"
+class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+>
 <div>
-<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+<label for="training_project" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
 <select
-name="focus_intervention"
-id="focus_intervention"
+name="project_id"
+id="training_project"
+x-model="projectId"
+required
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
-<option value="">Select Focus Intervention...</option>
-{% for code, label in interventions %}
-<option value="{{ code }}">{{ label }}</option>
+<option value="">Select a Project…</option>
+{% for project in projects %}
+<option value="{{ project.id }}" {% if not project.selectable %}disabled{% endif %}>{{ project.name }}{% if project.code %} ({{ project.code }}){% endif %}{% if project.unavailableReason %} — {{ project.unavailableReason }}{% endif %}</option>
 {% endfor %}
 </select>
+{% if not projects %}
+<p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No Project has been created yet. Create the Project before scheduling its Group Training.</p>
+{% endif %}
+</div>
+<div>
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Intervention</span>
+<div class="w-full min-h-10 px-3 py-2 rounded-control border border-slate-200 bg-slate-50 mt-1 flex flex-wrap items-center gap-1.5" aria-live="polite">
+<template x-for="(label, index) in interventionLabels" :key="index">
+<span class="inline-block px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100" x-text="label"></span>
+</template>
+<span x-show="!interventionLabels.length" class="edify-text-caption text-slate-400">Select a Project to populate</span>
+</div>
+<input type="hidden" name="focus_intervention" :value="primaryIntervention">
+</div>
 </div>
 {% endif %}
 
 <!-- Activity Goal -->
+{% if action == 'meeting' %}
 <div>
 <label for="activity_goal" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
 <textarea
@@ -269,6 +353,7 @@ placeholder="What needs to be achieved in this activity?"
 class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
+{% endif %}
 
 <!-- Expected Outcome -->
 <div>

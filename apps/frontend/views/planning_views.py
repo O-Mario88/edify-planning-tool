@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.htmx_errors import error_fragment
 from apps.core.exceptions import BadRequest
@@ -40,6 +42,66 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
+
+
+def _purpose_workflow_profiles(purposes) -> dict:
+    """The Workflow Profile behind every purpose the drawer offers (§7).
+
+    The drawer is generated from this, rather than carrying one universal
+    form with every possible field and hiding the irrelevant ones. Hiding is
+    what produced the participant bug: ``x-show`` removes a field from view
+    but the input still submits, so a planner who typed 30 participants for a
+    Training and then switched to a Visit posted 30 participants on a visit.
+
+    Keyed by purpose because that is what the planner actually chooses; the
+    purpose resolves to an activity type, and the activity type to the one
+    standard-support Catalogue item that prices it.
+    """
+    from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+    profiles = {}
+    for value, label in purposes:
+        workflow_kind = purpose_activity_type(value)
+        item = resolve_item_for_workflow_kind(workflow_kind)
+        if item is None:
+            # No single costing for this purpose. Say so in the profile so
+            # the drawer can disable the option with a reason, instead of
+            # accepting the choice and failing at submit.
+            profiles[value] = {
+                "purpose": value,
+                "label": label,
+                "workflowKind": workflow_kind,
+                "schedulable": False,
+                "participantMode": "none",
+                "requiresParticipants": False,
+                "participantsPerSchool": False,
+                "participantCategories": False,
+                "requiresProject": False,
+                "certifiedAgencyDeliveryAllowed": False,
+                "unavailableReason": (
+                    "No single approved Cost Catalogue entry prices this "
+                    "purpose. Ask the Country Director to define one."
+                ),
+            }
+            continue
+        profiles[value] = {
+            **item.workflow_profile(),
+            "purpose": value,
+            "label": label,
+            "schedulable": True,
+            "unavailableReason": "",
+        }
+    return profiles
+
+
+def _certified_agency_options(district_name: str = "", activity_type: str = ""):
+    from apps.partners.services import bookable_certified_agencies
+
+    return list(
+        bookable_certified_agencies(
+            district_name=district_name, activity_type=activity_type
+        ).values("id", "name")
+    )
 
 
 def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
@@ -569,6 +631,9 @@ def schedule_modal_view(request):
         action = request.GET.get("action", "training")
         partners = assignable_partners()
         from apps.clusters.services import active_school_count
+        from apps.projects.presentation import training_project_options
+
+        project_options = training_project_options() if action == "training" else []
 
         context = {
             "cluster": cluster,
@@ -580,6 +645,13 @@ def schedule_modal_view(request):
             # the multiplication is visible; the backend recomputes it at
             # submission so a stale drawer cannot price an activity.
             "cluster_school_count": active_school_count(cluster.id),
+            "projects": project_options,
+            "projects_json": json.dumps(project_options),
+            # §16 — certified agencies only. `partners` above is the ordinary
+            # assignable-partner list and must not be offered for booking.
+            "certified_agencies": _certified_agency_options(
+                district_name=(cluster.district.name if cluster.district_id else "")
+            ),
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context
@@ -728,8 +800,17 @@ def schedule_modal_view(request):
         "other_catalogue_items": other_catalogue_items,
         "selected_catalogue_item": first_catalogue_item,
         # Optional project context — stamps the scheduled activity so it flows
-        # into the Special Projects dashboard / analytics / My Plan.
+        # into the Special Projects dashboard / analytics / My Plan. Never
+        # required for ordinary support: a Project is asked for only when the
+        # selected purpose's Workflow Profile says requiresProject.
         "project_id": project_id,
+        # §7/§29 — the drawer's fields come from here, one profile per purpose.
+        "purpose_profiles": json.dumps(
+            _purpose_workflow_profiles(STAFF_VISIT_PURPOSES)
+        ),
+        "certified_agencies": _certified_agency_options(
+            district_name=(school.district.name if school.district_id else "")
+        ),
     }
     return render(request, "partials/planning/schedule_drawer.html", context)
 
@@ -759,7 +840,15 @@ def schedule_action_view(request):
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     expected_participants = request.POST.get("expected_participants", "").strip()
     participants_per_school = request.POST.get("participants_per_school", "").strip()
+    schools_invited = request.POST.get("schools_invited", "").strip()
+    teachers_attended = request.POST.get("teachers_attended", "").strip()
+    leaders_attended = request.POST.get("leaders_attended", "").strip()
+    other_participants = request.POST.get("other_participants", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
+    # §14 — which of the three delivery models. The service is the authority
+    # on what this means for status, executor and My Plan ownership; the view
+    # only passes the planner's choice through.
+    executor_type = request.POST.get("executor_type", "").strip()
     partner_id = request.POST.get("assigned_partner_id", "").strip()
     project_id = request.POST.get("project_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
@@ -767,6 +856,15 @@ def schedule_action_view(request):
     override_reason = request.POST.get("override_reason", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
     source_activity_id = request.POST.get("source_activity_id", "").strip()
+    if cluster_id and activity_type == "cluster_training":
+        if not project_id:
+            return error_fragment(
+                BadRequest("Select the Project this Group Training delivers."),
+                status=400,
+            )
+        # Project configuration owns intervention attribution. Do not trust a
+        # browser-supplied hidden value when the server can derive it.
+        focus_intervention = ""
     if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
         # The drawer asks for a purpose, not a catalogue row. Derive the
         # costing link from the purpose before refusing: purpose ->
@@ -815,6 +913,20 @@ def schedule_action_view(request):
         except Exception as exc:
             return error_fragment(exc, status=400)
         activity_type = purpose_activity_type(purpose_of_visit, activity_type)
+
+    if cluster_id and not catalogue_item_id:
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+        resolved = resolve_item_for_workflow_kind(activity_type)
+        if resolved is None:
+            return error_fragment(
+                BadRequest(
+                    "No single approved Activity Catalogue item costs this "
+                    "cluster activity. Ask the Country Director to configure it."
+                ),
+                status=400,
+            )
+        catalogue_item_id = resolved.id
 
     # Build payload
     is_ssa_expected = request.POST.get(
@@ -868,6 +980,17 @@ def schedule_action_view(request):
         # expectedParticipants the form happened to carry. The browser's
         # multiplication is a preview, not an input.
         payload["participantsPerSchool"] = participants_per_school
+    if schools_invited:
+        payload["schoolsInvited"] = schools_invited
+    for key, raw in (
+        ("teachersAttended", teachers_attended),
+        ("leadersAttended", leaders_attended),
+        ("otherParticipants", other_participants),
+    ):
+        if raw:
+            payload[key] = raw
+    if executor_type:
+        payload["executorType"] = executor_type
     if partner_id:
         payload["assignedPartnerId"] = partner_id
     if project_id:

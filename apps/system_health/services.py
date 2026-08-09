@@ -68,6 +68,7 @@ def report() -> dict:
     data["documentationCoverage"] = _documentation_coverage()
     data["referentialIntegrity"] = _referential_integrity()
     data["activityCatalogue"] = _activity_catalogue()
+    data["schedulingRules"] = _scheduling_rules()
     data["workPlan"] = _work_plan()
     data["strategicPriorities"] = _strategic_priorities()
     data["projectPriorities"] = _project_priorities()
@@ -106,6 +107,17 @@ def _activity_catalogue() -> dict:
         from apps.activity_catalogue.health import catalogue_health
 
         return catalogue_health()
+    except Exception:  # noqa: BLE001 — health must remain inspectable
+        return {"healthy": False, "checks": []}
+
+
+def _scheduling_rules() -> dict:
+    """Whether ordinary support is still schedulable, and whether certified
+    agency bookings reached the people who must act on them."""
+    try:
+        from apps.activity_catalogue.scheduling_health import scheduling_health
+
+        return scheduling_health()
     except Exception:  # noqa: BLE001 — health must remain inspectable
         return {"healthy": False, "checks": []}
 

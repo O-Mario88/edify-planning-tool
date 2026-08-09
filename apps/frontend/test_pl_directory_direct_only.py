@@ -27,6 +27,7 @@ from apps.accounts.models import (
     StaffSchoolAssignment,
     StaffSupervisorAssignment,
 )
+from apps.core.exceptions import Forbidden
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
@@ -40,6 +41,12 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
         self.district = District.objects.create(name="PLD District", region=self.region)
         self.sub_county = SubCounty.objects.create(
             name="PLD Sub", district=self.district
+        )
+        self.team_district = District.objects.create(
+            name="PLD Team District", region=self.region
+        )
+        self.team_sub_county = SubCounty.objects.create(
+            name="PLD Team Sub", district=self.team_district
         )
 
         self.pl = self._user("pld-pl", "pld-pl@edify.org", "PLD Lead", "Program Lead")
@@ -57,7 +64,13 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
         )
 
         self.mine = self._school("PLD-MINE", "PLD Mine", self.pl_sp)
-        self.theirs = self._school("PLD-THEIRS", "PLD Theirs", self.cceo_sp)
+        self.theirs = self._school(
+            "PLD-THEIRS",
+            "PLD Theirs",
+            self.cceo_sp,
+            district=self.team_district,
+            sub_county=self.team_sub_county,
+        )
 
     def _user(self, uid, email, name, role):
         return User.objects.create(
@@ -69,13 +82,15 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
             is_active=True,
         )
 
-    def _school(self, school_id, name, owner):
+    def _school(self, school_id, name, owner, *, district=None, sub_county=None):
+        district = district or self.district
+        sub_county = sub_county or self.sub_county
         school = School.objects.create(
             school_id=school_id,
             name=name,
             region=self.region,
-            district=self.district,
-            sub_county=self.sub_county,
+            district=district,
+            sub_county=sub_county,
             school_type="client",
             account_owner_id=owner.id,
             account_owner_name_raw=owner.user.name,
@@ -101,6 +116,64 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
             body,
             "a supervised CCEO's school must not appear in the PL's directory",
         )
+
+    def test_cluster_creation_drawer_lists_only_direct_portfolio_districts(self):
+        self.client.force_login(self.pl)
+
+        response = self.client.get("/clusters/create-drawer")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.district.name)
+        self.assertNotContains(response, self.team_district.name)
+        self.assertEqual(
+            list(response.context["districts"].values_list("id", flat=True)),
+            [self.district.id],
+        )
+
+    def test_cluster_creation_rejects_a_supervised_portfolio_district(self):
+        from apps.clusters.services import create_cluster
+
+        with self.assertRaisesMessage(Forbidden, "District outside your scope"):
+            create_cluster(
+                {
+                    "name": "PLD Team Cluster",
+                    "regionId": self.region.id,
+                    "districtId": self.team_district.id,
+                    "subCountyIds": [self.team_sub_county.id],
+                },
+                self.pl,
+            )
+
+    def test_portfolio_filter_applies_to_any_role_with_assigned_schools(self):
+        from apps.clusters.services import cluster_creation_district_ids
+
+        admin = self._user("pld-admin", "pld-admin@edify.org", "PLD Admin", "Admin")
+        admin_sp = StaffProfile.objects.create(
+            id="pld-admin-sp", user=admin, title="Admin"
+        )
+        StaffSchoolAssignment.objects.create(staff=admin_sp, school_id=self.mine.id)
+
+        self.assertEqual(cluster_creation_district_ids(admin), {self.district.id})
+
+    def test_roles_without_school_portfolios_have_no_creation_districts(self):
+        from apps.clusters.services import cluster_creation_district_ids
+
+        roles = (
+            "CountryDirector",
+            "ImpactAssessment",
+            "Accountant",
+            "RegionalVicePresident",
+            "HumanResources",
+        )
+        for index, role in enumerate(roles):
+            with self.subTest(role=role):
+                user = self._user(
+                    f"pld-no-portfolio-{index}",
+                    f"pld-no-portfolio-{index}@edify.org",
+                    f"PLD No Portfolio {index}",
+                    role,
+                )
+                self.assertEqual(cluster_creation_district_ids(user), set())
 
     def test_bulk_match_staff_cannot_reach_a_supervised_schools_ownership(self):
         self.client.force_login(self.pl)

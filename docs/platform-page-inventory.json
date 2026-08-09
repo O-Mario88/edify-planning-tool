@@ -697,15 +697,15 @@
       "template": "partials/clusters/bulk_assign_drawer.html"
     },
     {
-      "bytes": 19380,
+      "bytes": 26219,
       "findings": [],
       "forms": 1,
-      "htmx_controls": 5,
+      "htmx_controls": 7,
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 9041,
+      "bytes": 9070,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1017,7 +1017,7 @@
       "template": "partials/dashboards/pl/body.html"
     },
     {
-      "bytes": 3815,
+      "bytes": 3841,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1049,7 +1049,7 @@
       "template": "partials/dashboards/pl/route_capacity.html"
     },
     {
-      "bytes": 2292,
+      "bytes": 2316,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1097,7 +1097,7 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 5788,
+      "bytes": 5814,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1841,7 +1841,7 @@
       "template": "partials/oversight/_partner_view_button.html"
     },
     {
-      "bytes": 4369,
+      "bytes": 4395,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1849,7 +1849,7 @@
       "template": "partials/oversight/cd_team_detail.html"
     },
     {
-      "bytes": 8514,
+      "bytes": 8540,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1905,7 +1905,7 @@
       "template": "partials/oversight/period_filter_bar.html"
     },
     {
-      "bytes": 10588,
+      "bytes": 10614,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1985,7 +1985,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 11939,
+      "bytes": 13386,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1993,7 +1993,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 18382,
+      "bytes": 25880,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -9370,6 +9370,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9431,6 +9432,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9491,6 +9493,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9548,6 +9551,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9606,6 +9610,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9662,6 +9667,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9718,6 +9724,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9776,6 +9783,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9834,6 +9842,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9890,6 +9899,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -9946,6 +9956,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10005,6 +10016,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10067,6 +10079,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10129,6 +10142,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10185,6 +10199,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -10239,6 +10254,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],
@@ -22856,6 +22872,7 @@
         "apps.core.scoping",
         "apps.geography.models",
         "apps.partners.models",
+        "apps.projects.models",
         "apps.schools.models",
         "apps.ssa.services"
       ],

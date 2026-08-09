@@ -202,7 +202,7 @@ class DrawerLabelTests(SimpleTestCase):
 
 
 class OneWayToHandWorkToAPartnerTests(SimpleTestCase):
-    """Assigning a school to a partner is one workflow, not two.
+    """ASSIGNING a school to a partner is one workflow, not two.
 
     The schedule drawer used to offer "Assigned Partner Delivery" alongside a
     partner picker — a second route to the same outcome as the partner drawer,
@@ -211,8 +211,27 @@ class OneWayToHandWorkToAPartnerTests(SimpleTestCase):
     path created only the Activity. Partner work scheduled that way was
     invisible to anything reading assignments.
 
-    It is also one fewer decision at the moment of scheduling, which is what
-    §2 is actually asking for.
+    That rule still holds, and these tests still hold it. What changed is the
+    scope of "handing work to a partner", which turned out to cover two
+    commitments that are not the same act:
+
+      ASSIGNMENT   Staff give a school to a partner. No date, no cost, no
+                   Activity yet — the partner chooses the schedule, and
+                   `PartnerAssignment` is the record of the handover. This
+                   drawer must never offer it, for the reason above.
+
+      BOOKING      Staff book a CERTIFIED agency onto a date staff chose.
+                   The Activity exists and is scheduled immediately, priced
+                   at the agency rate, and lands dated in the agency's My
+                   Plan. There is nothing to hand over and no date for the
+                   agency to pick, so a PartnerAssignment would be a record
+                   of a decision nobody makes.
+
+    The original invisibility concern does not apply to booking:
+    `planning.partner_oversight_service._unassigned_partner_activities`
+    exists precisely to surface partner-delivered Activities that no
+    assignment points at, so a booking appears in PL Partner Oversight as a
+    scheduled-stage item with the agency as next-action owner.
     """
 
     SCHEDULE = "templates/partials/planning/schedule_drawer.html"
@@ -224,16 +243,38 @@ class OneWayToHandWorkToAPartnerTests(SimpleTestCase):
 
         return (Path(settings.BASE_DIR) / self.SCHEDULE).read_text(encoding="utf-8")
 
-    def test_the_schedule_drawer_offers_no_partner_picker(self):
+    def test_the_schedule_drawer_offers_no_assigned_partner_handover(self):
+        """The second route to the assignment workflow stays closed."""
         source = self._drawer()
-        self.assertNotIn('name="assigned_partner_id"', source)
         self.assertNotIn("Assigned Partner Delivery", source)
+        self.assertNotIn("Partner Selects Schedule", source)
+        # `executor_type` is what the drawer submits, and the only partner
+        # value it may carry is the booking one. If `partner` itself ever
+        # became selectable here, the assignment workflow would have a second
+        # door again — one that writes no PartnerAssignment.
+        self.assertNotIn('value="partner"', source)
+
+    def test_a_partner_picker_here_is_only_ever_certified_agencies(self):
+        source = self._drawer()
+        if 'name="assigned_partner_id"' not in source:
+            return
+        self.assertIn('value="certified_partner_agency"', source)
+        self.assertIn("certified_agencies", source)
+        self.assertIn("x-if=\"showAgency\"", source)
 
     def test_it_offers_no_delivery_type_choice(self):
-        """Delivery type is who is using the drawer, not a question."""
+        """Who DELIVERS may be a question; who is USING the drawer is not.
+
+        The old control asked for `delivery_type` directly, which is the
+        two-valued staff/partner axis the whole platform keys on — answering
+        it in a drawer is how partner work got created without a handover
+        record. The replacement asks a different question (which delivery
+        MODEL) and submits `delivery_type` as a derived hidden value.
+        """
         source = self._drawer()
         self.assertNotIn('<select\nname="delivery_type"', source)
         self.assertNotIn('id="delivery_type"', source)
+        self.assertNotIn('name="delivery_type"\n', source)
 
     def test_rescheduling_preserves_an_existing_partner_activity(self):
         """The trap in removing the control: hard-coding the hidden field to

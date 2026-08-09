@@ -10,13 +10,57 @@ hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 x-data="{
 delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
+executorType: 'staff',
+selectedAgency: '',
 ssa_expected: 'yes',
 activityType: '{{ recommended_activity_type|default:'school_visit' }}',
 purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
 partnerPurposes: [{% for value, label in partner_visit_purposes %}'{{ value }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
 focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
 recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
-alternative: false
+alternative: false,
+{% comment %}
+  §7 — the Workflow Profile for every purpose, server-rendered. The drawer's
+  fields are GENERATED from the active profile rather than all rendered and
+  selectively hidden, because a hidden input still submits: switching
+  Training -> Visit used to post the participant count typed a moment before.
+{% endcomment %}
+profiles: {{ purpose_profiles|default:'{}' }},
+get profile() {
+  return this.profiles[this.purposeOfVisit] || {
+    participantMode: 'none', requiresParticipants: false,
+    participantsPerSchool: false, participantCategories: false,
+    requiresProject: false, certifiedAgencyDeliveryAllowed: false,
+    schedulable: true, unavailableReason: ''
+  };
+},
+get showParticipants() { return this.profile.requiresParticipants === true; },
+get showCategories() { return this.profile.participantCategories === true; },
+get showAgency() { return this.executorType === 'certified_partner_agency'; },
+{% comment %}
+  §13 — clearing is the rule, not a nicety. A value that no longer has a
+  field to belong to must not travel with the submission, and the backend
+  clears it again on arrival so an API client gains nothing by keeping it.
+{% endcomment %}
+onPurposeChange() {
+  if (!this.showParticipants) {
+    this.plannedParticipants = '';
+    this.teacherCount = '';
+    this.leaderCount = '';
+    this.otherCount = '';
+  }
+  if (!this.showCategories) { this.teacherCount = ''; this.leaderCount = ''; this.otherCount = ''; }
+  if (!this.profile.certifiedAgencyDeliveryAllowed) { this.onDeliveryChange('staff'); }
+},
+onDeliveryChange(value) {
+  this.executorType = value;
+  this.delivery = (value === 'staff') ? 'staff' : 'partner';
+  if (value !== 'certified_partner_agency') { this.selectedAgency = ''; }
+},
+plannedParticipants: '',
+teacherCount: '',
+leaderCount: '',
+otherCount: ''
 }"
 >
 {% csrf_token %}
@@ -60,13 +104,21 @@ alternative: false
 </div>
 {% if catalogue_recommendations.unmetPriority %}
 {% comment %}
-The weakest intervention has no response that can be delivered here. Say so,
-rather than letting the activities below read as the answer to the score
-above -- they address a lower-ranked need.
+No NAMED curriculum training answers the weakest intervention in this
+context. That is worth saying — it is why the recommendations below address a
+lower-ranked need. But it is NOT the same as "nothing can be scheduled":
+standard field support answers any intervention, so when it is available the
+banner says which route to take rather than leaving the planner stuck. The
+older wording ("No activity addresses X") was true only because standard
+support did not exist, and reading it as "you need a Project or a Cluster" is
+exactly what people did.
 {% endcomment %}
 <div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3.5 text-[12px] leading-normal text-amber-900 shadow-sm" role="status">
-  <p class="font-bold">No activity below addresses {{ catalogue_recommendations.unmetPriority.need.label }}</p>
-  <p class="mt-1 font-medium">This School&rsquo;s most urgent need is {{ catalogue_recommendations.unmetPriority.need.label }} at {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). The activities listed answer the next needs down.</p>
+  <p class="font-bold">No programme training below addresses {{ catalogue_recommendations.unmetPriority.need.label }}</p>
+  <p class="mt-1 font-medium">This School&rsquo;s most urgent need is {{ catalogue_recommendations.unmetPriority.need.label }} at {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). The named trainings listed answer the next needs down.</p>
+  {% if catalogue_recommendations.unmetPriority.standardSupportAvailable %}
+  <p class="mt-1.5 font-medium">You can still schedule standard support for it here &mdash; choose a purpose below and set Focus Intervention to <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong>. No Project is required.</p>
+  {% endif %}
   {% if catalogue_recommendations.unmetPriority.blockedBy %}
   <ul class="mt-1.5 space-y-0.5 font-medium">
     {% for blocked in catalogue_recommendations.unmetPriority.blockedBy %}
@@ -113,6 +165,7 @@ its costing on, so the costing link is derived server-side and never asked for.
     id="purpose_of_visit"
     required
     x-model="purposeOfVisit"
+    @change="onPurposeChange()"
     class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
   >
     <option value="">Select the purpose of this visit…</option>
@@ -123,6 +176,14 @@ its costing on, so the costing link is derived server-side and never asked for.
     {% endfor %}
   </select>
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
+  {% comment %}
+    §30 — a purpose the Cost Catalogue cannot price says exactly that, and
+    names the person who can fix it. It never tells anyone to create a
+    Project they do not need.
+  {% endcomment %}
+  <p x-show="purposeOfVisit && profile.schedulable === false" style="display:none"
+     class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-rose-600"
+     x-text="profile.unavailableReason" role="alert"></p>
 </div>
 
 <div>
@@ -290,16 +351,89 @@ x-text="day"
 </div>
 
 {% if not reschedule_mode %}
-<!-- Participant numbers improve the estimate but are optional. -->
-<div x-show="['training', 'in_school_training', 'school_improvement_training'].includes(activityType)" style="display: none;">
-<label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected Participants</label>
-<input
-type="number"
-name="expected_participants"
-id="expected_participants"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
->
+{% comment %}
+  §8/§9 — participant inputs exist only where the Workflow Profile says the
+  activity plans people. A Visit has participantMode NONE, so no participant
+  field is rendered at all, its values are cleared when the purpose changes,
+  and the backend clears them again on arrival. A visit's cost has no
+  participant component and no API client can give it one.
+{% endcomment %}
+{% comment %}
+  Wrapper, not a spanning grid child: `col-span-3` is not among the compiled
+  Tailwind utilities, so it would render as nothing while looking deliberate
+  (the uncompiled-utilities lint exists because that failure is invisible).
+{% endcomment %}
+<template x-if="showCategories">
+<div>
+<div class="grid grid-cols-3 gap-2">
+  <div>
+    <label for="teachers_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers</label>
+    <input type="number" min="0" name="teachers_attended" id="teachers_attended" x-model="teacherCount"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
+  </div>
+  <div>
+    <label for="leaders_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School leaders</label>
+    <input type="number" min="0" name="leaders_attended" id="leaders_attended" x-model="leaderCount"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
+  </div>
+  <div>
+    <label for="other_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Other</label>
+    <input type="number" min="0" name="other_participants" id="other_participants" x-model="otherCount"
+      class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
+  </div>
 </div>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+  Planned total: <strong x-text="(Number(teacherCount||0) + Number(leaderCount||0) + Number(otherCount||0))"></strong>.
+  The backend calculates the stored total from these three numbers.
+</p>
+</div>
+</template>
+
+<template x-if="showParticipants && !showCategories">
+<div>
+  <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned Participants</label>
+  <input type="number" min="1" name="expected_participants" id="expected_participants" x-model="plannedParticipants"
+    class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
+</template>
+
+{% comment %}
+  §14/§15 — Delivery Type. Two partner workflows that are NOT the same:
+  assigning a school to a partner (its own drawer, its own record, the
+  partner picks the date) versus booking a certified agency onto a date
+  Edify chooses. Only the second belongs here, and only where the Workflow
+  Profile approves the activity for it.
+{% endcomment %}
+<template x-if="profile.certifiedAgencyDeliveryAllowed">
+<div>
+  <label for="executor_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
+  <select id="executor_type" @change="onDeliveryChange($event.target.value)"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
+    <option value="staff">Internal Staff</option>
+    <option value="certified_partner_agency">Certified Partner Agency</option>
+  </select>
+</div>
+</template>
+
+<template x-if="showAgency">
+<div>
+  <label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Certified Partner Agency <span class="text-rose-500">*</span></label>
+  <select name="assigned_partner_id" id="assigned_partner_id" x-model="selectedAgency"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
+    <option value="">Select a certified agency…</option>
+    {% for agency in certified_agencies %}
+    <option value="{{ agency.id }}">{{ agency.name }}</option>
+    {% endfor %}
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
+    Only certified, active agencies covering this district are listed. Booking one schedules the activity now and puts it straight on their My&nbsp;Plan &mdash; they do not schedule it again.
+  </p>
+  {% if not certified_agencies %}
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No certified agency currently covers this district. Choose Internal Staff, or ask the Country Director to certify one.</p>
+  {% endif %}
+</div>
+</template>
+<input type="hidden" name="executor_type" :value="executorType">
 
 {% comment %}
   No manual Focus Intervention select. It is chosen by the SSA-led catalogue

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 from django.db import transaction
+from django.db.models import Q
 
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
@@ -552,3 +553,42 @@ def assignable_partners():
         .exclude(id__in=held)
         .order_by("name")
     )
+
+
+#: Certification states that permit new bookings. A blank value is the
+#: historic shape for a partner flagged certified before the status column
+#: existed, and is treated as certified rather than as a refusal.
+BOOKABLE_CERTIFICATION_STATES = {"", "certified", "active"}
+
+
+def bookable_certified_agencies(*, activity_type: str = "", district_name: str = ""):
+    """Certified agencies Edify staff may book onto a date right now (§16).
+
+    Certified-agency booking is a stronger act than assignment: staff choose
+    the date, the Activity is scheduled immediately, budget moves, and the
+    booking lands in the agency's My Plan as work they are expected to
+    prepare for. So the picker offers only agencies that will actually pass
+    the booking transaction — every condition here is re-checked at write
+    time, and offering a choice the system will refuse teaches people that
+    the error is arbitrary.
+
+    Ordinary uncertified partners are never included. They receive work
+    through assignment and choose their own dates.
+    """
+    qs = assignable_partners().filter(is_certified=True)
+    qs = qs.filter(
+        Q(certification_status__isnull=True)
+        | Q(certification_status__in=BOOKABLE_CERTIFICATION_STATES)
+    )
+    if district_name:
+        # An empty coverage list means "not yet scoped", which the directory
+        # treats as unrestricted everywhere else; narrowing it here only would
+        # hide agencies the assignment picker offers.
+        qs = qs.filter(
+            Q(coverage_districts__len=0) | Q(coverage_districts__contains=[district_name])
+        )
+    if activity_type:
+        qs = qs.filter(
+            Q(trains_on__len=0) | Q(trains_on__contains=[activity_type])
+        )
+    return qs

@@ -18,6 +18,7 @@ from apps.core.enums import (
     ClusterMeetingSlot,
     DeliveryType,
     EvidenceStatus,
+    ExecutorType,
     PaymentStatus,
     ProgrammeActivityType,
     ProgrammeDeliveryMode,
@@ -159,6 +160,16 @@ class Activity(SoftDeleteModel):
     delivery_type = models.CharField(
         max_length=16, choices=DeliveryType.choices, default=DeliveryType.STAFF
     )
+    # The finer WHO axis. delivery_type stays two-valued because every
+    # existing surface keys on it; executor_type separates the two partner
+    # workflows that are not the same commitment — an assigned partner that
+    # still has to pick a date, versus a certified agency staff booked onto
+    # one. See apps.core.enums.ExecutorType.
+    executor_type = models.CharField(
+        max_length=32,
+        choices=ExecutorType.choices,
+        default=ExecutorType.STAFF,
+    )
     cluster_slot = models.CharField(
         max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True
     )
@@ -248,6 +259,17 @@ class Activity(SoftDeleteModel):
     # silently re-price an activity approved in August.
     participants_per_school = models.IntegerField(null=True, blank=True)
     cluster_school_count_snapshot = models.IntegerField(null=True, blank=True)
+    # How many of the cluster's schools were actually INVITED. Not every
+    # member qualifies for every session — a Literacy training does not reach
+    # the secondary and vocational schools in a mixed cluster — so multiplying
+    # by full cluster membership invited, catered and budgeted for people who
+    # were never coming. The multiplier for the participant total is this, not
+    # the membership snapshot beside it, which stays as the record of how
+    # large the cluster was when the activity was priced.
+    #
+    # Null on rows created before the distinction existed; those are read as
+    # "the whole cluster was invited", which is exactly what they meant.
+    schools_invited = models.IntegerField(null=True, blank=True)
     teachers_attended = models.IntegerField(null=True, blank=True)
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)
