@@ -77,7 +77,7 @@
                      { name: 'Verified', type: 'column', data: {{ overview.verified }} },
                      { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
                    ],
-                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
                    stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
                    colors: window.EdifyChartSystem.mixedSeries,
                    labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],

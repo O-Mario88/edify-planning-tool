@@ -16,13 +16,13 @@
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
   {% include "partials/pwa_head.html" %}
   {% comment %}
-    Inter is served from this origin — see the @font-face block in
+    Geist Sans is served from this origin — see the @font-face block in
     css/fonts.css. Preloaded here because that stylesheet has to download and
     parse before the browser would otherwise discover the font file, and the
     sign-in page is the first impression.
   {% endcomment %}
-  <link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731inter1">
+  <link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260809geist1">
 
   {% comment %}
     The brand panel this image fills is `display: none` below 70rem
@@ -75,9 +75,9 @@
     not restore main.css for it — add the rule to login.css, or build a
     login-scoped bundle. apps/core/tests/test_login_bundle.py holds this.
   {% endcomment %}
-  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260804tokens1">
-  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260731inter1">
-  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260731inter1">
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260809geist1">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260809geist1">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260809geist1">
   <script defer src="{% static 'js/login.js' %}?v=20260714a"></script>
 </head>
 <body class="login-page">

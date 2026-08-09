@@ -392,7 +392,7 @@ main .bg-white {
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
-/* Every workspace uses Inter Sans. Dark mode changes surfaces and contrast—not the
+/* Every workspace uses Geist Sans. Dark mode changes surfaces and contrast—not the
    product typeface—so moving between themes never changes the information
    density or visual language. */
 .theme-dark main h1,
@@ -1056,8 +1056,8 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 
 /* Budget category labels: distinguished in the dark header row by weight and
-   italic, on the platform's single UI font (Inter Sans). Serif was dropped to
-   satisfy the global Inter-only rule; the visual emphasis is preserved. */
+   italic, on the platform's single UI font (Geist Sans). Serif was dropped to
+   satisfy the global Geist-only rule; the visual emphasis is preserved. */
 .budget-category-name {
   font-style: italic !important;
   color: #ffffff !important;

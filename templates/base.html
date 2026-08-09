@@ -63,23 +63,23 @@ inset themselves — see components/mobile-shell.css.
   })();
 </script>
 
-<!-- Typography: Inter Sans — the platform typeface, served from this origin.
+<!-- Typography: Geist Sans — the platform typeface, served from this origin.
      It came from Google Fonts until the type tokens, all measured against
-     Inter, were rendering in ui-sans-serif whenever that request was slow or
+     Geist Sans, were rendering in ui-sans-serif whenever that request was slow or
      blocked. Preloaded because the @font-face lives in css/fonts.css, so the
      browser would otherwise not discover the file until that stylesheet had
      downloaded and parsed. -->
-<link rel="preload" href="{% static 'fonts/InterVariable.woff2' %}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-<link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260731inter1">
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260809geist1">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260731inter1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260809geist1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260809surfaces1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260809geist1">
     <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260809surfaces1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260808mobilephase1">
@@ -379,7 +379,7 @@ controller exists by the time a drawer's x-init runs.
       align: 'center',
       verticalAlign: 'middle',
       style: {
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'Geist Sans, sans-serif',
         fontSize: '13px',
         /* Read from the token rather than hardcoded so the message sits at the
            same contrast as other muted copy. */
@@ -392,7 +392,7 @@ controller exists by the time a drawer's x-init runs.
        segments, small point markers and a compact tooltip) stays consistent
        without editing every inline chart definition. */
     chart: {
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'Geist Sans, sans-serif',
       foreColor: 'var(--edify-text-muted)',
       background: 'transparent',
       toolbar: { show: false },
@@ -467,12 +467,12 @@ controller exists by the time a drawer's x-init runs.
     tooltip: {
       theme: 'dark',
       marker: { show: true },
-      style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' },
+      style: { fontSize: '12px', fontFamily: 'Geist Sans, sans-serif' },
     },
     dataLabels: {
       enabled: false,
       style: {
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'Geist Sans, sans-serif',
         fontSize: '12px',
         fontWeight: 650,
       },

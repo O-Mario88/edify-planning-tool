@@ -117,7 +117,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              this.chart = new ApexCharts(el, {
                series: [{% for s in status_distribution %}{{ s.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
                labels: [{% for s in status_distribution %}'{{ s.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 220, fontFamily: 'Inter, sans-serif' },
+               chart: { type: 'donut', height: 220, fontFamily: 'Geist Sans, sans-serif' },
                colors: ['var(--edify-text-subtle)', 'var(--edify-chart-blue)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-green)'],
                legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },
@@ -147,7 +147,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              this.chart = new ApexCharts(el, {
                series: [{{ fund_utilization.accounted }}, {{ fund_utilization.committed_not_accounted }}, {{ fund_utilization.uncommitted }}],
                labels: ['Accounted For', 'Committed, Not Accounted', 'Uncommitted'],
-               chart: { type: 'donut', height: 220, fontFamily: 'Inter, sans-serif' },
+               chart: { type: 'donut', height: 220, fontFamily: 'Geist Sans, sans-serif' },
                colors: ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)'],
                legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
                dataLabels: { enabled: false },

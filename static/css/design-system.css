@@ -9,7 +9,7 @@
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* The typeface itself is declared once, in css/fonts.css, which every entry
-   point loads before this file. Tokens here are measured against Inter's
+   point loads before this file. Tokens here are measured against Geist Sans
    metrics and assume it is present. */
 
 :root {
@@ -258,7 +258,7 @@
   --border-strong: var(--edify-border-strong);
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
-     Inter Sans — the platform typeface for data-dense premium dashboards.
+     Geist Sans — the platform typeface for data-dense premium dashboards.
      Type uses stable semantic steps instead of viewport/container arithmetic.
      Layout may reflow responsively; a label, table cell or KPI does not change
      size merely because its card or browser happens to be a few pixels wider.
@@ -268,7 +268,7 @@
        body    → default text and long-form copy (15px)
        label   → controls, table cells and secondary copy (14px)
        micro   → short overlines and compact badges only (12px) */
-  --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --edify-font-sans: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);

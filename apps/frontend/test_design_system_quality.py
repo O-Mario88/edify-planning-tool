@@ -49,29 +49,32 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
-    def test_inter_is_the_global_and_compiled_ui_font(self):
+    def test_geist_sans_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
 
         self.assertIn("css/fonts.css", base)
-        self.assertIn("--edify-font-sans: 'Inter'", tokens)
-        self.assertRegex(compiled, r"--font-sans:\s*Inter,")
+        self.assertIn("--edify-font-sans: 'Geist Sans'", tokens)
+        self.assertRegex(compiled, r'--font-sans:\s*"Geist Sans",')
 
-    def test_inter_is_self_hosted_on_every_entry_point(self):
+    def test_geist_sans_is_self_hosted_on_every_entry_point(self):
         """The typeface must not depend on a third-party request.
 
-        Every type token is measured against Inter's metrics, so a Google Fonts
+        Every type token is measured against Geist Sans metrics, so a third-party
         request that is slow or blocked rendered the whole product in
-        ui-sans-serif at Inter's measurements — the same CSS looking correct
+        ui-sans-serif at Geist Sans measurements — the same CSS looking correct
         locally and wrong in production on one cross-origin fetch.
 
-        This asserted `family=Inter` was present in base.html, which passed on
+        This once asserted a font family was present in base.html, which passed on
         the CDN link that WAS the problem.
         """
         faces = _read("static/css/fonts.css")
         self.assertIn("@font-face", faces)
-        self.assertIn("InterVariable.woff2", faces)
+        self.assertIn("Geist-Variable.woff2", faces)
+        self.assertIn("Geist-Italic-Variable.woff2", faces)
+        self.assertTrue((ROOT / "static/fonts/Geist-Variable.woff2").is_file())
+        self.assertTrue((ROOT / "static/fonts/Geist-Italic-Variable.woff2").is_file())
 
         # Relative, so ManifestStaticFilesStorage can rewrite it to the hashed
         # filename during collectstatic.
@@ -88,6 +91,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             missing, [], f"entry points not loading the typeface: {missing}"
         )
 
+        for entry_point in ("templates/base.html", "templates/layouts/login.html"):
+            source = _read(entry_point)
+            self.assertIn("fonts/Geist-Variable.woff2", source)
+            self.assertNotIn("InterVariable.woff2", source)
+
     def test_no_template_fetches_a_font_from_a_third_party(self):
         offenders = []
         for path in (ROOT / "templates").rglob("*.html"):
@@ -97,20 +105,20 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            "Inter is self-hosted; these still request it over the network: "
+            "Geist Sans is self-hosted; these still request fonts over the network: "
             + ", ".join(offenders),
         )
 
     def test_no_unapproved_font_family_is_shipped(self):
         forbidden = re.compile(
-            r"\b(Geist|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
+            r"\b(Inter|Outfit|Georgia|Times New Roman|Roboto|Open Sans|Poppins|Montserrat|Arial)\b",
             re.IGNORECASE,
         )
         # Tailwind's preflight writes `font-family: var(--default-font-family,
         # <generic stack>)`, and from 4.3.3 that stack is spelled out inline —
         # -apple-system, Segoe UI, Roboto, Arial and the rest. It is a fallback
         # for a variable the bundle defines two lines earlier as var(--font-sans),
-        # which is Inter, so none of those families can ever be applied. Scanning
+        # which is Geist Sans, so none of those families can ever be applied. Scanning
         # it would fail the gate on text that cannot reach a screen; what the gate
         # is for is a real font sneaking into hand-written CSS or a template.
         unreachable_fallback = re.compile(r"var\(--default-font-family,[^)]*\)")
@@ -124,7 +132,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             violations, [], "Unapproved UI fonts: " + ", ".join(violations)
         )
 
-    def test_charts_explicitly_use_inter(self):
+    def test_charts_explicitly_use_geist_sans(self):
         charts = "\n".join(
             path.read_text(encoding="utf-8")
             for path in (ROOT / "templates").rglob("*.html")
@@ -132,7 +140,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertNotIn("fontFamily: 'Outfit", charts)
         self.assertNotIn('fontFamily: "Outfit', charts)
-        self.assertIn("fontFamily: 'Inter", charts)
+        self.assertNotIn("fontFamily: 'Inter", charts)
+        self.assertIn("fontFamily: 'Geist Sans", charts)
 
     def test_content_cards_use_intrinsic_height_while_kpi_grids_stay_aligned(self):
         # Asserted against platform.css only: it is the stylesheet base.html
@@ -919,7 +928,7 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
         )
 
     def test_no_serif_or_hardcoded_font_family_in_templates(self):
-        """Inter Sans is the single UI font; a page must not smuggle in another
+        """Geist Sans is the single UI font; a page must not smuggle in another
         family (budgets/monthly.html previously rendered a group label in
         italic Times New Roman inside an operational table)."""
         import re
@@ -939,7 +948,7 @@ class GeometryConsistencyGuardTest(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            f"Use var(--edify-font-sans); Inter Sans is the only approved UI font: {offenders}",
+            f"Use var(--edify-font-sans); Geist Sans is the only approved UI font: {offenders}",
         )
 
 
