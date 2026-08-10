@@ -97,6 +97,14 @@ class ProjectCoordinatorScopeTests(TestCase):
                 self.my_project.id, {"managerStaffId": self.theirs_sp.id}, self.mine
             )
 
+    def test_coordinator_cannot_assign_priorities_on_a_peers_project(self):
+        with self.assertRaises(Forbidden):
+            project_services.assign_staff(
+                self.their_project.id,
+                {"staffIds": [self.mine_sp.id], "fy": "2027"},
+                self.mine,
+            )
+
     def test_dashboard_shows_only_their_portfolio(self):
         client = Client()
         client.force_login(self.mine)

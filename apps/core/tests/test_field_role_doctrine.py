@@ -141,6 +141,7 @@ class ProjectCoordinatorDoctrine(TestCase):
         held = _perms(PC)
         for needed in (
             Permission.PROJECT_MANAGE,
+            Permission.PROJECT_CONFIGURE_PRIORITIES,
             Permission.PROJECT_ASSIGN_SCHOOL,
             Permission.PLANNING_VIEW,
             Permission.PLANNING_CREATE,  # project planning

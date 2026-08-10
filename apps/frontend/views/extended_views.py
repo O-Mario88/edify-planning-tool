@@ -1847,6 +1847,14 @@ def core_school_detail_view(request, plan_id):
     return render(request, "pages/core_schools/detail.html", context)
 
 
+def _can_configure_project_priorities(user):
+    """Use the canonical RBAC permission for every Project creation surface."""
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    return has_permission(user, Permission.PROJECT_CONFIGURE_PRIORITIES.value)
+
+
 def _projects_context(request):
     """Build the Projects dashboard context for both default and filtered views.
 
@@ -1858,11 +1866,7 @@ def _projects_context(request):
     from apps.projects.dashboard_service import get_dashboard
 
     context = get_dashboard(request.user, request.GET.get("project"), request.GET)
-    context["can_create_projects"] = request.user.active_role in (
-        "Admin",
-        "CountryDirector",
-        "ImpactAssessment",
-    )
+    context["can_create_projects"] = _can_configure_project_priorities(request.user)
     return context
 
 
@@ -1882,13 +1886,10 @@ def projects_list_view(request):
 
 @require_page_permission("projects")
 def project_create_drawer_view(request):
-    if request.user.active_role not in (
-        "Admin",
-        "CountryDirector",
-        "ImpactAssessment",
-    ):
+    if not _can_configure_project_priorities(request.user):
         return HttpResponseForbidden(
-            "Only Impact Assessment, the Country Director, or Admin may create Projects."
+            "Only a Special Project Coordinator, Impact Assessment, the Country "
+            "Director, or Admin may create Projects."
         )
     from apps.activity_catalogue.services import effective_items
     from apps.core.enums import SsaIntervention
@@ -1911,13 +1912,10 @@ def project_create_drawer_view(request):
 @require_POST
 @require_page_permission("projects")
 def project_create_action_view(request):
-    if request.user.active_role not in (
-        "Admin",
-        "CountryDirector",
-        "ImpactAssessment",
-    ):
+    if not _can_configure_project_priorities(request.user):
         return HttpResponseForbidden(
-            "Only Impact Assessment, the Country Director, or Admin may create Projects."
+            "Only a Special Project Coordinator, Impact Assessment, the Country "
+            "Director, or Admin may create Projects."
         )
     from apps.projects.services import create_project
 
@@ -2414,11 +2412,7 @@ def project_detail_view(request, project_id):
             "variant": "primary",
         },
     ]
-    can_assign_staff = request.user.active_role in (
-        "ImpactAssessment",
-        "CountryDirector",
-        "Admin",
-    )
+    can_assign_staff = _can_configure_project_priorities(request.user)
     staff_options = []
     if can_assign_staff:
         staff_options = list(

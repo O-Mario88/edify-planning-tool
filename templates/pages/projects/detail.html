@@ -30,7 +30,7 @@ Project
 {% if can_assign_staff %}
 <section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="assign-project-staff-title">
   <h2 id="assign-project-staff-title" class="text-[15px] font-extrabold text-slate-800">Assign as Staff Priority</h2>
-  <p class="mt-1 text-[12px] leading-5 text-slate-500">IA, the Country Director, and Admin can assign this Project to individuals or complete CCEO/PL role groups.</p>
+  <p class="mt-1 text-[12px] leading-5 text-slate-500">Special Project Coordinators, IA, the Country Director, and Admin can assign this Project to individuals or complete CCEO/PL role groups.</p>
   <form method="post" action="/projects/{{ project.id }}/staff/assign" class="mt-4 space-y-3">
     {% csrf_token %}
     <input type="hidden" name="fy" value="{{ assignment_fy }}">

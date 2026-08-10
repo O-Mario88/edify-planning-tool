@@ -2,7 +2,7 @@ from django.test import Client, TestCase
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activity_catalogue.models import ActivityCatalogueItem
-from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.exceptions import BadRequest
 from apps.core.permissions import has_permission
 from apps.core.rbac import EdifyRole, Permission
 from apps.geography.models import District, Region
@@ -100,29 +100,96 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
             self.ia,
         )
 
-    def test_ia_cd_and_admin_can_create_projects_but_coordinator_cannot(self):
+    def test_authorized_roles_can_create_projects_and_staff_priorities(self):
         item = ActivityCatalogueItem.objects.filter(
             status="active",
             project_delivery_allowed=True,
         ).first()
-        payload = {
-            "name": "Literacy Project Priority",
-            "code": "LITERACY-PRIORITY",
-            "category": ProjectCategory.INTERVENTION_SPECIFIC,
-            "targetInterventions": ["teaching_environment"],
-            "catalogueItemIds": [item.id],
-            "schoolFocus": "all",
-        }
-        result = create_project(payload, self.ia)
-        self.assertEqual(result["schoolFocus"], "all")
-        self.assertTrue(
-            has_permission(
-                self.admin,
-                Permission.PROJECT_CONFIGURE_PRIORITIES.value,
-            )
+        self.assertIsNotNone(item)
+
+        authorized = (
+            self.coordinator,
+            self.cd,
+            self.ia,
+            self.admin,
         )
-        with self.assertRaises(Forbidden):
-            create_project({**payload, "code": "PC-DENIED"}, self.coordinator)
+        for index, principal in enumerate(authorized):
+            with self.subTest(role=principal.active_role):
+                self.assertTrue(
+                    has_permission(
+                        principal,
+                        Permission.PROJECT_CONFIGURE_PRIORITIES.value,
+                    )
+                )
+                project = create_project(
+                    {
+                        "name": f"Literacy Project Priority {index}",
+                        "code": f"LITERACY-PRIORITY-{index}",
+                        "category": ProjectCategory.INTERVENTION_SPECIFIC,
+                        "targetInterventions": ["teaching_environment"],
+                        "catalogueItemIds": [item.id],
+                        "schoolFocus": "all",
+                    },
+                    principal,
+                )
+                self.assertEqual(project["schoolFocus"], "all")
+                priority = assign_staff(
+                    project["id"],
+                    {"staffIds": [self.cceo_staff.id], "fy": "2027"},
+                    principal,
+                )
+                self.assertEqual(priority["assigned"], 1)
+
+        coordinator_project = Project.objects.get(code="LITERACY-PRIORITY-0")
+        self.assertEqual(
+            coordinator_project.manager_staff_id,
+            self.coordinator_staff.id,
+        )
+
+    def test_coordinator_can_open_and_submit_the_create_project_drawer(self):
+        item = ActivityCatalogueItem.objects.filter(
+            status="active",
+            project_delivery_allowed=True,
+        ).first()
+        self.assertIsNotNone(item)
+        client = Client()
+        client.force_login(self.coordinator)
+
+        page = client.get("/projects")
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "New Project")
+
+        drawer = client.get("/projects/create", HTTP_HX_REQUEST="true")
+        self.assertEqual(drawer.status_code, 200)
+        self.assertContains(drawer, "Create Special Project")
+        self.assertContains(drawer, 'hx-post="/projects/create/action"')
+
+        response = client.post(
+            "/projects/create/action",
+            {
+                "name": "Coordinator Drawer Project",
+                "code": "COORDINATOR-DRAWER",
+                "category": ProjectCategory.PILOT.value,
+                "schoolFocus": "all",
+                "targetInterventions": ["teaching_environment"],
+                "catalogueItemIds": [item.id],
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("HX-Trigger"), "close-drawer")
+        self.assertTrue(
+            Project.objects.filter(
+                code="COORDINATOR-DRAWER",
+                manager_staff_id=self.coordinator_staff.id,
+            )
+            .exists()
+        )
+        project = Project.objects.get(code="COORDINATOR-DRAWER")
+        detail = client.get(f"/projects/{project.id}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, "Assign as Staff Priority")
+        self.assertContains(detail, "Assign Project priority")
 
     def test_role_group_assignment_becomes_each_staff_project_priority(self):
         project = self._project("LITERACY")

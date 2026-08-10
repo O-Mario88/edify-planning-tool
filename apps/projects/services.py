@@ -6,7 +6,8 @@ from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 
 from apps.core.exceptions import BadRequest, NotFoundError
-from apps.core.rbac import EdifyRole
+from apps.core.permissions import has_permission
+from apps.core.rbac import EdifyRole, Permission
 
 from .models import (
     OPEN_PROJECT_STATUSES,
@@ -19,22 +20,28 @@ from .models import (
     ProjectStatus,
 )
 
-PROJECT_ASSIGNER_ROLES = {
+# Country-scoped roles may act on any Project. Project Coordinators now hold
+# PROJECT_CONFIGURE_PRIORITIES too, but remain object-scoped to Projects they
+# manage; keeping this set narrow prevents that permission from widening school
+# assignment beyond their portfolio.
+PROJECT_COUNTRY_ASSIGNER_ROLES = {
     EdifyRole.IMPACT_ASSESSMENT.value,
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.ADMIN.value,
 }
 
 
-def _assert_project_assigner(principal) -> None:
+def _assert_project_configurer(principal) -> None:
     from apps.core.exceptions import Forbidden
 
-    if principal is None or getattr(principal, "active_role", "") not in (
-        PROJECT_ASSIGNER_ROLES
+    if principal is None or not has_permission(
+        principal,
+        Permission.PROJECT_CONFIGURE_PRIORITIES.value,
     ):
         raise Forbidden(
-            "Only Impact Assessment, the Country Director, or Admin may "
-            "create Projects and assign them as staff priorities."
+            "Only a Special Project Coordinator, Impact Assessment, the "
+            "Country Director, or Admin may create Projects and assign them "
+            "as staff priorities."
         )
 
 
@@ -174,7 +181,7 @@ def _assert_school_capacity(project, school) -> None:
 
 def _assert_staff_can_plan_project(project, school, principal) -> None:
     if principal is None or getattr(principal, "active_role", "") in (
-        PROJECT_ASSIGNER_ROLES
+        PROJECT_COUNTRY_ASSIGNER_ROLES
     ):
         return
     from apps.core.exceptions import Forbidden
@@ -285,7 +292,14 @@ def staff_assignments(project_id: str, principal=None) -> list[dict]:
 @transaction.atomic
 def assign_staff(project_id: str, data: dict, principal) -> dict:
     """Assign one Project to selected staff or complete CCEO/PL role groups."""
-    _assert_project_assigner(principal)
+    _assert_project_configurer(principal)
+    if principal.active_role == EdifyRole.PROJECT_COORDINATOR.value:
+        # Permission answers *what* a coordinator may do; project scope answers
+        # *where*. Do not let the new authoring permission cross coordinator
+        # portfolio boundaries.
+        from .scoping import get_scoped_project
+
+        get_scoped_project(project_id, principal)
     project = (
         Project.objects.select_for_update()
         .filter(
@@ -384,7 +398,11 @@ def assign_staff(project_id: str, data: dict, principal) -> dict:
 
 @transaction.atomic
 def revoke_staff(project_id: str, staff_id: str, principal) -> dict:
-    _assert_project_assigner(principal)
+    _assert_project_configurer(principal)
+    if principal.active_role == EdifyRole.PROJECT_COORDINATOR.value:
+        from .scoping import get_scoped_project
+
+        get_scoped_project(project_id, principal)
     updated = ProjectStaffAssignment.objects.filter(
         project_id=project_id,
         staff_id=staff_id,
@@ -522,7 +540,7 @@ def create_project(data: dict, principal) -> dict:
     from apps.audit.services import log as audit_log
     from apps.core.enums import SsaIntervention
 
-    _assert_project_assigner(principal)
+    _assert_project_configurer(principal)
     name = (data.get("name") or "").strip()
     if not name:
         raise BadRequest("A project name is required.")
@@ -564,6 +582,18 @@ def create_project(data: dict, principal) -> dict:
     if school_focus not in ProjectSchoolFocus.values:
         raise BadRequest("School focus must be all, client, or core.")
 
+    manager_staff_id = (data.get("managerStaffId") or "").strip() or None
+    if principal.active_role == EdifyRole.PROJECT_COORDINATOR.value:
+        # A coordinator-created Project must remain visible in the coordinator's
+        # object-scoped portfolio after the success redirect. Coordinators may
+        # not use project creation to assign ownership to a peer.
+        manager_staff_id = str(getattr(principal, "staff_profile_id", "") or "")
+        if not manager_staff_id:
+            raise BadRequest(
+                "A Special Project Coordinator needs an active staff profile "
+                "before creating Projects."
+            )
+
     project = Project.objects.create(
         name=name,
         code=code,
@@ -571,7 +601,7 @@ def create_project(data: dict, principal) -> dict:
         target_interventions=targets,
         measurement_start_fy=(data.get("measurementStartFy") or "").strip() or None,
         measurement_end_fy=(data.get("measurementEndFy") or "").strip() or None,
-        manager_staff_id=(data.get("managerStaffId") or "").strip() or None,
+        manager_staff_id=manager_staff_id,
         budget_ceiling_ugx=ceiling,
         school_focus=school_focus,
         status=ProjectStatus.PROPOSED.value,

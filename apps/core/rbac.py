@@ -465,6 +465,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES,
         P.EVIDENCE_REVIEW,
         P.PROJECT_MANAGE,
+        # The Special Project Coordinator authors Projects and turns them into
+        # staff priorities, alongside IA, the Country Director and Admin.
+        # Object scope still limits coordinators to Projects they manage.
+        P.PROJECT_CONFIGURE_PRIORITIES,
         P.PROJECT_ASSIGN_SCHOOL,
         P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
