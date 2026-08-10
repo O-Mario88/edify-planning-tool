@@ -178,6 +178,22 @@ No unmatched SSA records match this filter.
 </table>
 </div>
 
+<!-- Pagination stays adjacent to the table so both readers and the bounded-
+     table inventory can identify the control that governs these rows. -->
+{% if records_page.paginator.num_pages > 1 %}
+<div class="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-[12px] font-semibold text-slate-500">
+<span>Page {{ records_page.number }} of {{ records_page.paginator.num_pages }} · {{ records_page.paginator.count }} total</span>
+<div class="flex items-center gap-2">
+{% if records_page.has_previous %}
+<a href="?page={{ records_page.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">&larr; Prev</a>
+{% endif %}
+{% if records_page.has_next %}
+<a href="?page={{ records_page.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">Next &rarr;</a>
+{% endif %}
+</div>
+</div>
+{% endif %}
+
 <!--
   One copy of the school list for the whole page.
 
@@ -211,21 +227,6 @@ No unmatched SSA records match this filter.
   });
 })();
 </script>
-
-<!-- Pagination -->
-{% if records_page.paginator.num_pages > 1 %}
-<div class="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-[12px] font-semibold text-slate-500">
-<span>Page {{ records_page.number }} of {{ records_page.paginator.num_pages }} · {{ records_page.paginator.count }} total</span>
-<div class="flex items-center gap-2">
-{% if records_page.has_previous %}
-<a href="?page={{ records_page.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">&larr; Prev</a>
-{% endif %}
-{% if records_page.has_next %}
-<a href="?page={{ records_page.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" class="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 rounded-surface">Next &rarr;</a>
-{% endif %}
-</div>
-</div>
-{% endif %}
 </div>
 
 </div>
