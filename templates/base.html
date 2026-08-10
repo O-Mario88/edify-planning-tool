@@ -276,6 +276,7 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
      unique defect becomes one System Incident for the Admin. -->
+<script defer src="{% static 'js/csrf-sync.js' %}?v=20260810csrf1"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.

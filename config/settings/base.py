@@ -792,7 +792,14 @@ COUNTRY_MAP_CACHE_SECONDS = (
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
+# The CSRF token is already present in every rendered form and in the page's
+# csrf-token meta element, so HttpOnly does not hide it from an XSS payload.
+# Keeping this cookie readable lets the global client synchronizer replace a
+# stale rendered token after Django rotates the cookie at login (including a
+# login completed in another tab). Without that synchronization, the next
+# legitimate POST from an older page is rejected as "token from POST
+# incorrect" even though the user is still signed in.
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SAMESITE = "Lax"
 
