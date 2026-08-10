@@ -11,10 +11,16 @@ from apps.budget.health import (
     cost_line_period_drift,
     double_funded_budget_lines,
     finance_integrity_health,
+    payable_lines_without_approved_advance,
     split_week_cost_lines,
 )
 from apps.core.fy import get_operational_fy
-from apps.fund_requests.models import WeeklyFundRequest
+from apps.fund_requests.models import (
+    AdvanceRequest,
+    FundRequest,
+    FundRequestItem,
+    WeeklyFundRequest,
+)
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -124,6 +130,45 @@ class FinanceIntegrityHealthTest(TestCase):
                 total_amount=99_000,
             )
 
+    def test_it_finds_a_payable_line_without_an_approved_ledger_row(self):
+        week = _monday(1)
+        activity = self._activity(week)
+        line = self._line(activity, week)
+        request = FundRequest.objects.create(
+            fy=activity.fy,
+            period="monthly",
+            period_key=f"{activity.fy}-M{week.month}",
+            scope="own",
+            submitted_by_user_id="finhealth-owner",
+            submitted_by_role="CCEO",
+            total_amount=line.amount,
+            activity_count=1,
+            status="approved",
+        )
+        FundRequestItem.objects.create(
+            fund_request=request,
+            activity_id=activity.id,
+            activity_schedule_cost_line_id=line.id,
+            amount=line.amount,
+            period="monthly",
+            period_key=request.period_key,
+        )
+
+        self.assertEqual(payable_lines_without_approved_advance()["count"], 1)
+
+        AdvanceRequest.objects.create(
+            activity=activity,
+            budget_line=line,
+            responsible_user_id="finhealth-owner",
+            fy=activity.fy,
+            quarter="Q1",
+            month=week.month,
+            week=1,
+            amount=line.amount,
+            status="confirmed_for_advance",
+        )
+        self.assertEqual(payable_lines_without_approved_advance()["count"], 0)
+
     # ── the report itself ─────────────────────────────────────────────────
     def test_the_report_carries_every_check_with_an_action(self):
         report = finance_integrity_health()
@@ -135,6 +180,7 @@ class FinanceIntegrityHealthTest(TestCase):
                 "split_week_cost_lines",
                 "double_funded_budget_lines",
                 "partner_lines_in_staff_funding",
+                "payable_lines_without_approved_advance",
                 "dangling_fund_request_items",
             },
         )

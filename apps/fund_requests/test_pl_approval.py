@@ -17,7 +17,7 @@ from apps.command_center.todo_service import get_todos
 from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.fund_requests import pl_approval_service as svc
-from apps.fund_requests.models import FundRequest
+from apps.fund_requests.models import AdvanceRequest, FundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -141,7 +141,7 @@ class PLFundApprovalTest(TestCase):
         catalogue_id="cat-v1",
         key="transport_allowance",
     ):
-        return ActivityScheduleCostLine.objects.create(
+        line = ActivityScheduleCostLine.objects.create(
             activity=activity,
             cost_setting_key=key,
             label="Transport",
@@ -152,6 +152,20 @@ class PLFundApprovalTest(TestCase):
             fiscal_year=FY,
             catalogue_id=catalogue_id,
         )
+        owner_user_id = StaffProfile.objects.get(
+            id=activity.responsible_staff_id
+        ).user_id
+        AdvanceRequest.objects.create(
+            activity=activity,
+            budget_line=line,
+            responsible_user_id=owner_user_id,
+            fy=FY,
+            quarter="Q1",
+            month=month,
+            amount=amount,
+            status="confirmed_for_advance",
+        )
+        return line
 
     def _queue_names(self, principal, **filters):
         f = {"fy": FY, "month": MONTH, **filters}

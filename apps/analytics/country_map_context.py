@@ -39,7 +39,30 @@ def school_type_totals(districts: dict[str, Any]) -> dict[str, int]:
 
 
 def country_map_context(fy: str | None = None) -> dict[str, Any]:
-    """Return the shared system-wide map contract for an authorized viewer."""
+    """Return the shared system-wide map contract for an authorized viewer.
+
+    Cached per fiscal year and shared across viewers. That is sound precisely
+    because of this module's contract: the payload takes no role, portfolio or
+    ad-hoc filter, so two authorized viewers of the same FY are entitled to
+    byte-identical data. Permission to see the map is still enforced by the
+    calling view — this cache is only reached after that check.
+
+    The cache is fail-open (`stampede_safe_get_or_compute` degrades to direct
+    computation when the backend is unavailable), and tests bypass it because
+    ``COUNTRY_MAP_CACHE_SECONDS`` is 0 under the test settings.
+    """
+    from django.conf import settings
+
+    from apps.core.cache_utils import stampede_safe_get_or_compute
+
+    return stampede_safe_get_or_compute(
+        f"country-map:v1:{fy or 'current'}",
+        lambda: _country_map_context_uncached(fy),
+        timeout=settings.COUNTRY_MAP_CACHE_SECONDS,
+    )
+
+
+def _country_map_context_uncached(fy: str | None = None) -> dict[str, Any]:
     districts = district_insight(fy)
 
     return {
@@ -54,4 +77,8 @@ def country_map_context(fy: str | None = None) -> dict[str, Any]:
     }
 
 
-__all__ = ["country_map_context", "school_type_totals"]
+__all__ = [
+    "country_map_context",
+    "_country_map_context_uncached",
+    "school_type_totals",
+]

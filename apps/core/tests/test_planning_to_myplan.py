@@ -215,14 +215,15 @@ class PlanningToMyPlanFlowTest(TestCase):
         self.district.district_type = "primary"
         self.district.save(update_fields=["district_type"])
         fy = get_operational_fy()
-        catalogue, _ = CostCatalogue.objects.update_or_create(
-            country="Scheduling Test",
-            fy=fy,
-            version=999,
-            defaults={"is_active": True, "label": "Scheduling Test Catalogue"},
-        )
+        # Pricing resolves the active catalogue for the configured country;
+        # attach fixture rates to that authoritative catalogue rather than a
+        # parallel test-only country that the production service must ignore.
+        from apps.budget.costing_service import active_catalogue
+
+        catalogue = active_catalogue(fy)
+        self.assertIsNotNone(catalogue)
         CostSetting.objects.update_or_create(
-            key="staff_visit_transport_primary",
+            key="primary_transport_per_day",
             defaults={
                 "label": "Transport",
                 "unit_cost": 50_000,
@@ -232,7 +233,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             },
         )
         CostSetting.objects.update_or_create(
-            key="lunch",
+            key="primary_lunch_per_day",
             defaults={
                 "label": "Lunch",
                 "unit_cost": 10_000,

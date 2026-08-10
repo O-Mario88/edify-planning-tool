@@ -39,6 +39,16 @@ name: edify-planning-tool
 # another; keep SPACES_REGION in the same region so uploads stay on-continent.
 region: fra
 
+# Account lifecycle email is a production boot gate. Store the key as an
+# encrypted app-level secret so web and scheduler use the same real provider.
+envs:
+  - key: EMAIL_PROVIDER
+    value: resend
+  - key: RESEND_API_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: REPLACE_ME_resend_api_key
+
 # Only pushes to main trigger a build.
 alerts:
   - rule: DEPLOYMENT_FAILED

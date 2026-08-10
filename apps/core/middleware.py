@@ -13,6 +13,7 @@ import time
 from typing import Any, Callable
 
 from django.conf import settings
+from django.middleware.gzip import GZipMiddleware
 from django.http import (
     HttpRequest,
     HttpResponse,
@@ -534,3 +535,29 @@ class SlidingSessionMiddleware:
         # SessionMiddleware then saves the row with a fresh expiry and re-sends
         # the cookie with a fresh max-age.
         session[self.TOUCHED_AT] = int(now)
+
+
+class StreamSafeGZipMiddleware(GZipMiddleware):
+    """Compress ordinary responses; never touch a stream.
+
+    Nothing compressed HTML at all, so every page — and every HTMX swap that
+    replaces part of one — crossed the network at full size: 200 KB for a
+    dashboard, 500 KB for Analytics, on connections where that is seconds.
+    Static files were already compressed by WhiteNoise; the pages themselves
+    were not, and pages are what people wait for.
+
+    Django's GZipMiddleware also compresses StreamingHttpResponse, which is
+    exactly wrong for the two streaming things this platform has. Server-sent
+    events (apps.realtime) would be buffered by the compressor and stop
+    arriving as events — the live updates would simply stop working — and the
+    streamed CSV exports would be re-buffered in memory, which is the reason
+    they stream. Both are left alone.
+
+    BREACH: Django masks the CSRF token per response, which is the documented
+    mitigation for the token this would otherwise put at risk.
+    """
+
+    def process_response(self, request, response):
+        if getattr(response, "streaming", False):
+            return response
+        return super().process_response(request, response)

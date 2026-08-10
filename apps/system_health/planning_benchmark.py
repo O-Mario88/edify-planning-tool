@@ -57,15 +57,16 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
         stage="Assign to a partner, or schedule the activity",
         actor="CCEO / Program Lead / Project Coordinator",
         inputs=(
-            "school, or cluster with participants per school",
+            "school, or cluster with participants and schools invited",
             "date",
             "executor (staff or partner)",
         ),
         why_a_human=(
             "Who does the work and when is an allocation decision against real "
             "capacity. For a cluster event, the organiser also knows how many "
-            "people each school should send; the platform derives the total "
-            "from current cluster membership."
+            "people each invited school should send and how many schools were "
+            "actually invited; the platform derives the total from those two "
+            "facts."
         ),
     ),
     Touchpoint(

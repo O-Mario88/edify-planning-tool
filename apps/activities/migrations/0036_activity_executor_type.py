@@ -4,15 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0035_cluster_participant_planning'),
+        ("activities", "0035_cluster_participant_planning"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='executor_type',
-            field=models.CharField(choices=[('staff', 'Internal Staff'), ('partner', 'Assigned Partner — Partner Selects Schedule'), ('certified_partner_agency', 'Certified Partner Agency')], default='staff', max_length=32),
+            model_name="activity",
+            name="executor_type",
+            field=models.CharField(
+                choices=[
+                    ("staff", "Internal Staff"),
+                    ("partner", "Assigned Partner — Partner Selects Schedule"),
+                    ("certified_partner_agency", "Certified Partner Agency"),
+                ],
+                default="staff",
+                max_length=32,
+            ),
         ),
     ]

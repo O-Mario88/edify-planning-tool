@@ -145,9 +145,11 @@ def scheduling_health() -> dict:
     agency_duplicated_in_staff_plan = agency.filter(
         responsible_staff_id__isnull=False
     ).exclude(responsible_staff_id="")
-    agency_without_budget_lines = agency.filter(scheduled_date__isnull=False).annotate(
-        lines=Count("schedule_cost_lines")
-    ).filter(lines=0)
+    agency_without_budget_lines = (
+        agency.filter(scheduled_date__isnull=False)
+        .annotate(lines=Count("schedule_cost_lines"))
+        .filter(lines=0)
+    )
     # Partner-delivered work must carry the partner delivery type, or partner
     # payment, oversight and My Plan scoping all miss it.
     executor_delivery_mismatch = live.filter(

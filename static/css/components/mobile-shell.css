@@ -48,6 +48,31 @@
     max-inline-size: none;
   }
 
+  /* WCAG target sizing is a layout property, not a pointer-media hint. A
+   * narrow browser can report a fine pointer while still being used by touch
+   * or switch input, so the phone shell guarantees 44px targets directly. */
+  .edify-topbar__search input[type="search"],
+  .edify-topbar__utility,
+  .edify-topbar__account > button {
+    min-block-size: 44px;
+  }
+
+  .edify-topbar__utility,
+  .edify-topbar__account > button {
+    inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .edify-search-submit {
+    inline-size: 44px;
+    block-size: 44px;
+    inset-inline-end: 0;
+  }
+
+  search:has(.edify-search-submit) input[type="search"] {
+    padding-inline-end: 3rem;
+  }
+
   .edify-topbar > :last-child {
     gap: 0.25rem;
   }

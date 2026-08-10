@@ -10,11 +10,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from .models import (
-    MONEY_MOVED_ADVANCE_STATUSES,
-    WeeklyFundRequest,
-    WeeklyFundRequestLine,
-)
+from .models import WeeklyFundRequest, WeeklyFundRequestLine
 
 logger = logging.getLogger("edify.weekly_fund_request")
 
@@ -616,23 +612,18 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         fraction = disbursed_amount / wfr.total_amount if wfr.total_amount else 0
         now = timezone.now()
 
-        # Cross-channel mutual exclusion: the AdvanceRequest rows are the one
-        # shared money ledger every disbursement channel converges on. If any
-        # child advance already has money out (disbursed directly via
-        # advance_service, or mirrored by a period FundRequest), releasing
-        # this weekly request would pay the same cost lines twice.
-        already_moved = [
-            line.activity_budget_line_id
-            for line in wfr.lines.select_related("activity_budget_line")
-            for adv in line.activity_budget_line.advance_requests.all()
-            if adv.status in MONEY_MOVED_ADVANCE_STATUSES
-        ]
-        if already_moved:
-            raise BadRequest(
-                "Cannot disburse — money has already been released for "
-                f"{len(already_moved)} of this request's budget lines through "
-                "another disbursement channel."
-            )
+        # Lock the shared per-line ledger and require every line to be approved
+        # for release. This also blocks missing rows (partner/cost-missing
+        # lines) and serializes a concurrent period-channel disbursement.
+        from .funding_guard import lock_disbursable_advances
+
+        request_lines = list(wfr.lines.select_related("activity_budget_line"))
+        locked_advances = lock_disbursable_advances(
+            line.activity_budget_line_id for line in request_lines
+        )
+        advances_by_line = {
+            str(advance.budget_line_id): advance for advance in locked_advances
+        }
 
         wfr.status = "disbursed"
         wfr.disbursed_amount = disbursed_amount
@@ -657,10 +648,9 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         # parent total by up to ±1 UGX per line — the children must sum to
         # EXACTLY the disbursed amount (required reconciliation mismatch: 0).
         lines_with_adv = [
-            (line, line.activity_budget_line.advance_requests.first())
-            for line in wfr.lines.select_related("activity_budget_line")
+            (line, advances_by_line[str(line.activity_budget_line_id)])
+            for line in request_lines
         ]
-        lines_with_adv = [(ln, adv) for ln, adv in lines_with_adv if adv]
         shares: dict[str, int] = {}
         if lines_with_adv:
             exact = [

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from apps.geography.models import Region, District, SubCounty
 from apps.schools.models import School
 from apps.clusters.models import Cluster, ClusterSubCounty, SchoolClusterAssignment
-from apps.accounts.models import StaffProfile
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 
 
 class BulkAssignmentTests(TestCase):
@@ -61,6 +61,11 @@ class BulkAssignmentTests(TestCase):
             sub_county=self.sub_county_2,
             school_type="client",
             cluster_status="unclustered",
+        )
+        # Cluster creation is constrained to the actor's direct operational
+        # portfolio. This test exercises that write path in Mukono.
+        StaffSchoolAssignment.objects.create(
+            staff=self.staff_profile, school_id=self.school_other.id
         )
 
         self.cluster = Cluster.objects.create(

@@ -240,37 +240,57 @@ class Command(BaseCommand):
             plan
             for plan in CorePlan.objects.filter(status="Active")
             if not (plan.interventions or {}).get("recommended")
+            and not (plan.interventions or {}).get("maintenance")
         ]
-        if apply:
-            for plan in missing:
-                school = School.objects.filter(school_id=plan.school_id).first()
-                if not school:
-                    continue
-                rec = CoreInterventionRecommendationService.recommend(school)
-                plan.interventions = {
-                    "recommended": rec.get("rows") or [],
-                    "maintenance": rec.get("maintenance", False),
-                    "source_ssa_record_id": plan.baseline_ssa_record_id or None,
-                    "captured_at": timezone.now().isoformat(),
+        needs_ssa: list[str] = []
+        no_school: list[str] = []
+        written = 0
+        for plan in missing:
+            school = School.objects.filter(school_id=plan.school_id).first()
+            if not school:
+                # An orphan plan is a different defect with its own repair.
+                no_school.append(plan.school_id)
+                continue
+            rec = CoreInterventionRecommendationService.recommend(school)
+            rows = rec.get("rows") or []
+            maintenance = bool(rec.get("maintenance"))
+            # A school with no verified SSA yields available=False and no rows.
+            # Persisting that wrote {"recommended": []} stamped with captured_at
+            # and algorithm_version — an EMPTY recommendation wearing the shape
+            # of a real one, for a school nobody has assessed. The recommendation
+            # decides which four interventions a package targets and which two
+            # go to a Partner, so leave it unwritten and report it instead.
+            if not rec.get("available") or (not rows and not maintenance):
+                needs_ssa.append(plan.school_id)
+                continue
+            written += 1
+            if not apply:
+                continue
+            plan.interventions = {
+                "recommended": rows,
+                "maintenance": maintenance,
+                "source_ssa_record_id": plan.baseline_ssa_record_id or None,
+                "captured_at": timezone.now().isoformat(),
+                "algorithm_version": 1,
+                "backfilled": True,
+            }
+            plan.save(update_fields=["interventions", "updated_at"])
+            self._audit(
+                "core_recommendation",
+                "CorePlan",
+                plan.id,
+                {"recommended": []},
+                {
+                    "recommended_count": len(rows),
+                    "maintenance": maintenance,
                     "algorithm_version": 1,
                     "backfilled": True,
-                }
-                plan.save(update_fields=["interventions", "updated_at"])
-                self._audit(
-                    "core_recommendation",
-                    "CorePlan",
-                    plan.id,
-                    {"recommended": []},
-                    {
-                        "recommended_count": len(
-                            plan.interventions.get("recommended") or []
-                        ),
-                        "algorithm_version": 1,
-                        "backfilled": True,
-                    },
-                )
+                },
+            )
         self.stdout.write(
-            f"core-recommendations: {len(missing)} active plan(s) missing persisted set"
+            f"core-recommendations: {len(missing)} active plan(s) missing persisted "
+            f"set; {written} derivable; {len(needs_ssa)} MANUAL REVIEW (no verified "
+            f"SSA); {len(no_school)} MANUAL REVIEW (no School row)"
         )
 
     def _fix_cluster_meeting_cost_key(self, apply):

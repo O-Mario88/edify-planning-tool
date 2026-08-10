@@ -179,6 +179,67 @@ def partner_lines_in_staff_funding() -> dict:
     }
 
 
+def payable_lines_without_approved_advance() -> dict:
+    """Payable parent requests whose line ledger cannot safely release money.
+
+    A period or weekly parent is only ready for the Accountant when every
+    budget line has one approved AdvanceRequest. Missing rows and non-payable
+    states (self-funded, not requested, returned, cancelled, already paid)
+    would otherwise let the parent channel bypass the shared money ledger.
+    """
+    from apps.fund_requests.funding_guard import (
+        DISBURSABLE_ADVANCE_STATUSES,
+        PERIOD_DISBURSABLE_ADVANCE_STATUSES,
+    )
+    from apps.fund_requests.models import (
+        AdvanceRequest,
+        FundRequestItem,
+        WeeklyFundRequestLine,
+    )
+
+    period_line_ids = set(
+        FundRequestItem.objects.filter(
+            fund_request__status__in=("approved", "sent_to_accountant")
+        )
+        .exclude(activity_schedule_cost_line_id="")
+        .values_list("activity_schedule_cost_line_id", flat=True)
+    )
+    weekly_line_ids = set(
+        WeeklyFundRequestLine.objects.filter(
+            weekly_fund_request__status="confirmed_for_advance"
+        ).values_list("activity_budget_line_id", flat=True)
+    )
+    eligible_period = set(
+        AdvanceRequest.objects.filter(
+            budget_line_id__in=period_line_ids,
+            status__in=PERIOD_DISBURSABLE_ADVANCE_STATUSES,
+        ).values_list("budget_line_id", flat=True)
+    )
+    eligible_weekly = set(
+        AdvanceRequest.objects.filter(
+            budget_line_id__in=weekly_line_ids,
+            status__in=DISBURSABLE_ADVANCE_STATUSES,
+        ).values_list("budget_line_id", flat=True)
+    )
+    blocked = sorted(
+        str(line_id)
+        for line_id in (period_line_ids - eligible_period)
+        | (weekly_line_ids - eligible_weekly)
+    )
+    return {
+        **_issue(
+            "payable_lines_without_approved_advance",
+            "critical",
+            len(blocked),
+            f"{len(blocked)} payable budget line(s) have no approved advance "
+            "ledger row, so disbursement must remain blocked.",
+            "Return or regenerate the affected request after reconciling its "
+            "funding choice; do not release it outside the shared ledger.",
+        ),
+        "samples": blocked[:10],
+    }
+
+
 def dangling_fund_request_items() -> dict:
     """Monthly FundRequestItems whose source cost line no longer exists.
 
@@ -232,6 +293,7 @@ def finance_integrity_health() -> dict:
         split_week_cost_lines,
         double_funded_budget_lines,
         partner_lines_in_staff_funding,
+        payable_lines_without_approved_advance,
         dangling_fund_request_items,
     ):
         try:

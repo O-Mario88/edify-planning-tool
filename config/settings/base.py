@@ -153,6 +153,11 @@ MIDDLEWARE = [
     "apps.core.middleware.CanonicalHostMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    # After WhiteNoise so it only ever sees application responses — WhiteNoise
+    # returns static files itself, already compressed. Before everything that
+    # writes the body, which is what GZipMiddleware requires. Skips streams;
+    # see StreamSafeGZipMiddleware for why that matters here.
+    "apps.core.middleware.StreamSafeGZipMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
     # including error pages — the ones most likely to be reached with a
     # crafted URL.
@@ -747,10 +752,39 @@ ANALYTICS_DASHBOARD_CACHE_SECONDS = (
     if _is_testing
     else _as_int(os.environ.get("ANALYTICS_DASHBOARD_CACHE_SECONDS"), 30)
 )
+# 120s, not 30s. The report runs ~50 integrity checks across the whole estate
+# and was measured at 6.4s cold on production (16,274 schools / 123k SSA
+# scores), so a 30-second window made one operator reading one page trigger a
+# full rebuild roughly every other scroll. What it reports — unclustered
+# schools, orphaned records, missing recommendations — moves on the timescale
+# of imports and scheduling, not seconds.
+#
+# Deliberately not longer: this is the page someone refreshes during an
+# incident to see whether a repair landed, and a 5-minute stale window would
+# make it lie to them. This shortens the rebuild frequency; it does NOT make
+# the underlying report faster, which remains unprofiled at production scale.
 SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS = (
     0
     if _is_testing
-    else _as_int(os.environ.get("SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS"), 30)
+    else _as_int(os.environ.get("SYSTEM_HEALTH_DASHBOARD_CACHE_SECONDS"), 120)
+)
+# Longer than its neighbours on purpose. Impact reads ~125k paired-assessment
+# rows into pandas and runs Kruskal-Wallis across districts; it is derived from
+# CONFIRMED SSA records and completed activities, which move on the timescale
+# of an assessment cycle, not a page view. A 30s window would still recompute
+# several times an hour for one person reading a single dashboard.
+IMPACT_DASHBOARD_CACHE_SECONDS = (
+    0 if _is_testing else _as_int(os.environ.get("IMPACT_DASHBOARD_CACHE_SECONDS"), 300)
+)
+# The shared analytics map is country-wide by contract: the fiscal year is its
+# ONLY filter, so every authorized viewer of a given FY gets a byte-identical
+# payload. Four surfaces (PL, CD, analytics dashboard, projects impact) rebuilt
+# it independently on every page load — aggregating 136 districts, 2,562
+# sub-counties and the SSA/delivery facts behind them each time. One shared
+# FY-keyed entry serves them all. It carries no role, portfolio or user scope,
+# which is exactly why it is safe to share.
+COUNTRY_MAP_CACHE_SECONDS = (
+    0 if _is_testing else _as_int(os.environ.get("COUNTRY_MAP_CACHE_SECONDS"), 300)
 )
 
 

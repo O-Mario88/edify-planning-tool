@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
@@ -30,6 +32,8 @@ class WeeklyFundRequestsTest(APITestCase):
             ("school_visit_cost_per_school", 62000),
             ("school_visit_cost_per_school_primary", 50000),
             ("school_visit_cost_per_school_secondary", 66000),
+            ("primary_transport_per_day", 50000),
+            ("primary_lunch_per_day", 12000),
             ("group_training_participant_meal_cost_per_head", 12000),
             ("group_training_venue_cost", 200000),
             ("group_training_facilitation_fee", 150000),
@@ -173,11 +177,17 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
-        # Confirm budget lines exist and use primary visit rate (50,000)
+        # Confirm the governed primary transport + lunch split is persisted.
         lines = ActivityScheduleCostLine.objects.filter(activity_id=sv["id"])
-        self.assertEqual(lines.count(), 1)
-        self.assertEqual(lines[0].amount, 50000)
-        self.assertEqual(lines[0].week_start_date.isoformat(), "2026-07-06")
+        self.assertEqual(lines.count(), 2)
+        self.assertEqual(
+            set(lines.values_list("cost_setting_key", "amount")),
+            {("primary_transport_per_day", 50000), ("primary_lunch_per_day", 12000)},
+        )
+        self.assertEqual(
+            set(lines.values_list("week_start_date", flat=True)),
+            {date(2026, 7, 6)},
+        )
 
         # 2. Schedule a Cluster Meeting (10 participants, rate = 8000 each).
         # FEES_ENROLMENT_MARKETING is the cluster_meeting item for enrolment,
@@ -232,7 +242,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
-        # Total: 50,000 + 80,000 + 530,000 = 660,000 UGX
+        # Total: 62,000 transport/lunch + 80,000 + 530,000 = 672,000 UGX
         wfr_data = self._post(
             "/api/fund-requests/weekly/generate",
             {
@@ -242,7 +252,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 660000)
+        self.assertEqual(wfr_data["totalAmount"], 672000)
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail
@@ -251,8 +261,8 @@ class WeeklyFundRequestsTest(APITestCase):
 
         detail_res = self._get(f"/api/fund-requests/weekly/{wfr_data['id']}")
         self.assertEqual(
-            len(detail_res["lines"]), 5
-        )  # 1 school visit, 1 cluster meeting, 3 group training lines
+            len(detail_res["lines"]), 6
+        )  # 2 visit components, 1 cluster meeting, 3 group-training components
         descriptions = {line["description"] for line in detail_res["lines"]}
         self.assertTrue(
             {
@@ -274,7 +284,7 @@ class WeeklyFundRequestsTest(APITestCase):
         self._as(self.accountant)
         self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
-            {"amount": 660000, "method": "Mobile Money", "reference": "TXN-9988"},
+            {"amount": 672000, "method": "Mobile Money", "reference": "TXN-9988"},
             400,
         )
 
@@ -288,7 +298,7 @@ class WeeklyFundRequestsTest(APITestCase):
         disburse_res = self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
             {
-                "amount": 660000,
+                "amount": 672000,
                 "method": "Mobile Money",
                 "reference": "TXN-9988",
             },
@@ -296,4 +306,4 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         self.assertEqual(disburse_res["status"], "disbursed")
-        self.assertEqual(disburse_res["disbursedAmount"], 660000)
+        self.assertEqual(disburse_res["disbursedAmount"], 672000)

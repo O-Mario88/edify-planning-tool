@@ -381,18 +381,19 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 "activity_schedule_cost_line_id", flat=True
             )
         )
-        if line_ids:
-            from .models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest
+        # Call the guard UNCONDITIONALLY, exactly as the dashboard and weekly
+        # channels do. Gating it on `if line_ids` failed open: a request whose
+        # items carry no cost-line linkage skipped the ledger entirely and
+        # released money with no traceable Planning source, which is the one
+        # thing every funding path is required to prove.
+        from .funding_guard import (
+            PERIOD_DISBURSABLE_ADVANCE_STATUSES,
+            lock_disbursable_advances,
+        )
 
-            already = AdvanceRequest.objects.filter(
-                budget_line_id__in=line_ids,
-                status__in=MONEY_MOVED_ADVANCE_STATUSES,
-            ).count()
-            if already:
-                raise BadRequest(
-                    f"Cannot disburse — {already} of this request's budget lines "
-                    "already had money released through the weekly/advance queue."
-                )
+        locked_advances = lock_disbursable_advances(
+            line_ids, allowed_statuses=PERIOD_DISBURSABLE_ADVANCE_STATUSES
+        )
 
         fr.status = FundRequestStatus.DISBURSED
         fr.disbursed_amount = data.get("amount", fr.total_amount)
@@ -415,14 +416,11 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         # this channel only checked — leaving the same cost line payable a
         # second time through the advance/weekly queue after a period-first
         # disbursement.
-        if line_ids:
+        if locked_advances:
+            from .models import AdvanceRequest
+
             AdvanceRequest.objects.filter(
-                budget_line_id__in=line_ids,
-                status__in=[
-                    "pending_responsible_confirmation",
-                    "confirmed_for_advance",
-                    "submitted_to_accountant",
-                ],
+                id__in=[advance.id for advance in locked_advances]
             ).update(
                 status="disbursed",
                 # Each advance mirrors exactly one budget line, so its full

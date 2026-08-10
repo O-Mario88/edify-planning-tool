@@ -149,11 +149,20 @@ def catalogue_health() -> dict:
         .exclude(schedule_cost_lines__cost_setting_key__icontains="partner")
         .distinct()
     )
-    staff_wrong_rate = Activity.objects.filter(
-        catalogue_item__isnull=False,
-        delivery_type="staff",
-        schedule_cost_lines__cost_setting_key__icontains="partner",
-    ).distinct()
+    staff_wrong_rate = (
+        Activity.objects.filter(
+            catalogue_item__isnull=False,
+            delivery_type="staff",
+            schedule_cost_lines__cost_setting_key__icontains="partner",
+        )
+        .exclude(
+            # This is the governed rate for a staff-owned administrative meeting
+            # with partners. "partner" describes the meeting/cost profile, not
+            # the executor or funding path.
+            catalogue_item__costing_profile="ADMIN_PARTNER_MEETING"
+        )
+        .distinct()
+    )
     missing_cost_provenance = (
         Activity.objects.filter(
             catalogue_item__isnull=False,

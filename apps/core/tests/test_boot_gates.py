@@ -1,7 +1,7 @@
-"""SEC-01 — production boot gates (apps.core.boot_gates), the four
+"""SEC-01 — production boot gates (apps.core.boot_gates), including the
 conditions the prior audit found missing from config/settings/prod.py's
 import-time checks: DB-unavailable-at-boot, pending migrations, missing
-static assets. (The fourth, scheduler-disabled, is covered as a System
+static assets. (Scheduler-disabled is covered as a System
 Health CRITICAL check instead — see apps.realtime.health — and is verified
 in apps/realtime/tests.py, not here.)
 
@@ -102,6 +102,56 @@ class StaticAssetsGateTest(SimpleTestCase):
             issues = boot_gates._check_static_assets_collected()
         self.assertEqual(len(issues), 1)
         self.assertIn("STATIC_ROOT is not configured", issues[0])
+
+
+class EmailDeliveryGateTest(SimpleTestCase):
+    def test_console_provider_is_allowed_outside_production(self):
+        with self.settings(
+            IS_PRODUCTION=False,
+            EMAIL_PROVIDER="console",
+            RESEND_API_KEY="",
+        ):
+            self.assertEqual(boot_gates._check_email_delivery_configured(), [])
+
+    def test_production_reports_a_missing_provider(self):
+        with self.settings(
+            IS_PRODUCTION=True,
+            EMAIL_PROVIDER="console",
+            RESEND_API_KEY="",
+        ):
+            issues = boot_gates._check_email_delivery_configured()
+        self.assertEqual(len(issues), 1)
+        self.assertIn("Production email delivery is not configured", issues[0])
+
+    def test_a_missing_provider_warns_but_never_stops_the_process_booting(self):
+        """Email is a degradation, not a boot blocker.
+
+        Exiting here would trade one broken channel for a dead site — the
+        container would not start, taking Planning, finance and every other
+        workflow down with it. The condition must still be reported, and it
+        remains a standing System Health finding.
+        """
+        with (
+            self.settings(
+                IS_PRODUCTION=True, EMAIL_PROVIDER="console", RESEND_API_KEY=""
+            ),
+            patch.object(boot_gates, "_check_database_available", return_value=[]),
+            patch.object(boot_gates, "_check_no_pending_migrations", return_value=[]),
+            patch.object(boot_gates, "_check_static_assets_collected", return_value=[]),
+            patch("sys.stderr", new_callable=StringIO) as stderr,
+        ):
+            boot_gates.verify_or_exit()  # must not raise SystemExit
+
+        self.assertIn("Production email delivery is not configured", stderr.getvalue())
+        self.assertIn("not blocking boot", stderr.getvalue())
+
+    def test_production_accepts_resend_with_a_key(self):
+        with self.settings(
+            IS_PRODUCTION=True,
+            EMAIL_PROVIDER="resend",
+            RESEND_API_KEY="test-key",
+        ):
+            self.assertEqual(boot_gates._check_email_delivery_configured(), [])
 
 
 class VerifyOrExitTest(SimpleTestCase):

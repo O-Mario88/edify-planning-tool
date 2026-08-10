@@ -34,6 +34,8 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertIn("min-block-size: 5.75rem !important", consistency)
         self.assertIn("last-child:nth-child(odd)", components)
         self.assertIn("data-mobile-summary", template)
+        self.assertIn('<h2 class="kpi-strip__title">', template)
+        self.assertNotIn('<h4 class="kpi-strip__title">', template)
         self.assertNotIn("scroll-snap-type: inline mandatory", components)
 
     def test_filter_sheet_uses_native_dialog_and_safari_fallback(self):
@@ -68,6 +70,15 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertIn(".edify-topbar__utility--mobile-redundant", styles)
         self.assertIn(".edify-topbar__utility--theme", styles)
         self.assertIn("{% if mobile_nav %}", shell)
+
+    def test_phone_topbar_targets_are_at_least_44_pixels(self):
+        styles = _read("static/css/components/mobile-shell.css")
+
+        self.assertIn('.edify-topbar__search input[type="search"]', styles)
+        self.assertIn(".edify-topbar__account > button", styles)
+        self.assertIn("min-block-size: 44px", styles)
+        self.assertIn("inline-size: 44px", styles)
+        self.assertIn("block-size: 44px", styles)
 
     def test_long_page_deferral_is_explicit_and_layout_stable(self):
         styles = _read("static/css/components/mobile-patterns.css")

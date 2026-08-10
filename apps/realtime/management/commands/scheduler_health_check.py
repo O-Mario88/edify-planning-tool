@@ -39,7 +39,7 @@ class Command(BaseCommand):
             )
             self.stdout.write(
                 f"  {j['job_name']:32s} {marker:20s} last_successful={j['last_successful']} "
-                f"failures={j['failure_count']}"
+                f"next_due={j.get('next_due')} failures={j['failure_count']}"
             )
 
         if not SchedulerHealthService.is_scheduler_process_alive():

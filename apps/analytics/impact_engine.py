@@ -79,6 +79,10 @@ from apps.targets.my_targets import (
 # data" instead of reporting a number nobody should act on.
 MIN_GROUP_N = 8  # smallest group size for a two-group comparison
 MIN_CORR_N = 10  # smallest sample for a correlation
+
+#: Shared empty result for a (district, intervention) cell with no rows —
+#: allocated once so a lookup miss costs nothing.
+_EMPTY_DELTAS = np.array([], dtype=float)
 SIGNIFICANT_P = 0.05
 SUGGESTIVE_P = 0.10
 
@@ -610,16 +614,33 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
         for d, grp in frame.groupby("district")
         if grp["school_id"].nunique() >= MIN_GROUP_N
     ]
+
+    # One pass over the frame, then look everything up.
+    #
+    # This function used to filter the whole frame with a fresh boolean mask
+    # for every (district, intervention) cell — once for the matrix, again to
+    # assemble the Kruskal-Wallis groups, and a third time for the lagging
+    # list, with the median recomputed twice per lagging cell. That is roughly
+    # 24 full scans per district, and it made /impact a TWELVE SECOND page of
+    # which only ~1s was the database. Grouping once is the same arithmetic on
+    # the same rows: identical medians, identical group membership.
+    by_cell = {
+        key: series.to_numpy()
+        for key, series in frame.groupby(["district", "intervention"])["delta"]
+    }
+
+    def _deltas(district: str, intervention: str):
+        return by_cell.get((district, intervention), _EMPTY_DELTAS)
+
     matrix_rows = []
     for district in sorted(eligible):
         cells = []
-        d_frame = frame[frame["district"] == district]
         for intervention in ALL_INTERVENTIONS:
-            deltas = d_frame[d_frame["intervention"] == intervention]["delta"]
+            deltas = _deltas(district, intervention)
             cells.append(
                 {
                     "x": INTERVENTION_LABELS[intervention],
-                    "y": round(float(deltas.median()), 2) if len(deltas) else None,
+                    "y": round(float(np.median(deltas)), 2) if len(deltas) else None,
                 }
             )
         matrix_rows.append({"name": district, "data": cells})
@@ -627,12 +648,7 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
     tests = []
     lagging = []
     for intervention in ALL_INTERVENTIONS:
-        groups = [
-            frame[(frame["district"] == d) & (frame["intervention"] == intervention)][
-                "delta"
-            ].to_numpy()
-            for d in eligible
-        ]
+        groups = [_deltas(d, intervention) for d in eligible]
         groups = [g for g in groups if len(g) >= MIN_GROUP_N]
         entry = {
             "key": intervention,
@@ -658,18 +674,17 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
                 entry.update({"p": round(float(p), 4), "verdict": _verdict(float(p))})
         tests.append(entry)
 
-        i_frame = frame[frame["intervention"] == intervention]
         for district in eligible:
-            deltas = i_frame[i_frame["district"] == district]["delta"]
-            if (
-                len(deltas) >= MIN_GROUP_N
-                and float(deltas.median()) < DECLINE_THRESHOLD
-            ):
+            deltas = _deltas(district, intervention)
+            if len(deltas) < MIN_GROUP_N:
+                continue
+            median = float(np.median(deltas))
+            if median < DECLINE_THRESHOLD:
                 lagging.append(
                     {
                         "district": district,
                         "intervention": INTERVENTION_LABELS[intervention],
-                        "median_delta": round(float(deltas.median()), 2),
+                        "median_delta": round(median, 2),
                         "n": int(len(deltas)),
                     }
                 )

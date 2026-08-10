@@ -547,7 +547,7 @@ class PartnerCatalogueWorkflowTests(TestCase):
             label="Partner workflow test",
         )
         CostSetting.objects.update_or_create(
-            key="partner_visit_rate",
+            key="partner_visit_lump_sum",
             defaults={
                 "label": "Partner visit rate",
                 "unit_cost": 125000,
@@ -571,7 +571,7 @@ class PartnerCatalogueWorkflowTests(TestCase):
         self.assertEqual(activity.activity_name_snapshot, self.item.display_name)
         self.assertEqual(Activity.objects.count(), 1)
         line = activity.schedule_cost_lines.get()
-        self.assertEqual(line.cost_setting_key, "partner_visit_rate")
+        self.assertEqual(line.cost_setting_key, "partner_visit_lump_sum")
         self.assertEqual(line.amount, 125000)
         self.assertEqual(line.activity_catalogue_item_id, self.item.id)
         with self.assertRaises(BadRequest):

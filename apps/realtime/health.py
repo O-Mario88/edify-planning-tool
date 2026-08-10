@@ -21,23 +21,36 @@ def background_automation_health() -> dict:
     enabled = bool(getattr(settings, "ENABLE_BACKGROUND_JOBS", False))
     is_production = bool(getattr(settings, "IS_PRODUCTION", False))
 
+    # Web and scheduler are deliberately separate process types. The flag must
+    # be false in every web process and true only in the scheduler worker, but
+    # System Health runs in a web process. Shared execution history is the
+    # cross-process source of truth for whether the worker exists.
+    alive = SchedulerHealthService.is_scheduler_process_alive()
+    scheduler_available = enabled or alive
+
     # ── 1. Is the scheduler enabled at all on THIS process' config ──────────
     checks.append(
         {
             "key": "scheduler_enabled",
             "severity": "ok"
-            if enabled
+            if scheduler_available
             else ("critical" if is_production else "warning"),
             "component": "Scheduler",
-            "current_state": "Enabled"
-            if enabled
-            else "Disabled (ENABLE_BACKGROUND_JOBS=false)",
-            "expected_state": "Enabled in production",
+            "current_state": (
+                "Enabled on this process"
+                if enabled
+                else (
+                    "Dedicated scheduler activity observed"
+                    if alive
+                    else "No dedicated scheduler activity observed"
+                )
+            ),
+            "expected_state": "One dedicated scheduler is active in production",
             "last_check": now,
             "owner": "Platform/Ops",
             "recommended_action": (
                 "OK"
-                if enabled
+                if scheduler_available
                 else "Provision the dedicated worker process (see docs/scheduler-deployment.md) "
                 "and set ENABLE_BACKGROUND_JOBS=true on it."
             ),
@@ -45,12 +58,12 @@ def background_automation_health() -> dict:
         }
     )
 
-    if not enabled:
-        # Nothing else is meaningful to check if jobs are off everywhere.
+    if not scheduler_available:
+        # With neither a local scheduler nor shared execution evidence, there
+        # is no useful per-job state to present as healthy.
         return {"checks": checks}
 
     # ── 2. Scheduler process heartbeat ───────────────────────────────────────
-    alive = SchedulerHealthService.is_scheduler_process_alive()
     checks.append(
         {
             "key": "scheduler_heartbeat",
@@ -59,7 +72,7 @@ def background_automation_health() -> dict:
             "current_state": "Recent job activity observed"
             if alive
             else "No job has started recently",
-            "expected_state": "At least one job runs within every 10-minute window",
+            "expected_state": "At least one job runs within every 20-minute window",
             "last_check": now,
             "owner": "Platform/Ops",
             "recommended_action": "OK"
@@ -73,7 +86,9 @@ def background_automation_health() -> dict:
     for j in SchedulerHealthService.all_jobs_health():
         spec = j["spec"]
         label = spec.description if spec else j["job_name"]
-        if j["severity"] == "ok":
+        if j["status"] == "scheduled":
+            current = f"First run due: {j['next_due']}"
+        elif j["severity"] == "ok":
             current = f"Last successful run: {j['last_successful']}"
         elif j["status"] == "never_run":
             current = "Never run"

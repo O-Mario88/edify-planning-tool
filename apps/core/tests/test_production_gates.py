@@ -631,15 +631,29 @@ class EntitlementGateTest(TestCase):
         future_fy_date = timezone.now().replace(
             year=timezone.now().year + 1, month=10, day=15
         )
-        from apps.budget.models import CostCatalogue
+        from apps.budget.models import CostCatalogue, CostSetting
         from apps.activities.services import create
 
         future_fy = get_operational_fy(future_fy_date)
-        CostCatalogue.objects.get_or_create(
+        future_catalogue = CostCatalogue.objects.get_or_create(
             fy=future_fy,
             version=1,
             defaults={"label": "Next FY entitlement test catalogue"},
         )[0]
+        for key, label in (
+            ("primary_transport_per_day", "Transport (primary)"),
+            ("primary_lunch_per_day", "Lunch"),
+        ):
+            CostSetting.objects.update_or_create(
+                key=key,
+                defaults={
+                    "label": label,
+                    "unit_cost": 5_000,
+                    "version": 1,
+                    "fy": future_fy,
+                    "catalogue": future_catalogue,
+                },
+            )
 
         future = create(
             {

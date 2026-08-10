@@ -24,7 +24,7 @@ from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 from apps.fund_requests import disbursement_dashboard_service as svc
 from apps.fund_requests import pl_approval_service as pl_svc
-from apps.fund_requests.models import FundRequest, WeeklyFundRequest
+from apps.fund_requests.models import AdvanceRequest, FundRequest, WeeklyFundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -95,7 +95,7 @@ class DisbursementDashboardTest(TestCase):
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
         )
-        ActivityScheduleCostLine.objects.create(
+        line = ActivityScheduleCostLine.objects.create(
             activity=act,
             cost_setting_key="transport_allowance",
             label="Transport",
@@ -105,6 +105,16 @@ class DisbursementDashboardTest(TestCase):
             month=MONTH,
             fiscal_year=FY,
             catalogue_id="cat-v1",
+        )
+        AdvanceRequest.objects.create(
+            activity=act,
+            budget_line=line,
+            responsible_user_id=self.cceo.id,
+            fy=FY,
+            quarter="Q1",
+            month=MONTH,
+            amount=line.amount,
+            status="confirmed_for_advance",
         )
 
     def _approved_plan(self):
@@ -245,7 +255,7 @@ class DisbursementDashboardTest(TestCase):
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
         )
-        ActivityScheduleCostLine.objects.create(
+        line2 = ActivityScheduleCostLine.objects.create(
             activity=act2,
             cost_setting_key="transport_allowance",
             label="Transport",
@@ -255,6 +265,16 @@ class DisbursementDashboardTest(TestCase):
             month=MONTH,
             fiscal_year=FY,
             catalogue_id="cat-v1",
+        )
+        AdvanceRequest.objects.create(
+            activity=act2,
+            budget_line=line2,
+            responsible_user_id=self.cceo.id,
+            fy=FY,
+            quarter="Q1",
+            month=MONTH,
+            amount=line2.amount,
+            status="confirmed_for_advance",
         )
 
         fr = self._approved_plan()  # two activities, 250_000 each, total 500_000
@@ -442,7 +462,7 @@ class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
         )
-        ActivityScheduleCostLine.objects.create(
+        line = ActivityScheduleCostLine.objects.create(
             activity=act,
             cost_setting_key="transport_allowance",
             label="Transport",
@@ -452,6 +472,16 @@ class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
             month=MONTH,
             fiscal_year=FY,
             catalogue_id="cat-v1",
+        )
+        AdvanceRequest.objects.create(
+            activity=act,
+            budget_line=line,
+            responsible_user_id=self.cceo.id,
+            fy=FY,
+            quarter="Q1",
+            month=MONTH,
+            amount=line.amount,
+            status="confirmed_for_advance",
         )
 
     def test_concurrent_disburse_calls_write_exactly_one_set_of_records(self):

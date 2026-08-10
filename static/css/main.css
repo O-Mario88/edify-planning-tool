@@ -598,6 +598,9 @@
   .col-span-2 {
     grid-column: span 2 / span 2;
   }
+  .col-span-3 {
+    grid-column: span 3 / span 3;
+  }
   .col-span-full {
     grid-column: 1 / -1;
   }
@@ -5413,6 +5416,9 @@
     }
     .md\:justify-between {
       justify-content: space-between;
+    }
+    .md\:gap-4 {
+      gap: calc(var(--spacing) * 4);
     }
     :where(.md\:divide-x > :not(:last-child)) {
       --tw-divide-x-reverse: 0;

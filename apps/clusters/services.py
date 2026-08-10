@@ -521,16 +521,12 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
             portfolio_owner_id = portfolio_owner_profile_id(school)
             owner_variants = owner_id_variants(portfolio_owner_id or "")
             cluster_owner = (cluster.responsible_staff_id or "").strip()
-            has_other_members = (
-                School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True)
-                .exclude(pk=school.pk)
-                .exists()
-            )
 
-            # The first school claims a new/empty cluster for its portfolio
-            # owner. Later members must agree, so a mixed portfolio can never
-            # silently transfer an established cluster.
-            if portfolio_owner_id and (not cluster_owner or not has_other_members):
+            # An unowned cluster is claimed by its first portfolio. An empty
+            # cluster with an explicit owner is *not* unowned: silently
+            # replacing that owner would let the first assignment bypass the
+            # same portfolio boundary enforced for every later member.
+            if portfolio_owner_id and not cluster_owner:
                 if cluster_owner != portfolio_owner_id:
                     cluster.responsible_staff_id = portfolio_owner_id
                     cluster.save(update_fields=["responsible_staff_id", "updated_at"])

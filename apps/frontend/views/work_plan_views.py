@@ -28,11 +28,32 @@ from apps.core.rbac import Permission
 from apps.accounts.staff_matching import on_staff
 
 
+def _signed_out_redirect(request):
+    """Answer a signed-out visitor the way the rest of the product does.
+
+    Every other guarded route redirects to /login preserving the destination;
+    these Work Plan routes answered a bare 403, so a logged-out person
+    following a link lost where they were going and got an error page instead
+    of a sign-in form.
+
+    Only safe methods redirect. A signed-out POST is a mutation attempt, and
+    403 is the honest machine-readable answer there — bouncing it to a login
+    page would drop the body and imply the request could be replayed.
+    Authenticated-but-unauthorized always stays 403: that is a real refusal.
+    """
+    if request.method not in ("GET", "HEAD"):
+        return HttpResponseForbidden("Sign in first.")
+
+    from django.contrib.auth.views import redirect_to_login
+
+    return redirect_to_login(request.get_full_path(), login_url="/login")
+
+
 def _manual_activity_permission(view):
     @wraps(view)
     def wrapped(request, *args, **kwargs):
         if not getattr(request.user, "is_authenticated", False):
-            return HttpResponseForbidden("Sign in first.")
+            return _signed_out_redirect(request)
         if not has_permission(request.user, Permission.MANUAL_ACTIVITY_CREATE.value):
             return HttpResponseForbidden(
                 "You do not have permission to add non-school programme " "activities."
@@ -312,7 +333,7 @@ def _require_permission(permission: str, denied_message: str):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
             if not getattr(request.user, "is_authenticated", False):
-                return HttpResponseForbidden("Sign in first.")
+                return _signed_out_redirect(request)
             if not has_permission(request.user, permission):
                 return HttpResponseForbidden(denied_message)
             return view(request, *args, **kwargs)
@@ -329,7 +350,7 @@ def _require_export(view):
     @wraps(view)
     def wrapped(request, *args, **kwargs):
         if not getattr(request.user, "is_authenticated", False):
-            return HttpResponseForbidden("Sign in first.")
+            return _signed_out_redirect(request)
         if not has_permission(request.user, Permission.EXPORT.value):
             return HttpResponseForbidden("You do not have permission to export.")
         return view(request, *args, **kwargs)

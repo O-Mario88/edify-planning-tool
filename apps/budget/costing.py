@@ -60,6 +60,21 @@ GROUP_TRAINING_RATE_KEYS = (
 CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head"
 
 
+def _nonnegative_count(raw) -> int:
+    """Normalize a participant count from an API or HTML form payload.
+
+    Django's request payloads keep number inputs as strings.  Costing is also
+    called by JSON clients and by persisted-model serializers, so this pure
+    engine deliberately accepts either representation.  Invalid or negative
+    values contribute zero here; the scheduling/completion services remain
+    responsible for returning their field-specific validation errors.
+    """
+    try:
+        return max(0, int(raw or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
 def _participants_of(a: dict, default_n: int) -> int:
     """Participant quantity for per-head pricing.
 
@@ -69,13 +84,16 @@ def _participants_of(a: dict, default_n: int) -> int:
     silently converted a planned estimate into an actuals-based figure.
     Actuals are used only when no plan was ever captured, ahead of the
     hardcoded default."""
-    expected = a.get("expectedParticipants") or 0
+    expected = _nonnegative_count(a.get("expectedParticipants"))
     if expected > 0:
         return expected
-    counted = (
-        (a.get("teachersAttended") or 0)
-        + (a.get("leadersAttended") or 0)
-        + (a.get("otherParticipants") or 0)
+    counted = sum(
+        _nonnegative_count(a.get(key))
+        for key in (
+            "teachersAttended",
+            "leadersAttended",
+            "otherParticipants",
+        )
     )
     return counted if counted > 0 else default_n
 
@@ -245,10 +263,13 @@ def resolve_activity_cost(
     snapshot_lines: list[dict] | None = None,
 ) -> ActivityCost:
     """Prefer schedule-time snapshot; recalc from attendance when actuals exist."""
-    attended = (
-        (a.get("teachersAttended") or 0)
-        + (a.get("leadersAttended") or 0)
-        + (a.get("otherParticipants") or 0)
+    attended = sum(
+        _nonnegative_count(a.get(key))
+        for key in (
+            "teachersAttended",
+            "leadersAttended",
+            "otherParticipants",
+        )
     )
     if attended > 0:
         return cost_for_activity(a, rates)

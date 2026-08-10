@@ -181,7 +181,7 @@ class ACreatedClusterKeepsItsOwnerTest(TestCase):
             active_role=EdifyRole.ADMIN.value,
             is_active=True,
         )
-        StaffProfile.objects.create(user=self.admin, title="Admin")
+        self.admin_profile = StaffProfile.objects.create(user=self.admin, title="Admin")
 
         self.cceo = User.objects.create(
             email="cceo@owner.test",
@@ -201,6 +201,12 @@ class ACreatedClusterKeepsItsOwnerTest(TestCase):
         )
         StaffSchoolAssignment.objects.create(
             staff=self.cceo_profile, school_id=school.id
+        )
+        # Cluster creation is a direct-portfolio write. Give the Admin the
+        # district portfolio this fixture intends to exercise; country-wide
+        # read visibility alone must not grant cluster mutation authority.
+        StaffSchoolAssignment.objects.create(
+            staff=self.admin_profile, school_id=school.id
         )
 
     def test_the_create_drawer_offers_the_field(self):

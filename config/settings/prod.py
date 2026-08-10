@@ -215,7 +215,14 @@ SECURE_SSL_REDIRECT = _truthy(os.environ.get("SECURE_SSL_REDIRECT"), fallback=Tr
 SECURE_REDIRECT_EXEMPT = [r"^api/health(/|$)"]
 SESSION_COOKIE_SECURE = _truthy(os.environ.get("SESSION_COOKIE_SECURE"), fallback=True)
 CSRF_COOKIE_SECURE = _truthy(os.environ.get("CSRF_COOKIE_SECURE"), fallback=True)
-SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30  # 30 days
+# One year. The header previously advertised `preload` on a 30-day max-age,
+# which no browser accepts: the preload list requires >= 31536000, so the
+# directive was inert and the site was claiming a protection it did not have.
+# A year is the standard production value and stays reversible by lowering it
+# — actual submission to the preload list is a separate, deliberate step and
+# is much harder to undo, so it remains a human decision, not a side effect of
+# this setting.
+SECURE_HSTS_SECONDS = 60 * 60 * 24 * 365  # 1 year — preload-list minimum
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

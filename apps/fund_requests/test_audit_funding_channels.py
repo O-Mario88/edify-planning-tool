@@ -184,6 +184,104 @@ class PeriodDisburseWritesTheLedgerAmountTest(_ChannelFixture):
         self.assertEqual(self.advance.disbursed_by_user_id, self.accountant.id)
 
 
+class PlannedFundingRequiresAnApprovedLedgerTest(_ChannelFixture):
+    """A period/weekly parent may never move money around the shared ledger."""
+
+    def test_period_disbursement_refuses_a_missing_advance(self):
+        self.advance.delete()
+        fr = self._monthly_request("approved")
+
+        with self.assertRaisesMessage(BadRequest, "missing an approved advance"):
+            services.disburse(fr.id, {}, self.accountant)
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "approved")
+
+    def test_period_disbursement_refuses_every_non_payable_advance_state(self):
+        fr = self._monthly_request("approved")
+        for status in (
+            "self_funded_pending_reimbursement",
+            "not_requested",
+            "returned",
+            "cancelled",
+            "disbursed",
+        ):
+            with self.subTest(status=status):
+                self.advance.status = status
+                self.advance.save(update_fields=["status", "updated_at"])
+                with self.assertRaisesMessage(
+                    BadRequest, "missing an approved advance"
+                ):
+                    services.disburse(fr.id, {}, self.accountant)
+                fr.refresh_from_db()
+                self.assertEqual(fr.status, "approved")
+
+    def test_approved_period_request_can_release_a_pending_schedule_ledger(self):
+        fr = self._monthly_request("approved")
+
+        services.disburse(fr.id, {}, self.accountant)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "disbursed")
+
+    def test_second_period_request_for_the_same_line_is_refused(self):
+        self.advance.status = "confirmed_for_advance"
+        self.advance.save(update_fields=["status", "updated_at"])
+        own = self._monthly_request("approved", scope="own")
+        team = self._monthly_request("approved", scope="team")
+
+        services.disburse(own.id, {}, self.accountant)
+        with self.assertRaisesMessage(BadRequest, "already had money released"):
+            services.disburse(team.id, {}, self.accountant)
+
+        team.refresh_from_db()
+        self.assertEqual(team.status, "approved")
+
+    def test_period_disbursement_refuses_items_with_no_cost_line_linkage(self):
+        """The guard must run even when NO item carries a cost line.
+
+        `services.disburse` used to call the guard only `if line_ids`, so a
+        request whose items were all unlinked skipped the shared ledger
+        entirely and released money with no traceable Planning source. The
+        dashboard and weekly channels always call it; this one now does too."""
+        fr = self._monthly_request("approved")
+        fr.items.update(activity_schedule_cost_line_id="")
+
+        with self.assertRaisesMessage(BadRequest, "no approved budget-line ledger"):
+            services.disburse(fr.id, {}, self.accountant)
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "approved")
+        self.advance.refresh_from_db()
+        self.assertEqual(
+            self.advance.status,
+            "pending_responsible_confirmation",
+            "an unlinked request must not touch the shared ledger at all",
+        )
+
+    def test_dashboard_disbursement_refuses_a_missing_advance(self):
+        self.advance.delete()
+        fr = self._monthly_request("sent_to_accountant")
+
+        with self.assertRaisesMessage(BadRequest, "missing an approved advance"):
+            disbursement_dashboard_service.disburse(self.accountant, fr.id, {})
+
+        fr.refresh_from_db()
+        self.assertEqual(fr.status, "sent_to_accountant")
+
+    def test_weekly_disbursement_refuses_a_missing_advance(self):
+        from apps.fund_requests import weekly_service
+
+        self.advance.delete()
+        weekly = self._weekly_request("confirmed_for_advance")
+
+        with self.assertRaisesMessage(BadRequest, "missing an approved advance"):
+            weekly_service.disburse(weekly.id, {}, self.accountant)
+
+        weekly.refresh_from_db()
+        self.assertEqual(weekly.status, "confirmed_for_advance")
+
+
 class DashboardDisburseWritesTheLedgerAmountTest(_ChannelFixture):
     """F1/F2 — the dashboard path must write disbursed_amount and only write
     Disbursement audit rows for money it actually moved."""

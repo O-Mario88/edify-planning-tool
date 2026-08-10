@@ -296,6 +296,9 @@ class SchedulerHealthService:
 
     @staticmethod
     def job_health(job_name: str) -> dict:
+        from apscheduler.triggers.cron import CronTrigger
+        from django.conf import settings
+
         from .models import ScheduledJobExecution
 
         spec = get_spec(job_name)
@@ -312,17 +315,35 @@ class SchedulerHealthService:
         now = timezone.now()
 
         never_run = latest is None
+        first_due = None
+        not_due_yet = False
+        if spec and never_run:
+            scheduler_started = (
+                ScheduledJobExecution.objects.filter(job_name__in=JOB_NAMES)
+                .order_by("started_at")
+                .values_list("started_at", flat=True)
+                .first()
+            )
+            if scheduler_started:
+                trigger = CronTrigger(
+                    timezone=settings.TIME_ZONE,
+                    **spec.cron_kwargs,
+                )
+                first_due = trigger.get_next_fire_time(None, scheduler_started)
+                not_due_yet = bool(first_due and first_due > now)
         overdue = False
         if spec and latest_success:
             overdue = (now - latest_success.started_at) > timedelta(
                 minutes=spec.max_interval_minutes
             )
-        elif spec and never_run:
+        elif spec and never_run and not not_due_yet:
             overdue = True
 
         failed = bool(latest and latest.status == "failed")
 
-        if never_run:
+        if never_run and not_due_yet:
+            status, severity = "scheduled", "ok"
+        elif never_run:
             status, severity = "never_run", "critical"
         elif failed:
             status, severity = "failed", "critical"
@@ -339,6 +360,7 @@ class SchedulerHealthService:
             "last_started": latest.started_at if latest else None,
             "last_completed": latest.completed_at if latest else None,
             "last_successful": latest_success.started_at if latest_success else None,
+            "next_due": first_due,
             "duration_seconds": latest.duration_seconds if latest else None,
             "failure_count": ScheduledJobExecution.objects.filter(
                 job_name=job_name, status="failed"
@@ -354,16 +376,22 @@ class SchedulerHealthService:
         return [SchedulerHealthService.job_health(spec.name) for spec in JOB_REGISTRY]
 
     @staticmethod
-    def is_scheduler_process_alive(stale_after_minutes: int = 10) -> bool:
+    def is_scheduler_process_alive(stale_after_minutes: int = 20) -> bool:
         """Heartbeat check: has ANY job execution started recently enough
         that the scheduler process itself is plausibly still running (as
-        opposed to every job independently going overdue)."""
+        opposed to every job independently going overdue).
+
+        The most frequent guaranteed job runs every 15 minutes. A ten-minute
+        window therefore produced a false outage for five minutes of every
+        quarter hour. Twenty minutes covers one cadence plus bounded
+        scheduling/database jitter; individual jobs retain their stricter
+        registry-specific overdue thresholds.
+        """
         from .models import ScheduledJobExecution
 
         cutoff = timezone.now() - timedelta(minutes=stale_after_minutes)
-        # At minimum, notification_escalation runs hourly -- if nothing at
-        # all has started in `stale_after_minutes` and jobs are enabled,
-        # treat the scheduler process as suspect rather than trusting silence.
+        # If nothing at all has started within the bounded window, treat the
+        # scheduler process as suspect rather than trusting configuration.
         return ScheduledJobExecution.objects.filter(started_at__gte=cutoff).exists()
 
     @staticmethod

@@ -293,7 +293,9 @@ class DesignSystemContractTest(SimpleTestCase):
         school_id = row.index('class="school-record-row__school-id"', icon)
         headline = row.index('class="core-school-row__headline"')
         title = row.index('class="school-record-row__title"', headline)
-        actions = row.index('class="school-record-row__actions core-school-row__actions"', title)
+        actions = row.index(
+            'class="school-record-row__actions core-school-row__actions"', title
+        )
         metadata = row.index('class="school-record-row__metadata"', actions)
 
         self.assertLess(icon, school_id)

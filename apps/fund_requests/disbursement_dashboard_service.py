@@ -1429,38 +1429,21 @@ def disburse(principal, fund_request_id, data=None):
             )
         fraction = amount / fr.total_amount if fr.total_amount else 0
 
-        # Cross-channel guard. AdvanceRequest is the one shared ledger every
-        # disbursement channel converges on (see MONEY_MOVED_ADVANCE_STATUSES
-        # in models.py), and services.py:307 already refuses on this basis.
-        # This path did not, so the same ActivityScheduleCostLine could be paid
-        # once here and once via the Weekly Advance button on the very same
-        # screen -- reproduced end to end as 250,000 UGX released as 500,000.
-        from .models import (
-            MONEY_MOVED_ADVANCE_STATUSES,
-            AdvanceRequest,
-            AdvanceRequestStatus,
-        )
+        from .models import AdvanceRequest, AdvanceRequestStatus
 
         line_ids = [
             i.activity_schedule_cost_line_id
             for i in fr.items.all()
             if i.activity_schedule_cost_line_id
         ]
-        if line_ids:
-            clash = (
-                AdvanceRequest.objects.select_for_update()
-                .filter(
-                    budget_line_id__in=line_ids,
-                    status__in=MONEY_MOVED_ADVANCE_STATUSES,
-                )
-                .count()
-            )
-            if clash:
-                raise BadRequest(
-                    f"Cannot disburse — {clash} of this plan's budget lines "
-                    "already had money released through the weekly/advance "
-                    "queue. Releasing again would pay the same work twice."
-                )
+        from .funding_guard import (
+            PERIOD_DISBURSABLE_ADVANCE_STATUSES,
+            lock_disbursable_advances,
+        )
+
+        locked_advances = lock_disbursable_advances(
+            line_ids, allowed_statuses=PERIOD_DISBURSABLE_ADVANCE_STATUSES
+        )
 
         fr.status = "disbursed"
         fr.disbursed_amount = amount
@@ -1484,51 +1467,30 @@ def disburse(principal, fund_request_id, data=None):
         # budget lines it actually flipped. Without the update the guard is
         # one-directional: the weekly/advance queue would still see these lines
         # as unpaid and release them a second time.
-        flipped_line_ids: set[str] = set()
-        stale_line_ids: set[str] = set()
-        if line_ids:
-            flipped_line_ids = set(
-                AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
-                .exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES)
-                .values_list("budget_line_id", flat=True)
+        flipped_line_ids = {str(advance.budget_line_id) for advance in locked_advances}
+        if locked_advances:
+            AdvanceRequest.objects.filter(
+                id__in=[advance.id for advance in locked_advances]
+            ).update(
+                status=AdvanceRequestStatus.DISBURSED,
+                # Each advance mirrors one budget line, so its line amount
+                # is what this release moves — without this every budget
+                # rollup summing advance disbursed_amount reported UGX 0
+                # disbursed for money released through this channel.
+                disbursed_amount=F("amount"),
+                disbursed_at=now,
+                disbursed_by_user_id=principal.user_id,
+                disburse_method=method,
+                disburse_reference=reference,
+                updated_at=now,
             )
-            # Lines whose advance exists but did NOT flip: their money already
-            # moved through another channel. The clash guard above refuses the
-            # whole release when any exist; this set backstops it so a stale
-            # item can never earn a second Disbursement audit row.
-            stale_line_ids = (
-                set(
-                    AdvanceRequest.objects.filter(
-                        budget_line_id__in=line_ids
-                    ).values_list("budget_line_id", flat=True)
-                )
-                - flipped_line_ids
-            )
-            if flipped_line_ids:
-                AdvanceRequest.objects.filter(
-                    budget_line_id__in=flipped_line_ids,
-                ).exclude(status__in=MONEY_MOVED_ADVANCE_STATUSES).update(
-                    status=AdvanceRequestStatus.DISBURSED,
-                    # Each advance mirrors one budget line, so its line amount
-                    # is what this release moves — without this every budget
-                    # rollup summing advance disbursed_amount reported UGX 0
-                    # disbursed for money released through this channel.
-                    disbursed_amount=F("amount"),
-                    disbursed_at=now,
-                    disbursed_by_user_id=principal.user_id,
-                    disburse_method=method,
-                    disburse_reference=reference,
-                    updated_at=now,
-                )
 
         # One DisbursementRecord per activity the plan actually funds — the same
         # audit trail apps.fund_requests.finance_services.AdvanceDisbursementService
         # writes for single-activity advances. Disbursement.activity is required,
         # so a month-level release still needs one row per activity it covers;
-        # split proportionally when a partial amount was released. Items whose
-        # ledger row was already money-moved are skipped (see stale_line_ids);
-        # items with no ledger row at all are still recorded, because this
-        # channel is the only one that can release their money.
+        # split proportionally when a partial amount was released. Every item
+        # has an approved, locked ledger row at this point.
         Disbursement.objects.bulk_create(
             [
                 Disbursement(
@@ -1542,7 +1504,7 @@ def disburse(principal, fund_request_id, data=None):
                     notes=f"Monthly fund plan {fr.period_key}",
                 )
                 for item in fr.items.all()
-                if item.activity_schedule_cost_line_id not in stale_line_ids
+                if item.activity_schedule_cost_line_id in flipped_line_ids
             ]
         )
 

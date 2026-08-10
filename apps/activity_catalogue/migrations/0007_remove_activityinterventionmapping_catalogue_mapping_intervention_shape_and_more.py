@@ -4,42 +4,85 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activity_catalogue', '0006_programme_event_cost_profiles'),
+        ("activity_catalogue", "0006_programme_event_cost_profiles"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='activityinterventionmapping',
-            name='catalogue_mapping_intervention_shape',
+            model_name="activityinterventionmapping",
+            name="catalogue_mapping_intervention_shape",
         ),
         migrations.AddField(
-            model_name='activitycatalogueitem',
-            name='certified_agency_delivery_allowed',
+            model_name="activitycatalogueitem",
+            name="certified_agency_delivery_allowed",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='activitycatalogueitem',
-            name='participant_mode',
-            field=models.CharField(choices=[('none', 'No participants'), ('direct_total', 'Total entered directly'), ('per_school', 'Participants per school × active schools'), ('by_category', 'Teachers + leaders + other')], default='none', max_length=16),
+            model_name="activitycatalogueitem",
+            name="participant_mode",
+            field=models.CharField(
+                choices=[
+                    ("none", "No participants"),
+                    ("direct_total", "Total entered directly"),
+                    ("per_school", "Participants per school × active schools"),
+                    ("by_category", "Teachers + leaders + other"),
+                ],
+                default="none",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='activitycatalogueitem',
-            name='standard_support',
+            model_name="activitycatalogueitem",
+            name="standard_support",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='activityinterventionmapping',
-            name='mapping_mode',
-            field=models.CharField(choices=[('fixed', 'Fixed'), ('multiple_allowed', 'Multiple allowed'), ('inherit_from_source_activity', 'Inherit from source activity'), ('ssa_completion_prerequisite', 'SSA completion prerequisite'), ('administrative', 'Administrative'), ('any_ssa_intervention', 'Any SSA intervention (planner selects)')], max_length=48),
+            model_name="activityinterventionmapping",
+            name="mapping_mode",
+            field=models.CharField(
+                choices=[
+                    ("fixed", "Fixed"),
+                    ("multiple_allowed", "Multiple allowed"),
+                    ("inherit_from_source_activity", "Inherit from source activity"),
+                    ("ssa_completion_prerequisite", "SSA completion prerequisite"),
+                    ("administrative", "Administrative"),
+                    ("any_ssa_intervention", "Any SSA intervention (planner selects)"),
+                ],
+                max_length=48,
+            ),
         ),
         migrations.AddConstraint(
-            model_name='activitycatalogueitem',
-            constraint=models.UniqueConstraint(condition=models.Q(('standard_support', True), ('status', 'active')), fields=('workflow_kind',), name='uniq_active_standard_support_per_workflow_kind'),
+            model_name="activitycatalogueitem",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("standard_support", True), ("status", "active")),
+                fields=("workflow_kind",),
+                name="uniq_active_standard_support_per_workflow_kind",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='activityinterventionmapping',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('intervention__isnull', True), ('mapping_mode__in', ['ssa_completion_prerequisite', 'administrative', 'inherit_from_source_activity', 'any_ssa_intervention'])), models.Q(('intervention__isnull', False), ('mapping_mode__in', ['fixed', 'multiple_allowed'])), _connector='OR'), name='catalogue_mapping_intervention_shape'),
+            model_name="activityinterventionmapping",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(
+                        ("intervention__isnull", True),
+                        (
+                            "mapping_mode__in",
+                            [
+                                "ssa_completion_prerequisite",
+                                "administrative",
+                                "inherit_from_source_activity",
+                                "any_ssa_intervention",
+                            ],
+                        ),
+                    ),
+                    models.Q(
+                        ("intervention__isnull", False),
+                        ("mapping_mode__in", ["fixed", "multiple_allowed"]),
+                    ),
+                    _connector="OR",
+                ),
+                name="catalogue_mapping_intervention_shape",
+            ),
         ),
     ]

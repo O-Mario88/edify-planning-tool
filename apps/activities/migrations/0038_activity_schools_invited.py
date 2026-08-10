@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0037_backfill_executor_type'),
+        ("activities", "0037_backfill_executor_type"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='schools_invited',
+            model_name="activity",
+            name="schools_invited",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

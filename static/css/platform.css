@@ -2001,7 +2001,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   main .pl-ssa-matrix.edify-mobile-table--fit :is(th, td) {
     min-inline-size: 0 !important;
     padding-inline: 0.125rem !important;
-    font-size: 0.625rem !important;
+    font-size: var(--edify-text-label-size) !important;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2186,7 +2186,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-row__id {
   flex: 0 0 auto;
   color: var(--edify-text-subtle);
-  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 600 var(--edify-text-micro-size)/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -2632,7 +2632,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .planning-school-row__id {
   flex: 0 0 auto;
   color: var(--edify-text-subtle);
-  font: 600 0.625rem/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font: 600 var(--edify-text-micro-size)/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: 0.04em;
 }
 

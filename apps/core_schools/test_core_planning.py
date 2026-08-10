@@ -15,7 +15,9 @@ from __future__ import annotations
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
 
 from apps.accounts.models import (
     StaffProfile,
@@ -956,4 +958,36 @@ class CoreSchoolsPlanningTest(TestCase):
                 core_plan=plan, activity_type="assessment"
             ).count(),
             1,
+        )
+
+    def test_self_heal_loads_latest_ssa_for_the_cohort_in_one_query(self):
+        """Adding schools must not add one reverse-FK read per school."""
+        from apps.core_schools.core_planning_services import CoreSchoolsService
+
+        for index in range(3):
+            school = self._school(
+                f"CORE-BULK-{index}", f"Bulk Core {index}", self.cceo_sp
+            )
+            SsaRecord.objects.create(
+                school=school,
+                fy=FY,
+                quarter="Q1",
+                average_score=5.0 + index,
+                verification_status="confirmed",
+                date_of_ssa=date(int(FY) - 1, 11, 5),
+                uploaded_by="test",
+            )
+
+        with CaptureQueriesContext(connection) as queries:
+            CoreSchoolsService.get_core_schools(self.cceo, {"fy": FY})
+
+        ssa_reads = [
+            query["sql"]
+            for query in queries.captured_queries
+            if 'FROM "ssa_record"' in query["sql"]
+        ]
+        self.assertEqual(
+            len(ssa_reads),
+            1,
+            f"Expected one cohort SSA read, saw {len(ssa_reads)}: {ssa_reads}",
         )

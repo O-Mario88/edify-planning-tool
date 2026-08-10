@@ -181,14 +181,14 @@ class PlanningReadinessTestCase(TestCase):
         self.assertEqual(cost.amount, 120000)
         self.assertEqual(cost.lines[0].key, "core_school_visit")
 
-    def test_partner_visit_rate_basis_per_school(self):
+    def test_partner_visit_rate_basis_per_activity(self):
         from apps.budget.costing import cost_for_activity
 
-        rates = {"partner_school_visit_rate": 45000}
+        rates = {"partner_visit_lump_sum": 45000}
         a = {"activityType": "school_visit", "deliveryType": "partner"}
         cost = cost_for_activity(a, rates)
         self.assertEqual(cost.amount, 45000)
-        self.assertIn("[Rate basis: per school]", cost.lines[0].label)
+        self.assertIn("[Rate basis: per activity]", cost.lines[0].label)
 
 
 class CoreSummarySecondRoundPendingTestCase(TestCase):

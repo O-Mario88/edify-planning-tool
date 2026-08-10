@@ -260,7 +260,7 @@ class OneWayToHandWorkToAPartnerTests(SimpleTestCase):
             return
         self.assertIn('value="certified_partner_agency"', source)
         self.assertIn("certified_agencies", source)
-        self.assertIn("x-if=\"showAgency\"", source)
+        self.assertIn('x-if="showAgency"', source)
 
     def test_it_offers_no_delivery_type_choice(self):
         """Who DELIVERS may be a question; who is USING the drawer is not.

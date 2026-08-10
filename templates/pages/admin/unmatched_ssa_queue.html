@@ -117,14 +117,14 @@
 <input type="hidden" name="action" value="match">
 
 <span class="edify-filter-label">School ID</span>
-<select aria-label="School ID" name="school_id" required class="text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
+<!-- The full school list is identical for every row, so it is rendered ONCE
+     below and copied in on first interaction. Repeating it per row shipped
+     16,274 options x ~33 rows = 37MB of HTML and a 61-second page. -->
+<select aria-label="School ID" name="school_id" required data-school-picker class="text-[12px] bg-slate-50 border border-slate-200 rounded-control px-2 py-1 max-w-[160px] focus:outline-none font-semibold">
 <option value="">-- Select school --</option>
 {% if r.suggested_school %}
 <option value="{{ r.suggested_school.id }}" selected>Suggested: {{ r.suggested_school.name }} ({{ r.suggested_school.school_id }})</option>
 {% endif %}
-{% for school in schools %}
-<option value="{{ school.id }}">{{ school.name }} ({{ school.school_id }})</option>
-{% endfor %}
 </select>
 
 <button type="submit" class="px-3 py-1.5 edify-primary-solid edify-primary-hover text-white font-semibold edify-text-caption rounded-control transition-all shadow-sm">
@@ -177,6 +177,40 @@ No unmatched SSA records match this filter.
 </tbody>
 </table>
 </div>
+
+<!--
+  One copy of the school list for the whole page.
+
+  Every row's picker offers the same 16,274 active schools, so rendering the
+  options inside each row multiplied them by the page size: ~33 rows x 16,274
+  options was 37MB of HTML and a 61-second response on production. The list is
+  emitted once here and copied into a picker the first time someone opens it,
+  which leaves the posted field (`school_id`, a School pk) exactly as it was.
+-->
+<template id="ssa-school-options">
+{% for school in schools %}<option value="{{ school.id }}">{{ school.name }} ({{ school.school_id }})</option>{% endfor %}
+</template>
+<script>
+(function () {
+  var source = document.getElementById("ssa-school-options");
+  if (!source) return;
+  function fill(select) {
+    if (select.dataset.schoolsLoaded) return;
+    select.dataset.schoolsLoaded = "1";
+    select.appendChild(source.content.cloneNode(true));
+  }
+  // Populate on first interaction, and on submit so a keyboard-only or
+  // programmatic submit can never post an empty picker.
+  document.querySelectorAll("[data-school-picker]").forEach(function (select) {
+    ["focus", "pointerdown", "keydown"].forEach(function (evt) {
+      select.addEventListener(evt, function () { fill(select); }, { once: true });
+    });
+    if (select.form) {
+      select.form.addEventListener("submit", function () { fill(select); });
+    }
+  });
+})();
+</script>
 
 <!-- Pagination -->
 {% if records_page.paginator.num_pages > 1 %}

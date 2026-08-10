@@ -322,3 +322,76 @@ class AnalyticsQueryPerformanceTest(TestCase):
             for r in RVPDashboardService.region_ranking(cd_d1, acts_d1, FY)
         }
         self.assertEqual(region_ranking_d1, {"North Region": 2})  # only D1's 2 schools
+
+
+class CountryMapIsBuiltOncePerFiscalYearTest(TestCase):
+    """The shared analytics map is country-wide by contract — its ONLY filter is
+    the fiscal year — yet four surfaces (PL analytics, CD analytics, the
+    analytics dashboard and projects impact) each rebuilt it from scratch on
+    every page load, aggregating every district and sub-county each time.
+
+    It is now cached per FY and shared across viewers. Sharing is sound here
+    precisely because the payload carries no role, portfolio or user scope; the
+    calling view still enforces permission before this code is reached.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        region = Region.objects.create(name="Map Cache Region")
+        district = District.objects.create(name="Map Cache District", region=region)
+        School.objects.create(
+            school_id="SCH-MAP-CACHE",
+            name="Map Cache Primary",
+            region=region,
+            district=district,
+        )
+
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    def test_cache_returns_the_same_payload_the_uncached_builder_produces(self):
+        """Correctness first: the cache must not change what the map reports."""
+        from apps.analytics.country_map_context import (
+            _country_map_context_uncached,
+            country_map_context,
+        )
+
+        with self.settings(COUNTRY_MAP_CACHE_SECONDS=300):
+            cached = country_map_context(FY)
+        direct = _country_map_context_uncached(FY)
+
+        self.assertEqual(cached["school_type_totals"], direct["school_type_totals"])
+        self.assertEqual(
+            sorted(cached["district_insight"]), sorted(direct["district_insight"])
+        )
+
+    def test_second_build_of_the_same_fy_runs_no_queries(self):
+        from apps.analytics.country_map_context import country_map_context
+
+        with self.settings(COUNTRY_MAP_CACHE_SECONDS=300):
+            country_map_context(FY)
+            with CaptureQueriesContext(connection) as second:
+                country_map_context(FY)
+
+        self.assertEqual(
+            len(second.captured_queries),
+            0,
+            "the country map must be rebuilt once per FY, not once per viewer",
+        )
+
+    def test_a_different_fiscal_year_is_not_served_the_cached_payload(self):
+        from apps.analytics.country_map_context import country_map_context
+
+        with self.settings(COUNTRY_MAP_CACHE_SECONDS=300):
+            country_map_context(FY)
+            with CaptureQueriesContext(connection) as other_fy:
+                country_map_context(str(int(FY) - 1))
+
+        self.assertGreater(
+            len(other_fy.captured_queries),
+            0,
+            "the cache key must include the FY or the map would show stale-year data",
+        )

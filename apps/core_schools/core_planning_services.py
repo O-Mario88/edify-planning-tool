@@ -354,15 +354,30 @@ class CoreSchoolsService:
 
         # 1. Self-healing check: ensure all core schools have a CorePlan for the current FY
         fy = filters.get("fy") or get_operational_fy()
-        uninitialized_schools = core_schools_qs.exclude(
-            school_id__in=CorePlan.objects.filter(fy=fy).values_list(
-                "school_id", flat=True
+        uninitialized_schools = list(
+            core_schools_qs.exclude(
+                school_id__in=CorePlan.objects.filter(fy=fy).values_list(
+                    "school_id", flat=True
+                )
             )
         )
-        if uninitialized_schools.exists():
+        if uninitialized_schools:
             from django.db import transaction
 
             interventions = [i.value for i in SsaIntervention]
+            # One bounded query for the cohort, rather than one reverse-FK
+            # lookup per school.  Keep this portable across PostgreSQL and the
+            # SQLite test database by selecting the first row per school in
+            # Python from an explicitly ordered result set.
+            latest_ssa_by_school = {}
+            confirmed_records = SsaRecord.objects.filter(
+                school_id__in=[school.id for school in uninitialized_schools],
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            ).order_by("school_id", "-date_of_ssa", "-created_at")
+            for record in confirmed_records:
+                latest_ssa_by_school.setdefault(record.school_id, record)
+
             # Provenance for auto-created plans/slots — same shape as the
             # audited onboard() path (created_by_id/created_by_name), so a
             # self-healed record is never indistinguishable from a hand-made
@@ -370,14 +385,7 @@ class CoreSchoolsService:
             actor_id = getattr(user, "user_id", None) or getattr(user, "id", None)
             actor_name = getattr(user, "name", None) or "System (auto-heal)"
             for s in uninitialized_schools:
-                latest = (
-                    s.ssa_records.filter(
-                        deleted_at__isnull=True,
-                        verification_status="confirmed",
-                    )
-                    .order_by("-date_of_ssa", "-created_at")
-                    .first()
-                )
+                latest = latest_ssa_by_school.get(s.id)
                 if not latest:
                     # SSA gate: mirrors the official onboard() path, which
                     # only ever runs after IA has verified an SSA-backed
@@ -1232,7 +1240,7 @@ class CoreStaffPartnerPerformanceService:
         for p in plans:
             delta = p.follow_up_average - p.baseline_average
             # If the school has partner slots scheduled/completed
-            is_partner = p.slots.filter(owner="partner").exists()
+            is_partner = any(slot.owner == "partner" for slot in p.slots.all())
             if is_partner:
                 partner_deltas.append(delta)
             else:
@@ -1264,24 +1272,71 @@ class CoreStaffPartnerPerformanceService:
                 else "–"
             )
 
-        # A row appears only for staff who actually own schools in scope; a
-        # portfolio with no scored schools reads "insufficient", never 0.
+        # ── One read of the cohort, then group in memory ──────────────────
+        #
+        # These three blocks used to walk every StaffProfile, every Partner
+        # and every Region, running a .count() and a two-query average for
+        # each — 101 queries of the page's 258, on a page that then keeps the
+        # top FIVE rows of each and discards the rest. The work was real and
+        # almost all of it was thrown away.
+        #
+        # The cohort is core schools only, so it is small enough to group in
+        # Python. What must not change is WHICH average each row reports:
+        # staff and partner rows use the latest verified-or-not record per
+        # school (CoreAssessmentService.get_average_score), while regions
+        # deliberately average every confirmed record. Those are different
+        # numbers and both are intentional, so they are computed separately
+        # below rather than unified into one convenient figure.
+        cohort = list(
+            core_schools_qs.values_list("id", "account_owner_id", "region_id")
+        )
+        cohort_ids = [row[0] for row in cohort]
+
+        latest_ids = list(
+            SsaRecord.objects.filter(school_id__in=cohort_ids, deleted_at__isnull=True)
+            .order_by("school_id", "-date_of_ssa")
+            .distinct("school_id")
+            .values_list("id", flat=True)
+        )
+        latest_by_school = dict(
+            SsaRecord.objects.filter(id__in=latest_ids).values_list(
+                "school_id", "average_score"
+            )
+        )
+
+        def _grouped_score(school_ids):
+            """The latest-record average for a group, or None if unscored."""
+            scores = [
+                latest_by_school[sid]
+                for sid in school_ids
+                if latest_by_school.get(sid) is not None
+            ]
+            if not scores:
+                return None
+            return round(round(sum(scores) / len(scores), 2), 1) or None
+
+        # account_owner_id holds either a StaffProfile id or a User id
+        # depending on how the school was assigned, so both spaces map to the
+        # same person — the original `__in=[staff.id, staff.user_id]`.
+        owner_schools: dict[str, list[str]] = {}
+        for school_id, owner_id, _region_id in cohort:
+            if owner_id:
+                owner_schools.setdefault(owner_id, []).append(school_id)
+
         staff_insights = []
         for staff in StaffProfile.objects.all().select_related("user"):
-            staff_schools = core_schools_qs.filter(
-                account_owner_id__in=[staff.id, staff.user_id]
+            school_ids = owner_schools.get(staff.id, []) + owner_schools.get(
+                staff.user_id, []
             )
-            count = staff_schools.count()
-            if not count:
+            if not school_ids:
                 continue
-            avg = CoreAssessmentService.get_average_score(staff_schools)
-            score = round(avg, 1) if avg else None
+            score = _grouped_score(school_ids)
             staff_insights.append(
                 {
                     "name": staff.user.name,
                     "initials": _initials(staff.user.name),
                     "score": score,
-                    "school_count": count,
+                    "school_count": len(school_ids),
                     "vs_avg": _vs_avg(score),
                     "insufficient": score is None,
                 }
@@ -1289,26 +1344,26 @@ class CoreStaffPartnerPerformanceService:
         staff_insights.sort(key=lambda r: (r["score"] is None, -(r["score"] or 0)))
         staff_insights = staff_insights[:5]
 
+        cohort_id_set = set(cohort_ids)
+        partner_schools: dict[str, set[str]] = {}
+        for partner_id, school_id in PartnerAssignment.objects.filter(
+            school__school_type="core"
+        ).values_list("partner_id", "school_id"):
+            if school_id in cohort_id_set:
+                partner_schools.setdefault(partner_id, set()).add(school_id)
+
         partner_insights = []
         for part in Partner.objects.all():
-            part_assignments = PartnerAssignment.objects.filter(
-                partner=part, school__school_type="core"
-            )
-            if not part_assignments.exists():
+            school_ids = partner_schools.get(part.id)
+            if not school_ids:
                 continue
-            assigned_school_ids = part_assignments.values_list("school_id", flat=True)
-            partner_schools = core_schools_qs.filter(id__in=assigned_school_ids)
-            count = partner_schools.count()
-            if not count:
-                continue
-            avg = CoreAssessmentService.get_average_score(partner_schools)
-            score = round(avg, 1) if avg else None
+            score = _grouped_score(school_ids)
             partner_insights.append(
                 {
                     "name": part.name,
                     "initials": _initials(part.name),
                     "score": score,
-                    "school_count": count,
+                    "school_count": len(school_ids),
                     "vs_avg": _vs_avg(score),
                     "insufficient": score is None,
                 }
@@ -1319,23 +1374,38 @@ class CoreStaffPartnerPerformanceService:
         # Regions: scoped to THIS cohort's schools and verified records only
         # (the previous version averaged every SSA in the region, scoped or
         # not). Regions with no scored core schools read as insufficient.
-        region_insights = []
-        for reg in Region.objects.all():
-            reg_schools = core_schools_qs.filter(region=reg)
-            count = reg_schools.count()
-            if not count:
-                continue
-            avg_reg = SsaRecord.objects.filter(
-                school__in=reg_schools,
+        # Confirmed records only, and EVERY confirmed record rather than the
+        # latest per school — different from the staff/partner figure above
+        # on purpose, so it is aggregated separately. One grouped query
+        # replaces a count plus an average per region.
+        region_schools: dict[str, list[str]] = {}
+        for school_id, _owner_id, region_id in cohort:
+            if region_id:
+                region_schools.setdefault(region_id, []).append(school_id)
+
+        region_averages = {
+            row["school__region_id"]: row["avg"]
+            for row in SsaRecord.objects.filter(
+                school_id__in=cohort_ids,
                 deleted_at__isnull=True,
                 verification_status="confirmed",
-            ).aggregate(avg=Avg("average_score"))["avg"]
+            )
+            .values("school__region_id")
+            .annotate(avg=Avg("average_score"))
+        }
+
+        region_insights = []
+        for reg in Region.objects.all():
+            school_ids = region_schools.get(reg.id)
+            if not school_ids:
+                continue
+            avg_reg = region_averages.get(reg.id)
             score = round(avg_reg, 1) if avg_reg else None
             region_insights.append(
                 {
                     "name": reg.name,
                     "score": score,
-                    "school_count": count,
+                    "school_count": len(school_ids),
                     "vs_avg": _vs_avg(score),
                     "insufficient": score is None,
                 }

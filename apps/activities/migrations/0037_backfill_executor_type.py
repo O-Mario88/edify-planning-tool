@@ -12,9 +12,7 @@ from django.db import migrations
 
 def set_executor_type(apps, schema_editor):
     Activity = apps.get_model("activities", "Activity")
-    Activity.objects.filter(delivery_type="partner").update(
-        executor_type="partner"
-    )
+    Activity.objects.filter(delivery_type="partner").update(executor_type="partner")
     Activity.objects.exclude(delivery_type="partner").update(executor_type="staff")
 
 

@@ -1,7 +1,10 @@
+import hashlib
 import json
 
+from django.conf import settings
 from django.shortcuts import render
 
+from apps.core.cache_utils import stampede_safe_get_or_compute
 from apps.core.permissions import require_page_permission
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 
@@ -12,7 +15,23 @@ def impact_analytics_view(request):
     the SSA scores — and what does the field say where they didn't?"""
     from apps.analytics.decision_engine import impact_analytics_dashboard
 
-    dashboard = impact_analytics_dashboard(request.user, request.GET.dict())
+    # Cached like the Analytics dashboard next door, and for a stronger
+    # reason: this page pulls ~125k improvement rows into pandas and runs
+    # Kruskal-Wallis over them, so it was the single most expensive page on
+    # the platform and it recomputed on EVERY load — including a second load
+    # of the same page by the same person. Keyed by user and role because the
+    # engine scopes to what the viewer may see; a shared key would leak one
+    # region's schools into another's dashboard.
+    query = request.GET.dict()
+    fingerprint = hashlib.sha256(
+        json.dumps(query, sort_keys=True, default=str).encode()
+    ).hexdigest()[:20]
+    dashboard = stampede_safe_get_or_compute(
+        f"impact-dashboard:v1:{request.user.id}:"
+        f"{request.user.active_role}:{fingerprint}",
+        lambda: impact_analytics_dashboard(request.user, query),
+        timeout=settings.IMPACT_DASHBOARD_CACHE_SECONDS,
+    )
     kpis = dashboard["kpis"]
     paired_schools = dashboard["coverage"]["schools_paired"]
     impact_kpi_items = [

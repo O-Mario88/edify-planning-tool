@@ -585,10 +585,9 @@ def bookable_certified_agencies(*, activity_type: str = "", district_name: str =
         # treats as unrestricted everywhere else; narrowing it here only would
         # hide agencies the assignment picker offers.
         qs = qs.filter(
-            Q(coverage_districts__len=0) | Q(coverage_districts__contains=[district_name])
+            Q(coverage_districts__len=0)
+            | Q(coverage_districts__contains=[district_name])
         )
     if activity_type:
-        qs = qs.filter(
-            Q(trains_on__len=0) | Q(trains_on__contains=[activity_type])
-        )
+        qs = qs.filter(Q(trains_on__len=0) | Q(trains_on__contains=[activity_type]))
     return qs

@@ -78,8 +78,13 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertNotIn("school-record-row__select", cluster)
         self.assertNotIn("school-record-row__icon", cluster)
         self.assertNotIn('type="checkbox"', cluster)
-        self.assertLess(cluster.index("cluster-card__metadata"), cluster.index("cluster-ssa-summary"))
-        self.assertLess(cluster.index("cluster-ssa-summary"), cluster.index("expanded-schools-"))
+        self.assertLess(
+            cluster.index("cluster-card__metadata"),
+            cluster.index("cluster-ssa-summary"),
+        )
+        self.assertLess(
+            cluster.index("cluster-ssa-summary"), cluster.index("expanded-schools-")
+        )
         self.assertIn("@container cluster-card (max-width: 30rem)", css)
         self.assertIn("grid-template-columns: max-content minmax(0, 1fr)", css)
         self.assertNotIn("gap-2 md:gap-4", cluster)

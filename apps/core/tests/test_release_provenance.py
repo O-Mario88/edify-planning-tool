@@ -240,7 +240,7 @@ class GlobalFontTest(SimpleTestCase):
     #: Families that may legitimately appear in a font stack: the fallbacks
     #: after Inter, and the generic keywords.
     ALLOWED = {
-        "inter",
+        "geist sans",
         "ui-sans-serif",
         "system-ui",
         "-apple-system",
@@ -270,10 +270,10 @@ class GlobalFontTest(SimpleTestCase):
         "revert",
     }
 
-    def test_inter_is_declared_and_self_hosted(self):
+    def test_geist_is_declared_and_self_hosted(self):
         fonts_css = (REPO / "static/css/fonts.css").read_text()
-        self.assertIn("Inter", fonts_css)
-        for weight in ("InterVariable.woff2",):
+        self.assertIn("Geist Sans", fonts_css)
+        for weight in ("Geist-Variable.woff2", "Geist-Italic-Variable.woff2"):
             self.assertTrue(
                 (REPO / "static/fonts" / weight).exists(),
                 f"{weight} must be committed — a CDN font is a third-party "
