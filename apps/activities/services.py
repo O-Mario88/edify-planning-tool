@@ -10,6 +10,7 @@ cost snapshots, Salesforce ID validation, and the authoritative payment guards
 
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime
 
 from django.db import transaction
@@ -59,6 +60,8 @@ RETURNED_STATUSES = (
     "returned_by_pl",
     "returned_by_ia",
 )
+
+logger = logging.getLogger(__name__)
 
 # Statuses from which a field worker may (re)enter completion: work in progress,
 # plus anything a reviewer returned for correction.
@@ -2145,30 +2148,39 @@ def _ensure_partner_handover(activity: Activity, data: dict) -> None:
     from apps.partners.purposes import normalise_visit_purpose
 
     try:
-        PartnerAssignment.objects.create(
-            school_id=activity.school_id,
-            cluster_id=activity.cluster_id,
-            partner_id=partner_id,
-            assigning_staff_id=activity.responsible_staff_id
-            or activity.monitored_by_staff_id,
-            monitoring_staff_id=activity.monitored_by_staff_id
-            or activity.responsible_staff_id,
-            assignment_mode="specific_activity",
-            catalogue_item_id=activity.catalogue_item_id,
-            purpose=activity.activity_purpose_text or "",
-            purpose_of_visit=normalise_visit_purpose(
-                data.get("purposeOfVisit") or activity.purpose_type,
-                for_partner=True,
-                fallback_activity_type=activity.activity_type,
-            ),
-            focus_intervention=activity.focus_intervention,
-            expected_activity_type=activity.activity_type,
-            scheduled_date=(
-                activity.scheduled_date.date() if activity.scheduled_date else None
-            ),
-            status="partner_scheduled",
-            scheduled_activity=activity,
-        )
+        # A savepoint of its own. The `except` below is deliberate — a missing
+        # handover must never cost us the activity — but catching a *database*
+        # error without a savepoint does not undo it: the surrounding
+        # transaction stays marked for rollback and the next query in it dies
+        # with TransactionManagementError. `create` is called from inside
+        # enclosing transactions (the cluster planner under its lock, daily
+        # visit batches in a loop), so swallowing an IntegrityError here would
+        # have taken the whole caller down instead of one handover record.
+        with transaction.atomic():
+            PartnerAssignment.objects.create(
+                school_id=activity.school_id,
+                cluster_id=activity.cluster_id,
+                partner_id=partner_id,
+                assigning_staff_id=activity.responsible_staff_id
+                or activity.monitored_by_staff_id,
+                monitoring_staff_id=activity.monitored_by_staff_id
+                or activity.responsible_staff_id,
+                assignment_mode="specific_activity",
+                catalogue_item_id=activity.catalogue_item_id,
+                purpose=activity.activity_purpose_text or "",
+                purpose_of_visit=normalise_visit_purpose(
+                    data.get("purposeOfVisit") or activity.purpose_type,
+                    for_partner=True,
+                    fallback_activity_type=activity.activity_type,
+                ),
+                focus_intervention=activity.focus_intervention,
+                expected_activity_type=activity.activity_type,
+                scheduled_date=(
+                    activity.scheduled_date.date() if activity.scheduled_date else None
+                ),
+                status="partner_scheduled",
+                scheduled_activity=activity,
+            )
     except Exception:  # noqa: BLE001
         # The activity is saved and correct; a missing handover is a
         # supervision gap the health board reports and the repair command

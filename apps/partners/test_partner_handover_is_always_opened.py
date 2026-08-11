@@ -131,6 +131,36 @@ class PartnerHandoverIsAlwaysOpenedTest(TestCase):
         _ensure_partner_handover(activity, {})
         self.assertFalse(PartnerAssignment.objects.exists())
 
+    def test_a_failed_handover_does_not_cost_us_the_activity(self):
+        """The `except` is deliberate, and it has to actually work.
+
+        Two bugs lived in this handler and neither could be seen from a green
+        suite, because nothing ever made the create fail. `logger` was never
+        imported in the module, so the handler raised NameError and replaced
+        the real error with a meaningless one. And the create ran without a
+        savepoint: catching a database error does not undo it, so an
+        IntegrityError here would leave the enclosing transaction marked for
+        rollback and kill the next query in it — `create` is called from inside
+        enclosing transactions, so one bad handover would have taken the whole
+        caller down.
+        """
+        from unittest.mock import patch
+
+        from apps.activities.services import _ensure_partner_handover
+        from apps.schools.models import School
+
+        activity = self._activity()
+        with patch.object(
+            PartnerAssignment.objects, "create", side_effect=RuntimeError("boom")
+        ):
+            _ensure_partner_handover(activity, {})  # must not raise
+
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "scheduled")
+        self.assertFalse(PartnerAssignment.objects.exists())
+        # The connection is still usable — the point of the savepoint.
+        self.assertTrue(School.objects.filter(id=self.school.id).exists())
+
     def test_the_health_board_separates_the_two_conditions(self):
         from apps.system_health.planning_oversight_health import (
             _partner_activities_no_assignment_claims,
