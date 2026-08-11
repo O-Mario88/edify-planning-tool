@@ -53,13 +53,16 @@ alerts:
   - rule: DEPLOYMENT_FAILED
 
 databases:
-  # Dev-tier is intentional: staging carries seeded data, not the live estate.
+  # PostgreSQL can use App Platform's dev tier because staging carries seeded
+  # data, not the live estate. DigitalOcean requires Valkey to be backed by a
+  # managed production database resource; there is no development-tier Valkey.
   - name: edifydb
     engine: PG
     production: false
   - name: edifycache
     engine: VALKEY
-    production: false
+    production: true
+    cluster_name: edify-staging-valkey-fra
 
 envs:
   - key: DJANGO_SETTINGS_MODULE
