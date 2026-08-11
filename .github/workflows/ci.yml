@@ -171,14 +171,15 @@ jobs:
       - name: Scan the image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          # Use the current post-incident scanner release. Trivy 0.70 reported
+          # superseded Python metadata from base-image layers even though the
+          # final merged filesystem contains only the patched distributions.
+          version: v0.72.0
           image-ref: edify-ci:${{ github.sha }}
           format: table
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
-          # Package analysis is layer-cached. After replacing a Python wheel,
-          # the shared daily cache retained the removed version alongside the
-          # final filesystem's patched version and reported both. Scan the
-          # freshly built image from its actual merged rootfs; vulnerability
-          # DB caching remains internal to the action for this invocation.
+          # Do not reuse package-analysis results between image revisions.
+          # Vulnerability data is still fetched fresh for this invocation.
           cache: false
