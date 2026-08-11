@@ -14,6 +14,7 @@ from functools import wraps
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.utils.html import escape
 
 from rest_framework.permissions import BasePermission
 
@@ -372,8 +373,31 @@ class RolePermissionService:
 
     @staticmethod
     def can_enter_activity_sf_id(user, activity) -> bool:
+        """Who may stamp the Salesforce Activity ID on a completed activity.
+
+        Ownership, not just role. This asked the role alone, so a Programme
+        Lead — who holds the role — could enter the Salesforce ID on any
+        activity they could reach, including every one of their CCEOs'. §1B
+        lists that among the things supervision does not license: the person
+        who did the work records its reference.
+
+        Impact Assessment and Admin keep the country-wide reach they need to
+        unblock a stalled chain; the monitoring staff member on a
+        partner-delivered activity keeps it too, because accepting the
+        partner's evidence and recording its reference are the same job.
+        """
         role = getattr(user, "active_role", None)
-        return role in ["CCEO", "Program Lead", "ImpactAssessment", "Admin"]
+        if role in ("ImpactAssessment", EdifyRole.ADMIN.value):
+            return True
+        if role not in ("CCEO", "Program Lead"):
+            return False
+        from apps.core.scoping import owner_ids
+
+        mine = owner_ids(user)
+        return (
+            activity.responsible_staff_id in mine
+            or getattr(activity, "monitored_by_staff_id", None) in mine
+        )
 
     @staticmethod
     def can_review_activity(user, activity) -> bool:
@@ -489,12 +513,19 @@ def render_access_denied(request, message: str):
     )
     if is_htmx or (request.META.get("SERVER_NAME") == "testserver" and is_action):
         if is_htmx:
+            # The caller's message, not a fixed one. Every denial used to read
+            # "Your role is not authorized", which is wrong for the commonest
+            # case on this platform: a supervisor reaching into a supervisee's
+            # record holds exactly the right role and is being refused over
+            # *ownership*. Telling them the role is wrong sends them to ask an
+            # administrator for a permission they already have, instead of to
+            # the colleague who owns the work.
             return HttpResponseForbidden(
                 "<div class='p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-surface text-[12.5px] font-black'>"
-                "Security Warning: Your role is not authorized to access this action."
+                f"{escape(message)}"
                 "</div>"
             )
-        return HttpResponseForbidden("Access Denied")
+        return HttpResponseForbidden(message or "Access Denied")
     messages.error(request, message)
     return redirect("/dashboard")
 
@@ -603,6 +634,71 @@ def get_scoped_object_or_404(model, user, *args, **kwargs):
     return obj
 
 
+def get_operational_school_or_404(user, *args, **kwargs):
+    """The write-side twin of `get_scoped_object_or_404`, for schools.
+
+    `can_view_record` answers "may this person *see* this row", and a
+    supervisor may see their whole team's. Drawers and POST handlers that
+    schedule, assign or edit were reading that answer, so a Programme Lead who
+    knew a school id could open the scheduling drawer for a CCEO's school and
+    be refused only later, by the activity service, in its own words.
+
+    This asks `may_plan_school` instead — the direct portfolio — and refuses in
+    the words §8 specifies, so the denial explains that the work belongs to
+    someone else rather than reading as a missing record.
+
+    Schools only, deliberately. `CorePlan.school_id` and its siblings hold the
+    *business* school id while `scope.own_school_ids` holds primary keys, and a
+    helper that quietly compared the two would answer "denied" for everybody.
+    Callers holding one of those rows resolve the School first and ask here.
+    """
+    from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        may_plan_school,
+        resolve_user_scope,
+    )
+    from apps.schools.models import School
+
+    school = get_object_or_404(School, *args, **kwargs)
+    if not RolePermissionService.can_view_record(user, school):
+        raise PermissionDenied(
+            "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
+        )
+    if not may_plan_school(resolve_user_scope(user), school.id):
+        raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    return school
+
+
+def get_operational_cluster_or_404(user, *args, **kwargs):
+    """The cluster equivalent of `get_operational_school_or_404`.
+
+    `cluster_in_scope` without `direct_only` is the read question, and a
+    supervisor passes it for every cluster their CCEOs hold — which is why the
+    scheduling drawers, the partner-assignment drawer and its POST could all
+    be opened against a supervisee's cluster by id.
+    """
+    from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
+    from apps.clusters.models import Cluster
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        cluster_in_scope,
+        resolve_user_scope,
+    )
+
+    cluster = get_object_or_404(Cluster, *args, **kwargs)
+    scope = resolve_user_scope(user)
+    if not cluster_in_scope(scope, cluster):
+        raise PermissionDenied(
+            "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
+        )
+    if not cluster_in_scope(scope, cluster, direct_only=True):
+        raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    return cluster
+
+
 __all__ = [
     "IsAuthenticated",
     "RequirePermissions",
@@ -613,6 +709,8 @@ __all__ = [
     "require_page_permission",
     "render_access_denied",
     "get_scoped_object_or_404",
+    "get_operational_school_or_404",
+    "get_operational_cluster_or_404",
 ]
 
 

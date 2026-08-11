@@ -1,4 +1,12 @@
-<li class="core-school-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+{% comment %}
+One core school, compact. The summary line carries only the nine facts a
+planner decides on — school, district, owner, assessment, visits, trainings,
+partner support, package state and the action. Everything else (address,
+contact, cluster, enrolment, SSA breakdown) is secondary metadata and lives in
+the expandable detail, which is what lets twenty rows fit on one screen without
+shrinking the type.
+{% endcomment %}
+<li class="core-school-row core-school-row--compact school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
   <div class="school-record-row__summary">
     <div class="school-record-row__content school-record-row__content--with-id">
       <button
@@ -37,25 +45,29 @@
             {% endif %}
           </div>
         </div>
-        <dl class="school-record-row__metadata">
+        <dl class="school-record-row__metadata core-school-row__metadata">
           <div><dt>District:</dt><dd>{{ school.district_name|default:"—" }}</dd></div>
-          <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address|default:"—" }}</dd></div>
-          <div><dt>School Type:</dt><dd>{{ school.school_type|default:"Core" }}</dd></div>
-          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{{ school.cluster_name }}{% else %}Not assigned{% endif %}</dd></div>
-          <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
-          <div><dt>Phone:</dt><dd>{{ school.phone|default:"—" }}</dd></div>
-          <div><dt>Primary Contact:</dt><dd>{{ school.school_contact|default:"—" }}</dd></div>
-          <div><dt>Staff Name:</dt><dd>{{ school.staff_name|default:"Unassigned" }}</dd></div>
-          <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+          <div><dt>Owner:</dt><dd>{{ school.staff_name|default:"Unassigned" }}</dd></div>
+          <div><dt>Assessment:</dt><dd class="{% if school.assessment.status == 'Missing' %}is-attention{% else %}is-positive{% endif %}">{{ school.assessment.status|default:"Missing" }}</dd></div>
           <div><dt>Visits:</dt><dd class="{% if school.scheduled_visit_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_visit_count }}/{{ school.visits_target }}</dd></div>
           <div><dt>Trainings:</dt><dd class="{% if school.scheduled_training_count %}is-positive{% else %}is-attention{% endif %}">{{ school.scheduled_training_count }}/{{ school.trainings_target }}</dd></div>
-          {% if school.package_complete %}<div><dt>Package:</dt><dd class="is-positive">Complete</dd></div>{% endif %}
+          <div><dt>Partner:</dt><dd>{% if school.partner_support_count %}{{ school.partner_support_count }} assigned{% else %}None{% endif %}</dd></div>
+          <div><dt>Package:</dt><dd class="{% if school.package_complete %}is-positive{% else %}is-attention{% endif %}">{% if school.package_complete %}Complete{% else %}{{ school.next_missing_milestone }}{% endif %}</dd></div>
         </dl>
       </div>
     </div>
   </div>
 
   <div id="core-school-details-{{ school.id }}" class="school-record-row__details">
+    <dl class="school-record-row__metadata core-school-row__metadata--secondary">
+      <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address|default:"—" }}</dd></div>
+      <div><dt>School Type:</dt><dd>{{ school.school_type|default:"Core" }}</dd></div>
+      <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{{ school.cluster_name }}{% else %}Not assigned{% endif %}</dd></div>
+      <div><dt>Enrollment:</dt><dd>{{ school.enrolment|default_if_none:"—" }}</dd></div>
+      <div><dt>Phone:</dt><dd>{{ school.phone|default:"—" }}</dd></div>
+      <div><dt>Primary Contact:</dt><dd>{{ school.school_contact|default:"—" }}</dd></div>
+      <div class="school-record-row__ssa {% if school.ssa_average_tone %}is-{{ school.ssa_average_tone }}{% endif %}"><dt>SSA:</dt><dd>{% if school.ssa_average is not None %}{{ school.ssa_average|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
+    </dl>
     {% include "partials/schools/ssa_score_groups.html" with detail_id="core-school-details-"|add:school.id ssa_groups=school.ssa_groups has_ssa_scores=school.has_ssa_scores selected_fy=selected_fy %}
   </div>
 </li>

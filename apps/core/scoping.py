@@ -75,6 +75,14 @@ class UserScope:
     own_school_ids: list[str] = field(default_factory=list)
     team_school_ids: list[str] = field(default_factory=list)
     core_school_ids: list[str] = field(default_factory=list)
+    # The direct-portfolio twins of the three fields above. `district_ids`,
+    # `cluster_ids` and `core_school_ids` are derived from the own+team union,
+    # so a Programme Lead inherits the districts, clusters and core schools of
+    # every CCEO they supervise — which is how supervision leaked into cluster
+    # planning and the Core Schools list. Everything that *writes* reads these.
+    own_district_ids: list[str] = field(default_factory=list)
+    own_cluster_ids: list[str] = field(default_factory=list)
+    own_core_school_ids: list[str] = field(default_factory=list)
     staff_ids: list[str] = field(default_factory=list)
     supervised_staff_ids: list[str] = field(default_factory=list)
     managed_staff_ids: list[str] = field(default_factory=list)
@@ -106,6 +114,15 @@ class UserScope:
 # Sentinel meaning "no rows match" — matches the legacy `['__none__']` idiom.
 _NONE = ["__none__"]
 
+# What a supervisor is told when they reach past oversight into a supervisee's
+# work. One sentence, used by every guard, because the *reason* is the whole
+# point: the record is not hidden from them and the answer is not "try again",
+# it is "this is someone else's to do and you can ask them to do it".
+OVERSIGHT_ONLY_MESSAGE = (
+    "You have read-only supervisory oversight of this record. Operational "
+    "planning must be completed by the responsible CCEO."
+)
+
 
 def _uniq(items: Iterable[str]) -> list[str]:
     seen: dict[str, None] = {}
@@ -113,6 +130,46 @@ def _uniq(items: Iterable[str]) -> list[str]:
         if x and x not in seen:
             seen[x] = None
     return list(seen.keys())
+
+
+def _derive_from_schools(school_ids: list[str], own_school_ids: list[str]) -> dict:
+    """Geography, clusters and the core subset, for the whole scope and for the
+    direct portfolio alone.
+
+    One pass over one query. The two answers have to come from the same rows:
+    computing the direct set with a second query is how it drifts from the
+    first, and the direct set is the one that decides what may be written.
+    """
+    empty = {
+        "district_ids": [],
+        "region_ids": [],
+        "cluster_ids": [],
+        "core_school_ids": [],
+        "own_district_ids": [],
+        "own_cluster_ids": [],
+        "own_core_school_ids": [],
+    }
+    if not school_ids:
+        return empty
+    school_model = _get_school_model()
+    if school_model is None:  # pragma: no cover - app not ready
+        return empty
+    rows = list(
+        school_model.objects.filter(id__in=school_ids).values(
+            "id", "district_id", "region_id", "cluster_id", "school_type"
+        )
+    )
+    own = set(own_school_ids)
+    mine = [r for r in rows if r["id"] in own]
+    return {
+        "district_ids": _uniq([r["district_id"] for r in rows]),
+        "region_ids": _uniq([r["region_id"] for r in rows]),
+        "cluster_ids": _uniq([r["cluster_id"] for r in rows if r["cluster_id"]]),
+        "core_school_ids": [r["id"] for r in rows if r["school_type"] == "core"],
+        "own_district_ids": _uniq([r["district_id"] for r in mine]),
+        "own_cluster_ids": _uniq([r["cluster_id"] for r in mine if r["cluster_id"]]),
+        "own_core_school_ids": [r["id"] for r in mine if r["school_type"] == "core"],
+    }
 
 
 def resolve_user_scope(user) -> UserScope:
@@ -148,6 +205,9 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     team_school_ids: list[str] = []
     assignment_staff_ids: list[str] = []
     core_school_ids: list[str] = []
+    own_district_ids: list[str] = []
+    own_cluster_ids: list[str] = []
+    own_core_school_ids: list[str] = []
     supervised_staff_ids: list[str] = []
     managed_staff_ids: list[str] = []
     partner_ids: list[str] = []
@@ -293,21 +353,16 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             [staff_id, *covered_staff_ids, *supervised_staff_ids]
         )
 
-        # Derive geography + clusters + core subset from the in-scope schools.
-        if school_ids:
-            school_model = _get_school_model()
-            if school_model is not None:
-                schools = school_model.objects.filter(id__in=school_ids).values(
-                    "id", "district_id", "region_id", "cluster_id", "school_type"
-                )
-                district_ids = _uniq([s["district_id"] for s in schools])
-                region_ids = _uniq([s["region_id"] for s in schools])
-                cluster_ids = _uniq(
-                    [s["cluster_id"] for s in schools if s["cluster_id"]]
-                )
-                core_school_ids = [
-                    s["id"] for s in schools if s["school_type"] == "core"
-                ]
+        # Derive geography + clusters + core subset from the in-scope schools,
+        # and the direct-portfolio twin of each from the own schools alone.
+        derived = _derive_from_schools(school_ids, own_school_ids)
+        district_ids = derived["district_ids"]
+        region_ids = derived["region_ids"]
+        cluster_ids = derived["cluster_ids"]
+        core_school_ids = derived["core_school_ids"]
+        own_district_ids = derived["own_district_ids"]
+        own_cluster_ids = derived["own_cluster_ids"]
+        own_core_school_ids = derived["own_core_school_ids"]
     elif role == EdifyRole.PROJECT_COORDINATOR.value and staff_id:
         try:
             from apps.projects.models import Project, ProjectSchoolAssignment
@@ -329,20 +384,14 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                 ).values_list("school_id", flat=True)
             )
             school_ids = _uniq(own_school_ids)
-            if school_ids:
-                school_model = _get_school_model()
-                if school_model is not None:
-                    schools = school_model.objects.filter(id__in=school_ids).values(
-                        "id", "district_id", "region_id", "cluster_id", "school_type"
-                    )
-                    district_ids = _uniq([s["district_id"] for s in schools])
-                    region_ids = _uniq([s["region_id"] for s in schools])
-                    cluster_ids = _uniq(
-                        [s["cluster_id"] for s in schools if s["cluster_id"]]
-                    )
-                    core_school_ids = [
-                        s["id"] for s in schools if s["school_type"] == "core"
-                    ]
+            derived = _derive_from_schools(school_ids, school_ids)
+            district_ids = derived["district_ids"]
+            region_ids = derived["region_ids"]
+            cluster_ids = derived["cluster_ids"]
+            core_school_ids = derived["core_school_ids"]
+            own_district_ids = derived["own_district_ids"]
+            own_cluster_ids = derived["own_cluster_ids"]
+            own_core_school_ids = derived["own_core_school_ids"]
         except Exception:
             # Logged, not swallowed. A scope that fails to compute falls
             # through to an empty one, and an empty scope is indistinguishable
@@ -367,24 +416,18 @@ def _resolve_user_scope_uncached(user) -> UserScope:
                     ).values_list("school_id", flat=True)
                 )
                 school_ids = _uniq(assigned_schools)
-                if school_ids:
-                    school_model = _get_school_model()
-                    if school_model is not None:
-                        schools = school_model.objects.filter(id__in=school_ids).values(
-                            "id",
-                            "district_id",
-                            "region_id",
-                            "cluster_id",
-                            "school_type",
-                        )
-                        district_ids = _uniq([s["district_id"] for s in schools])
-                        region_ids = _uniq([s["region_id"] for s in schools])
-                        cluster_ids = _uniq(
-                            [s["cluster_id"] for s in schools if s["cluster_id"]]
-                        )
-                        core_school_ids = [
-                            s["id"] for s in schools if s["school_type"] == "core"
-                        ]
+                # `own_school_ids` stays empty for partner users, as it always
+                # has: a partner delivers work at a school, it does not own the
+                # school record. The direct-portfolio twins follow it, so this
+                # narrowing changes nothing for partners.
+                derived = _derive_from_schools(school_ids, own_school_ids)
+                district_ids = derived["district_ids"]
+                region_ids = derived["region_ids"]
+                cluster_ids = derived["cluster_ids"]
+                core_school_ids = derived["core_school_ids"]
+                own_district_ids = derived["own_district_ids"]
+                own_cluster_ids = derived["own_cluster_ids"]
+                own_core_school_ids = derived["own_core_school_ids"]
             except Exception:
                 # Same reasoning as the coordinator branch above: a partner
                 # seeing an empty workspace and a partner whose scope query
@@ -456,6 +499,9 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         team_school_ids=team_school_ids,
         assignment_staff_ids=assignment_staff_ids,
         core_school_ids=core_school_ids,
+        own_district_ids=own_district_ids,
+        own_cluster_ids=own_cluster_ids,
+        own_core_school_ids=own_core_school_ids,
         staff_ids=[staff_id] if staff_id else [],
         supervised_staff_ids=supervised_staff_ids,
         managed_staff_ids=managed_staff_ids,
@@ -550,7 +596,7 @@ def assert_may_write_school(principal, school, *, action: str = "change") -> Non
         )
 
 
-def cluster_owner_ids(scope: UserScope) -> set[str]:
+def cluster_owner_ids(scope: UserScope, *, direct_only: bool = False) -> set[str]:
     """Every id a cluster this person is responsible for could be filed under.
 
     Two expansions, both load-bearing:
@@ -559,11 +605,18 @@ def cluster_owner_ids(scope: UserScope) -> set[str]:
       The edit drawer writes a *User* id; other paths write a StaffProfile id.
       A set built from one space silently disowns the clusters filed under the
       other — the trap `owner_ids` exists for.
-    * **The team.** A Programme Lead is responsible for their CCEOs' clusters,
-      so their supervisees' ids belong in the same set rather than in a second
-      branch that could drift from this one.
+    * **The team.** A Programme Lead can *see* their CCEOs' clusters, so their
+      supervisees' ids belong in the same set rather than in a second branch
+      that could drift from this one.
+
+    `direct_only` drops the second expansion. Seeing a cluster and being able
+    to plan a meeting in it are different questions, and answering both from
+    one set is what let a Programme Lead schedule cluster work inside a CCEO's
+    portfolio. Every write asks with `direct_only=True`; reads ask without it.
     """
-    ids = {scope.user_id} | set(scope.staff_ids) | set(scope.supervised_staff_ids)
+    ids = {scope.user_id} | set(scope.staff_ids)
+    if not direct_only:
+        ids |= set(scope.supervised_staff_ids)
     ids = {i for i in ids if i}
     if not ids:
         return set()
@@ -580,7 +633,7 @@ def cluster_owner_ids(scope: UserScope) -> set[str]:
     return ids
 
 
-def cluster_in_scope(scope: UserScope, cluster) -> bool:
+def cluster_in_scope(scope: UserScope, cluster, *, direct_only: bool = False) -> bool:
     """Return whether a cluster is inside an operational user's scope.
 
     **A cluster belongs to the person responsible for it, not to a district.**
@@ -611,18 +664,24 @@ def cluster_in_scope(scope: UserScope, cluster) -> bool:
         return False
     if scope.country_scope or scope.can_view_summary_only:
         return True
-    if getattr(cluster, "id", None) in scope.cluster_ids:
+    # Which of the two portfolios the question is about. `cluster_ids` and
+    # `district_ids` are both derived from the own+team school union, so
+    # reading them for a write would have re-opened through geography exactly
+    # what dropping the supervisees from `cluster_owner_ids` closes.
+    in_cluster_ids = scope.own_cluster_ids if direct_only else scope.cluster_ids
+    in_district_ids = scope.own_district_ids if direct_only else scope.district_ids
+    if getattr(cluster, "id", None) in in_cluster_ids:
         return True
     owner = (getattr(cluster, "responsible_staff_id", "") or "").strip()
     if owner:
-        return owner in cluster_owner_ids(scope)
+        return owner in cluster_owner_ids(scope, direct_only=direct_only)
     return bool(
         getattr(cluster, "district_id", None)
-        and cluster.district_id in scope.district_ids
+        and cluster.district_id in in_district_ids
     )
 
 
-def cluster_queryset(scope: UserScope, base=None):
+def cluster_queryset(scope: UserScope, base=None, *, direct_only: bool = False):
     """The clusters this user may pick, as a queryset.
 
     The set form of `cluster_in_scope`, and it must stay the set form: four
@@ -646,6 +705,12 @@ def cluster_queryset(scope: UserScope, base=None):
     A cluster with an owner reaches that owner's chain only. One with no owner
     is unassigned rather than somebody else's, so it stays visible from its
     district and can be picked up — `list_ownerless_clusters` names them.
+
+    `direct_only` is the set form of `cluster_in_scope(..., direct_only=True)`
+    — the clusters this person may *plan in*, which for a supervisor is a
+    strictly smaller set than the ones they may read. Every picker that leads
+    to a write passes it, so the drawer offers exactly what the service will
+    accept.
     """
     cluster_model = _get_cluster_model()
     if cluster_model is None:  # pragma: no cover - app not ready
@@ -655,11 +720,13 @@ def cluster_queryset(scope: UserScope, base=None):
     qs = qs.filter(deleted_at__isnull=True)
     if scope.country_scope or scope.can_view_summary_only:
         return qs
+    in_cluster_ids = scope.own_cluster_ids if direct_only else scope.cluster_ids
+    in_district_ids = scope.own_district_ids if direct_only else scope.district_ids
     unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     return qs.filter(
-        Q(responsible_staff_id__in=cluster_owner_ids(scope))
-        | Q(id__in=scope.cluster_ids)
-        | (unassigned & Q(district_id__in=scope.district_ids))
+        Q(responsible_staff_id__in=cluster_owner_ids(scope, direct_only=direct_only))
+        | Q(id__in=in_cluster_ids)
+        | (unassigned & Q(district_id__in=in_district_ids))
     )
 
 
@@ -727,6 +794,109 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     if scope.school_ids:
         return qs.filter(id__in=scope.school_ids)
     return qs.none()
+
+
+def direct_portfolio_schools(scope: UserScope, base=None):
+    """The schools this person may operate on — the direct portfolio.
+
+    Named, rather than left as `school_queryset(scope, direct_only=True)` at
+    twenty call sites, so the two questions have two names. Everything that
+    schedules, assigns, edits, uploads or exports operational rows asks this
+    one; `team_oversight_schools` answers the other half, and no surface may
+    use one where it means the other.
+    """
+    qs = school_queryset(scope, direct_only=True)
+    if qs is None:  # pragma: no cover - schools app not ready
+        return None
+    return qs if base is None else qs.filter(id__in=base.values("id"))
+
+
+def team_oversight_schools(scope: UserScope, base=None):
+    """The schools this person may *watch* but not operate on.
+
+    A supervisor's supervisees' portfolios, and nothing else — deliberately
+    disjoint from `direct_portfolio_schools` so an oversight page can never be
+    quietly re-pointed at a writable set, and so a count of one can never be
+    presented as a count of the other. Non-supervisors get an empty queryset,
+    which is the honest answer rather than a fall-through to their own work.
+    """
+    school_model = _get_school_model()
+    if school_model is None:  # pragma: no cover - app not ready
+        return None
+    qs = base if base is not None else school_model.objects.all()
+    qs = qs.filter(deleted_at__isnull=True)
+    if not scope.team_school_ids:
+        return qs.none()
+    return qs.filter(id__in=scope.team_school_ids)
+
+
+def may_plan_school(scope: UserScope, school) -> bool:
+    """Whether this person may place operational work at `school`.
+
+    The one predicate behind every planning surface. It reads the direct
+    portfolio and nothing else: supervision, approval authority, team
+    analytics, a shared district and an urgent alert all leave it False, which
+    is the rule this module exists to hold.
+
+    Country *scheduling* roles are the exception, and they are named rather
+    than derived from `country_scope` — Impact Assessment does its own field
+    work, the Programme Accountant schedules nothing, and one flag cannot tell
+    those two apart.
+    """
+    if getattr(scope, "active_role", None) in COUNTRY_SCHEDULING_ROLES:
+        return True
+    if scope.country_scope or scope.can_view_summary_only:
+        return False
+    school_id = getattr(school, "id", school)
+    return bool(scope.own_school_ids) and school_id in scope.own_school_ids
+
+
+def assert_may_plan_school(principal, school) -> None:
+    """Raise Forbidden unless `principal` may plan operational work at `school`."""
+    from apps.core.exceptions import Forbidden
+
+    if not may_plan_school(resolve_user_scope(principal), school):
+        raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
+
+
+def scope_cache_fingerprint(scope: UserScope) -> str:
+    """A short hash of everything that decides what this person may reach.
+
+    Every cached portfolio snapshot must carry it. Keys built from
+    ``user.id + active_role`` alone survive a change of portfolio, which is
+    precisely the stale-access case §11 names: a school moves to another CCEO,
+    a supervisor is reassigned, or a temporary coverage expires, and the old
+    answer keeps being served under the same key until its TTL runs out.
+
+    Self-invalidating rather than hook-driven. The inputs are recomputed from
+    the database on every request (see `resolve_user_scope`), so the moment
+    any of them changes the key changes and the stale entry is simply never
+    read again — no signal has to fire, and no invalidation call site can be
+    forgotten when a new surface starts caching.
+
+    Direct and oversight scope are hashed as *separate* fields, not as a
+    merged set, so a school moving from a supervisee's portfolio to the
+    supervisor's own changes the fingerprint even though the union did not.
+    """
+    import hashlib
+    import json
+
+    payload = json.dumps(
+        {
+            "role": scope.active_role,
+            "country": scope.country_scope,
+            "summary_only": scope.can_view_summary_only,
+            "own": sorted(scope.own_school_ids),
+            "team": sorted(scope.team_school_ids),
+            "own_clusters": sorted(scope.own_cluster_ids),
+            "supervised": sorted(scope.supervised_staff_ids),
+            "coverage": sorted(scope.assignment_staff_ids),
+            "regions": sorted(scope.region_ids),
+            "partners": sorted(scope.partner_ids),
+        },
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:16]
 
 
 def owner_ids(principal) -> list[str]:
@@ -827,10 +997,20 @@ def _get_partner_model():
 
 __all__ = [
     "UserScope",
+    "OVERSIGHT_ONLY_MESSAGE",
     "resolve_user_scope",
     "cluster_in_scope",
+    "cluster_owner_ids",
+    "cluster_queryset",
     "resolve_partner_ids",
     "school_queryset",
+    "direct_portfolio_schools",
+    "team_oversight_schools",
+    "may_plan_school",
+    "assert_may_plan_school",
+    "may_write_school",
+    "assert_may_write_school",
+    "scope_cache_fingerprint",
     "scoped_school_queryset",
     "aggregate_school_filter",
     "owner_ids",

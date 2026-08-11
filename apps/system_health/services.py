@@ -73,7 +73,26 @@ def report() -> dict:
     data["strategicPriorities"] = _strategic_priorities()
     data["projectPriorities"] = _project_priorities()
     data["planningOversight"] = _planning_oversight()
+    data["portfolioAccess"] = _portfolio_access()
     return data
+
+
+def _portfolio_access() -> dict:
+    """The direct-portfolio / team-oversight boundary, checked live.
+
+    Wrapped like its neighbours: a failing probe must not take the report down.
+    """
+    try:
+        from apps.system_health.portfolio_access_health import report as portfolio
+
+        return portfolio()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "clean": False,
+            "issueCount": 1,
+            "checks": [],
+            "error": str(exc),
+        }
 
 
 def _planning_oversight() -> dict:

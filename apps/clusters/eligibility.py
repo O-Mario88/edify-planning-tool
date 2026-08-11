@@ -157,7 +157,7 @@ def eligible_clusters_for_school(school, *, scope=None):
     if scope is not None:
         from apps.core.scoping import cluster_queryset
 
-        writable = cluster_queryset(scope)
+        writable = cluster_queryset(scope, direct_only=True)
         if writable is not None:
             qs = qs.filter(id__in=writable.values("id"))
 

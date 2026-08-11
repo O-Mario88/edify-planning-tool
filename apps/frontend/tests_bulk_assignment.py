@@ -238,8 +238,16 @@ class BulkAssignmentTests(TestCase):
                 current_fy_ssa_status="done",
             )
 
-        # Get page 1
+        # Get page 1. The default page size is 20 — the list card is sized to
+        # fill its column, and ten rows left it ending well short of the
+        # right-hand stack — so fifteen schools now fit on one page. The
+        # explicit ?per_page=10 below still pins the paging behaviour itself.
         response = self.client.get("/core-schools?page=1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["matrix_rows"]), 15)
+        self.assertFalse(response.context["is_paginated"])
+
+        response = self.client.get("/core-schools?page=1&per_page=10")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 10)
         self.assertContains(response, 'class="school-record-row__school-id"', count=10)
@@ -249,7 +257,7 @@ class BulkAssignmentTests(TestCase):
         self.assertIn(2, response.context["pages_list"])
 
         # Get page 2
-        response = self.client.get("/core-schools?page=2")
+        response = self.client.get("/core-schools?page=2&per_page=10")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 5)
 

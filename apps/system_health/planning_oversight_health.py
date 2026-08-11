@@ -15,6 +15,11 @@ from django.db.models import Count, Q, Sum
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 
+# `Activity.assigned_partner_id` is a plain CharField, so "names no partner"
+# is NULL *or* empty string. A predicate that checks one of them reports half
+# the rows and calls the other half healthy.
+_NO_PARTNER = Q(assigned_partner_id__isnull=True) | Q(assigned_partner_id="")
+
 
 def report() -> dict:
     """Every oversight invariant, checked against live data."""
@@ -31,6 +36,7 @@ def report() -> dict:
         # has to remember to read.
         _handovers_with_no_managing_cceo(),
         _partner_activities_no_assignment_claims(),
+        _partner_delivery_with_no_partner_named(),
         _partners_holding_work_with_no_login_account(),
         _role_queues_with_no_active_holder(),
         # Withdrawal touches an assignment, an activity, a budget and an
@@ -430,12 +436,19 @@ def _handovers_with_no_managing_cceo() -> dict:
 
 
 def _partner_activities_no_assignment_claims() -> dict:
-    """Partner-delivered work that reached no handover record.
+    """Partner work that names its partner but reached no handover record.
 
     Partner Oversight is driven by PartnerAssignment, so an activity marked
     partner-delivered that no assignment points at appears on that page
     nowhere at all — the work is real, its cost is real, and the supervisor
     responsible for partner delivery cannot see either.
+
+    Narrowed to activities that actually name a partner. The check used to
+    include rows with no partner at all and describe them the same way, which
+    pointed at a repair that cannot run: there is no organisation to link the
+    activity to. Those are a different defect and
+    `_partner_delivery_with_no_partner_named` reports them under their own
+    name, with their own fix.
     """
     from apps.activities.models import Activity
     from apps.partners.models import PartnerAssignment
@@ -445,9 +458,11 @@ def _partner_activities_no_assignment_claims() -> dict:
             "scheduled_activity_id", flat=True
         )
     )
-    partner_work = Activity.objects.filter(
-        deleted_at__isnull=True, delivery_type="partner"
-    ).exclude(status__in=("cancelled", "draft"))
+    partner_work = (
+        Activity.objects.filter(deleted_at__isnull=True, delivery_type="partner")
+        .exclude(status__in=("cancelled", "draft"))
+        .exclude(_NO_PARTNER)
+    )
     unclaimed = [
         row
         for row in partner_work.values("id", "school__name", "status")[:2000]
@@ -468,11 +483,51 @@ def _partner_activities_no_assignment_claims() -> dict:
             }
             for row in unclaimed[:10]
         ],
-        route=(
-            "manage.py repair_partner_assignment_links where an unlinked "
-            "assignment exists; otherwise the handover was never recorded and "
-            "only a person can say what it was"
-        ),
+        route="manage.py repair_partner_handovers --repair",
+    )
+
+
+def _partner_delivery_with_no_partner_named() -> dict:
+    """An activity whose delivery channel is "partner" and whose partner is nobody.
+
+    Not the same defect as the one above, and it took splitting them to see
+    why: there is no handover to repair, because there is nobody to hand the
+    work to. The row is internally contradictory — it was priced at partner
+    rates, it is attributed to a member of staff, and no organisation is on
+    the hook for it — so every partner figure it feeds is drawn from work no
+    partner did.
+
+    Deliberately left for a person. The honest correction is to restate the
+    delivery channel, and the channel decides the price, so an automatic
+    rewrite would silently re-cost completed work. `repair_partner_handovers`
+    lists these and will re-price them only when told to.
+    """
+    from apps.activities.models import Activity
+
+    rows = (
+        Activity.objects.filter(_NO_PARTNER, deleted_at__isnull=True, delivery_type="partner")
+        .exclude(status__in=("cancelled", "draft"))
+        .values("id", "school__name", "status", "activity_type")
+    )
+
+    return _finding(
+        key="partner_delivery_without_a_partner",
+        label="Partner-delivered activities naming no partner",
+        severity="error",
+        expected="Partner delivery names the partner that delivered it",
+        count=rows.count(),
+        examples=[
+            {
+                "id": row["id"],
+                "school": row["school__name"],
+                "actual": (
+                    f"{row['activity_type']} · {row['status']}, "
+                    "delivery_type=partner with no partner"
+                ),
+            }
+            for row in rows[:10]
+        ],
+        route="manage.py repair_partner_handovers  (dry run; --restate-channel to apply)",
     )
 
 
@@ -678,6 +733,14 @@ def _two_live_assignments_on_one_slot() -> dict:
             row["visit_number"] or "",
             row["training_number"] or "",
         )
+        # A clash needs a slot. Support slots are a Core-package concept —
+        # Visit 1..4, Training 1..4 — and most partner work names none, so
+        # keying on the empty triple made "two unslotted assignments at one
+        # school" read as two partners claiming one slot. That is two
+        # different pieces of work, which is ordinary, and reporting it as a
+        # double-booking would have every busy school on the board.
+        if not any(slot[1:]):
+            continue
         holders[slot].append(row)
 
     clashes = [rows for rows in holders.values() if len(rows) > 1]

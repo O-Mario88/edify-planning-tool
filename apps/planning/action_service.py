@@ -135,6 +135,23 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "route": "/my-plan",
         "why": "The activity has been rescheduled repeatedly.",
     },
+    # ── Core package conditions ─────────────────────────────────────────────
+    # What a supervisor can ask about a core school they may not plan for.
+    # Both are settled by re-reading the plan's own slot allocation, so the
+    # ask closes when the CCEO actually schedules the support — see
+    # `_core_condition_still_holds`.
+    "core_package_behind": {
+        "action": "Schedule the outstanding core visits and trainings",
+        "route": "/core-schools?q={school_ref}",
+        "why": "The school's 4 visits + 4 trainings core package is not fully "
+        "allocated for this financial year.",
+    },
+    "core_assessment_missing": {
+        "action": "Complete the core assessment",
+        "route": "/core-schools?q={school_ref}",
+        "why": "The core package cannot be planned until this financial "
+        "year's core assessment is on file.",
+    },
     # ── Partner-delivery conditions ─────────────────────────────────────────
     # Only the ones a member of staff can actually resolve are registered.
     # Where the partner is the responsible actor the ask goes to the partner
@@ -209,6 +226,13 @@ OVERSIGHT_RISK_KEYS = frozenset(
 # whether one still holds.
 PARTNER_OVERSIGHT_RISK_KEYS = frozenset(
     {"assignment_returned", "cceo_review_overdue", "partner_salesforce_overdue"}
+)
+
+# Conditions on a core school's package for the year. The CorePlan and its
+# slots are the record, so the sweep can settle these by counting allocated
+# slots — no second definition of "the package is done".
+CORE_OVERSIGHT_RISK_KEYS = frozenset(
+    {"core_package_behind", "core_assessment_missing"}
 )
 
 # Team-level asks. "The backlog is cleared" is a judgement about a body of
@@ -721,7 +745,7 @@ def return_to_sender(action: TeamAction, actor, reason: str) -> TeamAction:
             f"{reason}"
         ),
         action_id=action.id,
-        route="/planning/actions-sent",
+        route="/actions/sent",
         event="school_action_returned",
     )
     return action
@@ -820,6 +844,34 @@ def _notify(recipient_id, *, title, body, action_id, route, event) -> None:
 # ── Closing the loop ─────────────────────────────────────────────────────────
 
 
+def _core_condition_still_holds(action: TeamAction) -> bool:
+    """Is this core school's package still short for the year?
+
+    Read from the CorePlan's slots through the same service the Core Schools
+    page counts with, so an action closes exactly when the page stops showing
+    the school as behind. A plan that has gone missing counts as still open:
+    "we cannot tell" is not "it is done".
+    """
+    from apps.core_schools.core_planning_services import CorePackageSchedulingService
+    from apps.core_schools.models import CorePlan
+    from apps.schools.models import School
+
+    school_ref = (
+        School.objects.filter(id=action.school_id)
+        .values_list("school_id", flat=True)
+        .first()
+    )
+    if not school_ref:
+        return True
+    plan = CorePlan.objects.filter(school_id=school_ref, fy=action.fy).first()
+    if plan is None:
+        return True
+    if action.issue_type == "core_assessment_missing":
+        return not plan.assessment_completed
+    summary = CorePackageSchedulingService.summary(plan)
+    return not summary["package_complete"]
+
+
 def condition_still_holds(action: TeamAction) -> bool:
     """Re-read the source of truth. True means the problem is still there.
 
@@ -839,6 +891,9 @@ def condition_still_holds(action: TeamAction) -> bool:
 
     if action.issue_type in PARTNER_OVERSIGHT_RISK_KEYS:
         return _partner_risk_still_holds(action)
+
+    if action.issue_type in CORE_OVERSIGHT_RISK_KEYS:
+        return _core_condition_still_holds(action)
 
     has_ssa = SsaRecord.objects.filter(
         school_id=action.school_id,
@@ -1008,7 +1063,7 @@ def resolve_due_actions(*, limit: int | None = None) -> dict:
                 "is done — the record now confirms it."
             ),
             action_id=action.id,
-            route="/planning/actions-sent",
+            route="/actions/sent",
             event="school_action_resolved",
         )
     return {"checked": checked, "resolved": resolved}
@@ -1056,7 +1111,7 @@ def mark_overdue_actions() -> dict:
                 f"{_school_name(action.school_id)}."
             ),
             action_id=action.id,
-            route="/planning/actions-sent",
+            route="/actions/sent",
             event="school_action_overdue_sender",
         )
     return {"overdue": count}
@@ -1089,7 +1144,7 @@ def escalate(action: TeamAction, actor, to_user_id: str = "") -> TeamAction:
             f"overdue with {_name_of(action.recipient_id)}."
         ),
         action_id=action.id,
-        route="/planning/actions-sent",
+        route="/actions/sent",
         event="school_action_escalated",
     )
     return action

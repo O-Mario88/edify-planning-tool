@@ -26,7 +26,11 @@ from apps.core.permissions import (
     get_scoped_object_or_404,
     RolePermissionService,
 )
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import (
+    direct_portfolio_schools,
+    resolve_user_scope,
+    school_queryset,
+)
 from django.db.models import Q, Avg, Count, Sum
 from datetime import date, timedelta
 
@@ -1720,7 +1724,7 @@ def search_view(request):
     """Global search — open to every authenticated role (the topbar renders
     the search box everywhere), with each section scope-constrained:
 
-      • Schools: same `school_queryset(scope)` the school directory applies —
+      • Schools: same direct portfolio the school directory applies —
         a CCEO/PL only ever matches their own portfolio, never national rows.
       • Staff: rows deep-link to /staff/<id>, which only the staff-directory
         roles (HR/PL/CD/RVP/Admin) may open — other roles get no staff section
@@ -1734,10 +1738,12 @@ def search_view(request):
     results = {"schools": [], "staff": [], "activities": []}
     if q:
         scope = resolve_user_scope(request.user)
+        # Direct portfolio: these rows deep-link to the operational school
+        # profile, so search must not reach past what the directory shows.
         results["schools"] = list(
-            school_queryset(scope).filter(name__icontains=q, deleted_at__isnull=True)[
-                :10
-            ]
+            direct_portfolio_schools(scope).filter(
+                name__icontains=q, deleted_at__isnull=True
+            )[:10]
         )
         if RolePermissionService.can_view_page(request.user, "staff_directory"):
             results["staff"] = list(
@@ -1779,10 +1785,15 @@ def leave_requests_view(request):
 @require_page_permission("schools")
 def map_view(request):
     """Geographic map — plots every IN-SCOPE school with real coordinates
-    (verified SchoolGeoPoint overrides first, then upload lat/lng). The base
-    queryset is scope-constrained exactly like the school directory, so a
-    CCEO/PL only ever plots their own portfolio. Schools without coordinates
-    are counted honestly and routed to location cleanup."""
+    (verified SchoolGeoPoint overrides first, then upload lat/lng).
+
+    This is a monitoring surface, not a selector: nothing on it writes, and
+    every pin opens a read view. It therefore keeps the *read* scope, so a
+    supervisor still sees where their team works — which is the point of a
+    map. The directory, the pickers and search are narrower on purpose; this
+    docstring used to claim parity with the directory and no longer does.
+    Schools without coordinates are counted honestly and routed to location
+    cleanup."""
     import json
 
     scope = resolve_user_scope(request.user)
@@ -2425,7 +2436,9 @@ def project_detail_view(request, project_id):
             .order_by("user__name")
         )
     scope = resolve_user_scope(request.user)
-    eligible_schools = school_queryset(scope)
+    # A selector that leads to a cohort assignment, so it offers the direct
+    # portfolio only.
+    eligible_schools = school_queryset(scope, direct_only=True)
     if eligible_schools is not None:
         eligible_schools = list(
             eligible_schools.filter(deleted_at__isnull=True)

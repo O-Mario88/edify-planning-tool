@@ -748,8 +748,14 @@ class Command(BaseCommand):
             )
             clusters.append(cluster)
 
+        from apps.partners.models import Partner, PartnerAssignment
+
+        # Assignments reference activities, so they go first.
+        PartnerAssignment.objects.all().delete()
         Activity.objects.all().delete()
         ActivityScheduleCostLine.objects.all().delete()
+
+        seed_partners = list(Partner.objects.filter(active_status=True).order_by("name"))
 
         # Seed 13 activities per CCEO
         for cceo_idx, cceo in enumerate(cceos):
@@ -790,15 +796,52 @@ class Command(BaseCommand):
                     school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
                     cluster = None
 
+                # A partner-delivered activity names the partner that
+                # delivered it. Without this the seed produced 230 activities
+                # whose delivery channel was "partner" and whose partner was
+                # nobody — a state no write path in the application can
+                # produce, priced at partner rates, and invisible on Partner
+                # Oversight because nothing there has a partner to group it
+                # under. The demo then showed partner work that no partner
+                # could be held to.
+                partner = (
+                    seed_partners[(cceo_idx + act_idx) % len(seed_partners)]
+                    if del_type == "partner" and seed_partners
+                    else None
+                )
+
                 act = Activity.objects.create(
                     activity_type=act_type,
-                    delivery_type=del_type,
+                    delivery_type=del_type if partner or del_type != "partner" else "staff",
                     school=school,
                     cluster=cluster,
                     scheduled_date=scheduled_date,
                     responsible_staff_id=cceo.user.user_id,
+                    # `assigned_partner_id` is a plain CharField, not an FK —
+                    # there is no `assigned_partner` to assign.
+                    assigned_partner_id=partner.id if partner else None,
                     status="completed",
                 )
+
+                # The handover the work actually passed through. Seeded data
+                # has to be a state the application could have reached, or
+                # every board that reads it reports a defect that only the
+                # seeder can cause.
+                if partner is not None:
+                    PartnerAssignment.objects.create(
+                        school=school,
+                        cluster=cluster,
+                        partner=partner,
+                        assigning_staff_id=cceo.user.user_id,
+                        monitoring_staff_id=cceo.user.user_id,
+                        assignment_mode="specific_activity",
+                        purpose=f"Seeded {act_type.replace('_', ' ')}",
+                        purpose_of_visit="ssa_support",
+                        expected_activity_type=act_type,
+                        scheduled_date=scheduled_date.date(),
+                        status="completed",
+                        scheduled_activity=act,
+                    )
 
                 apply_to_activity(
                     act,

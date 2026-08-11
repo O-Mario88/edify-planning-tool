@@ -26,9 +26,12 @@ def impact_analytics_view(request):
     fingerprint = hashlib.sha256(
         json.dumps(query, sort_keys=True, default=str).encode()
     ).hexdigest()[:20]
+    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+
     dashboard = stampede_safe_get_or_compute(
         f"impact-dashboard:v1:{request.user.id}:"
-        f"{request.user.active_role}:{fingerprint}",
+        f"{request.user.active_role}:"
+        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
         lambda: impact_analytics_dashboard(request.user, query),
         timeout=settings.IMPACT_DASHBOARD_CACHE_SECONDS,
     )

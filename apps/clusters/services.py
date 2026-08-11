@@ -61,17 +61,6 @@ def _latest_confirmed_ssa_map(schools):
     return latest_applicable_records(schools, with_scores=True)
 
 
-def _scope_filter(principal):
-    """Returns a Q to constrain clusters to the user's districts (unless country
-    scope). Mirrors the legacy `where.districtId = { in: scope.districtIds }`."""
-    scope = resolve_user_scope(principal)
-    if scope.country_scope or scope.can_view_summary_only:
-        return Q(), scope
-    if scope.district_ids:
-        return Q(district_id__in=scope.district_ids), scope
-    return Q(district_id__in=["__none__"]), scope
-
-
 def cluster_creation_district_ids(principal) -> set[str]:
     """Districts where ``principal`` may create a cluster.
 
@@ -107,12 +96,20 @@ def cluster_creation_district_ids(principal) -> set[str]:
 
 
 def list_clusters(principal) -> list[dict]:
-    """List active/needs_review clusters within scope, with school counts + SSA."""
-    scope_q, scope = _scope_filter(principal)
+    """List active/needs_review clusters within scope, with school counts + SSA.
+
+    The operational list — `GET /api/clusters`, the same set the Clusters page
+    shows — so it answers the write question. An API that returned a wider set
+    than the page would be the bypass §8 is about: knowing a cluster id is not
+    supposed to be worth more than seeing it in the UI.
+    """
+    scope = resolve_user_scope(principal)
+    base = Cluster.objects.filter(
+        deleted_at__isnull=True, status__in=["active", "needs_review"]
+    )
+    scoped = cluster_queryset(scope, base=base, direct_only=True)
     clusters = list(
-        Cluster.objects.filter(
-            scope_q, deleted_at__isnull=True, status__in=["active", "needs_review"]
-        )
+        (scoped if scoped is not None else base.none())
         .select_related("district", "sub_county")
         .prefetch_related("covered_sub_counties__sub_county")
         .order_by("name")[:1000]  # safety bound
@@ -184,10 +181,18 @@ def _cluster_card(c: Cluster) -> dict:
 
 
 def recommendations(school_id: str, principal) -> dict:
-    """Cluster recommendations for a school (same sub-county + district)."""
+    """Cluster recommendations for a school (same sub-county + district).
+
+    The direct portfolio: every recommendation here ends in an assignment, and
+    `assign_school` refuses a school this person does not own. Recommending
+    what the save will reject is the drawer-promises-what-the-service-refuses
+    shape the cluster rules exist to prevent.
+    """
+    from apps.core.scoping import direct_portfolio_schools
+
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope)
-    qs = base if base is not None else School.objects.all()
+    base = direct_portfolio_schools(scope)
+    qs = base if base is not None else School.objects.none()
     school = qs.filter(school_id=school_id).select_related("sub_county").first()
     if not school:
         raise NotFoundError("School not found or outside scope")
@@ -386,7 +391,7 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     if (
         current_owner
         and not editor_scope.country_scope
-        and current_owner not in cluster_owner_ids(editor_scope)
+        and current_owner not in cluster_owner_ids(editor_scope, direct_only=True)
     ):
         raise Forbidden(
             "That cluster belongs to another staff member. Ask them, or "
@@ -596,15 +601,26 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
     cluster_id = data.get("clusterId")
     if not cluster_id:
         raise BadRequest("clusterId is required.")
+    # Both halves of this write follow direct ownership. Changing a school's
+    # cluster edits the school record and consumes a slot in the cluster, so a
+    # supervisor holding oversight of either side may not perform it — they
+    # ask the CCEO who owns it. `direct_portfolio_schools` and the direct
+    # cluster set are the same two sets the pickers offer.
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        cluster_queryset,
+        direct_portfolio_schools,
+    )
+
     scope = resolve_user_scope(principal)
-    schools = school_queryset(scope)
+    schools = direct_portfolio_schools(scope)
     school = (schools or School.objects.none()).filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found or outside your scope.")
     cluster = _scoped_cluster(cluster_id, principal)
-    scope_q, _ = _scope_filter(principal)
-    if not Cluster.objects.filter(scope_q, id=cluster.id).exists():
-        raise Forbidden("Cluster outside your scope.")
+    writable = cluster_queryset(scope, direct_only=True)
+    if writable is None or not writable.filter(id=cluster.id).exists():
+        raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
     school = set_school_cluster_membership(school, cluster, principal.user_id)
     return {"ok": True, "schoolId": school.school_id, "clusterId": cluster.id}
 
@@ -1103,16 +1119,22 @@ def cluster_intelligence(cluster_id: str, principal) -> dict:
 
 
 def sub_counties_without_clusters(principal) -> list[dict]:
-    """Gap board: sub-counties in scope with no active cluster."""
-    scope_q, scope = _scope_filter(principal)
+    """Gap board: sub-counties in scope with no active cluster.
+
+    Every row here is an invitation to create a cluster, and creation is
+    already limited to `cluster_creation_district_ids` — the districts of the
+    caller's *own* schools. Listing a supervisee's gap would offer a create
+    the service then refuses, so the board reads the same districts.
+    """
+    scope = resolve_user_scope(principal)
     covered = set(
         ClusterSubCounty.objects.filter(
             cluster__deleted_at__isnull=True, cluster__status="active"
         ).values_list("sub_county_id", flat=True)
     )
     qs = SubCounty.objects.all()
-    if not scope.country_scope and scope.district_ids:
-        qs = qs.filter(district_id__in=scope.district_ids)
+    if not scope.country_scope:
+        qs = qs.filter(district_id__in=scope.own_district_ids or ["__none__"])
     return [
         {"id": s.id, "name": s.name, "districtId": s.district_id}
         for s in qs.exclude(id__in=covered).order_by("name")[:500]
@@ -1123,11 +1145,14 @@ def cluster_planning(principal) -> list[dict]:
     """Per-cluster planning intelligence (cadence, SSA, coverage)."""
     from apps.activities.models import Activity
 
-    # Resolve user scope to filter clusters
-    scope_q, scope = _scope_filter(principal)
-
+    # Resolve user scope to filter clusters. Planning intelligence drives the
+    # planner drawer and the recommendation it acts on, so it is scoped to the
+    # clusters this person may actually plan in.
+    scope = resolve_user_scope(principal)
+    base = Cluster.objects.filter(deleted_at__isnull=True, status="active")
+    scoped = cluster_queryset(scope, base=base, direct_only=True)
     clusters = (
-        Cluster.objects.filter(scope_q, deleted_at__isnull=True, status="active")
+        (scoped if scoped is not None else base.none())
         .select_related("district", "sub_county")
         .prefetch_related("covered_sub_counties__sub_county")
     )
@@ -1345,8 +1370,13 @@ class ClusterDashboardService:
         # clusters they were. Unowned clusters stay visible from their district
         # — that carve-out lives inside cluster_queryset — so nothing becomes
         # unreachable while ownership is still being captured.
+        # `direct_only`: this page carries the plan, schedule and edit
+        # controls, so it lists the clusters this person may act on. A
+        # supervisor's CCEO clusters are read-only and belong on Team
+        # Oversight — showing them here made supervision look like ownership
+        # on the surface where the work is actually started.
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
-        scoped = cluster_queryset(scope, base=base_qs)
+        scoped = cluster_queryset(scope, base=base_qs, direct_only=True)
         base_qs = scoped if scoped is not None else base_qs.none()
 
         # 2. Filters from request
@@ -1780,32 +1810,17 @@ class ClusterActionPlannerService:
                 "purposeIntervention": None,
             }
 
-        act_dict = create_activity(data, user)
-
-        # If assigned partner, make sure PartnerAssignment is created
-        partner_id = data.get("assignedPartnerId")
-        if partner_id:
-            from apps.partners.models import PartnerAssignment
-            from apps.partners.purposes import normalise_visit_purpose
-
-            purpose_of_visit = normalise_visit_purpose(
-                data.get("purposeOfVisit") or data.get("purposeType"),
-                for_partner=True,
-                fallback_activity_type=data.get("activityType"),
-            )
-
-            PartnerAssignment.objects.create(
-                cluster_id=data.get("clusterId"),
-                partner_id=partner_id,
-                assigning_staff_id=user.staff_profile_id or user.id,
-                purpose=data.get("activityPurposeText"),
-                purpose_of_visit=purpose_of_visit,
-                focus_intervention=data.get("focusIntervention"),
-                expected_activity_type=data.get("activityType"),
-                status="partner_pending_schedule",
-            )
-
-        return act_dict
+        # The handover record is opened by `activities.services.create` for
+        # every path that schedules with a partner in one step, this one
+        # included. It used to be written here instead, which is why the
+        # school-level drawers — which never had a copy — produced partner
+        # activities that no assignment pointed at, invisible on Partner
+        # Oversight. One owner, so the two cannot drift again.
+        #
+        # The copy that lived here also wrote `status="partner_pending_schedule"`
+        # and left `scheduled_activity` empty, so a cluster handover read as
+        # still awaiting a date it already had.
+        return create_activity(data, user)
 
 
 class ClusterImpactService:

@@ -1330,21 +1330,30 @@ class FrontendViewsTestCase(TestCase):
         # activity via raw ORM writes.
         from apps.partners.models import PartnerAssignment
 
+        handoff = {
+            "cluster_id": self.cluster.id,
+            "partner_id": partner.id,
+            # Free-text activity types are gone: a partner handoff names
+            # an approved Activity Catalogue item (stable code accepted).
+            "catalogue_item_id": "ACCOUNTING_FINANCIAL_MANAGEMENT",
+            # Not the engine's primary recommendation for this cluster
+            # (members lack a verified SSA), so an authorized override
+            # reason is required.
+            "override_reason": "Cluster committee requested financial management support.",
+        }
+
+        # The supervising Programme Lead cannot make this handoff. The cluster
+        # reaches them only through their CCEO's school, and supervision is not
+        # ownership — handing a supervisee's cluster to a partner is the
+        # supervisee's decision. This used to succeed.
         self.client.force_login(pl_user)
-        response = self.client.post(
-            "/planning/assign-partner-action",
-            {
-                "cluster_id": self.cluster.id,
-                "partner_id": partner.id,
-                # Free-text activity types are gone: a partner handoff names
-                # an approved Activity Catalogue item (stable code accepted).
-                "catalogue_item_id": "ACCOUNTING_FINANCIAL_MANAGEMENT",
-                # Not the engine's primary recommendation for this cluster
-                # (members lack a verified SSA), so an authorized override
-                # reason is required.
-                "override_reason": "Cluster committee requested financial management support.",
-            },
-        )
+        refused = self.client.post("/planning/assign-partner-action", handoff)
+        self.assertEqual(refused.status_code, 403)
+        self.assertFalse(PartnerAssignment.objects.filter(cluster=self.cluster).exists())
+
+        # The CCEO who owns the school in that cluster makes it.
+        self.client.force_login(self.cceo_user)
+        response = self.client.post("/planning/assign-partner-action", handoff)
         self.assertEqual(response.status_code, 200, response.content)
 
         pa = PartnerAssignment.objects.get(cluster=self.cluster, partner=partner)
@@ -1370,10 +1379,12 @@ class FrontendViewsTestCase(TestCase):
 
         # 3. Partner reschedules the activity to a new date
         self.client.force_login(partner_user)
-        # Verify reschedule drawer displays the assigning staff's name
+        # Verify the reschedule drawer names the staff member monitoring the
+        # delivery — the CCEO who owns the school and made the handoff, not
+        # whoever supervises them.
         response = self.client.get(f"/my-plan/{act.id}/reschedule-drawer")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, pl_user.name)
+        self.assertContains(response, self.cceo_user.name)
 
         # Post scheduling date
         response = self.client.post(
@@ -1387,9 +1398,10 @@ class FrontendViewsTestCase(TestCase):
         # canonical StaffProfile monitor identity used by My Plan scoping.
         act.refresh_from_db()
         self.assertEqual(act.status, "partner_scheduled")
-        self.assertEqual(act.monitored_by_staff_id, pl_profile.id)
+        self.assertEqual(act.monitored_by_staff_id, self.cceo_profile.id)
 
-        # 4. Supervisor (PL) views My Plan and sees this scheduled activity
+        # 4. The supervising PL still sees the work on My Plan — reading their
+        # team's delivery is exactly what supervision is for.
         self.client.force_login(pl_user)
         response = self.client.get("/my-plan?period=week&month=7&week=3")
         self.assertEqual(response.status_code, 200)

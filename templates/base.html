@@ -74,12 +74,12 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260809geist1">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260809geist1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260811geist2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260809geist1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260811geist2">
     <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260809surfaces1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260808mobilephase1">
@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260809recordrows1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260811corelist10">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260809surfaces1">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260811geist2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260809micro19">
 <!-- How controls answer a pointer — hover inversion and the press. Last on
      purpose: it is the one place that decides the response, over whatever

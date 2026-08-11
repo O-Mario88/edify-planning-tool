@@ -522,10 +522,16 @@ def _recall_activity(activity, withdrawal, principal, *, locked: bool) -> None:
     """
     from apps.activities import services as activity_services
 
+    # `already_authorised`: `assert_may_withdraw` above is the authority for
+    # this decision, and it deliberately lets a Programme Lead recall a
+    # supervised CCEO's scheduled work. The activity service's own
+    # direct-portfolio guard would refuse that, so the two would disagree about
+    # a power the platform grants on purpose.
     activity_services.cancel(
         activity.id,
         {"reason": f"Partner withdrawal: {withdrawal.get_reason_category_display()}"},
         principal,
+        already_authorised=True,
     )
 
     if locked:

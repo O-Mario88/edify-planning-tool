@@ -54,6 +54,9 @@ CORE_ALLOCATED_SLOT_STATUSES = frozenset(
         "evidence_returned",
     }
 )
+# How many missing CorePlan rows one page load will repair. See the call site.
+SELF_HEAL_BATCH = 50
+
 CORE_SLOT_ORDINALS = {
     1: "First",
     2: "Second",
@@ -343,23 +346,60 @@ def build_sparkline_path(
 
 class CoreSchoolsService:
     @staticmethod
-    def get_core_schools(user, filters: dict):
+    def base_queryset(user, *, lens: str = "direct"):
+        """The core schools a lens may show.
+
+        Two lenses, two disjoint sets, and the caller must say which it means:
+
+        * ``direct`` — the core schools assigned to this person. This is the
+          operational list: it carries Schedule Visit, Schedule Training,
+          Assign Partner and Upload Assessment, so it may only contain schools
+          those buttons will actually work on.
+        * ``oversight`` — a supervisor's supervisees' core schools, read-only.
+
+        The page used to build its list from `analytics._scoped_schools`, which
+        is the aggregate scope — own **plus** team. A Programme Lead therefore
+        opened Core Schools onto their CCEOs' packages with every operational
+        control live beside them; on this deployment that was 103 core schools
+        for a lead who is directly assigned none.
+        """
+        from apps.core.scoping import (
+            direct_portfolio_schools,
+            resolve_user_scope,
+            team_oversight_schools,
+        )
+        from apps.schools.models import School
+
+        scope = resolve_user_scope(user)
+        base = School.objects.filter(deleted_at__isnull=True)
+        if lens == "oversight":
+            qs = team_oversight_schools(scope, base=base)
+        else:
+            qs = direct_portfolio_schools(scope)
+        return (qs if qs is not None else School.objects.none()).filter(
+            school_type="core"
+        ), scope
+
+    @staticmethod
+    def get_core_schools(user, filters: dict, *, lens: str = "direct"):
         """Scopes and filters core schools for the page."""
-        from apps.analytics.services import _scoped_schools
-
-        schools_qs, scope = _scoped_schools(user)
-
-        # Ensure we only work with Core schools
-        core_schools_qs = schools_qs.filter(school_type="core")
+        core_schools_qs, scope = CoreSchoolsService.base_queryset(user, lens=lens)
 
         # 1. Self-healing check: ensure all core schools have a CorePlan for the current FY
+        #
+        # Bounded. This runs on every page load over the whole scoped set, and
+        # a country role's set is every core school in the deployment — 1,407
+        # here — so an unbounded `list()` pulled the entire table into memory
+        # to find the handful with no plan. The cap is per request and the work
+        # is idempotent, so a large backlog drains over successive loads
+        # instead of making one load pay for all of it.
         fy = filters.get("fy") or get_operational_fy()
         uninitialized_schools = list(
             core_schools_qs.exclude(
                 school_id__in=CorePlan.objects.filter(fy=fy).values_list(
                     "school_id", flat=True
                 )
-            )
+            )[:SELF_HEAL_BATCH]
         )
         if uninitialized_schools:
             from django.db import transaction
@@ -567,6 +607,16 @@ class CorePackageProgressService:
             item["school_id"]: item["count"] for item in project_counts
         }
 
+        # Partner support, as one grouped read. The compact row shows it beside
+        # the visit and training counts because "is anyone else carrying part
+        # of this package" is one of the nine facts §15 asks a core row for.
+        partner_counts_map = {
+            item["school_id"]: item["count"]
+            for item in PartnerAssignment.objects.filter(school_id__in=db_ids)
+            .values("school_id")
+            .annotate(count=Count("id"))
+        }
+
         # Prefetch school geo details and latest SSA
         schools_data = []
         for s in iterator:
@@ -742,6 +792,7 @@ class CorePackageProgressService:
                     or s.cluster_id is not None,
                     "cluster_name": cluster_name,
                     "project_assignment_count": project_count,
+                    "partner_support_count": partner_counts_map.get(s.id, 0),
                     "score_pct": score_pct,
                     "score_label": score_label,
                     "score_badge_class": badge_class,
@@ -751,6 +802,13 @@ class CorePackageProgressService:
                     "ssa_average_tone": ssa_summary["average_tone"],
                     "ssa_groups": ssa_summary["groups"],
                     "assessment": assessment_cell,
+                    # The plan's own flag, not the slot pill. The slot can
+                    # read "Complete" from a scheduling state while the plan
+                    # still records no assessment on file, and the oversight
+                    # table and the "Send to…" it offers were reading one
+                    # each — so a row said Complete and the ask it produced
+                    # said Outstanding. One field now answers both.
+                    "assessment_completed": bool(plan and plan.assessment_completed),
                     "visits": visits,
                     "trainings": trainings,
                     "scheduled_visit_count": package_summary["visits"],
@@ -1647,3 +1705,138 @@ class CoreMyPlanSyncService:
     def sync_to_my_plan(activity) -> bool:
         """Pushes scheduled activity to My Plan (standard Activity record in DB)."""
         return True
+
+
+class CoreTeamOversightService:
+    """The read-only lens a supervisor gets over their team's core schools.
+
+    Deliberately a different shape from the operational rows. It answers the
+    supervisor's question — *who is answerable, what is stuck, and what can I
+    ask for* — rather than offering the CCEO's controls at one remove. Nothing
+    in here schedules, assigns or edits: the only action it produces is a
+    TeamAction addressed to the person who owns the work.
+
+    Every figure is folded from the same matrix rows the operational list
+    builds, plus three bounded lookups (partner support, activity state,
+    actions already sent), so the two lenses can never disagree about a
+    school's progress.
+    """
+
+    # Ordered most- to least-blocking. The first condition that holds is the
+    # blocker; the ask attached to it is the one worth sending.
+    #
+    # The fourth value is the design-system badge variant, resolved here rather
+    # than mapped in the template: `edify-status-badge` takes success/warning/
+    # danger/info/pending, and a template that translated "critical" into a
+    # class name would be a second vocabulary to keep in step with this one.
+    _BLOCKERS = (
+        (
+            "core_assessment_missing",
+            "Assessment due",
+            "critical",
+            "danger",
+        ),
+        (
+            "core_package_behind",
+            "Package behind",
+            "warning",
+            "warning",
+        ),
+    )
+
+    @staticmethod
+    def build_rows(matrix_rows: list[dict], fy: str) -> list[dict]:
+        from apps.core.activity_types import COMPLETED_WORK_STATUSES
+        from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+        if not matrix_rows:
+            return []
+
+        db_ids = [r["id"] for r in matrix_rows]
+
+        partner_counts = {
+            row["school_id"]: row["n"]
+            for row in PartnerAssignment.objects.filter(school_id__in=db_ids)
+            .values("school_id")
+            .annotate(n=Count("id"))
+        }
+
+        # One pass for the delivery chain: evidence, Salesforce, IA and
+        # finance are four questions about the same activities, so they are
+        # four conditional counts over one scan rather than four queries.
+        activity_state = {
+            row["school_id"]: row
+            for row in Activity.objects.filter(
+                school_id__in=db_ids,
+                fy=fy,
+                activity_type__in=("core_visit", "core_training"),
+                deleted_at__isnull=True,
+            )
+            .exclude(status="cancelled")
+            .values("school_id")
+            .annotate(
+                total=Count("id"),
+                evidence_outstanding=Count(
+                    "id", filter=Q(evidence_status__in=("", "pending", "not_uploaded"))
+                ),
+                salesforce_missing=Count(
+                    "id",
+                    filter=Q(status__in=tuple(COMPLETED_WORK_STATUSES))
+                    & (
+                        Q(salesforce_activity_id__isnull=True)
+                        | Q(salesforce_activity_id="")
+                    ),
+                ),
+                ia_pending=Count(
+                    "id", filter=Q(status="awaiting_ia_verification")
+                ),
+                finance_pending=Count("id", filter=Q(payment_status="pending")),
+            )
+        }
+
+        sent = {
+            (a.school_id, a.issue_type): a
+            for a in TeamAction.objects.filter(
+                school_id__in=db_ids, fy=fy, state__in=ACTIVE_STATES
+            )
+        }
+
+        rows = []
+        for r in matrix_rows:
+            state = activity_state.get(r["id"], {})
+            assessment_done = r["assessment_completed"]
+            blocker_key = blocker_label = blocker_severity = blocker_tone = ""
+            for key, label, severity, tone in CoreTeamOversightService._BLOCKERS:
+                if key == "core_assessment_missing" and assessment_done:
+                    continue
+                if key == "core_package_behind" and r["package_complete"]:
+                    continue
+                blocker_key, blocker_label = key, label
+                blocker_severity, blocker_tone = severity, tone
+                break
+
+            existing = sent.get((r["id"], blocker_key)) if blocker_key else None
+            rows.append(
+                {
+                    **r,
+                    "responsible_cceo": r["staff_name"],
+                    # "Send to James", not "Send to James Okello" — §7 asks for
+                    # the first name, and the button reads as a message to a
+                    # colleague rather than a system operation on a record.
+                    "responsible_first_name": (r["staff_name"] or "").split(" ")[0]
+                    or "the owner",
+                    "partner_support": partner_counts.get(r["id"], 0),
+                    "evidence_outstanding": state.get("evidence_outstanding", 0),
+                    "salesforce_missing": state.get("salesforce_missing", 0),
+                    "ia_pending": state.get("ia_pending", 0),
+                    "finance_pending": state.get("finance_pending", 0),
+                    "assessment_done": assessment_done,
+                    "blocker_key": blocker_key,
+                    "blocker_label": blocker_label or "No blocker",
+                    "blocker_severity": blocker_severity or "ok",
+                    "blocker_tone": blocker_tone or "success",
+                    "action_id": existing.id if existing else "",
+                    "action_state": existing.get_state_display() if existing else "",
+                }
+            )
+        return rows

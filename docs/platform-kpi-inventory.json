@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 11,
   "labels_in_several_modules": 15,
-  "breakdown_rows": 122
+  "breakdown_rows": 123
  },
  "duplicated_labels": {
   "Accountability Pending": [
@@ -2030,7 +2030,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1642,
+   "line": 1672,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -2046,7 +2046,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1650,
+   "line": 1680,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -2062,7 +2062,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1658,
+   "line": 1688,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -2078,7 +2078,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1666,
+   "line": 1696,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -2094,7 +2094,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1674,
+   "line": 1704,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -2110,7 +2110,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1682,
+   "line": 1712,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -2126,7 +2126,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1690,
+   "line": 1720,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -2142,7 +2142,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1698,
+   "line": 1728,
    "label": "Pending Activities",
    "keys": [
     "helper",
@@ -2702,7 +2702,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 170,
+   "line": 174,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",
@@ -2824,7 +2824,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 757,
+   "line": 763,
    "label": null,
    "keys": [
     "label",
@@ -2850,7 +2850,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 446,
+   "line": 448,
    "label": null,
    "keys": [
     "label",
@@ -2862,7 +2862,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 153,
+   "line": 197,
    "label": "Total Core Schools",
    "keys": [
     "icon",
@@ -2876,7 +2876,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 159,
+   "line": 203,
    "label": "Core Schools Ready for Planning",
    "keys": [
     "helper",
@@ -2891,7 +2891,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 166,
+   "line": 210,
    "label": "Avg. Core Assessment Score",
    "keys": [
     "icon",
@@ -2905,7 +2905,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 172,
+   "line": 216,
    "label": "Visits Scheduled",
    "keys": [
     "helper",
@@ -2920,7 +2920,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 179,
+   "line": 223,
    "label": "Trainings Scheduled",
    "keys": [
     "helper",
@@ -2935,7 +2935,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 186,
+   "line": 230,
    "label": "Staff vs Partner Performance Delta",
    "keys": [
     "helper",
@@ -2950,7 +2950,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 204,
+   "line": 248,
    "label": "Regions Covered",
    "keys": [
     "helper",
@@ -2965,11 +2965,12 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 275,
+   "line": 326,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
     "hx_include",
+    "hx_swap",
     "hx_target",
     "hx_trigger",
     "label",
@@ -3099,7 +3100,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1760,
+   "line": 1766,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3114,7 +3115,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2398,
+   "line": 2409,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -3130,7 +3131,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2406,
+   "line": 2417,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -3146,7 +3147,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2661,
+   "line": 2674,
    "label": null,
    "keys": [
     "label",
@@ -3158,7 +3159,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2833,
+   "line": 2846,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -3173,7 +3174,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2840,
+   "line": 2853,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -3188,7 +3189,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2847,
+   "line": 2860,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -3203,7 +3204,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2854,
+   "line": 2867,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3218,7 +3219,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2861,
+   "line": 2874,
    "label": "Missing Critical Data",
    "keys": [
     "helper",
@@ -3233,7 +3234,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1065,
+   "line": 1069,
    "label": null,
    "keys": [
     "achieved",
@@ -5141,7 +5142,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 782,
+   "line": 796,
    "label": "Ready for Support",
    "keys": [
     "helper",
@@ -5157,7 +5158,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 790,
+   "line": 804,
    "label": "SSA Required",
    "keys": [
     "helper",
@@ -5173,7 +5174,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 798,
+   "line": 812,
    "label": "Clusters Needing Action",
    "keys": [
     "helper",
@@ -5189,7 +5190,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 806,
+   "line": 820,
    "label": "Core Package Gaps",
    "keys": [
     "helper",
@@ -5205,7 +5206,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 814,
+   "line": 828,
    "label": "Partner Pending Schedule",
    "keys": [
     "helper",
@@ -5221,7 +5222,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 822,
+   "line": 836,
    "label": "In My Plan",
    "keys": [
     "helper",
@@ -5237,7 +5238,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 830,
+   "line": 844,
    "label": "Cost Blocked",
    "keys": [
     "helper",
@@ -5253,7 +5254,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 838,
+   "line": 852,
    "label": "Data Cleanup Required",
    "keys": [
     "helper",
@@ -6734,7 +6735,25 @@
   {
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
-   "line": 63,
+   "line": 69,
+   "label": null,
+   "keys": [
+    "clean",
+    "count",
+    "examples",
+    "expected",
+    "key",
+    "label",
+    "route",
+    "severity"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "breakdown-row",
+   "module": "apps/system_health/portfolio_access_health.py",
+   "line": 60,
    "label": null,
    "keys": [
     "clean",

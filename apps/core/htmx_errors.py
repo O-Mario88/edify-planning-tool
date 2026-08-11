@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import logging
 
+from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from django.utils.html import format_html
@@ -43,8 +44,19 @@ FRAGMENT = (
 
 
 def is_user_facing(exc: BaseException) -> bool:
-    """True when the exception's message was written to be read by a user."""
-    return isinstance(exc, (EdifyAPIException, DjangoValidationError))
+    """True when the exception's message was written to be read by a user.
+
+    `PermissionDenied` belongs here. A refusal is a decision, not a bug: the
+    guards raise it with a sentence explaining who may act and what to do
+    instead — "You have read-only supervisory oversight of this record.
+    Operational planning must be completed by the responsible CCEO." Treated as
+    an unexpected error it was logged with a traceback and shown to the person
+    as "Something went wrong. The error has been logged.", which tells them
+    nothing and sends them to look for a fault that does not exist.
+    """
+    return isinstance(
+        exc, (EdifyAPIException, DjangoValidationError, PermissionDenied)
+    )
 
 
 def error_message(exc: BaseException, *, action: str | None = None) -> str:
@@ -78,6 +90,13 @@ def error_fragment(
         # Callers are inside one today, but a helper that silently logs
         # "NoneType: None" when they are not is worse than no log at all.
         logger.error("Unhandled error during %s", action or "an action", exc_info=exc)
+    if isinstance(exc, PermissionDenied):
+        # The status belongs to the refusal, not to the call site. Most views
+        # pass `status=400` because that is the right default for the failures
+        # they were written around; a refusal answered with 400 tells the
+        # client the request was malformed when it was in fact understood
+        # perfectly and declined.
+        status = 403
     return HttpResponse(
         format_html(FRAGMENT, error_message(exc, action=action)), status=status
     )

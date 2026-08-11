@@ -154,6 +154,12 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
   {% endcomment %}
   hx-trigger="{{ topbar_search.hx_trigger|default:'keyup delay:300ms, search' }}, submit"
   hx-push-url="true"
+  {% comment %}
+  Opt-in swap. A page whose search target is a whole container rather than an
+  inner panel needs outerHTML; leaving it out defaults to htmx's innerHTML,
+  which is what every existing caller relies on.
+  {% endcomment %}
+  {% if topbar_search.hx_swap %}hx-swap="{{ topbar_search.hx_swap }}"{% endif %}
   {% if topbar_search.hx_include %}hx-include="{{ topbar_search.hx_include }}"{% endif %}
   {% endif %}
 >

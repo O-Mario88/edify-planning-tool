@@ -1,0 +1,164 @@
+{% comment %}
+Team Core Oversight — read-only by construction.
+
+Every operational control is absent rather than disabled: there is no Schedule,
+no Assign, no slot picker and no assessment upload anywhere in this file. The
+one action it offers is an ask addressed to the person who owns the work, and
+that ask is re-derived server-side before it is written.
+{% endcomment %}
+<div class="core-oversight-card card p-0 overflow-hidden">
+  <div class="core-oversight-card__header">
+    <div>
+      <h2 class="core-oversight-card__title edify-section-heading">Team Core Schools ({{ page_obj.paginator.count }})</h2>
+      <p class="core-oversight-card__helper edify-text-caption edify-text-muted">Owned by the {{ supervised_count }} colleague{{ supervised_count|pluralize }} you supervise. You can monitor and ask; the responsible CCEO plans and delivers.</p>
+    </div>
+    <span class="edify-status-badge info">Read-Only Team Oversight</span>
+  </div>
+
+  <div class="core-oversight-card__body">
+    {% if oversight_rows %}
+      <div class="core-oversight-scroll">
+        {% comment %}
+        `data-edify-padding="flush"` is the card layer's documented opt-out, and
+        this table needs it: the mobile-table script adds
+        `edify-mobile-table--cards` at runtime, which matches the
+        `[class*="-card"]` arm of the card selector in consistency.css. A
+        <table> is not a card, but the substring says otherwise, so the table
+        was being given a card's 18.5px inner padding on top of its own cell
+        padding — which is why the first column sat 7px right of the card title
+        and nothing in the card lined up.
+        {% endcomment %}
+        <table class="edify-data-table core-oversight-table w-full" data-edify-padding="flush">
+          <caption class="sr-only">Core package progress for schools owned by the CCEOs you supervise</caption>
+          <thead>
+            <tr>
+              <th scope="col">School</th>
+              <th scope="col">Responsible CCEO</th>
+              <th scope="col">Assessment</th>
+              <th scope="col">Visits</th>
+              <th scope="col">Trainings</th>
+              <th scope="col">Partner</th>
+              <th scope="col">Delivery</th>
+              <th scope="col">Blocker</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in oversight_rows %}
+              <tr>
+                <th scope="row" class="core-oversight-table__school" data-label="School" data-record-title>
+                  <span class="core-oversight-table__name">{{ r.name }}</span>
+                  <span class="core-oversight-caption edify-text-caption edify-text-muted">{{ r.district_name }}</span>
+                </th>
+                <td data-label="Responsible CCEO">{{ r.responsible_cceo }}</td>
+                <td data-label="Assessment"><span class="edify-status-badge {% if r.assessment_done %}success{% else %}danger{% endif %}">{% if r.assessment_done %}Complete{% else %}Outstanding{% endif %}</span></td>
+                <td class="tabular-nums" data-label="Visits">{{ r.scheduled_visit_count }} / {{ r.visits_target }}</td>
+                <td class="tabular-nums" data-label="Trainings">{{ r.scheduled_training_count }} / {{ r.trainings_target }}</td>
+                <td class="tabular-nums" data-label="Partner support">{% if r.partner_support %}{{ r.partner_support }}{% else %}—{% endif %}</td>
+                {% comment %}
+                The chips are flexed on an inner wrapper, not on the cell. A
+                `<td>` that becomes a flex container stops being a table-cell:
+                it drops out of the row's height distribution and
+                `vertical-align: middle` no longer applies, so this column sat
+                10px above every other one in the row.
+                {% endcomment %}
+                <td class="core-oversight-table__delivery" data-label="Delivery">
+                  <span class="core-oversight-flags">
+                  {% if r.evidence_outstanding %}<span class="edify-status-badge pending">{{ r.evidence_outstanding }} evidence</span>{% endif %}
+                  {% if r.salesforce_missing %}<span class="edify-status-badge pending">{{ r.salesforce_missing }} Salesforce</span>{% endif %}
+                  {% if r.ia_pending %}<span class="edify-status-badge pending">{{ r.ia_pending }} IA</span>{% endif %}
+                  {% if r.finance_pending %}<span class="edify-status-badge pending">{{ r.finance_pending }} finance</span>{% endif %}
+                  {% if not r.evidence_outstanding and not r.salesforce_missing and not r.ia_pending and not r.finance_pending %}<span class="core-oversight-caption edify-text-caption edify-text-muted">Clear</span>{% endif %}
+                  </span>
+                </td>
+                <td data-label="Blocker"><span class="edify-status-badge {{ r.blocker_tone }}">{{ r.blocker_label }}</span></td>
+                <td data-label="Action" data-record-action>
+                  {% if r.action_state %}
+                    <a class="btn btn-ghost h-8 core-oversight-action is-sent" href="/actions/sent">View Action · {{ r.action_state }}</a>
+                  {% elif r.blocker_key %}
+                    <form hx-post="/core-schools/oversight/send"
+                          hx-target="#core-oversight-status-{{ r.id }}"
+                          hx-swap="innerHTML"
+                          class="core-oversight-action-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="school_id" value="{{ r.school_id }}">
+                      <input type="hidden" name="fy" value="{{ fy }}">
+                      <button type="submit" class="btn btn-ghost h-8 core-oversight-action">Send to {{ r.responsible_first_name }}</button>
+                    </form>
+                  {% else %}
+                    <span class="core-oversight-caption edify-text-caption edify-text-muted">Nothing to ask</span>
+                  {% endif %}
+                  <span id="core-oversight-status-{{ r.id }}" class="core-oversight-status" role="status"></span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="edify-empty-state core-school-matrix__empty">
+        <span class="core-school-matrix__empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
+        <p class="core-school-matrix__empty-title">Nothing to oversee here</p>
+        <p class="core-school-matrix__empty-body edify-text-caption">No core schools in your team match these filters.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  {% comment %}
+  Same pager furniture as the operational list and as
+  `components/table_pager.html`: one look for paging, wherever you are.
+  {% endcomment %}
+  <nav class="core-school-matrix__footer" aria-label="Team core school pages">
+    <p class="core-school-matrix__count edify-text-caption font-semibold text-slate-400 tabular-nums">
+      {% if page_obj.paginator.count %}
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+      {% else %}
+        No team core schools to show
+      {% endif %}
+    </p>
+    <div class="core-school-matrix__pager">
+      <div class="core-school-matrix__page-size">
+        <label for="core-per-page-oversight" class="edify-text-caption font-semibold text-slate-400">Rows per page</label>
+        <select id="core-per-page-oversight" aria-label="Rows per page"
+          class="min-h-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 tabular-nums"
+          @change="
+            const s = document.getElementById('core-filters-per-page-input');
+            const p = document.getElementById('core-filters-page-input');
+            if (p) p.value = '1';
+            if (s) { s.value = $event.target.value; s.dispatchEvent(new Event('change', { bubbles: true })) }
+          ">
+          {% for size in page_size_options %}
+            <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if page_obj.has_other_pages %}
+        {% if page_obj.has_previous %}
+          <button type="button" rel="prev"
+            @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+            class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Prev</button>
+        {% endif %}
+        <div class="core-school-matrix__page-numbers">
+          {% for num in pages_list %}
+            {% if num == "..." %}
+              <span class="edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">…</span>
+            {% elif num == page_obj.number %}
+              <span aria-current="page" aria-label="Page {{ num }}, current page" class="min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ num }}</span>
+            {% else %}
+              <button type="button" aria-label="Page {{ num }}"
+                @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+                class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center">{{ num }}</button>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if page_obj.has_next %}
+          <button type="button" rel="next"
+            @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+            class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Next</button>
+        {% endif %}
+      {% endif %}
+    </div>
+  </nav>
+</div>

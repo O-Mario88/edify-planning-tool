@@ -1,88 +1,146 @@
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}" hx-swap-oob="true">
-<div class="core-school-matrix__header px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 text-[12px] font-bold text-slate-500 rounded-t-xl select-none">
-  <div class="flex items-center gap-2">
-    <span class="core-school-matrix__title text-slate-700 font-semibold uppercase edify-text-caption tracking-wider">{% comment %}
+{% comment %}
+The Core School List card, as a flex column: header and footer keep their
+natural height, the list region takes whatever is left. That is what fills the
+card down to the bottom of the right-hand stack without a pixel height
+anywhere — change the right column and this still lands on the same line.
+{% endcomment %}
+{% comment %}
+Card header. The colours come from tokens rather than `bg-slate-50/50
+text-slate-500 border-slate-100`, which pinned the header to the light theme,
+and the two strings use the platform's caption tier instead of a literal
+`text-[12px]`.
+{% endcomment %}
+<div class="core-school-matrix__header">
+  <span class="core-school-matrix__title edify-text-caption uppercase tracking-wider font-semibold">{% comment %}
 paginator.count, not the length of matrix_rows — the same defect the School
 Directory had. matrix_rows is one page, so this reported the page size rather
 than what the filters and the query actually matched.
 {% endcomment %}Core Schools Matrix ({{ page_obj.paginator.count }} School{{ page_obj.paginator.count|pluralize }})</span>
-  </div>
-  <div class="core-school-matrix__helper edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">
+  <span class="core-school-matrix__helper edify-text-caption">
     Click a school to view SSA scores and live support counts
-  </div>
+  </span>
 </div>
 
-<div class="rounded-b-xl border border-slate-100" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
+<div class="core-school-matrix__body" x-data="{ openSchoolId: null }" @click.outside="openSchoolId = null">
   {% if matrix_rows %}
     <ul class="core-school-list school-record-list" role="list">
       {% for r in matrix_rows %}
         {% include "partials/core_schools/school_row.html" with school=r %}
       {% endfor %}
     </ul>
-
-    <!-- Pagination controls -->
-    {% if page_obj.has_other_pages %}
-      <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-b-xl">
-        <div class="text-[12px] text-slate-500 font-semibold whitespace-nowrap">
-          Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} core schools
-        </div>
-
-        <div class="flex items-center gap-1.5 font-bold text-slate-600">
-          <!-- Rows per page selector -->
-          <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
-            <span>Rows per page:</span>
-            <select aria-label="Rows per page" class="h-7 px-1 rounded-control border border-slate-200 text-[12px] edify-surface font-bold focus:outline-none">
-              <option>10</option>
-            </select>
-          </div>
-
-          {% if page_obj.has_previous %}
-            <button
-              type="button"
-              @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
-            >
-              Previous
-            </button>
-          {% endif %}
-
-          <!-- List page numbers -->
-          <div class="flex items-center gap-1 text-[12px]">
-            {% for num in pages_list %}
-              {% if num == "..." %}
-                <span class="w-8 text-center text-slate-400 font-bold">...</span>
-              {% elif num == page_obj.number %}
-                <span class="h-8 w-8 rounded-pill text-white font-semibold flex items-center justify-center shadow-sm select-none edify-primary-solid">{{ num }}</span>
-              {% else %}
-                <button
-                  type="button"
-                  @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-                  class="h-8 w-8 rounded-control hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  {{ num }}
-                </button>
-              {% endif %}
-            {% endfor %}
-          </div>
-
-          {% if page_obj.has_next %}
-            <button
-              type="button"
-              @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-              class="h-8 px-3 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all cursor-pointer"
-            >
-              Next
-            </button>
-          {% endif %}
-        </div>
-      </div>
-    {% endif %}
-
   {% else %}
-    <div class="p-10 text-center select-none edify-surface rounded-surface">
-      <span class="text-[32px] block mb-2">⭐</span>
-      <p class="text-[14px] font-semibold text-[var(--edify-primary)]">No Core Schools Found</p>
-      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>
+    {% comment %}
+    Honest empty states, and two of them: nothing assigned is a different
+    fact from "your filters match nothing", and a supervisor whose team holds
+    core schools is pointed at the read-only lens rather than left thinking
+    the page is broken.
+    {% endcomment %}
+    <div class="edify-empty-state core-school-matrix__empty">
+      <span class="core-school-matrix__empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/></svg>
+      </span>
+      {% if selected_district != "All" or selected_staff != "All" or selected_partner != "All" or selected_ssa_status != "All" or selected_partner_assigned != "All" or selected_school_type != "All" %}
+        <p class="core-school-matrix__empty-title">No Core Schools match these filters</p>
+        <p class="core-school-matrix__empty-body edify-text-caption">Clear a filter or change the search to widen the list.</p>
+      {% else %}
+        <p class="core-school-matrix__empty-title">No Core Schools in your portfolio</p>
+        <p class="core-school-matrix__empty-body edify-text-caption">No core schools are directly assigned to your current operational portfolio.</p>
+        {% if has_team_core %}
+          <a class="btn btn-ghost h-8 core-school-matrix__empty-link" href="/core-schools?lens=oversight&fy={{ fy }}">View Team Core Oversight</a>
+        {% endif %}
+      {% endif %}
     </div>
   {% endif %}
 </div>
+
+{% comment %}
+Footer stays at the bottom of the card whether the list is long or short, and
+carries the page-size control. The sizes are validated server-side, so an
+edited `per_page` cannot turn the list into an unbounded query.
+
+The controls wear the same classes as `components/table_pager.html`, the pager
+143 other tables use — including its 44px minimum target. The hand-rolled 32px
+buttons that were here looked close enough on a desktop and were below the
+touch-target floor the mobile sweep set for every other list on the platform.
+The shared component itself cannot be included: it pages by href, and this
+table is driven by an HTMX filter form whose hidden input has to move instead.
+{% endcomment %}
+<nav class="core-school-matrix__footer" aria-label="Core school list pages">
+  <p class="core-school-matrix__count edify-text-caption font-semibold text-slate-400 tabular-nums">
+    {% if page_obj.paginator.count %}
+      Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+    {% else %}
+      No core schools to show
+    {% endif %}
+  </p>
+
+  <div class="core-school-matrix__pager">
+    <div class="core-school-matrix__page-size">
+      <label for="core-per-page" class="edify-text-caption font-semibold text-slate-400">Rows per page</label>
+      {% comment %}
+      The control lives in the card footer but the value has to reach the
+      filter form, and a `form=` attribute would not do it: HTMX listens for a
+      change event bubbling inside `#core-filters-form`, and this select is not
+      a descendant of it. So it writes the form's hidden input and dispatches
+      there — the same route the pager buttons already take. Page resets to 1,
+      because page 4 of a 10-row list is not page 4 of a 50-row one.
+      {% endcomment %}
+      <select id="core-per-page" aria-label="Rows per page"
+        class="min-h-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 tabular-nums"
+        @change="
+          const s = document.getElementById('core-filters-per-page-input');
+          const p = document.getElementById('core-filters-page-input');
+          if (p) p.value = '1';
+          if (s) { s.value = $event.target.value; s.dispatchEvent(new Event('change', { bubbles: true })) }
+        ">
+        {% for size in page_size_options %}
+          <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      {% if page_obj.has_previous %}
+        <button
+          type="button"
+          rel="prev"
+          @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+          class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center"
+        >
+          Prev
+        </button>
+      {% endif %}
+
+      <div class="core-school-matrix__page-numbers">
+        {% for num in pages_list %}
+          {% if num == "..." %}
+            <span class="edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">…</span>
+          {% elif num == page_obj.number %}
+            <span aria-current="page" aria-label="Page {{ num }}, current page" class="min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ num }}</span>
+          {% else %}
+            <button
+              type="button"
+              aria-label="Page {{ num }}"
+              @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+              class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center"
+            >
+              {{ num }}
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if page_obj.has_next %}
+        <button
+          type="button"
+          rel="next"
+          @click="const p = document.getElementById('core-filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
+          class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center"
+        >
+          Next
+        </button>
+      {% endif %}
+    {% endif %}
+  </div>
+</nav>

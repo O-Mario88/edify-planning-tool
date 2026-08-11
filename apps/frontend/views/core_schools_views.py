@@ -2,13 +2,17 @@ import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib import messages
+from django.utils.html import escape
 from django.db import transaction
 from django.views.decorators.http import require_POST
 from datetime import date
 
 from apps.core.htmx_errors import error_fragment
 from apps.core.donut import build_gauge
-from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.permissions import (
+    require_page_permission,
+    get_operational_school_or_404,
+)
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.enums import SsaIntervention
@@ -35,10 +39,28 @@ from apps.core_schools.core_planning_services import (
     CoreStaffPartnerPerformanceService,
     CoreRecommendationService,
     CorePackageSchedulingService,
+    CoreTeamOversightService,
     build_sparkline_path,
 )
+from apps.core.scoping import resolve_user_scope
 
 logger = logging.getLogger(__name__)
+
+
+# How many core schools one page shows, and what a reader may choose. The
+# default was 10, which left the list card ending well above the right-hand
+# card stack and put most portfolios behind pagination for no reason. Both the
+# default and the option set are server-side: an unrecognised `per_page` falls
+# back rather than becoming an unbounded query.
+CORE_PAGE_SIZES = (10, 20, 50)
+CORE_PAGE_SIZE_DEFAULT = 20
+
+
+def _core_page_size(request) -> int:
+    raw = str(request.GET.get("per_page", "")).strip()
+    if raw.isdigit() and int(raw) in CORE_PAGE_SIZES:
+        return int(raw)
+    return CORE_PAGE_SIZE_DEFAULT
 
 
 @require_page_permission("core_schools")
@@ -59,14 +81,31 @@ def core_schools_view(request):
         "partner_assigned": request.GET.get("partner_assigned", "All"),
     }
 
-    # 2. Scoped core schools list
-    core_schools_qs = CoreSchoolsService.get_core_schools(request.user, filters)
+    # 2. Scoped core schools list.
+    #
+    # Two lenses, never mixed. `direct` is the operational list and carries
+    # every write control on the page; `oversight` is a supervisor's
+    # supervisees' core schools, read-only, and reachable only when they have
+    # some. A lens the user cannot hold falls back rather than 404s, so a
+    # bookmarked ?lens=oversight from a former supervisor is harmless.
+    scope = resolve_user_scope(request.user)
+    has_team_core = bool(
+        CoreSchoolsService.base_queryset(request.user, lens="oversight")[0].exists()
+    )
+    lens = "oversight" if request.GET.get("lens") == "oversight" else "direct"
+    if lens == "oversight" and not has_team_core:
+        lens = "direct"
 
-    # 3. Paginate planning core schools dataset to 10 schools per page
+    core_schools_qs = CoreSchoolsService.get_core_schools(
+        request.user, filters, lens=lens
+    )
+
+    # 3. Paginate the core schools dataset — server-side, bounded.
     from django.core.paginator import Paginator
 
     page_num = request.GET.get("page", 1)
-    paginator = Paginator(core_schools_qs, 10)
+    per_page = _core_page_size(request)
+    paginator = Paginator(core_schools_qs, per_page)
     page_obj = paginator.get_page(page_num)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
@@ -76,6 +115,11 @@ def core_schools_view(request):
 
     # 4. Retrieve service-processed context
     matrix_rows = CorePackageProgressService.get_matrix_data(page_obj.object_list, fy)
+    oversight_rows = (
+        CoreTeamOversightService.build_rows(matrix_rows, fy)
+        if lens == "oversight"
+        else []
+    )
     planning_queue = CorePlanningService.get_planning_queue(page_obj.object_list, fy)
     intervention_impact = CoreInterventionImpactService.get_intervention_impact(
         core_schools_qs, fy
@@ -258,6 +302,13 @@ def core_schools_view(request):
         "partners": partners,
         "kpi_strip_items": kpi_strip_items,
         "matrix_rows": matrix_rows,
+        "oversight_rows": oversight_rows,
+        "lens": lens,
+        "is_oversight_lens": lens == "oversight",
+        "has_team_core": has_team_core,
+        "per_page": per_page,
+        "page_size_options": CORE_PAGE_SIZES,
+        "supervised_count": len(scope.supervised_staff_ids or []),
         "planning_queue": planning_queue,
         "intervention_impact": intervention_impact,
         "perf_insights": perf_insights,
@@ -278,13 +329,26 @@ def core_schools_view(request):
             "name": "q",
             "value": filters["q"],
             "hx_get": "/core-schools",
-            "hx_target": "#core-schools-table-container",
+            # The oversight lens has no `#core-schools-table-container` — that
+            # id belongs to the operational matrix. Searching there swapped a
+            # matrix partial into an element that was not on the page, so the
+            # query appeared to do nothing. Whole-container swap instead, which
+            # is what the filter row already does.
+            "hx_target": (
+                "#core-schools-main-container"
+                if lens == "oversight"
+                else "#core-schools-table-container"
+            ),
+            "hx_swap": "outerHTML" if lens == "oversight" else "innerHTML",
             "hx_trigger": "keyup changed delay:250ms, search",
             "hx_include": "#core-filters-form",
         },
     }
 
-    if request.headers.get("HX-Target") == "core-schools-table-container":
+    if (
+        request.headers.get("HX-Target") == "core-schools-table-container"
+        and lens != "oversight"
+    ):
         return render(request, "partials/core_schools/matrix_table.html", context)
 
     return render(request, "pages/core_schools/index.html", context)
@@ -294,7 +358,7 @@ def core_schools_view(request):
 def core_schedule_visit_drawer(request):
     """Renders schedule core visit drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
 
     (
         school.ssa_records.filter(deleted_at__isnull=True)
@@ -356,7 +420,7 @@ def core_schedule_visit_drawer(request):
 def core_schedule_visit_action(request):
     """Handles schedule visit submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     visit_seq = request.POST.get("visit_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -472,7 +536,7 @@ def core_schedule_visit_action(request):
 def core_schedule_training_drawer(request):
     """Renders schedule core training drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
 
     (
         school.ssa_records.filter(deleted_at__isnull=True)
@@ -535,7 +599,7 @@ def core_schedule_training_drawer(request):
 def core_schedule_training_action(request):
     """Handles schedule training submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     train_seq = request.POST.get("training_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -652,7 +716,7 @@ def core_schedule_training_action(request):
 def core_assign_partner_drawer(request):
     """Renders partner assignment drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
 
     partners = Partner.objects.all().order_by("name")
     interventions = SsaIntervention.choices
@@ -696,7 +760,7 @@ def core_assign_partner_drawer(request):
 def core_schedule_activity_drawer(request):
     """Choose Core package support or an unrestricted general activity."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     summary = CorePackageSchedulingService.summary(plan) if plan else None
 
@@ -723,7 +787,7 @@ def core_schedule_activity_drawer(request):
 def core_assign_partner_action(request):
     """Handles partner assignment submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     support_type = request.POST.get("support_type", "Visit")  # Visit | Training
     visit_training_number = request.POST.get("visit_training_number", "1")
     partner_id = request.POST.get("partner_id")
@@ -921,7 +985,7 @@ def core_assign_partner_action(request):
 def core_assessment_drawer(request):
     """Renders core assessment details drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     latest_ssa = (
         school.ssa_records.filter(deleted_at__isnull=True)
         .order_by("-date_of_ssa")
@@ -1001,7 +1065,7 @@ def champion_candidates_view(request):
 @require_page_permission("core_schools")
 def champion_review_drawer(request, school_id):
     """Drawer to review details of a Potential Champion candidate."""
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_school_or_404(request.user, school_id=school_id)
     metrics = ChampionEligibilityService.calculate_score(school)
     metrics["gauge"] = build_gauge(
         metrics["score"], label="Graduation score", color="var(--edify-chart-blue)"
@@ -1109,3 +1173,99 @@ def champions_list_view(request):
         "champions": formatted_champions,
     }
     return render(request, "pages/core_schools/champions.html", context)
+
+
+@require_POST
+@require_page_permission("core_schools")
+def core_oversight_send_action(request):
+    """"Send to <CCEO>" from Team Core Oversight.
+
+    The only write this lens produces, and it writes an *ask*, not work. It
+    creates the TeamAction, notification, to-do and audit event through the
+    same `send_action` every other oversight page uses, so a core ask is
+    tracked, deduplicated and auto-resolved exactly like a planning one.
+
+    Everything is re-derived server-side. The school is re-checked against the
+    sender's oversight set and the blocker is recomputed from the plan, so a
+    sender who edits the form cannot address a school outside their team or
+    raise a condition that is not true.
+    """
+    from apps.core.exceptions import Forbidden
+    from apps.frontend.views.oversight_views import may_delegate
+    from apps.planning.action_service import ActionError, send_action
+
+    if not may_delegate(request.user, country=False):
+        return error_fragment(
+            Forbidden(
+                "Sending an action here belongs to the supervisor of the team. "
+                "You can read this page but not send from it."
+            ),
+            status=403,
+        )
+
+    school_ref = (request.POST.get("school_id") or "").strip()
+    note = (request.POST.get("note") or "").strip()
+    fy = (request.POST.get("fy") or get_operational_fy()).strip()
+
+    scope = resolve_user_scope(request.user)
+    oversight_qs, _ = CoreSchoolsService.base_queryset(request.user, lens="oversight")
+    school = oversight_qs.filter(school_id=school_ref).first()
+    if school is None:
+        return error_fragment(
+            Forbidden(
+                "That core school is not in your team, so there is nobody here "
+                "to send it to."
+            ),
+            status=403,
+        )
+
+    plan = CorePlan.objects.filter(school_id=school.school_id, fy=fy).first()
+    if plan is None:
+        return error_fragment(
+            BadRequest("This school has no core plan for the selected year."),
+            status=400,
+        )
+    if not plan.assessment_completed:
+        key, detail = (
+            "core_assessment_missing",
+            "The core assessment for this year is not on file.",
+        )
+    elif not CorePackageSchedulingService.summary(plan)["package_complete"]:
+        key, detail = (
+            "core_package_behind",
+            "The 4 visits + 4 trainings core package is not fully allocated.",
+        )
+    else:
+        return error_fragment(
+            BadRequest(
+                "This core package is complete, so there is nothing to send."
+            ),
+            status=400,
+        )
+
+    try:
+        action = send_action(
+            sender=request.user,
+            school=school,
+            issue={
+                "key": key,
+                "condition_key": f"core|{key}|school|{school.id}|{fy}",
+                "severity": "critical" if key == "core_assessment_missing" else "warning",
+                "detail": detail,
+            },
+            fy=fy,
+            note=note,
+            within_staff_ids=scope.supervised_staff_ids or None,
+        )
+    except ActionError as exc:
+        return error_fragment(BadRequest(str(exc)), status=400)
+
+    from apps.frontend.views.oversight_views import _recipient_name
+
+    name = _recipient_name(action)
+    response = HttpResponse(
+        f'<p class="pill pill-success" role="status">Sent to {escape(name.rstrip("."))}. '
+        "Tracked under Actions Sent.</p>"
+    )
+    response["HX-Trigger"] = "core-oversight-action-sent"
+    return response

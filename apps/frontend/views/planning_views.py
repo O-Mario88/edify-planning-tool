@@ -7,7 +7,8 @@ from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
     RolePermissionService,
-    get_scoped_object_or_404,
+    get_operational_cluster_or_404,
+    get_operational_school_or_404,
 )
 from django.contrib import messages
 from django.db import transaction
@@ -627,7 +628,7 @@ def schedule_modal_view(request):
 
     cluster_id = request.GET.get("cluster_id")
     if cluster_id:
-        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+        cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
         action = request.GET.get("action", "training")
         partners = assignable_partners()
         from apps.clusters.services import active_school_count
@@ -658,8 +659,8 @@ def schedule_modal_view(request):
         )
 
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(
-        School, request.user, Q(id=school_id) | Q(school_id=school_id)
+    school = get_operational_school_or_404(
+        request.user, Q(id=school_id) | Q(school_id=school_id)
     )
     project_id = request.GET.get("project_id", "")
     from apps.activity_catalogue.services import recommend_activities
@@ -1062,11 +1063,11 @@ def assign_partner_modal_view(request):
     school = None
     cluster = None
     if school_id:
-        school = get_scoped_object_or_404(
-            School, request.user, Q(id=school_id) | Q(school_id=school_id)
+        school = get_operational_school_or_404(
+            request.user, Q(id=school_id) | Q(school_id=school_id)
         )
     if cluster_id:
-        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+        cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
 
     partners = assignable_partners()
     project_id = request.GET.get("project_id", "")
@@ -1249,14 +1250,14 @@ def assign_partner_action_view(request):
                 else None
             )
             school_for_validation = (
-                get_scoped_object_or_404(
-                    School, request.user, Q(id=school_id) | Q(school_id=school_id)
+                get_operational_school_or_404(
+                    request.user, Q(id=school_id) | Q(school_id=school_id)
                 )
                 if school_id
                 else None
             )
             cluster_for_validation = (
-                get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+                get_operational_cluster_or_404(request.user, id=cluster_id)
                 if cluster_id
                 else None
             )
@@ -1382,8 +1383,8 @@ def assign_partner_action_view(request):
             return qs.order_by("-created_at").first()
 
         if school_id:
-            school = get_scoped_object_or_404(
-                School, request.user, Q(id=school_id) | Q(school_id=school_id)
+            school = get_operational_school_or_404(
+                request.user, Q(id=school_id) | Q(school_id=school_id)
             )
             purpose_of_visit = normalise_visit_purpose(
                 purpose_of_visit,
@@ -1430,7 +1431,7 @@ def assign_partner_action_view(request):
                 )
 
         if cluster_id:
-            cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+            cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
             assignment_purpose = purpose or catalogue_item.display_name
             act_type = catalogue_item.workflow_kind
             dup = _recent_duplicate(cluster=cluster, act_type=act_type)
@@ -1752,15 +1753,25 @@ def schedule_activity_form_view(request):
     school_id = request.GET.get("school", "")
     cluster_id = request.GET.get("cluster", "")
 
-    from apps.core.scoping import cluster_queryset, resolve_user_scope
+    from apps.core.scoping import (
+        cluster_queryset,
+        direct_portfolio_schools,
+        resolve_user_scope,
+    )
 
-    # Populate lookups. Schools were scoped here and clusters were not — the
-    # picker offered every cluster in the country beside a correctly narrowed
-    # school list, so the two dropdowns on one form disagreed about whose work
-    # this is.
+    # Populate lookups. Neither dropdown was scoped to what a save would
+    # accept: the school list was `active_schools()` — every operating school
+    # in the country — and the cluster list was every cluster in it. Both now
+    # come from the direct portfolio, which is the set the create-time guard
+    # checks against.
     scope = resolve_user_scope(request.user)
-    schools = active_schools().order_by("name")
-    clusters = cluster_queryset(scope).order_by("name")
+    schools = (
+        direct_portfolio_schools(scope) or School.objects.none()
+    ).order_by("name")
+    # `direct_only`, matching the create-time guard in `_target_in_direct_
+    # portfolio`. A supervisor's CCEO clusters are read-only oversight; listing
+    # them here promised a save the service would refuse.
+    clusters = cluster_queryset(scope, direct_only=True).order_by("name")
     partners = assignable_partners()
 
     selected_school = (

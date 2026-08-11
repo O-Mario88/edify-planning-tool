@@ -19,8 +19,8 @@ from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.core.scoping import (
     cluster_queryset,
+    direct_portfolio_schools,
     resolve_user_scope,
-    school_queryset,
 )
 from apps.core.enums import SsaIntervention
 
@@ -423,7 +423,9 @@ def cluster_schedule_activity_view(request):
             messages.error(request, f"Failed to schedule activity: {e}")
             if request.headers.get("HX-Request") == "true":
                 scope = resolve_user_scope(request.user)
-                clusters = cluster_queryset(scope).filter(status="active")
+                clusters = cluster_queryset(scope, direct_only=True).filter(
+                    status="active"
+                )
 
                 selected_cluster = clusters.filter(id=cluster_id).first()
                 rec = None
@@ -717,8 +719,12 @@ def planner_drawer_view(request):
     # Was: skip the filter when `scope.district_ids` is empty — which handed
     # every cluster in the country to the one user who has no geography at all.
     # `cluster_queryset` fails closed instead, agreeing with `cluster_in_scope`.
+    #
+    # This is the cluster *planner*: everything it offers leads to a schedule,
+    # so it asks the write question. A supervisor sees their CCEOs' clusters
+    # on oversight instead.
     scope = resolve_user_scope(request.user)
-    clusters = cluster_queryset(scope).filter(status="active")
+    clusters = cluster_queryset(scope, direct_only=True).filter(status="active")
 
     selected_cluster = None
     if cluster_id:
@@ -916,24 +922,22 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # Allow assignment if school is in a covered sub-county OR (for
             # district-level clusters with no covered sub-counties) in the
             # cluster's district.
+            # Direct portfolio only. Adding a school to a cluster edits the
+            # school record, so a supervisor may not do it for a CCEO's school
+            # — the same rule `assign_school` and the picker apply.
+            writable = (
+                direct_portfolio_schools(resolve_user_scope(user)) or School.objects.none()
+            )
             if covered_sub_counties:
-                school = (
-                    school_queryset(resolve_user_scope(user))
-                    .filter(
-                        id=sid,
-                        sub_county_id__in=covered_sub_counties,
-                        deleted_at__isnull=True,
-                    )
-                    .first()
-                )
+                school = writable.filter(
+                    id=sid,
+                    sub_county_id__in=covered_sub_counties,
+                    deleted_at__isnull=True,
+                ).first()
             else:
-                school = (
-                    school_queryset(resolve_user_scope(user))
-                    .filter(
-                        id=sid, district_id=cluster.district_id, deleted_at__isnull=True
-                    )
-                    .first()
-                )
+                school = writable.filter(
+                    id=sid, district_id=cluster.district_id, deleted_at__isnull=True
+                ).first()
             if school:
                 # Audited inside set_school_cluster_membership() (the
                 # canonical service assign_school_to_cluster delegates to)

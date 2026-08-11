@@ -19,7 +19,11 @@ from django.utils import timezone
 from apps.core.enums import ExecutorType, PARTNER_EXECUTOR_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.scoping import COUNTRY_SCHEDULING_ROLES, resolve_user_scope
+from apps.core.scoping import (
+    COUNTRY_SCHEDULING_ROLES,
+    owner_ids,
+    resolve_user_scope,
+)
 from apps.schools.models import School
 
 # REG-02 calendar policy. This module must run the gate, not merely borrow the
@@ -343,6 +347,60 @@ def _assert_may_schedule(activity: Activity, principal) -> None:
         )
 
 
+def _assert_may_execute(activity: Activity, principal) -> None:
+    """Reaching an activity is not the same as being able to run it.
+
+    `_assert_in_scope` lets a Programme Lead through on any activity at a
+    supervisee's school, because `school_ids` unions the team's schools in —
+    correct for reading, and it is what let a supervisor reschedule, cancel,
+    record attendance on, complete, and stamp the Salesforce ID of a CCEO's
+    work. §1B lists every one of those among the things supervision does not
+    license.
+
+    Three ways to legitimately hold an activity, and supervision is not one:
+
+      * you own it, in either id space (`owner_ids` — the responsible staff
+        member, or the staff member monitoring a partner's delivery);
+      * it sits at a school in your own portfolio, which covers work created
+        by someone else at a school you now hold;
+      * you are its partner.
+
+    Country roles are handled by `_assert_may_schedule`, which every caller
+    still applies where it applied before; this is the supervisor question,
+    kept separate so neither answer can quietly absorb the other.
+    """
+    scope = resolve_user_scope(principal)
+    if scope.active_role in COUNTRY_SCHEDULING_ROLES or scope.country_scope:
+        return
+    if not scope.supervised_staff_ids:
+        return  # not a supervisor: `_assert_in_scope` already decided this
+    mine = owner_ids(principal)
+    if activity.responsible_staff_id in mine:
+        return
+    if getattr(activity, "monitored_by_staff_id", None) in mine:
+        return
+    if activity.school_id and activity.school_id in (scope.own_school_ids or []):
+        return
+    if activity.assigned_partner_id and activity.assigned_partner_id in (
+        scope.partner_ids or []
+    ):
+        return
+    if activity.cluster_id:
+        from apps.clusters.models import Cluster
+        from apps.core.scoping import cluster_in_scope
+
+        cluster = (
+            Cluster.objects.filter(id=activity.cluster_id, deleted_at__isnull=True)
+            .only("id", "district_id", "responsible_staff_id")
+            .first()
+        )
+        if cluster and cluster_in_scope(scope, cluster, direct_only=True):
+            return
+    from apps.core.scoping import OVERSIGHT_ONLY_MESSAGE
+
+    raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
+
+
 def _target_in_direct_portfolio(scope, school: School | None, cluster_id) -> bool:
     """Is this target inside the *direct* portfolio the scope describes?
 
@@ -369,10 +427,17 @@ def _target_in_direct_portfolio(scope, school: School | None, cluster_id) -> boo
 
         cluster = (
             Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True)
-            .only("id", "district_id")
+            .only("id", "district_id", "responsible_staff_id")
             .first()
         )
-        if cluster and cluster_in_scope(scope, cluster):
+        # `direct_only`, for the same reason the school branch above reads
+        # `own_school_ids`. Without it the school half of this function
+        # followed direct ownership and the cluster half followed supervision:
+        # a Programme Lead refused a CCEO's school could still schedule a
+        # cluster meeting or training in that CCEO's cluster, and — because
+        # `district_ids` is derived from the own+team union — in every
+        # not-yet-owned cluster across their supervisees' districts too.
+        if cluster and cluster_in_scope(scope, cluster, direct_only=True):
             return True
     return False
 
@@ -448,7 +513,40 @@ def _assert_target_in_scope(
         owner_scope, school, cluster_id
     ):
         return
+    # Name the actual reason. A supervisor refused here is not missing a
+    # permission and not looking at a record that does not exist — they can
+    # see it, on oversight, and the next step is to ask the person who owns
+    # it. "Outside your scope" sent them to an administrator instead.
+    if _target_under_oversight(scope, school, cluster_id):
+        from apps.core.scoping import OVERSIGHT_ONLY_MESSAGE
+
+        raise Forbidden(OVERSIGHT_ONLY_MESSAGE)
     raise Forbidden("Activity target outside your scope.")
+
+
+def _target_under_oversight(scope, school: School | None, cluster_id) -> bool:
+    """Can this person *watch* the target they were just refused?
+
+    Only used to choose the wording of a refusal that has already happened —
+    never to grant anything.
+    """
+    if school and school.id in (scope.team_school_ids or []):
+        return True
+    if cluster_id and cluster_id not in (scope.own_cluster_ids or []):
+        from apps.clusters.models import Cluster
+        from apps.core.scoping import cluster_in_scope
+
+        cluster = (
+            Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True)
+            .only("id", "district_id", "responsible_staff_id")
+            .first()
+        )
+        return bool(
+            cluster
+            and scope.supervised_staff_ids
+            and cluster_in_scope(scope, cluster)
+        )
+    return False
 
 
 def _get_in_scope(activity_id: str, principal) -> Activity:
@@ -456,6 +554,18 @@ def _get_in_scope(activity_id: str, principal) -> Activity:
     if not a:
         raise NotFoundError("Activity not found.")
     _assert_in_scope(a, principal)
+    return a
+
+
+def _get_for_execution(activity_id: str, principal) -> Activity:
+    """Resolve an activity the caller may actually act on.
+
+    The read resolver plus the supervisor question. Used by every mutation —
+    complete, submit, reschedule, reassign, cancel, attendance — so the answer
+    cannot be right in five of them and forgotten in the sixth.
+    """
+    a = _get_in_scope(activity_id, principal)
+    _assert_may_execute(a, principal)
     return a
 
 
@@ -1995,7 +2105,77 @@ def create(
         pass
     if is_certified_agency_booking:
         _notify_certified_agency_booking(activity, certified_agency, principal)
+    _ensure_partner_handover(activity, data)
     return _serialize(activity)
+
+
+def _ensure_partner_handover(activity: Activity, data: dict) -> None:
+    """Open the handover record for work created already carrying a partner.
+
+    Partner Oversight is driven by PartnerAssignment: an activity that names a
+    partner but that no assignment points at appears on that page nowhere at
+    all. The work is real and its cost is real, and the supervisor answerable
+    for partner delivery can see neither.
+
+    There are two shapes of partner work and only one of them was covered.
+    When a *staff member hands a school over* first, the assignment is written
+    up front and the partner's later scheduling turns it into an activity
+    (`_partner_schedule_from_assignment`). When a staff member *schedules with
+    a partner in one step* — the school-visit drawer, the core-schools
+    drawers, the work plan, the API — the activity was created and no handover
+    was ever recorded. Only the cluster planner remembered to write one, in
+    its own copy, which is exactly the drift that made this worth centralising.
+
+    The assignment is created in its post-schedule state and linked, because
+    that is what actually happened: the assignment and the activity are the
+    same work at two moments of its life, and here both moments are now.
+
+    Deliberately silent when there is nothing to record. No partner named
+    means no handover to open — an activity marked partner-delivered with no
+    partner is a malformed row, and inventing a partner to satisfy a health
+    check would put real work against an organisation that never did it.
+    """
+    partner_id = activity.assigned_partner_id
+    if not partner_id or activity.delivery_type != "partner":
+        return
+    from apps.partners.models import PartnerAssignment
+
+    if PartnerAssignment.objects.filter(scheduled_activity_id=activity.id).exists():
+        return
+    from apps.partners.purposes import normalise_visit_purpose
+
+    try:
+        PartnerAssignment.objects.create(
+            school_id=activity.school_id,
+            cluster_id=activity.cluster_id,
+            partner_id=partner_id,
+            assigning_staff_id=activity.responsible_staff_id
+            or activity.monitored_by_staff_id,
+            monitoring_staff_id=activity.monitored_by_staff_id
+            or activity.responsible_staff_id,
+            assignment_mode="specific_activity",
+            catalogue_item_id=activity.catalogue_item_id,
+            purpose=activity.activity_purpose_text or "",
+            purpose_of_visit=normalise_visit_purpose(
+                data.get("purposeOfVisit") or activity.purpose_type,
+                for_partner=True,
+                fallback_activity_type=activity.activity_type,
+            ),
+            focus_intervention=activity.focus_intervention,
+            expected_activity_type=activity.activity_type,
+            scheduled_date=(
+                activity.scheduled_date.date() if activity.scheduled_date else None
+            ),
+            status="partner_scheduled",
+            scheduled_activity=activity,
+        )
+    except Exception:  # noqa: BLE001
+        # The activity is saved and correct; a missing handover is a
+        # supervision gap the health board reports and the repair command
+        # closes. Losing the activity over it would be the worse trade.
+        logger.exception(
+            "Could not open the partner handover for activity %s", activity.id
+        )
 
 
 def _catalogue_cluster(cluster_id):
@@ -2055,7 +2235,7 @@ def _schedule_period(
 def start_completion(
     activity_id: str, data: dict | None = None, principal=None
 ) -> dict:
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     if a.status not in STARTABLE_STATUSES:
         raise BadRequest("Activity must be scheduled before completion can start.")
     a.status = "completion_started"
@@ -2066,7 +2246,7 @@ def start_completion(
 def complete(activity_id: str, data: dict, principal) -> dict:
     """Submit completion: evidence present, Salesforce ID validated, attendance
     for trainings, CCEO routes to PL / staff routes to IA."""
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     if a.status not in COMPLETABLE_STATUSES:
         raise BadRequest(
             "Click Complete first to unlock evidence upload and Activity Code entry."
@@ -2201,7 +2381,7 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
     exercised under test — it is not part of the user-facing payload.
     """
     data = data or {}
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     if a.status not in SUBMITTABLE_STATUSES:
         raise BadRequest("Activity is not ready to be submitted for review.")
 
@@ -2289,7 +2469,7 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
     Completing an activity here would let a user skip the Salesforce/evidence
     requirements enforced by ``complete()`` and ``submit_for_review()``.
     """
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     if a.status in ("closed", "cancelled", "rejected", "deferred"):
         raise BadRequest("Attendance cannot be changed after this activity is closed.")
 
@@ -2458,7 +2638,7 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
 
 
 def reschedule(activity_id: str, data: dict, principal) -> dict:
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     _assert_may_schedule(a, principal)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
@@ -2628,7 +2808,7 @@ def _notify_partner_schedule_change(activity, event_type, title, body) -> None:
 
 
 def reassign(activity_id: str, data: dict, principal) -> dict:
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     # The ownership flip and the cost/request rebuild must land together — a
     # costing failure otherwise leaves the activity reassigned while the money
     # still sits with the previous owner. The row lock serialises concurrent
@@ -3001,9 +3181,26 @@ def _detach_from_daily_visit_batch(a: Activity) -> None:
         pass
 
 
-def _cancel_or_defer(activity_id: str, data: dict, principal, new_status: str) -> dict:
+def _cancel_or_defer(
+    activity_id: str,
+    data: dict,
+    principal,
+    new_status: str,
+    *,
+    already_authorised: bool = False,
+) -> dict:
     """Cancel/defer an activity AND withdraw its money from every draft
     funding surface, atomically.
+
+    `already_authorised` is for one caller: partner withdrawal. Recalling work
+    a partner has committed to a date is a *supervisory* act, and the platform
+    grants it deliberately — `partners.withdrawal_service.assert_may_withdraw`
+    says so in as many words: "Once a partner has committed to a date the CCEO
+    must ask their Program Lead, because cancelling work a partner has planned
+    around is a decision with consequences beyond one school." That service is
+    the authority for the decision; re-asking the direct-portfolio question
+    here overruled it and made a Programme Lead unable to recall their own
+    team's partner work. Nothing user-facing passes it.
 
     Previously this only flipped the status: the cost lines, the draft
     weekly/monthly fund requests, and the pending AdvanceRequests all kept the
@@ -3022,7 +3219,11 @@ def _cancel_or_defer(activity_id: str, data: dict, principal, new_status: str) -
     from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
     from apps.fund_requests.weekly_service import sync_weekly_requests_for_activity
 
-    a = _get_in_scope(activity_id, principal)
+    a = (
+        _get_in_scope(activity_id, principal)
+        if already_authorised
+        else _get_for_execution(activity_id, principal)
+    )
     with transaction.atomic():
         a = Activity.objects.select_for_update().get(pk=a.pk)
         prior_buckets = list(
@@ -3060,8 +3261,16 @@ def _cancel_or_defer(activity_id: str, data: dict, principal, new_status: str) -
     return _serialize(a)
 
 
-def cancel(activity_id: str, data: dict, principal) -> dict:
-    return _cancel_or_defer(activity_id, data, principal, "cancelled")
+def cancel(
+    activity_id: str, data: dict, principal, *, already_authorised: bool = False
+) -> dict:
+    return _cancel_or_defer(
+        activity_id,
+        data,
+        principal,
+        "cancelled",
+        already_authorised=already_authorised,
+    )
 
 
 def defer(activity_id: str, data: dict, principal) -> dict:
@@ -3137,7 +3346,7 @@ _COST_DRIVER_PATCH_FIELDS = (
 
 
 def patch_activity(activity_id: str, data: dict, principal) -> dict:
-    a = _get_in_scope(activity_id, principal)
+    a = _get_for_execution(activity_id, principal)
     update_fields = []
     if "activityPurposeText" in data:
         a.activity_purpose_text = data["activityPurposeText"]

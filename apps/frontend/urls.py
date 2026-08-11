@@ -1656,6 +1656,11 @@ urlpatterns = [
     # ── GROUP 7: Core Schools, Projects, Debriefs, Completed, Quality, Help ───
     path("core-schools", core_schools_views.core_schools_view, name="core_schools"),
     path(
+        "core-schools/oversight/send",
+        core_schools_views.core_oversight_send_action,
+        name="core_oversight_send_action",
+    ),
+    path(
         "core-schools/schedule-activity",
         core_schools_views.core_schedule_activity_drawer,
         name="core_schedule_activity_drawer",

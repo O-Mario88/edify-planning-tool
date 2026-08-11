@@ -9,11 +9,42 @@
 <!-- TOP HEADER SECTION -->
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Schools & Field</p>
-<h1 class="edify-page-title edify-page-header__title">Core Schools Planning</h1>
-<p class="edify-page-header__description">Plan and track the complete core service package: 4 Visits + 4 Trainings for every core school.</p>
+<p class="edify-page-eyebrow">Schools &amp; Field</p>
+<h1 class="edify-page-title edify-page-header__title">{% if is_oversight_lens %}Team Core Oversight{% else %}Core Schools Planning{% endif %}</h1>
+<p class="edify-page-header__description">{% if is_oversight_lens %}Read-only view of the core packages your CCEOs are responsible for. Ask the owner to act — you cannot plan their work here.{% else %}Plan and track the complete core service package: 4 Visits + 4 Trainings for every core school directly assigned to you.{% endif %}</p>
 </div>
 </div>
+
+{% comment %}
+Portfolio scope. Two lenses, never one blended list: the left is the core
+schools this person may act on, the right is their team's, read-only. The rail
+only exists for somebody who actually supervises core schools, so it does not
+imply a second portfolio to everyone else.
+
+Navigation, not an ARIA tablist — each option is its own URL and controls no
+panel here, so `role="tab"` would promise a widget that does not exist. It
+carries `data-edify-tablist`/`data-edify-tab` so it is the *same* segmented
+rail as the view tabs below it: two controls that look like tabs and are
+styled two different ways, one above the other, is the drift this markup
+exists to avoid.
+{% endcomment %}
+{% if has_team_core %}
+<nav data-edify-tablist aria-label="Core schools portfolio scope" class="core-scope-switch">
+  <a href="/core-schools?fy={{ fy }}&per_page={{ per_page }}" data-edify-tab{% if not is_oversight_lens %} aria-current="page"{% endif %}>
+    My Core Schools
+  </a>
+  {% comment %}
+  No badge inside the segment. The rail contract flattens pills inside a tab
+  on purpose — "counts belong to the tab label rather than sitting in a second
+  pill" — and a badge here also made this rail 10px taller than the identical
+  one below it. Read-only is stated where it is load-bearing: the page
+  description, and the badge on the oversight card itself.
+  {% endcomment %}
+  <a href="/core-schools?lens=oversight&fy={{ fy }}&per_page={{ per_page }}" data-edify-tab{% if is_oversight_lens %} aria-current="page"{% endif %}>
+    Team Core Oversight
+  </a>
+</nav>
+{% endif %}
 
 <!-- Filters inclusion -->
 {% include "partials/core_schools/filters.html" %}
@@ -21,64 +52,95 @@
 <!-- KPI Strip inclusion -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-<!-- Multi-tab main panel layout (Matrix, Queue, Impact, Performance Insights) using Alpine.js -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
+{% if is_oversight_lens %}
+
+{% comment %}
+Oversight is one full-width read-only table. It carries no right-hand
+decision stack because there is no decision to make here: the next step is
+always the responsible CCEO's.
+{% endcomment %}
+{% include "partials/core_schools/team_oversight.html" %}
+
+{% else %}
+
+{% comment %}
+One two-column parent grid, stretched. The left column holds the Core School
+List card and the right holds the summary stack; `items-stretch` (the grid
+default, named here so it cannot be lost) plus `h-full`/`flex-1` on the left
+card is what makes the two columns end on the same line — no fixed height,
+so the alignment survives any change to the right-hand content.
+{% endcomment %}
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
 
 <!-- Left 3 columns: Tab panels -->
-<div class="lg:col-span-3 space-y-6">
+<div class="lg:col-span-3 flex flex-col gap-4 min-w-0">
 
 <!-- Tab Headers -->
-<div role="tablist" aria-label="Core Schools views">
+<div role="tablist" aria-label="Core Schools views" class="shrink-0">
 <button
 id="core-tab-matrix" type="button" role="tab" aria-controls="core-schools-table-container" :aria-selected="activeTab === 'matrix'" :tabindex="activeTab === 'matrix' ? 0 : -1"
 @click="setTab('matrix')"
-class="edify-primary-focus"
+class="edify-tab-btn edify-primary-focus"
 >
 Core Service Package Matrix
 </button>
 <button
 id="core-tab-queue" type="button" role="tab" aria-controls="core-panel-queue" :aria-selected="activeTab === 'queue'" :tabindex="activeTab === 'queue' ? 0 : -1"
 @click="setTab('queue')"
-class="edify-primary-focus"
+class="edify-tab-btn edify-primary-focus"
 >
 Core Planning Queue
 </button>
 <button
 id="core-tab-impact" type="button" role="tab" aria-controls="core-panel-impact" :aria-selected="activeTab === 'impact'" :tabindex="activeTab === 'impact' ? 0 : -1"
 @click="setTab('impact')"
-class="edify-primary-focus"
+class="edify-tab-btn edify-primary-focus"
 >
 Intervention Impact Tracker
 </button>
 <button
 id="core-tab-performance" type="button" role="tab" aria-controls="core-panel-performance" :aria-selected="activeTab === 'performance'" :tabindex="activeTab === 'performance' ? 0 : -1"
 @click="setTab('performance')"
-class="edify-primary-focus"
+class="edify-tab-btn edify-primary-focus"
 >
 Staff vs Partner Performance
 </button>
 </div>
 
-<!-- Tab Content Cards -->
-<div :class="activeTab === 'performance' ? '' : 'edify-surface rounded-surface border border-slate-100 shadow-sm p-6'">
+{% comment %}
+The surface moved off this wrapper and onto each panel. It used to carry
+`edify-surface rounded-surface border`, and the list card inside it kept its
+own header, rounding and footer — a card drawn inside a card, with the shell's
+padding showing as a frame around it. One card per panel, and the list card
+owns the edge.
+{% endcomment %}
+<div class="core-panel-shell flex-1 min-h-0 flex flex-col">
 
+{% comment %}
+`card` rather than `edify-surface rounded-surface border border-slate-100
+shadow-sm`. The utility spelling was carried over from the old markup and
+hard-codes a light-mode border: `border-slate-100` does not change in the dark
+or blue themes, so the card edge disappeared in one and fought the glass plane
+in the other. `.card` takes its surface, border, radius and shadow from the
+theme tokens and is what every other list on the platform uses.
+{% endcomment %}
 <!-- Tab: Matrix -->
-<div x-show="activeTab === 'matrix'" id="core-schools-table-container" role="tabpanel">
+<div x-show="activeTab === 'matrix'" id="core-schools-table-container" role="tabpanel" class="core-list-card card">
 {% include "partials/core_schools/matrix_table.html" %}
 </div>
 
 <!-- Tab: Queue -->
-<div x-show="activeTab === 'queue'" id="core-panel-queue" role="tabpanel" style="display: none;">
+<div x-show="activeTab === 'queue'" id="core-panel-queue" role="tabpanel" class="core-panel-body card p-6" style="display: none;">
 {% include "partials/core_schools/planning_queue.html" %}
 </div>
 
 <!-- Tab: Impact -->
-<div x-show="activeTab === 'impact'" id="core-panel-impact" role="tabpanel" style="display: none;">
+<div x-show="activeTab === 'impact'" id="core-panel-impact" role="tabpanel" class="core-panel-body card p-6" style="display: none;">
 {% include "partials/core_schools/intervention_impact.html" %}
 </div>
 
 <!-- Tab: Performance -->
-<div x-show="activeTab === 'performance'" id="core-panel-performance" role="tabpanel" style="display: none;">
+<div x-show="activeTab === 'performance'" id="core-panel-performance" role="tabpanel" class="core-panel-body" style="display: none;">
 {% include "partials/core_schools/performance_insights.html" %}
 </div>
 
@@ -87,11 +149,13 @@ Staff vs Partner Performance
 </div>
 
 <!-- Right 1 column: Strategies, rules, and alert details -->
-<div class="lg:col-span-1">
+<div class="lg:col-span-1 flex flex-col min-w-0">
 {% include "partials/core_schools/right_panel.html" %}
 </div>
 
 </div>
+
+{% endif %}
 
 </div>
 

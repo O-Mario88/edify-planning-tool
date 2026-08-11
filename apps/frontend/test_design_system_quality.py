@@ -51,12 +51,19 @@ def _contrast_ratio(foreground, background):
 class PlatformDesignSystemQualityTest(SimpleTestCase):
     def test_geist_sans_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
+        theme = _read("assets/css/_theme.css")
         tokens = _read("static/css/design-system.css")
         compiled = _read("static/css/main.css")
+        bridge = _read("static/css/consistency.css")
 
         self.assertIn("css/fonts.css", base)
         self.assertIn("--edify-font-sans: 'Geist Sans'", tokens)
+        self.assertIn("--font-mono: var(--font-sans);", theme)
+        self.assertIn("--edify-font-mono: var(--edify-font-sans);", tokens)
         self.assertRegex(compiled, r'--font-sans:\s*"Geist Sans",')
+        self.assertIn("--font-mono: var(--font-sans);", compiled)
+        self.assertIn(".leaflet-container {", bridge)
+        self.assertIn("font-family: var(--edify-font-sans) !important;", bridge)
 
     def test_geist_sans_is_self_hosted_on_every_entry_point(self):
         """The typeface must not depend on a third-party request.

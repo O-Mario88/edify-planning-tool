@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.db.models import Q
 
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
 
 
 def search(principal, q: str, context: str | None = None) -> dict:
@@ -14,8 +14,14 @@ def search(principal, q: str, context: str | None = None) -> dict:
     scope = resolve_user_scope(principal)
     results: list[dict] = []
 
-    # Schools (scope-constrained).
-    base = school_queryset(scope)
+    # Schools — the direct portfolio.
+    #
+    # Search is a way into a record, and every school result routes to
+    # /schools/<id>, which is an operational profile. A supervisor searching
+    # their CCEO's school and landing on the editable profile is the same
+    # defect as listing it in the directory, arriving by a different door.
+    # Their team's work is on Team Oversight, labelled as such.
+    base = direct_portfolio_schools(scope)
     if base is not None:
         for s in base.filter(Q(name__icontains=q) | Q(school_id__icontains=q))[:20]:
             results.append(

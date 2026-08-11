@@ -3158,7 +3158,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   border-radius: var(--radius-control);
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--edify-font-sans);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   line-height: 1.2;
@@ -3817,16 +3817,26 @@ main [data-mobile-family="directory"] .school-filter-clear {
   font-family: var(--edify-font-sans);
 }
 
+/* Card header. Layout only — `edify-text-caption` in the markup owns the type
+   tier, and the colours come from tokens so the header follows the theme
+   instead of the `bg-slate-50/50 text-slate-500` it used to hard-code. */
 .core-school-matrix__header {
-  font: var(--edify-font-label);
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  user-select: none;
 }
 
-.core-school-matrix__title {
-  font: var(--edify-font-micro);
-}
+.core-school-matrix__title { color: var(--edify-text); }
 
 .core-school-matrix__helper {
-  font: var(--edify-font-micro);
+  color: var(--edify-text-muted);
   text-transform: none !important;
   letter-spacing: var(--edify-text-micro-tracking) !important;
 }
@@ -4248,4 +4258,377 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   .edify-report-summary-card {
     min-block-size: 0 !important;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Core Schools — list card, scope switch and team oversight
+   ════════════════════════════════════════════════════════════════════════════
+
+   The card fills the column it sits in, and the column is a stretched grid
+   item, so the list ends on the same line as the right-hand card stack with no
+   height declared anywhere. Change the right stack and this still lines up.
+   The list body grows but never shrinks (`flex: 1 0 auto`), which is what
+   keeps a long list out of an internal scroll region — the page scrolls, not
+   a box inside a box inside a box. */
+.core-panel-shell {
+  min-block-size: 0;
+}
+
+.core-list-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.core-panel-body {
+  flex: 1 1 auto;
+}
+
+.core-school-matrix__body {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-block-size: 0;
+  border-block-start: 0;
+}
+
+.core-school-matrix__body > .school-record-list {
+  flex: 1 0 auto;
+}
+
+.core-school-matrix__empty {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* An icon, not a character. The platform lints emoji out of templates: how a
+   glyph renders is the reader's font's decision, and an empty state should not
+   look different on one machine from another. */
+.core-school-matrix__empty-icon {
+  display: inline-flex;
+  inline-size: 1.9rem;
+  block-size: 1.9rem;
+  color: var(--edify-text-subtle, var(--edify-text-muted));
+}
+
+.core-school-matrix__empty-icon svg { inline-size: 100%; block-size: 100%; }
+
+/* Footer: last child of the card, so it sits at the bottom whether the list
+   above it is one row or fifty. */
+.core-school-matrix__footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1.5rem;
+  border-block-start: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  border-end-start-radius: var(--edify-radius-surface, 12px);
+  border-end-end-radius: var(--edify-radius-surface, 12px);
+}
+
+.core-school-matrix__count { margin: 0; }
+
+.core-school-matrix__pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.core-school-matrix__page-size {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-inline-end: 0.6rem;
+}
+
+.core-school-matrix__page-numbers {
+  display: flex;
+  gap: 0.15rem;
+  align-items: center;
+}
+
+/* Compact core row.
+   The shared record hides its metadata until the row is expanded, which is
+   right for the School Directory — but a core row's nine facts (owner,
+   assessment, visits, trainings, partner, package state) ARE the row, and
+   hiding them left nothing to plan from. They stay on one wrapped line; the
+   address, contact, cluster, enrolment and SSA breakdown moved into the
+   detail, so the row gained information and lost height at the same time. */
+.core-school-row--compact.school-record-row:not(.is-expanded) .core-school-row__metadata {
+  display: flex;
+}
+
+.core-school-row--compact.school-record-row:not(.is-expanded) .school-record-row__summary {
+  align-items: start;
+  padding-block: 0.55rem;
+}
+
+.core-school-row--compact .core-school-row__metadata {
+  gap: 0.2rem 0.95rem;
+  margin-block-start: 0.28rem;
+}
+
+.core-school-row--compact .core-school-row__metadata dd.is-positive { color: var(--edify-success-text, var(--edify-success)); }
+.core-school-row--compact .core-school-row__metadata dd.is-attention { color: var(--edify-warning-text, var(--edify-warning)); }
+
+.core-school-row__metadata--secondary {
+  padding-block-end: 0.6rem;
+  border-block-end: 1px dashed var(--edify-border);
+}
+
+/* Narrow rows put the school name back on its own line.
+   The headline is a two-column grid (name | actions), which is right at
+   desktop width and wrong once the row is phone-sized: two buttons plus their
+   labels left about five characters for the name, so "Nakifuma UMEA Primary
+   School" rendered as "Nakif um…". The name is the row's identity and gets the
+   full width; the actions move underneath, where they are also easier to hit. */
+@container core-school-row (max-width: 30rem) {
+  .core-school-row--compact .core-school-row__headline {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .core-school-row--compact .core-school-row__headline .school-record-row__actions {
+    justify-content: flex-start;
+  }
+}
+
+/* Portfolio scope switch. Two lenses, one control, and the read-only badge
+   spelled out on the tab rather than discovered after arriving.
+
+   Everything about how it LOOKS comes from the shared rail contract above —
+   this is a `data-edify-tablist`, so it is the same segmented control as the
+   view tabs beneath it. All that is left is to stop a two-option rail
+   stretching the full width of the page. */
+.core-scope-switch {
+  align-self: flex-start;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
+/* One height for both rails on this page.
+
+   The rail contract sizes a segment with vertical padding, which a button's UA
+   reset removes and an anchor keeps — so the scope rail rendered 38px anchors
+   directly above 32px buttons in what reads as the same control. Matching the
+   buttons rather than the anchors keeps this page's rails the height every
+   other rail on the platform settles at. */
+main .core-scope-switch [data-edify-tab] {
+  padding-block: 0 !important;
+  min-block-size: 2rem !important;
+}
+
+
+/* Team Core Oversight — a read-only table, so nothing here is a control that
+   changes a record. `Send to <name>` is the only submit, and it writes an ask. */
+.core-oversight-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.core-oversight-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: start;
+  justify-content: space-between;
+  padding: 0.9rem 1.5rem;
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  border-start-start-radius: var(--edify-radius-surface, 12px);
+  border-start-end-radius: var(--edify-radius-surface, 12px);
+}
+
+.core-oversight-card__helper {
+  max-inline-size: 60ch;
+  margin-block-start: 0.15rem;
+}
+
+.core-oversight-card__body { flex: 1 0 auto; }
+
+/* One scroll region, horizontal only, and only when the table is wider than
+   the page. The rows themselves never scroll. */
+.core-oversight-scroll { overflow-x: auto; }
+
+/* Cell padding between columns is NOT set here. `main table th, main table td`
+   in this same file already fixes it for every table on the platform, with
+   `!important` — so the `padding: 0.55rem 0.4rem` that used to sit here was
+   dead code that read as though it were in charge. Head and body line up
+   because that one contract governs both. */
+.core-oversight-table th,
+.core-oversight-table td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* The two OUTER edges are the exception. They are not space between columns —
+   they are the card's gutter. Left as the global 11px, the first column
+   started 7px right of the card title and the last ran flush into the card's
+   right edge, 25px past where the header badge stops; nothing in the card
+   lined up with anything else. `!important` only because the contract it is
+   carving an exception out of is itself important. */
+.core-oversight-table th:first-child,
+.core-oversight-table td:first-child {
+  padding-inline-start: 1.5rem !important;
+}
+
+.core-oversight-table th:last-child,
+.core-oversight-table td:last-child {
+  padding-inline-end: 1.5rem !important;
+}
+
+/* A column header aligns with its own cells. `.edify-data-table th` sets
+   `text-align: left` from a later stylesheet than the `text-right` utility on
+   the markup, so the Action header sat at the left of a column of
+   right-aligned buttons — the one misalignment on this table the eye actually
+   catches. Stated here, where head and body cannot disagree. */
+.core-oversight-table th:last-child,
+.core-oversight-table td:last-child { text-align: end; }
+
+/* Nine columns have to fit before the primary action does, and `Send to
+   <name>` sitting past the right edge of a scroll region is an action nobody
+   finds. The three columns carrying prose wrap; the numeric ones stay on one
+   line, where wrapping would be the thing that looks broken. */
+.core-oversight-table__school,
+.core-oversight-table td[data-label="Responsible CCEO"],
+.core-oversight-table td[data-label="Blocker"],
+.core-oversight-table__delivery {
+  white-space: normal;
+}
+
+.core-oversight-table__school { min-inline-size: 9.5rem; }
+
+/* The action stays reachable whatever the table measures.
+   Nine columns of real data will sometimes be wider than the card — school
+   names and CCEO names are not fixed-width — and chasing that with ever
+   tighter padding only moves the breakpoint. Pinning the last column to the
+   right edge of the scroll region means `Send to <name>` is always on screen,
+   which is the one thing on this page a supervisor is here to do. */
+.core-oversight-table th:last-child,
+.core-oversight-table td:last-child {
+  position: sticky;
+  inset-inline-end: 0;
+  background: var(--edify-surface);
+  box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.18);
+}
+
+.core-oversight-table thead th:last-child { background: var(--edify-surface-muted); }
+.core-oversight-table tbody tr:hover td:last-child { background: var(--edify-surface-hover); }
+.core-oversight-table td[data-label="Blocker"] { max-inline-size: 10rem; }
+.core-oversight-table__delivery { max-inline-size: 9rem; }
+
+.core-oversight-table thead th {
+  border-block-end: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font: var(--edify-font-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: start;
+  text-transform: uppercase;
+}
+
+.core-oversight-table tbody tr { border-block-end: 1px solid var(--edify-divider); }
+.core-oversight-table tbody tr:hover { background: var(--edify-surface-hover); }
+
+.core-oversight-table__school { text-align: start; }
+
+.core-oversight-table__name {
+  display: block;
+  max-inline-size: 16rem;
+  color: var(--edify-text);
+  font-weight: 650;
+}
+
+.core-oversight-caption {
+  display: block;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+/* The cell stays a table-cell so it keeps the row's height and its
+   `vertical-align: middle`; the wrapper inside it does the flexing. */
+.core-oversight-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.core-oversight-action-form { display: inline; }
+
+.core-oversight-action.is-sent { color: var(--edify-primary); }
+
+.core-oversight-status:not(:empty) {
+  display: block;
+  margin-block-start: 0.3rem;
+  font-size: var(--edify-text-micro-size);
+}
+
+/* Tablet and phone.
+   Once the columns stack there is no equal-height problem to solve, so the
+   stretch behaviour is switched off and everything takes its natural height —
+   forcing desktop equal-height after a stack is how a card ends up with three
+   screens of empty space on a phone. */
+@media (max-width: 64rem) {
+  .core-list-card,
+  .core-panel-body { block-size: auto; }
+
+  .core-school-matrix__body,
+  .core-school-matrix__body > .school-record-list,
+  .core-school-matrix__empty,
+  .core-oversight-card__body { flex: 0 0 auto; }
+}
+
+@media (max-width: 48rem) {
+  .core-school-matrix__footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding-inline: 1rem;
+  }
+
+  .core-school-matrix__pager { justify-content: space-between; }
+
+  .core-oversight-card__header { padding-inline: 1rem; }
+
+  /* The phone layout is `edify-mobile-table--cards` — the platform's own
+     mobile-table component, applied by the enhancer. This file used to carry a
+     second, hand-rolled card layout for the same table, and the two fought:
+     the component wants values to wrap, and the desktop `nowrap` below kept
+     them on one line, so every value was clipped at the card's edge. All that
+     is needed here is to release what the desktop rules impose. */
+  .core-oversight-scroll { overflow-x: visible; }
+
+  .edify-mobile-table--cards.core-oversight-table :is(th, td) {
+    white-space: normal;
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
+
+  /* A sticky column has nothing to stick to once the table is a stack. */
+  .core-oversight-table th:last-child,
+  .core-oversight-table td:last-child {
+    position: static;
+    box-shadow: none;
+    background: transparent;
+    padding-inline: 0 !important;
+  }
+
+  .core-oversight-table th:first-child { padding-inline-start: 0 !important; }
+  .core-oversight-flags { justify-content: flex-end; }
+  .core-oversight-action,
+  .core-oversight-action-form { inline-size: 100%; }
 }

@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **499**
-- All registered routes: **901**
+- Routed product surfaces: **500**
+- All registered routes: **902**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **318**
-- Full pages: **326**
+- Shared component templates: **319**
+- Full pages: **327**
 - Partials and drawers: **157**
-- Permission-gated surfaces: **489**
-- Referenced by automated tests: **464**
+- Permission-gated surfaces: **490**
+- Referenced by automated tests: **465**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -166,7 +166,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /completed-activities/<str:activity_id>/ | Completed Activity Record - Edify Command Center | ADMIN, CCEO, PL, PROJECT_COORDINATOR | pages/closure/completed_detail.html | 9.4 | 0 | referenced by automated test |
 | /compliance-register | Compliance Register | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /core-school-health | Core School Health | ADMIN, CD, IA, PL, RVP | pages/core_schools/leadership.html | 9.4 | 0 | referenced by automated test |
-| /core-schools | Core Schools | ADMIN, CCEO, IA, PL | partials/core_schools/matrix_table.html<br>pages/core_schools/index.html | 9.4 | 0 | referenced by automated test |
+| /core-schools | Core Schools | ADMIN, CCEO, IA, PL | partials/core_schools/matrix_table.html<br>pages/core_schools/index.html | 9.6 | 0 | referenced by automated test |
 | /core-schools/<str:plan_id> | Core School Plan | ADMIN, CCEO, PL, PROJECT_COORDINATOR | pages/core_schools/detail.html | 9.4 | 0 | referenced by automated test |
 | /core-schools/<str:school_id>/champion-approve | Champion Approve Action | ADMIN, CCEO, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /core-schools/<str:school_id>/champion-reject | Champion Reject Action | ADMIN, CCEO, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -176,6 +176,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /core-schools/assign-partner/action | Core Assign Partner Action | ADMIN, CCEO, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /core-schools/champion-candidates | Champion School Candidates | ADMIN, CCEO, IA, PL | pages/core_schools/champion_candidates.html | 9.6 | 0 | referenced by automated test |
 | /core-schools/champions | Graduated Champion Schools | ADMIN, CCEO, IA, PL | pages/core_schools/champions.html | 9.6 | 0 | referenced by automated test |
+| /core-schools/oversight/send | Core Oversight Send Action | ADMIN, CCEO, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /core-schools/schedule-activity | Core Schedule Activity Drawer | ADMIN, CCEO, IA, PL | partials/core_schools/schedule_activity_drawer.html | 9.6 | 0 | referenced by automated test |
 | /core-schools/schedule-training | Core Schedule Training Drawer | ADMIN, CCEO, IA, PL | partials/core_schools/schedule_training_drawer.html | 9.8 | 0 | referenced by automated test |
 | /core-schools/schedule-training/action | Core Schedule Training Action | ADMIN, CCEO, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

@@ -276,9 +276,27 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertIn("Alpha Core School", html)
         self.assertNotIn("Beta Core School", html)
 
-    def test_pl_sees_own_and_supervised_core_portfolio(self):
+    def test_pl_operational_core_list_excludes_a_supervised_cceos_school(self):
+        """Supervision is not ownership.
+
+        This asserted the opposite until the direct-portfolio rule landed: the
+        Programme Lead's *operational* Core list showed their CCEOs' core
+        schools with Schedule, Assign and Upload Assessment live on every one.
+        The work is still visible — on the read-only oversight lens, where the
+        next step is to ask the CCEO who owns it.
+        """
         html = self._client(self.pl).get("/core-schools").content.decode()
-        self.assertIn("Alpha Core School", html)  # supervised CCEO's school
+        self.assertNotIn("Alpha Core School", html)
+        self.assertIn("No Core Schools in your portfolio", html)
+        self.assertIn("lens=oversight", html)
+
+    def test_pl_sees_the_supervised_core_school_on_the_oversight_lens(self):
+        response = self._client(self.pl).get("/core-schools?lens=oversight")
+        html = response.content.decode()
+        self.assertIn("Alpha Core School", html)
+        self.assertIn("Read-Only Team Oversight", html)
+        self.assertNotIn("/core-schools/schedule-", html)
+        self.assertNotIn("/core-schools/assign-partner", html)
 
     def test_pl_cannot_see_other_pl_core_schools(self):
         html = self._client(self.other_pl).get("/core-schools").content.decode()
@@ -335,7 +353,7 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertContains(response, "Christlike Behaviour")
         self.assertContains(response, "(9/10)")
         self.assertContains(response, "Plot 12, Kampala Road")
-        self.assertContains(response, "Staff Name:")
+        self.assertContains(response, "Owner:")
         self.assertContains(response, "Core Cceo")
         self.assertContains(response, ">Core<")
         self.assertContains(

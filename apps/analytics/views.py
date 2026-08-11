@@ -28,9 +28,15 @@ def _get_cache_key(prefix: str, user, params: dict) -> str:
     # sha256, not md5: this only needs to distinguish parameter sets, but an
     # md5 call without usedforsecurity=False raises on a FIPS-enforcing host,
     # which would take every analytics endpoint down rather than degrade it.
+    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+
     param_str = json.dumps(params, sort_keys=True)
     param_hash = hashlib.sha256(param_str.encode("utf-8")).hexdigest()[:32]
-    return f"analytics:{prefix}:{user.id}:{user.active_role}:{param_hash}"
+    # The portfolio fingerprint, not just the user and role. Reassign a school
+    # or change a reporting line and the key changes, so the previous answer
+    # is never served again — see `scope_cache_fingerprint`.
+    portfolio = scope_cache_fingerprint(resolve_user_scope(user))
+    return f"analytics:{prefix}:{user.id}:{user.active_role}:{portfolio}:{param_hash}"
 
 
 class AnalyticsDashboardView(APIView):

@@ -167,10 +167,23 @@ class PlanningDashboardService:
             "tab", "client"
         )  # client, core, clusters, partner, scheduled
 
-        # 1. Base Queryset for schools (scope-scoped)
-        from apps.analytics.services import _scoped_schools
+        # 1. Base Queryset for schools — the DIRECT portfolio.
+        #
+        # This is the Planning workspace: every row carries Schedule, Assign
+        # to Partner and the cluster planner, and the cluster tab derives its
+        # cluster ids from this very queryset. It used to read
+        # `analytics._scoped_schools`, the aggregate own+team scope, so a
+        # Programme Lead planned across their CCEOs' schools and clusters from
+        # the page whose whole purpose is to place work. Their team's plan is
+        # on Team Planning Oversight, read-only.
+        from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+        from apps.schools.models import School as _School
 
-        schools_qs, scope = _scoped_schools(principal)
+        scope = resolve_user_scope(principal)
+        schools_qs = direct_portfolio_schools(scope) or _School.objects.none()
+        # Held before the filters below are applied: the KPI strip counts the
+        # whole portfolio, the list counts what the filters matched.
+        schools_qs_base = schools_qs
 
         # Apply filters
         if district_id and district_id != "All":
@@ -659,9 +672,10 @@ class PlanningDashboardService:
                 s["clusterName"] = "—"
 
         # 5. Compute KPI Cards Metrics
-        from apps.analytics.services import _scoped_schools
-
-        base_schools_qs, scope = _scoped_schools(principal)
+        #
+        # Same set as the rows above, so the headline and the list cannot
+        # disagree about how many schools this person plans for.
+        base_schools_qs = schools_qs_base
 
         all_school_ids = list(base_schools_qs.values_list("id", flat=True))
         cost_blocked_count = (

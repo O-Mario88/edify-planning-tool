@@ -82,6 +82,24 @@ class DashboardCardRowContractTest(SimpleTestCase):
         self.assertNotIn("Approval Queue", cceo_row)
         self.assertNotIn("dashboards/pl/approval_queue.html", cceo_row)
 
+    def test_main_dashboard_gives_cluster_performance_the_wide_lower_track(self):
+        template = self._source("templates/pages/dashboards/main.html")
+        css = self._source("static/css/admin-dashboard.css")
+        lower_row = template[template.index('class="admin-grid admin-grid--lower"') :]
+        lower_row = lower_row[: lower_row.index("</div>\n    </div>")]
+
+        self.assertLess(
+            lower_row.index('class="admin-panel admin-clusters"'),
+            lower_row.index('class="admin-stack"'),
+        )
+        self.assertIn(
+            "grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.72fr)",
+            css,
+        )
+        self.assertIn(
+            ".admin-grid--lower :is(.admin-mini-grid, .admin-budget-grid)", css
+        )
+
     def test_cd_program_lead_surfaces_show_supervised_cceo_area_results(self):
         dashboard = self._source("templates/partials/dashboards/cd/body.html")
         oversight = self._source("templates/partials/analytics/cd/pl_oversight.html")

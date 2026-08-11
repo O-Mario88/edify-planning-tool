@@ -67,7 +67,10 @@ def list_schools(query: dict, principal):
     the row serializer dereferences (region/district/sub_county/parish) so the
     directory page isn't an N+1 (4 queries × page-size per page)."""
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope)
+    # `direct_only`, matching the School Directory page this backs. An API
+    # that returned the supervisory union while the page showed the direct
+    # portfolio would be a bypass with a JSON content type.
+    base = school_queryset(scope, direct_only=True)
     if base is None:
         return School.objects.none()
     base = base.filter(_build_q(query, scope))
@@ -324,7 +327,9 @@ def triage_data_quality_issue(issue_id: str, action: str, principal):
 def proposals(principal, limit: int = 10) -> list[dict]:
     """Best-SSA Client and Core Trained schools → Core candidates."""
     scope = resolve_user_scope(principal)
-    base = school_queryset(scope)
+    # Proposing a school for Core onboarding is a write this person would
+    # perform, so the candidate pool is their own portfolio.
+    base = school_queryset(scope, direct_only=True)
     if base is None:
         return []
     # Candidate = a client school with the best current SSA standing.

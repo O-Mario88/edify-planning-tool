@@ -48,9 +48,13 @@ def analytics_dashboard_view(request):
     filter_fingerprint = hashlib.sha256(
         json.dumps(filters, sort_keys=True, default=str).encode()
     ).hexdigest()[:20]
+    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+
     analytics_key = (
         f"analytics-dashboard:v1:{request.user.id}:"
-        f"{request.user.active_role}:{filter_fingerprint}"
+        f"{request.user.active_role}:"
+        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:"
+        f"{filter_fingerprint}"
     )
     data = stampede_safe_get_or_compute(
         analytics_key,
