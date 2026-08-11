@@ -345,9 +345,10 @@ class CoreSchoolsService:
     @staticmethod
     def get_core_schools(user, filters: dict):
         """Scopes and filters core schools for the page."""
-        from apps.analytics.services import _scoped_schools
+        from apps.core.scoping import resolve_user_scope, school_queryset
 
-        schools_qs, scope = _scoped_schools(user)
+        scope = resolve_user_scope(user)
+        schools_qs = school_queryset(scope)
 
         # Ensure we only work with Core schools
         core_schools_qs = schools_qs.filter(school_type="core")

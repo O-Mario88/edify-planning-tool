@@ -705,6 +705,7 @@ def school_directory_view(request):
         "can_schedule": RolePermissionService.can_schedule_activity(user),
         "can_upload_schools": _may_upload_schools(request),
         "can_add_ssa": _may_upload_ssa(request),
+        "is_program_lead": user.active_role == "Program Lead",
     }
 
     if request.headers.get("HX-Request") == "true":

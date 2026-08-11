@@ -361,6 +361,16 @@ urlpatterns = [
         name="team_planning_oversight",
     ),
     path(
+        "team-core-oversight/",
+        core_schools_views.team_core_oversight_view,
+        name="team_core_oversight",
+    ),
+    path(
+        "team-core-oversight/send",
+        core_schools_views.team_core_send_action_view,
+        name="team_core_oversight_send",
+    ),
+    path(
         "country-planning-oversight/",
         oversight_views.country_planning_oversight_view,
         name="country_planning_oversight",

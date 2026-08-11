@@ -20,7 +20,7 @@ from django.db.models import Avg, Count, Max, Min, Prefetch, Q, Sum
 
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
-from apps.core.rbac import Permission
+from apps.core.rbac import EdifyRole, Permission
 from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
@@ -379,18 +379,19 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     # An unowned cluster stays editable so it can be picked up and given an
     # owner; that is the same carve-out `cluster_in_scope` makes, and without
     # it the 16 clusters that have never had an owner would be frozen.
-    from apps.core.scoping import cluster_owner_ids
+    from apps.core.scoping import may_plan_cluster
 
     current_owner = (cluster.responsible_staff_id or "").strip()
     editor_scope = resolve_user_scope(principal)
-    if (
-        current_owner
-        and not editor_scope.country_scope
-        and current_owner not in cluster_owner_ids(editor_scope)
+    strict_program_lead = (
+        editor_scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    )
+    if (current_owner or strict_program_lead) and not may_plan_cluster(
+        editor_scope, cluster
     ):
         raise Forbidden(
-            "That cluster belongs to another staff member. Ask them, or "
-            "transfer it through the cluster-transfer workflow."
+            "You have read-only supervisory oversight of this record. "
+            "Operational Planning must be completed by the responsible CCEO."
         )
 
     region_id = data.get("regionId")

@@ -8,7 +8,11 @@ from datetime import date
 
 from apps.core.htmx_errors import error_fragment
 from apps.core.donut import build_gauge
-from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.permissions import (
+    require_page_permission,
+    get_scoped_object_or_404,
+    get_operational_object_or_404,
+)
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.core.enums import SsaIntervention
@@ -62,11 +66,18 @@ def core_schools_view(request):
     # 2. Scoped core schools list
     core_schools_qs = CoreSchoolsService.get_core_schools(request.user, filters)
 
-    # 3. Paginate planning core schools dataset to 10 schools per page
+    # 3. Bounded server-side pagination. Twenty uses the available desktop
+    # height efficiently; 10 and 50 remain explicit user choices.
     from django.core.paginator import Paginator
 
     page_num = request.GET.get("page", 1)
-    paginator = Paginator(core_schools_qs, 10)
+    try:
+        page_size = int(request.GET.get("page_size", 20))
+    except (TypeError, ValueError):
+        page_size = 20
+    if page_size not in {10, 20, 50}:
+        page_size = 20
+    paginator = Paginator(core_schools_qs, page_size)
     page_obj = paginator.get_page(page_num)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
@@ -234,9 +245,9 @@ def core_schools_view(request):
     )
     partners = (
         Partner.objects.filter(
-            id__in=PartnerAssignment.objects.filter(school__school_type="core").values(
-                "partner_id"
-            )
+            id__in=PartnerAssignment.objects.filter(
+                school__in=core_schools_qs
+            ).values("partner_id")
         )
         .distinct()
         .order_by("name")
@@ -265,6 +276,8 @@ def core_schools_view(request):
         "page_obj": page_obj,
         "is_paginated": page_obj.has_other_pages(),
         "pages_list": pages_list,
+        "page_size": page_size,
+        "is_program_lead": getattr(request.user, "active_role", "") == "Program Lead",
         "base_template": "layouts/blank.html"
         if request.headers.get("HX-Request") == "true"
         else "layouts/shell.html",
@@ -290,11 +303,101 @@ def core_schools_view(request):
     return render(request, "pages/core_schools/index.html", context)
 
 
+@require_page_permission("team_planning_oversight")
+def team_core_oversight_view(request):
+    """Read-only Core School monitoring for a PL's supervised CCEO portfolios."""
+    from django.core.paginator import Paginator
+    from apps.core.scoping import resolve_user_scope, team_oversight_school_queryset
+    from apps.planning.action_models import ACTIVE_STATES, TeamAction
+
+    scope = resolve_user_scope(request.user)
+    fy = request.GET.get("fy") or get_operational_fy()
+    q = (request.GET.get("q") or "").strip()
+    schools = team_oversight_school_queryset(scope).filter(school_type="core")
+    if q:
+        from django.db.models import Q
+
+        schools = schools.filter(
+            Q(name__icontains=q)
+            | Q(school_id__icontains=q)
+            | Q(district__name__icontains=q)
+            | Q(account_owner_name_raw__icontains=q)
+        )
+    page_obj = Paginator(schools.order_by("name"), 20).get_page(
+        request.GET.get("page", 1)
+    )
+    rows = CorePackageProgressService.get_matrix_data(page_obj.object_list, fy)
+    active_actions = {
+        action.school_id: action
+        for action in TeamAction.objects.filter(
+            school_id__in=[row["id"] for row in rows],
+            issue_type="core_package_recovery",
+            state__in=ACTIVE_STATES,
+        )
+    }
+    for row in rows:
+        row["action"] = active_actions.get(row["id"])
+    return render(
+        request,
+        "pages/core_schools/team_oversight.html",
+        {
+            "rows": rows,
+            "page_obj": page_obj,
+            "fy": fy,
+            "q": q,
+            "topbar_search": {
+                "placeholder": "Search Team Core Schools…",
+                "label": "Search supervised Core Schools",
+                "name": "q",
+                "value": q,
+                "action": "/team-core-oversight/",
+                "method": "get",
+                "hidden": [{"name": "fy", "value": fy}],
+            },
+        },
+    )
+
+
+@require_POST
+@require_page_permission("team_planning_oversight")
+def team_core_send_action_view(request):
+    """Create the durable TeamAction/notification/message/audit handoff only."""
+    from apps.core.scoping import resolve_user_scope, team_oversight_school_queryset
+    from apps.planning.action_service import ActionError, send_action
+
+    scope = resolve_user_scope(request.user)
+    school = get_object_or_404(
+        team_oversight_school_queryset(scope).filter(school_type="core"),
+        id=request.POST.get("school_id"),
+    )
+    fy = request.POST.get("fy") or get_operational_fy()
+    try:
+        action = send_action(
+            sender=request.user,
+            school=school,
+            fy=fy,
+            note=(request.POST.get("note") or "").strip(),
+            due_days=5,
+            within_staff_ids=scope.supervised_staff_ids,
+            issue={
+                "key": "core_package_recovery",
+                "condition_key": f"core-package:{school.id}:{fy}",
+                "severity": request.POST.get("priority") or "high",
+                "detail": "Review the outstanding Core package milestone and record the next operational step.",
+            },
+        )
+    except ActionError as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, "Action sent to the responsible CCEO and added to their To-Do list.")
+    return redirect("/team-core-oversight/")
+
+
 @require_page_permission("core_schools")
 def core_schedule_visit_drawer(request):
     """Renders schedule core visit drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
 
     (
         school.ssa_records.filter(deleted_at__isnull=True)
@@ -356,7 +459,7 @@ def core_schedule_visit_drawer(request):
 def core_schedule_visit_action(request):
     """Handles schedule visit submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
     visit_seq = request.POST.get("visit_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -472,7 +575,7 @@ def core_schedule_visit_action(request):
 def core_schedule_training_drawer(request):
     """Renders schedule core training drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
 
     (
         school.ssa_records.filter(deleted_at__isnull=True)
@@ -535,7 +638,7 @@ def core_schedule_training_drawer(request):
 def core_schedule_training_action(request):
     """Handles schedule training submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
     train_seq = request.POST.get("training_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -652,7 +755,7 @@ def core_schedule_training_action(request):
 def core_assign_partner_drawer(request):
     """Renders partner assignment drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
 
     partners = Partner.objects.all().order_by("name")
     interventions = SsaIntervention.choices
@@ -696,7 +799,7 @@ def core_assign_partner_drawer(request):
 def core_schedule_activity_drawer(request):
     """Choose Core package support or an unrestricted general activity."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     summary = CorePackageSchedulingService.summary(plan) if plan else None
 
@@ -723,7 +826,7 @@ def core_schedule_activity_drawer(request):
 def core_assign_partner_action(request):
     """Handles partner assignment submission."""
     school_id = request.POST.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
     support_type = request.POST.get("support_type", "Visit")  # Visit | Training
     visit_training_number = request.POST.get("visit_training_number", "1")
     partner_id = request.POST.get("partner_id")
@@ -921,7 +1024,7 @@ def core_assign_partner_action(request):
 def core_assessment_drawer(request):
     """Renders core assessment details drawer."""
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, school_id=school_id)
+    school = get_operational_object_or_404(School, request.user, school_id=school_id)
     latest_ssa = (
         school.ssa_records.filter(deleted_at__isnull=True)
         .order_by("-date_of_ssa")

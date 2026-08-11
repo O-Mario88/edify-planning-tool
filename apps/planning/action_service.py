@@ -89,6 +89,12 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "route": "/schools/{school_pk}",
         "why": "The school's intervention areas need follow-up.",
     },
+    "core_package_recovery": {
+        "action": "Recover the outstanding Core School package milestones",
+        "route": "/core-schools",
+        "why": "The Core School package has an outstanding assessment, visit, "
+        "training, evidence or verification milestone.",
+    },
     # ── Planning oversight conditions ───────────────────────────────────────
     # Registered here rather than in a second playbook so a supervisor's
     # "Send to…" and a school card's "Send to…" produce the same kind of

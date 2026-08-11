@@ -14,6 +14,7 @@ person who owns it rather than to reach past them.
 from __future__ import annotations
 
 from django.test import TestCase
+from django.test import Client
 
 from apps.accounts.models import (
     StaffProfile,
@@ -107,6 +108,53 @@ class PlanningFollowsDirectOwnershipTest(TestCase):
         self.assertIn(self.cceo_school.id, scope.school_ids)
         self.assertNotIn(self.cceo_school.id, scope.own_school_ids)
 
+    def test_planning_dashboard_contains_only_direct_schools(self):
+        from apps.clusters.models import Cluster
+        from apps.planning.planning_service import PlanningDashboardService
+
+        cluster = Cluster.objects.create(
+            name="PL Direct Cluster",
+            region=self.region,
+            district=self.district,
+            responsible_staff_id=self.pl_profile.id,
+        )
+        School.objects.filter(id__in=[self.pl_school.id, self.cceo_school.id]).update(
+            cluster_id=cluster.id, cluster_status="clustered"
+        )
+        data = PlanningDashboardService.get_dashboard_data(
+            self.pl, {"tab": "client", "page": 1, "per_page": 20}
+        )
+        refs = {row["schoolId"] for row in data["schools"]}
+        self.assertIn(self.pl_school.school_id, refs)
+        self.assertNotIn(self.cceo_school.school_id, refs)
+
+    def test_supervised_school_operational_drawers_and_preview_return_403(self):
+        client = Client()
+        client.force_login(self.pl)
+        headers = {"HTTP_HX_REQUEST": "true"}
+        for url in (
+            f"/planning/schedule-modal?school_id={self.cceo_school.school_id}",
+            f"/planning/assign-partner-modal?school_id={self.cceo_school.school_id}",
+            f"/planning/route-preview?school_id={self.cceo_school.school_id}",
+        ):
+            self.assertEqual(client.get(url, **headers).status_code, 403, url)
+
+    def test_bulk_export_rejects_a_supervised_school_id(self):
+        client = Client()
+        client.force_login(self.pl)
+        response = client.post(
+            "/planning/bulk-action",
+            {"action": "export", "school_ids": [self.cceo_school.school_id]},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_global_operational_search_excludes_supervised_school(self):
+        from apps.search.services import search
+
+        result = search(self.pl, self.cceo_school.school_id)
+        self.assertEqual(result["results"], [])
+
     def test_a_country_role_is_unaffected(self):
         cd, _ = self._staff("cd@own.test", EdifyRole.COUNTRY_DIRECTOR)
 
@@ -125,8 +173,11 @@ class AssigningWorkToTheOwnerIsNotReachingPastThemTest(
     not supervision-as-ownership, which would permit far too much.
     """
 
-    def test_a_lead_may_assign_work_to_the_cceo_who_owns_the_school(self):
-        self._plan(self.pl, self.cceo_school, owner=self.cceo_profile)
+    def test_a_lead_sends_an_action_instead_of_scheduling_for_the_owner(self):
+        with self.assertRaisesMessage(
+            Forbidden, "read-only supervisory oversight"
+        ):
+            self._plan(self.pl, self.cceo_school, owner=self.cceo_profile)
 
     def test_a_lead_still_may_not_take_the_work_themselves(self):
         """Naming nobody means naming yourself, and the PL owns no such school."""

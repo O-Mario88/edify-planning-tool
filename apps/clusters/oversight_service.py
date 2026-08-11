@@ -22,7 +22,11 @@ from __future__ import annotations
 
 from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
-from apps.core.scoping import cluster_queryset, resolve_user_scope
+from apps.core.scoping import (
+    cluster_queryset,
+    resolve_user_scope,
+    team_oversight_cluster_queryset,
+)
 
 #: A cluster with no responsible staff is unassigned, not unowned-by-accident.
 #: It groups under its own heading rather than being dropped, because a cluster
@@ -90,8 +94,16 @@ def grouped_clusters(principal) -> dict:
     scope = resolve_user_scope(principal)
     is_programme_lead = scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
 
+    if is_programme_lead:
+        visible_clusters = team_oversight_cluster_queryset(scope)
+    elif scope.country_scope or scope.can_view_summary_only:
+        # This page is a read-only oversight lens. Country visibility is valid
+        # here even when the role (Accountant/RVP) has no scheduling authority.
+        visible_clusters = Cluster.objects.filter(deleted_at__isnull=True)
+    else:
+        visible_clusters = cluster_queryset(scope)
     clusters = list(
-        (cluster_queryset(scope) or Cluster.objects.none())
+        (visible_clusters or Cluster.objects.none())
         .select_related("district", "sub_county")
         .order_by("name")
     )

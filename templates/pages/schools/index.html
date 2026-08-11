@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}School Directory - Edify Command Center{% endblock %}
+{% block title %}{% if is_program_lead %}My Assigned Schools{% else %}School Directory{% endif %} - Edify Command Center{% endblock %}
 
 {% block shell_content %}
 <div
@@ -19,8 +19,8 @@ data-mobile-family="directory"
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Schools & Field</p>
-<h1 class="edify-page-title edify-page-header__title">School Directory</h1>
-<p class="edify-page-header__description">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+<h1 class="edify-page-title edify-page-header__title">{% if is_program_lead %}My Assigned Schools{% else %}School Directory{% endif %}</h1>
+<p class="edify-page-header__description">{% if is_program_lead %}Plan and manage only schools directly assigned to your operational portfolio.{% else %}Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.{% endif %}</p>
 </div>
 
 <!-- Action buttons -->

@@ -188,20 +188,21 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
             "supervision must not become ownership through the bulk action",
         )
 
-    def test_direct_only_is_opt_in_and_leaves_the_team_scope_intact(self):
+    def test_operational_queryset_is_direct_and_oversight_is_explicit(self):
+        from apps.core.scoping import team_oversight_school_queryset
+
         scope = resolve_user_scope(self.pl)
         direct = set(
             school_queryset(scope, direct_only=True).values_list("id", flat=True)
         )
-        full = set(school_queryset(scope).values_list("id", flat=True))
+        operational = set(school_queryset(scope).values_list("id", flat=True))
+        oversight = set(
+            team_oversight_school_queryset(scope).values_list("id", flat=True)
+        )
 
         self.assertEqual(direct, {self.mine.id})
-        self.assertEqual(
-            full,
-            {self.mine.id, self.theirs.id},
-            "team targets, PL analytics and the review queue still read the "
-            "union — narrowing is the directory's choice, not the scope's",
-        )
+        self.assertEqual(operational, {self.mine.id})
+        self.assertEqual(oversight, {self.theirs.id})
 
     def test_a_cceo_sees_no_change(self):
         # A CCEO supervises nobody, so own == union and the narrowing is a no-op.
@@ -210,3 +211,8 @@ class ProgramLeadDirectoryIsDirectOnlyTest(TestCase):
             set(school_queryset(scope, direct_only=True).values_list("id", flat=True)),
             set(school_queryset(scope).values_list("id", flat=True)),
         )
+
+    def test_programme_lead_directory_is_named_my_assigned_schools(self):
+        self.client.force_login(self.pl)
+        response = self.client.get("/schools")
+        self.assertContains(response, "My Assigned Schools")

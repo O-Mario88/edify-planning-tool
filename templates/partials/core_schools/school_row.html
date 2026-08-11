@@ -37,6 +37,14 @@
             {% endif %}
           </div>
         </div>
+        <dl class="core-school-row__progress" aria-label="Core package progress">
+          <div><dt>Owner</dt><dd>{{ school.staff_name|default:"Unassigned" }}</dd></div>
+          <div><dt>Assessment</dt><dd>{{ school.assessment.status|default:"Missing" }}</dd></div>
+          <div><dt>Visits</dt><dd>{{ school.scheduled_visit_count }}/{{ school.visits_target }}</dd></div>
+          <div><dt>Trainings</dt><dd>{{ school.scheduled_training_count }}/{{ school.trainings_target }}</dd></div>
+          <div><dt>Package</dt><dd>{{ school.package_status }}</dd></div>
+          <div><dt>Risk / blocker</dt><dd>{% if school.package_complete %}On track{% else %}{{ school.next_missing_milestone }}{% endif %}</dd></div>
+        </dl>
         <dl class="school-record-row__metadata">
           <div><dt>District:</dt><dd>{{ school.district_name|default:"—" }}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address|default:"—" }}</dd></div>

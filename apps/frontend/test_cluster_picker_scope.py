@@ -178,9 +178,8 @@ class TheQuerysetMatchesTheRuleTest(ClusterPickerScopeFixture):
 
         self.assertEqual(cluster_queryset(scope).count(), 4)
 
-    def test_a_programme_lead_gets_their_cceos_clusters(self):
-        """A PL is responsible for the team's clusters, so the supervisees'
-        ids belong in the same owner set rather than a second branch."""
+    def test_a_programme_lead_gets_cceo_clusters_only_in_oversight(self):
+        """Supervision exposes a read-only lens, never an operational picker."""
         from apps.accounts.models import StaffSupervisorAssignment
 
         StaffSupervisorAssignment.objects.create(
@@ -189,9 +188,15 @@ class TheQuerysetMatchesTheRuleTest(ClusterPickerScopeFixture):
         scope = resolve_user_scope(self.pl_user)
 
         names = set(cluster_queryset(scope).values_list("name", flat=True))
+        from apps.core.scoping import team_oversight_cluster_queryset
 
-        self.assertIn("Mine Cluster", names)
+        oversight = set(
+            team_oversight_cluster_queryset(scope).values_list("name", flat=True)
+        )
+
+        self.assertNotIn("Mine Cluster", names)
         self.assertNotIn("Theirs Cluster", names)
+        self.assertIn("Mine Cluster", oversight)
 
     def test_deleted_clusters_are_never_offered(self):
         from django.utils import timezone

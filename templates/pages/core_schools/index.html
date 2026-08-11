@@ -13,6 +13,9 @@
 <h1 class="edify-page-title edify-page-header__title">Core Schools Planning</h1>
 <p class="edify-page-header__description">Plan and track the complete core service package: 4 Visits + 4 Trainings for every core school.</p>
 </div>
+{% if is_program_lead %}
+<a href="/team-core-oversight/" class="inline-flex min-h-11 items-center px-4 rounded-control border border-[var(--edify-border)] font-semibold">Team Core Oversight</a>
+{% endif %}
 </div>
 
 <!-- Filters inclusion -->
@@ -22,10 +25,10 @@
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Multi-tab main panel layout (Matrix, Queue, Impact, Performance Insights) using Alpine.js -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
+<div class="core-schools-workspace grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
 
 <!-- Left 3 columns: Tab panels -->
-<div class="lg:col-span-3 space-y-6">
+<div class="core-schools-workspace__main lg:col-span-3 flex flex-col gap-6 min-w-0">
 
 <!-- Tab Headers -->
 <div role="tablist" aria-label="Core Schools views">
@@ -60,10 +63,10 @@ Staff vs Partner Performance
 </div>
 
 <!-- Tab Content Cards -->
-<div :class="activeTab === 'performance' ? '' : 'edify-surface rounded-surface border border-slate-100 shadow-sm p-6'">
+<div class="core-schools-workspace__list-card" :class="activeTab === 'performance' ? '' : 'edify-surface rounded-surface border border-slate-100 shadow-sm'">
 
 <!-- Tab: Matrix -->
-<div x-show="activeTab === 'matrix'" id="core-schools-table-container" role="tabpanel">
+<div x-show="activeTab === 'matrix'" id="core-schools-table-container" role="tabpanel" class="core-schools-workspace__panel">
 {% include "partials/core_schools/matrix_table.html" %}
 </div>
 
@@ -87,7 +90,7 @@ Staff vs Partner Performance
 </div>
 
 <!-- Right 1 column: Strategies, rules, and alert details -->
-<div class="lg:col-span-1">
+<div class="core-schools-workspace__aside lg:col-span-1 flex flex-col gap-6">
 {% include "partials/core_schools/right_panel.html" %}
 </div>
 

@@ -41,6 +41,8 @@ def report() -> dict:
         _replacement_carrying_inherited_cost(),
         _locked_withdrawal_without_amendment(),
         _performance_attributed_to_the_wrong_party(),
+        _pl_operational_work_outside_direct_portfolio(),
+        _core_schools_without_a_direct_owner(),
     ]
     issues = sum(check["count"] for check in checks)
     return {
@@ -70,6 +72,84 @@ def _finding(
         "route": route,
         "clean": count == 0,
     }
+
+
+def _pl_operational_work_outside_direct_portfolio() -> dict:
+    """Work attributed to a PL at a school not directly assigned to that PL."""
+    from apps.accounts.models import StaffProfile, StaffSchoolAssignment
+    from apps.activities.models import Activity
+    from apps.core.rbac import EdifyRole
+
+    leads = list(
+        StaffProfile.objects.filter(
+            user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+            deleted_at__isnull=True,
+        ).select_related("user")
+    )
+    examples = []
+    count = 0
+    for lead in leads:
+        identities = [lead.id, lead.user_id]
+        direct = StaffSchoolAssignment.objects.filter(staff=lead).values("school_id")
+        offenders = Activity.objects.filter(
+            responsible_staff_id__in=identities,
+            school__isnull=False,
+            deleted_at__isnull=True,
+        ).exclude(school_id__in=direct)
+        count += offenders.count()
+        for activity in offenders.select_related("school")[: max(0, 10 - len(examples))]:
+            examples.append(
+                {
+                    "id": activity.id,
+                    "programLead": lead.user.name,
+                    "responsibleCCEO": getattr(activity.school, "account_owner_name_raw", "") or "Unknown",
+                    "school": activity.school.name,
+                    "expectedAccess": "Read-Only Team Oversight",
+                    "actual": f"Operational Activity in {activity.status}",
+                    "affectedRoute": "/planning",
+                    "resolution": "Review with manage.py repair_pl_portfolio_access",
+                }
+            )
+    return _finding(
+        key="pl_work_outside_direct_portfolio",
+        label="Programme Lead operational work outside direct portfolio",
+        severity="error",
+        expected="PL operational work targets only directly assigned schools",
+        count=count,
+        examples=examples,
+        route="manage.py repair_pl_portfolio_access",
+    )
+
+
+def _core_schools_without_a_direct_owner() -> dict:
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.schools.models import School
+
+    assigned = StaffSchoolAssignment.objects.values("school_id")
+    offenders = School.objects.filter(
+        school_type="core", deleted_at__isnull=True
+    ).exclude(id__in=assigned)
+    return _finding(
+        key="core_school_missing_direct_owner",
+        label="Core Schools without a direct staff assignment",
+        severity="error",
+        expected="Every active Core School has a direct operational owner",
+        count=offenders.count(),
+        examples=[
+            {
+                "id": row.id,
+                "programLead": "Unknown",
+                "responsibleCCEO": row.account_owner_name_raw or "Unassigned",
+                "school": row.name,
+                "expectedAccess": "Direct owner required",
+                "actual": "No StaffSchoolAssignment",
+                "affectedRoute": "/core-schools",
+                "resolution": "Assign the school to its responsible staff member",
+            }
+            for row in offenders[:10]
+        ],
+        route="/schools?tab=not_assigned",
+    )
 
 
 def _assignments_scheduled_without_a_linked_activity() -> dict:

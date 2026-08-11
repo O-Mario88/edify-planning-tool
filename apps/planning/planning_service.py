@@ -168,9 +168,10 @@ class PlanningDashboardService:
         )  # client, core, clusters, partner, scheduled
 
         # 1. Base Queryset for schools (scope-scoped)
-        from apps.analytics.services import _scoped_schools
+        from apps.core.scoping import resolve_user_scope, school_queryset
 
-        schools_qs, scope = _scoped_schools(principal)
+        scope = resolve_user_scope(principal)
+        schools_qs = school_queryset(scope)
 
         # Apply filters
         if district_id and district_id != "All":
@@ -308,10 +309,10 @@ class PlanningDashboardService:
         has_catalogue = active_catalogue() is not None
 
         if active_tab == "clusters":
+            from apps.core.scoping import cluster_queryset
+
             scoped_cluster_ids = list(
-                schools_qs.exclude(Q(cluster_id__isnull=True) | Q(cluster_id=""))
-                .values_list("cluster_id", flat=True)
-                .distinct()
+                cluster_queryset(scope).values_list("id", flat=True)
             )
 
             scheduled_cluster_ids = (
@@ -659,9 +660,10 @@ class PlanningDashboardService:
                 s["clusterName"] = "—"
 
         # 5. Compute KPI Cards Metrics
-        from apps.analytics.services import _scoped_schools
+        from apps.core.scoping import resolve_user_scope, school_queryset
 
-        base_schools_qs, scope = _scoped_schools(principal)
+        scope = resolve_user_scope(principal)
+        base_schools_qs = school_queryset(scope)
 
         all_school_ids = list(base_schools_qs.values_list("id", flat=True))
         cost_blocked_count = (
@@ -723,6 +725,7 @@ class PlanningDashboardService:
                 baseline_required_count += 1
 
         partner_pending_schedule_count = PartnerAssignment.objects.filter(
+            school__in=base_schools_qs,
             status__in=[
                 "assigned",
                 "pending_scheduling",
@@ -732,6 +735,7 @@ class PlanningDashboardService:
         ).count()
 
         in_my_plan_count = Activity.objects.filter(
+            school__in=base_schools_qs,
             deleted_at__isnull=True,
             status__in=["scheduled", "in_progress", "completed", "ia_verified"],
             fy=fy,

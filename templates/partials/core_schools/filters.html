@@ -9,6 +9,7 @@ hx-push-url="true"
 class="flex flex-wrap items-center justify-between gap-3 edify-surface p-4 rounded-surface border border-slate-100 shadow-sm "
 >
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}">
+<input type="hidden" name="page_size" id="core-filters-page-size-input" value="{{ page_size|default:20 }}">
 <div class="flex flex-wrap items-center gap-2.5 edify-text-caption font-bold text-slate-600">
 
 <!-- FY -->

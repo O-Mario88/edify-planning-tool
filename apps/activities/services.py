@@ -20,6 +20,7 @@ from apps.core.enums import ExecutorType, PARTNER_EXECUTOR_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import COUNTRY_SCHEDULING_ROLES, resolve_user_scope
+from apps.core.rbac import EdifyRole
 from apps.schools.models import School
 
 # REG-02 calendar policy. This module must run the gate, not merely borrow the
@@ -365,14 +366,14 @@ def _target_in_direct_portfolio(scope, school: School | None, cluster_id) -> boo
         return True
     if cluster_id:
         from apps.clusters.models import Cluster
-        from apps.core.scoping import cluster_in_scope
+        from apps.core.scoping import may_plan_cluster
 
         cluster = (
             Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True)
-            .only("id", "district_id")
+            .only("id", "district_id", "responsible_staff_id", "deleted_at")
             .first()
         )
-        if cluster and cluster_in_scope(scope, cluster):
+        if cluster and may_plan_cluster(scope, cluster):
             return True
     return False
 
@@ -443,12 +444,20 @@ def _assert_target_in_scope(
         return
     if _target_in_direct_portfolio(scope, school, cluster_id):
         return
+    # A PL sends a TeamAction to the responsible CCEO; naming that CCEO as the
+    # Activity owner is still operational scheduling and must not become a
+    # delegation-shaped bypass around direct portfolio ownership.
+    if scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        raise Forbidden(
+            "You have read-only supervisory oversight of this record. "
+            "Operational Planning must be completed by the responsible CCEO."
+        )
     owner_scope = _delegated_owner_scope(scope, principal, owner_id)
     if owner_scope is not None and _target_in_direct_portfolio(
         owner_scope, school, cluster_id
     ):
         return
-    raise Forbidden("Activity target outside your scope.")
+    raise Forbidden("Activity target outside your direct operational portfolio.")
 
 
 def _get_in_scope(activity_id: str, principal) -> Activity:

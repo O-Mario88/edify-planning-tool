@@ -15,9 +15,10 @@ def setup(query: dict, principal) -> list[dict]:
     from django.db.models import Q
     from apps.core.enums import SsaIntervention
     from apps.activities.models import Activity
-    from apps.analytics.services import _scoped_schools
+    from apps.core.scoping import resolve_user_scope, school_queryset
 
-    schools, scope = _scoped_schools(principal)
+    scope = resolve_user_scope(principal)
+    schools = school_queryset(scope)
     fy = query.get("fy") or get_operational_fy()
 
     sit_scheduled_school_ids = set(
@@ -157,12 +158,13 @@ def plan_builder(query: dict, principal) -> dict:
     from apps.clusters.models import Cluster
     from apps.ssa.models import SsaRecord
     from apps.core.enums import SsaIntervention
-    from apps.analytics.services import _scoped_schools
+    from apps.core.scoping import resolve_user_scope, school_queryset
 
     fy = query.get("fy") or get_operational_fy()
 
     # 1. Fetch schools in user scope
-    scoped_schools, scope = _scoped_schools(principal)
+    scope = resolve_user_scope(principal)
+    scoped_schools = school_queryset(scope)
 
     # 2. Filter schools that are clustered, have a current-FY SSA, and are client type
     ready_schools = (
@@ -606,7 +608,7 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
         validate_context,
     )
     from apps.activity_catalogue.models import MappingMode
-    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+    from apps.core.scoping import resolve_user_scope, school_queryset
     from apps.partners.models import Partner, PartnerAssignment
     from apps.ssa.services import latest_applicable_record
 
@@ -620,7 +622,7 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
         active_status=True,
     ).first()
     school = (
-        scoped_school_queryset(resolve_user_scope(principal))
+        school_queryset(resolve_user_scope(principal))
         .filter(school_id=data.get("schoolId"))
         .first()
     )

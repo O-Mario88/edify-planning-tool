@@ -277,8 +277,15 @@ def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
                 .values_list("id", flat=True)
                 .first()
             )
-            if not (school_pk and scope.school_ids and school_pk in scope.school_ids):
-                raise Forbidden("Core slot outside your scope.")
+            if not (
+                school_pk
+                and scope.own_school_ids
+                and school_pk in scope.own_school_ids
+            ):
+                raise Forbidden(
+                    "You have read-only supervisory oversight of this record. "
+                    "Operational Planning must be completed by the responsible CCEO."
+                )
         return _apply_slot_action(slot, action, data)
 
 

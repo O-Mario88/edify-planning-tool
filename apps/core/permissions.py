@@ -306,7 +306,14 @@ class RolePermissionService:
         if school_or_cluster is None:
             return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
 
-        return RolePermissionService.can_view_record(user, school_or_cluster)
+        from apps.core.scoping import may_plan_cluster, may_write_school, resolve_user_scope
+
+        scope = resolve_user_scope(user)
+        if school_or_cluster.__class__.__name__ == "School":
+            return may_write_school(scope, school_or_cluster)
+        if school_or_cluster.__class__.__name__ == "Cluster":
+            return may_plan_cluster(scope, school_or_cluster)
+        return False
 
     @staticmethod
     def can_assign_to_partner(user, school_or_cluster=None) -> bool:
@@ -314,7 +321,10 @@ class RolePermissionService:
         # Mirrors can_schedule_activity's allowed set: assigning to a partner
         # is the alternative to scheduling yourself (spec §5), so whoever can
         # schedule for their portfolio can also hand it off to a partner.
-        return role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"]
+        allowed = role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"]
+        if not allowed or school_or_cluster is None:
+            return allowed
+        return RolePermissionService.can_schedule_activity(user, school_or_cluster)
 
     @staticmethod
     def can_assign_to_staff(user, school) -> bool:
@@ -603,6 +613,27 @@ def get_scoped_object_or_404(model, user, *args, **kwargs):
     return obj
 
 
+READ_ONLY_OVERSIGHT_MESSAGE = (
+    "You have read-only supervisory oversight of this record. Operational "
+    "Planning must be completed by the responsible CCEO."
+)
+
+
+def get_operational_object_or_404(model, user, *args, **kwargs):
+    """Fetch a planning target and enforce direct operational authority.
+
+    This is intentionally distinct from `get_scoped_object_or_404`, which is
+    a read gate and therefore includes supervised records on oversight pages.
+    """
+    from django.core.exceptions import PermissionDenied
+    from django.shortcuts import get_object_or_404
+
+    obj = get_object_or_404(model, *args, **kwargs)
+    if not RolePermissionService.can_schedule_activity(user, obj):
+        raise PermissionDenied(READ_ONLY_OVERSIGHT_MESSAGE)
+    return obj
+
+
 __all__ = [
     "IsAuthenticated",
     "RequirePermissions",
@@ -613,6 +644,8 @@ __all__ = [
     "require_page_permission",
     "render_access_denied",
     "get_scoped_object_or_404",
+    "get_operational_object_or_404",
+    "READ_ONLY_OVERSIGHT_MESSAGE",
 ]
 
 

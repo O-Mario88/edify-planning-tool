@@ -3318,6 +3318,39 @@ main [data-mobile-family="directory"] .school-filter-clear {
   white-space: nowrap;
 }
 
+.core-school-row__progress {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.35rem 0.7rem;
+  margin: 0.5rem 0 0;
+}
+
+.core-school-row__progress div { min-inline-size: 0; }
+.core-school-row__progress dt {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 650;
+}
+.core-school-row__progress dd {
+  margin: 0.12rem 0 0;
+  overflow: hidden;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@container core-school-row (max-width: 48rem) {
+  .core-school-row__progress { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container core-school-row (max-width: 26rem) {
+  .core-school-row__progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .core-school-row__progress dd { white-space: normal; }
+}
+
 @container core-school-row (max-width: 30rem) {
   .core-school-row__headline {
     gap: 0.4rem;
@@ -3829,6 +3862,42 @@ main [data-mobile-family="directory"] .school-filter-clear {
   font: var(--edify-font-micro);
   text-transform: none !important;
   letter-spacing: var(--edify-text-micro-tracking) !important;
+}
+
+/* Core Schools workspace: intrinsic equal-height columns on desktop. The
+   right stack determines the row height; the operational list grows to that
+   same boundary without a screenshot-specific fixed height or nested scroll. */
+.core-schools-workspace__main,
+.core-schools-workspace__aside,
+.core-schools-workspace__list-card,
+.core-schools-workspace__panel,
+.core-school-matrix__body {
+  min-block-size: 0;
+}
+
+.core-schools-workspace__list-card,
+.core-schools-workspace__panel,
+.core-school-matrix__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.core-school-matrix__records {
+  flex: 1 1 auto;
+}
+
+.core-school-matrix__footer {
+  flex: 0 0 auto;
+  margin-block-start: auto;
+}
+
+@media (max-width: 63.999rem) {
+  .core-schools-workspace__list-card,
+  .core-schools-workspace__panel,
+  .core-school-matrix__body {
+    flex: none;
+  }
 }
 
 @media (max-width: 52rem) {

@@ -276,9 +276,63 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertIn("Alpha Core School", html)
         self.assertNotIn("Beta Core School", html)
 
-    def test_pl_sees_own_and_supervised_core_portfolio(self):
+    def test_pl_operational_page_contains_only_direct_core_portfolio(self):
+        direct = self._school("CORE-PL", "Direct PL Core School", self.pl_sp)
+        self._plan(direct)
         html = self._client(self.pl).get("/core-schools").content.decode()
-        self.assertIn("Alpha Core School", html)  # supervised CCEO's school
+        self.assertIn("Direct PL Core School", html)
+        self.assertNotIn("Alpha Core School", html)
+        self.assertIn('href="/team-core-oversight/"', html)
+
+    def test_pl_sees_supervised_core_school_only_in_team_core_oversight(self):
+        html = self._client(self.pl).get("/team-core-oversight/").content.decode()
+        self.assertIn("Alpha Core School", html)
+        self.assertIn("Read-Only Team Oversight", html)
+        self.assertNotIn("/core-schools/schedule-activity", html)
+
+    def test_pl_direct_core_drawer_refuses_supervised_school(self):
+        response = self._client(self.pl).get(
+            f"/core-schools/schedule-activity?school_id={self.school.school_id}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertNotContains(response, "Schedule", status_code=403)
+
+    def test_core_page_defaults_to_bounded_twenty_row_server_page(self):
+        for number in range(20):
+            school = self._school(
+                f"PL-{number:02d}", f"PL Core {number:02d}", self.pl_sp
+            )
+            self._plan(school)
+        response = self._client(self.pl).get("/core-schools")
+        self.assertEqual(len(response.context["page_obj"].object_list), 20)
+        self.assertEqual(response.context["page_size"], 20)
+        self.assertContains(response, 'option value="10"')
+        self.assertContains(response, 'option value="20" selected')
+        self.assertContains(response, 'option value="50"')
+
+    def test_core_page_layout_uses_intrinsic_stretch_and_flex_footer(self):
+        direct = self._school("CORE-LAYOUT", "Layout Core School", self.pl_sp)
+        self._plan(direct)
+        html = self._client(self.pl).get("/core-schools").content.decode()
+        self.assertIn("core-schools-workspace", html)
+        self.assertIn("core-schools-workspace__list-card", html)
+        self.assertIn("core-school-matrix__footer", html)
+        self.assertNotIn("max-h-[", html.split('id="core-schools-table-container"', 1)[1].split("</div>", 1)[0])
+
+    def test_team_core_send_creates_durable_action_for_responsible_cceo(self):
+        from apps.planning.action_models import TeamAction
+
+        response = self._client(self.pl).post(
+            "/team-core-oversight/send",
+            {"school_id": self.school.id, "fy": FY, "priority": "high"},
+        )
+        self.assertEqual(response.status_code, 302)
+        action = TeamAction.objects.get(
+            school_id=self.school.id, issue_type="core_package_recovery"
+        )
+        self.assertEqual(action.recipient_id, self.cceo.id)
+        self.assertEqual(action.sender_id, self.pl.id)
 
     def test_pl_cannot_see_other_pl_core_schools(self):
         html = self._client(self.other_pl).get("/core-schools").content.decode()

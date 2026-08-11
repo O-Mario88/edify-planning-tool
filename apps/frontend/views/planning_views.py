@@ -8,6 +8,7 @@ from apps.core.permissions import (
     require_page_permission,
     RolePermissionService,
     get_scoped_object_or_404,
+    get_operational_object_or_404,
 )
 from django.contrib import messages
 from django.db import transaction
@@ -492,7 +493,12 @@ def planning_dashboard_view(request):
         )
 
     staff_members = (
-        StaffProfile.objects.filter(deleted_at__isnull=True)
+        StaffProfile.objects.filter(
+            deleted_at__isnull=True,
+            user_id__in=_planning_schools.exclude(account_owner_id__isnull=True).values(
+                "account_owner_id"
+            ),
+        )
         .select_related("user")
         .order_by("user__name")
     )
@@ -519,6 +525,7 @@ def planning_dashboard_view(request):
         from apps.activities.models import Activity
 
         scheduled_activities = Activity.objects.filter(
+            school__in=_planning_schools,
             deleted_at__isnull=True,
             status__in=[
                 "planned",
@@ -627,7 +634,7 @@ def schedule_modal_view(request):
 
     cluster_id = request.GET.get("cluster_id")
     if cluster_id:
-        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+        cluster = get_operational_object_or_404(Cluster, request.user, id=cluster_id)
         action = request.GET.get("action", "training")
         partners = assignable_partners()
         from apps.clusters.services import active_school_count
@@ -658,7 +665,7 @@ def schedule_modal_view(request):
         )
 
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(
+    school = get_operational_object_or_404(
         School, request.user, Q(id=school_id) | Q(school_id=school_id)
     )
     project_id = request.GET.get("project_id", "")
@@ -1062,11 +1069,11 @@ def assign_partner_modal_view(request):
     school = None
     cluster = None
     if school_id:
-        school = get_scoped_object_or_404(
+        school = get_operational_object_or_404(
             School, request.user, Q(id=school_id) | Q(school_id=school_id)
         )
     if cluster_id:
-        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+        cluster = get_operational_object_or_404(Cluster, request.user, id=cluster_id)
 
     partners = assignable_partners()
     project_id = request.GET.get("project_id", "")
@@ -1249,14 +1256,14 @@ def assign_partner_action_view(request):
                 else None
             )
             school_for_validation = (
-                get_scoped_object_or_404(
+                get_operational_object_or_404(
                     School, request.user, Q(id=school_id) | Q(school_id=school_id)
                 )
                 if school_id
                 else None
             )
             cluster_for_validation = (
-                get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+                get_operational_object_or_404(Cluster, request.user, id=cluster_id)
                 if cluster_id
                 else None
             )
@@ -1382,7 +1389,7 @@ def assign_partner_action_view(request):
             return qs.order_by("-created_at").first()
 
         if school_id:
-            school = get_scoped_object_or_404(
+            school = get_operational_object_or_404(
                 School, request.user, Q(id=school_id) | Q(school_id=school_id)
             )
             purpose_of_visit = normalise_visit_purpose(
@@ -1430,7 +1437,7 @@ def assign_partner_action_view(request):
                 )
 
         if cluster_id:
-            cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+            cluster = get_operational_object_or_404(Cluster, request.user, id=cluster_id)
             assignment_purpose = purpose or catalogue_item.display_name
             act_type = catalogue_item.workflow_kind
             dup = _recent_duplicate(cluster=cluster, act_type=act_type)
@@ -1571,7 +1578,17 @@ def bulk_action_view(request):
     if not school_ids:
         return HttpResponse("No schools selected", status=400)
 
-    schools = School.objects.filter(school_id__in=school_ids)
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    operational = school_queryset(resolve_user_scope(request.user))
+    schools = operational.filter(school_id__in=school_ids)
+    requested = set(school_ids)
+    allowed = set(schools.values_list("school_id", flat=True))
+    if allowed != requested:
+        return HttpResponseForbidden(
+            "You have read-only supervisory oversight of one or more selected "
+            "records. Operational Planning must be completed by the responsible CCEO."
+        )
 
     if action == "export":
         # CSV Export simple response
@@ -1752,19 +1769,19 @@ def schedule_activity_form_view(request):
     school_id = request.GET.get("school", "")
     cluster_id = request.GET.get("cluster", "")
 
-    from apps.core.scoping import cluster_queryset, resolve_user_scope
+    from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
 
     # Populate lookups. Schools were scoped here and clusters were not — the
     # picker offered every cluster in the country beside a correctly narrowed
     # school list, so the two dropdowns on one form disagreed about whose work
     # this is.
     scope = resolve_user_scope(request.user)
-    schools = active_schools().order_by("name")
+    schools = school_queryset(scope).order_by("name")
     clusters = cluster_queryset(scope).order_by("name")
     partners = assignable_partners()
 
     selected_school = (
-        School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
+        schools.filter(Q(id=school_id) | Q(school_id=school_id)).first()
         if school_id
         else None
     )
@@ -1934,6 +1951,24 @@ def route_preview_view(request):
     if not school_ids:
         return render(
             request, "partials/planning/route_preview.html", {"preview": None}
+        )
+
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    operational = school_queryset(resolve_user_scope(request.user))
+    allowed = set(
+        operational.filter(Q(id__in=school_ids) | Q(school_id__in=school_ids)).values_list(
+            "school_id", flat=True
+        )
+    )
+    requested_school_refs = set(
+        School.objects.filter(Q(id__in=school_ids) | Q(school_id__in=school_ids))
+        .values_list("school_id", flat=True)
+    )
+    if allowed != requested_school_refs or not requested_school_refs:
+        return HttpResponseForbidden(
+            "You have read-only supervisory oversight of one or more selected "
+            "records. Operational Planning must be completed by the responsible CCEO."
         )
 
     from datetime import date as _date

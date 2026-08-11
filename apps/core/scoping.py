@@ -550,8 +550,35 @@ def assert_may_write_school(principal, school, *, action: str = "change") -> Non
         )
 
 
+def _expand_staff_identity_ids(ids: set[str]) -> set[str]:
+    """Expand User and StaffProfile identifiers into both persisted id spaces."""
+    ids = {i for i in ids if i}
+    if not ids:
+        return set()
+    try:
+        from apps.accounts.models import StaffProfile  # type: ignore
+    except Exception:  # noqa: BLE001 - accounts may not be ready
+        return ids
+    pairs = StaffProfile.objects.filter(Q(id__in=ids) | Q(user_id__in=ids)).values_list(
+        "id", "user_id"
+    )
+    for profile_id, user_id in pairs:
+        ids.update({i for i in (profile_id, user_id) if i})
+    return ids
+
+
+def direct_cluster_owner_ids(scope: UserScope) -> set[str]:
+    """Identifiers that represent this user's own operational cluster ownership."""
+    return _expand_staff_identity_ids({scope.user_id, *scope.staff_ids})
+
+
+def team_cluster_owner_ids(scope: UserScope) -> set[str]:
+    """Identifiers belonging only to staff supervised by this user."""
+    return _expand_staff_identity_ids(set(scope.supervised_staff_ids))
+
+
 def cluster_owner_ids(scope: UserScope) -> set[str]:
-    """Every id a cluster this person is responsible for could be filed under.
+    """Every id a cluster visible through direct or team scope may use.
 
     Two expansions, both load-bearing:
 
@@ -563,21 +590,30 @@ def cluster_owner_ids(scope: UserScope) -> set[str]:
       so their supervisees' ids belong in the same set rather than in a second
       branch that could drift from this one.
     """
-    ids = {scope.user_id} | set(scope.staff_ids) | set(scope.supervised_staff_ids)
-    ids = {i for i in ids if i}
-    if not ids:
-        return set()
-    try:
-        from apps.accounts.models import StaffProfile  # type: ignore
-    except Exception:  # noqa: BLE001 - accounts may not be ready
-        return ids
-    # Profile id → user id, and user id → profile id, so either space resolves.
-    pairs = StaffProfile.objects.filter(Q(id__in=ids) | Q(user_id__in=ids)).values_list(
-        "id", "user_id"
+    return direct_cluster_owner_ids(scope) | team_cluster_owner_ids(scope)
+
+
+def may_plan_cluster(scope: UserScope, cluster) -> bool:
+    """Return whether `cluster` is directly available for operational planning."""
+    if getattr(cluster, "deleted_at", None) is not None:
+        return False
+    if scope.active_role in COUNTRY_SCHEDULING_ROLES:
+        return True
+    if scope.country_scope or scope.can_view_summary_only:
+        return False
+    owner = (getattr(cluster, "responsible_staff_id", "") or "").strip()
+    if scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        # Supervision, geography and member-school visibility never confer
+        # cluster planning authority on a Programme Lead.
+        return bool(owner) and owner in direct_cluster_owner_ids(scope)
+    if owner:
+        return owner in direct_cluster_owner_ids(scope)
+    # Preserve the established CCEO adoption path for legacy ownerless
+    # clusters; the strict PL rule above deliberately has no such fallback.
+    return bool(
+        getattr(cluster, "district_id", None)
+        and cluster.district_id in scope.district_ids
     )
-    for profile_id, user_id in pairs:
-        ids.update({i for i in (profile_id, user_id) if i})
-    return ids
 
 
 def cluster_in_scope(scope: UserScope, cluster) -> bool:
@@ -653,14 +689,30 @@ def cluster_queryset(scope: UserScope, base=None):
 
     qs = base if base is not None else cluster_model.objects.all()
     qs = qs.filter(deleted_at__isnull=True)
-    if scope.country_scope or scope.can_view_summary_only:
+    if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         return qs
+    if scope.country_scope or scope.can_view_summary_only:
+        return qs.none()
+    if scope.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return qs.filter(responsible_staff_id__in=direct_cluster_owner_ids(scope))
     unassigned = Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")
     return qs.filter(
-        Q(responsible_staff_id__in=cluster_owner_ids(scope))
+        Q(responsible_staff_id__in=direct_cluster_owner_ids(scope))
         | Q(id__in=scope.cluster_ids)
         | (unassigned & Q(district_id__in=scope.district_ids))
     )
+
+
+def team_oversight_cluster_queryset(scope: UserScope, base=None):
+    """Read-only clusters owned by supervised staff, never a planning source."""
+    cluster_model = _get_cluster_model()
+    if cluster_model is None:  # pragma: no cover - app not ready
+        return None
+    qs = base if base is not None else cluster_model.objects.all()
+    qs = qs.filter(deleted_at__isnull=True)
+    if scope.active_role != EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return qs.none()
+    return qs.filter(responsible_staff_id__in=team_cluster_owner_ids(scope))
 
 
 # ── ORM query constraints (legacy schoolWhere / aggregateSchoolWhere) ────────
@@ -678,24 +730,15 @@ def _operationally_active(qs):
     )
 
 
-def school_queryset(scope: UserScope, *, direct_only: bool = False):
+def school_queryset(scope: UserScope, *, direct_only: bool = True):
     """Return the base queryset for the School model, scope-constrained.
 
     Summary-only roles (RVP) receive NO school-level rows — they use aggregate
     summaries only. Returns None if the schools app isn't installed yet.
 
-    `direct_only` narrows the result to schools assigned to this person, dropping
-    the supervised team's schools that `scope.school_ids` unions in. It exists
-    for the School Directory and its bulk actions, where a supervising Program
-    Lead was operating on CCEO-owned schools as if they were their own: on
-    production a PL's directory listed 2171 schools of which 1030 (47.4%)
-    belonged to two supervised CCEOs, offering the same edit, cluster, project
-    and staff-match controls on all of them. Supervision is not ownership.
-
-    It is deliberately opt-in. The flat own+team scope is correct for the
-    surfaces that read it — team targets, PL analytics, the review queue — and
-    ~15 services depend on it, so this changes the directory alone rather than
-    the meaning of `school_ids`.
+    Operational scope is direct by default. Supervisory rows are available only
+    through `team_oversight_school_queryset`; callers must opt into that named,
+    read-only lens instead of silently spending visibility as write authority.
 
     Country-scope roles are unaffected: they hold no per-school assignment rows,
     so `own_school_ids` is empty for them and narrowing would blank their
@@ -720,13 +763,34 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
         return qs
     if scope.can_view_summary_only:
         return qs.none()
-    if direct_only:
-        # No own_school_ids means no directly-assigned schools, which is an
-        # empty directory — not a fall-through to the team's.
-        return qs.filter(id__in=scope.own_school_ids)
-    if scope.school_ids:
-        return qs.filter(id__in=scope.school_ids)
-    return qs.none()
+    # No own_school_ids means no directly-assigned schools, which is an empty
+    # operational portfolio — never a fall-through to the supervised team's.
+    return qs.filter(id__in=scope.own_school_ids)
+
+
+def direct_portfolio_for(principal, base=None):
+    """Canonical active School queryset for operational work."""
+    scope = resolve_user_scope(principal)
+    qs = school_queryset(scope)
+    if base is None or qs is None:
+        return qs
+    return base.filter(id__in=qs.values("id"))
+
+
+def team_oversight_school_queryset(scope: UserScope, base=None):
+    """Read-only active schools owned by supervised staff."""
+    school_model = _get_school_model()
+    if school_model is None:
+        return None
+    qs = _operationally_active(base if base is not None else school_model.objects.all())
+    if scope.active_role != EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+        return qs.none()
+    return qs.filter(id__in=scope.team_school_ids)
+
+
+def team_oversight_for(principal, base=None):
+    """Canonical supervised School queryset for dedicated read-only views."""
+    return team_oversight_school_queryset(resolve_user_scope(principal), base=base)
 
 
 def owner_ids(principal) -> list[str]:
