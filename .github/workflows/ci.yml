@@ -168,14 +168,25 @@ jobs:
             edify-ci:${{ github.sha }} \
             -c 'import config.settings.collectstatic; print("runtime import: ok")'
 
-      - name: Scan the image
+      # Scan the merged filesystem that the runtime container actually sees.
+      # Image-mode scanning also consumes the base image's third-party SBOM,
+      # which can retain packages replaced by later layers and report versions
+      # that are absent from the deployable filesystem.
+      - name: Export the deployable image filesystem
+        run: |
+          container_id=$(docker create edify-ci:${{ github.sha }})
+          trap 'docker rm -f "$container_id" >/dev/null 2>&1 || true' EXIT
+          mkdir -p "${{ runner.temp }}/edify-image-rootfs"
+          docker export "$container_id" | \
+            tar -xf - -C "${{ runner.temp }}/edify-image-rootfs"
+
+      - name: Scan the deployable image filesystem
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          # Use the current post-incident scanner release. Trivy 0.70 reported
-          # superseded Python metadata from base-image layers even though the
-          # final merged filesystem contains only the patched distributions.
+          # Use the current post-incident scanner release.
           version: v0.72.0
-          image-ref: edify-ci:${{ github.sha }}
+          scan-type: rootfs
+          scan-ref: ${{ runner.temp }}/edify-image-rootfs
           format: table
           exit-code: "1"
           ignore-unfixed: true
