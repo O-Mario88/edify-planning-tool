@@ -4318,3 +4318,11 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
     min-block-size: 0 !important;
   }
 }
+@media (min-width: 64rem) {
+  .team-core-oversight-row {
+    grid-template-columns:
+      minmax(14rem, 1.5fr)
+      repeat(4, minmax(7rem, auto))
+      minmax(12rem, auto);
+  }
+}

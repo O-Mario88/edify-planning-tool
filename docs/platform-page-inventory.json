@@ -849,7 +849,7 @@
       "template": "partials/core_schools/core_assessment_drawer.html"
     },
     {
-      "bytes": 5744,
+      "bytes": 5852,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -865,7 +865,7 @@
       "template": "partials/core_schools/intervention_impact.html"
     },
     {
-      "bytes": 4865,
+      "bytes": 5622,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -889,7 +889,7 @@
       "template": "partials/core_schools/planning_queue.html"
     },
     {
-      "bytes": 7855,
+      "bytes": 7803,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -921,7 +921,7 @@
       "template": "partials/core_schools/schedule_visit_drawer.html"
     },
     {
-      "bytes": 5400,
+      "bytes": 6130,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -30114,6 +30114,132 @@
     {
       "api_endpoints": [],
       "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.core_schools_views",
+      "backend_view": "apps.frontend.views.core_schools_views.team_core_oversight_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Core Oversight \u00b7 Edify",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Read-only Core School monitoring for a PL's supervised CCEO portfolios.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/team-core-oversight/",
+      "route_name": "team_core_oversight",
+      "secondary_actions": [
+        "/team-core-oversight/send"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/core_schools/team_oversight.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.core_schools_views",
+      "backend_view": "apps.frontend.views.core_schools_views.team_core_send_action_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Core Oversight Send",
+      "permission_key": "team_planning_oversight",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Create the durable TeamAction/notification/message/audit handoff only.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/team-core-oversight/send",
+      "route_name": "team_core_oversight_send",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.geography.models",
+        "apps.notifications.services",
+        "apps.partners.models",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
       "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.oversight_views",
@@ -45468,6 +45594,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.core_schools_views.team_core_oversight_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-core-oversight/",
+      "route_name": "team_core_oversight",
+      "templates": [
+        "pages/core_schools/team_oversight.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.core_schools_views.team_core_send_action_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_planning_oversight",
+      "required_permissions": [],
+      "route": "/team-core-oversight/send",
+      "route_name": "team_core_oversight_send",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.team_planning_oversight_view",
       "kind": "page",
       "methods": [
@@ -45893,15 +46045,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 901,
+    "all_routes": 903,
     "api_routes": 293,
     "component_templates": 318,
-    "full_pages": 326,
+    "full_pages": 328,
     "partials_and_drawers": 157,
-    "permission_gated": 489,
+    "permission_gated": 491,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 499,
+    "routed_surfaces": 501,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45909,6 +46061,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 464
+    "test_referenced": 466
   }
 }

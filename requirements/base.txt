@@ -51,6 +51,15 @@ gunicorn==26.0.0
 # required check, so this is a build gate, not advice.
 cryptography==50.0.0
 
+# Runtime supply-chain packages are pinned even when they arrive transitively
+# or with the Python base image. The container scanner evaluates what is in the
+# final image, not only direct application imports: msgpack 1.1.2 carries
+# GHSA-6v7p-g79w-8964 and the image's setuptools 70.3.0 carries
+# CVE-2025-47273. Installing both into /install replaces those vulnerable
+# copies when the build stage is copied into the non-root runtime image.
+msgpack==1.2.1
+setuptools==84.0.0
+
 # Transitive, via Twisted's tls extra for the ASGI stack, and pinned here only
 # because its range decides which cryptography can be installed: 26.2.0 caps at
 # cryptography<49, which pins the CVEs in place. 26.4.0 allows <51 and still

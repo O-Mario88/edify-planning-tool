@@ -97,12 +97,17 @@ def _pl_operational_work_outside_direct_portfolio() -> dict:
             deleted_at__isnull=True,
         ).exclude(school_id__in=direct)
         count += offenders.count()
-        for activity in offenders.select_related("school")[: max(0, 10 - len(examples))]:
+        for activity in offenders.select_related("school")[
+            : max(0, 10 - len(examples))
+        ]:
             examples.append(
                 {
                     "id": activity.id,
                     "programLead": lead.user.name,
-                    "responsibleCCEO": getattr(activity.school, "account_owner_name_raw", "") or "Unknown",
+                    "responsibleCCEO": getattr(
+                        activity.school, "account_owner_name_raw", ""
+                    )
+                    or "Unknown",
                     "school": activity.school.name,
                     "expectedAccess": "Read-Only Team Oversight",
                     "actual": f"Operational Activity in {activity.status}",

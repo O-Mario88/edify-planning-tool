@@ -533,7 +533,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             follow_up_owner_id=self.cceo_sp.id,
         )
         self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
-        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
+        activity = FieldDebriefService.accept_recommendation(self.admin, d.id)
         self.assertIsNotNone(activity.id)
         self.assertEqual(activity.school_id, self.school.id)
         self.assertEqual(activity.planning_source, "school_planning")
@@ -553,7 +553,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             school_ids=[self.school.id],
             follow_up_owner_id=self.cceo_sp.id,
         )
-        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
+        activity = FieldDebriefService.accept_recommendation(self.admin, d.id)
         self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
     def test_accept_recommendation_falls_back_to_submitter_user_id(self):
@@ -563,7 +563,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             recommended_next_activity_type="follow_up_visit",
             school_ids=[self.school.id],
         )
-        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
+        activity = FieldDebriefService.accept_recommendation(self.admin, d.id)
         self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
     def test_accept_recommendation_enforces_existing_visit_entitlement(self):
@@ -574,7 +574,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             follow_up_owner_id=self.cceo_sp.id,
         )
         with self.assertRaisesMessage(BadRequest, "entitlement"):
-            FieldDebriefService.accept_recommendation(self.pl, d.id)
+            FieldDebriefService.accept_recommendation(self.admin, d.id)
         d.refresh_from_db()
         self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
         self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
@@ -588,10 +588,10 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             follow_up_owner_id=self.cceo_sp.id,
             follow_up_date=date(2026, 8, 10),
         )
-        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
+        activity = FieldDebriefService.accept_recommendation(self.admin, d.id)
         event = AuditLog.objects.get(subject_id=activity.id, action="activity.planned")
         self.assertEqual(event.action, "activity.planned")
-        self.assertEqual(event.actor_id, self.pl.id)
+        self.assertEqual(event.actor_id, self.admin.id)
         self.assertEqual(event.payload["planned_date"], "2026-08-10")
 
     def test_accept_recommendation_requires_proposed_status(self):
@@ -603,6 +603,19 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         d = self._submit(self.cceo, recommended_next_activity_type="follow_up_visit")
         with self.assertRaises(Forbidden):
             FieldDebriefService.accept_recommendation(self.cceo2, d.id)
+
+    def test_program_lead_cannot_accept_recommendation_for_supervised_school(self):
+        self._release_visit_entitlement()
+        d = self._submit(
+            self.cceo,
+            recommended_next_activity_type="follow_up_visit",
+            school_ids=[self.school.id],
+            follow_up_owner_id=self.cceo_sp.id,
+        )
+        with self.assertRaisesMessage(Forbidden, "read-only supervisory oversight"):
+            FieldDebriefService.accept_recommendation(self.pl, d.id)
+        d.refresh_from_db()
+        self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
 
     def test_reject_recommendation(self):
         d = self._submit(self.cceo, recommended_next_activity_type="follow_up_visit")
@@ -617,7 +630,7 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
             school_ids=[self.school.id],
             follow_up_owner_id=self.cceo_sp.id,
         )
-        FieldDebriefService.accept_recommendation(self.pl, d.id)
+        FieldDebriefService.accept_recommendation(self.admin, d.id)
         self.assertTrue(
             Notification.objects.filter(
                 recipient_id=self.cceo.id,

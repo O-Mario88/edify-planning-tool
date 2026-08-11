@@ -238,8 +238,9 @@ class BulkAssignmentTests(TestCase):
                 current_fy_ssa_status="done",
             )
 
-        # Get page 1
-        response = self.client.get("/core-schools?page=1")
+        # The production default is 20; request the supported 10-row option to
+        # exercise pagination with this 15-record fixture.
+        response = self.client.get("/core-schools?page=1&page_size=10")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 10)
         self.assertContains(response, 'class="school-record-row__school-id"', count=10)
@@ -249,7 +250,7 @@ class BulkAssignmentTests(TestCase):
         self.assertIn(2, response.context["pages_list"])
 
         # Get page 2
-        response = self.client.get("/core-schools?page=2")
+        response = self.client.get("/core-schools?page=2&page_size=10")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 5)
 

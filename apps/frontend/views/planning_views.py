@@ -7,7 +7,6 @@ from apps.core.permissions import (
     require_export_permission,
     require_page_permission,
     RolePermissionService,
-    get_scoped_object_or_404,
     get_operational_object_or_404,
 )
 from django.contrib import messages
@@ -19,7 +18,6 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
-from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
@@ -1437,7 +1435,9 @@ def assign_partner_action_view(request):
                 )
 
         if cluster_id:
-            cluster = get_operational_object_or_404(Cluster, request.user, id=cluster_id)
+            cluster = get_operational_object_or_404(
+                Cluster, request.user, id=cluster_id
+            )
             assignment_purpose = purpose or catalogue_item.display_name
             act_type = catalogue_item.workflow_kind
             dup = _recent_duplicate(cluster=cluster, act_type=act_type)
@@ -1957,13 +1957,14 @@ def route_preview_view(request):
 
     operational = school_queryset(resolve_user_scope(request.user))
     allowed = set(
-        operational.filter(Q(id__in=school_ids) | Q(school_id__in=school_ids)).values_list(
-            "school_id", flat=True
-        )
+        operational.filter(
+            Q(id__in=school_ids) | Q(school_id__in=school_ids)
+        ).values_list("school_id", flat=True)
     )
     requested_school_refs = set(
-        School.objects.filter(Q(id__in=school_ids) | Q(school_id__in=school_ids))
-        .values_list("school_id", flat=True)
+        School.objects.filter(
+            Q(id__in=school_ids) | Q(school_id__in=school_ids)
+        ).values_list("school_id", flat=True)
     )
     if allowed != requested_school_refs or not requested_school_refs:
         return HttpResponseForbidden(

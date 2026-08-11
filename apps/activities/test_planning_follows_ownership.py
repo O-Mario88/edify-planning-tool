@@ -174,9 +174,7 @@ class AssigningWorkToTheOwnerIsNotReachingPastThemTest(
     """
 
     def test_a_lead_sends_an_action_instead_of_scheduling_for_the_owner(self):
-        with self.assertRaisesMessage(
-            Forbidden, "read-only supervisory oversight"
-        ):
+        with self.assertRaisesMessage(Forbidden, "read-only supervisory oversight"):
             self._plan(self.pl, self.cceo_school, owner=self.cceo_profile)
 
     def test_a_lead_still_may_not_take_the_work_themselves(self):

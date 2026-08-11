@@ -731,7 +731,7 @@ class PlanningDashboardService:
                 "pending_scheduling",
                 "partner_pending_schedule",
                 "assigned_to_partner_pending_scheduling",
-            ]
+            ],
         ).count()
 
         in_my_plan_count = Activity.objects.filter(

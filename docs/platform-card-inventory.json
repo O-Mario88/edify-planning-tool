@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 562,
-  "templates": 199,
-  "distinct_titles": 535,
+  "titled_cards": 563,
+  "templates": 200,
+  "distinct_titles": 536,
   "with_card_key": 13,
   "untitled_surfaces": 1046,
   "untitled_chrome": 233,
@@ -968,6 +968,15 @@
      1
     ]
    ]
+  },
+  {
+   "template": "templates/pages/core_schools/team_oversight.html",
+   "line": 16,
+   "title": "Supervised Core Schools",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden",
+   "branch_path": []
   },
   {
    "template": "templates/pages/cost_settings/index.html",
@@ -3027,7 +3036,7 @@
    "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
    "branch_path": [
     [
-     14,
+     17,
      0
     ]
    ]

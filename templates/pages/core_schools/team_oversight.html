@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% block title %}Team Core Oversight · Edify{% endblock %}
 {% block shell_content %}
-<main class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Read-Only Team Oversight</p>
@@ -21,7 +21,7 @@
     {% if rows %}
       <ul class="divide-y divide-slate-100" role="list">
       {% for school in rows %}
-        <li class="p-4 sm:p-5 grid gap-4 lg:grid-cols-[minmax(14rem,1.5fr)_repeat(4,minmax(7rem,auto))_minmax(12rem,auto)] items-center">
+        <li class="team-core-oversight-row p-4 sm:p-5 grid gap-4 items-center">
           <div><h3 class="font-semibold text-slate-900">{{ school.name }}</h3><p class="text-xs text-slate-500 mt-1">{{ school.school_id }} · {{ school.district_name }} · Responsible CCEO: {{ school.staff_name }}</p></div>
           <dl class="text-xs"><dt class="text-slate-500">Assessment</dt><dd class="font-semibold mt-1">{{ school.assessment.status }}</dd></dl>
           <dl class="text-xs"><dt class="text-slate-500">Visits</dt><dd class="font-semibold mt-1">{{ school.scheduled_visit_count }} / {{ school.visits_target }}</dd></dl>
@@ -31,7 +31,7 @@
             {% if school.action %}
               <a href="/actions/sent" class="inline-flex min-h-11 items-center px-3 rounded-control border border-slate-200 font-semibold text-xs">View Action</a>
             {% else %}
-              <form method="post" action="/team-core-oversight/send">{% csrf_token %}<input type="hidden" name="school_id" value="{{ school.id }}"><input type="hidden" name="fy" value="{{ fy }}"><button class="inline-flex min-h-11 items-center px-3 rounded-control edify-primary-solid text-white font-semibold text-xs">Send to {{ school.staff_name }}</button></form>
+              <form method="post" action="/team-core-oversight/send">{% csrf_token %}<input type="hidden" name="school_id" value="{{ school.id }}"><input type="hidden" name="fy" value="{{ fy }}"><button type="submit" class="inline-flex min-h-11 items-center px-3 rounded-control edify-primary-solid text-white font-semibold text-xs">Send to {{ school.staff_name }}</button></form>
             {% endif %}
           </div>
         </li>
@@ -42,5 +42,5 @@
       <div class="p-10 text-center"><h2 class="font-semibold">No supervised Core Schools</h2><p class="text-sm text-slate-500 mt-1">No Core Schools currently belong to a supervised CCEO portfolio.</p></div>
     {% endif %}
   </section>
-</main>
+</div>
 {% endblock %}

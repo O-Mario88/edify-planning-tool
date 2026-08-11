@@ -63,7 +63,14 @@ class Command(BaseCommand):
                     record.save(update_fields=["status", "updated_at"])
                     did_repair = True
                 findings.append(
-                    self._row("Activity", record, lead, record.school, classification, did_repair)
+                    self._row(
+                        "Activity",
+                        record,
+                        lead,
+                        record.school,
+                        classification,
+                        did_repair,
+                    )
                 )
                 repaired += int(did_repair)
 
@@ -84,7 +91,12 @@ class Command(BaseCommand):
                     did_repair = True
                 findings.append(
                     self._row(
-                        "PartnerAssignment", record, lead, record.school, classification, did_repair
+                        "PartnerAssignment",
+                        record,
+                        lead,
+                        record.school,
+                        classification,
+                        did_repair,
                     )
                 )
                 repaired += int(did_repair)
@@ -122,7 +134,14 @@ class Command(BaseCommand):
                     classification = "Unauthorized but Draft"
                     did_repair = True
                 findings.append(
-                    self._row("CoreActivitySlot", record, lead, school, classification, did_repair)
+                    self._row(
+                        "CoreActivitySlot",
+                        record,
+                        lead,
+                        school,
+                        classification,
+                        did_repair,
+                    )
                 )
                 repaired += int(did_repair)
 
@@ -143,9 +162,7 @@ class Command(BaseCommand):
             "mode": "apply" if apply else "dry-run",
             "findingCount": len(findings),
             "repairedCount": repaired,
-            "manualReviewCount": sum(
-                not finding["repaired"] for finding in findings
-            ),
+            "manualReviewCount": sum(not finding["repaired"] for finding in findings),
             "findings": findings,
         }
         self.stdout.write(json.dumps(payload, indent=2, default=str))
@@ -174,7 +191,9 @@ class Command(BaseCommand):
             "kind": kind,
             "id": str(record.id),
             "programLead": lead.user.name or lead.user.email,
-            "school": getattr(school, "name", "Missing school") if school else "Missing school",
+            "school": getattr(school, "name", "Missing school")
+            if school
+            else "Missing school",
             "schoolId": getattr(school, "school_id", "") if school else "",
             "expectedAccess": "Read-Only Team Oversight",
             "actualAccess": "Operational record attributed to Programme Lead",

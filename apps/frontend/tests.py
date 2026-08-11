@@ -1318,6 +1318,11 @@ class FrontendViewsTestCase(TestCase):
             supervisor=pl_profile, supervisee=self.cceo_profile
         )
 
+        # This test exercises the permitted operational flow. A supervised
+        # CCEO cluster is read-only to the PL and has its own denial coverage.
+        self.cluster.responsible_staff_id = pl_profile.id
+        self.cluster.save(update_fields=["responsible_staff_id", "updated_at"])
+
         # Link cluster to school to bring it in scope
         self.school.cluster_id = self.cluster.id
         self.school.save()

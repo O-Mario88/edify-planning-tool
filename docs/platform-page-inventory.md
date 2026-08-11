@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **499**
-- All registered routes: **901**
+- Routed product surfaces: **501**
+- All registered routes: **903**
 - API routes: **293**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
 - Shared component templates: **318**
-- Full pages: **326**
+- Full pages: **328**
 - Partials and drawers: **157**
-- Permission-gated surfaces: **489**
-- Referenced by automated tests: **464**
+- Permission-gated surfaces: **491**
+- Referenced by automated tests: **466**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -496,6 +496,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
+| /team-core-oversight/ | Team Core Oversight · Edify | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | pages/core_schools/team_oversight.html | 9.6 | 0 | referenced by automated test |
+| /team-core-oversight/send | Team Core Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/ | Team Planning Oversight · Edify | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

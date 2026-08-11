@@ -23,6 +23,11 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libpq5 libexpat1 curl \
     libreoffice --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+# The runtime base currently carries an old setuptools distribution. Merely
+# copying the pinned replacement from /install would leave the old, differently
+# named dist-info directory behind for scanners (and tooling) to discover.
+# Remove it first; requirements/base.txt then supplies the patched runtime copy.
+RUN python -m pip uninstall -y setuptools
 # Site-packages from the build stage.
 COPY --from=build /install /usr/local
 # Application source.

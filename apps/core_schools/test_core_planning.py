@@ -318,7 +318,10 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertIn("core-schools-workspace", html)
         self.assertIn("core-schools-workspace__list-card", html)
         self.assertIn("core-school-matrix__footer", html)
-        self.assertNotIn("max-h-[", html.split('id="core-schools-table-container"', 1)[1].split("</div>", 1)[0])
+        self.assertNotIn(
+            "max-h-[",
+            html.split('id="core-schools-table-container"', 1)[1].split("</div>", 1)[0],
+        )
 
     def test_team_core_send_creates_durable_action_for_responsible_cceo(self):
         from apps.planning.action_models import TeamAction

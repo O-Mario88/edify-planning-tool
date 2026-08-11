@@ -389,9 +389,14 @@ def update_cluster(cluster_id: str, data: dict, principal) -> dict:
     if (current_owner or strict_program_lead) and not may_plan_cluster(
         editor_scope, cluster
     ):
+        if strict_program_lead and cluster.id in editor_scope.cluster_ids:
+            raise Forbidden(
+                "You have read-only supervisory oversight of this record. "
+                "Operational Planning must be completed by the responsible CCEO."
+            )
         raise Forbidden(
-            "You have read-only supervisory oversight of this record. "
-            "Operational Planning must be completed by the responsible CCEO."
+            "That cluster belongs to another staff member. Only its responsible "
+            "owner may change its operational planning."
         )
 
     region_id = data.get("regionId")

@@ -306,7 +306,11 @@ class RolePermissionService:
         if school_or_cluster is None:
             return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
 
-        from apps.core.scoping import may_plan_cluster, may_write_school, resolve_user_scope
+        from apps.core.scoping import (
+            may_plan_cluster,
+            may_write_school,
+            resolve_user_scope,
+        )
 
         scope = resolve_user_scope(user)
         if school_or_cluster.__class__.__name__ == "School":
@@ -630,7 +634,20 @@ def get_operational_object_or_404(model, user, *args, **kwargs):
 
     obj = get_object_or_404(model, *args, **kwargs)
     if not RolePermissionService.can_schedule_activity(user, obj):
-        raise PermissionDenied(READ_ONLY_OVERSIGHT_MESSAGE)
+        # Read-only oversight is a specific Program Lead capability, not a
+        # generic synonym for "forbidden". A peer CCEO (or a PL reaching
+        # outside both direct and supervised portfolios) must receive the
+        # ordinary access denial instead of being told they supervise a record
+        # they cannot even view.
+        if (
+            getattr(user, "active_role", None) == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+            and RolePermissionService.can_view_record(user, obj)
+        ):
+            raise PermissionDenied(READ_ONLY_OVERSIGHT_MESSAGE)
+        raise PermissionDenied(
+            "Access Denied: Your active role or assigned portfolio scope does "
+            "not permit operating on this record."
+        )
     return obj
 
 

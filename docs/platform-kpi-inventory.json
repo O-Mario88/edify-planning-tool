@@ -2030,7 +2030,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1642,
+   "line": 1648,
    "label": "Total Clusters",
    "keys": [
     "helper",
@@ -2046,7 +2046,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1650,
+   "line": 1656,
    "label": "Schools in Clusters",
    "keys": [
     "helper",
@@ -2062,7 +2062,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1658,
+   "line": 1664,
    "label": "Without Current SSA",
    "keys": [
     "helper",
@@ -2078,7 +2078,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1666,
+   "line": 1672,
    "label": "Needing Group Training",
    "keys": [
     "helper",
@@ -2094,7 +2094,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1674,
+   "line": 1680,
    "label": "Not Met This Quarter",
    "keys": [
     "helper",
@@ -2110,7 +2110,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1682,
+   "line": 1688,
    "label": "Average Cluster SSA",
    "keys": [
     "helper",
@@ -2126,7 +2126,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1690,
+   "line": 1696,
    "label": "Weakest Intervention",
    "keys": [
     "helper",
@@ -2142,7 +2142,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/clusters/services.py",
-   "line": 1698,
+   "line": 1704,
    "label": "Pending Activities",
    "keys": [
     "helper",
@@ -2862,7 +2862,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 153,
+   "line": 164,
    "label": "Total Core Schools",
    "keys": [
     "icon",
@@ -2876,7 +2876,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 159,
+   "line": 170,
    "label": "Core Schools Ready for Planning",
    "keys": [
     "helper",
@@ -2891,7 +2891,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 166,
+   "line": 177,
    "label": "Avg. Core Assessment Score",
    "keys": [
     "icon",
@@ -2905,7 +2905,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 172,
+   "line": 183,
    "label": "Visits Scheduled",
    "keys": [
     "helper",
@@ -2920,7 +2920,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 179,
+   "line": 190,
    "label": "Trainings Scheduled",
    "keys": [
     "helper",
@@ -2935,7 +2935,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 186,
+   "line": 197,
    "label": "Staff vs Partner Performance Delta",
    "keys": [
     "helper",
@@ -2950,7 +2950,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 204,
+   "line": 215,
    "label": "Regions Covered",
    "keys": [
     "helper",
@@ -2965,7 +2965,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 275,
+   "line": 288,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -2973,6 +2973,23 @@
     "hx_target",
     "hx_trigger",
     "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/frontend/views/core_schools_views.py",
+   "line": 348,
+   "label": "Search supervised Core Schools",
+   "keys": [
+    "action",
+    "hidden",
+    "label",
+    "method",
     "name",
     "placeholder",
     "value"
@@ -5141,7 +5158,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 782,
+   "line": 786,
    "label": "Ready for Support",
    "keys": [
     "helper",
@@ -5157,7 +5174,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 790,
+   "line": 794,
    "label": "SSA Required",
    "keys": [
     "helper",
@@ -5173,7 +5190,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 798,
+   "line": 802,
    "label": "Clusters Needing Action",
    "keys": [
     "helper",
@@ -5189,7 +5206,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 806,
+   "line": 810,
    "label": "Core Package Gaps",
    "keys": [
     "helper",
@@ -5205,7 +5222,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 814,
+   "line": 818,
    "label": "Partner Pending Schedule",
    "keys": [
     "helper",
@@ -5221,7 +5238,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 822,
+   "line": 826,
    "label": "In My Plan",
    "keys": [
     "helper",
@@ -5237,7 +5254,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 830,
+   "line": 834,
    "label": "Cost Blocked",
    "keys": [
     "helper",
@@ -5253,7 +5270,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/planning/planning_service.py",
-   "line": 838,
+   "line": 842,
    "label": "Data Cleanup Required",
    "keys": [
     "helper",
@@ -5269,7 +5286,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 118,
+   "line": 119,
    "label": "Not clustered",
    "keys": [
     "count",
@@ -5283,7 +5300,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 124,
+   "line": 125,
    "label": "Clustered, SSA required",
    "keys": [
     "count",
@@ -5297,7 +5314,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 130,
+   "line": 131,
    "label": "SIT scheduled, SSA missing",
    "keys": [
     "count",
@@ -5311,7 +5328,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 136,
+   "line": 137,
    "label": "Ready to plan",
    "keys": [
     "count",
@@ -5325,7 +5342,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 142,
+   "line": 143,
    "label": "Plan core package",
    "keys": [
     "count",
@@ -6734,7 +6751,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
-   "line": 63,
+   "line": 65,
    "label": null,
    "keys": [
     "clean",

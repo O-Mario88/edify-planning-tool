@@ -245,9 +245,9 @@ def core_schools_view(request):
     )
     partners = (
         Partner.objects.filter(
-            id__in=PartnerAssignment.objects.filter(
-                school__in=core_schools_qs
-            ).values("partner_id")
+            id__in=PartnerAssignment.objects.filter(school__in=core_schools_qs).values(
+                "partner_id"
+            )
         )
         .distinct()
         .order_by("name")
@@ -372,7 +372,7 @@ def team_core_send_action_view(request):
     )
     fy = request.POST.get("fy") or get_operational_fy()
     try:
-        action = send_action(
+        send_action(
             sender=request.user,
             school=school,
             fy=fy,
@@ -389,7 +389,10 @@ def team_core_send_action_view(request):
     except ActionError as exc:
         messages.error(request, str(exc))
     else:
-        messages.success(request, "Action sent to the responsible CCEO and added to their To-Do list.")
+        messages.success(
+            request,
+            "Action sent to the responsible CCEO and added to their To-Do list.",
+        )
     return redirect("/team-core-oversight/")
 
 
