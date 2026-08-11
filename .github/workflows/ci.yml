@@ -176,3 +176,9 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+          # Package analysis is layer-cached. After replacing a Python wheel,
+          # the shared daily cache retained the removed version alongside the
+          # final filesystem's patched version and reported both. Scan the
+          # freshly built image from its actual merged rootfs; vulnerability
+          # DB caching remains internal to the action for this invocation.
+          cache: false
