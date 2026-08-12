@@ -88,7 +88,7 @@ grouping changes — so the header keeps the control that fired the request.
         Worst first. Eight schools lost across eight {{ grouping }}s is country-wide drift; eight lost in one is a {{ grouping }} in trouble, and the national total cannot tell them apart.
       </p>
     </div>
-    <div class="overflow-x-auto max-md:hidden">
+    <div class="overflow-x-auto">
       <table class="w-full text-left">
         <caption class="sr-only">Closures grouped by {{ grouping }}</caption>
         <thead>
@@ -117,7 +117,7 @@ grouping changes — so the header keeps the control that fired the request.
       </table>
     </div>
 
-    <ul class="md:hidden divide-y edify-border">
+    <ul class="hidden divide-y edify-border">
       {% for row in place_pager.rows %}
       <li class="p-4 space-y-1">
         <div class="flex items-baseline justify-between gap-2">

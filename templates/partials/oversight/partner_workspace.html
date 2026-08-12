@@ -166,7 +166,7 @@ schedule, and none edits a CCEO's record.
           Waiting on {{ group.name }} to set a date. No cost exists until they do.
         </p>
       </div>
-      <div class="overflow-x-auto max-md:hidden">
+      <div class="overflow-x-auto">
         <table class="w-full text-left">
           <caption class="sr-only">Assignments {{ group.name }} has not yet scheduled</caption>
           <thead>
@@ -212,7 +212,7 @@ schedule, and none edits a CCEO's record.
         </table>
       </div>
       {% include "components/table_pager.html" with pager=awaiting_page param=group.awaiting_page_param %}
-      <ul class="md:hidden divide-y edify-border border-t edify-border">
+      <ul class="hidden divide-y edify-border border-t edify-border">
         {% for item in awaiting_page.rows %}
         <li class="p-4 space-y-1.5">
           <p class="font-semibold text-sm">{{ item.school_name|default:"—" }}</p>
@@ -245,7 +245,7 @@ schedule, and none edits a CCEO's record.
           Scheduled &amp; Delivering ({{ group.summary.scheduled }})
         </h3>
       </div>
-      <div class="overflow-x-auto max-md:hidden">
+      <div class="overflow-x-auto">
         <table class="w-full text-left">
           <caption class="sr-only">Work {{ group.name }} has scheduled</caption>
           <thead>
@@ -293,7 +293,7 @@ schedule, and none edits a CCEO's record.
         </table>
       </div>
       {% include "components/table_pager.html" with pager=scheduled_page param=group.scheduled_page_param %}
-      <ul class="md:hidden divide-y edify-border border-t edify-border">
+      <ul class="hidden divide-y edify-border border-t edify-border">
         {% for item in scheduled_page.rows %}
         <li class="p-4 space-y-1.5">
           <div class="flex items-start justify-between gap-2">

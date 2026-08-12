@@ -48,7 +48,7 @@ is the answer to half the questions this page gets asked.
         </p>
       </div>
 
-      <div class="overflow-x-auto max-md:hidden">
+      <div class="overflow-x-auto">
         <table class="w-full text-left">
           <caption class="sr-only">Flagged schools owned by {{ group.owner_name }}</caption>
           <thead>
@@ -81,7 +81,7 @@ is the answer to half the questions this page gets asked.
         </table>
       </div>
 
-      <ul class="md:hidden divide-y edify-border border-t edify-border">
+      <ul class="hidden divide-y edify-border border-t edify-border">
         {% for row in flagged_page.rows %}
         <li class="py-3 space-y-1">
           <p class="font-semibold text-sm">{{ row.name }}</p>

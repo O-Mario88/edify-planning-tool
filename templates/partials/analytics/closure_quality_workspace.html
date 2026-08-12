@@ -84,7 +84,7 @@ loses focus mid-interaction.
       </p>
     </div>
 
-    <div class="overflow-x-auto max-md:hidden">
+    <div class="overflow-x-auto">
       <table class="w-full text-left">
         <caption class="sr-only">Closures needing review</caption>
         <thead>
@@ -131,7 +131,7 @@ loses focus mid-interaction.
       </table>
     </div>
 
-    <ul class="md:hidden divide-y edify-border">
+    <ul class="hidden divide-y edify-border">
       {% for row in pager.rows %}
       <li class="p-4 space-y-1.5">
         <p class="font-semibold text-sm">{{ row.school.name }}</p>

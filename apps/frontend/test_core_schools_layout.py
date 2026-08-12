@@ -137,11 +137,13 @@ class CoreSchoolsLayoutContractTest(TestCase):
         self.assertIn("block-size: auto", stacked)
         self.assertIn("flex: 0 0 auto", stacked)
 
-    def test_the_oversight_table_becomes_cards_on_a_phone(self):
+    def test_the_oversight_table_stays_a_table_on_a_phone(self):
         css = CSS.read_text()
         phone = css.split("@media (max-width: 48rem)", 1)[1]
-        self.assertIn(".core-oversight-table thead", phone)
-        self.assertIn("content: attr(data-label)", phone)
+        self.assertIn(".core-oversight-scroll", phone)
+        self.assertIn("overflow-x: auto", phone)
+        self.assertIn("min-inline-size: 68rem", phone)
+        self.assertNotIn("content: attr(data-label)", phone)
         oversight = OVERSIGHT.read_text()
         for label in ("data-label=\"Visits\"", "data-label=\"Trainings\"", "data-label=\"Action\""):
             self.assertIn(label, oversight)
@@ -180,11 +182,7 @@ class CoreSchoolsLayoutContractTest(TestCase):
     def test_the_oversight_table_shares_the_cards_gutter(self):
         """The table's outer edges line up with the card's header and footer.
 
-        Two separate things pushed it out of line. The table matched the
-        `[class*="-card"]` arm of the card selector in consistency.css — via
-        `edify-mobile-table--cards`, added at runtime by the mobile-table
-        script — and was given a card's inner padding on top of its own cells.
-        And the outer cells kept the platform's 11px inter-column padding,
+        The outer cells once kept the platform's 11px inter-column padding,
         which is inter-column space, not the card's margin. The first column
         ended up 7px right of the card title while the last ran flush into the
         card's right edge, 25px past the header badge.
@@ -247,23 +245,14 @@ class CoreSchoolsLayoutContractTest(TestCase):
                 block = desktop.split(cell_rule, 1)[1].split("}", 1)[0]
                 self.assertNotIn("display: flex", block)
 
-    def test_the_phone_layout_is_the_platform_component(self):
-        """One mobile card layout, not two.
-
-        This file carried a hand-rolled phone layout for the same table the
-        `edify-mobile-table--cards` enhancer already handles. The two fought:
-        the component wants values to wrap and the desktop `nowrap` kept them
-        on one line, so every value was clipped at the card's edge.
-        """
+    def test_the_phone_layout_is_a_scrollable_table(self):
+        """The column headers and table cells remain tangible on phones."""
         css = CSS.read_text()
         oversight = OVERSIGHT.read_text()
 
-        self.assertIn("edify-mobile-table--cards.core-oversight-table", css)
-        # The component's own hooks, rather than a second set of rules.
-        self.assertIn("data-record-title", oversight)
-        self.assertIn("data-record-action", oversight)
-        # And none of the hand-rolled card layout that used to duplicate it:
-        # its own hidden thead, its own card border on the row, its own labels.
+        self.assertNotIn("edify-mobile-table--cards", css)
+        self.assertIn(".core-oversight-table { min-inline-size: 68rem; }", css)
+        self.assertIn("<thead>", oversight)
         self.assertNotIn("core-oversight-table thead {", css)
         self.assertNotIn("core-oversight-table td::before", css)
 

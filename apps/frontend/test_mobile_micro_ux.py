@@ -47,19 +47,14 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn("root.querySelectorAll('table').forEach(enhanceTable)", behavior)
         self.assertIn("ensureTableCaption", behavior)
         self.assertIn("header.setAttribute('scope', 'col')", behavior)
-        self.assertIn("cell.setAttribute('data-label', headers[index])", behavior)
-        self.assertNotIn("headerCells.length > 5", behavior)
-        self.assertIn("Column count alone is not a reason", behavior)
-        self.assertIn("isSingleCellEmptyState", behavior)
-        self.assertIn("structuralSpan", behavior)
         self.assertIn("enhanceTableChoices(table)", behavior)
         self.assertIn("Select all records", behavior)
         self.assertIn("makeScrollRegion(table, label)", behavior)
         self.assertIn(".edify-table-choice", styles)
-        self.assertIn("edify-mobile-table--cards", styles)
+        self.assertNotIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
         self.assertIn("table.matches('[data-mobile-table=\"fit\"]')", behavior)
-        self.assertIn("table.matches('[data-mobile-table=\"cards\"]')", behavior)
+        self.assertIn("table.classList.add('edify-mobile-table--scroll')", behavior)
         self.assertIn("edify-mobile-table--fit", styles)
         self.assertIn("Scrollable table:", behavior)
 
@@ -106,20 +101,36 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260811corelist10", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260809micro19", base)
-        self.assertIn("micro-ux.js' %}?v=20260809micro13", base)
+        self.assertIn("platform.css' %}?v=20260812tables1", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260812tables1", base)
+        self.assertIn("micro-ux.js' %}?v=20260812tables1", base)
 
-    def test_failed_dashboard_tables_choose_non_scrolling_mobile_modes(self):
+    def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (
-            ("templates/partials/dashboards/pl/cceo_performance.html", "cards"),
-            ("templates/partials/dashboards/urgent_schools_table.html", "cards"),
+            ("templates/partials/dashboards/pl/cceo_performance.html", "scroll"),
+            ("templates/partials/dashboards/urgent_schools_table.html", "scroll"),
             ("templates/partials/dashboards/pl/ssa_intelligence.html", "fit"),
-            ("templates/partials/oversight/cd_workspace.html", "cards"),
-            ("templates/partials/oversight/pl_workspace.html", "cards"),
+            ("templates/partials/oversight/cd_workspace.html", "scroll"),
+            ("templates/partials/oversight/pl_workspace.html", "scroll"),
         ):
             with self.subTest(path=path):
                 self.assertIn(f'data-mobile-table="{mode}"', _read(path))
+
+    def test_mobile_table_card_modes_and_visible_duplicate_lists_are_gone(self):
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            source = path.read_text(encoding="utf-8")
+            with self.subTest(template=str(path.relative_to(ROOT))):
+                self.assertNotIn('data-mobile-table="cards"', source)
+
+        for path in (
+            "templates/pages/ia/partials/queue_table.html",
+            "templates/partials/projects/portfolio_list.html",
+            "templates/partials/oversight/pl_workspace.html",
+            "templates/partials/oversight/cd_workspace.html",
+        ):
+            source = _read(path)
+            self.assertNotIn('class="md:hidden', source)
+            self.assertNotIn('class="lg:hidden', source)
 
     def test_message_and_calendar_tab_rails_cannot_collapse_or_clip(self):
         styles = _read("static/css/platform.css")

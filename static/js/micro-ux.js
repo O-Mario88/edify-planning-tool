@@ -142,58 +142,11 @@
       return;
     }
 
-    var forceCards = table.matches('[data-mobile-table="cards"]');
-    var bodyRows = Array.from(table.querySelectorAll('tbody > tr'));
-    var structuralSpan = Array.from(
-      table.querySelectorAll('[rowspan], [colspan]:not([colspan="1"])')
-    ).some(function (cell) {
-      var row = cell.parentElement;
-      var isSingleCellEmptyState = row && row.closest('tbody') && row.children.length === 1;
-      return cell.hasAttribute('rowspan') || cell.closest('thead') || !isSingleCellEmptyState;
-    });
-    /* Operational records become labelled cards on narrow screens even when
-       they have many columns. Column count alone is not a reason to force a
-       phone user into a 44rem horizontal canvas. Only true comparison
-       matrices and structurally grouped tables keep horizontal scrolling. */
-    var complex = !forceCards && (
-      headerCells.length === 0 || Boolean(
-        structuralSpan ||
-        table.matches('.edify-report-matrix__table, [data-mobile-table="scroll"]')
-      )
-    );
-
-    if (complex) {
-      table.classList.add('edify-mobile-table--scroll');
-      makeScrollRegion(table, label);
-      return;
-    }
-
-    table.classList.add('edify-mobile-table--cards');
-    var headers = headerCells.map(function (header) { return cleanText(header.textContent); });
-
-    bodyRows.forEach(function (row) {
-      var cells = Array.from(row.children).filter(function (cell) {
-        return cell.matches('td, th');
-      });
-      if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
-        row.classList.add('edify-mobile-table__empty-row');
-        cells[0].classList.add('edify-mobile-table__empty');
-        return;
-      }
-
-      cells.forEach(function (cell, index) {
-        if (!cell.hasAttribute('data-label') && headers[index]) {
-          cell.setAttribute('data-label', headers[index]);
-        }
-      });
-      if (cells[0] && !cells[0].hasAttribute('data-record-title')) {
-        cells[0].setAttribute('data-record-title', '');
-      }
-      var last = cells[cells.length - 1];
-      if (last && last.querySelector('a, button, input, select')) {
-        last.setAttribute('data-record-action', '');
-      }
-    });
+    /* Keep every data set tangible at every viewport: the header and column
+       relationships stay visible, and narrow screens scroll the real table
+       horizontally. */
+    table.classList.add('edify-mobile-table--scroll');
+    makeScrollRegion(table, label);
   }
 
   function enhanceTables(root) {

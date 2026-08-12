@@ -40,7 +40,7 @@
   accent-color: var(--edify-accent);
 }
 
-.edify-workspace :where(.edify-empty-state, [data-empty-state], .edify-mobile-table__empty) {
+.edify-workspace :where(.edify-empty-state, [data-empty-state]) {
   min-block-size: 8rem;
   padding: 1.25rem;
   border: 1px dashed var(--edify-border-strong);
@@ -75,12 +75,12 @@
 }
 
 .edify-mobile-table--scroll {
-  min-inline-size: max(44rem, 100%);
+  min-inline-size: 100%;
 }
 
 /* Small comparison tables can declare their own column proportions and stay
-   as tables at phone widths. This mode deliberately avoids both the 44rem
-   scroll floor and the record-card transformation. */
+   as tables at phone widths. This mode deliberately avoids the 44rem scroll
+   floor. */
 .edify-mobile-table--fit {
   inline-size: 100% !important;
   min-inline-size: 0 !important;
@@ -88,6 +88,17 @@
 }
 
 @media (max-width: 63.999rem) {
+  .edify-mobile-table--scroll {
+    min-inline-size: max(44rem, 100%);
+  }
+
+  /* A scrollable table should expose its complete data set. Older templates
+     used responsive `hidden …:table-cell` utilities to drop secondary
+     columns; the scroll region removes the need for that data loss. */
+  .edify-mobile-table--scroll :is(th, td)[class~="hidden"][class*=":table-cell"] {
+    display: table-cell !important;
+  }
+
   /* Buttons are controls even when their original utility classes describe a
      32px desktop target. min-size lets long labels grow without clipping. */
   .edify-workspace :where(button, [role="button"], summary, [role="tab"]),
@@ -168,104 +179,6 @@
     flex: 0 0 auto;
   }
 
-  /* The enhancer selects card mode only for simple data tables. Complex
-     matrices remain semantic scroll regions and never receive these rules. */
-  .edify-mobile-table--cards {
-    display: block !important;
-    inline-size: 100% !important;
-    min-inline-size: 0 !important;
-    border-collapse: separate;
-    white-space: normal !important;
-  }
-
-  .edify-mobile-table--cards > caption {
-    display: block;
-  }
-
-  .edify-mobile-table--cards > thead {
-    position: absolute !important;
-    clip-path: inset(50%) !important;
-    overflow: hidden !important;
-    inline-size: 1px !important;
-    block-size: 1px !important;
-    white-space: nowrap !important;
-  }
-
-  .edify-mobile-table--cards > tbody,
-  .edify-mobile-table--cards > tbody > tr {
-    display: block !important;
-    inline-size: 100% !important;
-  }
-
-  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) {
-    margin-block: 0.7rem;
-    padding: 0.75rem;
-    border: 1px solid var(--edify-border) !important;
-    border-radius: var(--edify-radius-md);
-    background: var(--edify-surface-raised);
-    box-shadow: var(--edify-shadow-xs);
-  }
-
-  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th) {
-    display: grid !important;
-    grid-template-columns: minmax(6.5rem, 0.85fr) minmax(0, 1.35fr);
-    inline-size: 100% !important;
-    max-inline-size: 100% !important;
-    min-block-size: 2.75rem;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.55rem 0 !important;
-    border-block-end: 1px solid var(--edify-border) !important;
-    overflow-wrap: anywhere;
-    text-align: start !important;
-  }
-
-  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th) > * {
-    min-inline-size: 0;
-    max-inline-size: 100%;
-  }
-
-  .edify-mobile-table--cards > tbody > tr:not(.edify-mobile-table__empty-row) > :is(td, th):last-child {
-    border-block-end: 0 !important;
-  }
-
-  .edify-mobile-table--cards [data-label]::before {
-    content: attr(data-label);
-    align-self: start;
-    color: var(--edify-text-muted);
-    font-size: var(--edify-text-micro-size);
-    font-weight: 700;
-    line-height: 1.35;
-    text-align: start;
-  }
-
-  .edify-mobile-table--cards [data-record-title] {
-    color: var(--edify-text);
-    font-weight: 750;
-  }
-
-  .edify-mobile-table--cards [data-record-action] {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .edify-mobile-table--cards [data-record-action]::before {
-    content: none;
-  }
-
-  .edify-mobile-table--cards [data-record-action] :where(a, button) {
-    min-block-size: 2.75rem !important;
-  }
-
-  .edify-mobile-table__empty-row {
-    display: block !important;
-  }
-
-  .edify-mobile-table__empty-row > td {
-    display: block !important;
-    inline-size: 100%;
-    margin-block: 0.75rem;
-  }
-
   .edify-table-scroll-region {
     padding-block-end: 0.35rem;
   }
@@ -275,15 +188,6 @@
     max-block-size: 100dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
-  }
-}
-
-@media (max-width: 47.999rem) {
-  /* Some oversight pages already author a dedicated phone list. Preserve that
-     source-level choice instead of allowing card mode to unhide the tablet
-     table and duplicate every record. */
-  .edify-mobile-table--cards[class~="max-md:hidden"] {
-    display: none !important;
   }
 }
 
@@ -309,7 +213,6 @@
     outline-color: Highlight;
   }
 
-  .edify-mobile-table--cards > tbody > tr,
   .edify-table-scroll-region {
     border: 1px solid CanvasText !important;
   }
@@ -317,7 +220,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .edify-table-scroll-region,
-  .edify-mobile-table--cards * {
+  .edify-mobile-table--scroll * {
     scroll-behavior: auto !important;
   }
 }

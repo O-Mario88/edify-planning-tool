@@ -179,14 +179,12 @@
   .hcos-button { flex: 1; }
   .hcos-metric { padding: 0.8rem 0.65rem; }
   .hcos-metric strong { font-size: 1.25rem; }
-  .hcos-register { overflow: visible; }
-  .hcos-table-wrap { overflow: visible; }
-  .hcos-table { min-width: 0; }
-  .hcos-table thead { display: none; }
-  .hcos-table tbody { display: grid; gap: 0.7rem; padding: 0.72rem; }
-  .hcos-table tr { display: grid; gap: 0.08rem; padding: 0.65rem 0.72rem; border: 1px solid var(--edify-border); border-radius: 0.55rem; background: var(--edify-surface-muted); }
-  .hcos-table td { display: grid; grid-template-columns: minmax(6.5rem, 0.42fr) minmax(0, 1fr); align-items: center; gap: 0.65rem; padding: 0.28rem 0; border: 0; }
-  .hcos-table td::before { content: attr(data-label); color: var(--edify-text-subtle); font-size: var(--edify-text-table-heading-size); font-weight: 570; }
+  .hcos-table-wrap {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+  .hcos-table { min-width: 44rem; }
   .hcos-pagination { align-items: flex-start; flex-direction: column; }
 }
 

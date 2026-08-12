@@ -691,46 +691,26 @@
     display: none !important;
   }
 
-  /* Shared record tables become stacked records. Existing data-label spans
-     remain the accessible names; actions stay inside their owning record. */
+  /* Shared record tables retain their column structure. The platform table
+     enhancer supplies the labelled horizontal scroll region on narrow views. */
   [data-mobile-family] .edify-record-table {
-    display: block !important;
-    inline-size: 100% !important;
-    min-inline-size: 0 !important;
+    display: table !important;
   }
 
   [data-mobile-family] .edify-record-table > thead {
-    display: none !important;
+    display: table-header-group !important;
   }
 
-  [data-mobile-family] .edify-record-table > tbody,
-  [data-mobile-family] .edify-record-table > tbody > tr {
-    display: block !important;
-    inline-size: 100% !important;
+  [data-mobile-family] .edify-record-table > tbody {
+    display: table-row-group !important;
   }
 
   [data-mobile-family] .edify-record-table > tbody > tr {
-    margin: 0.65rem 0;
-    padding: 0.75rem !important;
-    border: 1px solid var(--edify-border) !important;
-    border-radius: var(--edify-radius-md);
-    background: var(--edify-surface);
+    display: table-row !important;
   }
 
-  [data-mobile-family] .edify-record-table > tbody > tr > td {
-    display: flex !important;
-    min-block-size: 2.5rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.5rem 0 !important;
-    border-block-end: 1px solid var(--edify-border);
-    text-align: end;
-  }
-
-  [data-mobile-family] .edify-record-table > tbody > tr > td:last-child {
-    min-block-size: 2.75rem;
-    border-block-end: 0;
+  [data-mobile-family] .edify-record-table > tbody > tr > :is(th, td) {
+    display: table-cell !important;
   }
 
   [data-mobile-family="finance"] .edify-record-table [data-record-action] :is(button, a),

@@ -232,7 +232,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("@media (max-width: 63.9375rem)", platform)
         self.assertIn("@media (max-width: 47.5rem)", platform)
         self.assertIn("@media (max-width: 30rem)", platform)
-        self.assertIn("platform-table-cards", platform)
+        self.assertNotIn("platform-table-cards", platform)
         self.assertIn("min-block-size: 2.75rem", platform)
 
     def test_every_authenticated_page_inherits_compact_cockpit_density(self):

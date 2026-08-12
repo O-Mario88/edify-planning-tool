@@ -1387,9 +1387,8 @@ main .platform-hero__eyebrow {
   to { background-position: -220% 0; }
 }
 
-/* Opt-in responsive table contract. Identity, status and action columns stay
-   visible; lower-priority cells collapse on tablets and become labelled cards
-   on phones when templates provide data-label attributes. */
+/* Responsive tables keep their complete column set. The shared enhancer wraps
+   them in a labelled horizontal scroll region on narrow screens. */
 main .platform-responsive-table [data-priority="low"] {
   transition: opacity var(--edify-transition-fast);
 }
@@ -1730,9 +1729,6 @@ main .platform-responsive-table [data-priority="low"] {
     grid-template-columns: 1fr;
   }
 
-  main .platform-responsive-table [data-priority="low"] {
-    display: none;
-  }
 }
 
 @media (max-width: 47.5rem) {
@@ -1801,44 +1797,6 @@ main .platform-responsive-table [data-priority="low"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  main .platform-responsive-table.platform-table-cards,
-  main .platform-responsive-table.platform-table-cards :where(tbody, tr, td) {
-    display: block;
-    inline-size: 100%;
-  }
-
-  main .platform-responsive-table.platform-table-cards thead {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: clip;
-    clip-path: inset(50%);
-  }
-
-  main .platform-responsive-table.platform-table-cards tr {
-    margin-block-end: 0.75rem;
-    padding: 0.75rem;
-    border: 1px solid var(--edify-border);
-    border-radius: var(--edify-radius-md);
-    background: var(--edify-surface);
-    box-shadow: var(--edify-shadow-sm);
-  }
-
-  main .platform-responsive-table.platform-table-cards td {
-    display: grid;
-    grid-template-columns: minmax(7.5rem, 42%) 1fr;
-    gap: 0.75rem;
-    border: 0 !important;
-    padding: 0.4rem 0 !important;
-    text-align: start !important;
-  }
-
-  main .platform-responsive-table.platform-table-cards td::before {
-    content: attr(data-label);
-    color: var(--edify-text-subtle);
-    font-size: var(--edify-text-table-heading-size);
-    font-weight: 600;
-  }
 }
 
 @media (max-width: 30rem) {
@@ -4604,31 +4562,13 @@ main .core-scope-switch [data-edify-tab] {
 
   .core-oversight-card__header { padding-inline: 1rem; }
 
-  /* The phone layout is `edify-mobile-table--cards` — the platform's own
-     mobile-table component, applied by the enhancer. This file used to carry a
-     second, hand-rolled card layout for the same table, and the two fought:
-     the component wants values to wrap, and the desktop `nowrap` below kept
-     them on one line, so every value was clipped at the card's edge. All that
-     is needed here is to release what the desktop rules impose. */
-  .core-oversight-scroll { overflow-x: visible; }
-
-  .edify-mobile-table--cards.core-oversight-table :is(th, td) {
-    white-space: normal;
-    min-inline-size: 0;
-    max-inline-size: none;
+  /* Nine columns remain a table on phones. The action column stays sticky
+     while the remaining columns move through the horizontal scroll region. */
+  .core-oversight-scroll {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
   }
 
-  /* A sticky column has nothing to stick to once the table is a stack. */
-  .core-oversight-table th:last-child,
-  .core-oversight-table td:last-child {
-    position: static;
-    box-shadow: none;
-    background: transparent;
-    padding-inline: 0 !important;
-  }
-
-  .core-oversight-table th:first-child { padding-inline-start: 0 !important; }
-  .core-oversight-flags { justify-content: flex-end; }
-  .core-oversight-action,
-  .core-oversight-action-form { inline-size: 100%; }
+  .core-oversight-table { min-inline-size: 68rem; }
 }

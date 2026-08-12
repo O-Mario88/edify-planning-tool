@@ -62,7 +62,7 @@ school's future, not its history.
   {% endcomment %}
   {% paginate rows "closed_page" as pager %}
   <section class="card p-0 overflow-hidden">
-    <div class="overflow-x-auto max-md:hidden">
+    <div class="overflow-x-auto">
       <table class="w-full text-left">
         <caption class="sr-only">Schools that have closed</caption>
         <thead>
@@ -111,7 +111,7 @@ school's future, not its history.
     Phone: the same rows read down instead of across. An eight-column table on
     a 375px screen is a horizontal scroll nobody performs.
     {% endcomment %}
-    <ul class="md:hidden divide-y edify-border">
+    <ul class="hidden divide-y edify-border">
       {% for row in pager.rows %}
       <li class="p-4 space-y-1.5">
         <div class="flex items-start justify-between gap-2">

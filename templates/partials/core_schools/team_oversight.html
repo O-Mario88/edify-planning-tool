@@ -19,14 +19,8 @@ that ask is re-derived server-side before it is written.
     {% if oversight_rows %}
       <div class="core-oversight-scroll">
         {% comment %}
-        `data-edify-padding="flush"` is the card layer's documented opt-out, and
-        this table needs it: the mobile-table script adds
-        `edify-mobile-table--cards` at runtime, which matches the
-        `[class*="-card"]` arm of the card selector in consistency.css. A
-        <table> is not a card, but the substring says otherwise, so the table
-        was being given a card's 18.5px inner padding on top of its own cell
-        padding — which is why the first column sat 7px right of the card title
-        and nothing in the card lined up.
+        `data-edify-padding="flush"` keeps the table's outer columns aligned
+        with this card's header while the table scrolls horizontally.
         {% endcomment %}
         <table class="edify-data-table core-oversight-table w-full" data-edify-padding="flush">
           <caption class="sr-only">Core package progress for schools owned by the CCEOs you supervise</caption>

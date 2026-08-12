@@ -68,7 +68,7 @@ The body, swapped on its own so a future filter row in the header survives.
     </button>
 
     <div id="cluster-group-{{ group.key }}" x-show="open" x-cloak class="border-t edify-border">
-      <div class="overflow-x-auto max-md:hidden">
+      <div class="overflow-x-auto">
         <table class="w-full text-left">
           <caption class="sr-only">Clusters held by {{ group.label }}</caption>
           <thead>
@@ -103,7 +103,7 @@ The body, swapped on its own so a future filter row in the header survives.
         </table>
       </div>
 
-      <ul class="md:hidden divide-y edify-border">
+      <ul class="hidden divide-y edify-border">
         {% for row in group.clusters|slice:":50" %}
         <li class="p-4 space-y-1">
           <a href="/clusters/{{ row.cluster.id }}" class="font-semibold text-sm hover:underline edify-primary-text">{{ row.cluster.name }}</a>

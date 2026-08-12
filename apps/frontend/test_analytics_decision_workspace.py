@@ -75,7 +75,7 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         cluster_template = _read(
             "templates/partials/analytics/cluster_performance.html"
         )
-        self.assertIn('data-mobile-table="cards"', cluster_template)
+        self.assertIn('data-mobile-table="scroll"', cluster_template)
 
     def test_analytics_navigation_exposes_named_workspace_areas(self):
         navigation = _read("apps/core/navigation.py")

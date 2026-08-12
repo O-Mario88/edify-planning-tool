@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
-  <div class="hidden lg:block overflow-x-auto">
+  <div class="overflow-x-auto">
     <table class="w-full text-left" aria-describedby="ia-queue-caption">
       <caption id="ia-queue-caption" class="sr-only">Activity verification records ordered by critical risk, overdue status, and oldest submission.</caption>
       <thead>
@@ -68,7 +68,7 @@
     </table>
   </div>
 
-  <ul class="lg:hidden divide-y divide-[var(--edify-border)]" aria-label="Activity verification records">
+  <ul class="hidden divide-y divide-[var(--edify-border)]" aria-label="Activity verification records">
     {% for act in queue %}
     <li class="p-4 space-y-3">
       <div class="flex items-start justify-between gap-3">
