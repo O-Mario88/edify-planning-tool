@@ -535,7 +535,7 @@
 
 .ia-queue-row__record > a {
   color: var(--edify-accent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--edify-font-sans);
   font-size: var(--edify-text-micro-size);
   font-weight: 800;
 }

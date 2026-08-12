@@ -962,18 +962,15 @@ SIDEBAR_ITEMS = [
                 "page_key": "dashboard",
             },
             {
-                "label": "Team Targets",
-                "url": "/team-targets/",
-                "page_key": "team_targets",
-            },
-            {
-                # Team oversight is one surface, not one per subject. Plans,
-                # clusters and flagged schools are three lenses on the same
-                # team, and splitting them into separate pages would make a
-                # supervisor visit three places to answer one question.
+                # Planning, targets, clusters and flagged schools are lenses
+                # inside one Team Oversight workspace. The navigation audience
+                # is the union of the two underlying page permissions; the
+                # view shows only the lenses each role is authorized to read.
                 "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
+                "visible_to": {PL, CD, HR, IA, RVP, ACCOUNTANT, ADMIN},
+                "extra_active_paths": ("/team-targets",),
             },
             {
                 "label": "My Plan",
@@ -1474,11 +1471,6 @@ SIDEBAR_ITEMS = [
                 "page_key": "performance_reviews",
             },
             {
-                "label": "Team Target Oversight",
-                "url": "/team-targets/",
-                "page_key": "team_targets",
-            },
-            {
                 "label": "Recovery Plans",
                 "url": "/recovery-plans",
                 "page_key": "recovery_plans",
@@ -1830,7 +1822,7 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # the school-context surface they actually hold.
     PARTNER: ("dashboard", "my_plan", "clusters", "messages"),
     # A PL's second surface is the team, not their own plan alone.
-    PL: ("dashboard", "my_plan", "team_targets", "messages"),
+    PL: ("dashboard", "my_plan", "team_planning_oversight", "messages"),
     # Projects lead for the coordinator; their planning is project-scoped.
     PROJECT_COORDINATOR: ("dashboard", "projects", "my_plan", "messages"),
     # Verification is the whole job; SSA is its second queue.
@@ -1864,7 +1856,7 @@ MOBILE_NAV_SHORT_LABELS = {
     "my_professional_development": "PD",
     "staff": "People",
     "system_health": "Health",
-    "team_targets": "Targets",
+    "team_planning_oversight": "Oversight",
     "weekly_fund_request": "Funds",
 }
 

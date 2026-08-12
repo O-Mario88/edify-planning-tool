@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
 
-{% block title %}Team Planning Oversight · Edify{% endblock %}
+{% block title %}Team Oversight · Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260808people2">{% endblock %}
 
 {% block shell_content %}
@@ -10,20 +10,47 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <p class="edify-page-eyebrow">Supervision</p>
-      <h1 class="edify-page-title edify-page-header__title">Team Planning Oversight</h1>
-      <p class="edify-page-header__description">{% if country_lens %}Review each Programme Lead, then open the work owned by the PL and every CCEO they supervise.{% else %}Move between your work and each supervised CCEO while status remains visible in the table.{% endif %}</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif country_lens %}Review each Programme Lead, then open the work owned by the PL and every CCEO they supervise.{% else %}Move between your work and each supervised CCEO while status remains visible in the table.{% endif %}</p>
     </div>
+    {% if active_oversight_view == "targets" %}
+    <div class="tt-page-header__context" aria-label="Current reporting context">
+      <span class="tt-context-dot" aria-hidden="true"></span>
+      <span><strong>{{ overall_team_size }}</strong> supervised team member{{ overall_team_size|pluralize }}</span>
+      <span aria-hidden="true">·</span>
+      <span>Updated {{ last_refreshed|date:"H:i" }}</span>
+    </div>
+    {% endif %}
   </header>
 
-  {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
+  {% if can_view_team_planning and can_view_team_targets %}
+  {% comment %}
+  These are server-routed views rather than client-side ARIA tabs. Each link
+  owns a URL and loads only its dataset, while the shared tab styling makes
+  their relationship clear and preserves normal browser navigation.
+  {% endcomment %}
+  <nav data-edify-tablist aria-label="Team oversight views">
+    <a href="/team-planning-oversight/" data-edify-tab{% if active_oversight_view == "planning" %} aria-current="page"{% endif %}>Planning &amp; Portfolio</a>
+    <a href="/team-planning-oversight/?view=targets" data-edify-tab{% if active_oversight_view == "targets" %} aria-current="page"{% endif %}>Target Performance</a>
+  </nav>
+  {% endif %}
 
-  <div id="oversight-workspace">
-    {% if country_lens %}
-      {% include "partials/oversight/team_country_workspace.html" %}
-    {% else %}
-      {% include "partials/oversight/pl_workspace.html" %}
-    {% endif %}
-  </div>
+  {% if active_oversight_view == "targets" %}
+  <section class="tt-page team-oversight-targets"
+        x-data="{ showCatchup: false, catchupStaff: '', catchupArea: 'school_visits', staffFilter: 'all', expandedStaff: '' }"
+        @click.window="if (expandedStaff && !$event.target.closest('.tt-member-row, .tt-area-row, .tt-mobile-member')) expandedStaff = ''">
+    {% include "partials/targets/team/workspace.html" %}
+  </section>
+  {% else %}
+    {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
+
+    <div id="oversight-workspace">
+      {% if country_lens %}
+        {% include "partials/oversight/team_country_workspace.html" %}
+      {% else %}
+        {% include "partials/oversight/pl_workspace.html" %}
+      {% endif %}
+    </div>
 
   {% comment %}
   Cluster Oversight — who is carrying which clusters.
@@ -32,10 +59,10 @@
   come to planning oversight, and a second page would split "what is planned"
   from "who holds the ground it is planned on".
   {% endcomment %}
-  <section aria-labelledby="cluster-oversight-heading" class="pt-2">
-    <h2 id="cluster-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">Cluster Oversight</h2>
-    {% include "partials/clusters/oversight_workspace.html" with groups=cluster_oversight.groups total_clusters=cluster_oversight.total_clusters total_schools=cluster_oversight.total_schools unassigned=cluster_oversight.unassigned is_team_lens=is_team_lens %}
-  </section>
+    <section aria-labelledby="cluster-oversight-heading" class="pt-2">
+      <h2 id="cluster-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">Cluster Oversight</h2>
+      {% include "partials/clusters/oversight_workspace.html" with groups=cluster_oversight.groups total_clusters=cluster_oversight.total_clusters total_schools=cluster_oversight.total_schools unassigned=cluster_oversight.unassigned is_team_lens=is_team_lens %}
+    </section>
 
   {% comment %}
   School Oversight — the third lens on the same team, and the reason this page
@@ -44,9 +71,10 @@
   is in trouble. Three pages would have made a supervisor visit three places to
   answer one question.
   {% endcomment %}
-  <section aria-labelledby="school-oversight-heading" class="pt-2">
-    <h2 id="school-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">School Oversight</h2>
-    {% include "partials/oversight/flagged_schools.html" %}
-  </section>
+    <section aria-labelledby="school-oversight-heading" class="pt-2">
+      <h2 id="school-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">School Oversight</h2>
+      {% include "partials/oversight/flagged_schools.html" %}
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

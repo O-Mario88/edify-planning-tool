@@ -257,10 +257,11 @@ class CoreSchoolsLayoutContractTest(TestCase):
         self.assertNotIn("core-oversight-table td::before", css)
 
     def test_the_pager_matches_the_shared_table_pager(self):
-        """Same furniture as `components/table_pager.html`, including its
-        44px target — the hand-rolled 32px buttons were below the floor every
-        other list on the platform meets."""
+        """Core Schools uses the shared pager furniture and compact sizing."""
         shared = (ROOT / "templates/components/table_pager.html").read_text()
+        responsive = (
+            ROOT / "static/css/components/mobile-micro-ux.css"
+        ).read_text()
         control = (
             "min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 "
             "edify-surface edify-text-caption font-bold text-slate-600 "
@@ -272,6 +273,8 @@ class CoreSchoolsLayoutContractTest(TestCase):
             self.assertIn(
                 "rounded-control edify-primary-solid text-white", page
             )
+        self.assertIn("--edify-pagination-control-size: 1.875rem", responsive)
+        self.assertIn("--edify-pagination-control-size: 1.75rem", responsive)
 
     def test_every_colour_comes_from_a_theme_token(self):
         """Light and dark both work because neither is hard-coded."""

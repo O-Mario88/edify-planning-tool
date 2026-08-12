@@ -83,7 +83,7 @@ every authenticated page.
     {% endif %}
 
     {% if page_obj.paginator.num_pages > 1 %}
-    <nav class="hcos-pagination" aria-label="Register pagination">
+    <nav class="edify-pagination-scope hcos-pagination" aria-label="Register pagination">
       <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
       <div>
         {% if page_obj.has_previous %}<a href="?q={{ search|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}

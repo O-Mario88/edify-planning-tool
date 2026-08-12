@@ -339,6 +339,29 @@ main :is(.edify-page-header--dark, [class~="bg-slate-900"], [class~="bg-slate-80
   color: var(--edify-on-accent) !important;
 }
 
+/* Typography is one platform-wide decision. This final bridge loads after
+ * feature and vendor styles, so even utilities intended for identifiers and
+ * Leaflet's built-in Helvetica stack resolve to Geist Sans. Weight, tracking
+ * and colour can still distinguish machine-readable values without bringing
+ * a second family into the interface. */
+html,
+body,
+button,
+input,
+select,
+textarea,
+optgroup,
+code,
+kbd,
+samp,
+pre,
+.font-sans,
+.font-mono,
+.leaflet-container {
+  font-family: var(--edify-font-sans) !important;
+  font-size-adjust: from-font;
+}
+
 /* Custom navy/blue surfaces cannot rely on a text-white utility alone because
  * the platform heading contract below also uses !important. Marking the
  * surface makes inverse typography explicit and keeps headings white in every

@@ -82,7 +82,7 @@
   {% endif %}
 
   {% if page_obj.paginator.num_pages > 1 %}
-  <nav class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" aria-label="Evidence pagination">
+  <nav class="edify-pagination-scope flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2" aria-label="Evidence pagination">
     <p class="edify-text-caption text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</p>
     <div class="flex items-center gap-2">
       {% if page_obj.has_previous %}

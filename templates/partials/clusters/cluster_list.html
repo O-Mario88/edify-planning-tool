@@ -29,7 +29,7 @@ Create Cluster
 
 <!-- Real Pagination Footer -->
 {% if page_obj.paginator.num_pages > 1 %}
-<div class="flex items-center justify-between edify-text-caption text-slate-500 font-semibold mt-4 edify-surface p-3 rounded-surface border border-slate-100 shadow-sm">
+<div class="edify-pagination-scope flex items-center justify-between edify-text-caption text-slate-500 font-semibold mt-4 edify-surface p-3 rounded-surface border border-slate-100 shadow-sm">
 <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} clusters</span>
 <div class="flex items-center gap-1">
 {% if page_obj.has_previous %}

@@ -21,6 +21,10 @@
      with the semantic Edify design tokens. */
   --font-sans: "Geist Sans", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Identifiers stay visually distinct through weight/tracking, not by
+     introducing a second product typeface. Tailwind's font-mono utility is
+     deliberately routed back through the one approved family. */
+  --font-mono: var(--font-sans);
 
   /* Edify brand tokens (referenced by templates as e.g. text-edify-primary,
      bg-[var(--color-edify-soft)], border-edify-border). */

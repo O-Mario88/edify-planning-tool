@@ -503,7 +503,9 @@ def planning_dashboard_view(request):
     total_pages = data["total_pages"]
     from apps.core.pagination import make_pagination_window
 
-    pages_list = make_pagination_window(int(filters["page"]), total_pages)
+    pages_list = make_pagination_window(
+        int(filters["page"]), total_pages, window_size=1
+    )
 
     showing_start = (
         (int(filters["page"]) - 1) * int(filters["per_page"]) + 1

@@ -196,9 +196,9 @@ def paginate_rows(rows: list, page: int = 1, page_size: int = TABLE_PAGE_SIZE) -
         # A single page needs no pager at all; saying so here keeps the
         # decision out of the template.
         "paginated": page_count > 1,
-        # Reuses make_pagination_window above rather than listing every
-        # page: a 40-page table should not render 40 links.
-        "pages": make_pagination_window(current, page_count),
+        # One adjacent page on either side keeps the shared table pager small
+        # enough for a phone without hiding the first or last page.
+        "pages": make_pagination_window(current, page_count, window_size=1),
     }
 
 

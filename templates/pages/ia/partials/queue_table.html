@@ -92,7 +92,7 @@
   </ul>
 
   {% if page_obj.paginator.num_pages > 1 %}
-  <nav class="flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--edify-border)]" aria-label="Verification queue pages">
+  <nav class="edify-pagination-scope flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--edify-border)]" aria-label="Verification queue pages">
     <span class="edify-text-caption text-[var(--edify-text-muted)]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</span>
     <div class="flex items-center gap-2">
       {% if page_obj.has_previous %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Previous</a>{% endif %}

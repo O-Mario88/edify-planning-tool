@@ -85,7 +85,7 @@
       </table>
     </div>
 
-    <footer class="spp-pagination">
+    <footer class="edify-pagination-scope spp-pagination">
       <span>Showing {{ result_start }}–{{ result_end }} of {{ total }} assignments</span>
       <nav aria-label="Project school pages">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" hx-get="?{% for key,value in selected.items %}{% if value and key != 'selected' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" hx-target="#spp-workspace" hx-push-url="true" aria-label="Previous page">‹</a>{% endif %}{% for link in page_links %}{% if link.url %}<a href="{{ link.url }}" hx-get="{{ link.url }}" hx-target="#spp-workspace" hx-push-url="true" class="{% if link.current %}is-current{% endif %}">{{ link.label }}</a>{% else %}<span>…</span>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" hx-get="?{% for key,value in selected.items %}{% if value and key != 'selected' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" hx-target="#spp-workspace" hx-push-url="true" aria-label="Next page">›</a>{% endif %}</nav>
       <label>Rows <select aria-label="Per page" name="per_page" form="spp-filters"><option value="10" {% if selected.per_page == 10 %}selected{% endif %}>10</option><option value="25" {% if selected.per_page == 25 %}selected{% endif %}>25</option><option value="50" {% if selected.per_page == 50 %}selected{% endif %}>50</option></select></label>

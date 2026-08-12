@@ -160,6 +160,17 @@ class MobileNavAuthorizationTests(SimpleTestCase):
 
 
 class MobileNavDestinationTests(SimpleTestCase):
+    def test_program_lead_has_one_team_oversight_destination(self):
+        sections = build_sidebar_for_user(_User(ROLE_LABELS[PL]), "/dashboard")
+        items = [item for section in sections for item in section["items"]]
+
+        self.assertEqual(
+            [item["label"] for item in items].count("Team Oversight"),
+            1,
+        )
+        self.assertNotIn("Team Targets", {item["label"] for item in items})
+        self.assertNotIn("Team Target Oversight", {item["label"] for item in items})
+
     def test_messages_is_present_for_every_role(self):
         # PAGE_PERMISSIONS["messages"] is ALL_ROLES, and it is the one shared
         # destination the mandate names for every persona.

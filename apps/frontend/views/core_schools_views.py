@@ -109,7 +109,7 @@ def core_schools_view(request):
     page_obj = paginator.get_page(page_num)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=2, on_ends=1
+            page_obj.number, on_each_side=1, on_ends=1
         )
     )
 

@@ -131,6 +131,19 @@ class LoginBundleTests(SimpleTestCase):
                         "so this class renders as nothing.",
                     )
 
+    def test_login_statistics_use_their_container_at_tablet_width(self):
+        css = (CSS / "login.css").read_text()
+
+        self.assertIn("container: login-brand-content / inline-size", css)
+        tablet_rule = css.split(
+            "@container login-brand-content (max-width: 40rem)", 1
+        )[1]
+        self.assertIn(
+            "grid-template-columns: repeat(2, minmax(0, 1fr))",
+            tablet_rule,
+        )
+        self.assertIn(".login-stat:nth-child(n + 3)", tablet_rule)
+
 
 class LoginHeroImageTests(SimpleTestCase):
     """The brand photo must not be downloaded by viewports that never show it.

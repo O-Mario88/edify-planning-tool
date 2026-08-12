@@ -142,7 +142,7 @@
         <span class="tt-empty__icon" aria-hidden="true">◎</span>
         <h3>No team members match these filters</h3>
         <p>Adjust the reporting scope to return to the full supervised team.</p>
-        <a href="/team-targets?fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear filters</a>
+        <a href="/team-planning-oversight/?view=targets&fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear filters</a>
       </div>
       {% endif %}
     </section>
@@ -154,7 +154,6 @@
             <span class="tt-eyebrow">Intervention queue</span>
             <h2>Staff requiring support</h2>
           </div>
-          <button type="button" @click="staffFilter='risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="tt-link-button">View all</button>
         </header>
         <div class="tt-support-list">
           {% for staff in support_staff %}
@@ -169,6 +168,9 @@
           <div class="tt-rail-empty"><strong>No urgent interventions</strong><span>The selected team scope is at pace.</span></div>
           {% endfor %}
         </div>
+        <footer class="tt-rail-panel__actions">
+          <button type="button" @click="staffFilter='risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="tt-link-button">View all</button>
+        </footer>
       </section>
 
       <section class="tt-panel tt-rail-panel">
@@ -177,7 +179,6 @@
             <span class="tt-eyebrow">Planning workflow</span>
             <h2>Recovery plans</h2>
           </div>
-          <button type="button" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">View all</button>
         </header>
         <div class="tt-plan-list">
           {% for plan in recovery_plans %}
@@ -190,7 +191,10 @@
           <div class="tt-rail-empty"><strong>No active recovery plans</strong><span>Create one when performance needs structured intervention.</span></div>
           {% endfor %}
         </div>
-        <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--primary tt-button--recovery edify-card-action">Create recovery plan</button>
+        <footer class="tt-rail-panel__actions">
+          <button type="button" hx-get="/team-targets/recovery?fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">View all</button>
+          <button type="button" @click="catchupStaff=''; showCatchup=true" class="tt-button tt-button--primary tt-button--recovery tt-rail-panel__primary-action edify-card-action">Create recovery plan</button>
+        </footer>
       </section>
 
       <section class="tt-panel tt-rail-panel">

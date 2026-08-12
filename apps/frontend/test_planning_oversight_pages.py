@@ -121,7 +121,9 @@ class RouteAccessTest(OversightPageFixture):
     def test_the_program_lead_page_opens_for_a_program_lead(self):
         response = self.as_user(self.pl_user).get(PL_URL)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Team Planning Oversight")
+        self.assertContains(response, "Team Oversight")
+        self.assertContains(response, "Planning &amp; Portfolio")
+        self.assertContains(response, "Target Performance")
 
     def test_the_country_page_opens_for_the_country_director(self):
         response = self.as_user(self.cd_user).get(CD_URL)

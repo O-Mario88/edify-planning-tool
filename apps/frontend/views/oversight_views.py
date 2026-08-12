@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from apps.core.fy import fy_options, get_operational_fy
 from apps.core.metrics import DataState, MetricValue, render_kpi_item
 from apps.core.permissions import (
+    RolePermissionService,
     require_any_page_permission,
     require_export_permission,
     require_page_permission,
@@ -288,9 +289,36 @@ def _program_lead_tabs(items, selected: str | None) -> tuple[list[dict], str, li
     return tabs, active["key"], active["items"]
 
 
-@require_page_permission("team_planning_oversight")
+@require_any_page_permission("team_planning_oversight", "team_targets")
 def team_planning_oversight_view(request):
-    """What my team has planned, who executes it, and where I must intervene."""
+    """One Team Oversight workspace for planning and target performance."""
+    can_view_planning = RolePermissionService.can_view_page(
+        request.user, "team_planning_oversight"
+    )
+    can_view_targets = RolePermissionService.can_view_page(request.user, "team_targets")
+    requested_view = (request.GET.get("view") or "planning").strip().lower()
+    active_view = "targets" if requested_view == "targets" else "planning"
+    if active_view == "targets" and not can_view_targets:
+        active_view = "planning"
+    if active_view == "planning" and not can_view_planning:
+        active_view = "targets"
+
+    if active_view == "targets":
+        # Do not calculate the planning, cluster and school oversight datasets
+        # while the user is reviewing performance. These are independent,
+        # expensive lenses and the inactive one must not delay the active one.
+        from apps.frontend.views.staff_views import _team_targets_page_context
+
+        context = {
+            **_team_targets_page_context(request),
+            "active_oversight_view": "targets",
+            "can_view_team_targets": can_view_targets,
+            "can_view_team_planning": can_view_planning,
+        }
+        if request.headers.get("HX-Request") == "true":
+            return render(request, "partials/targets/team/workspace.html", context)
+        return render(request, "pages/oversight/team_planning.html", context)
+
     period = _period_filters(request)
     advanced = oversight.read_filters(request)
     scope = oversight.resolve_oversight_scope(request.user)
@@ -334,6 +362,9 @@ def team_planning_oversight_view(request):
         "flagged_schools": team_flagged_schools(
             request.user, fy=period["fy"], month=period.get("month")
         ),
+        "active_oversight_view": "planning",
+        "can_view_team_targets": can_view_targets,
+        "can_view_team_planning": can_view_planning,
     }
 
     if request.headers.get("HX-Request") == "true":

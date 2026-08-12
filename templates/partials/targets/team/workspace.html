@@ -1,8 +1,8 @@
 {% load frontend_filters %}
 <div id="team-targets-workspace" class="tt-workspace">
   <section class="tt-filter-panel" aria-label="Team targets filters">
-    <form method="get" action="/team-targets"
-          hx-get="/team-targets"
+    <form method="get" action="/team-planning-oversight/"
+          hx-get="/team-planning-oversight/"
           hx-target="#team-targets-workspace"
           hx-swap="outerHTML"
           hx-trigger="change"
@@ -10,6 +10,7 @@
           hx-indicator="#team-targets-loading"
           hx-disabled-elt="select, button"
           class="edify-filter-bar tt-filter-grid">
+      <input type="hidden" name="view" value="targets">
       <label class="tt-filter-field">
         <span>Fiscal year</span>
         <select name="fy" aria-label="Fiscal year">
@@ -63,7 +64,7 @@
           Updating team data
         </span>
         {% if filters_active %}
-        <a href="/team-targets?fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear</a>
+        <a href="/team-planning-oversight/?view=targets&fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear</a>
         {% endif %}
         <a href="/team-targets/export?fy={{ fy }}&month={{ month_of_fy }}&category={{ selected_category|urlencode }}&district={{ selected_district|urlencode }}&team_member={{ selected_team_member|urlencode }}"
            class="tt-button tt-button--primary">

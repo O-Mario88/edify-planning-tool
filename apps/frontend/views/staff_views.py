@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.core.permissions import (
+    RolePermissionService,
     require_export_permission,
     render_access_denied,
     require_page_permission,
@@ -116,7 +117,7 @@ def staff_directory_view(request):
     page_obj = paginator.get_page(page_number)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=2, on_ends=1
+            page_obj.number, on_each_side=1, on_ends=1
         )
     )
 
@@ -1243,13 +1244,8 @@ def profile_view(request):
     return render(request, "pages/profile/index.html", context)
 
 
-@require_page_permission("team_targets")
-def team_targets_view(request):
-    """Team Targets — the Program Lead's supervision and recovery cockpit.
-
-    Aggregates the validated My Targets performance of supervised CCEOs.
-    Strictly PL-scoped (CD/Admin get a country oversight lens). The PL's own
-    performance lives on My Targets, never here."""
+def _team_targets_page_context(request):
+    """Build the target-performance half of the Team Oversight workspace."""
     from apps.core.fy import fy_options
     from apps.targets.team_targets import PLTeamTargetsService
 
@@ -1271,10 +1267,30 @@ def team_targets_view(request):
         district=district,
         team_member=team_member,
     )
-    context = {**data, "fy_options": fy_options()}
+    return {**data, "fy_options": fy_options()}
+
+
+@require_page_permission("team_targets")
+def team_targets_view(request):
+    """Backward-compatible entry point for Team Oversight target performance.
+
+    The sidebar now exposes one Team Oversight page. Keeping this route as an
+    alias protects bookmarks, exports and HTMX drawers that already point at
+    ``/team-targets`` while rendering the same unified workspace shell.
+    """
+    context = _team_targets_page_context(request)
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/targets/team/workspace.html", context)
-    return render(request, "pages/targets/team.html", context)
+    context.update(
+        {
+            "active_oversight_view": "targets",
+            "can_view_team_targets": True,
+            "can_view_team_planning": RolePermissionService.can_view_page(
+                request.user, "team_planning_oversight"
+            ),
+        }
+    )
+    return render(request, "pages/oversight/team_planning.html", context)
 
 
 def _team_member_or_none(request, staff_user_id):

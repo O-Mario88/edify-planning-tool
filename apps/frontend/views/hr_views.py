@@ -796,7 +796,10 @@ def performance_reviews_view(request):
             ),
         ],
         rows=rows,
-        primary_action={"label": "Open Team Targets", "href": "/team-targets/"},
+        primary_action={
+            "label": "Open Team Oversight",
+            "href": "/team-planning-oversight/?view=targets",
+        },
         empty_title="No performance reviews in this scope",
     )
 

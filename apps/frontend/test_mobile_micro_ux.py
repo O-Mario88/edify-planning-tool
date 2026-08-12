@@ -64,10 +64,37 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
     def test_pagination_is_named_and_touch_safe_at_source(self):
         pager = _read("templates/components/table_pager.html")
-        self.assertIn("min-h-11 min-w-11", pager)
+        styles = _read("static/css/components/mobile-micro-ux.css")
+
+        self.assertIn("edify-pagination__control", pager)
+        self.assertIn('aria-label="Previous page"', pager)
+        self.assertIn('aria-label="Next page"', pager)
         self.assertIn('aria-label="Page {{ p }}, current page"', pager)
         self.assertIn('aria-label="Page {{ p }}"', pager)
-        self.assertNotIn('class="h-8 min-w-8', pager)
+        self.assertIn("--edify-pagination-control-size: 1.875rem", styles)
+        self.assertIn("--edify-pagination-control-size: 2rem", styles)
+        self.assertIn("--edify-pagination-control-size: 1.75rem", styles)
+        self.assertIn(".edify-pagination__direction-symbol", styles)
+
+        for path in (
+            "templates/pages/admin/unmatched_ssa_queue.html",
+            "templates/pages/staff/index.html",
+            "templates/partials/clusters/cluster_list.html",
+            "templates/partials/core_schools/planning_queue.html",
+            "templates/partials/core_schools/matrix_table.html",
+            "templates/partials/core_schools/team_oversight.html",
+            "templates/partials/finance/fund_allocation_table.html",
+            "templates/partials/planning/school_table.html",
+            "templates/partials/projects/planning_workspace.html",
+            "templates/partials/schools/table.html",
+            "templates/partials/evidence/workspace.html",
+            "templates/partials/my_plan/_pager.html",
+            "templates/partials/dashboards/pl/urgent_schools_page.html",
+            "templates/pages/hr/module_workspace.html",
+            "templates/pages/ia/partials/queue_table.html",
+        ):
+            with self.subTest(path=path):
+                self.assertIn("edify-pagination-scope", _read(path))
 
     def test_tabs_and_custom_modals_gain_keyboard_behavior(self):
         behavior = _read("static/js/micro-ux.js")
@@ -107,7 +134,7 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
         self.assertIn("platform.css' %}?v=20260812tables1", base)
         self.assertIn("pages.css' %}?v=20260812tables2", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260812tables3", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260812pager1", base)
         self.assertIn("micro-ux.js' %}?v=20260812tables3", base)
 
     def test_dashboard_tables_keep_real_table_modes(self):

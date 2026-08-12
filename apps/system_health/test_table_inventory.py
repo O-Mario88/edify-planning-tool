@@ -71,6 +71,6 @@ class PageSizeTest(SimpleTestCase):
         from apps.core.pagination import paginate_rows
 
         pages = paginate_rows(list(range(400)), page=20)["pages"]
-        self.assertLess(len(pages), 12)
+        self.assertLessEqual(len(pages), 7)
         self.assertIn("...", pages)
         self.assertIn(20, pages)

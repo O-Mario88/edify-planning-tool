@@ -151,7 +151,11 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
    three-track grid would push Priority Schools' table into the 12.5rem slot
    and leave the third track empty. The survivors keep their old ratio. */
 .admin-grid--middle { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.86fr); }
-.admin-grid--lower { grid-template-columns: minmax(17rem, 0.72fr) minmax(0, 1.45fr); }
+/* Cluster Performance is the primary analysis surface in this row. The
+   Partner Support and Budget snapshots form the narrower supporting stack on
+   the right, leaving the cluster table enough room for names, trends and
+   status without squeezing its columns. */
+.admin-grid--lower { grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.72fr); }
 
 .admin-panel {
   min-width: 0;
@@ -353,6 +357,9 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 .admin-mini-grid,
 .admin-budget-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; padding: 0.72rem 0.85rem 0.85rem; }
+.admin-grid--lower :is(.admin-mini-grid, .admin-budget-grid) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .admin-mini,
 .admin-budget-grid article { min-width: 0; padding: 0.72rem; border: 1px solid var(--edify-border); border-radius: 0.58rem; background: var(--edify-surface-muted); }
 .admin-mini > span:first-child,

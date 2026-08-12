@@ -272,7 +272,7 @@
   /* Compatibility alias only: themes must never introduce a second UI font. */
   --edify-font-serif: var(--edify-font-sans);
   --edify-font-display-family: var(--edify-font-sans);
-  --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  --edify-font-mono: var(--edify-font-sans);
 
   --edify-text-display-size: 1.75rem;
   --edify-text-heading-size: 1.25rem;

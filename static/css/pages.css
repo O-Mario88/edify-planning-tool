@@ -3443,6 +3443,17 @@
 .tt-support-list,
 .tt-plan-list { display: grid; padding: 0 0.85rem; }
 
+.tt-rail-panel__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.55rem 0.85rem 0;
+}
+
+.tt-rail-panel__primary-action {
+  justify-self: center;
+}
+
 .tt-support-item,
 .tt-plan-item {
   display: grid;

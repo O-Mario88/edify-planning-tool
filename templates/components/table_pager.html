@@ -10,30 +10,38 @@
 {% endcomment %}
 {% load table_pagination %}
 {% if pager.paginated %}
-<nav class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100"
+<nav class="edify-pagination flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-slate-100"
      aria-label="Table pages">
-  <p class="edify-text-caption font-semibold text-slate-400 tabular-nums">
+  <p class="edify-pagination__summary edify-text-caption font-semibold text-slate-400 tabular-nums">
     Showing {{ pager.first_index }}–{{ pager.last_index }} of {{ pager.total }}
   </p>
-  <div class="flex items-center gap-1">
+  <div class="edify-pagination__controls flex items-center gap-1">
     {% pager_query param as base %}
     {% if pager.has_previous %}
     <a href="?{{ base }}{{ param }}={{ pager.previous_page }}" rel="prev"
-       class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Prev</a>
+       aria-label="Previous page"
+       class="edify-pagination__control edify-pagination__control--direction min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">
+      <span class="edify-pagination__direction-label">Prev</span>
+      <span class="edify-pagination__direction-symbol" aria-hidden="true">‹</span>
+    </a>
     {% endif %}
     {% for p in pager.pages %}
       {% if p == "..." %}
-      <span class="edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">…</span>
+      <span class="edify-pagination__ellipsis edify-text-caption font-bold text-slate-300 px-1" aria-hidden="true">…</span>
       {% elif p == pager.page %}
-      <span aria-current="page" aria-label="Page {{ p }}, current page" class="min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ p }}</span>
+      <span aria-current="page" aria-label="Page {{ p }}, current page" class="edify-pagination__control edify-pagination__control--current min-h-11 min-w-11 px-2.5 rounded-control edify-primary-solid text-white edify-text-caption font-bold tabular-nums inline-flex items-center justify-center">{{ p }}</span>
       {% else %}
       <a href="?{{ base }}{{ param }}={{ p }}"
-         aria-label="Page {{ p }}" class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center">{{ p }}</a>
+         aria-label="Page {{ p }}" class="edify-pagination__control min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 tabular-nums inline-flex items-center justify-center">{{ p }}</a>
       {% endif %}
     {% endfor %}
     {% if pager.has_next %}
     <a href="?{{ base }}{{ param }}={{ pager.next_page }}" rel="next"
-       class="min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">Next</a>
+       aria-label="Next page"
+       class="edify-pagination__control edify-pagination__control--direction min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 edify-surface edify-text-caption font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">
+      <span class="edify-pagination__direction-label">Next</span>
+      <span class="edify-pagination__direction-symbol" aria-hidden="true">›</span>
+    </a>
     {% endif %}
   </div>
 </nav>

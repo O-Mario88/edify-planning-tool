@@ -333,6 +333,39 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn('id="team-targets-workspace"', html)
         self.assertNotIn("Search team member", html)
 
+    def test_target_performance_is_a_view_inside_team_oversight(self):
+        client = Client()
+        client.force_login(self.pl)
+
+        html = client.get("/team-planning-oversight/?view=targets").content.decode()
+
+        self.assertIn("<title>Team Oversight · Edify</title>", html)
+        self.assertIn('id="team-targets-workspace"', html)
+        self.assertIn(
+            'href="/team-planning-oversight/?view=targets" data-edify-tab aria-current="page"',
+            html,
+        )
+        self.assertNotIn('id="oversight-workspace"', html)
+
+    def test_intervention_view_all_actions_follow_their_card_lists(self):
+        client = Client()
+        client.force_login(self.pl)
+        html = client.get("/team-planning-oversight/?view=targets").content.decode()
+
+        rail_cards = html.split('<section class="tt-panel tt-rail-panel">')
+        support_card = rail_cards[1]
+        recovery_card = rail_cards[2]
+
+        self.assertLess(
+            support_card.index('class="tt-support-list"'),
+            support_card.index(">View all</button>"),
+        )
+        self.assertLess(
+            recovery_card.index('class="tt-plan-list"'),
+            recovery_card.index(">View all</button>"),
+        )
+        self.assertIn("tt-rail-panel__primary-action", recovery_card)
+
     def test_team_targets_keeps_the_accessible_performance_table_on_mobile(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         client = Client()

@@ -66,7 +66,7 @@ touch-target floor the mobile sweep set for every other list on the platform.
 The shared component itself cannot be included: it pages by href, and this
 table is driven by an HTMX filter form whose hidden input has to move instead.
 {% endcomment %}
-<nav class="core-school-matrix__footer" aria-label="Core school list pages">
+<nav class="edify-pagination-scope core-school-matrix__footer" aria-label="Core school list pages">
   <p class="core-school-matrix__count edify-text-caption font-semibold text-slate-400 tabular-nums">
     {% if page_obj.paginator.count %}
       Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}

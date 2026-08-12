@@ -597,7 +597,12 @@ def require_any_page_permission(*page_names: str):
                 audit_log(
                     action="unauthorized_page_access",
                     subject_kind="Page",
-                    subject_id=" or ".join(page_names),
+                    # AuditLog.subject_id is intentionally compact (30 chars).
+                    # Keep the complete any-of permission list in ``reason``
+                    # and use the canonical/first page key for the indexable
+                    # subject, otherwise legitimate composite guards can make
+                    # the denial audit itself fail to persist.
+                    subject_id=page_names[0][:30],
                     actor_id=str(request.user.id),
                     actor_role=getattr(request.user, "active_role", None),
                     success=False,

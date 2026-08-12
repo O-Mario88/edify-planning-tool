@@ -1,7 +1,7 @@
 {% include "partials/dashboards/urgent_schools_table.html" with urgent_action_mode="pl" %}
 
 {% if urgent_pagination.total %}
-<nav class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t edify-border-top"
+<nav class="edify-pagination-scope flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 border-t edify-border-top"
      aria-label="Urgent schools pagination">
   <p class="text-[12px] edify-text-muted">
     Showing {{ urgent_pagination.first_row }}–{{ urgent_pagination.last_row }} of {{ urgent_pagination.total }}
