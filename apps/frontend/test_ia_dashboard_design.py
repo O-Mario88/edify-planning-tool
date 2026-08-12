@@ -90,10 +90,21 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertNotIn("padding: clamp(1rem, 2vw, 1.5rem)", self.css)
         self.assertNotIn("width: min(100%, 92rem)", self.css)
         self.assertIn("container: ia-queue / inline-size", self.css)
-        self.assertIn("@container ia-queue", self.css)
+        self.assertIn(".ia-queue-table-scroll", self.css)
+        self.assertIn("min-width: 44rem", self.css)
         self.assertIn("repeat(auto-fit", self.css)
         self.assertIn("@media (prefers-reduced-motion: reduce)", self.css)
         self.assertIn("overscroll-behavior-x: contain", self.css)
+
+    def test_pending_queue_is_a_native_scrollable_table_at_every_width(self):
+        self.assertIn(
+            '<table class="ia-queue-table" data-mobile-table="scroll">',
+            self.template,
+        )
+        self.assertIn("<caption", self.template)
+        self.assertIn('<th scope="col">Record</th>', self.template)
+        self.assertNotIn('role="table"', self.template)
+        self.assertNotIn(".ia-queue-table__header {\n    display: none", self.css)
 
     def test_report_tile_titles_do_not_wrap_at_intermediate_widths(self):
         self.assertIn("container-name: kpi-strip ia-report-kpis", self.css)

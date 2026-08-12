@@ -1,8 +1,8 @@
 {% load table_pagination %}
 {% load frontend_filters %}
-<div class="overflow-x-auto flex-1">
+<div class="flex-1 min-w-0">
   {% paginate backlog_snapshot "backlog_snapshot_page" as backlog_snapshot_pager %}
-<table class="w-full border-collapse whitespace-nowrap text-[12px]">
+  <table class="w-full border-collapse text-[12px]" data-mobile-table="fit">
     <thead>
       <tr class="edify-text-subtle border-b edify-border-bottom edify-surface-muted text-left text-[12px] font-bold uppercase tracking-[.06em]">
         <th class="px-2.5 py-2">Item</th>
@@ -20,6 +20,6 @@
       {% endfor %}
     </tbody>
   </table>
-{% include "components/table_pager.html" with pager=backlog_snapshot_pager param="backlog_snapshot_page" %}
+  {% include "components/table_pager.html" with pager=backlog_snapshot_pager param="backlog_snapshot_page" %}
 </div>
 <div class="p-3 pt-2"><a href="/analytics/program-lead" class="text-[12px] font-semibold no-underline edify-primary-text">View backlog analytics &rarr;</a></div>

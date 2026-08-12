@@ -84,7 +84,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260812tables1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260812tables1">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260731nowraptiles1">
+  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260812tables2">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -106,7 +106,7 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 <link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260811geist2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812tables1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812tables3">
 <!-- How controls answer a pointer — hover inversion and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -296,7 +296,7 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260812tables1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260812tables3"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

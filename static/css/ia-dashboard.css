@@ -464,21 +464,19 @@
   container: ia-queue / inline-size;
 }
 
-.ia-queue-table__header,
-.ia-queue-row {
-  display: grid;
-  grid-template-columns:
-    minmax(7rem, 0.85fr)
-    minmax(12rem, 1.75fr)
-    minmax(8rem, 1fr)
-    minmax(8rem, 1fr)
-    4.5rem;
-  align-items: center;
-  gap: 0.8rem;
+.ia-queue-table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.ia-queue-table {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
 }
 
 .ia-queue-table__header {
-  padding: 0.7rem 1.25rem;
   background: var(--edify-surface-muted);
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-table-heading-size);
@@ -487,23 +485,31 @@
   text-transform: uppercase;
 }
 
+.ia-queue-table__header th {
+  padding: 0.7rem 0.75rem;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.ia-queue-table__header th:nth-child(1) { width: 15%; }
+.ia-queue-table__header th:nth-child(2) { width: 34%; }
+.ia-queue-table__header th:nth-child(3) { width: 20%; }
+.ia-queue-table__header th:nth-child(4) { width: 20%; }
+.ia-queue-table__header th:nth-child(5) { width: 11%; }
+
 .ia-queue-row {
-  min-height: 4.75rem;
-  padding: 0.85rem 1.25rem;
-  border-top: 1px solid var(--edify-border);
   transition: background var(--edify-transition-fast);
 }
 
-.ia-queue-table__header + [role="rowgroup"] > .ia-queue-row:first-child {
-  border-top: 0;
+.ia-queue-row > td {
+  min-width: 0;
+  padding: 0.85rem 0.75rem;
+  border-top: 1px solid var(--edify-border);
+  vertical-align: middle;
 }
 
 .ia-queue-row:hover {
   background: var(--edify-surface-hover);
-}
-
-.ia-queue-row > div {
-  min-width: 0;
 }
 
 .ia-queue-row strong,
@@ -1569,27 +1575,6 @@
 .ia-field-signals__arrow {
   color: var(--edify-text-subtle);
   font-size: 1.25rem;
-}
-
-@container ia-queue (max-width: 47rem) {
-  .ia-queue-table__header {
-    display: none;
-  }
-
-  .ia-queue-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "record action"
-      "school school"
-      "owner age";
-    gap: 0.55rem 1rem;
-  }
-
-  .ia-queue-row__record { grid-area: record; }
-  .ia-queue-row__school { grid-area: school; }
-  .ia-queue-row__owner { grid-area: owner; }
-  .ia-queue-row__age { grid-area: age; text-align: right; }
-  .ia-queue-row__action { grid-area: action; }
 }
 
 @media (max-width: 68rem) {

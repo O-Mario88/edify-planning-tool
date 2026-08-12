@@ -22,8 +22,9 @@
         <span>Period comparison</span>
         <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
       </div>
-      <div class="tt-matrix-scroll tt-desktop-matrix" tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
+      <div class="tt-matrix-scroll" data-table-scroll-region tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
         <table class="tt-matrix">
+          <caption class="sr-only">Team performance by reporting period</caption>
           <colgroup>
             <col class="tt-matrix__member-column">
             {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
@@ -124,70 +125,6 @@
             {% endfor %}
           </tbody>
         </table>
-      </div>
-
-      <div class="tt-mobile-performance" aria-label="Team performance cards">
-        {% for member in members %}
-        <article class="tt-mobile-member"
-                 data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
-                 @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
-                 :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
-                 x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
-          <div class="tt-mobile-member__header">
-            <div class="tt-mobile-member__identity">
-              <span class="tt-avatar">{{ member.initials }}</span>
-              <span class="tt-person__copy">
-                <strong>{{ member.name }}</strong>
-                <small>CCEO · {{ member.district_label }}</small>
-              </span>
-            </div>
-            <span class="tt-status" data-tone="{{ member.display_tone }}">{{ member.display_status }}</span>
-            <button type="button" class="tt-row-action"
-                    @click.stop
-                    hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
-                    hx-target="#drawer-container" hx-swap="innerHTML"
-                    aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div>
-
-          <dl class="tt-mobile-member__metrics">
-            {% for cell in member.mobile_cells %}
-            <div{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
-              <dt>{% if cell.key == 'month' %}{{ cell.label }}{% elif cell.key == 'fy' %}Full year{% else %}{{ cell.label }}{% endif %}</dt>
-              <dd data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</dd>
-              <small>{{ cell.achieved }} of {{ cell.target }}</small>
-            </div>
-            {% endfor %}
-          </dl>
-
-          <button type="button" class="tt-mobile-member__area-toggle"
-                  @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
-                  :aria-expanded="expandedStaff === '{{ member.user_id }}'"
-                  aria-controls="tt-mobile-areas-{{ member.user_id }}">
-            <span>Priority breakdown</span>
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'" aria-hidden="true"><path d="m5 7 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div id="tt-mobile-areas-{{ member.user_id }}" class="tt-mobile-member__areas" @click.stop x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
-            {% for area in member.area_matrix %}
-            <section class="tt-mobile-area">
-              <header class="tt-mobile-area__header">
-                <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<strong>{{ area.label }}</strong></span>
-              </header>
-              <div class="tt-mobile-area__periods" tabindex="0" aria-label="{{ area.label }} performance by reporting period">
-                {% for period in area.periods %}
-                <div{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
-                  <span>{{ period.label }}</span>
-                  <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
-                  <small>{{ period.achieved }} of {{ period.target }} · {{ period.status }}</small>
-                </div>
-                {% endfor %}
-              </div>
-            </section>
-            {% endfor %}
-          </div>
-        </article>
-        {% endfor %}
       </div>
 
       <footer class="tt-panel__footer">

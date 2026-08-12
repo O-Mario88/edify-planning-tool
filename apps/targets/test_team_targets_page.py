@@ -333,14 +333,16 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn('id="team-targets-workspace"', html)
         self.assertNotIn("Search team member", html)
 
-    def test_team_targets_renders_accessible_mobile_performance_cards(self):
+    def test_team_targets_keeps_the_accessible_performance_table_on_mobile(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         client = Client()
         client.force_login(self.pl)
 
         html = client.get("/team-targets").content.decode()
 
-        self.assertIn('class="tt-mobile-performance"', html)
+        self.assertIn('class="tt-matrix"', html)
+        self.assertIn("Team performance by reporting period", html)
+        self.assertNotIn('class="tt-mobile-performance"', html)
         self.assertIn(
             'aria-label="Open Grace One validated achievement, pace, and blockers"',
             html,
@@ -381,7 +383,7 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn('class="tt-area-matrix"', html)
         self.assertIn("agreed-priority performance by reporting period", html)
         self.assertIn(f'aria-controls="tt-desktop-areas-{self.cceo1.id}"', html)
-        self.assertIn('class="tt-mobile-area__periods"', html)
+        self.assertNotIn('class="tt-mobile-area__periods"', html)
 
     def test_performance_statuses_use_the_five_scannable_display_states(self):
         self.assertEqual(

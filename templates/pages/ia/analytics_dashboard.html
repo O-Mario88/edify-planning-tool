@@ -4,7 +4,7 @@
 {% block title %}Impact Assessment Dashboard — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260808mobilephase2">
+<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260812tables2">
 <link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260809layout8">
 {% endblock %}
 
@@ -101,39 +101,44 @@
       </header>
 
       {% if queue_items %}
-      <div class="ia-queue-table" role="table" aria-label="Oldest pending verification records">
-        <div class="ia-queue-table__header" role="row">
-          <span role="columnheader">Record</span>
-          <span role="columnheader">School and activity</span>
-          <span role="columnheader">Owner</span>
-          <span role="columnheader">Waiting</span>
-          <span role="columnheader"><span class="sr-only">Action</span></span>
-        </div>
-        <div role="rowgroup">
+      <div class="ia-queue-table-scroll overflow-x-auto">
+        <table class="ia-queue-table" data-mobile-table="scroll">
+          <caption class="sr-only">Oldest pending verification records</caption>
+          <thead>
+            <tr class="ia-queue-table__header">
+              <th scope="col">Record</th>
+              <th scope="col">School and activity</th>
+              <th scope="col">Owner</th>
+              <th scope="col">Waiting</th>
+              <th scope="col"><span class="sr-only">Action</span></th>
+            </tr>
+          </thead>
+          <tbody>
           {% for item in queue_items %}
-          <div class="ia-queue-row" role="row">
-            <div class="ia-queue-row__record" role="cell">
+          <tr class="ia-queue-row">
+            <td class="ia-queue-row__record">
               <a href="{{ item.review_url }}">#{{ item.record_id }}</a>
               {% if item.is_overdue %}<span class="ia-status ia-status--danger">SLA risk</span>{% else %}<span class="ia-status ia-status--warning">Pending</span>{% endif %}
-            </div>
-            <div class="ia-queue-row__school" role="cell">
+            </td>
+            <td class="ia-queue-row__school">
               <strong>{{ item.school }}</strong>
               <span>{{ item.district }} · {{ item.activity_type }}</span>
-            </div>
-            <div class="ia-queue-row__owner" role="cell">
+            </td>
+            <td class="ia-queue-row__owner">
               <strong>{{ item.submitted_by }}</strong>
               <span>Responsible staff</span>
-            </div>
-            <div class="ia-queue-row__age" role="cell">
+            </td>
+            <td class="ia-queue-row__age">
               <strong>{{ item.submitted_relative }}</strong>
               <span>{{ item.submission_date }}</span>
-            </div>
-            <div class="ia-queue-row__action" role="cell">
+            </td>
+            <td class="ia-queue-row__action">
               <a href="{{ item.review_url }}" aria-label="Review {{ item.activity_type }} at {{ item.school }}">Review <span aria-hidden="true">→</span></a>
-            </div>
-          </div>
+            </td>
+          </tr>
           {% endfor %}
-        </div>
+          </tbody>
+        </table>
       </div>
       {% else %}
       <div class="ia-empty">

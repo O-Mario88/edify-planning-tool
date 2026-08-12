@@ -67,12 +67,6 @@
     return cleanText(caption.textContent) || 'Data records';
   }
 
-  function updateScrollState(region) {
-    var max = Math.max(0, region.scrollWidth - region.clientWidth);
-    region.classList.toggle('can-scroll-inline-start', region.scrollLeft > 2);
-    region.classList.toggle('can-scroll-inline-end', region.scrollLeft < max - 2);
-  }
-
   function makeScrollRegion(table, label) {
     var region = table.parentElement;
     var alreadySuitable = region && (
@@ -92,11 +86,30 @@
     region.setAttribute('role', 'region');
     region.setAttribute('aria-label', 'Scrollable table: ' + label);
     region.setAttribute('tabindex', '0');
-    if (region.dataset.edifyScrollReady !== 'true') {
-      region.dataset.edifyScrollReady = 'true';
-      region.addEventListener('scroll', function () { updateScrollState(region); }, { passive: true });
-    }
-    requestAnimationFrame(function () { updateScrollState(region); });
+  }
+
+  function tableColumnCount(table) {
+    return Array.from(table.rows || []).reduce(function (largest, row) {
+      var count = Array.from(row.cells || []).reduce(function (total, cell) {
+        return total + Math.max(1, cell.colSpan || 1);
+      }, 0);
+      return Math.max(largest, count);
+    }, 0);
+  }
+
+  function tableNeedsInlineScroll(table) {
+    var mode = table.dataset.mobileTable;
+    if (mode === 'scroll') return true;
+    if (mode === 'fit') return false;
+
+    /* Most operational tables with five or fewer columns can remain tangible
+       without scrolling once their cell spacing tightens. Preserve scrolling
+       for genuinely long tables and for tables whose markup declares a wide
+       minimum as part of their information design. */
+    var declaresWideMinimum = Array.from(table.classList).some(function (name) {
+      return name.indexOf('min-w-') === 0 || name.indexOf('min-inline-') === 0;
+    });
+    return declaresWideMinimum || tableColumnCount(table) > 5;
   }
 
   function enhanceTableChoices(table) {
@@ -134,10 +147,14 @@
     });
     enhanceTableChoices(table);
 
-    /* Compact comparison tables can opt into a fixed, intrinsic-width layout
-       that keeps every column visible on phones. They remain semantic tables
-       instead of becoming cards or a horizontal scroll region. */
-    if (table.matches('[data-mobile-table="fit"]')) {
+    /* A visually hidden table is an accessibility fallback for a chart, not
+       a visual layout surface. Preserve its one-pixel hiding contract. */
+    if (table.matches('.sr-only, .edify-visually-hidden')) return;
+
+    /* Compact tables keep every column visible on phones. Explicit fit/scroll
+       modes remain available for unusual content, while the default follows
+       the real column count instead of making every table scroll. */
+    if (!tableNeedsInlineScroll(table)) {
       table.classList.add('edify-mobile-table--fit');
       return;
     }

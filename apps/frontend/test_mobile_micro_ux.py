@@ -53,10 +53,14 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn(".edify-table-choice", styles)
         self.assertNotIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
-        self.assertIn("table.matches('[data-mobile-table=\"fit\"]')", behavior)
+        self.assertIn("tableNeedsInlineScroll(table)", behavior)
+        self.assertIn("tableColumnCount(table) > 5", behavior)
+        self.assertIn("table.matches('.sr-only, .edify-visually-hidden')", behavior)
         self.assertIn("table.classList.add('edify-mobile-table--scroll')", behavior)
         self.assertIn("edify-mobile-table--fit", styles)
         self.assertIn("Scrollable table:", behavior)
+        self.assertNotIn("can-scroll-inline", behavior)
+        self.assertNotIn("box-shadow: inset", styles)
 
     def test_pagination_is_named_and_touch_safe_at_source(self):
         pager = _read("templates/components/table_pager.html")
@@ -102,11 +106,13 @@ class MobileMicroUXContractTest(SimpleTestCase):
         base = _read("templates/base.html")
 
         self.assertIn("platform.css' %}?v=20260812tables1", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260812tables1", base)
-        self.assertIn("micro-ux.js' %}?v=20260812tables1", base)
+        self.assertIn("pages.css' %}?v=20260812tables2", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260812tables3", base)
+        self.assertIn("micro-ux.js' %}?v=20260812tables3", base)
 
     def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (
+            ("templates/partials/dashboards/pl/backlog_snapshot.html", "fit"),
             ("templates/partials/dashboards/pl/cceo_performance.html", "scroll"),
             ("templates/partials/dashboards/urgent_schools_table.html", "scroll"),
             ("templates/partials/dashboards/pl/ssa_intelligence.html", "fit"),
@@ -131,6 +137,14 @@ class MobileMicroUXContractTest(SimpleTestCase):
             source = _read(path)
             self.assertNotIn('class="md:hidden', source)
             self.assertNotIn('class="lg:hidden', source)
+
+        pages = _read("static/css/pages.css")
+        team_targets = _read("templates/partials/targets/team/body.html")
+        leave = _read("templates/pages/leave/personal_time_off.html")
+        self.assertNotIn("tt-mobile-performance", team_targets)
+        self.assertNotIn("pto-tracker-cards", leave)
+        self.assertNotIn(".tt-mobile-performance", pages)
+        self.assertNotIn(".pto-tracker-cards", pages)
 
     def test_message_and_calendar_tab_rails_cannot_collapse_or_clip(self):
         styles = _read("static/css/platform.css")

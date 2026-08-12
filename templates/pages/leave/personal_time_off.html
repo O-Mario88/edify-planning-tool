@@ -448,7 +448,7 @@
 
     <div class="pto-table-wrap overflow-x-auto">
       {% paginate tracker_leaves "tracker_leaves_page" as tracker_leaves_pager %}
-<table>
+      <table>
         <caption class="sr-only">Team leave requests, balances, coverage and approval status</caption>
         <thead>
           <tr>
@@ -472,24 +472,7 @@
           {% endfor %}
         </tbody>
       </table>
-{% include "components/table_pager.html" with pager=tracker_leaves_pager param="tracker_leaves_page" %}
-    </div>
-
-    <div class="pto-tracker-cards">
-      {% for tl in tracker_leaves %}
-      <article>
-        <div><strong>{{ tl.staff_name }}</strong><span>{{ tl.role }} · {{ tl.type_label }}</span></div>
-        <span class="pto-status is-{{ tl.status }}">{{ tl.status }}</span>
-        <dl>
-          <div><dt>Period</dt><dd>{{ tl.start_date }} – {{ tl.end_date }}</dd></div>
-          <div><dt>Days</dt><dd>{{ tl.days_charged }}d</dd></div>
-          <div><dt>Balance</dt><dd>{% if tl.balance_available %}{{ tl.remaining_days }}d{% else %}Not available{% endif %}</dd></div>
-          <div><dt>Cover</dt><dd>{% if tl.covering_person != 'None' %}{{ tl.covering_person }}{% else %}Not assigned{% endif %}</dd></div>
-        </dl>
-      </article>
-      {% empty %}
-      <div class="pto-empty-state pto-empty-state--compact"><strong>No team leave history</strong><p>Approved and pending team requests will appear here.</p></div>
-      {% endfor %}
+      {% include "components/table_pager.html" with pager=tracker_leaves_pager param="tracker_leaves_page" %}
     </div>
   </section>
 
