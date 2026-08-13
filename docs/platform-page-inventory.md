@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **500**
-- All registered routes: **902**
-- API routes: **293**
+- Routed product surfaces: **504**
+- All registered routes: **909**
+- API routes: **296**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
 - Shared component templates: **319**
 - Full pages: **327**
-- Partials and drawers: **157**
-- Permission-gated surfaces: **490**
-- Referenced by automated tests: **465**
+- Partials and drawers: **161**
+- Permission-gated surfaces: **494**
+- Referenced by automated tests: **469**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -142,6 +142,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
 | /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.6 | 0 | referenced by automated test |
+| /calendar/events | Calendar Event Create | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /candidate-pipeline | Candidate Pipeline | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /change-password | Change Password | Unmapped | pages/auth/change_password.html | 9.6 | 0 | referenced by automated test |
 | /clusters | Clusters | ADMIN, CCEO, CD, IA, PARTNER, PL | partials/clusters/htmx_response.html<br>pages/clusters/index.html | 9.6 | 0 | referenced by automated test |
@@ -254,12 +255,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /fund-approvals/detail | Fund Approvals Detail | ADMIN, PL | partials/fund_approvals/detail.html | 9.7 | 0 | referenced by automated test |
 | /fund-approvals/return | Fund Approvals Return | ADMIN, PL | partials/fund_approvals/return_drawer.html | 9.4 | 0 | referenced by automated test |
 | /fund-requests | Fund Requests List | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /fund-requests/advances/<str:advance_id>/pl-approve | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
+| /fund-requests/advances/<str:advance_id>/pl-return | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/generate-request | Generate Request Action | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /fund-requests/receipt-confirm | Fund Receipt Confirm | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /fund-requests/weekly | Weekly Fund Request | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id> | Weekly Request details - Edify Command Center | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | pages/fund_requests/detail.html | 9.4 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/approve | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/confirm | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
+| /fund-requests/weekly/<str:request_id>/confirm-receipt | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/disburse | Weekly Fund Request Disburse | ACCOUNTANT, ADMIN | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/return | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/self-funded | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
@@ -497,12 +501,12 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
-| /team-planning-oversight/ | Team Planning Oversight · Edify | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | pages/oversight/team_planning.html | 9.4 | 0 | referenced by automated test |
+| /team-planning-oversight/ | Team Oversight | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/targets/team/workspace.html<br>pages/oversight/team_planning.html | 9.8 | 0 | referenced by automated test |
 | /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/send | Team Planning Oversight Send | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /team-targets | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
-| /team-targets/ | Team Target Oversight | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/targets/team.html | 9.8 | 0 | referenced by automated test |
+| /team-targets | Team Oversight · Edify | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/oversight/team_planning.html | 9.8 | 0 | referenced by automated test |
+| /team-targets/ | Team Oversight · Edify | ADMIN, CD, HR, IA, PL | partials/targets/team/workspace.html<br>pages/oversight/team_planning.html | 9.8 | 0 | referenced by automated test |
 | /team-targets/catchup | Team Targets Catchup Create | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets/catchup/<str:plan_id>/action | Team Targets Catchup Action | ADMIN, CD, HR, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-targets/day | Team Targets Day | ADMIN, CD, HR, IA, PL | partials/targets/team/day_drawer.html | 9.4 | 0 | referenced by automated test |

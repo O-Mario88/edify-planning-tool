@@ -1895,7 +1895,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 150,
+   "line": 156,
    "title": "Open queues",
    "heading_level": 2,
    "has_card_key": false,
@@ -1904,7 +1904,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 181,
+   "line": 187,
    "title": "Needs attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -1913,7 +1913,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 228,
+   "line": 234,
    "title": "Eight-week activity flow",
    "heading_level": 3,
    "has_card_key": false,
@@ -1922,7 +1922,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 262,
+   "line": 268,
    "title": "Regional performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -1931,7 +1931,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 273,
+   "line": 279,
    "title": "District monitoring",
    "heading_level": 3,
    "has_card_key": false,
@@ -1940,7 +1940,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 281,
+   "line": 287,
    "title": "CCEO and Program Lead performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -1949,7 +1949,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 309,
+   "line": 315,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -1958,7 +1958,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 345,
+   "line": 351,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -1967,7 +1967,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 376,
+   "line": 382,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -1976,7 +1976,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 420,
+   "line": 426,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -1985,7 +1985,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 455,
+   "line": 461,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,
@@ -6021,7 +6021,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 214,
+   "line": 151,
    "title": "Staff requiring support",
    "heading_level": 2,
    "has_card_key": false,
@@ -6030,7 +6030,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 237,
+   "line": 176,
    "title": "Recovery plans",
    "heading_level": 2,
    "has_card_key": false,
@@ -6039,7 +6039,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 259,
+   "line": 200,
    "title": "Validation issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -6048,7 +6048,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 310,
+   "line": 251,
    "title": "Priority progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -6057,7 +6057,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 327,
+   "line": 268,
    "title": "Team performance trend",
    "heading_level": 2,
    "has_card_key": false,
@@ -6066,7 +6066,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 386,
+   "line": 327,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -6075,7 +6075,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 407,
+   "line": 348,
    "title": "Districts most behind",
    "heading_level": 2,
    "has_card_key": false,
@@ -6084,7 +6084,7 @@
   },
   {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 81,
+   "line": 82,
    "title": "Supervised-Team Project Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -6093,7 +6093,7 @@
   },
   {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 123,
+   "line": 124,
    "title": "Supervised-Team Milestone Allocations",
    "heading_level": 2,
    "has_card_key": false,

@@ -185,7 +185,7 @@
       "template": "components/sidebar.html"
     },
     {
-      "bytes": 2280,
+      "bytes": 2958,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -217,7 +217,7 @@
       "template": "partials/_section_nav.html"
     },
     {
-      "bytes": 7319,
+      "bytes": 7353,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -369,7 +369,7 @@
       "template": "partials/analytics/cd/target_by_pl.html"
     },
     {
-      "bytes": 12349,
+      "bytes": 12332,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -377,7 +377,7 @@
       "template": "partials/analytics/closure_impact_workspace.html"
     },
     {
-      "bytes": 14548,
+      "bytes": 14531,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -385,7 +385,7 @@
       "template": "partials/analytics/closure_quality_workspace.html"
     },
     {
-      "bytes": 3132,
+      "bytes": 3133,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -673,7 +673,7 @@
       "template": "partials/budgets/budget_group_tables.html"
     },
     {
-      "bytes": 1487,
+      "bytes": 1523,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -721,7 +721,7 @@
       "template": "partials/clusters/cluster_detail_drawer.html"
     },
     {
-      "bytes": 3723,
+      "bytes": 3746,
       "findings": [],
       "forms": 0,
       "htmx_controls": 4,
@@ -793,7 +793,7 @@
       "template": "partials/clusters/kpi_strip.html"
     },
     {
-      "bytes": 6434,
+      "bytes": 6417,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -865,7 +865,7 @@
       "template": "partials/core_schools/intervention_impact.html"
     },
     {
-      "bytes": 8158,
+      "bytes": 8181,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -881,7 +881,7 @@
       "template": "partials/core_schools/performance_insights.html"
     },
     {
-      "bytes": 13065,
+      "bytes": 13088,
       "findings": [],
       "forms": 0,
       "htmx_controls": 9,
@@ -937,11 +937,11 @@
       "template": "partials/core_schools/strategy_playbook_drawer.html"
     },
     {
-      "bytes": 10661,
+      "bytes": 10273,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
-      "tables": 2,
+      "tables": 1,
       "template": "partials/core_schools/team_oversight.html"
     },
     {
@@ -1009,7 +1009,7 @@
       "template": "partials/dashboards/pl/approval_queue.html"
     },
     {
-      "bytes": 1456,
+      "bytes": 1458,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1025,7 +1025,7 @@
       "template": "partials/dashboards/pl/body.html"
     },
     {
-      "bytes": 3841,
+      "bytes": 3842,
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -1089,7 +1089,7 @@
       "template": "partials/dashboards/pl/urgent_action_sent.html"
     },
     {
-      "bytes": 1749,
+      "bytes": 1772,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -1105,7 +1105,7 @@
       "template": "partials/dashboards/rvp/approvals_drawer.html"
     },
     {
-      "bytes": 5814,
+      "bytes": 5815,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -1209,7 +1209,7 @@
       "template": "partials/documents/upload_table.html"
     },
     {
-      "bytes": 6868,
+      "bytes": 6891,
       "findings": [],
       "forms": 1,
       "htmx_controls": 6,
@@ -1321,7 +1321,7 @@
       "template": "partials/finance/fund_allocation_kpis.html"
     },
     {
-      "bytes": 16932,
+      "bytes": 16955,
       "findings": [],
       "forms": 0,
       "htmx_controls": 10,
@@ -1433,10 +1433,10 @@
       "template": "partials/fund_requests/source_activities.html"
     },
     {
-      "bytes": 8681,
+      "bytes": 11703,
       "findings": [],
-      "forms": 4,
-      "htmx_controls": 5,
+      "forms": 7,
+      "htmx_controls": 8,
       "tables": 0,
       "template": "partials/fund_requests/weekly_request_workflow.html"
     },
@@ -1609,7 +1609,7 @@
       "template": "partials/messages/unread_badge_oob.html"
     },
     {
-      "bytes": 1800,
+      "bytes": 1823,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1849,7 +1849,7 @@
       "template": "partials/oversight/_partner_view_button.html"
     },
     {
-      "bytes": 4395,
+      "bytes": 4396,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1857,7 +1857,7 @@
       "template": "partials/oversight/cd_team_detail.html"
     },
     {
-      "bytes": 8540,
+      "bytes": 8524,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1881,7 +1881,7 @@
       "template": "partials/oversight/filter_drawer.html"
     },
     {
-      "bytes": 5020,
+      "bytes": 5003,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1897,7 +1897,7 @@
       "template": "partials/oversight/partner_detail_drawer.html"
     },
     {
-      "bytes": 18990,
+      "bytes": 18956,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1913,7 +1913,7 @@
       "template": "partials/oversight/period_filter_bar.html"
     },
     {
-      "bytes": 10614,
+      "bytes": 10598,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2017,7 +2017,7 @@
       "template": "partials/planning/school_row.html"
     },
     {
-      "bytes": 14204,
+      "bytes": 14227,
       "findings": [],
       "forms": 0,
       "htmx_controls": 6,
@@ -2185,7 +2185,7 @@
       "template": "partials/projects/planning_icon.html"
     },
     {
-      "bytes": 15917,
+      "bytes": 15940,
       "findings": [],
       "forms": 1,
       "htmx_controls": 8,
@@ -2193,7 +2193,7 @@
       "template": "partials/projects/planning_workspace.html"
     },
     {
-      "bytes": 9556,
+      "bytes": 9553,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2353,7 +2353,7 @@
       "template": "partials/schools/sub_county_options.html"
     },
     {
-      "bytes": 5874,
+      "bytes": 5897,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -2433,10 +2433,10 @@
       "template": "partials/targets/team/_area_icon.html"
     },
     {
-      "bytes": 27858,
+      "bytes": 23499,
       "findings": [],
       "forms": 0,
-      "htmx_controls": 9,
+      "htmx_controls": 8,
       "tables": 4,
       "template": "partials/targets/team/body.html"
     },
@@ -2489,7 +2489,7 @@
       "template": "partials/targets/team/validation_drawer.html"
     },
     {
-      "bytes": 11328,
+      "bytes": 11433,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -7051,6 +7051,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7121,6 +7122,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7192,6 +7194,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7264,6 +7267,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7334,6 +7338,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7406,6 +7411,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7476,6 +7482,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7549,6 +7556,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7623,6 +7631,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7698,6 +7707,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7772,6 +7782,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -7842,6 +7853,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -9192,6 +9204,7 @@
       "route": "/calendar",
       "route_name": "calendar",
       "secondary_actions": [
+        "{% url ",
         "/calendar"
       ],
       "services_and_models": [
@@ -9201,6 +9214,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -9232,6 +9246,84 @@
       "templates": [
         "pages/calendar/index.html"
       ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.extended_views",
+      "backend_view": "apps.frontend.views.extended_views.calendar_event_create_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Calendar Event Create",
+      "permission_key": "calendar",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Add a country-wide organization event that blocks field planning.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/calendar/events",
+      "route_name": "calendar_event_create",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.admin_users.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.core_schools.models",
+        "apps.flags.models",
+        "apps.geography.models",
+        "apps.geography.services",
+        "apps.notifications.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.projects.services",
+        "apps.routes.models",
+        "apps.schools.models",
+        "apps.schools.services",
+        "apps.ssa.models",
+        "apps.ssa.services",
+        "apps.system_health.services",
+        "apps.targets.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -10644,6 +10736,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -12438,6 +12531,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -13254,6 +13348,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -13329,6 +13424,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -14288,6 +14384,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -14361,6 +14458,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -15481,6 +15579,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -15557,6 +15656,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -15631,6 +15731,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -15706,6 +15807,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -15796,6 +15898,132 @@
       "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.advance_pl_approve_action",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /work-plan/add",
+        "GET /fund-requests/weekly"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": true,
+      "page_title": "Fund Requests",
+      "permission_key": "fund_requests",
+      "primary_action": "Add Non-School Activity",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The PL confirms an accountability/reimbursement claim is accounted for \u2192 it moves to the Accountant. Re-renders in place like the other weekly actions.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/advances/<str:advance_id>/pl-approve",
+      "route_name": "advance_pl_approve",
+      "secondary_actions": [
+        "/fund-requests/receipt-confirm"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": false,
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.advance_pl_return_action",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /work-plan/add",
+        "GET /fund-requests/weekly"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": true,
+      "page_title": "Fund Requests",
+      "permission_key": "fund_requests",
+      "primary_action": "Add Non-School Activity",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The PL returns an accountability/reimbursement claim for correction.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/advances/<str:advance_id>/pl-return",
+      "route_name": "advance_pl_return",
+      "secondary_actions": [
+        "/fund-requests/receipt-confirm"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": false,
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -16163,6 +16391,69 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.weekly_fund_request_receipt_action",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /work-plan/add",
+        "GET /fund-requests/weekly"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": true,
+      "page_title": "Fund Requests",
+      "permission_key": "fund_requests",
+      "primary_action": "Add Non-School Activity",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The owner confirms the disbursed week's funds actually arrived \u2014 this is what opens the accountability workflow for the week's advances. Re-renders in place like the confirm action above.",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/weekly/<str:request_id>/confirm-receipt",
+      "route_name": "weekly_fund_request_receipt",
+      "secondary_actions": [
+        "/fund-requests/receipt-confirm"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": false,
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.budget_views",
       "backend_view": "apps.frontend.views.budget_views.weekly_fund_request_disburse_action",
@@ -16373,6 +16664,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -18477,6 +18769,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -19823,6 +20116,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -25950,6 +26244,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26029,6 +26324,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26104,6 +26400,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26177,6 +26474,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26254,6 +26552,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26334,6 +26633,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26409,6 +26709,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26486,6 +26787,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26565,6 +26867,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26647,6 +26950,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -26733,6 +27037,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -27063,6 +27368,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -27238,6 +27544,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -29056,6 +29363,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -29137,6 +29445,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -29429,6 +29738,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -30184,23 +30494,25 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.team_planning_oversight_view",
       "charts": false,
       "drawers": false,
       "findings": [],
-      "forms": false,
-      "htmx_endpoints": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /team-planning-oversight/"
+      ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
-      "page_title": "Team Planning Oversight \u00b7 Edify",
+      "page_title": "Team Oversight",
       "permission_key": "team_planning_oversight",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "What my team has planned, who executes it, and where I must intervene.",
+      "purpose": "One Team Oversight workspace for planning and target performance.",
       "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
@@ -30212,7 +30524,10 @@
       ],
       "route": "/team-planning-oversight/",
       "route_name": "team_planning_oversight",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/team-planning-oversight/",
+        "/team-targets/catchup"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -30221,18 +30536,19 @@
         "apps.schools.models"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": false,
+        "disabled": true,
+        "empty": true,
         "error": false,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
-      "tables": false,
+      "surface_kind": "partial",
+      "tables": true,
       "templates": [
+        "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html"
       ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "migration-required",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -30412,18 +30728,18 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "GET /team-targets"
+        "GET /team-planning-oversight/"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": true,
       "notifications": false,
-      "page_title": "Team Target Oversight",
+      "page_title": "Team Oversight \u00b7 Edify",
       "permission_key": "team_targets",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Team Targets \u2014 the Program Lead's supervision and recovery cockpit.",
-      "responsive_state": "manual-review-required",
+      "purpose": "Backward-compatible entry point for Team Oversight target performance.",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CD",
@@ -30434,7 +30750,7 @@
       "route": "/team-targets",
       "route_name": "team_targets",
       "secondary_actions": [
-        "/team-targets",
+        "/team-planning-oversight/",
         "/team-targets/catchup"
       ],
       "services_and_models": [
@@ -30459,7 +30775,7 @@
       "tables": true,
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/targets/team.html"
+        "pages/oversight/team_planning.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -30477,18 +30793,18 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "GET /team-targets"
+        "GET /team-planning-oversight/"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": true,
       "notifications": false,
-      "page_title": "Team Target Oversight",
+      "page_title": "Team Oversight \u00b7 Edify",
       "permission_key": "team_targets",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Team Targets \u2014 the Program Lead's supervision and recovery cockpit.",
-      "responsive_state": "manual-review-required",
+      "purpose": "Backward-compatible entry point for Team Oversight target performance.",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CD",
@@ -30499,7 +30815,7 @@
       "route": "/team-targets/",
       "route_name": "",
       "secondary_actions": [
-        "/team-targets",
+        "/team-planning-oversight/",
         "/team-targets/catchup"
       ],
       "services_and_models": [
@@ -30524,7 +30840,7 @@
       "tables": true,
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/targets/team.html"
+        "pages/oversight/team_planning.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -31165,6 +31481,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -31525,6 +31842,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -31609,6 +31927,7 @@
         "apps.activity_catalogue.services",
         "apps.admin_users.services",
         "apps.audit.models",
+        "apps.audit.services",
         "apps.clusters.models",
         "apps.core.scoping",
         "apps.core_schools.models",
@@ -35050,9 +35369,7 @@
         "TRACE"
       ],
       "page_permission": "",
-      "required_permissions": [
-        "planning.view"
-      ],
+      "required_permissions": [],
       "route": "/api/activities(?:/|)<str:activity_id>",
       "route_name": "detail",
       "templates": []
@@ -37777,6 +38094,44 @@
       ],
       "page_permission": "",
       "required_permissions": [
+        "budget.approve"
+      ],
+      "route": "/api/fund-requests(?:/|)advances/<str:advance_id>/pl-approve",
+      "route_name": "advance-pl-approve",
+      "templates": []
+    },
+    {
+      "callback": "apps.fund_requests.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "budget.approve"
+      ],
+      "route": "/api/fund-requests(?:/|)advances/<str:advance_id>/pl-return",
+      "route_name": "advance-pl-return",
+      "templates": []
+    },
+    {
+      "callback": "apps.fund_requests.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
         "payment.act"
       ],
       "route": "/api/fund-requests(?:/|)advances/<str:advance_id>/reimburse",
@@ -37895,6 +38250,25 @@
       ],
       "route": "/api/fund-requests(?:/|)weekly/<str:request_id>",
       "route_name": "weekly-detail",
+      "templates": []
+    },
+    {
+      "callback": "apps.fund_requests.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "planning.view"
+      ],
+      "route": "/api/fund-requests(?:/|)weekly/<str:request_id>/confirm-receipt",
+      "route_name": "weekly-confirm-receipt",
       "templates": []
     },
     {
@@ -40515,6 +40889,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.extended_views.calendar_event_create_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "calendar",
+      "required_permissions": [],
+      "route": "/calendar/events",
+      "route_name": "calendar_event_create",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.hr_views.candidate_pipeline_view",
       "kind": "page",
       "methods": [
@@ -42085,6 +42471,38 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.budget_views.advance_pl_approve_action",
+      "kind": "partial",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/advances/<str:advance_id>/pl-approve",
+      "route_name": "advance_pl_approve",
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.advance_pl_return_action",
+      "kind": "partial",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/advances/<str:advance_id>/pl-return",
+      "route_name": "advance_pl_return",
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.budget_views.generate_request_action",
       "kind": "page",
       "methods": [
@@ -42165,6 +42583,22 @@
       "required_permissions": [],
       "route": "/fund-requests/weekly/<str:request_id>/confirm",
       "route_name": "weekly_fund_request_confirm",
+      "templates": [
+        "partials/fund_requests/root.html",
+        "pages/fund_requests/weekly.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.weekly_fund_request_receipt_action",
+      "kind": "partial",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/weekly/<str:request_id>/confirm-receipt",
+      "route_name": "weekly_fund_request_receipt",
       "templates": [
         "partials/fund_requests/root.html",
         "pages/fund_requests/weekly.html"
@@ -45550,7 +45984,7 @@
     },
     {
       "callback": "apps.frontend.views.oversight_views.team_planning_oversight_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -45559,6 +45993,7 @@
       "route": "/team-planning-oversight/",
       "route_name": "team_planning_oversight",
       "templates": [
+        "partials/targets/team/workspace.html",
         "pages/oversight/team_planning.html"
       ]
     },
@@ -45612,7 +46047,7 @@
       "route_name": "team_targets",
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/targets/team.html"
+        "pages/oversight/team_planning.html"
       ]
     },
     {
@@ -45627,7 +46062,7 @@
       "route_name": "",
       "templates": [
         "partials/targets/team/workspace.html",
-        "pages/targets/team.html"
+        "pages/oversight/team_planning.html"
       ]
     },
     {
@@ -45974,15 +46409,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 902,
-    "api_routes": 293,
+    "all_routes": 909,
+    "api_routes": 296,
     "component_templates": 319,
     "full_pages": 327,
-    "partials_and_drawers": 157,
-    "permission_gated": 490,
+    "partials_and_drawers": 161,
+    "permission_gated": 494,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 500,
+    "routed_surfaces": 504,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -45990,6 +46425,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 465
+    "test_referenced": 469
   }
 }

@@ -1809,7 +1809,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 289,
+   "line": 243,
    "label": null,
    "keys": [
     "amount",
@@ -1858,7 +1858,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1572,
+   "line": 1580,
    "label": null,
    "keys": [
     "amount",
@@ -2811,7 +2811,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 712,
+   "line": 758,
    "label": null,
    "keys": [
     "label",
@@ -3100,7 +3100,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1766,
+   "line": 1894,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -3115,7 +3115,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2409,
+   "line": 2537,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -3131,7 +3131,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2417,
+   "line": 2545,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -3147,7 +3147,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2674,
+   "line": 2802,
    "label": null,
    "keys": [
     "label",
@@ -3159,7 +3159,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2846,
+   "line": 2974,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -3174,7 +3174,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2853,
+   "line": 2981,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -3189,7 +3189,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2860,
+   "line": 2988,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -3204,7 +3204,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2867,
+   "line": 2995,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3219,7 +3219,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2874,
+   "line": 3002,
    "label": "Missing Critical Data",
    "keys": [
     "helper",
@@ -3234,7 +3234,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1069,
+   "line": 1197,
    "label": null,
    "keys": [
     "achieved",
@@ -3792,7 +3792,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 242,
+   "line": 243,
    "label": "My Work",
    "keys": [
     "count",
@@ -3806,7 +3806,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 272,
+   "line": 273,
    "label": null,
    "keys": [
     "count",
@@ -3820,7 +3820,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 252,
+   "line": 253,
    "label": null,
    "keys": [
     "count",
@@ -3834,7 +3834,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 864,
+   "line": 895,
    "label": "All Partners",
    "keys": [
     "count",
@@ -3847,7 +3847,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 870,
+   "line": 901,
    "label": null,
    "keys": [
     "count",
@@ -4006,7 +4006,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 612,
+   "line": 613,
    "label": null,
    "keys": [
     "achieved",
@@ -4022,7 +4022,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 879,
+   "line": 880,
    "label": "Total CCEOs",
    "keys": [
     "helper",
@@ -4038,7 +4038,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 887,
+   "line": 888,
    "label": "With Overdue",
    "keys": [
     "helper",
@@ -4054,7 +4054,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 895,
+   "line": 896,
    "label": "All Caught Up",
    "keys": [
     "helper",
@@ -4280,7 +4280,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 354,
+   "line": 355,
    "label": null,
    "keys": [
     "activity_ids",
@@ -4294,7 +4294,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 369,
+   "line": 370,
    "label": null,
    "keys": [
     "activity_count",
@@ -4309,7 +4309,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 389,
+   "line": 390,
    "label": "Week {\u2026} (Days {\u2026}\u2013{\u2026})",
    "keys": [
     "activity_count",
@@ -4326,7 +4326,7 @@
   {
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
-   "line": 416,
+   "line": 417,
    "label": null,
    "keys": [
     "label",
@@ -4339,7 +4339,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 403,
+   "line": 407,
    "label": "Total Requested This Month",
    "keys": [
     "helper",
@@ -4354,7 +4354,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 410,
+   "line": 414,
    "label": "Awaiting Approval",
    "keys": [
     "helper",
@@ -4369,7 +4369,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 417,
+   "line": 421,
    "label": "Approved Today",
    "keys": [
     "helper",
@@ -4384,7 +4384,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 424,
+   "line": 428,
    "label": "Returned for Review",
    "keys": [
     "helper",
@@ -4399,7 +4399,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 437,
+   "line": 441,
    "label": "Average Cost per School",
    "keys": [
     "helper",
@@ -4414,7 +4414,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 455,
+   "line": 459,
    "label": null,
    "keys": [
     "amount",
@@ -4428,7 +4428,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/fund_requests/services.py",
-   "line": 543,
+   "line": 596,
    "label": null,
    "keys": [
     "amount",
@@ -4891,7 +4891,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 524,
+   "line": 525,
    "label": null,
    "keys": [
     "helper",
@@ -4908,7 +4908,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 542,
+   "line": 543,
    "label": "Staff Included",
    "keys": [
     "helper",
@@ -4925,7 +4925,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 551,
+   "line": 552,
    "label": "Total Planned Activities",
    "keys": [
     "helper",
@@ -4942,7 +4942,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 652,
+   "line": 653,
    "label": "Planned Schools",
    "keys": [
     "icon",
@@ -4955,7 +4955,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 653,
+   "line": 654,
    "label": "Partner-Planned Schools",
    "keys": [
     "icon",
@@ -4968,7 +4968,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 658,
+   "line": 659,
    "label": "Cluster Meetings / Sessions",
    "keys": [
     "icon",
@@ -4981,7 +4981,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 663,
+   "line": 664,
    "label": "Trainings Planned",
    "keys": [
     "icon",
@@ -4994,7 +4994,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 664,
+   "line": 665,
    "label": "SSA Collection Visits",
    "keys": [
     "icon",
@@ -5007,7 +5007,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 665,
+   "line": 666,
    "label": "Special Project Activities",
    "keys": [
     "icon",
@@ -5020,7 +5020,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 670,
+   "line": 671,
    "label": "Admin Plan Items",
    "keys": [
     "icon",
@@ -5033,7 +5033,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1101,
+   "line": 1102,
    "label": "Highest Planned Cost Staff",
    "keys": [
     "helper",
@@ -5048,7 +5048,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1110,
+   "line": 1111,
    "label": "Largest Cluster Training Budget",
    "keys": [
     "helper",
@@ -5063,7 +5063,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1117,
+   "line": 1118,
    "label": "Partner Cost Share",
    "keys": [
     "helper",
@@ -5078,7 +5078,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1124,
+   "line": 1125,
    "label": "Top Cost Category",
    "keys": [
     "helper",
@@ -5093,7 +5093,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1133,
+   "line": 1134,
    "label": "Admin Budget Share",
    "keys": [
     "helper",
@@ -5108,7 +5108,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1140,
+   "line": 1141,
    "label": "Average Allocation per Staff",
    "keys": [
     "helper",
@@ -5123,7 +5123,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1469,
+   "line": 1470,
    "label": null,
    "keys": [
     "activity_id",
