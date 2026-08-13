@@ -288,6 +288,47 @@ def dangling_fund_request_items() -> dict:
     }
 
 
+def stale_rate_priced_lines() -> dict:
+    """Live, re-priceable budget lines priced at a superseded catalogue rate.
+
+    Rate changes deliberately never touch existing lines (snapshot semantics),
+    but nothing surfaced the divergence — a CD raising a rate mid-month got a
+    silently mixed-rate month (2026-08-12 audit L-8). Only lines that COULD
+    still re-price are reported: money-moved or owner-settled lines are locked
+    history and correct at their version."""
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.budget.models import CostSetting
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES
+
+    current_versions = dict(CostSetting.objects.values_list("key", "version"))
+    stale: list[str] = []
+    rows = (
+        ActivityScheduleCostLine.objects.filter(activity__deleted_at__isnull=True)
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .exclude(advance_requests__status__in=MONEY_MOVED_ADVANCE_STATUSES)
+        .values_list("id", "cost_setting_key", "cost_setting_version")[:20000]
+    )
+    for line_id, key, version in rows:
+        # §9 cross-month splits suffix the key with #mYYYYMM.
+        latest = current_versions.get((key or "").split("#m", 1)[0])
+        if latest is not None and (version or 0) < latest:
+            stale.append(str(line_id))
+    return {
+        **_issue(
+            "stale_rate_priced_lines",
+            "medium",
+            len(stale),
+            f"{len(stale)} live budget line(s) are priced at a superseded "
+            "catalogue rate.",
+            "Re-price the affected activities (reschedule/re-save) if the new "
+            "rate should apply, or leave them if the old price was the "
+            "agreement — this check reports, it does not decide.",
+        ),
+        "samples": stale[:10],
+    }
+
+
 def money_moved_on_cancelled_work() -> dict:
     """Disbursed/accounted advances whose activity was later cancelled.
 
@@ -350,6 +391,7 @@ def finance_integrity_health() -> dict:
         payable_lines_without_approved_advance,
         dangling_fund_request_items,
         money_moved_on_cancelled_work,
+        stale_rate_priced_lines,
     ):
         try:
             checks.append(check())

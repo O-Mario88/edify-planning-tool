@@ -3206,6 +3206,44 @@ def _detach_from_daily_visit_batch(a: Activity) -> None:
         pass
 
 
+def _notify_frozen_weekly_request(wfr, activity, new_status: str) -> None:
+    """Tell the owner (and the accountants who would hit the guard) that a
+    cancellation just invalidated a submitted/approved weekly request's total
+    — the request must be returned so the week rebuilds without the cancelled
+    amount. Never blocks the cancellation."""
+    try:
+        from apps.accounts.models import User
+        from apps.notifications.services import WorkflowNotificationService
+
+        what = activity.activity_name_snapshot or activity.get_activity_type_display()
+        recipients = [wfr.responsible_user] + list(
+            User.objects.filter(active_role="Accountant", is_active=True).values_list(
+                "id", flat=True
+            )
+        )
+        WorkflowNotificationService.trigger(
+            event_type="weekly_fund_request_invalidated",
+            category="finance",
+            priority="high",
+            title="Cancelled work inside a submitted weekly request",
+            body=(
+                f"{what} was {new_status}, but its amount is still inside the "
+                f"submitted/approved week of {wfr.week_start_date:%d %b} "
+                f"(UGX {wfr.total_amount:,}). Return that request so the week "
+                "rebuilds without it — it cannot be disbursed as approved."
+            ),
+            context_type="WeeklyFundRequest",
+            context_id=wfr.id,
+            recipients=[r for r in recipients if r],
+        )
+    except Exception:  # noqa: BLE001 — never block a cancellation over a ping
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "frozen-weekly-request notification failed for %s", wfr.id, exc_info=True
+        )
+
+
 def _cancel_or_defer(
     activity_id: str,
     data: dict,
@@ -3240,9 +3278,13 @@ def _cancel_or_defer(
     from apps.fund_requests.models import (
         MONEY_MOVED_ADVANCE_STATUSES,
         AdvanceRequest,
+        WeeklyFundRequest,
     )
     from apps.fund_requests.monthly_service import sync_monthly_drafts_for_activity
-    from apps.fund_requests.weekly_service import sync_weekly_requests_for_activity
+    from apps.fund_requests.weekly_service import (
+        REBUILDABLE_WEEKLY_STATUSES,
+        sync_weekly_requests_for_activity,
+    )
 
     a = (
         _get_in_scope(activity_id, principal)
@@ -3256,6 +3298,20 @@ def _cancel_or_defer(
                 "responsible_user", "fiscal_year", "month", "week_start_date"
             )
         )
+        # A submitted/approved weekly request carrying this work keeps its
+        # frozen total, and deleting the pending advances below makes it
+        # undisbursable until someone returns it — capture the affected
+        # requests now so the block is EXPLAINED at the moment it is created
+        # instead of surfacing as an opaque guard refusal at the accountant
+        # (2026-08-12 audit M-11).
+        frozen_wfrs = list(
+            WeeklyFundRequest.objects.filter(
+                lines__activity_budget_line__activity=a
+            )
+            .exclude(status__in=REBUILDABLE_WEEKLY_STATUSES)
+            .exclude(status__in=("disbursed", "accounted"))
+            .distinct()
+        )
         a.status = new_status
         a.last_reason = data.get("reason")
         a.save(update_fields=["status", "last_reason", "updated_at"])
@@ -3265,6 +3321,8 @@ def _cancel_or_defer(
         ).delete()
         sync_weekly_requests_for_activity(a, prior_buckets=prior_buckets)
         sync_monthly_drafts_for_activity(a, prior_buckets=prior_buckets)
+    for frozen in frozen_wfrs:
+        _notify_frozen_weekly_request(frozen, a, new_status)
     # §26 — the record is preserved (never deleted) and the cancelled status
     # is what removes it from the partner's active My Plan. What was missing
     # was telling them: a partner could otherwise travel to a school for work

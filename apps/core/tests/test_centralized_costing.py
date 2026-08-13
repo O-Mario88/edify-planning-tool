@@ -527,14 +527,35 @@ class CentralizedCostingTest(APITestCase):
         )
         self.assertEqual(blocked.status_code, 400, blocked.content)
 
-        # After completion, responsible user submits a reimbursement claim.
+        # After completion, responsible user submits a reimbursement claim —
+        # which routes to the PL before the Accountant (2026-08-13 mandate).
         self._as(self.cceo)
         claim = self._post(
             f"/api/fund-requests/advances/{adv.id}/submit-reimbursement",
             {"amountSpent": adv.amount, "netsuiteId": "EXP-9"},
             200,
         )
-        self.assertEqual(claim["status"], "reimbursement_submitted")
+        self.assertEqual(claim["status"], "reimbursement_pl_pending")
+
+        from apps.fund_requests.advance_service import pl_approve_accountability
+
+        cd = User.objects.create_user(
+            email="cd2@cost.test",
+            name="Cd2",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="x",
+            is_active=True,
+        )
+        approved = pl_approve_accountability(adv.id, cd)
+        self.assertEqual(approved["status"], "reimbursement_submitted")
+
+        # Money moves only after IA confirms the work was done.
+        from apps.activities.models import Activity
+
+        Activity.objects.filter(id=scheduled["id"]).update(
+            ia_verification_status="confirmed"
+        )
 
         # Accountant reimburses — money is sent but not yet "reimbursed"
         # (financially cleared) until the employee confirms receipt

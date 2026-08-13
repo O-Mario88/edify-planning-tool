@@ -38,9 +38,13 @@ def _catalogue_for_batch_date(visit_date: date):
 
 def _is_locked(responsible_user: str, visit_date: date) -> bool:
     """The exact lock boundary already used everywhere else in this codebase:
-    a batch may be recalculated only while its week's WeeklyFundRequest is
-    still in draft (pending_responsible_confirmation) or doesn't exist yet."""
+    a batch may be recalculated only while its week's WeeklyFundRequest is in
+    an OWNER-HELD state (draft or returned — the generator's rebuildable set)
+    or doesn't exist yet. A returned week is back in the owner's hands, so
+    its batches must be repairable; excluding only the draft status made
+    every return a dead end for pool corrections too."""
     from apps.fund_requests.models import WeeklyFundRequest
+    from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
 
     return (
         WeeklyFundRequest.objects.filter(
@@ -48,9 +52,38 @@ def _is_locked(responsible_user: str, visit_date: date) -> bool:
             week_start_date__lte=visit_date,
             week_end_date__gte=visit_date,
         )
-        .exclude(status="pending_responsible_confirmation")
+        .exclude(status__in=REBUILDABLE_WEEKLY_STATUSES)
         .exists()
     )
+
+
+def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
+    """Recompute this owner's unlocked week batches whose live member count no
+    longer matches the priced split.
+
+    A member cancelled while the week was LOCKED leaves the surviving schools
+    priced for N schools with only N-1 active (the detach deliberately leaves
+    frozen snapshots alone — audit L-7). The freeze lifting (a return) is the
+    moment the pool can be made honest again; the return actions call this so
+    the corrected week is what gets re-submitted."""
+    repaired = 0
+    for batch in DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user,
+        visit_date__gte=week_start,
+        visit_date__lte=week_end,
+    ):
+        if _is_locked(batch.responsible_user, batch.visit_date):
+            continue
+        live = (
+            batch.activities.filter(deleted_at__isnull=True)
+            .exclude(status="cancelled")
+            .count()
+        )
+        if live != batch.school_count:
+            with transaction.atomic():
+                _recalculate_and_write_lines(batch, None, batch.responsible_user)
+            repaired += 1
+    return repaired
 
 
 def _resolve_group(district_ids: set[str]):

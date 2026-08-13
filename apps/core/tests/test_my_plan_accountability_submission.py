@@ -94,8 +94,11 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
 
         self.adv.refresh_from_db()
         # The responsible user's submission must NOT self-close accountability —
-        # it must wait for the Accountant's approve_accountability() review.
-        self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PENDING)
+        # it now waits for the PL's approval first, then the Accountant's
+        # approve_accountability() review (2026-08-13 mandate).
+        self.assertEqual(
+            self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+        )
         self.assertNotEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTED)
         self.assertEqual(self.adv.accountability_netsuite_id, "EXP-2026-00889")
         self.assertEqual(self.adv.accounted_amount, 48000)
@@ -112,9 +115,28 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
             },
         )
         self.adv.refresh_from_db()
-        self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PENDING)
+        self.assertEqual(
+            self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+        )
 
-        from apps.fund_requests.advance_service import approve_accountability
+        from apps.fund_requests.advance_service import (
+            approve_accountability,
+            pl_approve_accountability,
+        )
+
+        # The PL confirms the money is accounted for before the Accountant
+        # may act; country authority stands in here.
+        cd = User.objects.create_user(
+            email="cd-accountability@test.org",
+            name="Accountability CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="password",
+            is_active=True,
+        )
+        pl_approve_accountability(self.adv.id, cd)
+        self.adv.refresh_from_db()
+        self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PENDING)
 
         # Final clearance is IA-gated — verify the activity first.
         self.activity.ia_verification_status = "confirmed"

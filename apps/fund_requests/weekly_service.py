@@ -411,6 +411,13 @@ def return_weekly_request(request_id: str, data: dict, principal) -> dict:
         wfr.save(update_fields=["status", "updated_at"])
         _sync_advances(wfr, "pending_responsible_confirmation", "advance")
 
+    # The freeze just lifted — repair any batch pool left over-allocated by a
+    # cancellation that happened while the week was locked (audit L-7), so
+    # the corrected numbers are what the owner re-submits.
+    from apps.daily_visit_batches.services import resync_stale_batches
+
+    resync_stale_batches(wfr.responsible_user, wfr.week_start_date, wfr.week_end_date)
+
     _audit_weekly(
         principal, "weekly_fund_request.return", wfr, {"stage": stage, "reason": reason}
     )
@@ -714,6 +721,17 @@ def disburse(request_id: str, data: dict, principal) -> dict:
             "method": wfr.disburse_method or "",
             "reference": wfr.disburse_reference or "",
         },
+    )
+    # Receipt confirmation is what opens accountability — tell the owner the
+    # money is on its way (their Confirm-Receipt To-Do derives from state).
+    _notify_weekly_owner(
+        wfr,
+        "weekly_fund_request_disbursed",
+        "Funds disbursed — confirm receipt",
+        f"UGX {wfr.disbursed_amount:,} for your week of "
+        f"{wfr.week_start_date:%d %b} was disbursed"
+        + (f" via {wfr.disburse_method}" if wfr.disburse_method else "")
+        + ". Confirm the funds arrived to open accountability.",
     )
     return _serialize_request(wfr)
 

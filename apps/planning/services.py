@@ -423,11 +423,52 @@ def create_plan(data: dict, principal) -> dict:
             title=act.get("title", ""),
             week_of_month=act.get("weekOfMonth", 1),
             school_id=act.get("schoolId"),
-            est_cost_cents=act.get("estCostCents", 0),
+            # Priced from the CD catalogue, never from the request body — no
+            # staff invents a cost, even on a lightweight plan row (audit L-5).
+            est_cost_cents=_estimate_plan_activity_cost(
+                act.get("kind", "visit"),
+                act.get("schoolId"),
+                act.get("deliveryType"),
+            ),
             intervention_area=act.get("interventionArea"),
             delivery_type=act.get("deliveryType"),
         )
     return _serialize_plan(plan, include_activities=True)
+
+
+def _estimate_plan_activity_cost(kind, school_id, delivery_type) -> int:
+    """Catalogue-priced estimate for a lightweight monthly-plan row.
+
+    The client used to send estCostCents verbatim — a staff-invented cost on
+    a surface that displays as budget. The estimate mirrors what scheduling
+    would price: the activity type mapped from the row's kind, the school's
+    district type, and the CD rate card. A missing rate simply estimates the
+    priceable components (plan rows are drafts, not funded work)."""
+    from apps.budget.costing_service import preview
+    from apps.schools.models import School
+
+    activity_type = "in_school_training" if kind == "training" else "school_visit"
+    district_type = "primary"
+    if school_id:
+        school = (
+            School.objects.filter(school_id=school_id)
+            .select_related("district")
+            .first()
+            or School.objects.filter(id=school_id).select_related("district").first()
+        )
+        if school and school.district_id and school.district.district_type:
+            district_type = school.district.district_type
+    try:
+        result = preview(
+            {
+                "activityType": activity_type,
+                "deliveryType": delivery_type or "staff",
+                "districtType": district_type,
+            }
+        )
+        return int(result["amount"])
+    except Exception:  # noqa: BLE001 — a draft row must never fail on pricing
+        return 0
 
 
 def _plan_owner_in_scope(plan: MonthlyPlan, principal) -> bool:

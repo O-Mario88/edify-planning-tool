@@ -1713,6 +1713,16 @@ def return_weekly_request(principal, weekly_request, reason: str):
             advance.save(update_fields=["status", "last_note", "updated_at"])
             moved += 1
 
+    # The freeze just lifted — repair any batch pool left over-allocated by a
+    # cancellation that happened while the week was locked (audit L-7).
+    from apps.daily_visit_batches.services import resync_stale_batches
+
+    resync_stale_batches(
+        weekly_request.responsible_user,
+        weekly_request.week_start_date,
+        weekly_request.week_end_date,
+    )
+
     audit_log(
         # The established audit vocabulary. Moving this transition into the
         # service must not rename the event that already exists in history.

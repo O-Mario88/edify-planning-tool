@@ -321,6 +321,62 @@ def disburse(advance_id: str, data: dict, principal) -> dict:
     return _serialize(adv)
 
 
+def _notify(recipients, event: str, title: str, body: str, adv: AdvanceRequest):
+    """Workflow notification — must never block the finance action."""
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        ids = [r for r in recipients if r]
+        if not ids:
+            return
+        WorkflowNotificationService.trigger(
+            event_type=event,
+            category="finance",
+            priority="high",
+            title=title,
+            body=body,
+            context_type="AdvanceRequest",
+            context_id=adv.id,
+            recipients=ids,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _supervisor_ids(owner_user_id: str | None) -> list[str]:
+    """The owner's supervising PLs (user ids), for approval notifications."""
+    if not owner_user_id:
+        return []
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    return [
+        supervisor_id
+        for supervisor_id in StaffSupervisorAssignment.objects.filter(
+            supervisee__user_id=owner_user_id
+        ).values_list("supervisor__user_id", flat=True)
+        if supervisor_id
+    ]
+
+
+def _accountant_ids() -> list[str]:
+    from apps.accounts.models import User
+
+    return list(
+        User.objects.filter(active_role="Accountant", is_active=True).values_list(
+            "id", flat=True
+        )
+    )
+
+
+def _owner_name(owner_user_id: str | None) -> str:
+    if not owner_user_id:
+        return "a staff member"
+    from apps.accounts.models import User
+
+    owner = User.objects.filter(id=owner_user_id).only("name").first()
+    return owner.name if owner and owner.name else "a staff member"
+
+
 def _audit(principal, action: str, adv: AdvanceRequest, payload: dict):
     try:
         from apps.audit.services import log as audit_log
@@ -371,12 +427,11 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
             ):
                 raise Forbidden("Only the responsible user can submit accountability.")
 
-        # Disbursed and RECEIVED are different facts. When this advance was
-        # paid as part of a weekly request, the owner must first confirm the
-        # week's funds actually arrived (weekly_service.confirm_receipt) —
-        # that confirmation is what opens the accountability workflow. The
-        # monthly channel records the same fact on FundRequest.
-        from .models import WeeklyFundRequest
+        # Disbursed and RECEIVED are different facts. Whichever request
+        # carried this line — the weekly request or a monthly fund plan — the
+        # owner must first confirm the funds actually arrived; that
+        # confirmation is what opens the accountability workflow.
+        from .models import FundRequest, WeeklyFundRequest
 
         unreceipted_week = (
             WeeklyFundRequest.objects.filter(
@@ -386,9 +441,18 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
             )
             .exists()
         )
-        if unreceipted_week:
+        unreceipted_month = (
+            FundRequest.objects.filter(
+                items__activity_schedule_cost_line_id=adv.budget_line_id,
+                period="monthly",
+                status="disbursed",
+                receipt_confirmed_at__isnull=True,
+            )
+            .exists()
+        )
+        if unreceipted_week or unreceipted_month:
             raise BadRequest(
-                "Confirm receipt of this week's disbursed funds first — "
+                "Confirm receipt of the disbursed funds first — "
                 "accountability opens once you have confirmed the money "
                 "actually arrived."
             )
@@ -448,6 +512,15 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
         "advance_request.submit_accountability",
         adv,
         {"accounted": accounted, "returned": returned, "netsuite_id": netsuite_id},
+    )
+    _notify(
+        _supervisor_ids(adv.responsible_user_id),
+        "advance_accountability_submitted",
+        "Fund accountability awaiting your approval",
+        f"{_owner_name(adv.responsible_user_id)} accounted for UGX "
+        f"{accounted:,} ({netsuite_id}). Confirm the money is accounted for "
+        "so the Accountant can settle it.",
+        adv,
     )
     return _serialize(adv)
 
@@ -525,6 +598,30 @@ def pl_approve_accountability(advance_id: str, principal) -> dict:
         adv,
         {"accounted": adv.accounted_amount, "routed_to": adv.status},
     )
+    claim = adv.status == AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED
+    _notify(
+        [adv.responsible_user_id],
+        "advance_accountability_pl_approved",
+        "Accountability approved by your Program Lead",
+        (
+            "Your reimbursement claim was approved and sent to the Accountant."
+            if claim
+            else "Your accountability was approved and sent to the Accountant."
+        ),
+        adv,
+    )
+    _notify(
+        _accountant_ids(),
+        "advance_accountability_ready",
+        (
+            "Reimbursement claim ready to pay"
+            if claim
+            else "Accountability ready for review"
+        ),
+        f"UGX {adv.accounted_amount or 0:,} from "
+        f"{_owner_name(adv.responsible_user_id)} cleared PL approval.",
+        adv,
+    )
     return _serialize(adv)
 
 
@@ -557,6 +654,13 @@ def pl_return_accountability(advance_id: str, data: dict, principal) -> dict:
         "advance_request.pl_return_accountability",
         adv,
         {"reason": reason},
+    )
+    _notify(
+        [adv.responsible_user_id],
+        "advance_accountability_returned",
+        "Accountability returned by your Program Lead",
+        f"Correct and resubmit. Reason: {reason}",
+        adv,
     )
     return _serialize(adv)
 

@@ -659,6 +659,34 @@ class FailureIsolationTest(TestCase):
             amount=30_000,
             status="confirmed_for_advance",
         )
+        # Per-line disbursement requires the line's membership in an approved
+        # weekly request — this test is about audit-failure isolation, so the
+        # fixture satisfies the approval chain properly.
+        from datetime import date, timedelta
+
+        from apps.fund_requests.models import (
+            WeeklyFundRequest,
+            WeeklyFundRequestLine,
+        )
+
+        monday = date.today() - timedelta(days=date.today().weekday())
+        wfr = WeeklyFundRequest.objects.create(
+            fy=get_operational_fy(),
+            week_start_date=monday,
+            week_end_date=monday + timedelta(days=6),
+            responsible_user="hardening-owner",
+            total_amount=30_000,
+            status="confirmed_for_advance",
+        )
+        WeeklyFundRequestLine.objects.create(
+            weekly_fund_request=wfr,
+            activity_budget_line=line,
+            line_item_type="transport",
+            description="Transport",
+            quantity=1,
+            unit_cost=30_000,
+            total_cost=30_000,
+        )
         with patch(
             "apps.audit.services.log", side_effect=RuntimeError("audit store down")
         ):

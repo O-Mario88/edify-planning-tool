@@ -15,6 +15,7 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.fund_requests.weekly_service import disburse as disburse_weekly
 from apps.fund_requests.advance_service import (
     submit_accountability,
+    pl_approve_accountability,
     verify_return,
     approve_accountability,
     submit_reimbursement,
@@ -28,6 +29,19 @@ User = get_user_model()
 
 @freeze_time("2026-08-03")  # fixed Monday, matches hardcoded fy="2026" — REG-02 §1.1
 class AccountantAndAutomatedHandoffsTest(TestCase):
+    def _cd(self):
+        """Country authority standing in as the accountability approver."""
+        if not hasattr(self, "_cd_user"):
+            self._cd_user = User.objects.create_user(
+                email="cd-handoffs@test.org",
+                name="Handoffs CD",
+                roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+                active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+                password="x",
+                is_active=True,
+            )
+        return self._cd_user
+
     def setUp(self):
         # Create users
         self.accountant = User.objects.create_user(
@@ -133,6 +147,13 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
             self.cceo_user,
         )
         self.adv.refresh_from_db()
+        # Submission routes through the PL first (2026-08-13 mandate); the CD
+        # stands in as the approving authority here.
+        self.assertEqual(
+            self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+        )
+        pl_approve_accountability(self.adv.id, self._cd())
+        self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PENDING)
         self.assertEqual(self.adv.accounted_amount, 45000)
         self.assertEqual(self.adv.returned_amount, 5000)
@@ -170,8 +191,18 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
             self.cceo_user,
         )
         self.adv.refresh_from_db()
+        # The claim routes through the PL before the Accountant's queue.
+        self.assertEqual(
+            self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING
+        )
+        pl_approve_accountability(self.adv.id, self._cd())
+        self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED)
         self.assertEqual(self.adv.accountability_netsuite_id, "EXP-9901")
+
+        # Money moves only after IA confirms the work was done.
+        self.activity.ia_verification_status = "confirmed"
+        self.activity.save(update_fields=["ia_verification_status"])
 
         # Reimburse/Disburse — money is sent but not yet "reimbursed"
         # (financially cleared) until the employee confirms receipt.

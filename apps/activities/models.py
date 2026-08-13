@@ -439,9 +439,16 @@ class ActivityScheduleCostLine(TimeStampedModel):
 
     @property
     def finance_status(self) -> str:
-        """Resolve the dynamic financial status of the budget line from the 17-state lifecycle."""
+        """Resolve the dynamic financial status of the budget line from the 17-state lifecycle.
+
+        Prefetch contract: list views must prefetch
+        ``advance_requests`` and ``weekly_request_lines__weekly_fund_request``
+        or every rendered row costs two queries. Access deliberately goes
+        through ``list(...all())`` — ``.first()`` issues a fresh query even
+        when the relation is prefetched (the audit's known trap)."""
         # 1. Check linked AdvanceRequest status first
-        adv = self.advance_requests.first()
+        advances = list(self.advance_requests.all())
+        adv = advances[0] if advances else None
         if adv:
             status = adv.status
             if status == "accounted":
@@ -476,7 +483,8 @@ class ActivityScheduleCostLine(TimeStampedModel):
         # an earlier vocabulary here checked names like "pending_pl_approval"
         # that no code ever wrote, so every line under approval displayed as
         # "Draft Costed" (2026-08-12 audit M-5).
-        wfr_line = self.weekly_request_lines.first()
+        wfr_lines = list(self.weekly_request_lines.all())
+        wfr_line = wfr_lines[0] if wfr_lines else None
         if wfr_line:
             wfr = wfr_line.weekly_fund_request
             status = wfr.status

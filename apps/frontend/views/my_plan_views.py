@@ -139,7 +139,16 @@ def my_plan_view(request):
 
 @require_page_permission("my_plan")
 def activity_detail_view(request, activity_id):
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    a = get_object_or_404(
+        # The drawer renders line.finance_status per cost line — honour its
+        # prefetch contract or every line costs two extra queries.
+        Activity.objects.prefetch_related(
+            "schedule_cost_lines__advance_requests",
+            "schedule_cost_lines__weekly_request_lines__weekly_fund_request",
+        ),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
 
     # Enforce record ownership/scope gating
     if not RolePermissionService.can_view_record(request.user, a):

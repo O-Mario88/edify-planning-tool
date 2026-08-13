@@ -248,6 +248,38 @@ class PlannedFundingRequiresAnApprovedLedgerTest(_ChannelFixture):
         self.advance.refresh_from_db()
         self.assertEqual(self.advance.status, "pending_responsible_confirmation")
 
+    def test_monthly_disbursement_requires_receipt_before_accountability(self):
+        """Same receipt-before-accountability law as the weekly channel: a
+        line paid through a monthly fund plan cannot be accounted for until
+        the owner confirms the plan's funds actually arrived."""
+        from django.utils import timezone as _tz
+
+        from apps.fund_requests import advance_service
+
+        self.advance.status = "disbursed"
+        self.advance.disbursed_amount = self.AMOUNT
+        self.advance.save(
+            update_fields=["status", "disbursed_amount", "updated_at"]
+        )
+        fr = self._monthly_request("disbursed")
+
+        with self.assertRaisesMessage(BadRequest, "Confirm receipt"):
+            advance_service.submit_accountability(
+                self.advance.id,
+                {"amountSpent": self.AMOUNT, "netsuiteId": "NS-M-1"},
+                self.owner,
+            )
+
+        fr.receipt_confirmed_at = _tz.now()
+        fr.save(update_fields=["receipt_confirmed_at", "updated_at"])
+        advance_service.submit_accountability(
+            self.advance.id,
+            {"amountSpent": self.AMOUNT, "netsuiteId": "NS-M-1"},
+            self.owner,
+        )
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "accountability_pl_pending")
+
     def test_accountant_return_routes_the_ledger_back_to_pending(self):
         """Returning a sent plan un-clears its advances, so nothing on it
         stays releasable while the owner corrects it."""
