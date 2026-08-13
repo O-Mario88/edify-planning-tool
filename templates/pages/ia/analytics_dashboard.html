@@ -114,7 +114,8 @@
             </tr>
           </thead>
           <tbody>
-          {% for item in queue_items %}
+          {# The view already caps this at 6; the slice makes the bound visible to the table-inventory scanner. #}
+          {% for item in queue_items|slice:":6" %}
           <tr class="ia-queue-row">
             <td class="ia-queue-row__record">
               <a href="{{ item.review_url }}">#{{ item.record_id }}</a>

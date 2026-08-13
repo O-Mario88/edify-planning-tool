@@ -216,13 +216,51 @@ class PlannedFundingRequiresAnApprovedLedgerTest(_ChannelFixture):
                 fr.refresh_from_db()
                 self.assertEqual(fr.status, "approved")
 
-    def test_approved_period_request_can_release_a_pending_schedule_ledger(self):
-        fr = self._monthly_request("approved")
+    def test_approval_routes_the_pending_ledger_for_period_release(self):
+        """Approval — not disbursement — is what clears a pending advance.
+
+        The period channel used to release advances still in
+        pending_responsible_confirmation, meaning nobody with authority had
+        cleared those lines. services.approve() now routes the request's
+        pending advances to submitted_to_accountant, and the guard releases
+        only cleared statuses."""
+        admin = self._person("admin", "Admin")
+        fr = self._monthly_request("submitted")
+
+        services.approve(fr.id, {}, admin)
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "submitted_to_accountant")
 
         services.disburse(fr.id, {}, self.accountant)
-
         self.advance.refresh_from_db()
         self.assertEqual(self.advance.status, "disbursed")
+        self.assertEqual(self.advance.disbursed_amount, self.AMOUNT)
+
+    def test_period_disbursement_refuses_a_pending_ledger(self):
+        """An approved-status request whose advances are still pending (the
+        approval never routed them — e.g. a row built around approve()) must
+        fail closed instead of releasing unconfirmed money."""
+        fr = self._monthly_request("approved")
+
+        with self.assertRaisesMessage(BadRequest, "missing an approved advance"):
+            services.disburse(fr.id, {}, self.accountant)
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "pending_responsible_confirmation")
+
+    def test_accountant_return_routes_the_ledger_back_to_pending(self):
+        """Returning a sent plan un-clears its advances, so nothing on it
+        stays releasable while the owner corrects it."""
+        self.advance.status = "submitted_to_accountant"
+        self.advance.save(update_fields=["status", "updated_at"])
+        fr = self._monthly_request("sent_to_accountant")
+
+        disbursement_dashboard_service.return_item(
+            self.accountant, fr.id, {"reason": "fix the venue line"}
+        )
+
+        self.advance.refresh_from_db()
+        self.assertEqual(self.advance.status, "pending_responsible_confirmation")
 
     def test_second_period_request_for_the_same_line_is_refused(self):
         self.advance.status = "confirmed_for_advance"

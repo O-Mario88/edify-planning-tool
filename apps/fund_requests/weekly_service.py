@@ -14,6 +14,20 @@ from .models import WeeklyFundRequest, WeeklyFundRequestLine
 
 logger = logging.getLogger("edify.weekly_fund_request")
 
+# Statuses in which a weekly request is in its OWNER's hands and may be
+# delete-and-rebuilt by the generator. Everything else (submitted, approved,
+# confirmed, disbursed, self-funded, not-requested) is a frozen finance
+# snapshot. Returned requests must rebuild — freezing them made every return a
+# dead end: the owner was told to "fix the schedule and re-submit", but the
+# line set could never change, so the request re-entered approval with exactly
+# the numbers it was returned over.
+REBUILDABLE_WEEKLY_STATUSES = (
+    "pending_responsible_confirmation",
+    "returned_by_pl",
+    "returned_by_cd",
+    "returned_by_accountant",
+)
+
 
 def parse_date(d_str: str) -> date:
     if isinstance(d_str, (date, datetime)):
@@ -36,24 +50,24 @@ def generate_weekly_fund_request(
     week_start = week_start - timedelta(days=week_start.weekday())
     week_end = week_start + timedelta(days=6)
 
-    # 1. Find all scheduled activities for the selected week that are not
-    # cancelled/deferred. Partner-delivered work is EXCLUDED from the staff
-    # advance channel entirely: its one payable path is the post-IA-clearance
-    # PartnerPayment workflow, and carrying the same cost line here made it
-    # payable twice (once as the managing staff member's advance, once as the
-    # partner's payment). Partner costs still appear in every budget
-    # AGGREGATE — those are roll-ups, not payment channels.
-    lines = (
+    # 1. All staff-fundable budget lines for the selected week owned by this
+    # user. The shared predicate (apps.fund_requests.fundable) excludes
+    # cancelled/deferred/rejected work, partner-delivered work (paid only via
+    # the post-IA-clearance PartnerPayment workflow — carrying it here made
+    # the same line payable twice), cost-missing activities (they carry no
+    # advances, so one unpriced activity hard-blocked the owner's whole week
+    # at the funding guard), and lines whose owner opted out or whose money
+    # already moved. Partner costs still appear in budget AGGREGATES — those
+    # are roll-ups, not payment channels.
+    from .fundable import fundable_lines
+
+    lines = fundable_lines(
         ActivityScheduleCostLine.objects.filter(
             responsible_user=responsible_user_id,
             planned_date__gte=week_start,
             planned_date__lte=week_end,
-            activity__scheduled_date__isnull=False,
         )
-        .exclude(activity__status__in=("cancelled", "deferred", "rejected"))
-        .exclude(activity__delivery_type="partner")
-        .select_related("activity")
-    )
+    ).select_related("activity")
 
     total_amount = sum(line.amount for line in lines)
     fy = get_operational_fy(week_start)
@@ -64,13 +78,15 @@ def generate_weekly_fund_request(
             responsible_user=responsible_user_id, week_start_date=week_start
         ).first()
         if not lines.exists():
-            # If no lines exist, and there is a draft request, we delete it
-            if wfr and wfr.status == "pending_responsible_confirmation":
+            # Nothing fundable left in the week: an owner-held (draft or
+            # returned) request has nothing to resubmit — remove it rather
+            # than leaving a stale amount on a finance page.
+            if wfr and wfr.status in REBUILDABLE_WEEKLY_STATUSES:
                 wfr.lines.all().delete()
                 wfr.delete()
             return None
 
-        # Once a request has left the draft state (submitted, approved,
+        # Once a request has left the owner's hands (submitted, approved,
         # confirmed for advance, self-funded, disbursed, ...), a later
         # schedule/reschedule that re-triggers this sync must NEVER silently
         # rewrite its amount or delete+rebuild its line items — that would
@@ -79,7 +95,10 @@ def generate_weekly_fund_request(
         # fires automatically on every activity schedule (no manual "Generate
         # Request" step), so this guard is the difference between "auto"
         # meaning convenient and "auto" meaning finance-unsafe.
-        if wfr and wfr.status != "pending_responsible_confirmation":
+        # Returned requests rebuild (see REBUILDABLE_WEEKLY_STATUSES); the
+        # returned_* status itself is preserved so re-submission stays an
+        # explicit owner action (request_advance).
+        if wfr and wfr.status not in REBUILDABLE_WEEKLY_STATUSES:
             return wfr
 
         if wfr:
@@ -699,6 +718,35 @@ def disburse(request_id: str, data: dict, principal) -> dict:
     return _serialize_request(wfr)
 
 
+def confirm_receipt(request_id: str, principal) -> dict:
+    """The OWNER confirms the disbursed week's funds actually arrived.
+
+    Disbursed and received are different facts — the Accountant records the
+    first, only the person whose account the money landed in can attest the
+    second. Accountability on this week's advances opens only after this
+    confirmation (advance_service.submit_accountability enforces it), which
+    is what starts the accountability workflow the moment the staff member
+    clicks Confirm."""
+    with transaction.atomic():
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
+        if not wfr:
+            raise NotFoundError("Weekly fund request not found.")
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
+            raise Forbidden("Only the owner can confirm receipt of these funds.")
+        if wfr.status != "disbursed":
+            raise BadRequest("These funds are not marked as disbursed.")
+        if wfr.receipt_confirmed_at:
+            return _serialize_request(wfr)  # idempotent — already confirmed
+        wfr.receipt_confirmed_at = timezone.now()
+        wfr.save(update_fields=["receipt_confirmed_at", "updated_at"])
+    _audit_weekly(principal, "weekly_fund_request.receipt_confirmed", wfr, {})
+    return _serialize_request(wfr)
+
+
 def accountant_weekly_queues() -> dict:
     """Return all weekly requests split by status for the accountant dashboard."""
     return {
@@ -746,6 +794,9 @@ def _serialize_request(wfr: WeeklyFundRequest, include_lines: bool = False) -> d
         "status": wfr.status,
         "disbursedAmount": wfr.disbursed_amount,
         "disbursedAt": wfr.disbursed_at.isoformat() if wfr.disbursed_at else None,
+        "receiptConfirmedAt": wfr.receipt_confirmed_at.isoformat()
+        if wfr.receipt_confirmed_at
+        else None,
         "confirmedAt": wfr.confirmed_at.isoformat() if wfr.confirmed_at else None,
     }
 

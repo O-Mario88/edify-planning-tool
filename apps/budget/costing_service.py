@@ -4,9 +4,9 @@ Every scheduling path (school visit, partner visit, cluster training, cluster
 meeting, reschedule, partner self-schedule) calls THIS service to persist the
 activity cost. No other module computes or persists activity cost. The service:
 
-  • preview(input)        — itemized cost from the ACTIVE catalogue (no writes).
-  • assert_schedulable()  — optional validation for callers that want a strict
-                            preview; it is not a schedule-time blocker.
+  • preview(input)        — itemized cost from the ACTIVE catalogue (no writes);
+                            its blockers[] are the funded-scheduling gate that
+                            activities.services.create() enforces for dated work.
   • apply_to_activity()   — the canonical budget-line writer: clears + rebuilds
                              ActivityScheduleCostLine rows, stamps catalogue
                              id/version onto every line, sets est_cost_cents.
@@ -230,59 +230,13 @@ def activity_cost_coverage(items, catalogue: CostCatalogue | None = None) -> lis
     return rows
 
 
-def assert_schedulable(input: dict) -> None:
-    """Raise BadRequest if the activity cannot be costed (missing rate / no
-    catalogue / invalid participants). Called by every scheduling path BEFORE
-    persisting, so no activity is ever created with a fake or missing cost."""
-    input = _profiled_input(input)
-    # Check scheduled date is present
-    scheduled_date_raw = input.get("scheduledDate")
-    if not scheduled_date_raw:
-        raise BadRequest("Scheduled date is required.")
-
-    # Check fiscal year can be calculated
-    from apps.core.fy import get_operational_fy
-    from datetime import datetime
-
-    try:
-        dt = datetime.fromisoformat(str(scheduled_date_raw).replace("Z", "+00:00"))
-        fy = get_operational_fy(dt)
-        if not fy:
-            raise ValueError()
-    except Exception as exc:
-        raise BadRequest(
-            "Fiscal year cannot be calculated from scheduled date."
-        ) from exc
-
-    activity_type = input.get("activityType", "")
-    is_training = activity_type in {
-        "training",
-        "in_school_training",
-        "school_improvement_training",
-        "cluster_training",
-        "core_training",
-        "cluster_training_ssa_collection",
-    }
-    is_cluster_meeting = activity_type in {
-        "cluster_meeting",
-        "cluster_meeting_ssa_review",
-    }
-    is_training_like = is_training or is_cluster_meeting
-
-    if is_training_like:
-        expected = input.get("expectedParticipants")
-        if expected is None:
-            raise BadRequest("Participant count is required.")
-        try:
-            expected_int = int(expected)
-            if expected_int <= 0:
-                raise ValueError()
-        except ValueError:
-            raise BadRequest("Participant count must be greater than zero.")
-
-    result = preview(input)
-    if result["blockers"]:
-        raise BadRequest(" · ".join(result["blockers"]))
+# NOTE: an `assert_schedulable(input)` gate used to live here, whose docstring
+# claimed it was "called by every scheduling path" — it had ZERO callers. The
+# real funded-scheduling gate is the inline preview-blocker check inside
+# activities.services.create() (dated work only), and its extra
+# participants-required rule would have broken the deliberate
+# default-25-participants pricing. Removed rather than left lying (2026-08-12
+# audit L-1).
 
 
 def _serialize_line(line: CostLine) -> dict:
@@ -521,106 +475,138 @@ def apply_to_activity(
         activity.quarter = quarter
         activity.fy = fiscal_year
 
-    # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
-    # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
-    # the lines below would silently erase that financial record along with
-    # it, no matter how careful advance_service.sync_for_activity() is about
-    # never touching a disbursed advance, since by the time it runs the row
-    # would already be gone. Once money has actually moved on this activity,
-    # re-pricing it here is a locked historical snapshot; the caller must use
-    # a formal amendment/variance workflow instead of a silent reschedule.
-    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
-
-    if AdvanceRequest.objects.filter(
-        budget_line__activity=activity,
-        status__in=[
-            AdvanceRequestStatus.DISBURSED,
-            AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
-            AdvanceRequestStatus.ACCOUNTED,
-            AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
-            AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
-            AdvanceRequestStatus.REIMBURSED,
-        ],
-    ).exists():
-        raise BadRequest(
-            "This activity already has a disbursed or accounted advance — its "
-            "cost snapshot is locked. Use a budget amendment instead of "
-            "rescheduling to change its cost."
-        )
-
-    # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
-    # rebuild below would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
-    # confirmation silently vanishes and is recreated as pending) while the
-    # approved weekly request keeps its stale total with a missing line — the
-    # accountant would then disburse an inconsistent request. The unstick path
-    # is the accountant returning the advance, which is re-confirmable.
-    if AdvanceRequest.objects.filter(
-        budget_line__activity=activity,
-        status__in=[
-            AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
-            AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
-        ],
-    ).exists():
-        raise BadRequest(
-            "This activity's advance is already confirmed and sitting in the "
-            "accountant's queue. Ask the accountant to return the advance "
-            "first, then reschedule."
-        )
-
-    # A submitted or approved weekly request is its own finance snapshot.
-    # Its child advances can still be pending at this point, so advance-status
-    # checks alone would not prevent a delete-and-rebuild from silently
-    # removing an approved request line.
-    from apps.fund_requests.models import WeeklyFundRequest
-
-    if (
-        WeeklyFundRequest.objects.filter(lines__activity_budget_line__activity=activity)
-        .exclude(status="pending_responsible_confirmation")
-        .exists()
-    ):
-        raise BadRequest(
-            "This activity is already included in a submitted or approved "
-            "weekly fund request. Return that request before changing its cost."
-        )
-
-    # A submitted/approved MONTHLY FundRequest is equally a finance snapshot,
-    # but its items reference cost lines by a bare CharField id (no FK) — the
-    # delete-and-rebuild below would leave those payable item rows dangling
-    # with live amounts and no source line. Freeze re-pricing the same way the
-    # weekly check above does.
-    from apps.fund_requests.models import FundRequestItem, FundRequestStatus
-
-    line_ids = list(
-        ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
-            "id", flat=True
-        )
+    from apps.fund_requests.models import (
+        AdvanceRequest,
+        AdvanceRequestStatus,
+        FundRequest,
+        FundRequestStatus,
+        WeeklyFundRequest,
     )
-    if (
-        line_ids
-        and FundRequestItem.objects.filter(
-            activity_schedule_cost_line_id__in=line_ids,
-        )
-        .exclude(
-            fund_request__status__in=[
-                FundRequestStatus.DRAFT,
-                # Returned/rejected requests are back in the owner's hands —
-                # re-pricing is the legitimate next step for those.
-                FundRequestStatus.RETURNED,
-                FundRequestStatus.REJECTED,
-            ]
-        )
-        .exists()
-    ):
-        raise BadRequest(
-            "This activity is already included in a submitted or approved "
-            "monthly fund request. Return that request before changing its cost."
-        )
+    from apps.fund_requests.weekly_service import REBUILDABLE_WEEKLY_STATUSES
 
-    # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own
-    # cost-field save must succeed or fail together — a crash mid-sequence (e.g.
-    # after the delete but before the bulk_create completes) would otherwise
-    # leave a scheduled Activity with zero budget lines.
+    # The finance-lock guards, the clear-and-rebuild of the cost lines and the
+    # activity's own cost-field save must all happen in ONE transaction, with
+    # the inspected rows locked. The guards used to run before the atomic
+    # block with no locks at all — a confirmation or weekly submission landing
+    # between the check and the delete was CASCADE-erased with the lines, the
+    # exact vanishing-record scenario the guards describe (2026-08-12 audit
+    # M-2). Locking also means a crash mid-sequence can no longer leave a
+    # scheduled Activity with zero budget lines.
     with transaction.atomic():
+        # Lock every advance on this activity's lines. A concurrent
+        # confirm_advance()/weekly submit updating one of these rows now
+        # blocks until this transaction commits (or commits first, in which
+        # case the guards below see the confirmed status and refuse).
+        locked_advances = list(
+            AdvanceRequest.objects.select_for_update(of=("self",)).filter(
+                budget_line__activity=activity
+            )
+        )
+        # A cost line's disbursed/accounted/reimbursed AdvanceRequest (or its
+        # WeeklyFundRequestLine) CASCADEs on the line's own deletion — clearing
+        # the lines below would silently erase that financial record. Once
+        # money has actually moved, this snapshot is locked history; the
+        # caller must use a formal amendment/variance workflow instead.
+        if any(
+            adv.status
+            in (
+                AdvanceRequestStatus.DISBURSED,
+                AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
+                AdvanceRequestStatus.ACCOUNTED,
+                AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
+                AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
+                AdvanceRequestStatus.REIMBURSED,
+            )
+            for adv in locked_advances
+        ):
+            raise BadRequest(
+                "This activity already has a disbursed or accounted advance — its "
+                "cost snapshot is locked. Use a budget amendment instead of "
+                "rescheduling to change its cost."
+            )
+
+        # Confirmed-but-not-yet-disbursed money is frozen too: the clear-and-
+        # rebuild would CASCADE-delete a CONFIRMED_FOR_ADVANCE advance (the
+        # confirmation silently vanishes and is recreated as pending) while the
+        # approved weekly request keeps its stale total with a missing line.
+        # The unstick path is the accountant returning the advance.
+        if any(
+            adv.status
+            in (
+                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+            )
+            for adv in locked_advances
+        ):
+            raise BadRequest(
+                "This activity's advance is already confirmed and sitting in the "
+                "accountant's queue. Ask the accountant to return the advance "
+                "first, then reschedule."
+            )
+
+        # A submitted or approved weekly request is its own finance snapshot.
+        # Its child advances can still be pending at this point, so the
+        # advance checks alone would not stop a rebuild from removing an
+        # approved request line. Lock ALL carrying requests (any status) so a
+        # concurrent submission serializes with this rebuild, then refuse on
+        # the frozen ones. A RETURNED request is back in the owner's hands —
+        # re-pricing is the legitimate next step, and the generator rebuilds
+        # its lines from the corrected schedule.
+        carrying_wfr_ids = list(
+            WeeklyFundRequest.objects.filter(
+                lines__activity_budget_line__activity=activity
+            )
+            .values_list("id", flat=True)
+            .distinct()
+        )
+        locked_wfrs = list(
+            WeeklyFundRequest.objects.select_for_update().filter(
+                id__in=carrying_wfr_ids
+            )
+        )
+        if any(w.status not in REBUILDABLE_WEEKLY_STATUSES for w in locked_wfrs):
+            raise BadRequest(
+                "This activity is already included in a submitted or approved "
+                "weekly fund request. Return that request before changing its cost."
+            )
+
+        # A submitted/approved MONTHLY FundRequest is equally a finance
+        # snapshot, but its items reference cost lines by a bare CharField id
+        # (no FK) — the rebuild would leave those payable item rows dangling
+        # with live amounts and no source line. Any returned/rejected status
+        # is back in the owner's hands (matching services.submit's
+        # resubmittable set — the plain RETURNED trio alone made every
+        # returned_by_* monthly request an un-fixable dead end).
+        line_ids = list(
+            ActivityScheduleCostLine.objects.filter(activity=activity).values_list(
+                "id", flat=True
+            )
+        )
+        repriceable_fr_statuses = [
+            FundRequestStatus.DRAFT,
+            FundRequestStatus.RETURNED,
+            FundRequestStatus.REJECTED,
+            FundRequestStatus.RETURNED_BY_PL,
+            FundRequestStatus.RETURNED_BY_CD,
+            FundRequestStatus.RETURNED_BY_RVP,
+            FundRequestStatus.RETURNED_BY_ACCOUNTANT,
+        ]
+        carrying_fr_ids = list(
+            FundRequest.objects.filter(
+                items__activity_schedule_cost_line_id__in=line_ids
+            )
+            .values_list("id", flat=True)
+            .distinct()
+        )
+        locked_frs = list(
+            FundRequest.objects.select_for_update().filter(id__in=carrying_fr_ids)
+        )
+        if any(fr.status not in repriceable_fr_statuses for fr in locked_frs):
+            raise BadRequest(
+                "This activity is already included in a submitted or approved "
+                "monthly fund request. Return that request before changing its cost."
+            )
+
         ActivityScheduleCostLine.objects.filter(activity=activity).delete()
 
         # Tag Core activity budget lines
@@ -728,6 +714,5 @@ def apply_to_activity(
 __all__ = [
     "active_catalogue",
     "preview",
-    "assert_schedulable",
     "apply_to_activity",
 ]

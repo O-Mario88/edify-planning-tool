@@ -33,14 +33,25 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
         # Unconditional for non-country roles: an empty staff_ids narrowed to
         # nothing before, not to the whole country's activities.
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids or ["__none__"])
+    # Cancelled/deferred/rejected work never enters a payment request — this
+    # channel used to include it (and partner + already-paid lines below),
+    # producing approved totals the funding guard could never release.
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+
+    qs = qs.exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
     qs = _filter_period(qs, period, period_key, data).prefetch_related(
         "schedule_cost_lines"
     )
 
     activities = list(qs)
-    # Cost blocker: any in-period activity flagged cost-missing, or with no lines.
+    # Cost blocker: any in-period STAFF activity flagged cost-missing, or a
+    # scheduled one with no lines. Partner-delivered work is exempt — it is
+    # paid through the PartnerPayment workflow and carries no staff lines.
     bad = [
-        a for a in activities if a.cost_missing or not list(a.schedule_cost_lines.all())
+        a
+        for a in activities
+        if a.delivery_type != "partner"
+        and (a.cost_missing or not list(a.schedule_cost_lines.all()))
     ]
     if bad:
         if strict:
@@ -52,12 +63,23 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
         # and leave the rest visible as cost-missing blockers on their pages.
         activities = [a for a in activities if a not in bad]
 
-    request_items: list[tuple[Activity, object]] = []
-    total = 0
-    for a in activities:
-        for line in a.schedule_cost_lines.all():
-            request_items.append((a, line))
-            total += line.amount
+    # Items come from the shared staff-fundable predicate: no partner lines
+    # (payable only via PartnerPayment), no lines whose money already moved
+    # through the weekly/advance channel, none whose owner opted out. The
+    # request total is therefore exactly what the accountant can release.
+    from apps.activities.models import ActivityScheduleCostLine
+    from .fundable import fundable_lines
+
+    lines = list(
+        fundable_lines(
+            ActivityScheduleCostLine.objects.filter(
+                activity__in=[a.id for a in activities]
+            )
+        ).select_related("activity")
+    )
+    request_items = [(line.activity, line) for line in lines]
+    total = sum(line.amount for line in lines)
+    activities = list({line.activity_id: line.activity for line in lines}.values())
 
     lens = (
         "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
@@ -348,15 +370,36 @@ def _audit_fund_request(principal, action: str, fr: FundRequest, payload: dict):
 
 
 def approve(request_id: str, data: dict, principal) -> dict:
-    return _review(request_id, FundRequestStatus.APPROVED, data, principal)
+    result = _review(request_id, FundRequestStatus.APPROVED, data, principal)
+    # Approval clears this request's lines for release: move their pending
+    # advances to SUBMITTED_TO_ACCOUNTANT so the disbursement guard (which no
+    # longer accepts pending rows) recognises the chain's decision.
+    from .advance_service import sync_advances_for_period_request
+
+    fr = FundRequest.objects.filter(id=request_id).first()
+    if fr:
+        sync_advances_for_period_request(fr, to_accountant=True)
+    return result
 
 
 def return_request(request_id: str, data: dict, principal) -> dict:
-    return _review(request_id, FundRequestStatus.RETURNED, data, principal)
+    result = _review(request_id, FundRequestStatus.RETURNED, data, principal)
+    from .advance_service import sync_advances_for_period_request
+
+    fr = FundRequest.objects.filter(id=request_id).first()
+    if fr:
+        sync_advances_for_period_request(fr, to_accountant=False)
+    return result
 
 
 def reject(request_id: str, data: dict, principal) -> dict:
-    return _review(request_id, FundRequestStatus.REJECTED, data, principal)
+    result = _review(request_id, FundRequestStatus.REJECTED, data, principal)
+    from .advance_service import sync_advances_for_period_request
+
+    fr = FundRequest.objects.filter(id=request_id).first()
+    if fr:
+        sync_advances_for_period_request(fr, to_accountant=False)
+    return result
 
 
 def disburse(request_id: str, data: dict, principal) -> dict:
@@ -452,6 +495,16 @@ def _submit_accountability_locked(request_id: str, data: dict, principal) -> dic
     fr = FundRequest.objects.select_for_update().filter(id=request_id).first()
     if not fr:
         raise NotFoundError("Fund request not found.")
+    # Accountability is the OWNER's declaration of what they spent — the
+    # endpoint carries only a view permission, so without this check any
+    # planning-view holder could write accounted amounts and NetSuite IDs
+    # onto anyone's disbursed request (2026-08-12 audit M-10). Mirrors
+    # advance_service.submit_accountability.
+    if fr.submitted_by_user_id and fr.submitted_by_user_id != principal.user_id:
+        if getattr(principal, "active_role", "") not in ("CountryDirector", "Admin"):
+            raise Forbidden(
+                "Only the request owner can submit its accountability."
+            )
     # Accountability exists only for money that actually left the account.
     if fr.status != FundRequestStatus.DISBURSED:
         raise BadRequest(

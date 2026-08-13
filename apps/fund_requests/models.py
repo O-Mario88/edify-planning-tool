@@ -130,8 +130,23 @@ class AdvanceRequestStatus(models.TextChoices):
     NOT_REQUESTED = "not_requested", "Not requested"
     SUBMITTED_TO_ACCOUNTANT = "submitted_to_accountant", "Submitted to accountant"
     DISBURSED = "disbursed", "Disbursed"
+    # Accountability routes through the owner's Program Lead BEFORE the
+    # Accountant (2026-08-13 mandate: "all fund accountability is approved by
+    # the PL, then goes to the accountant"). The PL confirms the money is
+    # accounted for; IA separately confirms the work was done; the Accountant
+    # settles last.
+    ACCOUNTABILITY_PL_PENDING = (
+        "accountability_pl_pending",
+        "Accountability awaiting PL approval",
+    )
     ACCOUNTABILITY_PENDING = "accountability_pending", "Accountability pending"
     ACCOUNTED = "accounted", "Accounted"
+    # A self-funded reimbursement claim awaiting the PL's approval before it
+    # reaches the Accountant's reimbursement queue.
+    REIMBURSEMENT_PL_PENDING = (
+        "reimbursement_pl_pending",
+        "Reimbursement awaiting PL approval",
+    )
     REIMBURSEMENT_SUBMITTED = "reimbursement_submitted", "Reimbursement submitted"
     # Accountant has disbursed the reimbursement but the employee has not yet
     # confirmed receipt — money is not "reimbursed" (financially cleared)
@@ -162,8 +177,13 @@ ADVANCE_TYPES = (
 # already in one of these states, or the same line gets paid twice.
 MONEY_MOVED_ADVANCE_STATUSES = (
     AdvanceRequestStatus.DISBURSED,
+    AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING,
     AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
     AdvanceRequestStatus.ACCOUNTED,
+    # A self-funded claim's money is the EMPLOYEE's, already spent — the
+    # in-flight claim is equally a financial record that must never be
+    # silently deleted or re-priced away.
+    AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING,
     AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
     AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
     AdvanceRequestStatus.REIMBURSED,
@@ -215,6 +235,12 @@ class AdvanceRequest(TimeStampedModel):
     returned_amount = models.BigIntegerField(null=True, blank=True)
     accountability_netsuite_id = models.CharField(max_length=128, null=True, blank=True)
     accountability_submitted_at = models.DateTimeField(null=True, blank=True)
+    # The Program Lead's confirmation that the money is accounted for —
+    # required before the Accountant may settle (clear or reimburse).
+    accountability_pl_approved_at = models.DateTimeField(null=True, blank=True)
+    accountability_pl_approved_by = models.CharField(
+        max_length=30, null=True, blank=True
+    )
     accountability_reviewed_at = models.DateTimeField(null=True, blank=True)
     # Confirmation / review audit.
     confirmed_at = models.DateTimeField(null=True, blank=True)
@@ -281,6 +307,11 @@ class WeeklyFundRequest(TimeStampedModel):
     disbursed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     disburse_method = models.CharField(max_length=64, null=True, blank=True)
     disburse_reference = models.CharField(max_length=128, null=True, blank=True)
+    # The owner's confirmation that the disbursed week's funds actually
+    # arrived. Accountability on the week's advances opens only after this —
+    # disbursed and received are different facts (the monthly FundRequest and
+    # the reimbursement leg already record them separately).
+    receipt_confirmed_at = models.DateTimeField(null=True, blank=True)
 
     # Accountability (advance path, after disbursement)
     accounted_amount = models.BigIntegerField(null=True, blank=True)

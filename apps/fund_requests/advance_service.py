@@ -93,8 +93,17 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
                     amount=line.amount,
                     status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
                 )
-            else:
-                # Refresh mutable fields (amount may change on reschedule).
+            elif adv.status in (
+                AdvanceRequestStatus.DRAFT_FROM_SCHEDULE,
+                AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+                AdvanceRequestStatus.RETURNED,
+            ):
+                # Refresh mutable fields (amount may change on reschedule) —
+                # but only while the advance is still in its owner's hands. A
+                # confirmed/submitted/paid advance's requested amount is part
+                # of the financial record; the costing-service locks normally
+                # prevent reaching here in those states, and this guard keeps
+                # repair/backfill callers equally safe (2026-08-12 audit L-6).
                 adv.amount = line.amount
                 adv.responsible_user_id = responsible or adv.responsible_user_id
                 adv.fy, adv.quarter = activity.fy, activity.quarter
@@ -112,6 +121,48 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
                         "updated_at",
                     ]
                 )
+
+
+# ── Monthly/period approval routing ──────────────────────────────────────────
+def sync_advances_for_period_request(fund_request, *, to_accountant: bool) -> int:
+    """Mirror a monthly/period FundRequest's approval state onto the shared
+    advance ledger.
+
+    The disbursement guard (funding_guard) only releases advances in
+    SUBMITTED_TO_ACCOUNTANT / CONFIRMED_FOR_ADVANCE — a pending advance means
+    nobody with authority has cleared that line for payment. Approval of the
+    governing monthly request IS that clearance, so it must move the child
+    advances forward; a return/reject moves them back. Only rows still in the
+    pending/submitted pair are touched: owner choices (self-funded,
+    not-requested) and money that already moved are never overwritten.
+
+    Returns the number of advances updated."""
+    from django.utils import timezone as _tz
+
+    line_ids = [
+        item.activity_schedule_cost_line_id
+        for item in fund_request.items.all()
+        if item.activity_schedule_cost_line_id
+    ]
+    if not line_ids:
+        return 0
+    qs = AdvanceRequest.objects.filter(budget_line_id__in=line_ids)
+    if to_accountant:
+        # RETURNED advances are re-requestable (confirm_advance accepts them),
+        # so a re-approved monthly request routes them forward too.
+        return qs.filter(
+            status__in=(
+                AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+                AdvanceRequestStatus.RETURNED,
+            )
+        ).update(
+            status=AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+            updated_at=_tz.now(),
+        )
+    return qs.filter(status=AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT).update(
+        status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+        updated_at=_tz.now(),
+    )
 
 
 # ── Responsible-user confirmation ────────────────────────────────────────────
@@ -201,31 +252,44 @@ def disburse(advance_id: str, data: dict, principal) -> dict:
         # Approval-chain guard: the owner's confirmation alone is a REQUEST,
         # not an approval. The weekly fund request that carries this line
         # routes CCEO→PL and PL→CD; disbursing the per-line advance directly
-        # used to skip that chain entirely. Money may only move once the
-        # governing weekly request has cleared approval (or was routed
-        # direct for CD/Admin owners, which also lands on confirmed_for_advance).
-        from .models import WeeklyFundRequest
+        # used to skip that chain entirely. Money may only move for a budget
+        # line that is ITSELF carried by an approved weekly request — checking
+        # merely that *a* request for the owner's week was approved let an
+        # activity scheduled after that approval (which the generator's freeze
+        # deliberately keeps out of the request) be confirmed and disbursed
+        # per-line without any PL/CD approval covering its amount. Allow-list
+        # by membership, and fail closed for lines with no week at all.
+        from .models import WeeklyFundRequestLine
 
         bl = adv.budget_line
-        if bl is not None and bl.week_start_date:
-            wfr = WeeklyFundRequest.objects.filter(
-                responsible_user=adv.responsible_user_id,
-                week_start_date=bl.week_start_date,
-            ).first()
-            unapproved = wfr is None or wfr.status in (
-                "pending_responsible_confirmation",
-                "submitted_to_pl",
-                "submitted_to_cd",
-                "returned_by_pl",
-                "returned_by_cd",
+        carried_by_approved_request = (
+            bl is not None
+            and WeeklyFundRequestLine.objects.filter(
+                activity_budget_line=bl,
+                weekly_fund_request__status="confirmed_for_advance",
+            ).exists()
+        )
+        if not carried_by_approved_request:
+            raise BadRequest(
+                "Cannot disburse — this budget line is not part of an approved "
+                "weekly fund request. Submit and approve the weekly request "
+                "that carries it first (if the request was already approved "
+                "before this activity was scheduled, ask the approver to "
+                "return it so the week regenerates, then re-submit)."
             )
-            if unapproved:
-                raise BadRequest(
-                    "Cannot disburse — this advance's weekly fund request has "
-                    "not been approved yet. Submit and approve the weekly "
-                    "request first."
-                )
-        adv.disbursed_amount = int(data.get("amount", adv.amount))
+        # Same bounds the weekly and monthly channels enforce: positive and
+        # within the approved amount — this path used to accept any figure
+        # verbatim (2026-08-12 audit L-4).
+        try:
+            disbursed_amount = int(data.get("amount", adv.amount))
+        except (TypeError, ValueError):
+            disbursed_amount = adv.amount
+        if disbursed_amount <= 0 or disbursed_amount > adv.amount:
+            raise BadRequest(
+                "Disbursed amount must be positive and within the approved "
+                "advance amount."
+            )
+        adv.disbursed_amount = disbursed_amount
         adv.disbursed_at = timezone.now()
         adv.disbursed_by_user_id = principal.user_id
         adv.disburse_method = data.get("method")
@@ -307,6 +371,28 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
             ):
                 raise Forbidden("Only the responsible user can submit accountability.")
 
+        # Disbursed and RECEIVED are different facts. When this advance was
+        # paid as part of a weekly request, the owner must first confirm the
+        # week's funds actually arrived (weekly_service.confirm_receipt) —
+        # that confirmation is what opens the accountability workflow. The
+        # monthly channel records the same fact on FundRequest.
+        from .models import WeeklyFundRequest
+
+        unreceipted_week = (
+            WeeklyFundRequest.objects.filter(
+                lines__activity_budget_line__advance_requests=adv,
+                status="disbursed",
+                receipt_confirmed_at__isnull=True,
+            )
+            .exists()
+        )
+        if unreceipted_week:
+            raise BadRequest(
+                "Confirm receipt of this week's disbursed funds first — "
+                "accountability opens once you have confirmed the money "
+                "actually arrived."
+            )
+
         netsuite_id = (data.get("netsuiteId") or "").strip()
         if not netsuite_id:
             raise BadRequest(
@@ -337,13 +423,21 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
         adv.accountability_netsuite_id = netsuite_id
         adv.accountability_submitted_at = timezone.now()
         adv.last_note = variance_note[:512] if variance_note else adv.last_note
-        adv.status = AdvanceRequestStatus.ACCOUNTABILITY_PENDING
+        # Route through the owner's Program Lead first — the PL confirms the
+        # money is accounted for before the Accountant may settle it
+        # (2026-08-13 mandate). A resubmission after a PL return clears the
+        # prior approval stamp.
+        adv.status = AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+        adv.accountability_pl_approved_at = None
+        adv.accountability_pl_approved_by = None
         adv.save(
             update_fields=[
                 "accounted_amount",
                 "returned_amount",
                 "accountability_netsuite_id",
                 "accountability_submitted_at",
+                "accountability_pl_approved_at",
+                "accountability_pl_approved_by",
                 "last_note",
                 "status",
                 "updated_at",
@@ -354,6 +448,115 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
         "advance_request.submit_accountability",
         adv,
         {"accounted": accounted, "returned": returned, "netsuite_id": netsuite_id},
+    )
+    return _serialize(adv)
+
+
+# ── PL accountability approval (before the Accountant) ──────────────────────
+def _require_accountability_approver(adv: AdvanceRequest, principal) -> None:
+    """The owner's Program Lead (or country authority) approves fund
+    accountability; nobody approves their own. Mirrors the weekly request's
+    approval law (weekly_service._require_weekly_approver)."""
+    if adv.responsible_user_id == principal.user_id:
+        raise Forbidden("You cannot approve your own accountability.")
+
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    role = getattr(principal, "active_role", "")
+    if role in ("CountryDirector", "Admin") or has_permission(
+        principal, Permission.FUND_REQUEST_APPROVE_ESCALATED.value
+    ):
+        return
+    if role != "Program Lead":
+        raise Forbidden(
+            "Only the owner's Program Lead (or country leadership) can act on "
+            "this accountability."
+        )
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    supervises = StaffSupervisorAssignment.objects.filter(
+        supervisor__user_id=principal.user_id,
+        supervisee__user_id=adv.responsible_user_id,
+    ).exists()
+    if not supervises:
+        raise Forbidden("This accountability belongs to another Program Lead's team.")
+
+
+_PL_PENDING_STATUSES = (
+    AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING,
+    AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING,
+)
+
+
+def pl_approve_accountability(advance_id: str, principal) -> dict:
+    """The Program Lead confirms the money is accounted for → the submission
+    moves to the Accountant (accountability review, or the reimbursement
+    queue for a self-funded claim). IA's work-done confirmation is a separate,
+    parallel gate the Accountant's settlement enforces."""
+    with transaction.atomic():
+        adv = AdvanceRequest.objects.select_for_update().filter(id=advance_id).first()
+        if not adv:
+            raise NotFoundError("Advance request not found.")
+        if adv.status not in _PL_PENDING_STATUSES:
+            raise BadRequest(
+                "Nothing to approve — this accountability is not awaiting PL "
+                "approval."
+            )
+        _require_accountability_approver(adv, principal)
+        adv.accountability_pl_approved_at = timezone.now()
+        adv.accountability_pl_approved_by = principal.user_id
+        adv.status = (
+            AdvanceRequestStatus.ACCOUNTABILITY_PENDING
+            if adv.status == AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+            else AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED
+        )
+        adv.save(
+            update_fields=[
+                "accountability_pl_approved_at",
+                "accountability_pl_approved_by",
+                "status",
+                "updated_at",
+            ]
+        )
+    _audit(
+        principal,
+        "advance_request.pl_approve_accountability",
+        adv,
+        {"accounted": adv.accounted_amount, "routed_to": adv.status},
+    )
+    return _serialize(adv)
+
+
+def pl_return_accountability(advance_id: str, data: dict, principal) -> dict:
+    """The Program Lead returns the accountability for correction — back to
+    the state the owner resubmits from (disbursed for an advance; self-funded
+    pending for a reimbursement claim)."""
+    reason = (data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequest("A return reason is required.")
+    with transaction.atomic():
+        adv = AdvanceRequest.objects.select_for_update().filter(id=advance_id).first()
+        if not adv:
+            raise NotFoundError("Advance request not found.")
+        if adv.status not in _PL_PENDING_STATUSES:
+            raise BadRequest(
+                "Nothing to return — this accountability is not awaiting PL "
+                "approval."
+            )
+        _require_accountability_approver(adv, principal)
+        adv.last_note = reason[:512]
+        adv.status = (
+            AdvanceRequestStatus.DISBURSED
+            if adv.status == AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+            else AdvanceRequestStatus.SELF_FUNDED_PENDING_REIMBURSEMENT
+        )
+        adv.save(update_fields=["last_note", "status", "updated_at"])
+    _audit(
+        principal,
+        "advance_request.pl_return_accountability",
+        adv,
+        {"reason": reason},
     )
     return _serialize(adv)
 
@@ -537,12 +740,20 @@ def submit_reimbursement(advance_id: str, data: dict, principal) -> dict:
         adv.accounted_amount = int(data.get("amountSpent", adv.amount))
         adv.accountability_netsuite_id = data.get("netsuiteId")
         adv.accountability_submitted_at = timezone.now()
-        adv.status = AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED
+        # The claim goes to the owner's Program Lead first; only a PL-approved
+        # claim reaches the Accountant's reimbursement queue (2026-08-13
+        # mandate — the amount used + NetSuite ID trigger the reimbursement,
+        # and the PL confirms the money is accounted for).
+        adv.status = AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING
+        adv.accountability_pl_approved_at = None
+        adv.accountability_pl_approved_by = None
         adv.save(
             update_fields=[
                 "accounted_amount",
                 "accountability_netsuite_id",
                 "accountability_submitted_at",
+                "accountability_pl_approved_at",
+                "accountability_pl_approved_by",
                 "status",
                 "updated_at",
             ]
@@ -575,11 +786,29 @@ def reimburse(advance_id: str, data: dict, principal) -> dict:
     on the row lock, then sees the status already moved past
     REIMBURSEMENT_SUBMITTED and is rejected instead of paying twice."""
     with transaction.atomic():
-        adv = AdvanceRequest.objects.select_for_update().filter(id=advance_id).first()
+        adv = (
+            AdvanceRequest.objects.select_for_update()
+            .select_related("activity")
+            .filter(id=advance_id)
+            .first()
+        )
         if not adv:
             raise NotFoundError("Advance request not found.")
         if adv.status != AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED:
             raise BadRequest("Only a submitted reimbursement claim can be reimbursed.")
+        # IA confirms the WORK happened before money leaves for it — the same
+        # gate the advance path enforces at approve_accountability. Without
+        # this, a self-funded claim was payable for unverified work.
+        activity = adv.activity
+        ia_verified = (
+            activity.ia_verification_status == "confirmed"
+            or activity.status in ("ia_verified", "closed")
+        )
+        if not ia_verified:
+            raise BadRequest(
+                "Cannot reimburse — IA has not verified this activity yet. "
+                "Reimbursement requires IA verification that the work was done."
+            )
         # Default is the VARIANCE (accounted - already-disbursed), not the
         # full accounted spend — for a self-funded claim disbursed is 0 so
         # this equals the full spend anyway, but for an advance-funded
@@ -716,6 +945,10 @@ def _serialize(adv: AdvanceRequest) -> dict:
         if adv.reimbursement_receipt_confirmed_at
         else None,
         "accountabilityNetsuiteId": adv.accountability_netsuite_id,
+        "accountabilityPlApprovedAt": adv.accountability_pl_approved_at.isoformat()
+        if adv.accountability_pl_approved_at
+        else None,
+        "accountabilityPlApprovedBy": adv.accountability_pl_approved_by,
         "confirmedAt": adv.confirmed_at.isoformat() if adv.confirmed_at else None,
     }
 
@@ -727,6 +960,8 @@ __all__ = [
     "not_requested",
     "disburse",
     "submit_accountability",
+    "pl_approve_accountability",
+    "pl_return_accountability",
     "verify_return",
     "approve_accountability",
     "submit_reimbursement",

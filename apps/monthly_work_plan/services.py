@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -132,7 +133,7 @@ def recompute_program_total(b: MonthlyWorkPlanBudget) -> MonthlyWorkPlanBudget:
         activity__deleted_at__isnull=True,
         activity__fy=b.fy,
         month=month_i,
-    ).exclude(activity__status__in=["cancelled", "rejected"])
+    ).exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
     program = lines.aggregate(total=Sum("amount"))["total"] or 0
     b.program_total = int(program)
     b.activity_count = lines.values("activity").distinct().count()

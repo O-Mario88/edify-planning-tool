@@ -200,3 +200,69 @@ class WeeklyApprovalRoutingTest(TestCase):
         approve_weekly_request(wfr.id, self.pl)
         adv.refresh_from_db()
         self.assertEqual(adv.status, "confirmed_for_advance")
+
+    # ── Per-line disbursement requires line MEMBERSHIP in an approved request ─
+    def test_per_line_disbursement_requires_membership_in_approved_request(self):
+        """2026-08-12 audit C-2: an activity scheduled AFTER the week's request
+        was approved joins no request (the generator freeze is deliberate), so
+        its advance must not be disbursable per-line merely because *a* request
+        for that week was approved."""
+        from apps.fund_requests.advance_service import (
+            confirm_advance,
+            disburse,
+            sync_for_activity,
+        )
+        from apps.fund_requests.models import AdvanceRequest
+
+        first = self._costed_activity(self.cceo)
+        sync_for_activity(first, responsible_user_id=self.cceo.id)
+        wfr = generate_weekly_fund_request(self.cceo.id, self.week_start.isoformat())
+        request_advance(wfr.id, self.cceo)
+        approve_weekly_request(wfr.id, self.pl)
+
+        # Scheduled after approval — the frozen request must not change…
+        late = self._costed_activity(self.cceo)
+        sync_for_activity(late, responsible_user_id=self.cceo.id)
+        generate_weekly_fund_request(self.cceo.id, self.week_start.isoformat())
+        wfr.refresh_from_db()
+        self.assertEqual(wfr.lines.count(), 1)
+
+        # …and the late advance, even owner-confirmed, must not be payable.
+        late_adv = AdvanceRequest.objects.get(activity=late)
+        confirm_advance(late_adv.id, self.cceo)
+        with self.assertRaisesMessage(
+            BadRequest, "not part of an approved weekly fund request"
+        ):
+            disburse(late_adv.id, {"amount": 50_000}, self.cd)
+
+        # The approved line itself still pays normally.
+        first_adv = AdvanceRequest.objects.get(activity=first)
+        res = disburse(first_adv.id, {"amount": 50_000}, self.cd)
+        self.assertEqual(res["status"], "disbursed")
+
+    def test_returned_weekly_request_rebuilds_from_the_corrected_schedule(self):
+        """2026-08-12 audit C-2 unstick path: a RETURNED request is back in
+        the owner's hands, so the generator rebuilds its lines from the
+        corrected schedule (it used to freeze, making every return a dead
+        end that re-submitted the exact numbers it was returned over)."""
+        from apps.fund_requests.advance_service import sync_for_activity
+
+        first = self._costed_activity(self.cceo)
+        sync_for_activity(first, responsible_user_id=self.cceo.id)
+        wfr = generate_weekly_fund_request(self.cceo.id, self.week_start.isoformat())
+        request_advance(wfr.id, self.cceo)
+        return_weekly_request(wfr.id, {"reason": "Add the second visit"}, self.pl)
+
+        second = self._costed_activity(self.cceo)
+        sync_for_activity(second, responsible_user_id=self.cceo.id)
+        rebuilt = generate_weekly_fund_request(
+            self.cceo.id, self.week_start.isoformat()
+        )
+
+        self.assertEqual(rebuilt.id, wfr.id)
+        self.assertEqual(rebuilt.status, "returned_by_pl")  # resubmission stays explicit
+        self.assertEqual(rebuilt.lines.count(), 2)
+        self.assertEqual(rebuilt.total_amount, 100_000)
+
+        res = request_advance(rebuilt.id, self.cceo)
+        self.assertEqual(res["status"], "submitted_to_pl")

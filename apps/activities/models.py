@@ -237,7 +237,11 @@ class Activity(SoftDeleteModel):
     # apps.budget.costing_service is the sole writer and the CD rate card
     # (apps.budget.models.CostSetting) is documented "1 unit = 1 UGX". Do
     # not divide/multiply this value by 100.
-    est_cost_cents = models.IntegerField(default=0)
+    # BigInteger like the ActivityScheduleCostLine amounts — the line columns
+    # were widened after overflowing at ~UGX 2.1bn (2026-07-30 audit M-14),
+    # and this header total is by definition >= any single line, so the
+    # 32-bit column here was the remaining overflow (2026-08-12 audit M-6).
+    est_cost_cents = models.BigIntegerField(default=0)
     cost_missing = models.BooleanField(default=False)
 
     # PL review handoff when a CCEO completes field work.
@@ -454,32 +458,46 @@ class ActivityScheduleCostLine(TimeStampedModel):
                 return "Ready for Disbursement"
             elif status == "self_funded_pending_reimbursement":
                 return "Execution Pending"
+            elif status in (
+                "accountability_pl_pending",
+                "reimbursement_pl_pending",
+            ):
+                return "Awaiting PL Approval"
+            elif status == "reimbursement_submitted":
+                return "Reimbursement Pending"
             elif status == "returned":
                 return "Returned"
             elif status == "cancelled":
                 return "Rejected"
 
-        # 2. Check WeeklyFundRequest status
+        # 2. Check WeeklyFundRequest status. These labels must track the
+        # statuses weekly_service actually writes (submitted_to_pl/_cd,
+        # confirmed_for_advance, returned_by_*, self_funded, not_requested…) —
+        # an earlier vocabulary here checked names like "pending_pl_approval"
+        # that no code ever wrote, so every line under approval displayed as
+        # "Draft Costed" (2026-08-12 audit M-5).
         wfr_line = self.weekly_request_lines.first()
         if wfr_line:
             wfr = wfr_line.weekly_fund_request
             status = wfr.status
             if status == "pending_responsible_confirmation":
                 return "Included in Weekly Request"
-            elif status == "pending_pl_approval":
+            elif status in ("submitted_to_pl", "submitted_to_cd"):
                 return "Submitted for Approval"
-            elif status == "approved_by_pl":
-                return "PL Approved"
-            elif status == "approved_by_cd":
-                return "CD Approved"
-            elif status == "approved_by_rvp":
-                return "RVP Approved"
             elif status == "confirmed_for_advance":
                 return "Ready for Disbursement"
             elif status == "disbursed":
                 return "Disbursed"
-            elif status == "returned_by_accountant":
+            elif status in (
+                "returned_by_pl",
+                "returned_by_cd",
+                "returned_by_accountant",
+            ):
                 return "Returned"
+            elif status == "self_funded":
+                return "Self-funded"
+            elif status == "not_requested":
+                return "Not Requested"
 
         # 3. Check Activity execution status
         if self.activity.status == "completed":

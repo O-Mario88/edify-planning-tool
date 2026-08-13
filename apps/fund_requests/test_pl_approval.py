@@ -124,6 +124,8 @@ class PLFundApprovalTest(TestCase):
         delivery="staff",
         status="scheduled",
     ):
+        from django.utils import timezone as _tz
+
         return Activity.objects.create(
             school=school,
             delivery_type=delivery,
@@ -131,6 +133,10 @@ class PLFundApprovalTest(TestCase):
             status=status,
             responsible_staff_id=staff_id,
             fy=FY,
+            # The fundable-lines predicate (and §1: every budget amount
+            # originates from a dated plan) requires scheduled work to carry
+            # its date.
+            scheduled_date=_tz.now(),
         )
 
     def _cost_line(
@@ -292,6 +298,26 @@ class PLFundApprovalTest(TestCase):
         fr.refresh_from_db()
         self.assertEqual(fr.status, "returned_by_pl")
         self.assertIn("Costs look too high", fr.review_note)
+
+    def test_return_is_refused_once_the_accountant_holds_the_plan(self):
+        """2026-08-12 audit C-1: approve() refuses to re-decide a plan the
+        Accountant queue holds, but return_request() had no such lock — a PL
+        "Return" on a sent/disbursed plan rebuilt its items and total from
+        live lines and flipped a paid request back to a resubmittable status,
+        rewriting the financial record."""
+        svc.approve(self.pl1_principal, self.cceo_a.id, FY, MONTH)
+
+        with self.assertRaisesMessage(BadRequest, "can no longer be returned"):
+            svc.return_request(
+                self.pl1_principal,
+                self.cceo_a.id,
+                FY,
+                MONTH,
+                {"reason": "Changed my mind"},
+            )
+
+        fr = svc._fund_request_for(self.cceo_a.id, FY, MONTH)
+        self.assertEqual(fr.status, "sent_to_accountant")
 
     def test_return_requires_reason(self):
         with self.assertRaises(BadRequest):

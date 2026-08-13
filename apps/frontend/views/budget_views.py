@@ -570,6 +570,13 @@ def _build_fund_requests_context(request):
                 "confirmed_for_advance": "Ready",
                 "self_funded_pending_reimbursement": "Self-funded",
                 "disbursed": "Disbursed",
+                "accountability_pl_pending": "Awaiting PL Approval",
+                "reimbursement_pl_pending": "Awaiting PL Approval",
+                "accountability_pending": "Accountability Review",
+                "reimbursement_submitted": "Reimbursement Pending",
+                "reimbursement_disbursed": "Reimbursed (confirm receipt)",
+                "accounted": "Cleared",
+                "reimbursed": "Reimbursed",
             }
             status_label = status_labels.get(status_raw, "Auto-calculated")
 
@@ -639,6 +646,45 @@ def _build_fund_requests_context(request):
             )
         if request_type and request_type.lower() != "all":
             weekly_total = sum(line["total_cost"] for line in weekly_lines)
+
+    # 4b. Fund accountability awaiting the PL's approval on this week —
+    # advance accountabilities and self-funded reimbursement claims both
+    # route through the PL before the Accountant. The service re-validates
+    # authority server-side; this flag only decides whether to render the
+    # approval block.
+    pl_pending_accountability = []
+    viewer_can_approve_accountability = False
+    if active_wfr:
+        from apps.fund_requests.models import AdvanceRequest as _Advance
+
+        for adv in _Advance.objects.filter(
+            budget_line__weekly_request_lines__weekly_fund_request=active_wfr,
+            status__in=("accountability_pl_pending", "reimbursement_pl_pending"),
+        ).select_related("budget_line"):
+            pl_pending_accountability.append(
+                {
+                    "id": adv.id,
+                    "item": (
+                        adv.budget_line.description or adv.budget_line.label
+                        if adv.budget_line
+                        else "Budget line"
+                    ),
+                    "amount": adv.accounted_amount or adv.amount,
+                    "netsuite_id": adv.accountability_netsuite_id,
+                    "claim": adv.status == "reimbursement_pl_pending",
+                }
+            )
+        if (
+            pl_pending_accountability
+            and active_wfr.responsible_user != user.user_id
+        ):
+            role = user.active_role
+            if role in ("CountryDirector", "Admin"):
+                viewer_can_approve_accountability = True
+            elif role == "Program Lead":
+                viewer_can_approve_accountability = active_wfr.responsible_user in (
+                    supervised_user_ids or []
+                )
 
     # 5. Source Activities Listing
     source_activities = []
@@ -1074,6 +1120,8 @@ def _build_fund_requests_context(request):
         "kpi_strip_items": kpi_strip_items,
         "active_wfr": active_wfr,
         "viewer_can_approve_wfr": viewer_can_approve_wfr,
+        "pl_pending_accountability": pl_pending_accountability,
+        "viewer_can_approve_accountability": viewer_can_approve_accountability,
         "wfr_status": wfr_status,
         "weekly_lines": weekly_lines,
         "weekly_total": weekly_total,
@@ -1194,6 +1242,77 @@ def weekly_fund_request_confirm_action(request, request_id):
         "hx_trigger": "keyup changed delay:250ms, search",
         "hx_include": "#filters-form",
     }
+    return render(request, "pages/fund_requests/weekly.html", context)
+
+
+@require_page_permission("fund_requests")
+def advance_pl_approve_action(request, advance_id):
+    """The PL confirms an accountability/reimbursement claim is accounted for
+    → it moves to the Accountant. Re-renders in place like the other weekly
+    actions."""
+    from apps.fund_requests.advance_service import pl_approve_accountability
+
+    action_error = action_ok = None
+    if request.method == "POST":
+        try:
+            pl_approve_accountability(advance_id, request.user)
+            action_ok = "Accountability approved and sent to the Accountant."
+        except Exception as e:
+            action_error = str(e)
+
+    context = _build_fund_requests_context(request)
+    context["action_error"] = action_error
+    context["action_ok"] = action_ok
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/fund_requests/root.html", context)
+    return render(request, "pages/fund_requests/weekly.html", context)
+
+
+@require_page_permission("fund_requests")
+def advance_pl_return_action(request, advance_id):
+    """The PL returns an accountability/reimbursement claim for correction."""
+    from apps.fund_requests.advance_service import pl_return_accountability
+
+    action_error = action_ok = None
+    if request.method == "POST":
+        try:
+            pl_return_accountability(
+                advance_id, {"reason": request.POST.get("reason")}, request.user
+            )
+            action_ok = "Accountability returned for correction."
+        except Exception as e:
+            action_error = str(e)
+
+    context = _build_fund_requests_context(request)
+    context["action_error"] = action_error
+    context["action_ok"] = action_ok
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/fund_requests/root.html", context)
+    return render(request, "pages/fund_requests/weekly.html", context)
+
+
+@require_page_permission("fund_requests")
+def weekly_fund_request_receipt_action(request, request_id):
+    """The owner confirms the disbursed week's funds actually arrived —
+    this is what opens the accountability workflow for the week's advances.
+    Re-renders in place like the confirm action above."""
+    from apps.fund_requests.weekly_service import confirm_receipt
+
+    action_error = action_ok = None
+    if request.method == "POST":
+        try:
+            confirm_receipt(request_id, request.user)
+            action_ok = (
+                "Receipt confirmed — you can now account for this week's spend."
+            )
+        except Exception as e:
+            action_error = str(e)
+
+    context = _build_fund_requests_context(request)
+    context["action_error"] = action_error
+    context["action_ok"] = action_ok
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/fund_requests/root.html", context)
     return render(request, "pages/fund_requests/weekly.html", context)
 
 

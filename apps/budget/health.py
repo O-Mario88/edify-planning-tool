@@ -91,15 +91,29 @@ def cost_line_period_drift(limit: int = 500) -> dict:
 
 
 def split_week_cost_lines() -> dict:
-    """Activities whose cost lines straddle more than one week."""
+    """Activities whose cost lines straddle more than one week.
+
+    Multi-day programme activities are EXEMPT: the §9 cross-period allocator
+    (costing_service._programme_period_specs) deliberately dates their
+    day-scaled components into the months the work happens in, stamping each
+    split line's key with a ``#mYYYYMM`` suffix. Flagging those made every
+    legitimate cross-month event a permanent "high" finding, which trains
+    people to ignore the check (2026-08-12 audit M-8)."""
     from apps.activities.models import ActivityScheduleCostLine
 
     weeks = defaultdict(set)
-    for activity_id, week in ActivityScheduleCostLine.objects.exclude(
+    period_split_activities = set()
+    for activity_id, week, key in ActivityScheduleCostLine.objects.exclude(
         week_start_date=None
-    ).values_list("activity_id", "week_start_date"):
+    ).values_list("activity_id", "week_start_date", "cost_setting_key"):
         weeks[activity_id].add(week)
-    split = [a for a, w in weeks.items() if len(w) > 1]
+        if "#m" in (key or ""):
+            period_split_activities.add(activity_id)
+    split = [
+        a
+        for a, w in weeks.items()
+        if len(w) > 1 and a not in period_split_activities
+    ]
 
     return {
         **_issue(
@@ -274,6 +288,46 @@ def dangling_fund_request_items() -> dict:
     }
 
 
+def money_moved_on_cancelled_work() -> dict:
+    """Disbursed/accounted advances whose activity was later cancelled.
+
+    Cancellation deliberately preserves money-moved advances (they settle
+    through return/accountability, never silent deletion). Each one is real
+    cash in the field for work that will not happen — it must be actively
+    settled, and until 2026-08-12 it also vanished from every budget rollup
+    (the aggregates excluded cancelled activities before summing the ledger),
+    so nobody was chasing it."""
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+    from apps.fund_requests.models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
+        AdvanceRequest,
+    )
+
+    open_rows = list(
+        AdvanceRequest.objects.filter(
+            status__in=MONEY_MOVED_ADVANCE_STATUSES,
+            activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES,
+        )
+        # Fully settled money needs no chasing even if the work was cancelled.
+        .exclude(status__in=("accounted", "reimbursed"))
+        .values_list("id", flat=True)
+    )
+    return {
+        **_issue(
+            "money_moved_on_cancelled_work",
+            "critical",
+            len(open_rows),
+            f"{len(open_rows)} advance(s) with money out of the account belong "
+            "to cancelled/deferred/rejected activities and are not yet "
+            "settled.",
+            "Have each responsible user submit accountability (or the "
+            "Accountant verify the return) so the cash comes back; the work "
+            "itself will not happen.",
+        ),
+        "samples": [str(pk) for pk in open_rows[:10]],
+    }
+
+
 # There was a `duplicate_weekly_requests` check here. It is gone because it
 # could never fire: WeeklyFundRequest carries a database UniqueConstraint on
 # (responsible_user, week_start_date) named `uniq_weekly_request_owner_week`,
@@ -295,6 +349,7 @@ def finance_integrity_health() -> dict:
         partner_lines_in_staff_funding,
         payable_lines_without_approved_advance,
         dangling_fund_request_items,
+        money_moved_on_cancelled_work,
     ):
         try:
             checks.append(check())

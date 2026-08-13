@@ -20,7 +20,11 @@ from django.utils import timezone
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+from apps.core.activity_types import (
+    NON_FUNDABLE_ACTIVITY_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 
 # Statuses that count as "PL-approved" — past the PL gate and routed to / through
 # the Accountant for disbursement. Approve sends a plan straight to the accountant.
@@ -646,20 +650,46 @@ def _ensure_fund_request(principal, cceo, fy, month):
 
     from .models import FundRequest, FundRequestItem
 
-    lines = list(
+    # PLAN lines — everything the PL is reviewing this month, including
+    # partner-delivered work, so _validate still flags plan-level problems
+    # (a partner visit with no planned school, a cost-missing activity).
+    plan_lines = list(
         ActivityScheduleCostLine.objects.filter(
             activity__responsible_staff_id__in=cceo["ids"],
             activity__fy=fy,
             month=month,
             activity__deleted_at__isnull=True,
         )
-        # Match get_pl_fund_approvals: cancelled/rejected/deferred activities
-        # must not be funded, so they must not enter the approval total either.
-        .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .select_related("activity")
     )
-    if not lines:
+    if not plan_lines:
         raise BadRequest("This plan has no scheduled, costed activities to approve.")
+
+    # REQUEST items — only the staff-fundable subset (shared predicate): no
+    # partner lines (paid via PartnerPayment), no cost-missing activities, no
+    # lines already paid through the weekly channel. The approval total is
+    # therefore exactly what the Accountant can release; the old query sent
+    # partner/paid lines into the request, where the funding guard blocked
+    # the whole plan with a "reconcile the request" refusal.
+    from .fundable import fundable_lines
+
+    lines = list(
+        fundable_lines(
+            ActivityScheduleCostLine.objects.filter(
+                activity__responsible_staff_id__in=cceo["ids"],
+                activity__fy=fy,
+                month=month,
+            )
+        ).select_related("activity")
+    )
+    if not lines:
+        raise BadRequest(
+            "Nothing on this plan is staff-payable — partner work pays through "
+            "Partner Payments, and already-funded or opted-out lines are "
+            "settled elsewhere. There is no advance for the Accountant to "
+            "disburse."
+        )
     total = sum(li.amount for li in lines)
     act_ids = {li.activity_id for li in lines}
     # update_or_create + the delete/recreate of items must be atomic — a crash
@@ -698,7 +728,9 @@ def _ensure_fund_request(principal, cceo, fy, month):
                 for li in lines
             ]
         )
-    return fr, lines
+    # Callers validate the PLAN (partner rows included), not the payable
+    # subset — _validate's partner/school checks must keep firing.
+    return fr, plan_lines
 
 
 def _resolve_cceo(principal, cceo_user_id):
@@ -748,6 +780,13 @@ def approve(principal, cceo_user_id, fy, month):
     fr.save(
         update_fields=["status", "reviewed_by_user_id", "reviewed_at", "updated_at"]
     )
+    # PL approval clears these lines for release — move their pending advances
+    # to SUBMITTED_TO_ACCOUNTANT so the disbursement guard (which refuses
+    # pending rows) recognises the decision. Owner choices (self-funded /
+    # not-requested) and money already moved are never overwritten.
+    from .advance_service import sync_advances_for_period_request
+
+    sync_advances_for_period_request(fr, to_accountant=True)
 
     _audit(
         principal,
@@ -779,6 +818,18 @@ def return_request(principal, cceo_user_id, fy, month, data):
     if not reason:
         raise BadRequest("A return reason is required.")
     cceo = _resolve_cceo(principal, cceo_user_id)
+    # Same lock as approve(): once the Accountant queue has acted on this plan
+    # (sent_to_accountant is their queue; disbursed/held are their decisions),
+    # a PL "Return" must not rebuild its items/total from live lines and flip a
+    # paid request back to a resubmittable status — that rewrites the financial
+    # record of money that already moved.
+    existing = _fund_request_for(cceo["user_id"], fy, month)
+    if existing and existing.status in _LOCKED_AFTER_ACCOUNTANT_ACTION:
+        raise BadRequest(
+            f"This plan is already {existing.get_status_display()} — it can no "
+            "longer be returned. Ask the Accountant to return it from the "
+            "disbursement queue instead."
+        )
     fr, _ = _ensure_fund_request(principal, cceo, fy, month)
 
     fr.status = "returned_by_pl"

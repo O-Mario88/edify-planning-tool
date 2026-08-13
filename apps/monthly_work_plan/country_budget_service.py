@@ -20,6 +20,7 @@ RVP reviews exactly what was submitted.
 
 from __future__ import annotations
 
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
@@ -222,7 +223,7 @@ def _valid_lines_qs(fy, month_num):
             activity__fy=fy,
             month=month_num,
         )
-        .exclude(activity__status__in=["cancelled", "rejected"])
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
         .select_related("activity", "activity__school")
     )
@@ -350,7 +351,7 @@ def _trailing_month_series(fy, month_num, n=6):
             ActivityScheduleCostLine.objects.filter(
                 activity__deleted_at__isnull=True, activity__fy=line_fy, month=m
             )
-            .exclude(activity__status__in=["cancelled", "rejected"])
+            .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
             .values(
                 "activity__activity_type",
                 "activity__delivery_type",

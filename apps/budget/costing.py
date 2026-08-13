@@ -145,7 +145,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     # core components (venue + participant meals) which are always demanded so
     # a missing rate blocks funded scheduling rather than under-costing.
     if activity_type == "programme_event":
-        days = max(1, int(a.get("days") or 1))
+        days = _days_of(a)
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
         add("Venue", "programme_venue_per_day", days)
         add("Participant meals", "programme_participant_meal_cost_per_head", n * days)
@@ -257,56 +257,11 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     )
 
 
-def resolve_activity_cost(
-    a: dict,
-    rates: RateCard,
-    snapshot_lines: list[dict] | None = None,
-) -> ActivityCost:
-    """Prefer schedule-time snapshot; recalc from attendance when actuals exist."""
-    attended = sum(
-        _nonnegative_count(a.get(key))
-        for key in (
-            "teachersAttended",
-            "leadersAttended",
-            "otherParticipants",
-        )
-    )
-    if attended > 0:
-        return cost_for_activity(a, rates)
-
-    if snapshot_lines:
-        lines = [
-            CostLine(
-                label=sl["label"],
-                key=sl["costSettingKey"],
-                unit=sl["unitCost"],
-                qty=sl["quantity"],
-                amount=sl["amount"],
-                missing=False,
-            )
-            for sl in snapshot_lines
-        ]
-        est = a.get("estCostCents")
-        amount = (
-            est if (est is not None and est > 0) else sum(line.amount for line in lines)
-        )
-        return ActivityCost(
-            amount=amount,
-            lines=lines,
-            cost_missing=bool(a.get("costMissing")),
-            missing_items=[],
-        )
-
-    est = a.get("estCostCents")
-    if est is not None and est > 0:
-        return ActivityCost(
-            amount=est,
-            lines=[],
-            cost_missing=bool(a.get("costMissing")),
-            missing_items=[],
-        )
-    return cost_for_activity(a, rates)
-
+# NOTE: a `resolve_activity_cost` helper used to live here ("prefer the
+# snapshot; recalc when actuals exist"). It had no callers, and its recalc
+# branch would have re-priced completed work at CURRENT rates — the exact
+# snapshot-vs-live desync the persisted cost lines exist to prevent — so it
+# was removed rather than left as an attractive nuisance (2026-08-12 audit L-1).
 
 __all__ = [
     "RateCard",
@@ -319,5 +274,4 @@ __all__ = [
     "LEGACY_CLUSTER_ACTIVITY_COST_KEYS",
     "RETIRED_COST_SETTING_KEYS",
     "cost_for_activity",
-    "resolve_activity_cost",
 ]

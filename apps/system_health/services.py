@@ -368,7 +368,18 @@ def missing_cost_lines_count() -> int:
     )
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
-        .filter(cost_line_count=0, est_cost_cents__gt=0)
+        .filter(cost_line_count=0)
+        # A missing line is a defect when the estimate says the activity
+        # carries cost, OR when catalogue-governed DATED work has no lines at
+        # all — the costing service writes lines (zero-amount ones included)
+        # for every dated schedule, so "no lines" there means the writer never
+        # ran, even if the estimate reads 0 (2026-08-12 audit L-9). Ungoverned
+        # legacy imports (no catalogue item) keep the estimate-only predicate
+        # so historic zero-cost work stays green.
+        .filter(
+            Q(est_cost_cents__gt=0)
+            | Q(catalogue_item_id__isnull=False, scheduled_date__isnull=False)
+        )
         .count()
     )
 
@@ -822,23 +833,31 @@ def _workflow_issues() -> dict:
     # that week can't silently rewrite an approved figure — so this check
     # can't just compare a request against its OWN (equally frozen) lines; it
     # has to recompute the live sum the same way the generator would.
+    from apps.fund_requests.fundable import fundable_lines
     from apps.fund_requests.models import WeeklyFundRequest
 
     confirmed_wfrs_drifted = 0
-    for _wfr in WeeklyFundRequest.objects.exclude(
-        status="pending_responsible_confirmation"
+    # Only the frozen PRE-disbursement stages can meaningfully drift: owner-
+    # held statuses (draft and returned) rebuild live so they never drift, and
+    # once money moves (disbursed / self-funded settlement) the request is a
+    # historical record whose own lines the fundable predicate rightly
+    # excludes. The live sum is computed with the SAME shared predicate the
+    # generator uses (fundable_lines); the old cancelled-only approximation
+    # flagged false drift whenever a partner or deferred activity shared the
+    # week.
+    for _wfr in WeeklyFundRequest.objects.filter(
+        status__in=("submitted_to_pl", "submitted_to_cd", "confirmed_for_advance")
     ).only(
         "id", "responsible_user", "week_start_date", "week_end_date", "total_amount"
     ):
         _live_sum = (
-            ActivityScheduleCostLine.objects.filter(
-                responsible_user=_wfr.responsible_user,
-                planned_date__gte=_wfr.week_start_date,
-                planned_date__lte=_wfr.week_end_date,
-                activity__deleted_at__isnull=True,
-            )
-            .exclude(activity__status="cancelled")
-            .aggregate(s=Sum("amount"))["s"]
+            fundable_lines(
+                ActivityScheduleCostLine.objects.filter(
+                    responsible_user=_wfr.responsible_user,
+                    planned_date__gte=_wfr.week_start_date,
+                    planned_date__lte=_wfr.week_end_date,
+                )
+            ).aggregate(s=Sum("amount"))["s"]
             or 0
         )
         if _live_sum != _wfr.total_amount:

@@ -22,6 +22,7 @@ from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.fund_requests.advance_service import (
+    pl_approve_accountability,
     approve_accountability,
     submit_accountability,
 )
@@ -56,6 +57,17 @@ class NetSuiteAccountabilityLawsTest(TestCase):
             password="x",
             is_active=True,
         )
+        # Accountability routes through a PL/CD approval before the Accountant
+        # (2026-08-13 mandate); country authority approves in this fixture.
+        self.cd = User.objects.create_user(
+            email="cd@ns.org",
+            name="Nia CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="x",
+            is_active=True,
+        )
+        StaffProfile.objects.create(user=self.cd, title="CountryDirector")
 
         self.activity = Activity.objects.create(
             school=self.school,
@@ -88,10 +100,17 @@ class NetSuiteAccountabilityLawsTest(TestCase):
             disbursed_amount=50_000,
         )
 
+    def _submit_accountability(self, adv_id, data, principal):
+        """Submit + the PL/CD approval the chain now requires before the
+        Accountant may act — these tests exercise the NetSuite laws."""
+        result = submit_accountability(adv_id, data, principal)
+        pl_approve_accountability(adv_id, self.cd)
+        return result
+
     # ── §15: accountability requires the NetSuite Code ───────────────────────
     def test_netsuite_code_required_for_accountability_completion(self):
         with self.assertRaises(BadRequest):
-            submit_accountability(
+            self._submit_accountability(
                 self.adv.id,
                 {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": ""},
                 self.cceo,
@@ -99,7 +118,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.DISBURSED)
 
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-2026-771"},
             self.cceo,
@@ -110,12 +129,12 @@ class NetSuiteAccountabilityLawsTest(TestCase):
 
     def test_variance_requires_explanation(self):
         with self.assertRaises(BadRequest):
-            submit_accountability(
+            self._submit_accountability(
                 self.adv.id,
                 {"amountSpent": 30_000, "amountReturned": 0, "netsuiteId": "EXP-1"},
                 self.cceo,
             )
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {
                 "amountSpent": 30_000,
@@ -135,13 +154,13 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         # NOT satisfy the accountability requirement.
         self.assertTrue(self.activity.salesforce_activity_id)
         with self.assertRaises(BadRequest):
-            submit_accountability(
+            self._submit_accountability(
                 self.adv.id,
                 {"amountSpent": 50_000, "amountReturned": 0},
                 self.cceo,
             )
         # And once submitted, the two proofs live on different fields.
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-42"},
             self.cceo,
@@ -156,7 +175,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
 
     # ── §17: IA verification gates final finance clearance ──────────────────
     def test_accountant_cannot_final_clear_without_ia_verification(self):
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-9"},
             self.cceo,
@@ -198,7 +217,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         # but the activity must NOT yet be closeable — the accountant has not
         # final-cleared it. Closure requires genuine accountant clearance
         # (mandate §9/§18), not merely a submitted accountability.
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-77"},
             self.cceo,
@@ -238,7 +257,7 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         self.activity.ia_verification_status = "confirmed"
         self.activity.save(update_fields=["status", "ia_verification_status"])
 
-        submit_accountability(
+        self._submit_accountability(
             self.adv.id,
             {"amountSpent": 50_000, "amountReturned": 0, "netsuiteId": "EXP-AUDIT-1"},
             self.cceo,

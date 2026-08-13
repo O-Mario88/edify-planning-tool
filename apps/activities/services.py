@@ -2043,7 +2043,16 @@ def create(
         # each school's Activity via this function, then prices the whole batch in
         # one pass afterward — skip the single-activity cost snapshot here so a
         # school is never priced twice (once alone, once as part of its batch).
-        if not skip_cost_snapshot:
+        #
+        # UNDATED work is never priced (§1: every budget amount originates
+        # from a dated plan). The write used to run for undated "planned"
+        # activities too, minting cost lines with NULL period stamps that no
+        # weekly/monthly builder could ever pick up while est_cost_cents
+        # still counted in line aggregates — and it silently skipped the
+        # missing-rate blocker above, which only guards dated work
+        # (2026-08-12 audit M-4). Pricing happens when the activity is dated
+        # (reschedule sets scheduled_date and re-prices).
+        if not skip_cost_snapshot and activity.scheduled_date:
             # Staff school visits are pool-priced: the whole day's transport/
             # meal pool is split across that day's schools. The UI scheduling
             # paths used to price each visit alone here — billing every school
@@ -2821,6 +2830,10 @@ def _notify_partner_schedule_change(activity, event_type, title, body) -> None:
 
 def reassign(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
+    # Reassignment moves the money trail to a new owner — a scheduling power,
+    # not a review/pay power, so country-visibility-only roles are refused the
+    # same way reschedule refuses them (2026-08-12 audit M-3).
+    _assert_may_schedule(a, principal)
     # The ownership flip and the cost/request rebuild must land together — a
     # costing failure otherwise leaves the activity reassigned while the money
     # still sits with the previous owner. The row lock serialises concurrent
@@ -3395,6 +3408,11 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
         cost_drivers_changed = any(
             f in _COST_DRIVER_PATCH_FIELDS for f in update_fields
         )
+        # Changing a cost driver re-prices the budget — scheduling authority,
+        # which country-visibility-only roles (Programme Accountant) do not
+        # carry (2026-08-12 audit M-3).
+        if cost_drivers_changed:
+            _assert_may_schedule(a, principal)
         with transaction.atomic():
             a.save(update_fields=update_fields + ["updated_at"])
             # A participant-count change re-prices per-head components. Batch

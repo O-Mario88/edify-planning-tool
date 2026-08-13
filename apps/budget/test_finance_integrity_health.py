@@ -177,6 +177,7 @@ class FinanceIntegrityHealthTest(TestCase):
             keys,
             {
                 "cost_line_period_drift",
+                "money_moved_on_cancelled_work",
                 "split_week_cost_lines",
                 "double_funded_budget_lines",
                 "partner_lines_in_staff_funding",

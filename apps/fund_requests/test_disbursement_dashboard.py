@@ -94,6 +94,7 @@ class DisbursementDashboardTest(TestCase):
             status="scheduled",
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
+            scheduled_date=timezone.now(),
         )
         line = ActivityScheduleCostLine.objects.create(
             activity=act,
@@ -254,6 +255,7 @@ class DisbursementDashboardTest(TestCase):
             status="scheduled",
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
+            scheduled_date=timezone.now(),
         )
         line2 = ActivityScheduleCostLine.objects.create(
             activity=act2,
@@ -461,6 +463,7 @@ class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
             status="scheduled",
             responsible_staff_id=self.cceo_sp.id,
             fy=FY,
+            scheduled_date=timezone.now(),
         )
         line = ActivityScheduleCostLine.objects.create(
             activity=act,

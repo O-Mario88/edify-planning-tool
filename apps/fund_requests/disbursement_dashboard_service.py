@@ -1591,6 +1591,12 @@ def return_item(principal, fund_request_id, data):
             "updated_at",
         ]
     )
+    # The plan is back in the owner's hands — advances the approval routed to
+    # the accountant queue go back to pending so nothing on this plan remains
+    # releasable until it is corrected and re-approved.
+    from .advance_service import sync_advances_for_period_request
+
+    sync_advances_for_period_request(fr, to_accountant=False)
     _audit(principal, "fund_request.return_accountant", fr, {"reason": reason})
     _notify_requester(
         fr,

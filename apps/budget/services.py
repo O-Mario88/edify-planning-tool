@@ -20,7 +20,7 @@ from apps.core.scoping import resolve_user_scope
 
 from .models import CostSetting, CostSettingHistory
 from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
-from apps.core.activity_types import TRAINING_TYPES
+from apps.core.activity_types import TRAINING_TYPES, NON_FUNDABLE_ACTIVITY_STATUSES
 
 # Calendar month → fiscal quarter (Oct-start FY: Q1 Oct–Dec … Q4 Jul–Sep),
 # matching apps/core/fy.py::get_quarter_for_date.
@@ -231,7 +231,7 @@ def from_schedule(principal, query: dict) -> dict:
     scope = resolve_user_scope(principal)
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(delivery_type="partner", planned_date__isnull=True)
     )
     if not scope.country_scope:
@@ -536,7 +536,7 @@ def board(principal, query: dict) -> dict:
     scope = resolve_user_scope(principal)
     qs = (
         Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(delivery_type="partner", planned_date__isnull=True)
     )
 
@@ -925,7 +925,7 @@ def budget_workspace(principal, query: dict) -> dict:
             activity__deleted_at__isnull=True,
             activity__scheduled_date__isnull=False,
         )
-        .exclude(activity__status__in=["cancelled", "rejected"])
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .select_related("activity", "partner")
     )
     if owner_ids is not None:
@@ -1339,15 +1339,11 @@ def get_budget_rollup(
     from django.db.models import Sum, Q
     from apps.activities.models import ActivityScheduleCostLine
 
-    qs = (
-        ActivityScheduleCostLine.objects.filter(
-            activity__deleted_at__isnull=True, activity__fy=fy
-        )
-        .exclude(activity__status__in=["cancelled", "rejected"])
-        .exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
-    )
+    base = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True, activity__fy=fy
+    ).exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
     if quarter:
-        qs = qs.filter(activity__quarter=quarter)
+        base = base.filter(activity__quarter=quarter)
     if month is not None:
         # `month` here is FY-relative (1=Oct...12=Sep — see monthly_budget()'s
         # callers), but ActivityScheduleCostLine.month is a calendar month
@@ -1355,7 +1351,11 @@ def get_budget_rollup(
         # Activity.planned_month, which used to be filtered on here, is a
         # separate legacy field only populated when a caller happens to pass
         # plannedMonth explicitly, so it silently under-counted real activity.
-        qs = qs.filter(month=_calendar_month_of_fy(fy, month))
+        base = base.filter(month=_calendar_month_of_fy(fy, month))
+
+    # PLANNED/requested/approved describe live, fundable work — cancelled,
+    # rejected and deferred activities leave those totals.
+    qs = base.exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
 
     agg = qs.aggregate(
         planned=Sum("amount"),
@@ -1384,9 +1384,16 @@ def get_budget_rollup(
                 ]
             ),
         ),
-        # Disbursed/accounted report ACTUAL money (AdvanceRequest amounts),
-        # not the planned line amount — a partial disbursement previously
-        # showed as fully disbursed on every rollup surface.
+    )
+    # DISBURSED/accounted describe money that actually left the account, so
+    # they must NOT apply the status exclusion: cancelling an activity after
+    # its advance was disbursed preserves the advance (it settles through
+    # return/accountability), and the cash-out figure vanishing from the
+    # rollup while the money was still in the field is exactly the
+    # under-reporting the 2026-08-12 audit flagged (H-3). Amounts come from
+    # the AdvanceRequest ledger, not the planned line amount — a partial
+    # disbursement previously showed as fully disbursed on every surface.
+    money_agg = base.aggregate(
         disbursed=Sum(
             "advance_requests__disbursed_amount",
             filter=Q(
@@ -1405,6 +1412,7 @@ def get_budget_rollup(
             filter=Q(advance_requests__status__in=["accounted", "reimbursed"]),
         ),
     )
+    agg.update(money_agg)
 
     planned = int(agg["planned"] or 0)
     requested = int(agg["requested"] or 0)

@@ -1721,6 +1721,19 @@ class PLCatchUpPlanService:
         if activity_type and plan.school_ids:
             from apps.activities import services as activity_services
 
+            # Resolve the governed catalogue item for this recovery type so
+            # catch-up work carries the same provenance (and recommendation /
+            # frequency gates) as drawer-scheduled work — approve() used to
+            # mint catalogue-less activities (2026-08-12 audit M-9). When the
+            # catalogue cannot answer unambiguously (None), the plan still
+            # approves: recovery must not be blocked on a CD filing question.
+            from apps.activity_catalogue.services import (
+                resolve_item_for_workflow_kind,
+            )
+
+            catalogue_item = resolve_item_for_workflow_kind(activity_type)
+            catalogue_ref = {"catalogueItemId": catalogue_item.id} if catalogue_item else {}
+
             dates = list(plan.planned_dates or [])
             for i, school_id in enumerate(plan.school_ids):
                 sched = dates[i] if i < len(dates) and dates[i] else None
@@ -1737,6 +1750,7 @@ class PLCatchUpPlanService:
                                 "scheduledDate": sched,
                                 "activityPurposeText": f"Catch-up plan recovery — {plan.area.label}",
                                 "purposeType": "target_recovery",
+                                **catalogue_ref,
                             },
                             principal=staff_user or approver,
                         )
@@ -1766,6 +1780,7 @@ class PLCatchUpPlanService:
                                 "plannedMonth": plan.month_of_fy,
                                 "activityPurposeText": f"Catch-up plan recovery — {plan.area.label}",
                                 "purposeType": "target_recovery",
+                                **catalogue_ref,
                             },
                             principal=staff_user or approver,
                         )

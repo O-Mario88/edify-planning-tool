@@ -170,6 +170,15 @@ class NotRequestedView(APIView):
 # Accountant actions (PAYMENT permission).
 AdvanceDisburseView = _advance_view(advance_service.disburse, PAYMENT)
 AdvanceAccountView = _advance_view(advance_service.submit_accountability, VIEW)
+# PL accountability approval (BUDGET_APPROVE; the service enforces that the
+# approver supervises the owner and never self-approves).
+AdvancePlApproveView = _advance_view(
+    lambda advance_id, data, principal: advance_service.pl_approve_accountability(
+        advance_id, principal
+    ),
+    APPROVE,
+)
+AdvancePlReturnView = _advance_view(advance_service.pl_return_accountability, APPROVE)
 AdvanceAccountApproveView = _advance_view(
     advance_service.approve_accountability, PAYMENT, takes_data=False
 )
@@ -191,6 +200,15 @@ class WeeklyGenerateView(APIView):
         user_id = request.data.get("responsibleUser", request.user.user_id)
         if not week_start:
             raise BadRequest("weekStartDate is required.")
+        # Regenerating (or emptying) someone ELSE's draft is a cross-user
+        # write — country authority only. The payload used to be trusted
+        # verbatim with just a view permission (2026-08-12 audit L-3).
+        if user_id != request.user.user_id and not getattr(
+            request.user, "country_scope", False
+        ):
+            raise BadRequest(
+                "You can only generate your own weekly fund request."
+            )
         wfr = generate_weekly_fund_request(user_id, week_start)
         if wfr:
             from .weekly_service import _serialize_request
@@ -261,3 +279,16 @@ class WeeklyRequestDisburseView(APIView):
         from .weekly_service import disburse
 
         return Response(disburse(request_id, request.data, request.user))
+
+
+class WeeklyRequestConfirmReceiptView(APIView):
+    """The owner confirms the disbursed week's funds arrived (opens
+    accountability). VIEW permission — the service enforces ownership."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def post(self, request: Request, request_id: str) -> Response:
+        from .weekly_service import confirm_receipt
+
+        return Response(confirm_receipt(request_id, request.user))

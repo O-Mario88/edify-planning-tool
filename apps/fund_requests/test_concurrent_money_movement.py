@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date, timedelta
 
 from django.db import IntegrityError, connection, connections, transaction
 from django.test import TransactionTestCase
@@ -42,7 +43,12 @@ from apps.fund_requests.advance_service import (
     disburse,
     reimburse,
 )
-from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+from apps.fund_requests.models import (
+    AdvanceRequest,
+    AdvanceRequestStatus,
+    WeeklyFundRequest,
+    WeeklyFundRequestLine,
+)
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -111,8 +117,6 @@ class ConcurrentDisbursementTest(TransactionTestCase):
             school=self.school,
             responsible_staff_id="race-owner",
         )
-        # No week_start_date: this test is about the lock, not the weekly
-        # approval-chain guard, which has its own tests.
         self.cost_line = ActivityScheduleCostLine.objects.create(
             activity=self.activity,
             responsible_user="race-owner",
@@ -129,6 +133,28 @@ class ConcurrentDisbursementTest(TransactionTestCase):
             quarter="Q1",
             amount=450_000,
             status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+        )
+        # This test is about the row lock, not the approval chain — but the
+        # per-line disburse guard now requires the budget line to be CARRIED
+        # by an approved weekly request (membership, not just "some request
+        # for that week was approved"), so the fixture provides one.
+        monday = date(2026, 4, 6)
+        wfr = WeeklyFundRequest.objects.create(
+            fy="FY26",
+            week_start_date=monday,
+            week_end_date=monday + timedelta(days=6),
+            responsible_user="race-owner",
+            total_amount=450_000,
+            status="confirmed_for_advance",
+        )
+        WeeklyFundRequestLine.objects.create(
+            weekly_fund_request=wfr,
+            activity_budget_line=self.cost_line,
+            line_item_type="transport",
+            description="Transport",
+            quantity=1,
+            unit_cost=450_000,
+            total_cost=450_000,
         )
 
     def tearDown(self):
@@ -218,6 +244,9 @@ class ConcurrentReimbursementTest(TransactionTestCase):
             fy="FY26",
             school=self.school,
             responsible_staff_id="race2-owner",
+            # reimburse() now refuses money for unverified work (the IA gate
+            # the advance path always had) — this test is about the row lock.
+            ia_verification_status="confirmed",
         )
         self.cost_line = ActivityScheduleCostLine.objects.create(
             activity=self.activity,

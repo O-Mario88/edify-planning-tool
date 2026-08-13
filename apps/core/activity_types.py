@@ -151,3 +151,16 @@ COMPLETED_WORK_STATUSES = (
     "accountant_confirmed",
     "completed",
 )
+
+# ── Non-fundable status vocabulary ───────────────────────────────────────────
+# Activity statuses that remove work from every staff funding channel (weekly
+# generator, monthly draft, period submit, PL approval) AND from budget
+# aggregates. Before this constant, four builders carried four different
+# exclusion sets and the aggregates disagreed with all of them about
+# "deferred": deferred work counted in the CD's program totals while no
+# funding channel would carry it (2026-08-12 audit M-7/H-2).
+NON_FUNDABLE_ACTIVITY_STATUSES = (
+    "cancelled",
+    "rejected",
+    "deferred",
+)

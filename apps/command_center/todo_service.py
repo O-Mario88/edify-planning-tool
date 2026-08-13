@@ -267,6 +267,57 @@ def _fund_request_todos(principal, role):
                 }
             )
 
+    # Fund accountability awaiting the approver's confirmation that the money
+    # is accounted for (advance accountability AND self-funded reimbursement
+    # claims both route through the PL before the Accountant).
+    if approver_status:
+        from apps.fund_requests.models import AdvanceRequest
+
+        acct_qs = AdvanceRequest.objects.filter(
+            status__in=(
+                "accountability_pl_pending",
+                "reimbursement_pl_pending",
+            )
+        )
+        if role == "Program Lead":
+            from apps.accounts.models import StaffSupervisorAssignment
+
+            supervised = StaffSupervisorAssignment.objects.filter(
+                supervisor__user_id=uid
+            ).values_list("supervisee__user_id", flat=True)
+            acct_qs = acct_qs.filter(responsible_user_id__in=list(supervised))
+        for adv in acct_qs.order_by("-accountability_submitted_at")[:15]:
+            claim = adv.status == "reimbursement_pl_pending"
+            todos.append(
+                {
+                    "id": f"adv-plakt-{adv.id}",
+                    "title": (
+                        "Approve Reimbursement Claim"
+                        if claim
+                        else "Approve Fund Accountability"
+                    ),
+                    "description": (
+                        f"UGX {adv.accounted_amount or 0:,} "
+                        + ("self-funded claim" if claim else "accountability")
+                        + " awaits your confirmation that the money is "
+                        "accounted for."
+                    ),
+                    "category": "Approval",
+                    "priority": "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": "Fund Accountability",
+                    "action_label": "Review",
+                    "action_url": "/fund-requests/weekly",
+                    "actionable": True,
+                    "source": "Finance approval",
+                    "_due_sort": date.max,
+                }
+            )
+
     # Monthly fund plans returned by the PL or the Accountant — the requester
     # must correct and re-submit. Auto-closes when the plan is re-approved
     # (status moves off returned_*).
@@ -294,6 +345,42 @@ def _fund_request_todos(principal, role):
                 "due_tone": "warning",
                 "linked": f"Monthly Fund Plan · {fr.period_key}",
                 "action_label": "Fix",
+                "action_url": "/fund-requests/weekly",
+                "actionable": True,
+                "source": "Finance workflow",
+                "_due_sort": date.today(),
+            }
+        )
+
+    # Disbursed WEEKLY requests awaiting the owner's receipt confirmation —
+    # the step that opens the week's accountability workflow. Auto-closes
+    # when weekly_service.confirm_receipt stamps receipt_confirmed_at.
+    from apps.fund_requests.models import WeeklyFundRequest
+
+    for wfr in WeeklyFundRequest.objects.filter(
+        responsible_user=uid,
+        status="disbursed",
+        receipt_confirmed_at__isnull=True,
+    ).order_by("-disbursed_at")[:5]:
+        todos.append(
+            {
+                "id": f"wfrreceipt-{wfr.id}",
+                "title": "Confirm Receipt of Funds",
+                "description": (
+                    f"Funds for your week of {wfr.week_start_date:%d %b} were "
+                    "disbursed"
+                    + (f" via {wfr.disburse_method}" if wfr.disburse_method else "")
+                    + ". Confirm they arrived to open accountability."
+                ),
+                "category": "Finance",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "Today",
+                "due_tone": "warning",
+                "linked": f"Weekly Fund Request · {wfr.week_start_date:%d %b}",
+                "action_label": "Confirm",
                 "action_url": "/fund-requests/weekly",
                 "actionable": True,
                 "source": "Finance workflow",

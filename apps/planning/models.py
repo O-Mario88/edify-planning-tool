@@ -78,7 +78,7 @@ class MonthlyPlanActivity(TimeStampedModel):
     assignee_id = models.CharField(max_length=30, null=True, blank=True)
     # Despite the field name, this holds plain integer UGX (whole
     # shillings), not cents -- see apps.activities.models.Activity.est_cost_cents.
-    est_cost_cents = models.IntegerField(default=0)
+    est_cost_cents = models.BigIntegerField(default=0)
     status = models.CharField(max_length=32, default="Planned")
     intervention_area = models.CharField(max_length=64, null=True, blank=True)
     delivery_type = models.CharField(max_length=16, null=True, blank=True)

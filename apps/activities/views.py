@@ -124,8 +124,17 @@ class SchedulePartnerVisitView(APIView):
 
 
 class ActivityDetailView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = PLANNING_VIEW
+    """GET stays a view-permission read; PATCH can change participant counts
+    and therefore RE-PRICE the activity's budget lines, so it demands the same
+    ACTIVITY_ASSIGN permission as every sibling mutation (2026-08-12 audit M-3
+    — it used to accept any PLANNING_VIEW holder)."""
+
+    @property
+    def required_permissions(self):
+        return ASSIGN if self.request.method == "PATCH" else PLANNING_VIEW
+
+    def get_permissions(self):
+        return [IsAuthenticated(), RequirePermissions()]
 
     def get(self, request: Request, activity_id: str) -> Response:
         return Response(services.get_activity(activity_id, request.user))

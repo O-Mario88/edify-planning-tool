@@ -45,6 +45,16 @@ urlpatterns = [
         name="advance-account",
     ),
     path(
+        "advances/<str:advance_id>/pl-approve",
+        views.AdvancePlApproveView.as_view(),
+        name="advance-pl-approve",
+    ),
+    path(
+        "advances/<str:advance_id>/pl-return",
+        views.AdvancePlReturnView.as_view(),
+        name="advance-pl-return",
+    ),
+    path(
         "advances/<str:advance_id>/account-approve",
         views.AdvanceAccountApproveView.as_view(),
         name="advance-account-approve",
@@ -86,6 +96,11 @@ urlpatterns = [
         "weekly/<str:request_id>/disburse",
         views.WeeklyRequestDisburseView.as_view(),
         name="weekly-disburse",
+    ),
+    path(
+        "weekly/<str:request_id>/confirm-receipt",
+        views.WeeklyRequestConfirmReceiptView.as_view(),
+        name="weekly-confirm-receipt",
     ),
     # Direct weekly request confirm routes (without weekly/ prefix)
     path(

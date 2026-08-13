@@ -499,6 +499,21 @@ urlpatterns = [
         name="weekly_fund_request_confirm",
     ),
     path(
+        "fund-requests/weekly/<str:request_id>/confirm-receipt",
+        budget_views.weekly_fund_request_receipt_action,
+        name="weekly_fund_request_receipt",
+    ),
+    path(
+        "fund-requests/advances/<str:advance_id>/pl-approve",
+        budget_views.advance_pl_approve_action,
+        name="advance_pl_approve",
+    ),
+    path(
+        "fund-requests/advances/<str:advance_id>/pl-return",
+        budget_views.advance_pl_return_action,
+        name="advance_pl_return",
+    ),
+    path(
         "fund-requests/weekly/<str:request_id>/self-funded",
         budget_views.weekly_fund_request_self_funded_action,
         name="weekly_fund_request_self_funded",

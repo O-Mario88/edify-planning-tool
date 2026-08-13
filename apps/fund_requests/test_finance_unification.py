@@ -29,6 +29,7 @@ from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.fund_requests.advance_service import (
+    pl_approve_accountability,
     approve_accountability,
     confirm_reimbursement_receipt,
     reimburse,
@@ -113,9 +114,33 @@ class FinanceUnificationBaseTest(TestCase):
             is_active=True,
         )
 
+        # Accountability routes through a PL/CD approval before the Accountant
+        # (2026-08-13 mandate); country authority approves in these fixtures.
+        self.cd = User.objects.create_user(
+            email="cd@fu.org",
+            name="Fu CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="x",
+            is_active=True,
+        )
+        StaffProfile.objects.create(user=self.cd, title="CountryDirector")
+
     def _ia_verify(self, activity):
         activity.ia_verification_status = "confirmed"
         activity.save(update_fields=["ia_verification_status"])
+
+    def _submit_accountability(self, adv_id, data, principal):
+        """Submit + the PL/CD approval the chain now requires before the
+        Accountant may act — these tests exercise the accountant-side laws."""
+        result = submit_accountability(adv_id, data, principal)
+        pl_approve_accountability(adv_id, self.cd)
+        return result
+
+    def _submit_reimbursement(self, adv_id, data, principal):
+        result = submit_reimbursement(adv_id, data, principal)
+        pl_approve_accountability(adv_id, self.cd)
+        return result
 
 
 class OverspendReimbursementTest(FinanceUnificationBaseTest):
@@ -126,7 +151,7 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-OVER-1"},
             self.cceo,
@@ -142,7 +167,7 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-OVER-2"},
             self.cceo,
@@ -167,7 +192,7 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-DUP-1"},
             self.cceo,
@@ -189,7 +214,7 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-TWICE-1"},
             self.cceo,
@@ -203,7 +228,7 @@ class OverspendReimbursementTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-RCPT-1"},
             self.cceo,
@@ -238,12 +263,19 @@ class SelfFundedReimbursementTest(FinanceUnificationBaseTest):
             advance_type="self_funded",
             status=AdvanceRequestStatus.SELF_FUNDED_PENDING_REIMBURSEMENT,
         )
-        submit_reimbursement(
+        self._submit_reimbursement(
             adv.id, {"amountSpent": 80_000, "netsuiteId": "EXP-SF-1"}, self.cceo
         )
         adv.refresh_from_db()
         self.assertEqual(adv.status, AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED)
 
+        # Money moves only after IA confirms the work was done — the same gate
+        # the advance path enforces at clearance (2026-08-13 mandate).
+        with self.assertRaisesMessage(BadRequest, "IA has not verified"):
+            reimburse(
+                adv.id, {"method": "cash", "reference": "REF-SF-1"}, self.accountant
+            )
+        self._ia_verify(activity)
         reimburse(adv.id, {"method": "cash", "reference": "REF-SF-1"}, self.accountant)
         adv.refresh_from_db()
         self.assertEqual(adv.status, AdvanceRequestStatus.REIMBURSEMENT_DISBURSED)
@@ -265,7 +297,7 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {
                 "amountSpent": 70_000,
@@ -284,7 +316,7 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {
                 "amountSpent": 70_000,
@@ -307,7 +339,7 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
         activity, adv = _make_activity_and_advance(
             self.school, self.cceo, amount=100_000
         )
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 100_000, "amountReturned": 0, "netsuiteId": "EXP-EXACT-1"},
             self.cceo,
@@ -322,7 +354,7 @@ class UnderSpendReturnVerificationTest(FinanceUnificationBaseTest):
             self.school, self.cceo, amount=100_000
         )
         with self.assertRaises(BadRequest):
-            submit_accountability(
+            self._submit_accountability(
                 adv.id,
                 {
                     "amountSpent": 120_000,
@@ -459,7 +491,7 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
         activity.ia_verification_status = "confirmed"
         activity.save(update_fields=["status", "ia_verification_status"])
 
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 100_000, "amountReturned": 0, "netsuiteId": "EXP-SNAP-1"},
             self.cceo,
@@ -489,7 +521,7 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
         activity.ia_verification_status = "confirmed"
         activity.save(update_fields=["status", "ia_verification_status"])
 
-        submit_accountability(
+        self._submit_accountability(
             adv.id,
             {"amountSpent": 150_000, "amountReturned": 0, "netsuiteId": "EXP-SNAP-2"},
             self.cceo,

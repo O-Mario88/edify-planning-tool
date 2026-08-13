@@ -2,7 +2,7 @@
 
 from django.test import SimpleTestCase
 
-from apps.budget.costing import cost_for_activity, resolve_activity_cost
+from apps.budget.costing import cost_for_activity
 
 
 TRAINING_RATES = {
@@ -40,26 +40,29 @@ class CostingFormPayloadTest(SimpleTestCase):
         meal = next(line for line in cost.lines if line.label == "Participant meals")
         self.assertEqual(meal.qty, 10)
 
-    def test_recosting_accepts_category_counts_serialized_as_strings(self):
-        cost = resolve_activity_cost(
+    def test_multi_day_days_accepts_a_string_and_garbage(self):
+        """`days` arrives as a string from number inputs; garbage falls back
+        to one day instead of raising (the programme-event branch used a bare
+        int() until the 2026-08-12 audit's L-2)."""
+        rates = {
+            "programme_venue_per_day": 100_000,
+            "programme_participant_meal_cost_per_head": 5_000,
+        }
+        cost = cost_for_activity(
             {
-                "activityType": "in_school_training",
-                "teachersAttended": "6",
-                "leadersAttended": "3",
-                "otherParticipants": "1",
+                "activityType": "programme_event",
+                "expectedParticipants": "10",
+                "days": "3",
             },
-            TRAINING_RATES,
-            snapshot_lines=[
-                {
-                    "label": "Old snapshot",
-                    "costSettingKey": "old",
-                    "unitCost": 1,
-                    "quantity": 1,
-                    "amount": 1,
-                }
-            ],
+            rates,
         )
+        venue = next(line for line in cost.lines if line.label == "Venue")
+        self.assertEqual(venue.qty, 3)
 
-        meal = next(line for line in cost.lines if line.label == "Participant meals")
-        self.assertEqual(meal.qty, 10)
+        cost = cost_for_activity(
+            {"activityType": "programme_event", "days": "garbage"},
+            rates,
+        )
+        venue = next(line for line in cost.lines if line.label == "Venue")
+        self.assertEqual(venue.qty, 1)
 

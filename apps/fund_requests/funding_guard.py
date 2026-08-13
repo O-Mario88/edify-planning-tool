@@ -18,10 +18,13 @@ DISBURSABLE_ADVANCE_STATUSES = (
     AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
     AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
 )
-PERIOD_DISBURSABLE_ADVANCE_STATUSES = (
-    AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-    *DISBURSABLE_ADVANCE_STATUSES,
-)
+# The monthly/period channel previously accepted PENDING_RESPONSIBLE_CONFIRMATION
+# here, letting the accountant move money for lines nobody had cleared — the
+# core finance-safety rule the weekly channel enforces. Approval of the monthly
+# request now routes its child advances to SUBMITTED_TO_ACCOUNTANT
+# (advance_service.sync_advances_for_period_request), so the period channel
+# demands the same cleared statuses as every other channel.
+PERIOD_DISBURSABLE_ADVANCE_STATUSES = DISBURSABLE_ADVANCE_STATUSES
 
 
 def lock_disbursable_advances(

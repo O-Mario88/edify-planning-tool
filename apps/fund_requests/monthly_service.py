@@ -20,21 +20,20 @@ def _period_key(fy: str, month: int) -> str:
 
 
 def _fundable_lines(owner_id: str, fy: str, month: int):
+    # The shared predicate (apps.fund_requests.fundable) is the one
+    # definition of a staff-fundable line — partner work pays through
+    # PartnerPayment, cost-missing work carries no advances, and lines whose
+    # money already moved (or whose owner opted out) never re-enter a draft.
+    from .fundable import fundable_lines
+
     return list(
-        ActivityScheduleCostLine.objects.filter(
-            responsible_user=owner_id,
-            fiscal_year=fy,
-            month=month,
-            activity__deleted_at__isnull=True,
-            activity__scheduled_date__isnull=False,
-            activity__cost_missing=False,
-        )
-        .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
-        # Partner-delivered costs are paid through the PartnerPayment
-        # workflow, never through a staff monthly/advance request — including
-        # them here made the same line payable in two channels.
-        .exclude(activity__delivery_type="partner")
-        .select_related("activity")
+        fundable_lines(
+            ActivityScheduleCostLine.objects.filter(
+                responsible_user=owner_id,
+                fiscal_year=fy,
+                month=month,
+            )
+        ).select_related("activity")
     )
 
 

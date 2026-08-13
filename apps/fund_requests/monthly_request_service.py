@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.db import transaction
 from django.utils import timezone
 
@@ -62,7 +63,7 @@ def _live_month_lines(principal, fy: str, month: int):
             activity__deleted_at__isnull=True,
             activity__scheduled_date__isnull=False,
         )
-        .exclude(activity__status__in=["cancelled", "rejected"])
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .select_related("activity", "activity__school")
         .order_by("planned_date", "activity__activity_type", "label")
     )
