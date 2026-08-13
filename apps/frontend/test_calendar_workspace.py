@@ -3,6 +3,7 @@ from datetime import date
 from django.test import TestCase
 
 from apps.accounts.models import (
+    CalendarBlock,
     Leave,
     PublicHoliday,
     StaffProfile,
@@ -127,6 +128,98 @@ class CalendarWorkspaceTest(TestCase):
         response = self.client.get("/calendar?year=2026&month=5")
 
         self.assertContains(response, "Presidential Inauguration")
+
+
+class CalendarEventAuthoringTest(TestCase):
+    event_date = date(2026, 9, 14)
+
+    def setUp(self):
+        self.cd = User.objects.create_user(
+            email="calendar-cd@example.com",
+            name="Calendar CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+        )
+        StaffProfile.objects.create(
+            user=self.cd,
+            title="Country Director",
+            country="Uganda",
+        )
+        self.cceo = User.objects.create_user(
+            email="calendar-cceo@example.com",
+            name="Calendar CCEO",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+        )
+        StaffProfile.objects.create(user=self.cceo, title="CCEO", country="Uganda")
+
+    def test_country_director_can_add_an_other_event_from_calendar(self):
+        self.client.force_login(self.cd)
+        page = self.client.get("/calendar?year=2026&month=9")
+
+        self.assertContains(page, "Add other event")
+        self.assertContains(page, 'action="/calendar/events"')
+
+        response = self.client.post(
+            "/calendar/events",
+            {
+                "title": "Annual strategy summit",
+                "description": "Country team convening",
+                "start_date": self.event_date.isoformat(),
+                "end_date": self.event_date.isoformat(),
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            "/calendar?year=2026&month=9",
+            fetch_redirect_response=False,
+        )
+        block = CalendarBlock.objects.get(title="Annual strategy summit")
+        self.assertEqual(block.block_type, "ORG_EVENT")
+        self.assertTrue(block.applies_to_all_roles)
+        self.assertEqual(block.created_by, self.cd.id)
+
+        page = self.client.get("/calendar?year=2026&month=9&event_kind=event")
+        self.assertContains(page, "Annual strategy summit")
+        self.assertContains(page, "Country team convening")
+        self.assertEqual(page.context["event_counts"]["event"], 1)
+        self.assertEqual(page.context["selected_event_kind"], "event")
+
+    def test_field_user_cannot_add_an_organization_event(self):
+        self.client.force_login(self.cceo)
+
+        page = self.client.get("/calendar?year=2026&month=9")
+        response = self.client.post(
+            "/calendar/events",
+            {
+                "title": "Unauthorized block",
+                "start_date": self.event_date.isoformat(),
+            },
+        )
+
+        self.assertNotContains(page, "Add other event")
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(CalendarBlock.objects.filter(title="Unauthorized block").exists())
+
+    def test_event_end_date_cannot_precede_start_date(self):
+        self.client.force_login(self.cd)
+
+        response = self.client.post(
+            "/calendar/events",
+            {
+                "title": "Invalid event",
+                "start_date": "2026-09-14",
+                "end_date": "2026-09-13",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            "/calendar",
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(CalendarBlock.objects.filter(title="Invalid event").exists())
 
 
 class CalendarRoleScheduleAudienceTest(TestCase):

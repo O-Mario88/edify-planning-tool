@@ -1483,6 +1483,11 @@ urlpatterns = [
     path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
     path("calendar", extended_views.calendar_view, name="calendar"),
+    path(
+        "calendar/events",
+        extended_views.calendar_event_create_view,
+        name="calendar_event_create",
+    ),
     path("work-plan", extended_views.work_plan_view, name="work_plan"),
     path("work-plan/", extended_views.work_plan_view, name="work_plan_alias"),
     path(

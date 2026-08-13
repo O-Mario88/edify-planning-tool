@@ -40,6 +40,32 @@ class MobileMicroUXContractTest(SimpleTestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, styles)
 
+    def test_touch_checkboxes_are_not_enlarged_or_given_a_field_focus_square(self):
+        base = _read("templates/base.html")
+        bridge = _read("static/css/consistency.css")
+
+        coarse_rule = base.split(
+            "@media (max-width: 48rem), (pointer: coarse)", 1
+        )[1].split("</style>", 1)[0]
+        self.assertNotIn(":where(input, select, textarea)", coarse_rule)
+        self.assertIn('input[type="text"]', coarse_rule)
+        self.assertIn('input[type="time"]', coarse_rule)
+
+        field_focus_rule = bridge.split(
+            "Text-entry controls receive the broad field ring", 1
+        )[1].split('main :is(input[type="checkbox"]', 1)[0]
+        self.assertIn(':not([type="checkbox"]):not([type="radio"])', field_focus_rule)
+        self.assertNotIn("main :is(input, select, textarea):focus", field_focus_rule)
+
+        # Selection controls retain the keyboard-only ring from the layer that
+        # loads after consistency.css; only persistent pointer focus is quiet.
+        styles = _read("static/css/components/mobile-micro-ux.css")
+        behavior = _read("static/js/micro-ux.js")
+        self.assertIn('data-edify-input-modality="pointer"', styles)
+        self.assertIn("outline: none !important", styles)
+        self.assertIn("dataset.edifyInputModality = 'pointer'", behavior)
+        self.assertIn("dataset.edifyInputModality = 'keyboard'", behavior)
+
     def test_every_rendered_table_is_adaptively_enhanced(self):
         behavior = _read("static/js/micro-ux.js")
         styles = _read("static/css/components/mobile-micro-ux.css")
@@ -134,8 +160,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
         self.assertIn("platform.css' %}?v=20260812tables1", base)
         self.assertIn("pages.css' %}?v=20260812tables2", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260812pager1", base)
-        self.assertIn("micro-ux.js' %}?v=20260812tables3", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260812checkbox1", base)
+        self.assertIn("micro-ux.js' %}?v=20260812checkbox1", base)
 
     def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (

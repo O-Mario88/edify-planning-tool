@@ -429,8 +429,13 @@ main :is([class*="border-blue-100"], [class*="border-blue-200"], [class*="border
   border-color: var(--brand-primary-border) !important;
 }
 
-main :is(input, select, textarea):focus,
-main :is(input, select, textarea):focus-visible,
+/* Text-entry controls receive the broad field ring. Native selection controls
+ * must not: on touch, a checkbox keeps :focus after the tap and this rule used
+ * to paint a 3px blue square around it until the next interaction. Keyboard
+ * users still receive the platform :focus-visible outline from platform.css /
+ * mobile-micro-ux.css. */
+main :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+main :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible,
 main [class*="focus:border-blue-"]:focus,
 main [class*="focus:ring-blue-"]:focus {
   border-color: var(--brand-primary) !important;

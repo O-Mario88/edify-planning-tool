@@ -144,9 +144,9 @@ class SchedulingPolicyService:
                 blockers.append(
                     f"This date is an organizational blackout date: {b.title}."
                 )
-            elif not user:
-                continue
             elif b.block_type == "STAFF_CONFERENCE":
+                if not user:
+                    continue
                 role_restricted = False
                 if b.applies_to_roles and user.active_role not in b.applies_to_roles:
                     role_restricted = True
@@ -157,12 +157,30 @@ class SchedulingPolicyService:
                         f"Staff Conference Week: {b.title} blocks scheduling."
                     )
             elif b.block_type in ("REGIONAL_EVENT", "ORG_EVENT", "CUSTOM_BLOCK"):
+                # Country-wide events created on Calendar must also block
+                # previews that run before a responsible staff member is
+                # selected. Scoped events still need a user so geography/role
+                # can be evaluated without over-blocking another audience.
+                if not user:
+                    if b.applies_to_all_roles and not b.region_id and not b.district_id:
+                        blockers.append(f"Blocked by calendar event: {b.title}.")
+                    continue
                 geo_blocked = True
+                if sp and b.country and sp.country and sp.country != b.country:
+                    geo_blocked = False
                 if b.region:
                     if (
                         sp
                         and not StaffGeographyAssignment.objects.filter(
-                            staff=sp, region=b.region
+                            staff=sp, region_id=b.region_id
+                        ).exists()
+                    ):
+                        geo_blocked = False
+                if b.district_id:
+                    if (
+                        sp
+                        and not StaffGeographyAssignment.objects.filter(
+                            staff=sp, district_id=b.district_id
                         ).exists()
                     ):
                         geo_blocked = False

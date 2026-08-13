@@ -16,6 +16,7 @@ import re
 from collections import defaultdict
 from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -385,7 +386,7 @@ def calendar_view(request):
     if selected_status not in _CALENDAR_STATUS_FAMILIES:
         selected_status = ""
     selected_event_kind = request.GET.get("event_kind", "all")
-    if selected_event_kind not in {"all", "activity", "leave", "holiday"}:
+    if selected_event_kind not in {"all", "activity", "leave", "holiday", "event"}:
         selected_event_kind = "all"
 
     month_start = date(year, month, 1)
@@ -471,7 +472,7 @@ def calendar_view(request):
     staff_names = _calendar_staff_names(activity_rows)
 
     events_by_date: dict[date, list[dict]] = defaultdict(list)
-    event_counts = {"activity": 0, "leave": 0, "holiday": 0}
+    event_counts = {"activity": 0, "leave": 0, "holiday": 0, "event": 0}
 
     for activity in activity_rows:
         start_date = (
@@ -638,7 +639,44 @@ def calendar_view(request):
     for holiday in _reference_holidays_for_year(year):
         add_holiday(holiday["date"], holiday["title"], "Edify calendar holiday")
 
-    event_order = {"holiday": 0, "leave": 1, "activity": 2}
+    # Country Director-created organization events are a distinct calendar
+    # category, not activities: they consume the date and therefore block new
+    # visits/trainings through SchedulingPolicyService, but never inflate work
+    # plan or target achievement counts.
+    organization_events = CalendarBlock.objects.filter(
+        is_active=True,
+        block_type="ORG_EVENT",
+        start_date__lte=month_end,
+        end_date__gte=month_start,
+    )
+    viewer_country = (
+        StaffProfile.objects.filter(user=user)
+        .values_list("country", flat=True)
+        .first()
+    )
+    if viewer_country and user.active_role != EdifyRole.ADMIN.value:
+        organization_events = organization_events.filter(country=viewer_country)
+
+    for block in organization_events.order_by("start_date", "title"):
+        current_date = max(block.start_date, month_start)
+        final_date = min(block.end_date, month_end)
+        range_label = _calendar_range_label(block.start_date, block.end_date)
+        while current_date <= final_date:
+            events_by_date[current_date].append(
+                {
+                    "kind": "event",
+                    "title": block.title,
+                    "meta": block.description or "Planning blocked",
+                    "href": "",
+                    "status": "Planning blocked",
+                    "tooltip": f"{block.title} · {range_label} · Planning blocked",
+                    "continued": current_date > block.start_date,
+                }
+            )
+            event_counts["event"] += 1
+            current_date += timedelta(days=1)
+
+    event_order = {"event": 0, "holiday": 1, "leave": 2, "activity": 3}
     for day_events in events_by_date.values():
         day_events.sort(key=lambda event: (event_order[event["kind"]], event["title"]))
 
@@ -649,6 +687,7 @@ def calendar_view(request):
             "activity": sum(event["kind"] == "activity" for event in day_events),
             "leave": sum(event["kind"] == "leave" for event in day_events),
             "holiday": sum(event["kind"] == "holiday" for event in day_events),
+            "event": sum(event["kind"] == "event" for event in day_events),
         }
 
     calendar_weeks = []
@@ -721,6 +760,8 @@ def calendar_view(request):
         "selected_type": selected_type,
         "selected_status": selected_status,
         "selected_event_kind": selected_event_kind,
+        "can_add_calendar_event": user.active_role
+        in {EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value},
         "filters_active": bool(
             selected_type or selected_status or selected_event_kind != "all"
         ),
@@ -750,6 +791,93 @@ def calendar_view(request):
         ),
     }
     return render(request, "pages/calendar/index.html", context)
+
+
+@require_page_permission("calendar")
+@require_POST
+def calendar_event_create_view(request):
+    """Add a country-wide organization event that blocks field planning.
+
+    CD owns the country calendar; Admin retains its normal operational
+    override. This is intentionally separate from Activity creation because a
+    blocking event is context for the work plan, not completed programme work.
+    """
+    if request.user.active_role not in {
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    }:
+        return HttpResponseForbidden("Only the Country Director can add calendar events.")
+
+    title = (request.POST.get("title") or "").strip()
+    description = (request.POST.get("description") or "").strip()
+    start_raw = (request.POST.get("start_date") or "").strip()
+    end_raw = (request.POST.get("end_date") or "").strip() or start_raw
+
+    if not title or not start_raw:
+        messages.error(request, "Event name and start date are required.")
+        return redirect("frontend:calendar")
+    if len(title) > 255:
+        messages.error(request, "Event name must be 255 characters or fewer.")
+        return redirect("frontend:calendar")
+    if len(description) > 2000:
+        messages.error(request, "Event details must be 2,000 characters or fewer.")
+        return redirect("frontend:calendar")
+
+    try:
+        start_date = date.fromisoformat(start_raw)
+        end_date = date.fromisoformat(end_raw)
+    except ValueError:
+        messages.error(request, "Enter valid event dates.")
+        return redirect("frontend:calendar")
+    if end_date < start_date:
+        messages.error(request, "End date cannot be before the start date.")
+        return redirect("frontend:calendar")
+
+    country = (
+        StaffProfile.objects.filter(user=request.user)
+        .values_list("country", flat=True)
+        .first()
+        or "Uganda"
+    )
+    block, created = CalendarBlock.objects.get_or_create(
+        title=title,
+        block_type="ORG_EVENT",
+        start_date=start_date,
+        end_date=end_date,
+        country=country,
+        defaults={
+            "description": description,
+            "applies_to_all_roles": True,
+            "created_by": request.user.id,
+            "is_active": True,
+        },
+    )
+    if created:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="calendar.organization_event_created",
+            subject_kind="CalendarBlock",
+            subject_id=block.id,
+            actor_id=request.user.id,
+            actor_role=request.user.active_role,
+            payload={
+                "title": title,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "country": country,
+            },
+        )
+        messages.success(
+            request,
+            f"'{title}' added. Visits and trainings are blocked on the event date(s).",
+        )
+    else:
+        messages.info(request, "That calendar event already exists.")
+
+    return redirect(
+        f"{reverse('frontend:calendar')}?year={start_date.year}&month={start_date.month}"
+    )
 
 
 # Gated on its own key rather than borrowing "planning": the sidebar

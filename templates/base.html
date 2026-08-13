@@ -105,8 +105,8 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260811geist2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812pager1">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260812checkbox1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812checkbox1">
 <!-- How controls answer a pointer — hover inversion and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -211,7 +211,13 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 }
 
 @media (max-width: 48rem), (pointer: coarse) {
-  :where(input, select, textarea) {
+  /* Only text-entry fields need a 48px control box. Applying this to native
+     checkboxes/radios enlarged their focus geometry into a blue square on
+     touch devices; their associated labels own the 48px tap target instead. */
+  :where(input[type="text"], input[type="search"], input[type="number"],
+  input[type="email"], input[type="password"], input[type="tel"],
+  input[type="url"], input[type="date"], input[type="datetime-local"],
+  input[type="time"], select, textarea) {
     min-height: 48px;
     font-size: 1rem;
   }
@@ -296,7 +302,7 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260812tables3"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260812checkbox1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and

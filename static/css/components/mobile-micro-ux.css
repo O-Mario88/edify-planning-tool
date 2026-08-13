@@ -40,6 +40,17 @@
   accent-color: var(--edify-accent);
 }
 
+/* WebKit and Chromium can retain :focus-visible on native selection controls
+ * after a touch tap. The platform's keyboard ring remains unchanged; only a
+ * focus reached through pointer/touch interaction drops the lingering square. */
+html[data-edify-input-modality="pointer"] .edify-workspace :where(
+  input[type="checkbox"],
+  input[type="radio"]
+):focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .edify-workspace :where(.edify-empty-state, [data-empty-state]) {
   min-block-size: 8rem;
   padding: 1.25rem;

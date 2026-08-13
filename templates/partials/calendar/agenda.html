@@ -8,7 +8,7 @@ from the one events_by_date projection.{% endcomment %}
   <li
     class="calendar-agenda__day{% if day.is_today %} calendar-agenda__day--today{% endif %}"
     {% if mobile_calendar %}
-    x-show="dayMatches('{{ day.date|date:"Y-m-d" }}', { all: {{ day.kind_counts.all }}, activity: {{ day.kind_counts.activity }}, leave: {{ day.kind_counts.leave }}, holiday: {{ day.kind_counts.holiday }} })"
+    x-show="dayMatches('{{ day.date|date:"Y-m-d" }}', { all: {{ day.kind_counts.all }}, activity: {{ day.kind_counts.activity }}, leave: {{ day.kind_counts.leave }}, holiday: {{ day.kind_counts.holiday }}, event: {{ day.kind_counts.event }} })"
     x-cloak
     {% endif %}
   >

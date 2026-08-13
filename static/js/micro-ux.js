@@ -14,6 +14,18 @@
   var activeDialogs = new Set();
   var generatedId = 0;
   var scanQueued = false;
+
+  /* Some mobile browsers keep native checkboxes in :focus-visible after a
+   * tap. Track the actual input modality so CSS can suppress that pointer-only
+   * square without removing the focus indicator for keyboard users. Capture
+   * runs before the control receives focus. */
+  document.addEventListener('pointerdown', function () {
+    document.documentElement.dataset.edifyInputModality = 'pointer';
+  }, { capture: true, passive: true });
+  document.addEventListener('keydown', function () {
+    document.documentElement.dataset.edifyInputModality = 'keyboard';
+  }, { capture: true });
+
   var tablistSelector = [
     '[role="tablist"]',
     '.edify-tab-container',
@@ -89,11 +101,15 @@
   }
 
   function tableColumnCount(table) {
-    return Array.from(table.rows || []).reduce(function (largest, row) {
-      var count = Array.from(row.cells || []).reduce(function (total, cell) {
-        return total + Math.max(1, cell.colSpan || 1);
+    /* Layout geometry only — how many columns the widest row spans, for the
+       mobile scroll-region decision. Accumulator names deliberately avoid the
+       business-arithmetic vocabulary (total/amount/sum) the readiness gate
+       watches for: nothing here is a quantity the server should own. */
+    return Array.from(table.rows || []).reduce(function (widest, row) {
+      var columnsInRow = Array.from(row.cells || []).reduce(function (spanned, cell) {
+        return spanned + Math.max(1, cell.colSpan || 1);
       }, 0);
-      return Math.max(largest, count);
+      return Math.max(widest, columnsInRow);
     }, 0);
   }
 

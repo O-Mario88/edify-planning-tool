@@ -144,6 +144,56 @@ class LoginBundleTests(SimpleTestCase):
         )
         self.assertIn(".login-stat:nth-child(n + 3)", tablet_rule)
 
+    def test_login_impact_items_reflow_without_heading_overflow(self):
+        css = (CSS / "login.css").read_text()
+
+        heading_rule = css.split(".impact-item h3 {", 1)[1].split("}", 1)[0]
+        self.assertNotIn("white-space: nowrap", heading_rule)
+        self.assertIn("text-wrap: balance", heading_rule)
+
+        tablet_rule = css.split(
+            "@container login-brand-content (max-width: 40rem)", 1
+        )[1]
+        self.assertIn(".impact-card__grid", tablet_rule)
+        self.assertIn(
+            "grid-template-columns: repeat(2, minmax(0, 1fr))",
+            tablet_rule,
+        )
+        self.assertIn(".impact-item:nth-child(n + 3)", tablet_rule)
+
+    def test_login_card_has_explicit_tablet_and_mobile_gutters(self):
+        css = (CSS / "login.css").read_text()
+
+        tablet_rule = css.split("@media (max-width: 70rem)", 1)[1].split(
+            "@media (max-width: 70rem) and", 1
+        )[0]
+        self.assertIn("max-width: none", tablet_rule)
+        self.assertIn("clamp(2.75rem, 5vw, 3rem)", tablet_rule)
+
+        mobile_rule = css.split("@media (max-width: 40rem)", 1)[1].split(
+            "@media (max-width: 23rem)", 1
+        )[0]
+        self.assertIn("align-items: safe center", mobile_rule)
+        self.assertIn("min-height: auto", mobile_rule)
+        self.assertIn("clamp(1.5rem, 7vw, 2rem)", mobile_rule)
+        self.assertNotIn("justify-content: center", mobile_rule)
+
+        compact_rule = css.split("@media (max-width: 23rem)", 1)[1]
+        self.assertIn("padding: 0", compact_rule)
+        self.assertIn("border-radius: 0", compact_rule)
+
+    def test_remember_checkbox_hides_pointer_ring_but_keeps_keyboard_modality(self):
+        css = (CSS / "login.css").read_text()
+        behavior = (ROOT / "static/js/login.js").read_text()
+        markup = LOGIN_LAYOUT.read_text()
+
+        self.assertIn('data-edify-input-modality="pointer"', css)
+        self.assertIn(".remember-control input:focus", css)
+        self.assertIn('dataset.edifyInputModality = "pointer"', behavior)
+        self.assertIn('dataset.edifyInputModality = "keyboard"', behavior)
+        self.assertIn("login.css' %}?v=20260812checkbox1", markup)
+        self.assertIn("login.js' %}?v=20260812checkbox1", markup)
+
 
 class LoginHeroImageTests(SimpleTestCase):
     """The brand photo must not be downloaded by viewports that never show it.

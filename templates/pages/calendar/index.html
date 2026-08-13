@@ -4,7 +4,7 @@
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260808mobilecalendar4">
+<link rel="stylesheet" href="{% static 'css/calendar-workspace.css' %}?v=20260812orgevents1">
 {% endblock %}
 
 {% block shell_content %}
@@ -18,7 +18,8 @@
       all: {{ event_total }},
       activity: {{ event_counts.activity }},
       leave: {{ event_counts.leave }},
-      holiday: {{ event_counts.holiday }}
+      holiday: {{ event_counts.holiday }},
+      event: {{ event_counts.event }}
     },
     agendaDays: [
       {% for day in agenda_days %}{
@@ -26,7 +27,8 @@
         all: {{ day.kind_counts.all }},
         activity: {{ day.kind_counts.activity }},
         leave: {{ day.kind_counts.leave }},
-        holiday: {{ day.kind_counts.holiday }}
+        holiday: {{ day.kind_counts.holiday }},
+        event: {{ day.kind_counts.event }}
       },{% endfor %}
     ],
     setEventFilter(filter) {
@@ -54,7 +56,7 @@
       return url.search;
     },
     filterAnnouncement() {
-      const labels = { all: 'events', activity: 'activities', leave: 'leave events', holiday: 'holidays' };
+      const labels = { all: 'events', activity: 'activities', leave: 'leave events', holiday: 'holidays', event: 'organization events' };
       return `${this.eventCounts[this.eventFilter]} ${labels[this.eventFilter]} shown`;
     }
   }"
@@ -64,7 +66,7 @@
     <div class="edify-page-header__lead">
       <p class="calendar-workspace__eyebrow">Operations calendar</p>
       <h1 class="edify-page-title edify-page-header__title">Calendar</h1>
-      <p class="calendar-workspace__intro edify-page-header__description">See your scheduled work, approved leave, and important holidays in one place.</p>
+      <p class="calendar-workspace__intro edify-page-header__description">See scheduled work, approved leave, organization events, and important holidays in one place.</p>
     </div>
     <a href="{% url 'frontend:personal_time_off' %}" class="btn btn-primary calendar-workspace__leave-action">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -74,6 +76,42 @@
       <span>Apply for Leave</span>
     </a>
   </header>
+
+  {% if can_add_calendar_event %}
+  <details class="calendar-event-composer">
+    <summary class="btn btn-secondary calendar-event-composer__summary">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M12 5v14M5 12h14" /></svg>
+      Add other event
+    </summary>
+    <div class="calendar-event-composer__panel">
+      <div class="calendar-event-composer__heading">
+        <p class="edify-page-eyebrow">Country calendar</p>
+        <h2 id="calendar-event-form-heading">Add an organization event</h2>
+        <p id="calendar-event-form-help">The complete event date range will be unavailable for new visits and trainings.</p>
+      </div>
+      <form method="post" action="{% url 'frontend:calendar_event_create' %}" class="calendar-event-composer__form" aria-labelledby="calendar-event-form-heading" aria-describedby="calendar-event-form-help">
+        {% csrf_token %}
+        <label class="calendar-event-composer__field calendar-event-composer__field--title">
+          <span>Event name</span>
+          <input type="text" name="title" maxlength="255" required autocomplete="off" placeholder="e.g. Annual strategy summit">
+        </label>
+        <label class="calendar-event-composer__field">
+          <span>Start date</span>
+          <input type="date" name="start_date" required>
+        </label>
+        <label class="calendar-event-composer__field">
+          <span>End date <small>(optional)</small></span>
+          <input type="date" name="end_date">
+        </label>
+        <label class="calendar-event-composer__field calendar-event-composer__field--details">
+          <span>Details <small>(optional)</small></span>
+          <textarea name="description" maxlength="2000" rows="2" placeholder="Add venue or context for the team"></textarea>
+        </label>
+        <button type="submit" class="btn btn-primary calendar-event-composer__submit">Add and block date</button>
+      </form>
+    </div>
+  </details>
+  {% endif %}
 
   {% comment %}Server-side primary filters (My Plan filter design): applied via
   the querystring so month navigation, view switches, and reloads all keep
@@ -124,6 +162,9 @@
     </button>
     <button type="button" role="tab" aria-controls="calendar-event-surfaces" @click="setEventFilter('holiday')" :aria-selected="eventFilter === 'holiday'" :class="eventFilter === 'holiday' ? 'is-active' : ''">
       <span class="calendar-workspace__filter-name">Holidays</span><span class="calendar-workspace__filter-count">{{ event_counts.holiday }}</span>
+    </button>
+    <button type="button" role="tab" aria-controls="calendar-event-surfaces" @click="setEventFilter('event')" :aria-selected="eventFilter === 'event'" :class="eventFilter === 'event' ? 'is-active' : ''">
+      <span class="calendar-workspace__filter-name">Other events</span><span class="calendar-workspace__filter-count">{{ event_counts.event }}</span>
     </button>
   </div>
   <p class="sr-only" aria-live="polite" x-text="filterAnnouncement()"></p>
@@ -178,6 +219,7 @@
             {% if day.kind_counts.activity %}<i class="calendar-mobile__dot calendar-mobile__dot--activity" x-show="eventFilter === 'all' || eventFilter === 'activity'"></i>{% endif %}
             {% if day.kind_counts.leave %}<i class="calendar-mobile__dot calendar-mobile__dot--leave" x-show="eventFilter === 'all' || eventFilter === 'leave'"></i>{% endif %}
             {% if day.kind_counts.holiday %}<i class="calendar-mobile__dot calendar-mobile__dot--holiday" x-show="eventFilter === 'all' || eventFilter === 'holiday'"></i>{% endif %}
+            {% if day.kind_counts.event %}<i class="calendar-mobile__dot calendar-mobile__dot--event" x-show="eventFilter === 'all' || eventFilter === 'event'"></i>{% endif %}
           </span>
         </button>
         {% endif %}
@@ -297,7 +339,8 @@
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--programme"></i> Programme events</span>
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--leave"></i> Leave</span>
       <span><i class="calendar-month__legend-dot calendar-month__legend-dot--holiday"></i> Holidays</span>
-      <p>Leave and holidays are overlays and never count as activities. Government-declared holidays appear only for the year they apply.</p>
+      <span><i class="calendar-month__legend-dot calendar-month__legend-dot--event"></i> Other events</span>
+      <p>Leave, holidays, and organization events are overlays and never count as activities. Organization events block new visits and trainings.</p>
     </footer>
   </section>
   </div>

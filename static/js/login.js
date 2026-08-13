@@ -1,6 +1,13 @@
 (function () {
   "use strict";
 
+  document.addEventListener("pointerdown", function () {
+    document.documentElement.dataset.edifyInputModality = "pointer";
+  }, { capture: true, passive: true });
+  document.addEventListener("keydown", function () {
+    document.documentElement.dataset.edifyInputModality = "keyboard";
+  }, { capture: true });
+
   function initPasswordToggles() {
     document.querySelectorAll("[data-password-toggle]").forEach(function (toggle) {
       var password = document.getElementById(toggle.getAttribute("aria-controls"));

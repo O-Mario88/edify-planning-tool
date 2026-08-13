@@ -142,6 +142,43 @@ class Reg02CalendarPolicyTest(TestCase):
             self._create(HOLIDAY)
         self.assertIn("blackout", str(ctx.exception))
 
+    def test_country_calendar_event_blocks_visit_and_training_planning(self):
+        """The same canonical gate is called by every visit/training workflow,
+        including previews that run before a responsible staff member exists."""
+        CalendarBlock.objects.create(
+            title="Country strategy summit",
+            block_type="ORG_EVENT",
+            start_date=MONDAY,
+            end_date=MONDAY,
+            country="Uganda",
+            applies_to_all_roles=True,
+            is_active=True,
+        )
+
+        assigned_check = SchedulingPolicyService.check(self.cceo, MONDAY)
+        pre_assignment_check = SchedulingPolicyService.check(None, MONDAY)
+
+        self.assertEqual(assigned_check["status"], "blocked")
+        self.assertEqual(pre_assignment_check["status"], "blocked")
+        self.assertIn("Country strategy summit", assigned_check["blockers"][0])
+        with self.assertRaises(BadRequest) as ctx:
+            self._create(MONDAY)
+        self.assertIn("Country strategy summit", str(ctx.exception))
+
+        with self.assertRaises(BadRequest) as training_ctx:
+            create(
+                {
+                    "activityType": "school_improvement_training",
+                    "schoolId": self.school.school_id,
+                    "scheduledDate": MONDAY,
+                    "expectedParticipants": 12,
+                    "focusIntervention": "leadership",
+                    "activityPurposeText": "REG-02 blocked training",
+                },
+                self.cceo,
+            )
+        self.assertIn("Country strategy summit", str(training_ctx.exception))
+
     # ── 4. Leave blocks employee scheduling ─────────────────────────────────
     def test_approved_leave_blocks_employee_scheduling(self):
         Leave.objects.create(
