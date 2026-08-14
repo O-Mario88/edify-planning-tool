@@ -221,12 +221,27 @@ class MilestoneAllocationProjectionTests(TestCase):
         )
         approve_allocation(allocation, principal=user)
         allocation.refresh_from_db()
-        periods = list(allocation.period_targets.order_by("period_start"))
-        self.assertEqual(len(periods), 12)
+        months = list(
+            allocation.period_targets.filter(period_type="month").order_by(
+                "period_start"
+            )
+        )
+        quarters = list(
+            allocation.period_targets.filter(period_type="quarter").order_by(
+                "period_start"
+            )
+        )
+        self.assertEqual(len(months), 12)
+        self.assertEqual(len(quarters), 4)
         self.assertEqual(
-            sum((period.planned_value for period in periods), 0),
+            sum((period.planned_value for period in months), 0),
             allocation.allocated_target,
         )
+        self.assertEqual(
+            sum((period.planned_value for period in quarters), 0),
+            allocation.allocated_target,
+        )
+        self.assertIsNotNone(allocation.locked_at)
 
         personal = personal_milestone_targets(staff=staff, fy="2027", month_of_fy=1)
         self.assertEqual(len(personal), 1)

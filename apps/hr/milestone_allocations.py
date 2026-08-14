@@ -6,25 +6,13 @@ from django.db import transaction
 from django.db.models import Count, Q
 
 from apps.core.exceptions import BadRequest
-from apps.targets.fy_calendar import FinancialYearCalendarService as FyCalendar
 
 from .models import (
     MilestoneAllocation,
-    MilestonePeriodTarget,
     MilestoneProgressCredit,
     PriorityMilestone,
     StrategicPriority,
 )
-
-
-def _split_decimal(total: Decimal, periods=12) -> list[Decimal]:
-    """Largest-remainder split that preserves the exact approved total."""
-    cents = int((total * 100).quantize(Decimal("1")))
-    base, remainder = divmod(cents, periods)
-    return [
-        Decimal(base + (1 if index < remainder else 0)) / 100
-        for index in range(periods)
-    ]
 
 
 def _assert_allocatable(milestone: PriorityMilestone) -> None:
@@ -63,6 +51,11 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
     country_id = data.get("countryId") if allocated_to_type == "country" else None
     effective_date = data.get("effectiveDate")
     allocation_reason = (data.get("allocationReason") or "").strip()
+    parent = None
+    if data.get("parentId"):
+        parent = MilestoneAllocation.objects.filter(id=data["parentId"]).first()
+        if parent is None or parent.milestone_id != milestone.id:
+            raise BadRequest("The parent allocation must belong to this milestone.")
     if not effective_date:
         raise BadRequest("Effective date is required.")
     if isinstance(effective_date, str):
@@ -74,6 +67,7 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         raise BadRequest("Allocation reason is required.")
     if allocated_to_type == "employee":
         from apps.accounts.models import StaffProfile
+        from apps.core.rbac import EdifyRole as _Role
 
         employee = (
             StaffProfile.objects.select_related("user").filter(id=employee_id).first()
@@ -92,20 +86,50 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
                 for role in (getattr(employee.user, "roles", None) or [])
             },
         }
-        if applicable and "all" not in applicable and not (applicable & employee_roles):
+        principal_staff_id = getattr(principal, "staff_profile_id", None)
+        has_own_approved_team_parent = (
+            getattr(principal, "active_role", "") == _Role.COUNTRY_PROGRAM_LEAD.value
+            and parent is not None
+            and parent.allocated_to_type == "team"
+            and str(parent.team_id) == str(principal_staff_id)
+            and parent.status == "approved"
+        )
+        is_pl_self_allocation = has_own_approved_team_parent and str(
+            employee.id
+        ) == str(principal_staff_id)
+        if (
+            applicable
+            and "all" not in applicable
+            and not (applicable & employee_roles)
+            and not is_pl_self_allocation
+        ):
             raise BadRequest(
                 "This milestone is not applicable to the selected employee's role."
             )
-        if getattr(principal, "active_role", "") == "CountryProgramLead":
+        # The real role string is "Program Lead" (EdifyRole). The previous
+        # comparison against "CountryProgramLead" — the enum NAME — matched no
+        # live principal, so this guard never fired.
+        if getattr(principal, "active_role", "") == _Role.COUNTRY_PROGRAM_LEAD.value:
             from apps.accounts.models import StaffSupervisorAssignment
 
-            principal_staff_id = getattr(principal, "staff_profile_id", None)
-            if not StaffSupervisorAssignment.objects.filter(
-                supervisor_id=principal_staff_id,
-                supervisee_id=employee.id,
-            ).exists():
+            if not has_own_approved_team_parent:
                 raise BadRequest(
-                    "Program Leads may allocate only to their supervised team."
+                    "Program Leads may allocate only from their own approved "
+                    "team target."
+                )
+            is_self = str(employee.id) == str(principal_staff_id)
+            is_supervised = StaffSupervisorAssignment.objects.filter(
+                supervisor_id=principal_staff_id, supervisee_id=employee.id
+            ).exists()
+            if not (is_self or is_supervised):
+                raise BadRequest(
+                    "Program Leads may allocate only to themselves or their "
+                    "supervised team."
+                )
+            if is_self and not is_pl_self_allocation:
+                raise BadRequest(
+                    "A Program Lead may allocate to themselves only from their "
+                    "own approved team target."
                 )
     elif allocated_to_type == "project":
         from apps.projects.scoping import get_scoped_project
@@ -127,14 +151,17 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         raise BadRequest("Choose a valid country.")
     if allocated_to_type == "team":
         from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+        from apps.core.rbac import EdifyRole as _Role
 
         if not StaffProfile.objects.filter(id=team_id).exists() or not (
             StaffSupervisorAssignment.objects.filter(supervisor_id=team_id).exists()
         ):
             raise BadRequest("Choose a valid supervised team.")
-        if getattr(principal, "active_role", "") == "CountryProgramLead" and str(
-            team_id
-        ) != str(getattr(principal, "staff_profile_id", "")):
+        if getattr(
+            principal, "active_role", ""
+        ) == _Role.COUNTRY_PROGRAM_LEAD.value and str(team_id) != str(
+            getattr(principal, "staff_profile_id", "")
+        ):
             raise BadRequest("Program Leads may allocate only their own team target.")
     if allocated_to_type == "country":
         applicable = set(milestone.country_applicability or [])
@@ -153,14 +180,43 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         raise BadRequest("Denominator must be greater than zero.")
     if weight < 0 or weight > 100:
         raise BadRequest("Weight must be between 0 and 100.")
+
+    def _column(key):
+        if data.get(key) in (None, ""):
+            return None
+        try:
+            return Decimal(str(data[key]))
+        except Exception as exc:  # noqa: BLE001
+            raise BadRequest("Core and Client targets must be numeric.") from exc
+
+    core_target = _column("coreTarget")
+    client_target = _column("clientTarget")
+
+    # One annual distribution (§4): a target-holder gets ONE live allocation
+    # per milestone for the year. Changing it afterwards is an amendment with
+    # a reason and audit history, never a second row.
+    live = milestone.allocations.exclude(status__in=("rejected", "superseded"))
+    duplicate = None
+    if allocated_to_type == "employee":
+        duplicate = live.filter(employee_id=employee_id).first()
+    elif allocated_to_type == "team":
+        duplicate = live.filter(allocated_to_type="team", team_id=team_id).first()
+    if duplicate is not None:
+        raise BadRequest(
+            "This target is already allocated for the year — targets are "
+            "distributed once; use a formal amendment to change the figure."
+        )
     allocation = MilestoneAllocation.objects.create(
         milestone=milestone,
+        parent=parent,
         allocated_to_type=allocated_to_type,
         country_id=country_id,
         team_id=team_id,
         employee_id=employee_id,
         project_id=project_id,
         allocated_target=target,
+        core_target=core_target,
+        client_target=client_target,
         denominator=denominator,
         weight=weight,
         allocation_reason=allocation_reason,
@@ -181,32 +237,19 @@ def approve_allocation(allocation, *, principal) -> MilestoneAllocation:
     _assert_allocatable(allocation.milestone)
     if allocation.status == "approved":
         return allocation
-    fy = allocation.milestone.priority.fy
-    monthly = _split_decimal(allocation.allocated_target or Decimal("0"))
-    for month_of_fy, planned in enumerate(monthly, 1):
-        start, end_exclusive = FyCalendar.month_range(fy, month_of_fy)
-        from datetime import timedelta
+    # Approval locks the annual figure and writes the quarter rows plus the
+    # capacity-aware month rows (working days − holidays − the holder's
+    # approved leave). The quarterly spread starts from the working-day
+    # recommendation and remains a draft until its own approval (§6).
+    from django.utils import timezone as _tz
 
-        MilestonePeriodTarget.objects.update_or_create(
-            milestone=allocation.milestone,
-            allocation=allocation,
-            period_type="month",
-            period_start=start,
-            defaults={
-                "scope": allocation.allocated_to_type,
-                "country_id": allocation.country_id,
-                "team_id": allocation.team_id,
-                "employee": allocation.employee,
-                "period_end": end_exclusive - timedelta(days=1),
-                "planned_value": planned,
-                "actual_source": (
-                    allocation.milestone.metric_definition.canonical_service
-                ),
-            },
-        )
+    from .target_distribution import phase_allocation_periods
+
+    phase_allocation_periods(allocation)
     allocation.status = "approved"
     allocation.approved_by = getattr(principal, "user_id", None) or str(principal.id)
-    allocation.save(update_fields=["status", "approved_by", "updated_at"])
+    allocation.locked_at = _tz.now()
+    allocation.save(update_fields=["status", "approved_by", "locked_at", "updated_at"])
     from .milestone_progress import refresh_period_targets
 
     refresh_period_targets(allocation.milestone_id)
@@ -333,6 +376,10 @@ def _allocation_projection(
     month_of_fy: int,
     linked_activity_count: int,
 ) -> dict:
+    from .target_distribution import classify_achievement
+
+    milestone = allocation.milestone
+    summable = milestone.measurement_type in {"count", "currency"}
     periods = sorted(
         (
             target
@@ -344,10 +391,23 @@ def _allocation_projection(
     current = periods[month_of_fy - 1] if len(periods) >= month_of_fy else None
     quarter_start = ((month_of_fy - 1) // 3) * 3
     quarter = periods[quarter_start : quarter_start + 3]
-    fy_plan = sum((target.planned_value for target in periods), Decimal("0"))
-    fy_actual = sum((target.actual_value for target in periods), Decimal("0"))
-    quarter_plan = sum((target.planned_value for target in quarter), Decimal("0"))
-    quarter_actual = sum((target.actual_value for target in quarter), Decimal("0"))
+    if summable:
+        fy_plan = sum((target.planned_value for target in periods), Decimal("0"))
+        fy_actual = sum((target.actual_value for target in periods), Decimal("0"))
+        quarter_plan = sum((target.planned_value for target in quarter), Decimal("0"))
+        quarter_actual = sum((target.actual_value for target in quarter), Decimal("0"))
+    else:
+        # Rates never sum: a 90% coverage commitment is 90% in every period,
+        # and adding three months of it is not 270%. The FY view of a rate is
+        # the rate itself; actuals ride the period rows' achievement math.
+        fy_plan = allocation.allocated_target or Decimal("0")
+        fy_actual = max(
+            (target.actual_value for target in periods), default=Decimal("0")
+        )
+        quarter_plan = fy_plan
+        quarter_actual = max(
+            (target.actual_value for target in quarter), default=Decimal("0")
+        )
     remaining = max(Decimal("0"), fy_plan - fy_actual)
     month_plan = current.planned_value if current else Decimal("0")
     month_actual = current.actual_value if current else Decimal("0")
@@ -364,12 +424,16 @@ def _allocation_projection(
         risk, risk_tone = "Watch", "warning"
     else:
         risk, risk_tone = "Needs attention", "danger"
+    progress = round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
+    classification = classify_achievement(
+        progress if fy_plan else None, cap_at_100=milestone.cap_at_100
+    )
     return {
         "allocationId": allocation.id,
-        "priority": allocation.milestone.priority.title,
-        "milestone": allocation.milestone.title,
+        "priority": milestone.priority.title,
+        "milestone": milestone.title,
         "targetSource": "Approved Milestone Allocation",
-        "dataSource": allocation.milestone.metric_definition.canonical_label,
+        "dataSource": milestone.metric_definition.canonical_label,
         "allocatedTarget": allocation.allocated_target or fy_plan,
         "monthPlan": month_plan,
         "monthActual": month_actual,
@@ -378,7 +442,8 @@ def _allocation_projection(
         "fyPlan": fy_plan,
         "fyActual": fy_actual,
         "remaining": remaining,
-        "progress": (round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0),
+        "progress": progress,
+        "classification": classification,
         "status": status,
         "risk": risk,
         "riskTone": risk_tone,

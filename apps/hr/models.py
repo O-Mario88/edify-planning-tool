@@ -1489,6 +1489,21 @@ class MilestoneDefinitionStatus(models.TextChoices):
     APPROVED = "approved", "Approved"
 
 
+class MilestoneAllocationMethod(models.TextChoices):
+    """How a country master milestone reaches its owners.
+
+    Not every country priority is a field target: board meetings never cascade
+    to a CCEO, and a blank source figure must never be scored. Making the
+    method a stored, reviewable choice is what keeps accountants, HR and IA
+    from receiving school-delivery targets by default.
+    """
+
+    FIELD_CASCADE = "field_cascade", "Field cascade (IA → PL → CCEO)"
+    SPECIALIST = "specialist", "Project / specialist team"
+    COUNTRY_OWNED = "country_owned", "Country-owned (CD/IA/country office)"
+    NON_SCOREABLE = "non_scoreable", "Non-scoreable / pending definition"
+
+
 class MilestoneMetricDefinition(TimeStampedModel):
     id = CuidField()
     metric_key = models.CharField(max_length=128, unique=True)
@@ -1539,6 +1554,28 @@ class PriorityMilestone(TimeStampedModel):
     )
     target_unit = models.CharField(max_length=64, blank=True)
     target_source_text = models.CharField(max_length=255, blank=True)
+    # ── Country master dimensions (Uganda Master Priority Plan) ───────────
+    # Core/Client are sub-targets of target_value, never parallel totals; the
+    # distribution reconciliation holds allocations to all three at once.
+    core_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    client_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    participants_per_school = models.PositiveSmallIntegerField(null=True, blank=True)
+    allocation_method = models.CharField(
+        max_length=24, choices=MilestoneAllocationMethod.choices, blank=True
+    )
+    responsible_role = models.CharField(max_length=64, blank=True)
+    # Percentage metrics that logically cannot exceed 100% (coverage) are
+    # capped and classified "Achieved", never "Far exceeded".
+    cap_at_100 = models.BooleanField(default=False)
+    # A source figure the CD has not yet confirmed (composite values, unclear
+    # metrics, FY ambiguity). Confirmation happens in-app before publication;
+    # the flag blocks distribution, not visibility.
+    needs_confirmation = models.BooleanField(default=False)
+    confirmation_note = models.TextField(blank=True)
     denominator_definition = models.TextField(blank=True)
     quality_gate = models.CharField(max_length=128, blank=True)
     role_applicability = models.JSONField(default=list, blank=True)
@@ -1585,6 +1622,16 @@ class MilestoneAllocation(TimeStampedModel):
     milestone = models.ForeignKey(
         PriorityMilestone, on_delete=models.PROTECT, related_name="allocations"
     )
+    # The cascade spine: a CCEO's allocation names the PL team allocation it
+    # was carved from, so every figure walks back to the Uganda total and
+    # reconciliation can hold children to their parent's approved target.
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="children",
+    )
     allocated_to_type = models.CharField(max_length=32)
     country_id = models.CharField(max_length=64, null=True, blank=True)
     team_id = models.CharField(max_length=64, null=True, blank=True)
@@ -1605,6 +1652,15 @@ class MilestoneAllocation(TimeStampedModel):
     allocated_target = models.DecimalField(
         max_digits=18, decimal_places=2, null=True, blank=True
     )
+    # Core/Client slices of allocated_target. Reconciliation holds the Core
+    # column and the Client column to the milestone's confirmed totals exactly
+    # as it holds the main column.
+    core_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    client_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
     denominator = models.DecimalField(
         max_digits=18, decimal_places=2, null=True, blank=True
     )
@@ -1614,6 +1670,16 @@ class MilestoneAllocation(TimeStampedModel):
     approved_by = models.CharField(max_length=30, null=True, blank=True)
     effective_date = models.DateField()
     status = models.CharField(max_length=24, default="draft")
+    # ── Quarterly spread (§6): a controlled commitment with its own approval.
+    # {"Q1": "25", ...} — entered or recommended; must sum to the annual
+    # target for summable measures. Approval writes the quarter period rows
+    # and phases the months; moving targets between quarters afterwards is a
+    # reforecast amendment, never an edit.
+    quarter_distribution = models.JSONField(default=dict, blank=True)
+    quarter_status = models.CharField(max_length=24, default="draft")
+    quarter_approved_by = models.CharField(max_length=30, null=True, blank=True)
+    quarter_approved_at = models.DateTimeField(null=True, blank=True)
+    locked_at = models.DateTimeField(null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -1736,3 +1802,54 @@ class MilestoneProgressCredit(TimeStampedModel):
                 fields=["rule", "activity"], name="uniq_milestone_activity_credit"
             )
         ]
+
+
+class MilestoneAllocationAmendment(TimeStampedModel):
+    """The only path that changes an approved allocation.
+
+    An approved figure is a locked commitment (§4): it is never edited in
+    place. Annual changes are ``amendment`` rows; moving targets between
+    quarters is a ``reforecast`` row that must keep the annual total intact.
+    Each row keeps the actor, reason, previous value and new value, which is
+    the §14 audit contract.
+    """
+
+    KIND_AMENDMENT = "amendment"
+    KIND_REFORECAST = "reforecast"
+
+    id = CuidField()
+    allocation = models.ForeignKey(
+        MilestoneAllocation, on_delete=models.CASCADE, related_name="amendments"
+    )
+    kind = models.CharField(
+        max_length=16,
+        choices=[
+            (KIND_AMENDMENT, "Annual amendment"),
+            (KIND_REFORECAST, "Quarterly reforecast"),
+        ],
+    )
+    reason = models.TextField()
+    previous_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    new_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    previous_quarters = models.JSONField(default=dict, blank=True)
+    new_quarters = models.JSONField(default=dict, blank=True)
+    requested_by = models.CharField(max_length=30)
+    status = models.CharField(
+        max_length=16,
+        choices=[
+            ("requested", "Requested"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+        ],
+        default="requested",
+    )
+    approved_by = models.CharField(max_length=30, null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_milestone_allocation_amendment"
+        ordering = ["-created_at"]

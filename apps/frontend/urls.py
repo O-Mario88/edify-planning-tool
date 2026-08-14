@@ -36,6 +36,7 @@ from .views import (
     decision_views,
     catalogue_views,
     priority_views,
+    target_distribution_views,
 )
 
 app_name = "frontend"
@@ -98,6 +99,31 @@ urlpatterns = [
         "strategic-priorities/cycles/<str:cycle_id>/approve",
         priority_views.cycle_approve_action,
         name="priority_cycle_approve",
+    ),
+    path(
+        "target-distribution",
+        target_distribution_views.target_distribution_page,
+        name="target_distribution",
+    ),
+    path(
+        "target-distribution/action",
+        target_distribution_views.target_distribution_action,
+        name="target_distribution_action",
+    ),
+    path(
+        "target-distribution/form",
+        target_distribution_views.target_distribution_form,
+        name="target_distribution_form",
+    ),
+    path(
+        "target-distribution/team",
+        target_distribution_views.team_distribution_page,
+        name="team_target_distribution",
+    ),
+    path(
+        "target-distribution/team/action",
+        target_distribution_views.team_distribution_action,
+        name="team_target_distribution_action",
     ),
     path("logout", auth_views.logout_view, name="logout"),
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),

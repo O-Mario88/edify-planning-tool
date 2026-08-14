@@ -4068,6 +4068,22 @@
    "has_drilldown": false
   },
   {
+   "kind": "other",
+   "module": "apps/frontend/views/target_distribution_views.py",
+   "line": 169,
+   "label": "Search master milestones and activities",
+   "keys": [
+    "action",
+    "hidden",
+    "label",
+    "name",
+    "placeholder",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
    "line": 361,
@@ -4884,6 +4900,34 @@
     "key",
     "label",
     "status"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/target_distribution.py",
+   "line": 151,
+   "label": null,
+   "keys": [
+    "key",
+    "label",
+    "pct",
+    "tone"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false
+  },
+  {
+   "kind": "other",
+   "module": "apps/hr/target_distribution.py",
+   "line": 132,
+   "label": "Not started",
+   "keys": [
+    "key",
+    "label",
+    "pct",
+    "tone"
    ],
    "has_metric_key": false,
    "has_drilldown": false

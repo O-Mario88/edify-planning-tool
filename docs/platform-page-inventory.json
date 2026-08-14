@@ -1505,6 +1505,22 @@
       "template": "partials/hr/pd_dashboard/tracker_table.html"
     },
     {
+      "bytes": 10212,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/hr/target_distribution_form.html"
+    },
+    {
+      "bytes": 9436,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/hr/team_target_distribution_form.html"
+    },
+    {
       "bytes": 1684,
       "findings": [],
       "forms": 0,
@@ -2401,7 +2417,7 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 22538,
+      "bytes": 22814,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -30494,6 +30510,248 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
+      "automated_quality_score": 10.0,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": true,
+      "notifications": false,
+      "page_title": "Uganda Master Priority Plan \u00b7 Edify",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution",
+      "route_name": "target_distribution",
+      "secondary_actions": [
+        "/target-distribution",
+        "/target-distribution/action"
+      ],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": true,
+        "error": true,
+        "loading": true
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/hr/target_distribution.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Target Distribution Action",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution/action",
+      "route_name": "target_distribution_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_form",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Target Distribution Form",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Lazy, database-backed IA \u2192 PL form for one master milestone.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution/form",
+      "route_name": "target_distribution_form",
+      "secondary_actions": [
+        "/target-distribution/action"
+      ],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": false,
+      "templates": [
+        "partials/hr/target_distribution_form.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.team_distribution_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": true,
+      "notifications": false,
+      "page_title": "Team Priority Distribution \u00b7 Edify",
+      "permission_key": "team_target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/target-distribution/team",
+      "route_name": "team_target_distribution",
+      "secondary_actions": [
+        "/target-distribution/team",
+        "/target-distribution/team/action"
+      ],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/hr/team_target_distribution.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.team_distribution_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Team Target Distribution Action",
+      "permission_key": "team_target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "PL"
+      ],
+      "route": "/target-distribution/team/action",
+      "route_name": "team_target_distribution_action",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
       "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.oversight_views",
       "backend_view": "apps.frontend.views.oversight_views.team_planning_oversight_view",
@@ -45983,6 +46241,72 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution",
+      "route_name": "target_distribution",
+      "templates": [
+        "pages/hr/target_distribution.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/action",
+      "route_name": "target_distribution_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_form",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/form",
+      "route_name": "target_distribution_form",
+      "templates": [
+        "partials/hr/target_distribution_form.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.team_distribution_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/team",
+      "route_name": "team_target_distribution",
+      "templates": [
+        "pages/hr/team_target_distribution.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.team_distribution_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "team_target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/team/action",
+      "route_name": "team_target_distribution_action",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.oversight_views.team_planning_oversight_view",
       "kind": "partial",
       "methods": [
@@ -46409,15 +46733,15 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 909,
+    "all_routes": 914,
     "api_routes": 296,
-    "component_templates": 319,
-    "full_pages": 327,
-    "partials_and_drawers": 161,
-    "permission_gated": 494,
+    "component_templates": 321,
+    "full_pages": 331,
+    "partials_and_drawers": 162,
+    "permission_gated": 499,
     "permission_keys": 70,
     "roles": 11,
-    "routed_surfaces": 504,
+    "routed_surfaces": 509,
     "scheduled_jobs": 18,
     "severity_counts": {
       "critical": 0,
@@ -46425,6 +46749,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 469
+    "test_referenced": 474
   }
 }

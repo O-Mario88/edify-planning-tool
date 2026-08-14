@@ -1292,6 +1292,23 @@ def create(
     participant_mode = _participant_mode_for(catalogue_item, activity_type)
     if school_id_str or cluster_id:
         data = _apply_participant_mode(data, participant_mode)
+        # §9 (Uganda master): when the published master carries a
+        # participants-per-school guidance for this activity and the planner
+        # stated no figure, suggest the guidance. A stated figure always wins,
+        # and this beats the silent 25-participant costing fallback that would
+        # otherwise price the gap.
+        from apps.core.enums import ParticipantMode as _PMode
+
+        if (
+            participant_mode == _PMode.PER_SCHOOL
+            and data.get("participantsPerSchool") in (None, "")
+            and catalogue_item is not None
+        ):
+            from apps.hr.target_distribution import participant_guidance_for
+
+            guidance = participant_guidance_for(catalogue_item.id)
+            if guidance:
+                data = {**data, "participantsPerSchool": guidance}
 
     # ── Cluster participant planning ─────────────────────────────────────
     # The user states how many people to invite per school. The total is
@@ -2654,6 +2671,13 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
         if hasattr(a, "verification") and a.verification:
             a.verification.status = "returned"
             a.verification.save(update_fields=["status"])
+        # A returned activity is no longer verified work: the milestone credit
+        # it earned at ia_confirm reverses with it, exactly as the personal
+        # target ledger reverses on the next rebuild. Without this the
+        # strategic figures kept counting delivery IA had just rejected.
+        from apps.hr.milestone_progress import reverse_activity_progress
+
+        transaction.on_commit(lambda: reverse_activity_progress(a))
 
     return _serialize(a)
 

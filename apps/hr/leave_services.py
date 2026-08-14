@@ -788,6 +788,31 @@ class LeaveApprovalService:
             year = int(leave.start_date[:4])
             LeaveBalanceService.recalculate_balances(leave.staff, year)
 
+            # §7 (Uganda master): approved leave changes this person's real
+            # delivery capacity, so their remaining monthly milestone targets
+            # re-phase automatically. Past months and quarter/annual totals
+            # never move; a rephase failure never blocks the leave approval.
+            def _rephase(
+                staff_id=leave.staff_id,
+                start=leave.start_date,
+                end=leave.end_date,
+            ):
+                try:
+                    from apps.core.fy import get_operational_fy
+                    from apps.hr.target_distribution import (
+                        rephase_staff_allocations,
+                    )
+
+                    fys = {
+                        get_operational_fy(date.fromisoformat(start)),
+                        get_operational_fy(date.fromisoformat(end)),
+                    }
+                    rephase_staff_allocations(staff_id, sorted(fys))
+                except Exception:  # noqa: BLE001
+                    pass
+
+            transaction.on_commit(_rephase)
+
             # If covering staff is present, create TemporaryCoverageAssignment
             if leave.covering_staff:
                 # Access begins at start date 8:00 AM, ends at end date 5:00 PM

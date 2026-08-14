@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **504**
-- All registered routes: **909**
+- Routed product surfaces: **509**
+- All registered routes: **914**
 - API routes: **296**
 - Roles: **11**
 - Permission keys: **70**
 - Scheduled jobs: **18**
 - Activity states: **23**
-- Shared component templates: **319**
-- Full pages: **327**
-- Partials and drawers: **161**
-- Permission-gated surfaces: **494**
-- Referenced by automated tests: **469**
+- Shared component templates: **321**
+- Full pages: **331**
+- Partials and drawers: **162**
+- Permission-gated surfaces: **499**
+- Referenced by automated tests: **474**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -501,6 +501,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
 | /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
+| /target-distribution | Uganda Master Priority Plan · Edify | ADMIN, CD, IA | pages/hr/target_distribution.html | 10.0 | 0 | referenced by automated test |
+| /target-distribution/action | Target Distribution Action | ADMIN, CD, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /target-distribution/form | Target Distribution Form | ADMIN, CD, IA | partials/hr/target_distribution_form.html | 9.6 | 0 | referenced by automated test |
+| /target-distribution/team | Team Priority Distribution · Edify | ADMIN, PL | pages/hr/team_target_distribution.html | 9.6 | 0 | referenced by automated test |
+| /target-distribution/team/action | Team Target Distribution Action | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/ | Team Oversight | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/targets/team/workspace.html<br>pages/oversight/team_planning.html | 9.8 | 0 | referenced by automated test |
 | /team-planning-oversight/detail | Team Planning Oversight Detail | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/oversight/detail_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/export | Team Planning Oversight Export | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |

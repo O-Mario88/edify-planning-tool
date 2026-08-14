@@ -1,0 +1,162 @@
+{% load frontend_filters %}
+
+<form method="post" action="/target-distribution/action" class="ia-distribution-form" data-distribution-form data-summable="{% if state.summable %}true{% else %}false{% endif %}" data-expected="{{ state.expected }}" data-core-expected="{{ state.expected_core|default_if_none:'' }}" data-client-expected="{{ state.expected_client|default_if_none:'' }}">
+  {% csrf_token %}
+  <input type="hidden" name="fy" value="{{ fy }}">
+  <input type="hidden" name="milestone" value="{{ milestone.id }}">
+
+  <div class="ia-distribution-form__intro">
+    <span class="ia-distribution-form__intro-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+    </span>
+    <p><strong>IA distributes Uganda targets to Program Leads.</strong> The full target must reach a zero balance before approval; approved figures lock for the year.</p>
+  </div>
+
+  <fieldset class="ia-distribution-form__fieldset">
+    <legend>Selected master priority</legend>
+    <div class="ia-distribution-form__grid">
+      <label for="distribution-financial-year">
+        <span>Financial Year</span>
+        <input id="distribution-financial-year" value="FY{{ fy }}" readonly>
+      </label>
+      <label for="distribution-priority-group">
+        <span>Priority Group</span>
+        <input id="distribution-priority-group" value="{{ milestone.priority.title }}" readonly>
+      </label>
+      <label class="ia-distribution-form__wide" for="distribution-milestone-activity">
+        <span>Milestone / Activity</span>
+        <input id="distribution-milestone-activity" value="{{ milestone.title }} · {{ activityDisplay }}" readonly>
+      </label>
+      <label for="distribution-uganda-target">
+        <span>Uganda Target (Total)</span>
+        <input id="distribution-uganda-target" value="{{ milestone.target_value|floatformat:'-2'|intcomma }} {{ milestone.target_unit }}" readonly>
+      </label>
+      <label for="distribution-allocation-method">
+        <span>Allocation Method</span>
+        <input id="distribution-allocation-method" value="{{ milestone.get_allocation_method_display }}" readonly>
+      </label>
+      {% if milestone.core_target != None %}
+      <label for="distribution-core-target">
+        <span>Core Target</span>
+        <input id="distribution-core-target" value="{{ milestone.core_target|floatformat:'-2'|intcomma }}" readonly>
+      </label>
+      {% endif %}
+      {% if milestone.client_target != None %}
+      <label for="distribution-client-target">
+        <span>Client Target</span>
+        <input id="distribution-client-target" value="{{ milestone.client_target|floatformat:'-2'|intcomma }}" readonly>
+      </label>
+      {% endif %}
+      {% if milestone.participants_per_school %}
+      <label class="ia-distribution-form__wide" for="distribution-participant-guidance">
+        <span>Participant Guidance</span>
+        <input id="distribution-participant-guidance" value="{{ milestone.participants_per_school }} per invited school · staff confirms the planned participants when scheduling" readonly>
+      </label>
+      {% endif %}
+      <label class="ia-distribution-form__wide" for="distribution-notes">
+        <span>Notes / Instructions</span>
+        <textarea id="distribution-notes" rows="2" readonly>{% if milestone.confirmation_note %}{{ milestone.confirmation_note }}{% else %}{{ milestone.source_text }}{% endif %}</textarea>
+      </label>
+    </div>
+  </fieldset>
+
+  <section class="ia-distribution-form__allocation" aria-labelledby="pl-allocation-title">
+    <div class="ia-distribution-form__section-heading">
+      <div>
+        <p class="ia-distribution-form__eyebrow">Balanced workload recommendation</p>
+        <h3 id="pl-allocation-title">Distribute to Program Leads</h3>
+      </div>
+      {% if state.summable %}
+      <div class="ia-distribution-balance {% if proposal.remaining == 0 %}is-zero{% endif %}" data-balance-panel>
+        <span>Proposed remaining</span>
+        <strong data-balance-main>{{ proposal.remaining|floatformat:"-2"|intcomma }}</strong>
+      </div>
+      {% else %}
+      <div class="ia-distribution-balance {% if state.balanced %}is-zero{% endif %}">
+        <span>Required per lead</span>
+        <strong>{{ state.expected|floatformat:"-2" }}%</strong>
+      </div>
+      {% endif %}
+    </div>
+
+    <p class="ia-distribution-form__guidance">
+      Recommendations combine each team’s eligible school portfolio, active CCEO count, FY delivery days, and workload already held on other priorities. Review the evidence before saving; the live balance must remain at zero to approve.
+    </p>
+
+    <div class="ia-distribution-form__lead-list">
+      {% for rec in recommendations %}
+      <article class="ia-distribution-lead">
+        <div class="ia-distribution-lead__identity">
+          <span class="ia-distribution-lead__avatar" aria-hidden="true">{{ rec.staff.user.name|slice:":1"|upper }}</span>
+          <div>
+            <h4>{{ rec.staff.user.name }}</h4>
+            <p>{{ rec.portfolio.total }} schools · {{ rec.portfolio.core }} Core · {{ rec.portfolio.client }} Client</p>
+            <div class="ia-recommendation-evidence" aria-label="Recommendation factors">
+              <span>1 PL + {{ rec.cceoCount }} CCEO{{ rec.cceoCount|pluralize }}</span>
+              <span>{{ rec.memberCount }} delivery holder{{ rec.memberCount|pluralize }}</span>
+              <span>{{ rec.eligibleSchools }} eligible schools</span>
+              <span>{{ rec.availableDays }} delivery days</span>
+              <span>{{ rec.activePriorities }} other live assignments</span>
+            </div>
+          </div>
+        </div>
+        <div class="ia-distribution-lead__inputs">
+          <label for="distribution-target-{{ rec.staff.id }}">
+            <span>Target</span>
+            <input id="distribution-target-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="target__{{ rec.staff.id }}" value="{% if rec.allocation %}{{ rec.allocation.allocated_target|floatformat:'-2' }}{% else %}{{ rec.recommended|floatformat:'-2' }}{% endif %}" data-allocation-value {% if rec.allocation and rec.allocation.status == "approved" %}readonly{% endif %}>
+          </label>
+          {% if milestone.core_target != None %}
+          <label for="distribution-core-{{ rec.staff.id }}">
+            <span>Core</span>
+            <input id="distribution-core-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="core__{{ rec.staff.id }}" value="{% if rec.allocation and rec.allocation.core_target != None %}{{ rec.allocation.core_target|floatformat:'-2' }}{% else %}{{ rec.recommendedCore|default_if_none:'0'|floatformat:'-2' }}{% endif %}" data-core-value {% if rec.allocation and rec.allocation.status == "approved" %}readonly{% endif %}>
+          </label>
+          {% endif %}
+          {% if milestone.client_target != None %}
+          <label for="distribution-client-{{ rec.staff.id }}">
+            <span>Client</span>
+            <input id="distribution-client-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="client__{{ rec.staff.id }}" value="{% if rec.allocation and rec.allocation.client_target != None %}{{ rec.allocation.client_target|floatformat:'-2' }}{% else %}{{ rec.recommendedClient|default_if_none:'0'|floatformat:'-2' }}{% endif %}" data-client-value {% if rec.allocation and rec.allocation.status == "approved" %}readonly{% endif %}>
+          </label>
+          {% endif %}
+        </div>
+        <div class="ia-distribution-lead__status">
+          {% if rec.allocation and rec.allocation.status == "approved" %}<span class="edify-badge" data-tone="success">Locked</span>
+          {% elif rec.allocation %}<span class="edify-badge" data-tone="warning">Draft</span>
+          {% else %}<span class="edify-badge">Recommended</span>{% endif %}
+          <small class="ia-recommendation-score">{{ rec.balanceScore }}% balanced share</small>
+        </div>
+      </article>
+      {% empty %}
+      <div class="ia-distribution-form__empty">
+        <strong>No Program Leads are available</strong>
+        <p>Add active Program Leads with supervised CCEOs before distributing this target.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if state.summable and milestone.core_target != None or state.summable and milestone.client_target != None %}
+    <div class="ia-distribution-form__sub-balances">
+      {% if milestone.core_target != None %}<span>Core proposed remaining <strong data-balance-core>{{ proposal.coreRemaining|floatformat:"-2" }}</strong></span>{% endif %}
+      {% if milestone.client_target != None %}<span>Client proposed remaining <strong data-balance-client>{{ proposal.clientRemaining|floatformat:"-2" }}</strong></span>{% endif %}
+    </div>
+    {% endif %}
+
+    <label class="ia-distribution-form__reason" for="distribution-rationale">
+      <span>Allocation rationale</span>
+      <input id="distribution-rationale" name="reason" value="Balanced workload recommendation: portfolio, team capacity, availability and existing assignments" required aria-describedby="distribution-reason-hint">
+      <small id="distribution-reason-hint">This explanation is retained in the target’s audit trail.</small>
+    </label>
+  </section>
+
+  <footer class="ia-distribution-form__actions">
+    <button type="button" class="ia-button ia-button--secondary" data-dialog-close>Cancel</button>
+    {% if recommendations and not allLocked %}
+    <button type="submit" name="action" value="save_team_allocations" class="ia-button ia-button--secondary">Save Draft</button>
+    <button type="submit" name="action" value="save_and_approve_team_distribution" class="ia-button ia-button--primary" data-approve-distribution>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      <span data-approve-label>Approve &amp; distribute</span>
+    </button>
+    {% elif allLocked %}
+    <span class="ia-distribution-form__locked">Distribution approved and locked</span>
+    {% endif %}
+  </footer>
+</form>

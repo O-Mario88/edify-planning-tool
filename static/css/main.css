@@ -822,6 +822,18 @@
   .table {
     display: table;
   }
+  .table-cell {
+    display: table-cell;
+  }
+  .table-header-group {
+    display: table-header-group;
+  }
+  .table-row {
+    display: table-row;
+  }
+  .table-row-group {
+    display: table-row-group;
+  }
   .aspect-square {
     aspect-ratio: 1 / 1;
   }
@@ -1448,9 +1460,6 @@
   }
   .min-w-6 {
     min-width: calc(var(--spacing) * 6);
-  }
-  .min-w-8 {
-    min-width: calc(var(--spacing) * 8);
   }
   .min-w-10 {
     min-width: calc(var(--spacing) * 10);
@@ -5119,11 +5128,6 @@
   }
   @media (width < 64rem) {
     .max-lg\:hidden {
-      display: none;
-    }
-  }
-  @media (width < 48rem) {
-    .max-md\:hidden {
       display: none;
     }
   }

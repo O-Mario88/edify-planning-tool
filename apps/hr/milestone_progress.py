@@ -31,10 +31,13 @@ def _rule_matches(rule, activity) -> bool:
         and activity.delivery_method_snapshot != rule.required_delivery_method
     ):
         return False
-    if rule.school_type and (
-        not activity.school or activity.school.school_type != rule.school_type
-    ):
-        return False
+    if rule.school_type:
+        from .target_distribution import school_type_family
+
+        if not activity.school or activity.school.school_type not in school_type_family(
+            rule.school_type
+        ):
+            return False
     if rule.school_level and (
         not activity.school
         or getattr(activity.school, "school_level", None) != rule.school_level
@@ -46,6 +49,31 @@ def _rule_matches(rule, activity) -> bool:
     ):
         return False
     return activity.status in QUALIFYING_STATES
+
+
+@transaction.atomic
+def reverse_activity_progress(activity) -> int:
+    """Remove the credits of an activity that is no longer verified.
+
+    Called when IA returns a completion. The credit rows are deleted (they are
+    derived, dedup'd facts, not history — the audit trail lives on the
+    Activity and the verification records) and every affected milestone's
+    period actuals are recomputed, so verified figures never keep counting
+    rejected work.
+    """
+
+    credits = list(
+        MilestoneProgressCredit.objects.filter(activity=activity).select_related("rule")
+    )
+    if not credits:
+        return 0
+    milestone_ids = {credit.rule.milestone_id for credit in credits}
+    MilestoneProgressCredit.objects.filter(
+        id__in=[credit.id for credit in credits]
+    ).delete()
+    for milestone_id in milestone_ids:
+        refresh_period_targets(milestone_id)
+    return len(credits)
 
 
 @transaction.atomic
@@ -89,7 +117,7 @@ def record_activity_progress(activity) -> int:
 def refresh_period_targets(milestone_id: str) -> None:
     targets = MilestonePeriodTarget.objects.filter(
         milestone_id=milestone_id
-    ).select_related("employee", "allocation")
+    ).select_related("employee", "allocation", "milestone")
     for target in targets:
         credits = MilestoneProgressCredit.objects.filter(
             rule__milestone_id=milestone_id,
@@ -137,16 +165,35 @@ def refresh_period_targets(milestone_id: str) -> None:
         else:
             actual = credits.aggregate(value=Sum("credited_value"))["value"]
         target.actual_value = Decimal(actual or 0)
-        target.achievement_percentage = (
-            (target.actual_value / target.planned_value * 100)
-            if target.planned_value
-            else Decimal("0")
-        )
+        if (
+            target.milestone.measurement_type in {"percentage", "ratio"}
+            and target.allocation_id
+            and target.allocation.denominator
+        ):
+            # A rate target holds the rate (e.g. 90) as planned_value while
+            # credits arrive as raw units (schools reached). Coverage is
+            # units/denominator; achievement is coverage against the committed
+            # rate — dividing units by a percentage would be dimensional
+            # nonsense.
+            coverage = target.actual_value / target.allocation.denominator * 100
+            target.achievement_percentage = (
+                (coverage / target.planned_value * 100)
+                if target.planned_value
+                else Decimal("0")
+            )
+        else:
+            target.achievement_percentage = (
+                (target.actual_value / target.planned_value * 100)
+                if target.planned_value
+                else Decimal("0")
+            )
         target.actual_source = "MilestoneProgressCredit"
         target.snapshot_at = timezone.now()
+        # achievement_percentage is dimension-safe for counts AND rates;
+        # comparing raw units to a percentage target is not.
         target.status = (
             "achieved"
-            if target.planned_value and target.actual_value >= target.planned_value
+            if target.planned_value and target.achievement_percentage >= 100
             else "in_progress"
             if target.actual_value
             else "not_started"

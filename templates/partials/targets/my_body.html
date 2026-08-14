@@ -61,7 +61,13 @@
             <td class="px-3 py-2.5 text-right tabular-nums">{{ row.fyPlan }} / {{ row.fyActual }}</td>
             <td class="px-3 py-2.5 text-right font-bold tabular-nums">{{ row.progress }}%</td>
             <td class="px-3 py-2.5 text-right tabular-nums">{{ row.remaining }}</td>
-            <td class="px-3 py-2.5"><span class="pill {% if row.status == 'Achieved' %}pill-success{% else %}pill-neutral{% endif %}">{{ row.status }}</span></td>
+            <td class="px-3 py-2.5">
+              {% if row.classification and row.classification.pct != None %}
+              <span class="edify-badge" data-tone="{{ row.classification.tone }}">{{ row.classification.label }}</span>
+              {% else %}
+              <span class="pill {% if row.status == 'Achieved' %}pill-success{% else %}pill-neutral{% endif %}">{{ row.status }}</span>
+              {% endif %}
+            </td>
             <td class="px-3 py-2.5 text-right tabular-nums">{{ row.linkedActivities }}</td>
             <td class="px-3 py-2.5 text-slate-500">{{ row.dataSource }}</td>
           </tr>

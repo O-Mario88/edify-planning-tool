@@ -254,7 +254,15 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_INTELLIGENCE_VIEW,
         P.BUDGET_DECISION_REVIEW,
         P.STRATEGIC_PRIORITIES_VIEW,
+        # The CD authors, confirms and locks the COUNTRY master (the Uganda
+        # Master Priority Plan). COUNTRY_AUTHOR_ROLES and _STRATEGY_AUTHORS
+        # both already named the CD an author; the matrix disagreeing meant
+        # the CD could open the strategy page but not act on it.
+        P.STRATEGIC_PRIORITIES_CREATE,
+        P.STRATEGIC_PRIORITIES_EDIT,
+        P.STRATEGIC_PRIORITIES_APPROVE,
         P.STRATEGIC_PRIORITIES_ALLOCATE,
+        P.MILESTONES_DEFINE,
         P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
     ],
@@ -400,6 +408,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,
+        # IA distributes the approved Uganda annual targets to Program Leads
+        # and approves their quarterly spreads (Uganda Master Priority Plan).
+        P.STRATEGIC_PRIORITIES_ALLOCATE,
+        P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [

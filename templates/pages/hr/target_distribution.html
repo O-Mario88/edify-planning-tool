@@ -1,0 +1,350 @@
+{% extends "layouts/shell.html" %}
+{% load static frontend_filters %}
+
+{% block title %}Uganda Master Priority Plan · Edify{% endblock %}
+
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260814premium4">
+{% endblock %}
+
+{% block shell_content %}
+<div class="edify-page-canvas ia-master space-y-5" aria-labelledby="ia-master-title" data-mobile-family="performance">
+  <nav class="ia-master__breadcrumb" aria-label="Breadcrumb">
+    <span>Home</span><span aria-hidden="true">/</span><span>Priorities</span><span aria-hidden="true">/</span><strong>Uganda Master Priority Plan</strong>
+  </nav>
+
+  <header class="edify-page-header ia-master__header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Impact Assessment · Uganda Target Distribution</p>
+      <h1 id="ia-master-title" class="edify-page-title edify-page-header__title">Uganda Master Priority Plan</h1>
+      <p class="edify-page-subtitle edify-page-header__description">The governed country plan for moving every confirmed field target from Impact Assessment to Program Leads and onward to accountable CCEOs.</p>
+    </div>
+    <div class="ia-master__header-tools">
+      {% if latestUpdated %}
+      <span class="ia-trust-chip" title="Latest database update">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+        Updated {{ latestUpdated|date:"j M · H:i" }}
+      </span>
+      {% endif %}
+      {% if hasMaster %}<span class="ia-master__state {% if not published %}is-draft{% endif %}">{% if published %}Published · governed{% else %}Draft · CD confirmation{% endif %}</span>{% endif %}
+    </div>
+  </header>
+
+  {% if cycle_years %}
+  <form method="get" action="/target-distribution" class="edify-filter-bar" aria-label="Distribution filters">
+    <label class="ia-master__fy" for="ia-master-fy">Financial year
+      <select id="ia-master-fy" name="fy">
+        {% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}
+      </select>
+    </label>
+  </form>
+  {% endif %}
+
+  {% if messages %}
+  <div class="space-y-2" aria-live="polite">{% for message in messages %}<div class="edify-alert" data-tone="{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>{% endfor %}</div>
+  {% endif %}
+
+  {% if hasMaster %}
+  <section class="ia-command edify-inverse-surface" aria-labelledby="distribution-command-title">
+    <div class="ia-command__main">
+      <div>
+        <p class="ia-command__eyebrow">Distribution command</p>
+        <h2 id="distribution-command-title">
+          {% if kpis.distributionComplete %}Uganda’s annual distribution is fully approved and locked.
+          {% elif not published %}The master is waiting for final confirmation and publication.
+          {% elif kpis.remainingTarget == 0 %}Every additive figure balances. Complete the remaining approvals.
+          {% else %}Move every field target to its next accountable owner.{% endif %}
+        </h2>
+        <p class="ia-command__copy">
+          {% if not published %}{{ kpis.needsConfirmation }} source figure{{ kpis.needsConfirmation|pluralize }} must be resolved before IA can begin distribution.
+          {% elif kpis.distributionComplete %}All {{ kpis.fieldCascade }} field-cascade milestones have a zero balance and an approved annual owner.
+          {% else %}Work the queue in order. Each milestone must reconcile to zero before it can lock for the financial year.{% endif %}
+        </p>
+      </div>
+      <div class="ia-command__metric">
+        <span class="ia-command__metric-label">Remaining to distribute</span>
+        <strong>{{ kpis.remainingTarget|floatformat:"-2"|intcomma }}</strong>
+        <progress class="ia-command__progress" value="{{ kpis.distributionPct }}" max="100">{{ kpis.distributionPct }}%</progress>
+        <small>{{ kpis.locked }} of {{ kpis.fieldCascade }} milestones locked · {{ kpis.distributionPct }}% allocated</small>
+      </div>
+      <div class="ia-command__action">
+        {% if can_distribute %}
+          {% if published and next_distribution %}
+          <button type="button" class="ia-button" data-open-distribution data-milestone="{{ next_distribution.milestone.id }}" data-priority="{{ next_distribution.priority.code }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            Continue distribution
+          </button>
+          <small>Next: {{ next_distribution.milestone.title|truncatechars:54 }}</small>
+          {% elif published %}
+          <button type="button" class="ia-button" data-open-distribution>Review distribution</button>
+          <small>Open the governed allocation workspace.</small>
+          {% else %}
+          <button type="button" class="ia-button" disabled>Awaiting publication</button>
+          <small>Country Director confirmation is the current dependency.</small>
+          {% endif %}
+        {% elif is_cd and not published and next_confirmation %}
+          <button type="button" class="ia-button" data-open-confirm data-milestone="{{ next_confirmation.milestone.id }}" data-target="{{ next_confirmation.milestone.target_value|default_if_none:'' }}" data-core="{{ next_confirmation.milestone.core_target|default_if_none:'' }}" data-client="{{ next_confirmation.milestone.client_target|default_if_none:'' }}" data-participants="{{ next_confirmation.milestone.participants_per_school|default_if_none:'' }}" data-method="{{ next_confirmation.milestone.allocation_method }}" data-note="{{ next_confirmation.milestone.confirmation_note|escape }}">Continue confirmation</button>
+          <small>Next: {{ next_confirmation.milestone.title|truncatechars:54 }}</small>
+        {% else %}
+          <a class="ia-button" href="#master-milestones-title">Review governed master</a>
+          <small>Inspect source figures, ownership and allocation state.</small>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="ia-workflow" aria-label="Distribution workflow">
+      <div class="ia-workflow__step {% if kpis.needsConfirmation == 0 %}is-complete{% else %}is-current{% endif %}">
+        <span class="ia-workflow__index">{% if kpis.needsConfirmation == 0 %}<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>{% else %}1{% endif %}</span><span><strong>Source confirmed</strong><small>{{ kpis.needsConfirmation }} unresolved</small></span>
+      </div>
+      <div class="ia-workflow__step {% if published %}is-complete{% elif kpis.needsConfirmation == 0 %}is-current{% endif %}">
+        <span class="ia-workflow__index">{% if published %}<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>{% else %}2{% endif %}</span><span><strong>Master published</strong><small>{% if published %}Governed for FY{{ fy }}{% else %}Country Director gate{% endif %}</small></span>
+      </div>
+      <div class="ia-workflow__step {% if kpis.distributionComplete %}is-complete{% elif published %}is-current{% endif %}">
+        <span class="ia-workflow__index">{% if kpis.distributionComplete %}<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>{% else %}3{% endif %}</span><span><strong>PL distribution</strong><small>{{ kpis.balanced }} reconciled</small></span>
+      </div>
+      <div class="ia-workflow__step {% if kpis.distributionComplete %}is-complete{% endif %}">
+        <span class="ia-workflow__index">{% if kpis.distributionComplete %}<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>{% else %}4{% endif %}</span><span><strong>Annual targets locked</strong><small>{{ kpis.locked }} of {{ kpis.fieldCascade }}</small></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="ia-insights" aria-label="Uganda master intelligence">
+    <article class="ia-insight">
+      <div class="ia-insight__head"><span class="ia-insight__label">Master scope</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></span></div>
+      <strong class="ia-insight__value">{{ kpis.milestones }}</strong>
+      <div class="ia-insight__meta"><span>milestones across <strong>{{ kpis.priorityGroups }}</strong> groups</span><span>Uganda additive target <strong>{{ kpis.totalTarget|floatformat:"-2"|intcomma }}</strong></span></div>
+    </article>
+    <article class="ia-insight">
+      <div class="ia-insight__head"><span class="ia-insight__label">Allocation health</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg></span></div>
+      <strong class="ia-insight__value">{{ kpis.allocatedTarget|floatformat:"-2"|intcomma }}</strong>
+      <div class="ia-insight__meta"><span>of <strong>{{ kpis.distributableTarget|floatformat:"-2"|intcomma }}</strong> distributable</span><span><strong>{{ kpis.actionableMilestones }}</strong> still actionable</span><span><strong>{{ kpis.countryProjectTarget|floatformat:"-2"|intcomma }}</strong> country/project owned</span></div>
+    </article>
+    <article class="ia-insight">
+      <div class="ia-insight__head"><span class="ia-insight__label">Portfolio mix</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14v11H5zM8 8V5h8v3"/></svg></span></div>
+      <strong class="ia-insight__value">{{ kpis.coreTarget|add:kpis.clientTarget|floatformat:"-2"|intcomma }}</strong>
+      <progress class="ia-portfolio-meter" value="{{ kpis.corePct }}" max="100">Core {{ kpis.corePct }}%</progress>
+      <div class="ia-portfolio-legend"><span>Core {{ kpis.coreTarget|floatformat:"-2"|intcomma }} · {{ kpis.corePct }}%</span><span>Client {{ kpis.clientTarget|floatformat:"-2"|intcomma }} · {{ kpis.clientPct }}%</span></div>
+    </article>
+  </section>
+
+  {% if is_cd and not published %}
+  <aside class="ia-master-alert" aria-label="Master publication">
+    <div><strong>Publication is the control point</strong><p>Once every source figure is confirmed, publish and lock the Uganda master so IA can distribute the approved field priorities.</p></div>
+    {% if canPublish %}
+    <form method="post" action="/target-distribution/action">{% csrf_token %}<input type="hidden" name="action" value="publish_master"><input type="hidden" name="fy" value="{{ fy }}"><button type="submit" class="ia-button ia-button--primary">Publish FY{{ fy }} master</button></form>
+    {% else %}<button type="button" class="ia-button" disabled>{{ kpis.needsConfirmation }} confirmation{{ kpis.needsConfirmation|pluralize }} remaining</button>{% endif %}
+  </aside>
+  {% endif %}
+
+  <section class="ia-workspace" aria-labelledby="master-milestones-title">
+    <header class="ia-workspace__header">
+      <div class="ia-workspace__title"><h2 id="master-milestones-title">Master milestones</h2><p>{{ master_row_count }} database-backed records · Every row below is fetched from the governed FY{{ fy }} master.</p></div>
+      <div class="ia-workspace__tools">
+        <details class="ia-filter-menu">
+          <summary class="ia-button ia-button--secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>Filters{% if active_filter_count %}<span class="ia-filter-count">{{ active_filter_count }}</span>{% endif %}</summary>
+          <div class="ia-filter-panel">
+            <form method="get" action="/target-distribution" class="ia-master-filters" aria-label="Filter Uganda master milestones">
+              <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="tab" value="{{ selected.tab }}"><input type="hidden" name="carry_q" value="{{ selected.q }}">
+              <label for="ia-filter-priority">Priority group<select id="ia-filter-priority" name="priority"><option value="">All groups</option>{% for group in groups %}<option value="{{ group.priority.code }}" {% if selected.priority == group.priority.code %}selected{% endif %}>{{ group.priority.title }}</option>{% endfor %}</select></label>
+              <label for="ia-filter-portfolio">Portfolio<select id="ia-filter-portfolio" name="portfolio"><option value="">All portfolios</option><option value="core" {% if selected.portfolio == "core" %}selected{% endif %}>Core targets</option><option value="client" {% if selected.portfolio == "client" %}selected{% endif %}>Client targets</option></select></label>
+              <label for="ia-filter-status">Status<select id="ia-filter-status" name="status"><option value="">All statuses</option><option value="published" {% if selected.status == "published" %}selected{% endif %}>Published</option><option value="balance_open" {% if selected.status == "balance_open" %}selected{% endif %}>Balance open</option><option value="ready_to_approve" {% if selected.status == "ready_to_approve" %}selected{% endif %}>Ready to approve</option><option value="distributed" {% if selected.status == "distributed" %}selected{% endif %}>Distributed</option><option value="needs_confirmation" {% if selected.status == "needs_confirmation" %}selected{% endif %}>Needs confirmation</option></select></label>
+              <div class="ia-master-filters__actions"><a href="?fy={{ fy }}&tab={{ selected.tab }}" class="ia-button ia-button--ghost">Clear</a><button type="submit" class="ia-button ia-button--primary">Apply filters</button></div>
+            </form>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <nav class="ia-tabs" aria-label="Milestone allocation views">
+      <a href="?fy={{ fy }}&tab=all" {% if selected.tab == "all" %}aria-current="page"{% endif %}>All milestones</a>
+      <a href="?fy={{ fy }}&tab=field_cascade" {% if selected.tab == "field_cascade" %}aria-current="page"{% endif %}>Field cascade</a>
+      <a href="?fy={{ fy }}&tab=specialist" {% if selected.tab == "specialist" %}aria-current="page"{% endif %}>Project / specialist</a>
+      <a href="?fy={{ fy }}&tab=country_owned" {% if selected.tab == "country_owned" %}aria-current="page"{% endif %}>Country owned</a>
+      <a href="?fy={{ fy }}&tab=non_scoreable" {% if selected.tab == "non_scoreable" %}aria-current="page"{% endif %}>Non-scoreable</a>
+    </nav>
+
+    {% if active_filter_count %}
+    <div class="ia-active-filters" aria-label="Active filters">
+      <strong>Active filters</strong>
+      {% if selected.q %}<span class="ia-filter-chip">Search: {{ selected.q|truncatechars:32 }}</span>{% endif %}
+      {% if selected.priority %}<span class="ia-filter-chip">Priority group</span>{% endif %}
+      {% if selected.portfolio %}<span class="ia-filter-chip">{{ selected.portfolio|title }} portfolio</span>{% endif %}
+      {% if selected.status %}<span class="ia-filter-chip">{{ selected.status|title }}</span>{% endif %}
+      <a href="?fy={{ fy }}&tab={{ selected.tab }}">Clear all</a>
+    </div>
+    {% endif %}
+
+    <div class="ia-master-table-wrap" tabindex="0" aria-label="Scrollable table: Uganda master milestones">
+      <table class="ia-master-table">
+        <caption>Uganda master priority milestones, allocation balances and workflow status</caption>
+        <thead><tr><th scope="col" class="ia-master-table__number">#</th><th scope="col" class="ia-master-table__priority">Priority group</th><th scope="col" class="ia-master-table__milestone">Milestone</th><th scope="col">Activity</th><th scope="col">Uganda target</th><th scope="col">Unit</th><th scope="col">Core</th><th scope="col">Client</th><th scope="col">Allocation method</th><th scope="col">Owner</th><th scope="col">Balance</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+        <tbody>
+          {% for row in page_obj %}
+          <tr>
+            <td class="ia-master-table__number" data-label="#">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="ia-master-table__priority" data-label="Priority group"><span class="ia-priority-chip" data-sequence="{{ row.priority.sequence }}">{{ row.priority.title }}</span></td>
+            <td class="ia-master-table__milestone" data-label="Milestone"><strong>{{ row.milestone.title }}</strong></td>
+            <td class="ia-mobile-secondary" data-label="Activity">{{ row.activityDisplay }}</td>
+            <td data-label="Uganda target" class="ia-master-table__metric">{% if row.milestone.target_value != None %}{{ row.milestone.target_value|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="ia-mobile-secondary" data-label="Unit">{{ row.milestone.target_unit|default:"—" }}</td>
+            <td class="ia-master-table__metric ia-master-table__core ia-mobile-secondary" data-label="Core">{% if row.milestone.core_target != None %}{{ row.milestone.core_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="ia-master-table__metric ia-master-table__client ia-mobile-secondary" data-label="Client">{% if row.milestone.client_target != None %}{{ row.milestone.client_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="ia-mobile-secondary" data-label="Allocation method">{{ row.milestone.get_allocation_method_display }}</td>
+            <td class="ia-mobile-secondary" data-label="Owner">{{ row.milestone.responsible_role|default:"Country owner" }}</td>
+            <td data-label="Balance" class="ia-master-table__metric ia-master-table__balance {% if row.remaining == 0 %}is-zero{% elif row.remaining != None %}is-open{% endif %}">{% if row.remaining != None %}{{ row.remaining|floatformat:"-2"|intcomma }}{% elif row.state and not row.state.summable %}{% if row.state.balanced %}Aligned{% else %}Open{% endif %}{% else %}—{% endif %}</td>
+            <td data-label="Status"><span class="ia-status" data-tone="{{ row.statusTone }}">{{ row.displayStatus }}</span></td>
+            <td data-label="Action">
+              <div class="ia-row-primary-action">
+                {% if can_distribute and published and row.milestone.allocation_method == "field_cascade" and not row.milestone.needs_confirmation %}<button type="button" class="ia-button ia-row-action" data-tone="{% if row.displayStatus == 'Distributed' %}success{% elif row.displayStatus == 'Ready to approve' %}info{% elif row.displayStatus == 'Balance open' %}warning{% else %}primary{% endif %}" data-open-distribution data-milestone="{{ row.milestone.id }}" data-priority="{{ row.priority.code }}" aria-label="{% if row.displayStatus == 'Distributed' %}Review{% elif row.displayStatus == 'Ready to approve' %}Approve{% elif row.displayStatus == 'Balance open' %}Continue distributing{% else %}Distribute{% endif %} {{ row.milestone.title }}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                  <span><strong>{% if row.displayStatus == "Distributed" %}Review{% elif row.displayStatus == "Ready to approve" %}Approve{% elif row.displayStatus == "Balance open" %}Continue{% else %}Distribute{% endif %}</strong><small>{% if row.displayStatus == "Distributed" %}Locked allocation{% elif row.displayStatus == "Ready to approve" %}Zero balance{% elif row.displayStatus == "Balance open" %}{{ row.remaining|floatformat:"-2"|intcomma }} remaining{% else %}To Program Leads{% endif %}</small></span>
+                </button>
+                {% elif is_cd and not published %}<button type="button" class="ia-button ia-button--secondary ia-row-action" data-open-confirm data-milestone="{{ row.milestone.id }}" data-target="{{ row.milestone.target_value|default_if_none:'' }}" data-core="{{ row.milestone.core_target|default_if_none:'' }}" data-client="{{ row.milestone.client_target|default_if_none:'' }}" data-participants="{{ row.milestone.participants_per_school|default_if_none:'' }}" data-method="{{ row.milestone.allocation_method }}" data-note="{{ row.milestone.confirmation_note|escape }}">Confirm source figure</button>{% else %}<span aria-hidden="true">—</span>{% endif %}
+              </div>
+              <details class="ia-mobile-details"><summary>View milestone details</summary><dl class="ia-mobile-details__grid"><div><dt>Activity</dt><dd>{{ row.activityDisplay }}</dd></div><div><dt>Unit</dt><dd>{{ row.milestone.target_unit|default:"—" }}</dd></div><div><dt>Portfolio</dt><dd>Core {% if row.milestone.core_target != None %}{{ row.milestone.core_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %} · Client {% if row.milestone.client_target != None %}{{ row.milestone.client_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</dd></div><div><dt>Method</dt><dd>{{ row.milestone.get_allocation_method_display }}</dd></div><div><dt>Owner</dt><dd>{{ row.milestone.responsible_role|default:"Country owner" }}</dd></div></dl></details>
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="13"><div class="ia-master-empty"><strong>No milestones match these filters.</strong><br>Clear or adjust the filters to continue.</div></td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <footer class="ia-master-pagination">
+      <span>Showing {% if master_row_count %}{{ page_obj.start_index }}–{{ page_obj.end_index }}{% else %}0{% endif %} of {{ page_obj.paginator.count }} milestones</span>
+      {% if page_obj.paginator.num_pages > 1 %}<nav aria-label="Milestone pages">{% if page_obj.has_previous %}<a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous page">‹</a>{% endif %}{% for number in page_obj.paginator.page_range %}{% if number == page_obj.number %}<span aria-current="page">{{ number }}</span>{% elif number >= page_obj.number|add:"-2" and number <= page_obj.number|add:"2" %}<a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ number }}">{{ number }}</a>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?{% if page_query %}{{ page_query }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next page">›</a>{% endif %}</nav>{% endif %}
+    </footer>
+  </section>
+
+  {% if can_distribute %}
+  <dialog id="ia-distribution-dialog" class="ia-dialog" aria-labelledby="ia-distribution-dialog-title">
+    <div class="ia-dialog__shell">
+      <header class="ia-dialog__header">
+        <div class="ia-dialog__title"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6m-3-3h6"/></svg></span><div><h2 id="ia-distribution-dialog-title">Priority distribution</h2><small>Uganda master → Program Leads</small></div></div>
+        <button type="button" class="ia-dialog__close" data-dialog-close aria-label="Close distribution workspace">×</button>
+      </header>
+      <div class="ia-dialog__picker">
+        <label for="ia-distribution-group">Priority group<select id="ia-distribution-group"><option value="">Select priority group</option>{% for priority in distribution_groups %}<option value="{{ priority.code }}">{{ priority.title }}</option>{% endfor %}</select></label>
+        <label for="ia-distribution-milestone">Milestone / activity<select id="ia-distribution-milestone"><option value="">Select milestone</option>{% for row in distribution_options %}<option value="{{ row.milestone.id }}" data-priority="{{ row.priority.code }}">{{ row.milestone.title }}</option>{% endfor %}</select></label>
+      </div>
+      <div id="ia-distribution-form-body" class="ia-dialog__body"><div class="ia-dialog__placeholder"><div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg><strong>Select a milestone to distribute</strong><p>The governed target, team portfolios, active CCEO capacity and balanced workload recommendations will be fetched from the database.</p></div></div></div>
+    </div>
+  </dialog>
+  {% endif %}
+
+  {% if is_cd and not published %}
+  <dialog id="ia-confirm-dialog" class="ia-dialog" aria-labelledby="ia-confirm-dialog-title">
+    <div class="ia-dialog__shell">
+      <header class="ia-dialog__header"><div class="ia-dialog__title"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div><h2 id="ia-confirm-dialog-title">Confirm master milestone</h2><small>Resolve the source figure before publication</small></div></div><button type="button" class="ia-dialog__close" data-dialog-close aria-label="Close confirmation workspace">×</button></header>
+      <div class="ia-dialog__body">
+        <form method="post" action="/target-distribution/action" class="ia-confirm-form">{% csrf_token %}<input type="hidden" name="action" value="confirm_milestone"><input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="milestone" id="confirm-milestone-id">
+          <label for="confirm-target">Confirmed target<input id="confirm-target" type="number" step="0.01" min="0" name="targetValue"></label><label for="confirm-core">Core target<input id="confirm-core" type="number" step="0.01" min="0" name="coreTarget"></label><label for="confirm-client">Client target<input id="confirm-client" type="number" step="0.01" min="0" name="clientTarget"></label><label for="confirm-participants">Participants per school<input id="confirm-participants" type="number" step="1" min="0" name="participantsPerSchool"></label>
+          <label class="ia-confirm-form__wide" for="confirm-method">Allocation method<select id="confirm-method" name="allocationMethod"><option value="field_cascade">Field cascade (IA → PL → CCEO)</option><option value="specialist">Project / specialist team</option><option value="country_owned">Country-owned</option><option value="non_scoreable">Non-scoreable / pending definition</option></select></label>
+          <label class="ia-confirm-form__wide" for="confirm-note">Confirmation note<input id="confirm-note" name="confirmationNote" placeholder="How the source ambiguity was resolved"></label>
+          <div class="ia-confirm-form__actions"><button type="button" class="ia-button ia-button--secondary" data-dialog-close>Cancel</button><button type="submit" class="ia-button ia-button--primary">Confirm source figure</button></div>
+        </form>
+      </div>
+    </div>
+  </dialog>
+  {% endif %}
+
+  {% else %}
+  <section class="ia-workspace ia-master-empty"><strong>No Uganda master exists for FY{{ fy }}.</strong><p>Import the confirmed country priorities into the database before opening distribution.</p></section>
+  {% endif %}
+</div>
+
+<script>
+(() => {
+  const distributionDialog = document.getElementById('ia-distribution-dialog');
+  const financialYearSelect = document.getElementById('ia-master-fy');
+  const distributionBody = document.getElementById('ia-distribution-form-body');
+  const groupSelect = document.getElementById('ia-distribution-group');
+  const milestoneSelect = document.getElementById('ia-distribution-milestone');
+  const placeholder = '<div class="ia-dialog__placeholder"><div><strong>Loading governed allocation…</strong><p>Calculating portfolio demand, team capacity, availability and current workload.</p></div></div>';
+  let distributionRequest;
+
+  const filterMilestones = () => {
+    if (!groupSelect || !milestoneSelect) return;
+    const group = groupSelect.value;
+    for (const option of milestoneSelect.options) {
+      if (!option.value) continue;
+      const matches = !group || option.dataset.priority === group;
+      option.hidden = !matches;
+      option.disabled = !matches;
+    }
+    if (milestoneSelect.selectedOptions[0]?.disabled) milestoneSelect.value = '';
+  };
+
+  const loadDistribution = async (milestoneId) => {
+    if (!distributionBody || !milestoneId) return;
+    distributionRequest?.abort();
+    distributionRequest = new AbortController();
+    distributionBody.innerHTML = placeholder;
+    try {
+      const response = await fetch(`/target-distribution/form?milestone=${encodeURIComponent(milestoneId)}`, {headers: {'HX-Request': 'true'}, signal: distributionRequest.signal});
+      const html = await response.text();
+      if (!response.ok) throw new Error(html || 'The allocation workspace could not be loaded.');
+      distributionBody.innerHTML = html;
+      
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      distributionBody.innerHTML = `<div class="ia-dialog__placeholder"><div><strong>Unable to load this milestone</strong><p>${escapeHtml(error.message)}</p></div></div>`;
+    }
+  };
+
+  const openDistribution = (button) => {
+    if (!distributionDialog) return;
+    distributionDialog.showModal();
+    const milestoneId = button.dataset.milestone || '';
+    const priority = button.dataset.priority || '';
+    if (priority && groupSelect) groupSelect.value = priority;
+    filterMilestones();
+    if (milestoneId && milestoneSelect) {
+      milestoneSelect.value = milestoneId;
+      loadDistribution(milestoneId);
+    }
+  };
+
+  // Reconciliation is server law: the balance figures on this panel are only
+  // ever rendered by the backend. Edited-but-unsaved inputs mark the panel
+  // stale so nobody reads a pre-edit balance as current — the numbers refresh
+  // when the draft is saved and the engine reconciles.
+  const markUnsaved = (form) => {
+    if (!form || form.dataset.summable !== 'true') return;
+    const panel = form.querySelector('[data-balance-panel]');
+    if (panel) {
+      panel.classList.add('is-stale');
+      panel.classList.remove('is-zero', 'is-over');
+    }
+    const approve = form.querySelector('[data-approve-distribution]');
+    const approveLabel = approve?.querySelector('[data-approve-label]');
+    if (approveLabel) approveLabel.textContent = 'Save draft to reconcile';
+    approve?.classList.remove('is-ready');
+  };
+
+  const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
+
+  document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-open-distribution]');
+    if (opener && !opener.disabled) openDistribution(opener);
+    const closer = event.target.closest('[data-dialog-close]');
+    if (closer) closer.closest('dialog')?.close();
+    const confirmOpener = event.target.closest('[data-open-confirm]');
+    if (confirmOpener) {
+      const dialog = document.getElementById('ia-confirm-dialog');
+      document.getElementById('confirm-milestone-id').value = confirmOpener.dataset.milestone || '';
+      document.getElementById('confirm-target').value = confirmOpener.dataset.target || '';
+      document.getElementById('confirm-core').value = confirmOpener.dataset.core || '';
+      document.getElementById('confirm-client').value = confirmOpener.dataset.client || '';
+      document.getElementById('confirm-participants').value = confirmOpener.dataset.participants || '';
+      document.getElementById('confirm-method').value = confirmOpener.dataset.method || 'non_scoreable';
+      document.getElementById('confirm-note').value = confirmOpener.dataset.note || '';
+      dialog?.showModal();
+    }
+  });
+  document.addEventListener('input', (event) => markUnsaved(event.target.closest('[data-distribution-form]')));
+  financialYearSelect?.addEventListener('change', () => financialYearSelect.form?.submit());
+  groupSelect?.addEventListener('change', filterMilestones);
+  milestoneSelect?.addEventListener('change', () => loadDistribution(milestoneSelect.value));
+  for (const dialog of document.querySelectorAll('.ia-dialog')) dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+})();
+</script>
+{% endblock %}

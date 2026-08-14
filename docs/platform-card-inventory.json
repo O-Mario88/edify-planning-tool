@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 563,
-  "templates": 200,
-  "distinct_titles": 536,
+  "titled_cards": 564,
+  "templates": 201,
+  "distinct_titles": 537,
   "with_card_key": 13,
-  "untitled_surfaces": 1049,
+  "untitled_surfaces": 1051,
   "untitled_chrome": 234,
-  "untitled_nested": 390,
-  "untitled_headless": 425,
+  "untitled_nested": 391,
+  "untitled_headless": 426,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 21,
   "ambiguous_titles": 1
@@ -1883,6 +1883,20 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-5",
    "branch_path": []
+  },
+  {
+   "template": "templates/pages/hr/team_target_distribution.html",
+   "line": 56,
+   "title": "Team priority distribution",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "team-delivery-card",
+   "branch_path": [
+    [
+     5,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
@@ -5934,35 +5948,35 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 106,
+   "line": 112,
    "title": "No measurable performance priorities agreed for FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6",
    "branch_path": [
     [
-     8,
+     9,
      1
     ]
    ]
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 115,
+   "line": 121,
    "title": "Performance Priorities by Time Period",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": [
     [
-     13,
+     14,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 199,
+   "line": 205,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -5971,7 +5985,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 216,
+   "line": 222,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -5980,7 +5994,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 245,
+   "line": 251,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,

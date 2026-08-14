@@ -1,0 +1,60 @@
+{% load frontend_filters %}
+
+<form method="post" action="/target-distribution/team/action" class="ia-distribution-form team-allocation-form" data-team-allocation-form data-expected="{{ row.state.expected }}" data-core-expected="{{ row.state.expected_core|default_if_none:'' }}" data-client-expected="{{ row.state.expected_client|default_if_none:'' }}" data-summable="{% if row.state.summable %}true{% else %}false{% endif %}">
+  {% csrf_token %}
+  <input type="hidden" name="fy" value="{{ fy }}">
+  <input type="hidden" name="allocation" value="{{ row.allocation.id }}">
+
+  <div class="ia-distribution-form__intro">
+    <span class="ia-distribution-form__intro-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg></span>
+    <p><strong>This is the exact annual target IA approved for your team.</strong> Allocate this figure—and only this figure—across yourself and your supervised CCEOs. The balance must reach zero before targets can lock.</p>
+  </div>
+
+  <fieldset class="ia-distribution-form__fieldset">
+    <legend>Received priority</legend>
+    <div class="ia-distribution-form__grid">
+      <label for="team-fy-{{ row.allocation.id }}"><span>Financial year</span><input id="team-fy-{{ row.allocation.id }}" value="FY{{ fy }}" readonly></label>
+      <label for="team-priority-{{ row.allocation.id }}"><span>Priority group</span><input id="team-priority-{{ row.allocation.id }}" value="{{ row.milestone.priority.title }}" readonly></label>
+      <label class="ia-distribution-form__wide" for="team-milestone-{{ row.allocation.id }}"><span>Milestone / activity</span><input id="team-milestone-{{ row.allocation.id }}" value="{{ row.milestone.title }}" readonly></label>
+      <label for="team-target-{{ row.allocation.id }}"><span>Your approved team target</span><input id="team-target-{{ row.allocation.id }}" value="{{ row.allocation.allocated_target|floatformat:'-2'|intcomma }} {{ row.milestone.target_unit }}" readonly></label>
+      <label for="team-method-{{ row.allocation.id }}"><span>Distribution route</span><input id="team-method-{{ row.allocation.id }}" value="IA allocation → Program Lead + CCEOs" readonly></label>
+      {% if row.allocation.core_target != None %}<label for="team-core-{{ row.allocation.id }}"><span>Core target</span><input id="team-core-{{ row.allocation.id }}" value="{{ row.allocation.core_target|floatformat:'-2'|intcomma }}" readonly></label>{% endif %}
+      {% if row.allocation.client_target != None %}<label for="team-client-{{ row.allocation.id }}"><span>Client target</span><input id="team-client-{{ row.allocation.id }}" value="{{ row.allocation.client_target|floatformat:'-2'|intcomma }}" readonly></label>{% endif %}
+    </div>
+  </fieldset>
+
+  <section class="ia-distribution-form__allocation" aria-labelledby="cceo-allocation-title-{{ row.allocation.id }}">
+    <div class="ia-distribution-form__section-heading">
+      <div><p class="ia-distribution-form__eyebrow">Balanced workload recommendation</p><h3 id="cceo-allocation-title-{{ row.allocation.id }}">Allocate within your team</h3></div>
+      {% if row.state.summable %}<div class="ia-distribution-balance {% if row.proposal.remaining == 0 %}is-zero{% endif %}" data-team-balance-panel><span>Proposed remaining</span><strong data-team-balance-main>{{ row.proposal.remaining|floatformat:"-2"|intcomma }}</strong></div>
+      {% else %}<div class="ia-distribution-balance {% if row.state.balanced %}is-zero{% endif %}"><span>Required per holder</span><strong>{{ row.state.expected|floatformat:"-2" }}%</strong></div>{% endif %}
+    </div>
+
+    {% if row.state.errors and row.state.rows %}<ul class="team-allocation-errors" aria-label="Allocation issues">{% for error in row.state.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    <p class="ia-distribution-form__guidance">You are included because the Program Lead is also a portfolio owner. Recommendations combine every eligible team member’s schools, FY delivery days after holidays and approved leave, and workload on other priorities. The annual target and Core/Client split remain exactly as received from IA.</p>
+
+    <div class="ia-distribution-form__lead-list">
+      {% for rec in row.recommendations %}
+      <article class="ia-distribution-lead">
+        <div class="ia-distribution-lead__identity"><span class="ia-distribution-lead__avatar" aria-hidden="true">{{ rec.staff.user.name|slice:":1"|upper }}</span><div><h4>{{ rec.staff.user.name }}</h4>{% if rec.isLead %}<span class="ia-member-role">Program Lead · You</span>{% endif %}<p>{{ rec.portfolio.total }} schools · {{ rec.portfolio.core }} Core · {{ rec.portfolio.client }} Client</p><div class="ia-recommendation-evidence" aria-label="Recommendation factors"><span>{{ rec.eligibleSchools }} eligible schools</span><span>{{ rec.availableDays }} delivery days</span><span>{{ rec.activePriorities }} other live assignments</span></div></div></div>
+        <div class="ia-distribution-lead__inputs">
+          <label for="member-target-{{ row.allocation.id }}-{{ rec.staff.id }}"><span>Target</span><input id="member-target-{{ row.allocation.id }}-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="target__{{ rec.staff.id }}" value="{% if rec.allocation %}{{ rec.allocation.allocated_target|floatformat:'-2' }}{% else %}{{ rec.recommended|floatformat:'-2' }}{% endif %}" data-team-allocation-value {% if rec.allocation and rec.allocation.status == 'approved' %}readonly{% endif %}></label>
+          {% if row.allocation.core_target != None %}<label for="member-core-{{ row.allocation.id }}-{{ rec.staff.id }}"><span>Core</span><input id="member-core-{{ row.allocation.id }}-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="core__{{ rec.staff.id }}" value="{% if rec.allocation and rec.allocation.core_target != None %}{{ rec.allocation.core_target|floatformat:'-2' }}{% else %}{{ rec.recommendedCore|default_if_none:'0'|floatformat:'-2' }}{% endif %}" data-team-core-value {% if rec.allocation and rec.allocation.status == 'approved' %}readonly{% endif %}></label>{% endif %}
+          {% if row.allocation.client_target != None %}<label for="member-client-{{ row.allocation.id }}-{{ rec.staff.id }}"><span>Client</span><input id="member-client-{{ row.allocation.id }}-{{ rec.staff.id }}" type="number" inputmode="decimal" step="0.01" min="0" name="client__{{ rec.staff.id }}" value="{% if rec.allocation and rec.allocation.client_target != None %}{{ rec.allocation.client_target|floatformat:'-2' }}{% else %}{{ rec.recommendedClient|default_if_none:'0'|floatformat:'-2' }}{% endif %}" data-team-client-value {% if rec.allocation and rec.allocation.status == 'approved' %}readonly{% endif %}></label>{% endif %}
+        </div>
+        <div class="ia-distribution-lead__status">{% if rec.allocation and rec.allocation.status == 'approved' %}<span class="edify-badge" data-tone="success">Locked</span>{% elif rec.allocation %}<span class="edify-badge" data-tone="warning">Draft</span>{% else %}<span class="edify-badge">Recommended</span>{% endif %}<small class="ia-recommendation-score">{{ rec.balanceScore }}% balanced share</small></div>
+      </article>
+      {% empty %}<div class="ia-distribution-form__empty"><strong>No eligible active team member found</strong><p>Confirm that the Program Lead profile is active and linked to the approved team allocation.</p></div>{% endfor %}
+    </div>
+
+    {% if row.state.summable and row.allocation.core_target != None or row.state.summable and row.allocation.client_target != None %}<div class="ia-distribution-form__sub-balances">{% if row.allocation.core_target != None %}<span>Core proposed remaining <strong data-team-balance-core>{{ row.proposal.coreRemaining|floatformat:"-2" }}</strong></span>{% endif %}{% if row.allocation.client_target != None %}<span>Client proposed remaining <strong data-team-balance-client>{{ row.proposal.clientRemaining|floatformat:"-2" }}</strong></span>{% endif %}</div>{% endif %}
+
+    <label class="ia-distribution-form__reason" for="member-rationale-{{ row.allocation.id }}"><span>Allocation rationale</span><input id="member-rationale-{{ row.allocation.id }}" name="reason" value="Balanced workload recommendation: portfolio, availability and existing assignments" required aria-describedby="member-rationale-hint-{{ row.allocation.id }}"><small id="member-rationale-hint-{{ row.allocation.id }}">This explanation remains in the priority’s audit trail.</small></label>
+  </section>
+
+  <footer class="ia-distribution-form__actions">
+    <button type="button" class="ia-button ia-button--secondary" data-team-dialog-close>Cancel</button>
+    {% if row.recommendations and not row.allLocked %}<button type="submit" name="action" value="save_member_allocations" class="ia-button ia-button--secondary">Save draft</button><button type="submit" name="action" value="save_and_approve_member_distribution" class="ia-button ia-button--primary" data-team-approve><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg><span data-team-approve-label>Approve &amp; distribute</span></button>
+    {% elif row.allLocked %}<span class="ia-distribution-form__locked">Team distribution approved and locked</span>{% endif %}
+  </footer>
+</form>

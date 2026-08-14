@@ -46,6 +46,17 @@ class NotificationLinkResolver:
                 return "/admin-ops/my-plan", "Open Admin My Plan"
             return "/admin-ops/my-plan", "Open Platform Operations"
 
+        # Uganda Master Priority Plan cascade: each recipient lands on the
+        # surface where the allocated target is now theirs to act on.
+        if event_type.startswith("target_allocation."):
+            if role == "cceo":
+                return "/my-targets", "View My Priorities"
+            if role == "program lead":
+                return "/target-distribution/team", "Open Team Distribution"
+            if role in ("impactassessment", "countrydirector", "admin"):
+                return "/target-distribution", "Open Target Distribution"
+            return "/my-targets", "View My Targets"
+
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):
                 route = "/hr/performance"
