@@ -479,7 +479,15 @@ main #filters-form .school-filter-grid > * {
     font-size: var(--edify-text-display-size) !important;
   }
 
-  .edify-shell :where(button, [role="button"], summary, [role="tab"]),
+  /* Icon-only round controls are excluded. They carry no label, so their
+     width has nothing to size to: raising the minimum on one axis alone
+     stretched them into ovals next to the perfectly circular search button.
+     They set their own equal h-9/w-9 and are already a comfortable target
+     (2026-08 UI/UX audit — the oval was introduced by this very rule). */
+  .edify-shell
+    :where(button, [role="button"], summary, [role="tab"]):not(
+      .edify-topbar__icon-control
+    ),
   .edify-shell a:where(
     .btn,
     .edify-action-button,
@@ -489,8 +497,8 @@ main #filters-form .school-filter-grid > * {
     [class~="h-9"],
     [class~="min-h-8"],
     [class~="min-h-9"]
-  ),
-  .edify-shell a[href] {
+  ):not(.edify-topbar__icon-control),
+  .edify-shell a[href]:not(.edify-topbar__icon-control) {
     min-block-size: var(--edify-action-button-block-size) !important;
     min-inline-size: var(--edify-action-button-block-size);
   }
