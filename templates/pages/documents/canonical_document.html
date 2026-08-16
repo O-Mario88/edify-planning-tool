@@ -14,6 +14,18 @@
     --agreement-rule: var(--edify-border);
     --agreement-supporting-ink: var(--edify-text-secondary, var(--edify-text));
   }
+  /* The accent is a mid-blue tuned for light paper, and the dark
+     themes reuse it unchanged. Applied to TEXT on a near-black agreement
+     surface it measures 3.87:1 — below the 4.5:1 AA floor — and this is the
+     one document every user must read before they can work, including the
+     safeguarding escalation timeframes. Lighten the accent for text on the
+     dark surfaces only; fills and borders keep the brand colour.
+     (2026-08 UI/UX audit.) */
+  :root.theme-dark,
+  :root.theme-blue {
+    --agreement-blue: var(--edify-accent-text);
+    --agreement-navy: var(--edify-accent-text);
+  }
   body {
     background: var(--agreement-paper);
   }

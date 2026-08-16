@@ -76,6 +76,12 @@
   --edify-secondary-light: var(--edify-brand-secondary-soft);
   --edify-accent: var(--edify-brand-primary);
   --edify-accent-hover: var(--edify-brand-primary-hover);
+  /* The accent used as TEXT. On light surfaces it is the brand blue; the dark
+     themes override it below, because the brand blue on a near-black surface
+     measures 3.87:1 where AA wants 4.5:1. Deliberately separate from
+     --edify-accent so button FILLS keep the brand colour — lightening those
+     would break white-on-fill contrast the other way (2026-08 UI/UX audit). */
+  --edify-accent-text: var(--edify-brand-primary);
   --edify-on-accent: #ffffff;
   --edify-accent-light: var(--edify-brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
@@ -461,6 +467,9 @@
    supplies the intentional blue surface hierarchy.
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-blue {
+
+  /* AA-safe accent for TEXT on this theme's dark surfaces. */
+  --edify-accent-text: #93c5fd;
   color-scheme: dark;
 
   /* The dark workspace uses a brighter step from the same login-reference
@@ -638,6 +647,9 @@ html.theme-blue body {
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-dark {
   color-scheme: dark;
+
+  /* AA-safe accent for TEXT on this theme's dark surfaces. */
+  --edify-accent-text: #93c5fd;
 
   --brand-primary: #1872bd;
   --brand-primary-hover: #0d5b9e;
