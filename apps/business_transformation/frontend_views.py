@@ -1,4 +1,5 @@
 import csv
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.http import HttpResponse
@@ -56,6 +57,25 @@ def _filters(request) -> dict:
             "case_status",
             "partner",
             "support_status",
+            "page",
+            "per_page",
+        )
+    }
+
+
+def _loan_filters(request) -> dict:
+    """Return only filters represented by controls on the loan dashboard."""
+
+    return {
+        key: (request.GET.get(key) or "").strip()
+        for key in (
+            "fy",
+            "q",
+            "mfi",
+            "district",
+            "status",
+            "repayment_health",
+            "salesforce_status",
             "page",
             "per_page",
         )
@@ -134,8 +154,15 @@ def mfi_portal_page(request, section: str = "dashboard"):
 @require_GET
 @require_page_permission("loans")
 def loan_page(request):
-    context = services.loan_register_context(request.user, _filters(request))
-    context["filter_query"] = request.GET.urlencode()
+    loan_filters = _loan_filters(request)
+    context = services.loan_register_context(request.user, loan_filters)
+    context["filter_query"] = urlencode(
+        {
+            key: value
+            for key, value in loan_filters.items()
+            if value and key not in {"page", "per_page"}
+        }
+    )
     context["topbar_search"] = _topbar_search(
         request, "bt-loan-filters", "Search Uganda loans"
     )
@@ -180,7 +207,7 @@ def loan_export_action(request):
         return render_access_denied(
             request, "Your active role cannot export the Uganda loan register."
         )
-    loans = services.loan_export_rows(request.user, _filters(request))
+    loans = services.loan_export_rows(request.user, _loan_filters(request))
     response = HttpResponse(content_type="text/csv; charset=utf-8")
     response["Content-Disposition"] = (
         'attachment; filename="uganda-governed-loan-register.csv"'

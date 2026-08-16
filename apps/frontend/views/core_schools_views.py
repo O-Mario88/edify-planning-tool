@@ -48,12 +48,12 @@ logger = logging.getLogger(__name__)
 
 
 # How many core schools one page shows, and what a reader may choose. The
-# default was 10, which left the list card ending well above the right-hand
-# card stack and put most portfolios behind pagination for no reason. Both the
-# default and the option set are server-side: an unrecognised `per_page` falls
-# back rather than becoming an unbounded query.
-CORE_PAGE_SIZES = (10, 20, 50)
-CORE_PAGE_SIZE_DEFAULT = 20
+# default was 20; fifteen keeps the page easier to scan while still showing a
+# useful working set on phone, tablet and desktop. Existing explicit 10/20/50
+# links remain valid. Both the default and the option set are server-side: an
+# unrecognised `per_page` falls back rather than becoming an unbounded query.
+CORE_PAGE_SIZES = (10, 15, 20, 50)
+CORE_PAGE_SIZE_DEFAULT = 15
 
 
 def _core_page_size(request) -> int:

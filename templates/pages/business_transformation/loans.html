@@ -32,37 +32,10 @@
       <span class="edify-filter-label">Financial year</span>
       <input id="loan-fy" type="text" inputmode="numeric" name="fy" value="{{ fy }}" pattern="[0-9]{4}" maxlength="4">
     </label>
-    <label for="loan-period-type">
-      <span class="edify-filter-label">Period</span>
-      <select id="loan-period-type" name="period_type">
-        <option value="fy" {% if filters.period_type == "fy" or not filters.period_type %}selected{% endif %}>Annual financial year</option>
-        <option value="quarter" {% if filters.period_type == "quarter" %}selected{% endif %}>Quarter</option>
-        <option value="month" {% if filters.period_type == "month" %}selected{% endif %}>Month</option>
-        <option value="custom" {% if filters.period_type == "custom" %}selected{% endif %}>Custom period</option>
-      </select>
-    </label>
-    <label for="loan-quarter">
-      <span class="edify-filter-label">Quarter</span>
-      <select id="loan-quarter" name="quarter"><option value="">All quarters</option>{% for quarter in "Q1,Q2,Q3,Q4"|split:"," %}<option value="{{ quarter }}" {% if filters.quarter == quarter %}selected{% endif %}>{{ quarter }}</option>{% endfor %}</select>
-    </label>
-    <label for="loan-month">
-      <span class="edify-filter-label">FY month</span>
-      <select id="loan-month" name="month">
-        <option value="">All months</option>
-        <option value="1" {% if filters.month == "1" %}selected{% endif %}>October</option><option value="2" {% if filters.month == "2" %}selected{% endif %}>November</option><option value="3" {% if filters.month == "3" %}selected{% endif %}>December</option><option value="4" {% if filters.month == "4" %}selected{% endif %}>January</option><option value="5" {% if filters.month == "5" %}selected{% endif %}>February</option><option value="6" {% if filters.month == "6" %}selected{% endif %}>March</option><option value="7" {% if filters.month == "7" %}selected{% endif %}>April</option><option value="8" {% if filters.month == "8" %}selected{% endif %}>May</option><option value="9" {% if filters.month == "9" %}selected{% endif %}>June</option><option value="10" {% if filters.month == "10" %}selected{% endif %}>July</option><option value="11" {% if filters.month == "11" %}selected{% endif %}>August</option><option value="12" {% if filters.month == "12" %}selected{% endif %}>September</option>
-      </select>
-    </label>
-    <label for="loan-region">
-      <span class="edify-filter-label">Region</span>
-      <select id="loan-region" name="region">
-        <option value="">All regions</option>
-        {% for region in regions %}<option value="{{ region.id }}" {% if filters.region == region.id %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
-      </select>
-    </label>
     <label for="loan-mfi-filter">
-      <span class="edify-filter-label">MFI</span>
+      <span class="edify-filter-label">Lending partner</span>
       <select id="loan-mfi-filter" name="mfi">
-        <option value="">All MFIs</option>
+        <option value="">All lending partners</option>
         {% for mfi in mfis %}<option value="{{ mfi.id }}" {% if filters.mfi == mfi.id %}selected{% endif %}>{{ mfi.name }}</option>{% endfor %}
       </select>
     </label>
@@ -70,31 +43,15 @@
       <span class="edify-filter-label">District</span>
       <select id="loan-district-filter" name="district"><option value="">All districts</option>{% for district in districts %}<option value="{{ district.id }}" {% if filters.district == district.id %}selected{% endif %}>{{ district.name }}</option>{% endfor %}</select>
     </label>
-    <label for="loan-school-filter">
-      <span class="edify-filter-label">School</span>
-      <select id="loan-school-filter" name="school"><option value="">All financed schools</option>{% for school in schools %}<option value="{{ school.id }}" {% if filters.school == school.id %}selected{% endif %}>{{ school.name }}</option>{% endfor %}</select>
-    </label>
-    <label for="loan-purpose-filter">
-      <span class="edify-filter-label">Loan purpose</span>
-      <select id="loan-purpose-filter" name="purpose"><option value="">All purposes</option>{% for purpose in loan_purposes %}<option value="{{ purpose.id }}" {% if filters.purpose == purpose.id %}selected{% endif %}>{{ purpose.label }}</option>{% endfor %}</select>
-    </label>
-    <label for="loan-edtech-filter">
-      <span class="edify-filter-label">Classification</span>
-      <select id="loan-edtech-filter" name="edtech"><option value="">EdTech and non-EdTech</option><option value="yes" {% if filters.edtech == "yes" %}selected{% endif %}>EdTech</option><option value="no" {% if filters.edtech == "no" %}selected{% endif %}>Non-EdTech</option></select>
-    </label>
     <label for="loan-status-filter">
-      <span class="edify-filter-label">Status</span>
+      <span class="edify-filter-label">Loan status</span>
       <select id="loan-status-filter" name="status">
         <option value="">All statuses</option>
         {% for value, label in loan_statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
     <label for="loan-repayment-filter"><span class="edify-filter-label">Repayment health</span><select id="loan-repayment-filter" name="repayment_health"><option value="">All repayment states</option>{% for value, label in repayment_statuses %}<option value="{{ value }}" {% if filters.repayment_health == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-    <label for="loan-salesforce-filter"><span class="edify-filter-label">Salesforce</span><select id="loan-salesforce-filter" name="salesforce_status"><option value="">All Salesforce states</option>{% for value, label in salesforce_statuses %}<option value="{{ value }}" {% if filters.salesforce_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-    <label for="loan-ia-filter"><span class="edify-filter-label">IA validation</span><select id="loan-ia-filter" name="ia_status"><option value="">All IA states</option>{% for value, label in ia_statuses %}<option value="{{ value }}" {% if filters.ia_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-    <label for="loan-impact-filter"><span class="edify-filter-label">Impact</span><select id="loan-impact-filter" name="impact_status"><option value="">All impact states</option>{% for value, label in impact_statuses %}<option value="{{ value }}" {% if filters.impact_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-    <label for="loan-custom-from"><span class="edify-filter-label">Custom from</span><input id="loan-custom-from" name="custom_from" type="date" value="{{ filters.custom_from }}"></label>
-    <label for="loan-custom-to"><span class="edify-filter-label">Custom to</span><input id="loan-custom-to" name="custom_to" type="date" value="{{ filters.custom_to }}"></label>
+    <label for="loan-salesforce-filter"><span class="edify-filter-label">Salesforce status</span><select id="loan-salesforce-filter" name="salesforce_status"><option value="">All Salesforce states</option>{% for value, label in salesforce_statuses %}<option value="{{ value }}" {% if filters.salesforce_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
     {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
   </form>
 

@@ -238,10 +238,9 @@ class BulkAssignmentTests(TestCase):
                 current_fy_ssa_status="done",
             )
 
-        # Get page 1. The default page size is 20 — the list card is sized to
-        # fill its column, and ten rows left it ending well short of the
-        # right-hand stack — so fifteen schools now fit on one page. The
-        # explicit ?per_page=10 below still pins the paging behaviour itself.
+        # Get page 1. The default page size is 15, so this exact cohort fits on
+        # one page. The explicit ?per_page=10 below still pins the paging
+        # behaviour itself.
         response = self.client.get("/core-schools?page=1")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["matrix_rows"]), 15)

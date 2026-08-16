@@ -330,6 +330,51 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
         EdifyRole.BUSINESS_TRANSFORMATION_OFFICER,
     }
 
+    def test_loan_dashboard_exposes_only_the_primary_filters(self):
+        self.client.force_login(self.bt_user)
+
+        response = self.client.get(
+            "/loans",
+            {
+                "fy": "2026",
+                "purpose": "retired-purpose-filter",
+                "period_type": "month",
+                "custom_from": "2026-01-01",
+            },
+        )
+
+        for control_id in (
+            "loan-fy",
+            "loan-mfi-filter",
+            "loan-district-filter",
+            "loan-status-filter",
+            "loan-repayment-filter",
+            "loan-salesforce-filter",
+        ):
+            with self.subTest(primary_filter=control_id):
+                self.assertContains(response, f'id="{control_id}"')
+
+        for control_id in (
+            "loan-period-type",
+            "loan-quarter",
+            "loan-month",
+            "loan-region",
+            "loan-school-filter",
+            "loan-purpose-filter",
+            "loan-edtech-filter",
+            "loan-ia-filter",
+            "loan-impact-filter",
+            "loan-custom-from",
+            "loan-custom-to",
+        ):
+            with self.subTest(retired_filter=control_id):
+                self.assertNotContains(response, f'id="{control_id}"')
+
+        self.assertNotIn("purpose", response.context["filters"])
+        self.assertNotIn("period_type", response.context["filters"])
+        self.assertNotIn("custom_from", response.context["filters"])
+        self.assertEqual(response.context["filter_query"], "fy=2026")
+
     def test_every_role_has_the_loans_page_in_navigation(self):
         for index, role in enumerate(EdifyRole):
             user = User.objects.create_user(
