@@ -629,9 +629,31 @@ def _analyze():
     multi-second sequential scan and made /analytics look like a 134s blocker
     when it was really 0.14s. Production runs autovacuum, so the unanalyzed
     state describes something that cannot happen there.
+
+    Scoped to the tables these gates actually measure, and tolerant of a lock
+    timeout. A bare database-wide ANALYZE takes a lock every other parallel
+    test worker contends with, and on CI (`--parallel 4`) that surfaced as
+    `LockNotAvailable` failing the whole class in setUpTestData. Statistics are
+    an accuracy aid, not a correctness requirement: without them the timings
+    read pessimistically, which can only make a gate stricter, never falsely
+    green. So a contended ANALYZE is skipped rather than raised.
     """
-    with connection.cursor() as cursor:
-        cursor.execute("ANALYZE")
+    from django.db.utils import OperationalError
+
+    tables = (
+        "school",
+        "activity",
+        "ssa_record",
+        "ssa_score",
+        "staff_school_assignment",
+    )
+    for table in tables:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"ANALYZE {table}")  # nosec B608 - fixed literals
+        except OperationalError:
+            # Another worker holds it; its own ANALYZE serves the same purpose.
+            continue
 
 
 # Section 46's objectives, in milliseconds. The same numbers
