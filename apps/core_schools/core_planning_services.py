@@ -1787,9 +1787,7 @@ class CoreTeamOversightService:
                         | Q(salesforce_activity_id="")
                     ),
                 ),
-                ia_pending=Count(
-                    "id", filter=Q(status="awaiting_ia_verification")
-                ),
+                ia_pending=Count("id", filter=Q(status="awaiting_ia_verification")),
                 finance_pending=Count("id", filter=Q(payment_status="pending")),
             )
         }

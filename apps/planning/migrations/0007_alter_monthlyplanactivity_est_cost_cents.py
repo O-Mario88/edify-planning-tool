@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0006_teamaction'),
+        ("planning", "0006_teamaction"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='monthlyplanactivity',
-            name='est_cost_cents',
+            model_name="monthlyplanactivity",
+            name="est_cost_cents",
             field=models.BigIntegerField(default=0),
         ),
     ]

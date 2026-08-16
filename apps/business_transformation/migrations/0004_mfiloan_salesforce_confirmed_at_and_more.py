@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('business_transformation', '0003_governed_uganda_loan_purposes'),
+        ("business_transformation", "0003_governed_uganda_loan_purposes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mfiloan',
-            name='salesforce_confirmed_at',
+            model_name="mfiloan",
+            name="salesforce_confirmed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='mfiloan',
-            name='salesforce_confirmed_by',
+            model_name="mfiloan",
+            name="salesforce_confirmed_by",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='mfiloan',
-            name='salesforce_loan_id',
+            model_name="mfiloan",
+            name="salesforce_loan_id",
             field=models.CharField(blank=True, max_length=18, null=True, unique=True),
         ),
     ]

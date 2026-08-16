@@ -260,7 +260,9 @@ class WeeklyApprovalRoutingTest(TestCase):
         )
 
         self.assertEqual(rebuilt.id, wfr.id)
-        self.assertEqual(rebuilt.status, "returned_by_pl")  # resubmission stays explicit
+        self.assertEqual(
+            rebuilt.status, "returned_by_pl"
+        )  # resubmission stays explicit
         self.assertEqual(rebuilt.lines.count(), 2)
         self.assertEqual(rebuilt.total_amount, 100_000)
 

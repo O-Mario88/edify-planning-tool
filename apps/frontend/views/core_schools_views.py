@@ -1178,7 +1178,7 @@ def champions_list_view(request):
 @require_POST
 @require_page_permission("core_schools")
 def core_oversight_send_action(request):
-    """"Send to <CCEO>" from Team Core Oversight.
+    """ "Send to <CCEO>" from Team Core Oversight.
 
     The only write this lens produces, and it writes an *ask*, not work. It
     creates the TeamAction, notification, to-do and audit event through the
@@ -1237,9 +1237,7 @@ def core_oversight_send_action(request):
         )
     else:
         return error_fragment(
-            BadRequest(
-                "This core package is complete, so there is nothing to send."
-            ),
+            BadRequest("This core package is complete, so there is nothing to send."),
             status=400,
         )
 
@@ -1250,7 +1248,9 @@ def core_oversight_send_action(request):
             issue={
                 "key": key,
                 "condition_key": f"core|{key}|school|{school.id}|{fy}",
-                "severity": "critical" if key == "core_assessment_missing" else "warning",
+                "severity": "critical"
+                if key == "core_assessment_missing"
+                else "warning",
                 "detail": detail,
             },
             fy=fy,

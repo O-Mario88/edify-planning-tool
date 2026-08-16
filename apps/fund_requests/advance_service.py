@@ -441,23 +441,17 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
         # confirmation is what opens the accountability workflow.
         from .models import FundRequest, WeeklyFundRequest
 
-        unreceipted_week = (
-            WeeklyFundRequest.objects.filter(
-                lines__activity_budget_line__advance_requests=adv,
-                status="disbursed",
-                receipt_confirmed_at__isnull=True,
-            )
-            .exists()
-        )
-        unreceipted_month = (
-            FundRequest.objects.filter(
-                items__activity_schedule_cost_line_id=adv.budget_line_id,
-                period="monthly",
-                status="disbursed",
-                receipt_confirmed_at__isnull=True,
-            )
-            .exists()
-        )
+        unreceipted_week = WeeklyFundRequest.objects.filter(
+            lines__activity_budget_line__advance_requests=adv,
+            status="disbursed",
+            receipt_confirmed_at__isnull=True,
+        ).exists()
+        unreceipted_month = FundRequest.objects.filter(
+            items__activity_schedule_cost_line_id=adv.budget_line_id,
+            period="monthly",
+            status="disbursed",
+            receipt_confirmed_at__isnull=True,
+        ).exists()
         if unreceipted_week or unreceipted_month:
             raise BadRequest(
                 "Confirm receipt of the disbursed funds first — "

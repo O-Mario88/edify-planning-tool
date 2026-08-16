@@ -2133,7 +2133,11 @@ def _business_transformation_todos(principal, role, today):
             .order_by("submitted_at", "created_at")[:40]
         )
         for loan in pending:
-            submitted = loan.submitted_at.date() if loan.submitted_at else loan.created_at.date()
+            submitted = (
+                loan.submitted_at.date()
+                if loan.submitted_at
+                else loan.created_at.date()
+            )
             due = submitted + timedelta(days=3)
             age = max((today - submitted).days, 0)
             if today > due + timedelta(days=7):

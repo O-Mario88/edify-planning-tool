@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fund_requests', '0010_monthly_team_request_snapshots'),
+        ("fund_requests", "0010_monthly_team_request_snapshots"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='weeklyfundrequest',
-            name='receipt_confirmed_at',
+            model_name="weeklyfundrequest",
+            name="receipt_confirmed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

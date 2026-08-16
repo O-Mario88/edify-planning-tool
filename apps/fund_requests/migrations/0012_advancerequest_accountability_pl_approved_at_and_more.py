@@ -4,25 +4,57 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('fund_requests', '0011_weeklyfundrequest_receipt_confirmed_at'),
+        ("fund_requests", "0011_weeklyfundrequest_receipt_confirmed_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='advancerequest',
-            name='accountability_pl_approved_at',
+            model_name="advancerequest",
+            name="accountability_pl_approved_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='advancerequest',
-            name='accountability_pl_approved_by',
+            model_name="advancerequest",
+            name="accountability_pl_approved_by",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AlterField(
-            model_name='advancerequest',
-            name='status',
-            field=models.CharField(choices=[('draft_from_schedule', 'Draft (from schedule)'), ('pending_responsible_confirmation', 'Pending responsible confirmation'), ('confirmed_for_advance', 'Confirmed for advance'), ('self_funded_pending_reimbursement', 'Self-funded (pending reimbursement)'), ('not_requested', 'Not requested'), ('submitted_to_accountant', 'Submitted to accountant'), ('disbursed', 'Disbursed'), ('accountability_pl_pending', 'Accountability awaiting PL approval'), ('accountability_pending', 'Accountability pending'), ('accounted', 'Accounted'), ('reimbursement_pl_pending', 'Reimbursement awaiting PL approval'), ('reimbursement_submitted', 'Reimbursement submitted'), ('reimbursement_disbursed', 'Reimbursement disbursed (awaiting receipt confirmation)'), ('reimbursed', 'Reimbursed'), ('returned', 'Returned'), ('cancelled', 'Cancelled')], default='pending_responsible_confirmation', max_length=40),
+            model_name="advancerequest",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("draft_from_schedule", "Draft (from schedule)"),
+                    (
+                        "pending_responsible_confirmation",
+                        "Pending responsible confirmation",
+                    ),
+                    ("confirmed_for_advance", "Confirmed for advance"),
+                    (
+                        "self_funded_pending_reimbursement",
+                        "Self-funded (pending reimbursement)",
+                    ),
+                    ("not_requested", "Not requested"),
+                    ("submitted_to_accountant", "Submitted to accountant"),
+                    ("disbursed", "Disbursed"),
+                    (
+                        "accountability_pl_pending",
+                        "Accountability awaiting PL approval",
+                    ),
+                    ("accountability_pending", "Accountability pending"),
+                    ("accounted", "Accounted"),
+                    ("reimbursement_pl_pending", "Reimbursement awaiting PL approval"),
+                    ("reimbursement_submitted", "Reimbursement submitted"),
+                    (
+                        "reimbursement_disbursed",
+                        "Reimbursement disbursed (awaiting receipt confirmation)",
+                    ),
+                    ("reimbursed", "Reimbursed"),
+                    ("returned", "Returned"),
+                    ("cancelled", "Cancelled"),
+                ],
+                default="pending_responsible_confirmation",
+                max_length=40,
+            ),
         ),
     ]

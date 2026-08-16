@@ -173,20 +173,12 @@ class Permission(str, Enum):
     BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE = (
         "businessTransformation.schoolSupport.manage"
     )
-    BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW = (
-        "businessTransformation.portfolio.view"
-    )
-    BUSINESS_TRANSFORMATION_SENSITIVE_VIEW = (
-        "businessTransformation.sensitive.view"
-    )
+    BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW = "businessTransformation.portfolio.view"
+    BUSINESS_TRANSFORMATION_SENSITIVE_VIEW = "businessTransformation.sensitive.view"
     BUSINESS_TRANSFORMATION_MFI_MANAGE = "businessTransformation.mfi.manage"
-    BUSINESS_TRANSFORMATION_REFERRAL_MANAGE = (
-        "businessTransformation.referral.manage"
-    )
+    BUSINESS_TRANSFORMATION_REFERRAL_MANAGE = "businessTransformation.referral.manage"
     BUSINESS_TRANSFORMATION_LOAN_WRITE = "businessTransformation.loan.write"
-    BUSINESS_TRANSFORMATION_REPAYMENT_WRITE = (
-        "businessTransformation.repayment.write"
-    )
+    BUSINESS_TRANSFORMATION_REPAYMENT_WRITE = "businessTransformation.repayment.write"
     BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY = (
         "businessTransformation.portfolio.certify"
     )

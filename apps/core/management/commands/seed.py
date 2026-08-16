@@ -755,7 +755,9 @@ class Command(BaseCommand):
         Activity.objects.all().delete()
         ActivityScheduleCostLine.objects.all().delete()
 
-        seed_partners = list(Partner.objects.filter(active_status=True).order_by("name"))
+        seed_partners = list(
+            Partner.objects.filter(active_status=True).order_by("name")
+        )
 
         # Seed 13 activities per CCEO
         for cceo_idx, cceo in enumerate(cceos):
@@ -812,7 +814,9 @@ class Command(BaseCommand):
 
                 act = Activity.objects.create(
                     activity_type=act_type,
-                    delivery_type=del_type if partner or del_type != "partner" else "staff",
+                    delivery_type=del_type
+                    if partner or del_type != "partner"
+                    else "staff",
                     school=school,
                     cluster=cluster,
                     scheduled_date=scheduled_date,

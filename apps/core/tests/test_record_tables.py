@@ -13,6 +13,7 @@ COMPONENT_CSS = ROOT / "static" / "css" / "components" / "mobile-shell.css"
 
 OPT_IN = "edify-record-table"
 
+
 def templates_with_class() -> list[Path]:
     return [
         p
@@ -46,7 +47,9 @@ class RecordTableCssContractTests(SimpleTestCase):
 
     def test_data_labels_do_not_render_as_card_rows(self):
         self.assertNotIn("content: attr(data-label)", self.css)
-        self.assertNotRegex(self.css, r"\.edify-record-table\s+thead\s*\{\s*display:\s*none")
+        self.assertNotRegex(
+            self.css, r"\.edify-record-table\s+thead\s*\{\s*display:\s*none"
+        )
 
 
 class RecordTableMarkupContractTests(SimpleTestCase):

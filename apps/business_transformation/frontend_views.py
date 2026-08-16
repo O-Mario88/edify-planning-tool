@@ -5,7 +5,11 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
-from apps.core.permissions import has_permission, render_access_denied, require_page_permission
+from apps.core.permissions import (
+    has_permission,
+    render_access_denied,
+    require_page_permission,
+)
 from apps.core.rbac import Permission
 
 from . import services
@@ -143,7 +147,9 @@ def loan_page(request):
 def loan_drawer(request, loan_id: str):
     loan = services.scoped_loans(request.user).filter(id=loan_id).first()
     if loan is None:
-        return render_access_denied(request, "This loan is outside your governed scope.")
+        return render_access_denied(
+            request, "This loan is outside your governed scope."
+        )
     return render(
         request,
         "partials/business_transformation/loan_drawer.html",
@@ -221,9 +227,7 @@ def loan_export_action(request):
                 loan.get_impact_status_display(),
                 loan.approved_amount or "",
                 loan.disbursed_amount or "",
-                loan.disbursement_date.isoformat()
-                if loan.disbursement_date
-                else "",
+                loan.disbursement_date.isoformat() if loan.disbursement_date else "",
                 loan.term_months or "",
                 _csv_safe(loan.repayment_frequency),
                 loan.last_repayment_data_date.isoformat()
@@ -245,7 +249,9 @@ def loan_save_action(request):
 @require_POST
 @require_page_permission("loans")
 def salesforce_confirmation_action(request, loan_id: str):
-    result = services.confirm_salesforce_loan(loan_id, request.POST.dict(), request.user)
+    result = services.confirm_salesforce_loan(
+        loan_id, request.POST.dict(), request.user
+    )
     messages.success(
         request,
         f"Salesforce Loan ID {result['salesforceLoanId']} confirmed.",

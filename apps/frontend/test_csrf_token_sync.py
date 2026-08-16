@@ -24,9 +24,8 @@ class CsrfTokenSynchronizationContractTest(SimpleTestCase):
         self.assertIn('document.addEventListener(\n    "submit"', self.script)
         self.assertIn('document.addEventListener("htmx:configRequest"', self.script)
         self.assertIn('event.detail.headers["X-CSRFToken"] = token;', self.script)
-        self.assertIn('field.value = token;', self.script)
+        self.assertIn("field.value = token;", self.script)
 
     def test_restored_and_swapped_pages_are_resynchronized(self):
         self.assertIn('window.addEventListener("pageshow"', self.script)
         self.assertIn('document.addEventListener("htmx:load"', self.script)
-

@@ -73,20 +73,34 @@ class ProgramLeadDirectPortfolioBase(TestCase):
         self.team_cluster = self._cluster("DP Team Cluster", self.team_district)
 
         self.my_school = self._school(
-            "DP-MINE", self.pl_profile, self.mine_district, self.mine_sub,
+            "DP-MINE",
+            self.pl_profile,
+            self.mine_district,
+            self.mine_sub,
             cluster=self.my_cluster,
         )
         self.my_core = self._school(
-            "DP-MINE-CORE", self.pl_profile, self.mine_district, self.mine_sub,
-            school_type="core", cluster=self.my_cluster,
+            "DP-MINE-CORE",
+            self.pl_profile,
+            self.mine_district,
+            self.mine_sub,
+            school_type="core",
+            cluster=self.my_cluster,
         )
         self.team_school = self._school(
-            "DP-THEIRS", self.cceo_profile, self.team_district, self.team_sub,
+            "DP-THEIRS",
+            self.cceo_profile,
+            self.team_district,
+            self.team_sub,
             cluster=self.team_cluster,
         )
         self.team_core = self._school(
-            "DP-THEIRS-CORE", self.cceo_profile, self.team_district, self.team_sub,
-            school_type="core", cluster=self.team_cluster,
+            "DP-THEIRS-CORE",
+            self.cceo_profile,
+            self.team_district,
+            self.team_sub,
+            school_type="core",
+            cluster=self.team_cluster,
         )
 
     def _staff(self, email, role, name):
@@ -246,9 +260,7 @@ class SchoolPlanningScopeTest(ProgramLeadDirectPortfolioBase):
             "DP-STRANGER", self.outsider_profile, self.mine_district, self.mine_sub
         )
         with self.assertRaisesMessage(Forbidden, "outside your scope"):
-            _assert_target_in_scope(
-                school=stranger, cluster_id=None, principal=self.pl
-            )
+            _assert_target_in_scope(school=stranger, cluster_id=None, principal=self.pl)
 
 
 class OperationalSurfacesTest(ProgramLeadDirectPortfolioBase):
@@ -603,9 +615,7 @@ class PortfolioChangePropagationTest(ProgramLeadDirectPortfolioBase):
         self.assertTrue(may_plan_school(scope, self.team_school.id))
 
     def test_removing_the_supervision_link_removes_the_oversight(self):
-        StaffSupervisorAssignment.objects.filter(
-            supervisor=self.pl_profile
-        ).delete()
+        StaffSupervisorAssignment.objects.filter(supervisor=self.pl_profile).delete()
         scope = resolve_user_scope(self.pl)
         self.assertEqual(scope.team_school_ids, [])
         self.assertEqual(

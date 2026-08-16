@@ -2,16 +2,61 @@ from django.db import migrations
 
 
 ACTIVITIES = (
-    ("BT_UG_BUSINESS_PLANNING_SUPPORT", "Business Planning Support", "financial_health", "school_visit"),
-    ("BT_UG_EDTECH_LOAN_VERIFICATION", "EdTech Loan Verification", "financial_health", "school_visit"),
-    ("BT_UG_FINANCIAL_HEALTH_FOLLOW_UP", "Financial Health Follow-Up", "financial_health", "school_visit"),
-    ("BT_UG_GOVERNMENT_REQUIREMENTS_TRAINING", "Government Requirements Training", "government_requirement", "training"),
-    ("BT_UG_SCHOOL_REGISTRATION_SUPPORT", "School Registration Support", "government_requirement", "school_visit"),
-    ("BT_UG_TAXATION_SUPPORT", "Taxation Support", "government_requirement", "school_visit"),
+    (
+        "BT_UG_BUSINESS_PLANNING_SUPPORT",
+        "Business Planning Support",
+        "financial_health",
+        "school_visit",
+    ),
+    (
+        "BT_UG_EDTECH_LOAN_VERIFICATION",
+        "EdTech Loan Verification",
+        "financial_health",
+        "school_visit",
+    ),
+    (
+        "BT_UG_FINANCIAL_HEALTH_FOLLOW_UP",
+        "Financial Health Follow-Up",
+        "financial_health",
+        "school_visit",
+    ),
+    (
+        "BT_UG_GOVERNMENT_REQUIREMENTS_TRAINING",
+        "Government Requirements Training",
+        "government_requirement",
+        "training",
+    ),
+    (
+        "BT_UG_SCHOOL_REGISTRATION_SUPPORT",
+        "School Registration Support",
+        "government_requirement",
+        "school_visit",
+    ),
+    (
+        "BT_UG_TAXATION_SUPPORT",
+        "Taxation Support",
+        "government_requirement",
+        "school_visit",
+    ),
     ("BT_UG_NSSF_SUPPORT", "NSSF Support", "government_requirement", "school_visit"),
-    ("BT_UG_GOVERNMENT_REQUIREMENTS_FOLLOW_UP", "Government Requirements Follow-Up", "government_requirement", "school_visit"),
-    ("BT_UG_MFI_MENTORSHIP", "MFI Mentorship Session", "financial_health", "school_visit"),
-    ("BT_UG_MONTHLY_MFI_REVIEW", "Monthly MFI Review Meeting", "financial_health", "meeting"),
+    (
+        "BT_UG_GOVERNMENT_REQUIREMENTS_FOLLOW_UP",
+        "Government Requirements Follow-Up",
+        "government_requirement",
+        "school_visit",
+    ),
+    (
+        "BT_UG_MFI_MENTORSHIP",
+        "MFI Mentorship Session",
+        "financial_health",
+        "school_visit",
+    ),
+    (
+        "BT_UG_MONTHLY_MFI_REVIEW",
+        "Monthly MFI Review Meeting",
+        "financial_health",
+        "meeting",
+    ),
 )
 
 
@@ -29,7 +74,9 @@ def seed_complete_catalogue(apps, schema_editor):
             if is_meeting
             else "school_visit"
         )
-        activity_type = "training" if is_training else "admin" if is_meeting else "school_visit"
+        activity_type = (
+            "training" if is_training else "admin" if is_meeting else "school_visit"
+        )
         delivery_method = (
             "in_school_training"
             if is_training
@@ -54,7 +101,8 @@ def seed_complete_catalogue(apps, schema_editor):
                 "cluster_delivery_allowed": is_training or is_meeting,
                 "project_delivery_allowed": True,
                 "requires_school": not is_meeting,
-                "requires_current_ssa": code not in {
+                "requires_current_ssa": code
+                not in {
                     "BT_UG_EDTECH_LOAN_VERIFICATION",
                     "BT_UG_MONTHLY_MFI_REVIEW",
                 },
@@ -66,8 +114,12 @@ def seed_complete_catalogue(apps, schema_editor):
                 "programme_category": "Business Transformation Uganda",
                 "salesforce_record_type": "TRAINING" if is_training else "VISIT",
                 "salesforce_expected_prefix": "TS-" if is_training else "VS-",
-                "evidence_profile": "TRAINING_ATTENDANCE" if is_training else "SCHOOL_VISIT_FORM",
-                "costing_profile": "IN_SCHOOL_TRAINING" if is_training else "STAFF_SCHOOL_VISIT",
+                "evidence_profile": "TRAINING_ATTENDANCE"
+                if is_training
+                else "SCHOOL_VISIT_FORM",
+                "costing_profile": "IN_SCHOOL_TRAINING"
+                if is_training
+                else "STAFF_SCHOOL_VISIT",
                 "support_objective": "BUSINESS_TRANSFORMATION",
                 "follow_up_required": "FOLLOW_UP" not in code,
                 "created_by": "migration",
@@ -101,8 +153,13 @@ def retire_complete_catalogue(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("business_transformation", "0006_financialpracticeassessment_loanimpactassessment_and_more"),
+        (
+            "business_transformation",
+            "0006_financialpracticeassessment_loanimpactassessment_and_more",
+        ),
         ("activity_catalogue", "0008_standard_in_school_training_no_participants"),
     ]
 
-    operations = [migrations.RunPython(seed_complete_catalogue, retire_complete_catalogue)]
+    operations = [
+        migrations.RunPython(seed_complete_catalogue, retire_complete_catalogue)
+    ]

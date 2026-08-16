@@ -26,7 +26,9 @@ def allocation_for_planning(*, allocation_id: str, principal):
     return allocation
 
 
-def link_activity(*, activity, allocation_id: str, principal, planned_contribution=None):
+def link_activity(
+    *, activity, allocation_id: str, principal, planned_contribution=None
+):
     from apps.hr.models import ActivityPriorityLink
 
     allocation = allocation_for_planning(
@@ -48,7 +50,10 @@ def link_activity(*, activity, allocation_id: str, principal, planned_contributi
             "catalogue_item_id", flat=True
         )
     )
-    if allowed_catalogue_ids and activity.catalogue_item_id not in allowed_catalogue_ids:
+    if (
+        allowed_catalogue_ids
+        and activity.catalogue_item_id not in allowed_catalogue_ids
+    ):
         raise BadRequest(
             "The selected Activity Catalogue item is not approved for this priority milestone."
         )

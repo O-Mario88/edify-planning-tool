@@ -926,7 +926,8 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             # school record, so a supervisor may not do it for a CCEO's school
             # — the same rule `assign_school` and the picker apply.
             writable = (
-                direct_portfolio_schools(resolve_user_scope(user)) or School.objects.none()
+                direct_portfolio_schools(resolve_user_scope(user))
+                or School.objects.none()
             )
             if covered_sub_counties:
                 school = writable.filter(

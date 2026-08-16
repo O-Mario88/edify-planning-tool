@@ -44,9 +44,7 @@ class PriorityPortfolioTests(TestCase):
             verification_status="confirmed",
             uploaded_by=cls.user.id,
         )
-        SsaScore.objects.create(
-            ssa_record=current, intervention="leadership", score=4
-        )
+        SsaScore.objects.create(ssa_record=current, intervention="leadership", score=4)
         old = SsaRecord.objects.create(
             school=cls.school,
             date_of_ssa=timezone.now(),

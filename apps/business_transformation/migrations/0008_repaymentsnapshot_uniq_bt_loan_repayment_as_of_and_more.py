@@ -4,18 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('business_transformation', '0007_complete_uganda_bt_activity_catalogue'),
+        ("business_transformation", "0007_complete_uganda_bt_activity_catalogue"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='repaymentsnapshot',
-            constraint=models.UniqueConstraint(fields=('loan', 'as_of_date'), name='uniq_bt_loan_repayment_as_of'),
+            model_name="repaymentsnapshot",
+            constraint=models.UniqueConstraint(
+                fields=("loan", "as_of_date"), name="uniq_bt_loan_repayment_as_of"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='repaymentsnapshot',
-            constraint=models.CheckConstraint(condition=models.Q(('principal_repaid__gte', 0), ('amount_due_during_period__gte', 0), ('amount_paid_during_period__gte', 0), ('outstanding_amount__gte', 0), ('amount_currently_due__gte', 0), ('amount_overdue__gte', 0)), name='bt_repayment_amounts_nonnegative'),
+            model_name="repaymentsnapshot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("principal_repaid__gte", 0),
+                    ("amount_due_during_period__gte", 0),
+                    ("amount_paid_during_period__gte", 0),
+                    ("outstanding_amount__gte", 0),
+                    ("amount_currently_due__gte", 0),
+                    ("amount_overdue__gte", 0),
+                ),
+                name="bt_repayment_amounts_nonnegative",
+            ),
         ),
     ]

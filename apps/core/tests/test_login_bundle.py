@@ -135,9 +135,9 @@ class LoginBundleTests(SimpleTestCase):
         css = (CSS / "login.css").read_text()
 
         self.assertIn("container: login-brand-content / inline-size", css)
-        tablet_rule = css.split(
-            "@container login-brand-content (max-width: 40rem)", 1
-        )[1]
+        tablet_rule = css.split("@container login-brand-content (max-width: 40rem)", 1)[
+            1
+        ]
         self.assertIn(
             "grid-template-columns: repeat(2, minmax(0, 1fr))",
             tablet_rule,
@@ -151,9 +151,9 @@ class LoginBundleTests(SimpleTestCase):
         self.assertNotIn("white-space: nowrap", heading_rule)
         self.assertIn("text-wrap: balance", heading_rule)
 
-        tablet_rule = css.split(
-            "@container login-brand-content (max-width: 40rem)", 1
-        )[1]
+        tablet_rule = css.split("@container login-brand-content (max-width: 40rem)", 1)[
+            1
+        ]
         self.assertIn(".impact-card__grid", tablet_rule)
         self.assertIn(
             "grid-template-columns: repeat(2, minmax(0, 1fr))",

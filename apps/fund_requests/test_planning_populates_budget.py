@@ -130,7 +130,9 @@ class PlanningPopulatesTheBudgetTest(TestCase):
         self.assertEqual(activity.est_cost_cents, DAY_POOL)
         self.assertFalse(activity.cost_missing)
         for line in lines:
-            self.assertEqual(line.catalogue_id, self.catalogue.id, line.cost_setting_key)
+            self.assertEqual(
+                line.catalogue_id, self.catalogue.id, line.cost_setting_key
+            )
             self.assertEqual(line.currency, "UGX")
             self.assertEqual(line.responsible_user, self.user.id)
 
@@ -141,9 +143,7 @@ class PlanningPopulatesTheBudgetTest(TestCase):
             set(advances.values_list("status", flat=True)),
             {"pending_responsible_confirmation"},
         )
-        self.assertEqual(
-            sum(advances.values_list("amount", flat=True)), DAY_POOL
-        )
+        self.assertEqual(sum(advances.values_list("amount", flat=True)), DAY_POOL)
 
         # 3. The weekly fund request auto-generated from the same lines.
         week_start = self.day - datetime.timedelta(days=self.day.weekday())
@@ -164,11 +164,7 @@ class PlanningPopulatesTheBudgetTest(TestCase):
         self.assertEqual(monthly.status, "draft")
         self.assertEqual(monthly.total_amount, DAY_POOL)
         self.assertEqual(
-            set(
-                monthly.items.values_list(
-                    "activity_schedule_cost_line_id", flat=True
-                )
-            ),
+            set(monthly.items.values_list("activity_schedule_cost_line_id", flat=True)),
             {line.id for line in lines},
         )
 
@@ -219,9 +215,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         StaffSupervisorAssignment.objects.create(
             supervisor=cls.pl_sp, supervisee=cls.cceo_sp
         )
-        StaffSchoolAssignment.objects.create(
-            staff=cls.cceo_sp, school_id=cls.school.id
-        )
+        StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=cls.school.id)
 
         # Two schedulable days in the SAME week (skip Sunday; stay in-week).
         first = _schedulable_date()
@@ -293,9 +287,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         advances = AdvanceRequest.objects.filter(
             budget_line__weekly_request_lines__weekly_fund_request=wfr
         )
-        self.assertEqual(
-            set(advances.values_list("status", flat=True)), {"disbursed"}
-        )
+        self.assertEqual(set(advances.values_list("status", flat=True)), {"disbursed"})
         self.assertEqual(
             sum(advances.values_list("disbursed_amount", flat=True)),
             wfr.total_amount,
@@ -534,7 +526,9 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
 
         self.client.force_login(self.pl)
         week_param = wfr.week_start_date.isoformat()
-        page = self.client.get(f"/fund-requests/weekly?week={week_param}&staff={self.cceo.id}")
+        page = self.client.get(
+            f"/fund-requests/weekly?week={week_param}&staff={self.cceo.id}"
+        )
         self.assertEqual(page.status_code, 200)
         html = page.content.decode()
         self.assertIn("Fund accountability awaiting your approval", html)

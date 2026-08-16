@@ -61,7 +61,13 @@ class CoreSchoolsLayoutContractTest(TestCase):
     def test_no_brittle_fixed_height_holds_the_card_up(self):
         css = CSS.read_text()
         core_css = css.split("Core Schools — list card", 1)[1]
-        for banned in ("height: 6", "height: 7", "height: 8", "height: 9", "px;\n  max-block-size"):
+        for banned in (
+            "height: 6",
+            "height: 7",
+            "height: 8",
+            "height: 9",
+            "px;\n  max-block-size",
+        ):
             self.assertNotIn(f"block-size: {banned}", core_css)
         self.assertNotIn("min-height: 800px", core_css)
 
@@ -145,7 +151,11 @@ class CoreSchoolsLayoutContractTest(TestCase):
         self.assertIn("min-inline-size: 68rem", phone)
         self.assertNotIn("content: attr(data-label)", phone)
         oversight = OVERSIGHT.read_text()
-        for label in ("data-label=\"Visits\"", "data-label=\"Trainings\"", "data-label=\"Action\""):
+        for label in (
+            'data-label="Visits"',
+            'data-label="Trainings"',
+            'data-label="Action"',
+        ):
             self.assertIn(label, oversight)
 
     def test_both_rails_on_the_page_are_the_same_segmented_control(self):
@@ -192,7 +202,9 @@ class CoreSchoolsLayoutContractTest(TestCase):
 
         self.assertIn('data-edify-padding="flush"', oversight)
 
-        gutter = css.split(".core-oversight-table th:first-child", 1)[1].split("}", 1)[0]
+        gutter = css.split(".core-oversight-table th:first-child", 1)[1].split("}", 1)[
+            0
+        ]
         self.assertIn("padding-inline-start: 1.5rem", gutter)
         end = css.split(".core-oversight-table th:last-child", 1)[1].split("}", 1)[0]
         self.assertIn("padding-inline-end: 1.5rem", end)
@@ -259,9 +271,7 @@ class CoreSchoolsLayoutContractTest(TestCase):
     def test_the_pager_matches_the_shared_table_pager(self):
         """Core Schools uses the shared pager furniture and compact sizing."""
         shared = (ROOT / "templates/components/table_pager.html").read_text()
-        responsive = (
-            ROOT / "static/css/components/mobile-micro-ux.css"
-        ).read_text()
+        responsive = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
         control = (
             "min-h-11 min-w-11 px-2.5 rounded-control border border-slate-200 "
             "edify-surface edify-text-caption font-bold text-slate-600 "
@@ -270,9 +280,7 @@ class CoreSchoolsLayoutContractTest(TestCase):
         self.assertIn(control, shared)
         for page in (LIST_CARD.read_text(), OVERSIGHT.read_text()):
             self.assertIn(control, page)
-            self.assertIn(
-                "rounded-control edify-primary-solid text-white", page
-            )
+            self.assertIn("rounded-control edify-primary-solid text-white", page)
         self.assertIn("--edify-pagination-control-size: 1.875rem", responsive)
         self.assertIn("--edify-pagination-control-size: 1.75rem", responsive)
 

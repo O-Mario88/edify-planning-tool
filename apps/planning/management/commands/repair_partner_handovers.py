@@ -82,11 +82,7 @@ class Command(BaseCommand):
             deleted_at__isnull=True, delivery_type="partner"
         ).exclude(status__in=("cancelled", "draft"))
 
-        linkable = [
-            a
-            for a in partner_work.exclude(no_partner)
-            if a.id not in claimed
-        ]
+        linkable = [a for a in partner_work.exclude(no_partner) if a.id not in claimed]
         orphaned = list(partner_work.filter(no_partner))
 
         self.stdout.write("")
@@ -135,7 +131,9 @@ class Command(BaseCommand):
 
         if not options["restate_channel"]:
             self.stdout.write("")
-            self.stdout.write("  Two ways to settle these, and they are different claims:")
+            self.stdout.write(
+                "  Two ways to settle these, and they are different claims:"
+            )
             self.stdout.write(
                 "    --attribute-partner <ids>  a partner did deliver this work "
                 "and the record simply never said which. Opens the handover; "
@@ -211,12 +209,9 @@ class Command(BaseCommand):
         """What restating would move, before anybody decides to move it."""
         from apps.activities.models import ActivityScheduleCostLine
 
-        total = (
-            ActivityScheduleCostLine.objects.filter(
-                activity_id__in=[a.id for a in activities]
-            )
-            .values_list("amount", flat=True)
-        )
+        total = ActivityScheduleCostLine.objects.filter(
+            activity_id__in=[a.id for a in activities]
+        ).values_list("amount", flat=True)
         amounts = [x for x in total if x is not None]
         self.stdout.write(
             f"  current recorded cost across those activities: "

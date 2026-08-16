@@ -1590,8 +1590,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_active_portfolio",
         label="Active Portfolio",
         definition=(
-            "Latest MFI-reported outstanding principal across active loans, "
-            "in UGX."
+            "Latest MFI-reported outstanding principal across active loans, " "in UGX."
         ),
         question="How much financed money is still at work?",
         category=Category.FINANCE,
@@ -1683,8 +1682,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_edtech_share",
         label="EdTech Share",
         definition=(
-            "Share of disbursed loans whose governed purpose is an EdTech "
-            "purpose."
+            "Share of disbursed loans whose governed purpose is an EdTech " "purpose."
         ),
         question="Is the lending advancing the EdTech objective?",
         category=Category.QUALITY,
@@ -1727,8 +1725,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_salesforce_backlog",
         label="Salesforce Backlog",
         definition=(
-            "Loan records whose Salesforce reference has not yet been "
-            "confirmed."
+            "Loan records whose Salesforce reference has not yet been " "confirmed."
         ),
         question="Which loan records still need their Salesforce proof?",
         category=Category.PENDING_ACTION,

@@ -55,7 +55,14 @@ def report() -> dict:
 
 
 def _finding(
-    *, key: str, label: str, severity: str, expected: str, count: int, examples, route: str
+    *,
+    key: str,
+    label: str,
+    severity: str,
+    expected: str,
+    count: int,
+    examples,
+    route: str,
 ) -> dict:
     return {
         "key": key,
@@ -191,9 +198,7 @@ def _cluster_selector_contains_supervised_clusters() -> dict:
         allowed = set(scope.own_cluster_ids)
         allowed_districts = set(scope.own_district_ids)
         leaked = []
-        for cluster in writable.only(
-            "id", "district_id", "responsible_staff_id"
-        )[:500]:
+        for cluster in writable.only("id", "district_id", "responsible_staff_id")[:500]:
             if cluster.id in allowed:
                 continue
             owner = (cluster.responsible_staff_id or "").strip()
@@ -241,17 +246,13 @@ def _search_reaches_supervised_schools() -> dict:
         team = list(scope.team_school_ids)[:1]
         if not team:
             return []
-        name = (
-            School.objects.filter(id=team[0]).values_list("name", flat=True).first()
-        )
+        name = School.objects.filter(id=team[0]).values_list("name", flat=True).first()
         if not name:
             return []
         results = search(user, name[:12])["results"]
         own = set(scope.own_school_ids)
         return [
-            r["id"]
-            for r in results
-            if r["kind"] == "school" and r["id"] not in own
+            r["id"] for r in results if r["kind"] == "school" and r["id"] not in own
         ]
 
     return _probe(
@@ -270,6 +271,7 @@ def _direct_and_oversight_sets_overlap() -> dict:
     of the other somewhere, and "my portfolio" and "my team's" have started to
     mean the same thing again.
     """
+
     def leak(user, scope):
         from apps.core.scoping import direct_portfolio_schools, team_oversight_schools
 

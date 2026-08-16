@@ -156,9 +156,7 @@ def ensure_business_transformation_reference() -> None:
                     "workflowKind": defaults["workflow_kind"],
                     "targetAudience": defaults["target_audience"],
                     "salesforceRecordType": defaults["salesforce_record_type"],
-                    "salesforceExpectedPrefix": defaults[
-                        "salesforce_expected_prefix"
-                    ],
+                    "salesforceExpectedPrefix": defaults["salesforce_expected_prefix"],
                     "evidenceProfile": defaults["evidence_profile"],
                     "costingProfile": defaults["costing_profile"],
                     "supportObjective": "BUSINESS_TRANSFORMATION",
@@ -259,25 +257,16 @@ def business_transformation_reference_is_complete() -> bool:
     )
     if present != expected_codes:
         return False
-    if (
-        BusinessTransformationPolicy.objects.filter(
-            country_code="UG", fy__in=POLICY_FYS
-        ).count()
-        < len(POLICY_FYS)
-    ):
+    if BusinessTransformationPolicy.objects.filter(
+        country_code="UG", fy__in=POLICY_FYS
+    ).count() < len(POLICY_FYS):
         return False
     purpose_codes = {row[0] for row in governed.GOVERNED_PURPOSES} | {
         row[0] for row in seed.LOAN_PURPOSES
     }
-    if (
-        LoanPurpose.objects.filter(code__in=purpose_codes).count()
-        < len(purpose_codes)
-    ):
+    if LoanPurpose.objects.filter(code__in=purpose_codes).count() < len(purpose_codes):
         return False
-    return (
-        ComplianceRequirement.objects.filter(
-            country_code="UG",
-            code__in=[row[0] for row in seed.COMPLIANCE_REQUIREMENTS],
-        ).count()
-        == len(seed.COMPLIANCE_REQUIREMENTS)
-    )
+    return ComplianceRequirement.objects.filter(
+        country_code="UG",
+        code__in=[row[0] for row in seed.COMPLIANCE_REQUIREMENTS],
+    ).count() == len(seed.COMPLIANCE_REQUIREMENTS)

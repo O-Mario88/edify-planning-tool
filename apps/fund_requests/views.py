@@ -206,9 +206,7 @@ class WeeklyGenerateView(APIView):
         if user_id != request.user.user_id and not getattr(
             request.user, "country_scope", False
         ):
-            raise BadRequest(
-                "You can only generate your own weekly fund request."
-            )
+            raise BadRequest("You can only generate your own weekly fund request.")
         wfr = generate_weekly_fund_request(user_id, week_start)
         if wfr:
             from .weekly_service import _serialize_request

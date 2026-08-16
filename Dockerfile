@@ -25,6 +25,12 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.
 COPY --from=build /install /usr/local
+# The slim base ships setuptools 70.3.0 (CVE-2025-47273 path traversal, fixed
+# in 78.1.1), which the scheduled Trivy scan rightly fails on. Upgrade in
+# place — an in-place pip upgrade removes the old dist-info the scanner reads,
+# which a build-stage --prefix copy would have merged alongside rather than
+# replaced.
+RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1"
 # Application source.
 COPY . .
 # Docker preserves permissions from a local build context. Normalize read and

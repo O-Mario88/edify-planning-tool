@@ -674,10 +674,7 @@ def _build_fund_requests_context(request):
                     "claim": adv.status == "reimbursement_pl_pending",
                 }
             )
-        if (
-            pl_pending_accountability
-            and active_wfr.responsible_user != user.user_id
-        ):
+        if pl_pending_accountability and active_wfr.responsible_user != user.user_id:
             role = user.active_role
             if role in ("CountryDirector", "Admin"):
                 viewer_can_approve_accountability = True
@@ -1302,9 +1299,7 @@ def weekly_fund_request_receipt_action(request, request_id):
     if request.method == "POST":
         try:
             confirm_receipt(request_id, request.user)
-            action_ok = (
-                "Receipt confirmed — you can now account for this week's spend."
-            )
+            action_ok = "Receipt confirmed — you can now account for this week's spend."
         except Exception as e:
             action_error = str(e)
 

@@ -1732,7 +1732,9 @@ class PLCatchUpPlanService:
             )
 
             catalogue_item = resolve_item_for_workflow_kind(activity_type)
-            catalogue_ref = {"catalogueItemId": catalogue_item.id} if catalogue_item else {}
+            catalogue_ref = (
+                {"catalogueItemId": catalogue_item.id} if catalogue_item else {}
+            )
 
             dates = list(plan.planned_dates or [])
             for i, school_id in enumerate(plan.school_ids):

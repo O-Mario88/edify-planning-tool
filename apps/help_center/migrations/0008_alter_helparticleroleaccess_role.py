@@ -4,15 +4,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('help_center', '0007_expand_guides_for_learning'),
+        ("help_center", "0007_expand_guides_for_learning"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='helparticleroleaccess',
-            name='role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('BusinessTransformationOfficer', 'BusinessTransformationOfficer'), ('MfiPartnerAdmin', 'MfiPartnerAdmin'), ('MfiLoanOfficer', 'MfiLoanOfficer'), ('Admin', 'Admin')], max_length=64),
+            model_name="helparticleroleaccess",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("BusinessTransformationOfficer", "BusinessTransformationOfficer"),
+                    ("MfiPartnerAdmin", "MfiPartnerAdmin"),
+                    ("MfiLoanOfficer", "MfiLoanOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+            ),
         ),
     ]

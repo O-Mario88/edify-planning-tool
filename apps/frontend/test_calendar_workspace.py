@@ -200,7 +200,9 @@ class CalendarEventAuthoringTest(TestCase):
 
         self.assertNotContains(page, "Add other event")
         self.assertEqual(response.status_code, 403)
-        self.assertFalse(CalendarBlock.objects.filter(title="Unauthorized block").exists())
+        self.assertFalse(
+            CalendarBlock.objects.filter(title="Unauthorized block").exists()
+        )
 
     def test_event_end_date_cannot_precede_start_date(self):
         self.client.force_login(self.cd)

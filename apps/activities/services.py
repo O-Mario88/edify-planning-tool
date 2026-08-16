@@ -545,9 +545,7 @@ def _target_under_oversight(scope, school: School | None, cluster_id) -> bool:
             .first()
         )
         return bool(
-            cluster
-            and scope.supervised_staff_ids
-            and cluster_in_scope(scope, cluster)
+            cluster and scope.supervised_staff_ids and cluster_in_scope(scope, cluster)
         )
     return False
 
@@ -3345,9 +3343,7 @@ def _cancel_or_defer(
         # instead of surfacing as an opaque guard refusal at the accountant
         # (2026-08-12 audit M-11).
         frozen_wfrs = list(
-            WeeklyFundRequest.objects.filter(
-                lines__activity_budget_line__activity=a
-            )
+            WeeklyFundRequest.objects.filter(lines__activity_budget_line__activity=a)
             .exclude(status__in=REBUILDABLE_WEEKLY_STATUSES)
             .exclude(status__in=("disbursed", "accounted"))
             .distinct()

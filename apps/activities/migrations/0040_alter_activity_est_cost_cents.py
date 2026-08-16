@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0039_cluster_participant_categories'),
+        ("activities", "0039_cluster_participant_categories"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='activity',
-            name='est_cost_cents',
+            model_name="activity",
+            name="est_cost_cents",
             field=models.BigIntegerField(default=0),
         ),
     ]

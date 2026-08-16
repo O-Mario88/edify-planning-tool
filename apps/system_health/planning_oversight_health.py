@@ -505,7 +505,9 @@ def _partner_delivery_with_no_partner_named() -> dict:
     from apps.activities.models import Activity
 
     rows = (
-        Activity.objects.filter(_NO_PARTNER, deleted_at__isnull=True, delivery_type="partner")
+        Activity.objects.filter(
+            _NO_PARTNER, deleted_at__isnull=True, delivery_type="partner"
+        )
         .exclude(status__in=("cancelled", "draft"))
         .values("id", "school__name", "status", "activity_type")
     )

@@ -83,6 +83,8 @@ class GovernedUgandaLoanPurposeTests(TestCase):
                 active=True,
             ).exists()
         )
+
+
 class VerifiedSsaTriggerTests(UgandaBusinessTransformationTestCase):
     def _ssa(self, financial=5.0, government=4.0):
         record = SsaRecord.objects.create(
@@ -226,7 +228,9 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
     def test_cceo_manages_only_the_relevant_schools_in_operational_scope(self):
         context = services.financial_health_context(self.cceo, {})
 
-        self.assertEqual([row["school_id"] for row in context["rows"]], [self.school.school_id])
+        self.assertEqual(
+            [row["school_id"] for row in context["rows"]], [self.school.school_id]
+        )
         self.assertTrue(context["rows"][0]["can_manage"])
         self.assertTrue(context["rows"][0]["can_plan"])
         self.assertTrue(
@@ -241,9 +245,7 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
     def test_government_requirements_uses_the_same_school_list_contract(self):
         self.client.force_login(self.cceo)
 
-        response = self.client.get(
-            "/business-transformation/government-requirements"
-        )
+        response = self.client.get("/business-transformation/government-requirements")
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Government Requirements portfolio")
@@ -288,9 +290,7 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
             )
 
         self.client.force_login(self.bt_user)
-        response = self.client.get(
-            "/business-transformation/government-requirements"
-        )
+        response = self.client.get("/business-transformation/government-requirements")
         self.assertContains(response, "View support for")
         self.assertNotContains(response, "Monitor support for")
         self.assertNotContains(response, "Plan support for")
@@ -454,7 +454,9 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                         permissions,
                     )
                     if role != EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
-                        self.assertNotContains(response, "Salesforce confirmation queue")
+                        self.assertNotContains(
+                            response, "Salesforce confirmation queue"
+                        )
 
 
 class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
@@ -671,16 +673,12 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             response = self.client.get("/loans/export.csv")
             with self.subTest(role=user.active_role):
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(
-                    response["Content-Type"], "text/csv; charset=utf-8"
-                )
+                self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
                 self.assertContains(response, "LN-EXPORT")
                 self.assertContains(response, "Loan-19650")
 
         self.client.force_login(self.officer)
-        denied = self.client.get(
-            "/loans/export.csv", HTTP_HX_REQUEST="true"
-        )
+        denied = self.client.get("/loans/export.csv", HTTP_HX_REQUEST="true")
         self.assertEqual(denied.status_code, 403)
 
     def test_mfi_admin_can_enter_a_loan_for_their_mfi(self):
@@ -705,9 +703,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         )
 
     def test_mfi_writer_cannot_enter_a_loan_for_another_mfi(self):
-        other_mfi = MfiOrganization.objects.create(
-            code="OTHER-MFI", name="Other MFI"
-        )
+        other_mfi = MfiOrganization.objects.create(code="OTHER-MFI", name="Other MFI")
         other_referral = FinanceReferral.objects.create(
             case=self.case,
             mfi=other_mfi,
@@ -843,12 +839,8 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             roles=[EdifyRole.CCEO.value],
             active_role=EdifyRole.CCEO.value,
         )
-        cceo_staff = StaffProfile.objects.create(
-            user=cceo, onboarding_state="active"
-        )
-        StaffSchoolAssignment.objects.create(
-            staff=cceo_staff, school_id=self.school.id
-        )
+        cceo_staff = StaffProfile.objects.create(user=cceo, onboarding_state="active")
+        StaffSchoolAssignment.objects.create(staff=cceo_staff, school_id=self.school.id)
         requirement = LoanVerificationRequirement.objects.get(loan_id=loan_data["id"])
         catalogue_item = ActivityCatalogueItem.objects.get(
             stable_code="BT_UG_LOAN_USE_VERIFICATION"
@@ -1020,9 +1012,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         bt_todos = _business_transformation_todos(
             self.bt_user, self.bt_user.active_role, timezone.localdate()
         )
-        self.assertIn(
-            f"bt-salesforce-{loan.id}", {todo["id"] for todo in bt_todos}
-        )
+        self.assertIn(f"bt-salesforce-{loan.id}", {todo["id"] for todo in bt_todos})
 
         country_director = User.objects.create_user(
             email="loan-return-cd@example.org",
@@ -1033,7 +1023,10 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         with self.assertRaises(Forbidden):
             services.return_salesforce_loan(
                 loan.id,
-                {"returnReason": "amount_inconsistent", "returnNote": "Check approval."},
+                {
+                    "returnReason": "amount_inconsistent",
+                    "returnNote": "Check approval.",
+                },
                 self.bt_user,
             )
         services.return_salesforce_loan(

@@ -228,9 +228,7 @@ def target_distribution_import(request):
         messages.error(request, "Choose a CSV or XLSX priority file.")
         return redirect(f"/target-distribution?fy={fy}")
     try:
-        batch, created = stage_priority_file(
-            file=upload, fy=fy, principal=request.user
-        )
+        batch, created = stage_priority_file(file=upload, fy=fy, principal=request.user)
         if created:
             if batch.invalid_rows:
                 messages.error(
@@ -245,7 +243,9 @@ def target_distribution_import(request):
                     "preview, then commit them as a draft master.",
                 )
         else:
-            messages.info(request, "This exact file was already staged; showing it now.")
+            messages.info(
+                request, "This exact file was already staged; showing it now."
+            )
         return redirect(f"/target-distribution?fy={fy}&import={batch.id}")
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))

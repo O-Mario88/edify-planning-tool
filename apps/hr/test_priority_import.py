@@ -85,7 +85,9 @@ class PriorityImportTests(TestCase):
         )
         self.assertEqual(batch.status, PriorityImportStatus.NEEDS_CORRECTION)
         self.assertEqual(batch.invalid_rows, 1)
-        self.assertIn("target_value must be a number.", batch.rows.get().validation_errors)
+        self.assertIn(
+            "target_value must be a number.", batch.rows.get().validation_errors
+        )
 
     def test_non_ia_cannot_import(self):
         with self.assertRaises(Forbidden):

@@ -81,8 +81,7 @@ class Command(BaseCommand):
         offending = [
             f
             for f in findings
-            if f["classification"]
-            not in ("valid_direct", "valid_coverage")
+            if f["classification"] not in ("valid_direct", "valid_coverage")
         ]
         self.stdout.write("")
         if not offending:
@@ -163,8 +162,11 @@ class Command(BaseCommand):
 
         coverage = list(
             TemporaryCoverageAssignment.objects.values(
-                "covering_staff_id", "original_staff_id", "start_datetime",
-                "end_datetime", "status",
+                "covering_staff_id",
+                "original_staff_id",
+                "start_datetime",
+                "end_datetime",
+                "status",
             )
         )
 

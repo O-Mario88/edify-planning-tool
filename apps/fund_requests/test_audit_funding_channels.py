@@ -258,9 +258,7 @@ class PlannedFundingRequiresAnApprovedLedgerTest(_ChannelFixture):
 
         self.advance.status = "disbursed"
         self.advance.disbursed_amount = self.AMOUNT
-        self.advance.save(
-            update_fields=["status", "disbursed_amount", "updated_at"]
-        )
+        self.advance.save(update_fields=["status", "disbursed_amount", "updated_at"])
         fr = self._monthly_request("disbursed")
 
         with self.assertRaisesMessage(BadRequest, "Confirm receipt"):

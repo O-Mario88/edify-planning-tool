@@ -1795,9 +1795,9 @@ def schedule_activity_form_view(request):
     # come from the direct portfolio, which is the set the create-time guard
     # checks against.
     scope = resolve_user_scope(request.user)
-    schools = (
-        direct_portfolio_schools(scope) or School.objects.none()
-    ).order_by("name")
+    schools = (direct_portfolio_schools(scope) or School.objects.none()).order_by(
+        "name"
+    )
     # `direct_only`, matching the create-time guard in `_target_in_direct_
     # portfolio`. A supervisor's CCEO clusters are read-only oversight; listing
     # them here promised a save the service would refuse.

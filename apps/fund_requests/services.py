@@ -502,9 +502,7 @@ def _submit_accountability_locked(request_id: str, data: dict, principal) -> dic
     # advance_service.submit_accountability.
     if fr.submitted_by_user_id and fr.submitted_by_user_id != principal.user_id:
         if getattr(principal, "active_role", "") not in ("CountryDirector", "Admin"):
-            raise Forbidden(
-                "Only the request owner can submit its accountability."
-            )
+            raise Forbidden("Only the request owner can submit its accountability.")
     # Accountability exists only for money that actually left the account.
     if fr.status != FundRequestStatus.DISBURSED:
         raise BadRequest(

@@ -1352,7 +1352,9 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(pl_user)
         refused = self.client.post("/planning/assign-partner-action", handoff)
         self.assertEqual(refused.status_code, 403)
-        self.assertFalse(PartnerAssignment.objects.filter(cluster=self.cluster).exists())
+        self.assertFalse(
+            PartnerAssignment.objects.filter(cluster=self.cluster).exists()
+        )
 
         # The CCEO who owns the school in that cluster makes it.
         self.client.force_login(self.cceo_user)

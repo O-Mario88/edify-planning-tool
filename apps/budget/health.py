@@ -110,9 +110,7 @@ def split_week_cost_lines() -> dict:
         if "#m" in (key or ""):
             period_split_activities.add(activity_id)
     split = [
-        a
-        for a, w in weeks.items()
-        if len(w) > 1 and a not in period_split_activities
+        a for a, w in weeks.items() if len(w) > 1 and a not in period_split_activities
     ]
 
     return {

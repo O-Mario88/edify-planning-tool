@@ -677,8 +677,7 @@ def cluster_in_scope(scope: UserScope, cluster, *, direct_only: bool = False) ->
     if owner:
         return owner in cluster_owner_ids(scope, direct_only=direct_only)
     return bool(
-        getattr(cluster, "district_id", None)
-        and cluster.district_id in in_district_ids
+        getattr(cluster, "district_id", None) and cluster.district_id in in_district_ids
     )
 
 

@@ -7,7 +7,9 @@ from collections import defaultdict
 from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
 
 
-def priority_portfolio(*, user, fy: str, strategic_milestones: list[dict]) -> list[dict]:
+def priority_portfolio(
+    *, user, fy: str, strategic_milestones: list[dict]
+) -> list[dict]:
     """Return planning, SSA, manual, and PD priorities without copying sources."""
     from apps.accounts.models import StaffSchoolAssignment
     from apps.hr.models import PerformancePriority, PerformanceReview
@@ -83,7 +85,9 @@ def priority_portfolio(*, user, fy: str, strategic_milestones: list[dict]) -> li
         band, _color, tone = ssa_score_band(weakest)
         ssa_rows.append(
             {
-                "title": labels.get(intervention, intervention.replace("_", " ").title()),
+                "title": labels.get(
+                    intervention, intervention.replace("_", " ").title()
+                ),
                 "detail": f"{len(scores)} school(s) below Strong; lowest score {weakest:g}.",
                 "meta": f"{band} · confirmed FY{fy} SSA",
                 "tone": tone,
@@ -105,7 +109,9 @@ def priority_portfolio(*, user, fy: str, strategic_milestones: list[dict]) -> li
             manual_rows.append(
                 {
                     "title": row.outcome_statement,
-                    "detail": row.measures_of_success or row.target or "Manually agreed priority",
+                    "detail": row.measures_of_success
+                    or row.target
+                    or "Manually agreed priority",
                     "meta": f"Weight {row.weight}% · {row.get_status_display()}",
                     "tone": "neutral",
                     "action": "View agreement",

@@ -65,4 +65,3 @@ class CostingFormPayloadTest(SimpleTestCase):
         )
         venue = next(line for line in cost.lines if line.label == "Venue")
         self.assertEqual(venue.qty, 1)
-

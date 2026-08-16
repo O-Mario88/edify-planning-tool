@@ -650,9 +650,7 @@ def calendar_view(request):
         end_date__gte=month_start,
     )
     viewer_country = (
-        StaffProfile.objects.filter(user=user)
-        .values_list("country", flat=True)
-        .first()
+        StaffProfile.objects.filter(user=user).values_list("country", flat=True).first()
     )
     if viewer_country and user.active_role != EdifyRole.ADMIN.value:
         organization_events = organization_events.filter(country=viewer_country)
@@ -806,7 +804,9 @@ def calendar_event_create_view(request):
         EdifyRole.COUNTRY_DIRECTOR.value,
         EdifyRole.ADMIN.value,
     }:
-        return HttpResponseForbidden("Only the Country Director can add calendar events.")
+        return HttpResponseForbidden(
+            "Only the Country Director can add calendar events."
+        )
 
     title = (request.POST.get("title") or "").strip()
     description = (request.POST.get("description") or "").strip()

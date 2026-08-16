@@ -60,9 +60,7 @@ class MfiListCreateView(APIView):
 
 class MfiMemberCreateView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = [
-        Permission.BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE.value
-    ]
+    required_permissions = [Permission.BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE.value]
 
     def post(self, request: Request) -> Response:
         return Response(
@@ -158,9 +156,7 @@ class RepaymentSnapshotCreateView(APIView):
 
 class LoanSalesforceConfirmationView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = [
-        Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM.value
-    ]
+    required_permissions = [Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM.value]
 
     def post(self, request: Request, loan_id: str) -> Response:
         return Response(
@@ -183,7 +179,9 @@ class LoanIAValidationView(APIView):
     required_permissions = [Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE.value]
 
     def post(self, request: Request, loan_id: str) -> Response:
-        return Response(services.validate_loan_by_ia(loan_id, request.data, request.user))
+        return Response(
+            services.validate_loan_by_ia(loan_id, request.data, request.user)
+        )
 
 
 class VerificationActivityLinkView(APIView):

@@ -54,9 +54,7 @@ def is_user_facing(exc: BaseException) -> bool:
     as "Something went wrong. The error has been logged.", which tells them
     nothing and sends them to look for a fault that does not exist.
     """
-    return isinstance(
-        exc, (EdifyAPIException, DjangoValidationError, PermissionDenied)
-    )
+    return isinstance(exc, (EdifyAPIException, DjangoValidationError, PermissionDenied))
 
 
 def error_message(exc: BaseException, *, action: str | None = None) -> str:

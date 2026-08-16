@@ -44,9 +44,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
         base = _read("templates/base.html")
         bridge = _read("static/css/consistency.css")
 
-        coarse_rule = base.split(
-            "@media (max-width: 48rem), (pointer: coarse)", 1
-        )[1].split("</style>", 1)[0]
+        coarse_rule = base.split("@media (max-width: 48rem), (pointer: coarse)", 1)[
+            1
+        ].split("</style>", 1)[0]
         self.assertNotIn(":where(input, select, textarea)", coarse_rule)
         self.assertIn('input[type="text"]', coarse_rule)
         self.assertIn('input[type="time"]', coarse_rule)

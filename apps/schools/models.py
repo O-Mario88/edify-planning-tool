@@ -438,9 +438,7 @@ def build_data_quality_issues(school, *, has_location=None):
         if not has_location:
             from apps.routes.models import SchoolGeoPoint
 
-            has_location = SchoolGeoPoint.objects.filter(
-                school_id=school.id
-            ).exists()
+            has_location = SchoolGeoPoint.objects.filter(school_id=school.id).exists()
     if not has_location:
         issues.append(
             DataQualityIssue(

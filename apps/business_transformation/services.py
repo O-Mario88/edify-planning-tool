@@ -755,9 +755,7 @@ def register_or_update_loan(data: dict, principal):
         ),
         "disbursed_amount": disbursed_amount,
         "currency": "UGX",
-        "processing_date": _date(
-            data.get("processingDate"), field="Processing date"
-        ),
+        "processing_date": _date(data.get("processingDate"), field="Processing date"),
         "approved_at": _datetime(data.get("approvedAt"), field="Approved at"),
         "disbursement_date": disbursement_date,
         "disbursement_confirmed_at": (
@@ -1178,9 +1176,11 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
         raise BadRequest("Unknown loan lifecycle status.")
     if lifecycle_status == LoanStatus.REPAID and outstanding != 0:
         raise BadRequest("A repaid loan must have a zero outstanding balance.")
-    if lifecycle_status == LoanStatus.DEFAULTED and not data.get(
-        "defaultClassifiedAt"
-    ) and not loan.default_classified_at:
+    if (
+        lifecycle_status == LoanStatus.DEFAULTED
+        and not data.get("defaultClassifiedAt")
+        and not loan.default_classified_at
+    ):
         raise BadRequest("A defaulted loan requires its classification date.")
     previous_lifecycle = loan.status
     status_reason = (data.get("statusReason") or "").strip()
@@ -1482,9 +1482,9 @@ def _selected_period_bounds(fy: str, filters: dict):
 def lending_partner_dashboard(principal, filters: dict) -> list[dict]:
     """One-query lending-partner rollup for the governed loan register."""
 
-    latest_repayment = RepaymentSnapshot.objects.filter(loan_id=OuterRef("pk")).order_by(
-        "-as_of_date", "-created_at"
-    )
+    latest_repayment = RepaymentSnapshot.objects.filter(
+        loan_id=OuterRef("pk")
+    ).order_by("-as_of_date", "-created_at")
     rows = list(
         filter_loans(scoped_loans(principal), filters)
         .annotate(
@@ -1493,9 +1493,7 @@ def lending_partner_dashboard(principal, filters: dict) -> list[dict]:
         .values("mfi_id", "mfi__name")
         .annotate(
             loan_count=Count("id"),
-            disbursed_loans=Count(
-                "id", filter=Q(status__in=DISBURSED_LOAN_STATUSES)
-            ),
+            disbursed_loans=Count("id", filter=Q(status__in=DISBURSED_LOAN_STATUSES)),
             disbursed_value=Sum(
                 "disbursed_amount", filter=Q(status__in=DISBURSED_LOAN_STATUSES)
             ),
@@ -1514,7 +1512,8 @@ def lending_partner_dashboard(principal, filters: dict) -> list[dict]:
                         RepaymentStatus.OVERDUE_31_90,
                         RepaymentStatus.OVERDUE_90_PLUS,
                     ]
-                ) | Q(status=LoanStatus.DEFAULTED),
+                )
+                | Q(status=LoanStatus.DEFAULTED),
             ),
             latest_repayment_update=Max("last_repayment_data_date"),
         )
@@ -1522,9 +1521,7 @@ def lending_partner_dashboard(principal, filters: dict) -> list[dict]:
     )
     for row in rows:
         row["disbursed_value"] = row["disbursed_value"] or Decimal("0")
-        row["salesforce_pending"] = (
-            row["loan_count"] - row["salesforce_confirmed"]
-        )
+        row["salesforce_pending"] = row["loan_count"] - row["salesforce_confirmed"]
         row["salesforce_coverage_pct"] = (
             round(row["salesforce_confirmed"] / row["loan_count"] * 100, 1)
             if row["loan_count"]
@@ -2099,8 +2096,9 @@ def _intervention_school_portfolio_context(
         activities_by_school.setdefault(str(activity.school_id), []).append(activity)
 
     cases = list(
-        TransformationCase.objects.filter(school_id__in=page_school_ids)
-        .order_by("school_id", "-created_at")
+        TransformationCase.objects.filter(school_id__in=page_school_ids).order_by(
+            "school_id", "-created_at"
+        )
     )
     case_by_school = {}
     for case in cases:
@@ -2114,9 +2112,13 @@ def _intervention_school_portfolio_context(
         ).order_by("case__school_id", "-assessed_on", "-created_at"):
             practice_by_school.setdefault(str(assessment.case.school_id), assessment)
     else:
-        for assessment in SchoolComplianceAssessment.objects.filter(
-            case__school_id__in=page_school_ids
-        ).select_related("requirement").order_by("case__school_id", "requirement__label"):
+        for assessment in (
+            SchoolComplianceAssessment.objects.filter(
+                case__school_id__in=page_school_ids
+            )
+            .select_related("requirement")
+            .order_by("case__school_id", "requirement__label")
+        ):
             compliance_by_school.setdefault(str(assessment.case.school_id), []).append(
                 assessment
             )
@@ -2216,11 +2218,15 @@ def _intervention_school_portfolio_context(
         else:
             compliance = compliance_by_school.get(school_key, [])
             verified_compliance = [
-                item for item in compliance if item.ia_status == IAValidationStatus.VERIFIED
+                item
+                for item in compliance
+                if item.ia_status == IAValidationStatus.VERIFIED
             ]
             row.update(
                 compliance_total=len(compliance),
-                compliant=sum(item.status == "compliant" for item in verified_compliance),
+                compliant=sum(
+                    item.status == "compliant" for item in verified_compliance
+                ),
                 action_required=sum(
                     item.status in {"action_required", "expired"}
                     for item in verified_compliance
@@ -2232,7 +2238,11 @@ def _intervention_school_portfolio_context(
                     item.status in {"not_assessed", "unknown"} for item in compliance
                 ),
                 nearest_expiry=min(
-                    (item.expiry_date for item in verified_compliance if item.expiry_date),
+                    (
+                        item.expiry_date
+                        for item in verified_compliance
+                        if item.expiry_date
+                    ),
                     default=None,
                 ),
             )
@@ -2256,13 +2266,18 @@ def _intervention_school_portfolio_context(
 
     metrics = {
         "portfolio": len(portfolio_school_ids),
-        "partnerAssigned": active_assignment_portfolio.values("school_id").distinct().count(),
+        "partnerAssigned": active_assignment_portfolio.values("school_id")
+        .distinct()
+        .count(),
         "supportDelivered": activity_portfolio.filter(
             status__in=_DELIVERED_ACTIVITY_STATUSES
         ).count(),
         "schoolsSupported": activity_portfolio.filter(
             status__in=_DELIVERED_ACTIVITY_STATUSES
-        ).values("school_id").distinct().count(),
+        )
+        .values("school_id")
+        .distinct()
+        .count(),
         "improving": improving_count,
         "declining": declining_count,
     }
@@ -2271,10 +2286,15 @@ def _intervention_school_portfolio_context(
             case__school_id__in=portfolio_school_ids
         )
         metrics.update(
-            practiceAssessed=practice_portfolio.values("case__school_id").distinct().count(),
+            practiceAssessed=practice_portfolio.values("case__school_id")
+            .distinct()
+            .count(),
             practiceVerified=practice_portfolio.filter(
                 verification_status=IAValidationStatus.VERIFIED
-            ).values("case__school_id").distinct().count(),
+            )
+            .values("case__school_id")
+            .distinct()
+            .count(),
         )
     else:
         compliance_portfolio = SchoolComplianceAssessment.objects.filter(
@@ -2283,11 +2303,17 @@ def _intervention_school_portfolio_context(
         metrics.update(
             compliant=compliance_portfolio.filter(
                 status="compliant", ia_status=IAValidationStatus.VERIFIED
-            ).values("case__school_id").distinct().count(),
+            )
+            .values("case__school_id")
+            .distinct()
+            .count(),
             actionRequired=compliance_portfolio.filter(
                 status__in=["action_required", "expired"],
                 ia_status=IAValidationStatus.VERIFIED,
-            ).values("case__school_id").distinct().count(),
+            )
+            .values("case__school_id")
+            .distinct()
+            .count(),
             awaitingVerification=compliance_portfolio.filter(
                 ia_status=IAValidationStatus.PENDING
             ).count(),
@@ -2312,12 +2338,12 @@ def _intervention_school_portfolio_context(
         ),
         "per_page": per_page,
         "page_size_options": _PORTFOLIO_PAGE_SIZES,
-        "regions": Region.objects.filter(
-            id__in=schools.values("region_id")
-        ).distinct().order_by("name"),
-        "districts": District.objects.filter(
-            id__in=schools.values("district_id")
-        ).distinct().order_by("name"),
+        "regions": Region.objects.filter(id__in=schools.values("region_id"))
+        .distinct()
+        .order_by("name"),
+        "districts": District.objects.filter(id__in=schools.values("district_id"))
+        .distinct()
+        .order_by("name"),
         "partners": Partner.objects.filter(id__in=relevant_partner_ids)
         .distinct()
         .order_by("name"),
@@ -2380,7 +2406,13 @@ def impact_reports_context(principal, filters: dict) -> dict:
 def mfi_portal_context(principal, section: str, filters: dict) -> dict:
     if getattr(principal, "active_role", "") not in MFI_ROLES:
         raise Forbidden("The MFI partner portal is available only to MFI users.")
-    allowed_sections = {"dashboard", "loans", "monthly-return", "data-issues", "reports"}
+    allowed_sections = {
+        "dashboard",
+        "loans",
+        "monthly-return",
+        "data-issues",
+        "reports",
+    }
     if section not in allowed_sections:
         raise NotFoundError("MFI portal section not found.")
     fy = filters.get("fy") or get_operational_fy()
@@ -2395,7 +2427,9 @@ def mfi_portal_context(principal, section: str, filters: dict) -> dict:
         **loan_register_context(principal, {**filters, "fy": fy}),
         "section": section,
         "portal_submissions": submissions.order_by("-reporting_month")[:24],
-        "data_issues": exceptions.order_by("submission__reporting_month", "row_number")[:100],
+        "data_issues": exceptions.order_by("submission__reporting_month", "row_number")[
+            :100
+        ],
         "open_issue_count": exceptions.count(),
     }
 
@@ -2565,8 +2599,9 @@ def school_profile_context(principal, school) -> dict:
         .order_by("-ssa_record__date_of_ssa")[:12]
     )
     financial_practices = list(
-        FinancialPracticeAssessment.objects.filter(case__school=school)
-        .order_by("-assessed_on")[:5]
+        FinancialPracticeAssessment.objects.filter(case__school=school).order_by(
+            "-assessed_on"
+        )[:5]
     )
     compliance_assessments = list(
         SchoolComplianceAssessment.objects.filter(case__school=school)

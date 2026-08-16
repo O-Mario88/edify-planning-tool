@@ -182,8 +182,7 @@ class ProjectStaffPriorityWorkflowTests(TestCase):
             Project.objects.filter(
                 code="COORDINATOR-DRAWER",
                 manager_staff_id=self.coordinator_staff.id,
-            )
-            .exists()
+            ).exists()
         )
         project = Project.objects.get(code="COORDINATOR-DRAWER")
         detail = client.get(f"/projects/{project.id}")

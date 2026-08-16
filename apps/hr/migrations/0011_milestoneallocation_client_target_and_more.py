@@ -7,113 +7,180 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('hr', '0010_fiscalyearrollover'),
+        ("hr", "0010_fiscalyearrollover"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='client_target',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
+            model_name="milestoneallocation",
+            name="client_target",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=18, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='core_target',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
+            model_name="milestoneallocation",
+            name="core_target",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=18, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='locked_at',
+            model_name="milestoneallocation",
+            name="locked_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='parent',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='children', to='hr.milestoneallocation'),
+            model_name="milestoneallocation",
+            name="parent",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="children",
+                to="hr.milestoneallocation",
+            ),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='quarter_approved_at',
+            model_name="milestoneallocation",
+            name="quarter_approved_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='quarter_approved_by',
+            model_name="milestoneallocation",
+            name="quarter_approved_by",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='quarter_distribution',
+            model_name="milestoneallocation",
+            name="quarter_distribution",
             field=models.JSONField(blank=True, default=dict),
         ),
         migrations.AddField(
-            model_name='milestoneallocation',
-            name='quarter_status',
-            field=models.CharField(default='draft', max_length=24),
+            model_name="milestoneallocation",
+            name="quarter_status",
+            field=models.CharField(default="draft", max_length=24),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='allocation_method',
-            field=models.CharField(blank=True, choices=[('field_cascade', 'Field cascade (IA → PL → CCEO)'), ('specialist', 'Project / specialist team'), ('country_owned', 'Country-owned (CD/IA/country office)'), ('non_scoreable', 'Non-scoreable / pending definition')], max_length=24),
+            model_name="prioritymilestone",
+            name="allocation_method",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("field_cascade", "Field cascade (IA → PL → CCEO)"),
+                    ("specialist", "Project / specialist team"),
+                    ("country_owned", "Country-owned (CD/IA/country office)"),
+                    ("non_scoreable", "Non-scoreable / pending definition"),
+                ],
+                max_length=24,
+            ),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='cap_at_100',
+            model_name="prioritymilestone",
+            name="cap_at_100",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='client_target',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
+            model_name="prioritymilestone",
+            name="client_target",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=18, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='confirmation_note',
+            model_name="prioritymilestone",
+            name="confirmation_note",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='core_target',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True),
+            model_name="prioritymilestone",
+            name="core_target",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=18, null=True
+            ),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='needs_confirmation',
+            model_name="prioritymilestone",
+            name="needs_confirmation",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='participants_per_school',
+            model_name="prioritymilestone",
+            name="participants_per_school",
             field=models.PositiveSmallIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='prioritymilestone',
-            name='responsible_role',
+            model_name="prioritymilestone",
+            name="responsible_role",
             field=models.CharField(blank=True, max_length=64),
         ),
         migrations.CreateModel(
-            name='MilestoneAllocationAmendment',
+            name="MilestoneAllocationAmendment",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('kind', models.CharField(choices=[('amendment', 'Annual amendment'), ('reforecast', 'Quarterly reforecast')], max_length=16)),
-                ('reason', models.TextField()),
-                ('previous_target', models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True)),
-                ('new_target', models.DecimalField(blank=True, decimal_places=2, max_digits=18, null=True)),
-                ('previous_quarters', models.JSONField(blank=True, default=dict)),
-                ('new_quarters', models.JSONField(blank=True, default=dict)),
-                ('requested_by', models.CharField(max_length=30)),
-                ('status', models.CharField(choices=[('requested', 'Requested'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='requested', max_length=16)),
-                ('approved_by', models.CharField(blank=True, max_length=30, null=True)),
-                ('approved_at', models.DateTimeField(blank=True, null=True)),
-                ('allocation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='amendments', to='hr.milestoneallocation')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "kind",
+                    models.CharField(
+                        choices=[
+                            ("amendment", "Annual amendment"),
+                            ("reforecast", "Quarterly reforecast"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("reason", models.TextField()),
+                (
+                    "previous_target",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=18, null=True
+                    ),
+                ),
+                (
+                    "new_target",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=18, null=True
+                    ),
+                ),
+                ("previous_quarters", models.JSONField(blank=True, default=dict)),
+                ("new_quarters", models.JSONField(blank=True, default=dict)),
+                ("requested_by", models.CharField(max_length=30)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("requested", "Requested"),
+                            ("approved", "Approved"),
+                            ("rejected", "Rejected"),
+                        ],
+                        default="requested",
+                        max_length=16,
+                    ),
+                ),
+                ("approved_by", models.CharField(blank=True, max_length=30, null=True)),
+                ("approved_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "allocation",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="amendments",
+                        to="hr.milestoneallocation",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'hr_milestone_allocation_amendment',
-                'ordering': ['-created_at'],
+                "db_table": "hr_milestone_allocation_amendment",
+                "ordering": ["-created_at"],
             },
         ),
     ]

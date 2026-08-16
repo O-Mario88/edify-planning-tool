@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('business_transformation', '0004_mfiloan_salesforce_confirmed_at_and_more'),
+        ("business_transformation", "0004_mfiloan_salesforce_confirmed_at_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='mfiloan',
-            name='salesforce_loan_id',
+            model_name="mfiloan",
+            name="salesforce_loan_id",
             field=models.CharField(blank=True, max_length=32, null=True, unique=True),
         ),
     ]

@@ -231,9 +231,7 @@ PARTNER_OVERSIGHT_RISK_KEYS = frozenset(
 # Conditions on a core school's package for the year. The CorePlan and its
 # slots are the record, so the sweep can settle these by counting allocated
 # slots — no second definition of "the package is done".
-CORE_OVERSIGHT_RISK_KEYS = frozenset(
-    {"core_package_behind", "core_assessment_missing"}
-)
+CORE_OVERSIGHT_RISK_KEYS = frozenset({"core_package_behind", "core_assessment_missing"})
 
 # Team-level asks. "The backlog is cleared" is a judgement about a body of
 # work rather than a fact about one record, so a human closes these and the

@@ -72,11 +72,15 @@ class HoverInvertsTest(SimpleTestCase):
         self.css = _read(STYLESHEET)
 
     def test_a_blue_control_turns_into_a_white_one(self):
-        self.assertIn("background-color: var(--edify-invert-surface) !important;", self.css)
+        self.assertIn(
+            "background-color: var(--edify-invert-surface) !important;", self.css
+        )
         self.assertIn("color: var(--edify-invert-surface-ink) !important;", self.css)
 
     def test_a_white_control_turns_into_a_blue_one(self):
-        self.assertIn("background-color: var(--edify-invert-fill) !important;", self.css)
+        self.assertIn(
+            "background-color: var(--edify-invert-fill) !important;", self.css
+        )
         self.assertIn("color: var(--edify-invert-fill-ink) !important;", self.css)
 
     def test_both_families_are_named_not_just_the_component_api(self):
@@ -126,7 +130,9 @@ class PressPushesTest(SimpleTestCase):
 
     def test_the_control_moves_down_rather_than_only_changing_colour(self):
         self.assertIn("--edify-press-shift: 1px;", self.css)
-        self.assertIn("transform: translateY(var(--edify-press-shift)) !important;", self.css)
+        self.assertIn(
+            "transform: translateY(var(--edify-press-shift)) !important;", self.css
+        )
 
     def test_the_press_is_removed_for_reduced_motion(self):
         """The whole press block sits inside the no-preference query, so a
@@ -186,7 +192,7 @@ class SegmentedTabsTest(SimpleTestCase):
         hover_blocks = [
             block
             for block in self.css.split("@media (hover: hover)")[1:]
-            if "role=\"tab\"" in block
+            if 'role="tab"' in block
         ]
         self.assertTrue(hover_blocks, "no tab hover rule at all")
         for block in hover_blocks:
@@ -194,13 +200,15 @@ class SegmentedTabsTest(SimpleTestCase):
             for selector_group in body.split("}"):
                 if ":hover" not in selector_group:
                     continue
-                if "[role=\"tab\"]:hover" in selector_group.replace(" ", ""):
+                if '[role="tab"]:hover' in selector_group.replace(" ", ""):
                     self.fail("an unselected tab still inverts on hover")
 
     def test_a_selected_tab_keeps_its_fill_under_the_pointer(self):
         selected_hover = self.css.split("@media (hover: hover)")[-1]
         self.assertIn('[role="tab"][aria-selected="true"]', selected_hover)
-        self.assertIn("background: var(--edify-invert-fill) !important;", selected_hover)
+        self.assertIn(
+            "background: var(--edify-invert-fill) !important;", selected_hover
+        )
 
     def test_the_tab_ink_outranks_a_page_level_utility(self):
         """The bug this catches shipped for a moment: with :where() the rail's

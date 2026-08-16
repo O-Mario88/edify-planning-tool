@@ -64,7 +64,9 @@ def _actor_id(principal) -> str:
 
 def _assert_importer(principal) -> None:
     if not has_permission(principal, Permission.STRATEGIC_PRIORITIES_IMPORT.value):
-        raise Forbidden("Only Impact Assessment may import the country priority master.")
+        raise Forbidden(
+            "Only Impact Assessment may import the country priority master."
+        )
 
 
 def _header(value) -> str:
@@ -85,9 +87,11 @@ def _parse_file(name: str, raw: bytes) -> tuple[list[str], list[tuple[int, dict]
         try:
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 members = archive.infolist()
-                if len(members) > 2000 or sum(
-                    member.file_size for member in members
-                ) > MAX_XLSX_UNCOMPRESSED_BYTES:
+                if (
+                    len(members) > 2000
+                    or sum(member.file_size for member in members)
+                    > MAX_XLSX_UNCOMPRESSED_BYTES
+                ):
                     raise BadRequest("The XLSX expands beyond the safe import limit.")
             import openpyxl
 
@@ -189,13 +193,15 @@ def stage_priority_file(*, file, fy: str, principal, country_id="Uganda"):
     if not source_rows:
         raise BadRequest("The upload contains no priority rows.")
     if len(source_rows) > MAX_IMPORT_ROWS:
-        raise BadRequest(f"A priority upload may contain at most {MAX_IMPORT_ROWS} rows.")
+        raise BadRequest(
+            f"A priority upload may contain at most {MAX_IMPORT_ROWS} rows."
+        )
 
     metric_keys = {row.get("metric_key", "") for _, row in source_rows}
     known_metrics = set(
-        MilestoneMetricDefinition.objects.filter(metric_key__in=metric_keys).values_list(
-            "metric_key", flat=True
-        )
+        MilestoneMetricDefinition.objects.filter(
+            metric_key__in=metric_keys
+        ).values_list("metric_key", flat=True)
     )
     activity_codes = {
         code.strip()
@@ -204,9 +210,9 @@ def stage_priority_file(*, file, fy: str, principal, country_id="Uganda"):
         if code.strip()
     }
     known_activities = set(
-        ActivityCatalogueItem.objects.filter(stable_code__in=activity_codes).values_list(
-            "stable_code", flat=True
-        )
+        ActivityCatalogueItem.objects.filter(
+            stable_code__in=activity_codes
+        ).values_list("stable_code", flat=True)
     )
     allowed_methods = set(MilestoneAllocationMethod.values)
     allowed_measurements = set(MilestoneMeasurementType.values)
@@ -238,7 +244,12 @@ def stage_priority_file(*, file, fy: str, principal, country_id="Uganda"):
             errors.append("core_target cannot exceed target_value.")
         if target is not None and client is not None and client > target:
             errors.append("client_target cannot exceed target_value.")
-        if target is not None and core is not None and client is not None and core + client > target:
+        if (
+            target is not None
+            and core is not None
+            and client is not None
+            and core + client > target
+        ):
             errors.append("core_target plus client_target cannot exceed target_value.")
 
         codes = [
@@ -260,14 +271,24 @@ def stage_priority_file(*, file, fy: str, principal, country_id="Uganda"):
             errors.append("Duplicate priority_code and milestone_code in this file.")
 
         needs_confirmation = _truthy(raw_row.get("needs_confirmation", ""))
-        status = PriorityImportRowStatus.BLOCKED if errors else (
-            PriorityImportRowStatus.REVIEW if needs_confirmation else PriorityImportRowStatus.READY
+        status = (
+            PriorityImportRowStatus.BLOCKED
+            if errors
+            else (
+                PriorityImportRowStatus.REVIEW
+                if needs_confirmation
+                else PriorityImportRowStatus.READY
+            )
         )
         staged.append(
             PriorityImportRow(
                 row_number=row_number,
-                group_code=(raw_row.get("group_code") or raw_row.get("priority_code", "")).strip(),
-                group_title=(raw_row.get("group_title") or raw_row.get("priority_title", "")).strip(),
+                group_code=(
+                    raw_row.get("group_code") or raw_row.get("priority_code", "")
+                ).strip(),
+                group_title=(
+                    raw_row.get("group_title") or raw_row.get("priority_title", "")
+                ).strip(),
                 priority_code=raw_row.get("priority_code", "").strip(),
                 priority_title=raw_row.get("priority_title", "").strip(),
                 milestone_code=raw_row.get("milestone_code", "").strip(),
@@ -311,8 +332,12 @@ def stage_priority_file(*, file, fy: str, principal, country_id="Uganda"):
                 invalid_rows=invalid_count,
                 duplicate_rows=duplicate_count,
                 validation_summary={
-                    "ready": sum(row.status == PriorityImportRowStatus.READY for row in staged),
-                    "review": sum(row.status == PriorityImportRowStatus.REVIEW for row in staged),
+                    "ready": sum(
+                        row.status == PriorityImportRowStatus.READY for row in staged
+                    ),
+                    "review": sum(
+                        row.status == PriorityImportRowStatus.REVIEW for row in staged
+                    ),
                     "blocked": invalid_count,
                 },
             )

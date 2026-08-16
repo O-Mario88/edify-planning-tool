@@ -192,9 +192,7 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         )
         self.adv.refresh_from_db()
         # The claim routes through the PL before the Accountant's queue.
-        self.assertEqual(
-            self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING
-        )
+        self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_PL_PENDING)
         pl_approve_accountability(self.adv.id, self._cd())
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED)

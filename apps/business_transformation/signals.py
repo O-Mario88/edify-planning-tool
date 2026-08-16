@@ -35,10 +35,7 @@ def enqueue_ssa_confirmed_batch(records) -> None:
 
     enqueue_many(
         "bt.ssa.confirmed",
-        [
-            _ssa_confirmed_event(record.id, record.verified_at)
-            for record in records
-        ],
+        [_ssa_confirmed_event(record.id, record.verified_at) for record in records],
     )
 
 
