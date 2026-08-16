@@ -6,7 +6,7 @@ environment could not produce evidence; it is never used to mean "probably fine"
 | # | Gate | Status | Evidence / blocker |
 | --- | --- | --- | --- |
 | 1 | No unresolved Critical findings | **PASS** | One Critical found (AUD-004), reproduced, fixed, regression-tested |
-| 2 | No unresolved High in finance/security/permissions/verification/targets/data-integrity/loans/SF | **FAIL — one open** | AUD-005, AUD-006, AUD-002 fixed; AUD-003 fixed for the app's own environment. **AUD-011 open**: two HIGH advisories survive in a second Python stack inside the runtime image (most likely LibreOffice's Debian Python), so the container scan is still red. AUD-007 (Admin country-budget authority) recorded as a governance decision |
+| 2 | No unresolved High in finance/security/permissions/verification/targets/data-integrity/loans/SF | **PASS** | AUD-002, AUD-003, AUD-005, AUD-006, AUD-011 all fixed and verified. The container scan was reproduced green locally with CI's exact scanner and flags before pushing |
 | 3 | Every mandatory end-to-end journey passes | **NOT ASSESSED** | §29's 16 journeys need a staging environment with real integration credentials and human actors; not performable here |
 | 4 | Every critical handoff creates the correct notification and To-Do | **PARTIAL** | Verified structurally in the preceding alignment audit (12 seam fixes); not re-walked journey-by-journey here |
 | 5 | Every To-Do closes automatically when its condition resolves | **PARTIAL** | To-Dos are derived live from workflow state (cannot go stale by construction); per-producer closure not re-tested this pass |
@@ -24,7 +24,7 @@ environment could not produce evidence; it is never used to mean "probably fine"
 | 17 | Backup restoration tested | **NOT ASSESSED** | Requires the production/DigitalOcean side; out of scope for this environment |
 | 18 | BT loan / Financial Health / Government Requirements journeys pass | **PARTIAL** | Module integrated into platform law this pass (reference data, metric registry, pagination, search, scoping verified). End-to-end journeys not walked |
 | 19 | All approved requirements have a final implementation status | **NOT DONE** | The full §7 traceability matrix was not built; this audit prioritised the platform laws (§3) and the highest-risk domains |
-| 20 | Documentation matches the audited system | **FAIL** | AUD-001: guide claims 509/914/11/70, live is 532/952/14/85 |
+| 20 | Documentation matches the audited system | **PASS** | AUD-001 fixed: figures re-measured and stated with their source, Admin's full exclusion set documented, and a new §8a covers Business Transformation |
 
 ## Summary
 
@@ -32,27 +32,33 @@ environment could not produce evidence; it is never used to mean "probably fine"
 target/achievement integrity, data integrity, and school-scale performance — all
 now carry either a passing verification or a fixed defect with a regression test.
 
-**Blocking a full production sign-off:** gates 3, 11, 14, 15, 17, 19 and 20. Six
-of those seven need a staging environment, real users, real devices, or real
-integration credentials. Gate 20 (documentation) is the one that can be closed
-immediately by regenerating the platform guide.
+**Blocking a full production sign-off:** gates 3, 11, 14, 15, 17 and 19. Every
+one of them needs something this environment does not have — a staging
+deployment, real users, real devices, or credentialed integrations. None can be
+closed by further code work here, and none should be marked passed without the
+evidence.
+
+**What that means for a client rollout.** The code is defensible: every platform
+law that could be tested from here was tested, and each defect found was
+reproduced, fixed and pinned. What has *not* been demonstrated is the system
+running end to end in a production-like environment — no journey walked on
+staging, no restore rehearsed, no integration failure exercised, no offline
+client at all. A rollout plan should treat those as the remaining work, not as
+paperwork.
 
 ## Recommended remediation order
 
-**Immediate (done this pass):** AUD-002, AUD-004, AUD-005, AUD-006, and AUD-003
-for the application's own dependencies.
+**Done this pass:** AUD-001, AUD-002, AUD-003, AUD-004, AUD-005, AUD-006,
+AUD-007, AUD-010, AUD-011, and the SF-ID half of AUD-009.
 
-**Immediate (still open):** AUD-011 — localize the second Python stack in the
-runtime image and decide between removing LibreOffice from the web tier
-(recommended), purging the specific packages, or an owned time-boxed ignore.
-Until then the container scan stays red, and a red control is one nobody reads.
-
-**Before pilot:**
-- Decide AUD-007 (Admin's country-budget authority) and record the decision.
-- Regenerate `PLATFORM_GUIDE.md` (closes gate 20).
-- Add a per-IP throttle to the browser login (AUD-010).
-- Resolve the two engine asymmetries in AUD-009 — especially the SF-ID gate,
-  which currently lets two engines disagree about whether the same work counts.
+**Before pilot (open, each needs a decision rather than a patch):**
+- Enforce the Salesforce ID at IA verification, or accept that an activity can
+  be verified without one and then never closed (AUD-009, related risk).
+- Decide the mixed-counting-basis behaviour in `refresh_period_targets`
+  (AUD-009 item 2) — latent today, wrong the moment a milestone mixes bases.
+- Make the formatter check a separate always-first CI job with an alert, so the
+  silent-red mode of AUD-002 cannot recur.
+- Reseed or accept the 23,560 impossible SSA rows in dev (AUD-008).
 
 **Before production:**
 - Extend the scale fixture to transactional volume and add BT surfaces (gate 13).

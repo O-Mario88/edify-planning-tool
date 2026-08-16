@@ -122,6 +122,28 @@ def login_view(request):
         from apps.accounts.models import User
         from apps.accounts.auth_failure_service import AuthenticationFailureService
         from apps.accounts.lockout_service import AuthenticationLockoutService
+        from apps.core.throttling import throttle_by_ip
+
+        # Per-IP ceiling, sharing the API login's budget and limit. Per-account
+        # lockout already stops a brute force against one account; this is the
+        # other shape — one guess each across many accounts from one address —
+        # which the DRF login has always been bounded against and this door
+        # was not.
+        if not throttle_by_ip(
+            request,
+            name="auth.login",
+            limit=getattr(settings, "RATE_LIMIT_LOGIN_PER_MIN", 10),
+        ):
+            return render(
+                request,
+                "pages/auth/login.html",
+                {
+                    "error": "Too many sign-in attempts. Please wait a minute "
+                    "and try again.",
+                    "email": request.POST.get("email", "").strip().lower(),
+                },
+                status=429,
+            )
 
         email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password", "")

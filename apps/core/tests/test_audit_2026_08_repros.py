@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
@@ -126,6 +126,45 @@ class AdminSeparationOfDutiesTest(TestCase):
             "the disburse endpoint admitted Admin (expected 403 from the "
             "payment.act gate)",
         )
+
+
+class BrowserLoginIsRateLimitedTest(TestCase):
+    """AUD-010: both doors to the credential check must be bounded per IP.
+
+    Per-account lockout stops a brute force against one account. It does not
+    bound the other shape — one guess each across many accounts from a single
+    address — which the DRF login has always been throttled against and the
+    server-rendered form was not.
+    """
+
+    def setUp(self):
+        from apps.core.throttling import reset_throttle_state
+
+        reset_throttle_state()
+        self.addCleanup(reset_throttle_state)
+
+    # The limit is pinned here rather than inherited: the developer .env sets
+    # RATE_LIMIT_LOGIN_PER_MIN=1000 so local work is not throttled, which would
+    # make this test silently vacuous on a laptop and meaningful only on CI.
+    @override_settings(RATE_LIMIT_LOGIN_PER_MIN=10)
+    def test_repeated_sign_in_attempts_from_one_address_are_capped(self):
+        limit = 10
+        statuses = [
+            self.client.post(
+                "/login",
+                {"email": f"nobody{i}@edify.org", "password": "wrong-password"},
+            ).status_code
+            for i in range(limit + 3)
+        ]
+        self.assertIn(
+            429,
+            statuses,
+            "the browser login accepted unlimited attempts from one address; "
+            "the per-IP throttle is missing or not wired",
+        )
+        # Sanity: the early attempts must NOT be throttled, or the test would
+        # pass on a login that simply rejects everyone.
+        self.assertNotIn(429, statuses[:3])
 
 
 class OperatorSuppliedNamesCannotRunScriptTest(TestCase):
@@ -319,6 +358,10 @@ class PartnerWorkNeverCreditsStaffTest(TestCase):
             catalogue_item=item,
             delivery_type="partner",
             assigned_partner_id="audit-partner-org",
+            # Required for the credit engine to consider it at all (AUD-009):
+            # without the reference this test would prove nothing, because the
+            # activity would be skipped before the partner rule was reached.
+            salesforce_activity_id="VS-AUDIT-PARTNER-1",
             # The trap: partner-delivered work still names the staff member
             # who owns the school (230 of 231 partner rows in dev do this).
             responsible_staff_id=profile.id,

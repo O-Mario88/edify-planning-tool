@@ -4935,7 +4935,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 525,
+   "line": 531,
    "label": null,
    "keys": [
     "helper",
@@ -4952,7 +4952,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 543,
+   "line": 549,
    "label": "Staff Included",
    "keys": [
     "helper",
@@ -4969,7 +4969,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 552,
+   "line": 558,
    "label": "Total Planned Activities",
    "keys": [
     "helper",
@@ -4986,7 +4986,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 653,
+   "line": 659,
    "label": "Planned Schools",
    "keys": [
     "icon",
@@ -4999,7 +4999,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 654,
+   "line": 660,
    "label": "Partner-Planned Schools",
    "keys": [
     "icon",
@@ -5012,7 +5012,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 659,
+   "line": 665,
    "label": "Cluster Meetings / Sessions",
    "keys": [
     "icon",
@@ -5025,7 +5025,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 664,
+   "line": 670,
    "label": "Trainings Planned",
    "keys": [
     "icon",
@@ -5038,7 +5038,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 665,
+   "line": 671,
    "label": "SSA Collection Visits",
    "keys": [
     "icon",
@@ -5051,7 +5051,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 666,
+   "line": 672,
    "label": "Special Project Activities",
    "keys": [
     "icon",
@@ -5064,7 +5064,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 671,
+   "line": 677,
    "label": "Admin Plan Items",
    "keys": [
     "icon",
@@ -5077,7 +5077,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1102,
+   "line": 1108,
    "label": "Highest Planned Cost Staff",
    "keys": [
     "helper",
@@ -5092,7 +5092,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1111,
+   "line": 1117,
    "label": "Largest Cluster Training Budget",
    "keys": [
     "helper",
@@ -5107,7 +5107,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1118,
+   "line": 1124,
    "label": "Partner Cost Share",
    "keys": [
     "helper",
@@ -5122,7 +5122,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1125,
+   "line": 1131,
    "label": "Top Cost Category",
    "keys": [
     "helper",
@@ -5137,7 +5137,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1134,
+   "line": 1140,
    "label": "Admin Budget Share",
    "keys": [
     "helper",
@@ -5152,7 +5152,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1141,
+   "line": 1147,
    "label": "Average Allocation per Staff",
    "keys": [
     "helper",
@@ -5167,7 +5167,7 @@
   {
    "kind": "breakdown-row",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 1470,
+   "line": 1476,
    "label": null,
    "keys": [
     "activity_id",

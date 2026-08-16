@@ -39,8 +39,14 @@ from apps.fund_requests.pl_approval_service import (
 from .models import MonthlyBudgetSubmissionSnapshot, MonthlyWorkPlanBudget
 from . import services as mwp
 
-CD_ROLES = ("CountryDirector", "Admin")
-RVP_ROLES = ("RegionalVicePresident", "Admin")
+# Authority tuples, deliberately WITHOUT "Admin". The permission matrix
+# withholds the country-budget authorities from the super-role
+# (ADMIN_EXCLUDED_PERMISSIONS), and a role tuple that names Admin re-grants
+# what the matrix just removed — the bypass the 2026-08 audit found on the
+# disbursement and IA-verify doors. Admin still READS every country budget
+# through READ_ROLES below; observing a control is not exercising it.
+CD_ROLES = ("CountryDirector",)
+RVP_ROLES = ("RegionalVicePresident",)
 READ_ROLES = (
     "CountryDirector",
     "RegionalVicePresident",

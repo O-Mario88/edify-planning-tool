@@ -84,14 +84,14 @@ class BudgetAmendmentTest(TestCase):
         )
         _line(self.activity, 45_000)
 
-    def _request(self):
+    def _request(self, principal=None):
         from apps.budget.amendment_service import request_amendment
 
         new_date = (timezone.now() + timedelta(days=30)).strftime("%Y-%m-%d")
         return request_amendment(
             self.activity.id,
             {"newDate": new_date, "reason": "Venue unavailable"},
-            self.owner,
+            principal or self.owner,
         )
 
     def test_request_requires_reason(self):
@@ -132,11 +132,16 @@ class BudgetAmendmentTest(TestCase):
     def test_requester_cannot_review_and_duplicate_blocked(self):
         from apps.budget.amendment_service import approve_amendment
 
-        amendment = self._request()
+        # The requester here must be someone who *could* otherwise review, or
+        # the reviewer-role gate fires first and the self-review rule is never
+        # the thing under test. (It used to be an Admin, which stopped being a
+        # reviewer when the 2026-08 audit removed budget authority from the
+        # super-role.)
+        amendment = self._request(self.accountant)
         with self.assertRaises(BadRequest):
-            approve_amendment(amendment.id, {}, self.owner)
+            approve_amendment(amendment.id, {}, self.accountant)
         with self.assertRaises(BadRequest):
-            self._request()  # second live amendment for same activity
+            self._request(self.accountant)  # second live amendment, same activity
 
     def test_non_reviewer_role_blocked(self):
         from apps.budget.amendment_service import approve_amendment

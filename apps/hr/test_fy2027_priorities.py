@@ -162,6 +162,11 @@ class MilestoneCreditDeduplicationTests(TestCase):
         activity = Activity.objects.create(
             activity_type=item.workflow_kind,
             status="ia_verified",
+            # Verified work carries its Salesforce reference: the ID is
+            # required before verification and locked afterwards, so an
+            # ia_verified row without one is a state the platform cannot
+            # reach, and the credit engine rightly refuses to count it.
+            salesforce_activity_id="VS-FY27-CREDIT-1",
             planned_date=date(2027, 1, 10),
             fy="2027",
             focus_intervention="christlike_behaviour",

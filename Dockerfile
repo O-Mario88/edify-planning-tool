@@ -26,24 +26,44 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.
 COPY --from=build /install /usr/local
-# The slim base ships setuptools 70.3.0 (CVE-2025-47273, path traversal, fixed
-# in 78.1.1). The prune below is the part that actually matters, and the reason
-# is worth writing down because the obvious fix silently does nothing:
+# Remove pip from the RUNTIME image. Two reasons, and the security one is not
+# the headline:
 #
-# The build stage now installs a current setuptools into /install, and the COPY
-# above merges that tree into /usr/local — merges, not replaces. So /usr/local
-# ends up carrying TWO dist-info directories: the new one and the base image's
-# 70.3.0. A plain `pip install --upgrade` then reports "already satisfied" and
-# exits without touching anything, because the new version is genuinely there.
-# The stale metadata survives, and a container scanner reads dist-info rather
-# than the importable module — so it keeps reporting a version that is not
-# actually installed. That looks like a false positive and is not one: the
-# right answer is to remove the metadata that no longer describes reality.
+# 1. Nothing here needs it. Dependencies are installed in the build stage above
+#    and copied in; docker-entrypoint.sh runs migrate, optionally seed, the
+#    preflight, and then daphne. A container that cannot install packages is a
+#    materially worse foothold than one that can.
+#
+# 2. It is the honest answer to the container scan. Trivy kept reporting
+#    setuptools 70.3.0 (CVE-2025-47273) and msgpack 1.1.2
+#    (GHSA-6v7p-g79w-8964) against this image, and neither is an application
+#    dependency: pip vendors its own copies and declares them in
+#    `pip/_vendor/vendor.txt`, which the scanner reads. Upgrading our packages
+#    could never clear those lines — the application's own site-packages was
+#    already clean and the scan stayed red. The fix is to remove the pip tree
+#    that carries them, not to add an ignore rule for a finding that would then
+#    go unread.
+#
+# The application's own setuptools is upgraded first, in case any dependency
+# imports it at runtime, and its superseded metadata is pruned — a COPY merges
+# directories rather than replacing them, so the old dist-info would otherwise
+# survive beside the new one and keep being reported.
+#
+# The removal is then asserted against the filesystem rather than with
+# `command -v pip`: this shell hashed `pip` when it ran the install on the
+# first line, so `command -v` keeps returning the old path after the file is
+# gone — a check that answers from cache instead of from the image.
 RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1" \
     && find /usr/local/lib/python3.13/site-packages -maxdepth 1 \
         -name 'setuptools-*.dist-info' -type d \
         -not -name "setuptools-$(python -c 'import setuptools; print(setuptools.__version__)').dist-info" \
         -exec rm -rf {} + \
+    && python -m pip uninstall -y pip \
+    && rm -rf /usr/local/lib/python3.13/site-packages/pip \
+              /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+              /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.13 \
+    && test ! -e /usr/local/lib/python3.13/site-packages/pip \
+    && test ! -e /usr/local/bin/pip \
     && python -c "import setuptools; print('setuptools', setuptools.__version__)"
 # Application source.
 COPY . .

@@ -755,6 +755,7 @@ class RateAchievementTests(DistributionFixture):
             activity = Activity.objects.create(
                 activity_type=item.workflow_kind,
                 status="ia_verified",
+                salesforce_activity_id=f"VS-CREDIT-{school.school_id}",
                 planned_date=date(2026, 10, 15),
                 fy=FY,
                 school=school,
@@ -793,6 +794,7 @@ class CreditReversalTests(DistributionFixture):
         activity = Activity.objects.create(
             activity_type=item.workflow_kind,
             status="ia_verified",
+            salesforce_activity_id="VS-CREDIT-TEAM-1",
             planned_date=date(2026, 10, 20),
             fy=FY,
             responsible_staff_id=self.cceo_a_sp.id,
@@ -841,6 +843,10 @@ class IaWorkspaceCreditTests(DistributionFixture):
         activity = Activity.objects.create(
             activity_type=item.workflow_kind,
             status="awaiting_ia_verification",
+            # Present before verification, as the workflow requires: the
+            # reference is locked once IA confirms, so it can never be added
+            # afterwards.
+            salesforce_activity_id="VS-CREDIT-WORKSPACE-1",
             planned_date=date(2026, 10, 22),
             fy=FY,
             responsible_staff_id=self.cceo_a_sp.id,

@@ -197,6 +197,23 @@ class ForgotPasswordRateThrottle(RouteRateThrottle):
     rate_window_ms = 10 * 60_000
 
 
+def throttle_by_ip(request, *, name: str, limit: int, window_ms: int = 60_000) -> bool:
+    """Per (name + client IP) window for plain Django views. True = allowed.
+
+    DRF views get this through `RouteRateThrottle`; the server-rendered login
+    form had no equivalent, so the two doors to the same credential check were
+    protected asymmetrically — per-account lockout stopped a brute force
+    against one account, but nothing bounded one guess each across many
+    accounts from a single address (2026-08 audit, AUD-010).
+
+    Shares the window backing and key shape with the DRF throttles, so the two
+    doors count against the same budget rather than granting a second one.
+    """
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    ident = xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "")
+    return _hit(f"{name}:{ident}", window_ms=window_ms, limit=limit)
+
+
 def reset_throttle_state(keys: Iterable[str] = ()) -> None:
     """Test helper: clear the window (all keys, or a subset).
 

@@ -223,6 +223,14 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.PAYMENT_ACT,
         # Field budget approval is the CCEO→PL chain alone.
         Permission.BUDGET_APPROVE,
+        # The country money chain is the CD→RVP authority, for the same reason
+        # as the line above: the doctrine here is "approve a budget, disburse
+        # against it, then verify the work it paid for", and an envelope is a
+        # budget. Excluding only the field half left the super-role holding the
+        # larger of the two approvals (2026-08 audit, AUD-007).
+        Permission.COUNTRY_BUDGET_SUBMIT,
+        Permission.COUNTRY_BUDGET_APPROVE,
+        Permission.FUND_REQUEST_APPROVE_ESCALATED,
         # A technical super-role remains read-only on the governed loan book.
         Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
         Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,

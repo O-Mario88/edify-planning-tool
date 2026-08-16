@@ -364,8 +364,11 @@ services:
         value: edifyplanning.app
 
       # ── Background jobs ───────────────────────────────────────────────────
-      # The eight scheduled jobs run ONLY in a dedicated runscheduler process.
-      # Keep this false on the web service.
+      # The scheduled jobs run ONLY in the dedicated runscheduler process
+      # below. Deliberately not stating a count here: the registry
+      # (apps/realtime/registry.py) is the source of truth and this comment
+      # has already drifted twice behind it. Keep this false on the web
+      # service.
       - key: ENABLE_BACKGROUND_JOBS
         value: "false"
 

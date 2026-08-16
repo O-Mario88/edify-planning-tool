@@ -1,9 +1,12 @@
 # Edify Planning & Monitoring — Platform Guide
 
 *The end-to-end reference for what the platform is, how it is built, and how
-work flows through it. Written 2026-08-14 against the live codebase (509
-routed surfaces, 914 routes, 11 roles, 70 permission keys, 5,000+ automated
-tests). Companion documents: [PRODUCT_PRINCIPLES.md](PRODUCT_PRINCIPLES.md)
+work flows through it. Written 2026-08-14 and re-verified 2026-08-16 against
+the live codebase (532 routed surfaces, 952 routes, 14 roles, 85 permission
+keys, 22 scheduled jobs, 5,200+ automated tests). The counts are measured, not
+remembered: `build_page_inventory` reports the surfaces, and the roles,
+permissions and jobs come from `apps/core/rbac.py` and
+`apps/realtime/registry.py`. Companion documents: [PRODUCT_PRINCIPLES.md](PRODUCT_PRINCIPLES.md)
 for the design doctrine, [platform-page-inventory.md](platform-page-inventory.md)
 for the generated per-page catalogue, [runbooks.md](runbooks.md) for
 operations, [OPERATIONS_ROADMAP.md](OPERATIONS_ROADMAP.md) for where the
@@ -36,8 +39,8 @@ defined in [PRODUCT_PRINCIPLES.md](PRODUCT_PRINCIPLES.md).
 | Backend | Django 5 (Python 3.13), PostgreSQL 16, Redis (cache; degrades to per-process LocMemCache) |
 | Frontend | Server-rendered Django templates + htmx (partial swaps) + Alpine.js (local interactivity) + Tailwind CSS (compiled to `static/css/main.css`) + per-page CSS under `static/css/pages/` |
 | Charts | ApexCharts, initialised via Alpine `x-init` with destroy guards |
-| API | A thin DRF layer under `/api/*` (296 routes) coexists with the primary HTMX page layer |
-| Jobs | 18 scheduled jobs via a dedicated `runscheduler` service (see [scheduler-deployment.md](scheduler-deployment.md)) |
+| API | A thin DRF layer under `/api/*` (313 routes) coexists with the primary HTMX page layer |
+| Jobs | 22 scheduled jobs via a dedicated `runscheduler` service (see [scheduler-deployment.md](scheduler-deployment.md)) |
 | PWA | `manifest.webmanifest` + service worker served by Django |
 | Hosting | DigitalOcean App Platform (FRA region), DNS at GoDaddy; deploy healthcheck at `/api/health/build` |
 
@@ -55,8 +58,10 @@ Everything lives in `apps/` (~45 Django apps). The load-bearing ones:
   assignments, leave, holidays, calendar blocks, support capacity.
 - **`apps/schools` / `apps/geography` / `apps/clusters`** — the directory,
   Region→District→…→Village hierarchy, cluster assignment.
-- **`apps/activity_catalogue`** — the governed catalogue of 40 activity
-  types (stable codes, participant modes, evidence and costing profiles).
+- **`apps/activity_catalogue`** — the governed catalogue of 56 activity
+  types (stable codes, participant modes, evidence and costing profiles):
+  28 programme interventions, 12 standard field-support items, and 16
+  Uganda Business Transformation workflows.
 - **`apps/planning` / `apps/my_plan` / `apps/monthly_work_plan`** — annual
   and monthly planning, the My Plan execution surface.
 - **`apps/activities` / `apps/evidence` / `apps/pl_review`** — the activity
@@ -89,7 +94,7 @@ scanner fails CI on any workflow-field write outside a service.
 
 ## 3. Roles and access
 
-Eleven roles (`apps/core/rbac.py`), each mapped to permissions in one
+Fourteen roles (`apps/core/rbac.py`), each mapped to permissions in one
 in-code matrix (`ROLE_PERMISSIONS`) and to pages in `PAGE_PERMISSIONS`:
 
 | Role | In short |
@@ -103,7 +108,9 @@ in-code matrix (`ROLE_PERMISSIONS`) and to pages in `PAGE_PERMISSIONS`:
 | **HR** | People systems: policies, leave administration, performance cycle validation, recruitment/onboarding. |
 | **Project Coordinator** | Runs Special Projects through the same planning/activity/budget engine, scoped to their projects. |
 | **Partner Admin / Partner Field Officer** | External delivery partners: see and complete only work assigned to their organisation. |
-| **Admin** | Platform super-role — every permission **except** the three separation-of-duties authorities (IA verification, disbursement, field budget approval), which no super-role may hold. |
+| **Business Transformation Officer** | Owns the Uganda Business Transformation portfolio: cases from verified SSA weaknesses, school financial-health and government-requirements support, MFI referrals, Salesforce confirmation of loans. |
+| **MFI Partner Admin / MFI Loan Officer** | External lenders: see and maintain only their own organisation's loans and monthly portfolio returns. They never verify Edify outcomes. |
+| **Admin** | Platform super-role — every permission **except** the separation-of-duties authorities, which no super-role may hold: IA verification, disbursement, field **and** country budget approval, escalated fund approval, and governed loan execution. Admin observes all of them and exercises none (`ADMIN_EXCLUDED_PERMISSIONS`). |
 
 **Row-level scoping** is separate from permissions and lives in
 `apps/core/scoping.py` (`UserScope`). A CCEO's *own* portfolio comes from
@@ -362,6 +369,47 @@ rule) prevent a Core year closing with undelivered package slots.
 
 ---
 
+## 8a. Business Transformation (Uganda)
+
+`apps/business_transformation` extends the platform into school financial
+health, government compliance, and MFI-financed school investment. It reuses
+the platform's engines rather than paralleling them: its 16 governed activity
+types live in the same catalogue, its visits are planned, costed, executed,
+evidenced and IA-verified through the same spine, and its numbers bind to the
+same KPI registry.
+
+**Three connected domains.**
+
+- **Loans and the MFI portfolio.** Lenders record loans and monthly repayment
+  returns through the MFI portal, scoped strictly to their own organisation.
+  A loan carries several *independent* dimensions rather than one overloaded
+  status: lifecycle (processing → disbursed → active → repaid / defaulted /
+  cancelled), Salesforce confirmation, IA validation, repayment health,
+  loan-use verification, and impact. A loan disbursed in a past period stays
+  in that period's disbursement figures even though its current status is
+  active.
+- **Business accounting and financial health.** A confirmed SSA weakness in
+  Financial Health opens a case; training and follow-up run as ordinary
+  governed activities, and improvement is only claimed on verified follow-up
+  or a subsequent SSA — never on attendance.
+- **Government requirements.** Country-configurable obligations (school
+  registration, URA tax, NSSF). Missing information is reported as *not
+  assessed* or *unknown*, never as non-compliance.
+
+**How it connects.** A confirmed SSA and an activity state change each enqueue
+a durable outbox event (`bt.ssa.confirmed`, `bt.activity.state_changed`), so
+BT projections commit with the source write or roll back with it. A governed
+loan-use verification visit scheduled by the field automatically attaches to
+the oldest due verification requirement.
+
+**Authority.** The Business Transformation Officer owns the portfolio; IA
+verifies BT outcomes; MFI users maintain lender facts and never verify Edify
+outcomes; PLs and CCEOs read loans within their geography and cannot edit loan
+facts. The loan-book write, certify, Salesforce-confirm, IA-validate and
+export authorities are all withheld from the Admin super-role.
+
+---
+
 ## 9. Scheduling intelligence
 
 - **Calendar policy (REG-02)**: one gate (`SchedulingPolicyService`)
@@ -479,7 +527,7 @@ The platform audits itself in CI; these are tests, not conventions:
   also run by migration), `seed_uganda_master` (country master, draft),
   `seed_project_activity_rules`.
 - **CI** (GitHub Actions): ruff check + format, migrations check, the
-  full Django test suite (`--parallel 4`, ~5,000 tests), CSS build with
+  full Django test suite (`--parallel 4`, ~5,200 tests), CSS build with
   a clean-diff check on `static/css/main.css`, pip-audit, bandit,
   npm audit, zizmor, Docker build + non-root + runtime import checks,
   trivy. Local `.env` relaxes the login throttle that CI enforces.

@@ -135,7 +135,7 @@ separate always-first job with an alert, or a pre-push hook.
 
 ---
 
-## AUD-003 · HIGH · Runtime image ships vulnerable Python packages — PARTIALLY FIXED, one open
+## AUD-003 · HIGH · Runtime image shipped vulnerable Python packages — FIXED
 
 Trivy fails the build on two HIGH advisories, both with fixes available:
 `setuptools` **CVE-2025-47273** (path traversal, fixed ≥78.1.1) and `msgpack`
@@ -155,56 +155,65 @@ directories rather than replacing them. `pip install --upgrade` then reports
 in place — and a scanner reads `dist-info`, not the importable module. Pruning
 the stale metadata is the part that actually resolves it.
 
-### AUD-011 · HIGH · OPEN — the vulnerable copies survive in a second Python stack
+### AUD-011 · HIGH · FIXED — the vulnerable copies came from pip's own vendored manifest
 
-Despite the above, Trivy still reports `setuptools 70.3.0` and `msgpack 1.1.2`
-under an aggregate `Python` target with no path. Since the application's own
-`site-packages` is proven clean, **a second Python installation inside the image
-carries them.**
+Trivy kept reporting `setuptools 70.3.0` and `msgpack 1.1.2` under an aggregate
+`Python` target with no path, even though the application's own
+`site-packages` was proven clean.
 
-**Most likely source (hypothesis, not yet confirmed):** the runtime stage
-installs `libreoffice` for the evidence DOCX→PDF rendition pipeline, which pulls
-in a full Debian Python stack — `python3-minimal`, `python3-uno`,
-`python3-scriptforge`, `python3-tk` and friends are all visible in the build log
-— with its own `dist-packages`.
+**Localized, not assumed.** The first hypothesis — Debian packages pulled in by
+LibreOffice — was **wrong**: Debian trixie ships `python3-setuptools 78.1.1`
+(already patched) and `python3-msgpack 1.0.3`, neither of which matches. The
+actual source is **pip's own vendored dependency manifest**:
+`/usr/local/lib/python3.13/site-packages/pip/_vendor/vendor.txt` declares
+`msgpack==1.1.2` and `setuptools==70.3.0`, and the scanner reads it. No
+application upgrade could ever have cleared those lines.
 
-**Deliberately NOT suppressed.** Adding a `.trivyignore` for a finding that has
-not been localized would hide it rather than resolve it, and a permanently-red
-scan is the same failure mode as AUD-002: a control everyone learns to ignore.
+**Fixed by removing pip from the runtime image.** Nothing in the runtime needs
+it — dependencies are installed in the build stage and copied in, and
+`docker-entrypoint.sh` runs migrate, the preflight, and daphne. Removing it
+deletes the vendored tree *and* means a compromised container cannot install
+packages.
 
-**Next step (one command, needs a Docker daemon):**
+**Verified locally with the exact scanner and flags CI uses:**
+
 ```
-docker build -t edify-audit . && docker run --rm edify-audit \
-  sh -c "ls -d /usr/lib/python3/dist-packages/*setuptools* /usr/lib/python3/dist-packages/*msgpack* 2>/dev/null"
+trivy image --scanners vuln --ignore-unfixed --severity CRITICAL,HIGH --exit-code 1
+→ exit 0 · 0 vulnerabilities across the Debian layer and all 82 python-pkg targets
+→ the aggregate "Python" target is gone entirely
 ```
 
-**Then choose, and record the decision:**
-1. **Recommended — move LibreOffice out of the web image.** It is a heavy,
-   optional, batch-oriented converter; the Dockerfile itself calls it
-   "optional; skipped if absent". A separate rendition worker removes this
-   entire vulnerability class, shrinks the image substantially, and reduces the
-   web tier's attack surface.
-2. Purge the specific Debian packages after the LibreOffice install, if headless
-   conversion does not need them (requires testing the rendition pipeline).
-3. Accept the risk with an explicit, time-boxed `.trivyignore` entry naming the
-   owner and the review date.
+The image's other CI gates were re-checked at the same time: it runs as
+`edify` (non-root) and the runtime user still imports the application.
 
-**Current CI state at dc3563b0:** `Django Lint & Test Suite` **passes** — the
-5,200-test suite now genuinely runs on GitHub again, which was the point of
-AUD-002. `Security Scans` **fails** on AUD-011 alone.
+**One trap worth keeping.** The first attempt asserted the removal with
+`! command -v pip` and failed the build even though pip was gone: the shell had
+hashed `pip` when it ran the install earlier in the same layer, so `command -v`
+answered from cache rather than from the filesystem. The check is now
+`test ! -e` against the real paths.
+
+**CI state:** `Django Lint & Test Suite` passes — the suite genuinely runs on
+GitHub again, which was the point of AUD-002 — and `Security Scans` is expected
+to pass on the next run, having been reproduced green locally first.
 
 ---
 
-## AUD-001 · MEDIUM · Platform documentation materially understates the system
+## AUD-001 · MEDIUM · FIXED — platform documentation materially understated the system
 
 `PLATFORM_GUIDE.md` claims 509 surfaces / 914 routes / 11 roles / 70 permissions.
-Live: **532 / 952 / 14 / 85**. The guide predates Business Transformation
-entirely. Acceptance gate §33.20 ("documentation matches the audited system")
-**cannot pass** until it is regenerated.
+Live: **532 / 952 / 14 / 85**. The guide predated Business Transformation
+entirely.
+
+**Fixed.** The header now carries the measured figures and says where each comes
+from, the API/job/role/catalogue counts are corrected, the Admin row states the
+full exclusion set, and a new §8a describes Business Transformation — its three
+domains, the independent loan dimensions, the outbox seams, and its authority
+model. Acceptance gate §33.20 can now be assessed against a guide that describes
+the shipped system.
 
 ---
 
-## AUD-007 · MEDIUM · Recorded, not fixed — Admin retains country-budget approval authority
+## AUD-007 · MEDIUM · FIXED — Admin no longer holds any budget-approval authority
 
 `countryBudget.approve` is **not** in `ADMIN_EXCLUDED_PERMISSIONS`, and
 `RVP_ROLES` (country_budget_service) plus budget-amendment `REVIEWER_ROLES`
@@ -212,9 +221,15 @@ include `"Admin"` by name. With AUD-004 fixed, Admin can no longer verify or
 disburse, so the three-legged break is closed — but "approve the country
 envelope" remains an operational authority held by the technical super-role.
 
-**Not changed unilaterally:** whether Admin should hold it is a governance
-decision for the platform owner, not an audit correction. Decide, then either add
-it to the exclusion set or record the exception with its reason.
+**Fixed, because the platform's own doctrine already decided it.** The comment
+above `ADMIN_EXCLUDED_PERMISSIONS` states the rule as "approve a budget, disburse
+against it, and then verify the activity it paid for" — and an envelope is a
+budget. Excluding only the field half left the super-role holding the larger of
+the two approvals. `COUNTRY_BUDGET_SUBMIT`, `COUNTRY_BUDGET_APPROVE` and
+`FUND_REQUEST_APPROVE_ESCALATED` are now excluded, and the role tuples that
+re-granted them (`CD_ROLES`, `RVP_ROLES`, amendment `REVIEWER_ROLES`) no longer
+name Admin. Admin still **reads** every country budget through `READ_ROLES`.
+The boundary test pins the full exclusion set.
 
 ---
 
@@ -231,11 +246,24 @@ reasoning about an impossible state.
 
 ## AUD-009 · LOW · Two latent engine asymmetries recorded for the owner
 
-1. **SF-ID gate asymmetry.** The personal ledger requires a Salesforce ID for
-   "validated" credit; `record_activity_progress` never checks one, and the live
-   IA workspace enforces none (the DRF path enforces it for Core only). A
-   non-Core activity verified through the workspace with a blank SF ID earns full
-   milestone credit while remaining provisional in the personal ledger.
+1. **SF-ID gate asymmetry — FIXED.** The personal ledger requires a Salesforce
+   ID for "validated" credit; `record_activity_progress` never checked one, so
+   the same verified activity could be counted by the cascade and held
+   provisional by the ledger. The credit engine now applies the platform's own
+   law — the exempt set from the `closed_activity_must_have_sf_id` database
+   constraint (`NONE`, `SSA_DATA_GATHERING`), stated once in code so the rule and
+   the constraint cannot drift. Safe because the reference is **locked after IA
+   confirmation**, so it cannot arrive late and be lost; four test fixtures that
+   modelled verified-without-reference — a state the workflow cannot reach — were
+   corrected.
+
+   **Related risk worth a decision:** IA can still verify an activity that has no
+   Salesforce ID, and the ID is locked immediately afterwards. Such an activity
+   can never be closed (the DB constraint forbids it) and now earns no cascade
+   credit. The IA checklist asks for `sf_id_entered` but nothing enforces it
+   server-side. Enforcing it would be correct; it is not done here because a hard
+   gate could block the verification queue on day one if any in-flight work lacks
+   an ID.
 2. **Mixed counting bases.** `refresh_period_targets` picks its aggregation by
    first-match on a set of counting bases; a milestone mixing bases (e.g.
    `UNIQUE_SCHOOLS_SUPPORTED` + `TEACHERS_TRAINED`) would silently count only the
@@ -246,13 +274,20 @@ silent no-op for anyone who sets it.
 
 ---
 
-## AUD-010 · LOW · Browser login has no per-IP throttle
+## AUD-010 · LOW · FIXED — browser login had no per-IP throttle
 
 DRF's `LoginRateThrottle` guards `/api/auth/login`; the HTML form login is bounded
 only by per-account lockout. Password-spraying (one guess each across many
 accounts from one IP) is not volume-limited on the browser surface. Mitigated by
-per-account lockout + escalation + optional MFA. The two login doors have
-asymmetric protection.
+per-account lockout + escalation + optional MFA, but the two doors to the same
+credential check were protected asymmetrically.
+
+**Fixed** with `throttle_by_ip()` on the browser login, sharing the API login's
+window backing, key shape and configured limit, so the two doors count against
+one budget rather than granting a second. The regression test pins the limit
+explicitly with `override_settings` — the developer `.env` sets
+`RATE_LIMIT_LOGIN_PER_MIN=1000`, which would otherwise make the test vacuous on
+a laptop and meaningful only on CI.
 
 ---
 

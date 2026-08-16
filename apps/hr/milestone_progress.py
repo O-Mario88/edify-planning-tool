@@ -15,6 +15,26 @@ from .models import (
 
 QUALIFYING_STATES = {"ia_verified", "accountant_confirmed", "closed"}
 
+# Record types that legitimately carry no Salesforce Activity ID. Same set the
+# `closed_activity_must_have_sf_id` database constraint exempts — stated once
+# here so the credit rule and the constraint cannot drift apart.
+SALESFORCE_EXEMPT_RECORD_TYPES = {"NONE", "SSA_DATA_GATHERING"}
+
+
+def _salesforce_reference_satisfied(activity) -> bool:
+    """Whether this activity carries the external proof its type requires.
+
+    The personal ledger has always required a Salesforce ID before counting
+    work as validated (apps/targets/my_targets.py); the milestone cascade did
+    not, so the same verified activity could be counted by one engine and held
+    provisional by the other (2026-08 audit, AUD-009). The platform law is the
+    database constraint's: every record type except the exempt ones must carry
+    the reference.
+    """
+    if activity.salesforce_record_type_snapshot in SALESFORCE_EXEMPT_RECORD_TYPES:
+        return True
+    return bool((activity.salesforce_activity_id or "").strip())
+
 
 def _rule_matches(rule, activity) -> bool:
     if activity.catalogue_item_id != rule.catalogue_item_id:
@@ -81,6 +101,8 @@ def record_activity_progress(activity) -> int:
     """Create at most one milestone credit per rule for this Activity."""
 
     if not activity.catalogue_item_id or activity.status not in QUALIFYING_STATES:
+        return 0
+    if not _salesforce_reference_satisfied(activity):
         return 0
     rules = MilestoneActivityRule.objects.filter(
         active=True,

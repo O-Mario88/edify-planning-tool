@@ -21,7 +21,10 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 
 from .models import BudgetAmendment, BudgetAmendmentStatus
 
-REVIEWER_ROLES = ("Accountant", "CountryDirector", "Admin")
+# Without "Admin": approving an amendment changes an approved figure, which is
+# the authority the amendment workflow exists to control. The super-role reads
+# amendments and exercises none of them (2026-08 audit, AUD-007).
+REVIEWER_ROLES = ("Accountant", "CountryDirector")
 
 
 def _audit(principal, action: str, amendment: BudgetAmendment, payload: dict) -> None:
@@ -134,7 +137,9 @@ def _get_reviewable(amendment_id: str, principal) -> BudgetAmendment:
     if not amendment:
         raise NotFoundError("Amendment not found.")
     if getattr(principal, "active_role", "") not in REVIEWER_ROLES:
-        raise Forbidden("Only the Accountant, CD or Admin may review amendments.")
+        raise Forbidden(
+            "Only the Accountant or Country Director may review amendments."
+        )
     if amendment.requested_by == principal.user_id:
         raise BadRequest("You cannot review your own amendment.")
     if amendment.status not in (
