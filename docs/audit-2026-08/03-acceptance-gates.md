@@ -6,7 +6,7 @@ environment could not produce evidence; it is never used to mean "probably fine"
 | # | Gate | Status | Evidence / blocker |
 | --- | --- | --- | --- |
 | 1 | No unresolved Critical findings | **PASS** | One Critical found (AUD-004), reproduced, fixed, regression-tested |
-| 2 | No unresolved High in finance/security/permissions/verification/targets/data-integrity/loans/SF | **PASS (with one recorded)** | AUD-005, AUD-006, AUD-002, AUD-003 fixed. AUD-007 (Admin country-budget authority) recorded — a governance decision, not a defect |
+| 2 | No unresolved High in finance/security/permissions/verification/targets/data-integrity/loans/SF | **FAIL — one open** | AUD-005, AUD-006, AUD-002 fixed; AUD-003 fixed for the app's own environment. **AUD-011 open**: two HIGH advisories survive in a second Python stack inside the runtime image (most likely LibreOffice's Debian Python), so the container scan is still red. AUD-007 (Admin country-budget authority) recorded as a governance decision |
 | 3 | Every mandatory end-to-end journey passes | **NOT ASSESSED** | §29's 16 journeys need a staging environment with real integration credentials and human actors; not performable here |
 | 4 | Every critical handoff creates the correct notification and To-Do | **PARTIAL** | Verified structurally in the preceding alignment audit (12 seam fixes); not re-walked journey-by-journey here |
 | 5 | Every To-Do closes automatically when its condition resolves | **PARTIAL** | To-Dos are derived live from workflow state (cannot go stale by construction); per-producer closure not re-tested this pass |
@@ -39,7 +39,13 @@ immediately by regenerating the platform guide.
 
 ## Recommended remediation order
 
-**Immediate (done this pass):** AUD-002, AUD-003, AUD-004, AUD-005, AUD-006.
+**Immediate (done this pass):** AUD-002, AUD-004, AUD-005, AUD-006, and AUD-003
+for the application's own dependencies.
+
+**Immediate (still open):** AUD-011 — localize the second Python stack in the
+runtime image and decide between removing LibreOffice from the web tier
+(recommended), purging the specific packages, or an owned time-boxed ignore.
+Until then the container scan stays red, and a red control is one nobody reads.
 
 **Before pilot:**
 - Decide AUD-007 (Admin's country-budget authority) and record the decision.

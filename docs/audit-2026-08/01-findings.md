@@ -135,13 +135,63 @@ separate always-first job with an alert, or a pre-push hook.
 
 ---
 
-## AUD-003 · HIGH · Runtime image shipped a vulnerable setuptools
+## AUD-003 · HIGH · Runtime image ships vulnerable Python packages — PARTIALLY FIXED, one open
 
-Scheduled Trivy scan failing on `setuptools 70.3.0` — **CVE-2025-47273** (path
-traversal, HIGH), fixed in ≥78.1.1. **Fixed** in 5ef10c98 by upgrading in place in
-the runtime stage (a build-stage `--prefix` copy would merge the new dist-info
-beside the old one the scanner reads). Verification: next scheduled scan must
-pass.
+Trivy fails the build on two HIGH advisories, both with fixes available:
+`setuptools` **CVE-2025-47273** (path traversal, fixed ≥78.1.1) and `msgpack`
+**GHSA-6v7p-g79w-8964** (out-of-bounds read, fixed ≥1.2.1).
+
+**Fixed for the application's own environment.** `msgpack` is now pinned at
+1.2.1 in `requirements/base.txt` (it arrived transitively via autobahn and
+CacheControl), and setuptools is upgraded in both build and runtime stages with
+the superseded `dist-info` pruned. The CI scan confirms the result:
+`site-packages` now reports **setuptools-84.0.0** and **msgpack-1.2.1**, each
+with zero vulnerabilities.
+
+A note on why the first attempt failed, because it is a reusable trap: the
+build stage's `--prefix` tree is **COPYed** into `/usr/local`, and a copy merges
+directories rather than replacing them. `pip install --upgrade` then reports
+"already satisfied" and does nothing, leaving the base image's old `dist-info`
+in place — and a scanner reads `dist-info`, not the importable module. Pruning
+the stale metadata is the part that actually resolves it.
+
+### AUD-011 · HIGH · OPEN — the vulnerable copies survive in a second Python stack
+
+Despite the above, Trivy still reports `setuptools 70.3.0` and `msgpack 1.1.2`
+under an aggregate `Python` target with no path. Since the application's own
+`site-packages` is proven clean, **a second Python installation inside the image
+carries them.**
+
+**Most likely source (hypothesis, not yet confirmed):** the runtime stage
+installs `libreoffice` for the evidence DOCX→PDF rendition pipeline, which pulls
+in a full Debian Python stack — `python3-minimal`, `python3-uno`,
+`python3-scriptforge`, `python3-tk` and friends are all visible in the build log
+— with its own `dist-packages`.
+
+**Deliberately NOT suppressed.** Adding a `.trivyignore` for a finding that has
+not been localized would hide it rather than resolve it, and a permanently-red
+scan is the same failure mode as AUD-002: a control everyone learns to ignore.
+
+**Next step (one command, needs a Docker daemon):**
+```
+docker build -t edify-audit . && docker run --rm edify-audit \
+  sh -c "ls -d /usr/lib/python3/dist-packages/*setuptools* /usr/lib/python3/dist-packages/*msgpack* 2>/dev/null"
+```
+
+**Then choose, and record the decision:**
+1. **Recommended — move LibreOffice out of the web image.** It is a heavy,
+   optional, batch-oriented converter; the Dockerfile itself calls it
+   "optional; skipped if absent". A separate rendition worker removes this
+   entire vulnerability class, shrinks the image substantially, and reduces the
+   web tier's attack surface.
+2. Purge the specific Debian packages after the LibreOffice install, if headless
+   conversion does not need them (requires testing the rendition pipeline).
+3. Accept the risk with an explicit, time-boxed `.trivyignore` entry naming the
+   owner and the review date.
+
+**Current CI state at dc3563b0:** `Django Lint & Test Suite` **passes** — the
+5,200-test suite now genuinely runs on GitHub again, which was the point of
+AUD-002. `Security Scans` **fails** on AUD-011 alone.
 
 ---
 
