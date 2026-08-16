@@ -93,7 +93,7 @@ NetSuite ID Required
 {% if rec.status == 'cleared' %}bg-emerald-50 text-emerald-700 border border-emerald-200
 {% elif rec.status == 'variance_review' %}bg-rose-50 text-rose-700 border border-rose-200
 {% else %}bg-slate-100 text-slate-500 border border-slate-200/50{% endif %}">
-{{ rec.status|title }}
+{{ rec.status|status_label }}
 </span>
 </td>
 <!-- Actions -->

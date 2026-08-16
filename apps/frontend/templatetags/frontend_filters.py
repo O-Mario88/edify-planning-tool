@@ -10,6 +10,44 @@ def replace_underscore(value):
     return str(value).replace("_", " ")
 
 
+# Words the platform capitalises as initialisms. Title-casing a status token
+# turns "submitted_to_pl" into "Submitted To Pl", which reads as a typo for a
+# role everybody knows as the PL.
+_STATUS_INITIALISMS = {
+    "Pl": "PL",
+    "Ia": "IA",
+    "Cd": "CD",
+    "Rvp": "RVP",
+    "Hr": "HR",
+    "Ssa": "SSA",
+    "Mfi": "MFI",
+    "Bt": "BT",
+    "Netsuite": "NetSuite",
+    "Salesforce": "Salesforce",
+    "Edtech": "EdTech",
+    "Nssf": "NSSF",
+    "Ura": "URA",
+}
+
+
+@register.filter
+def status_label(value):
+    """Render a stored status token as the phrase a person would say.
+
+    `{{ obj.status|title }}` leaves the underscores in — live finance and
+    activity pages were showing "Submitted_To_Pl", "Awaiting_Ia_Verification"
+    and "Pending_Responsible_Confirmation" to users (2026-08 UI/UX audit).
+    Prefer a model's own `get_status_display` where one exists; this is for the
+    surfaces reading a bare CharField.
+    """
+    if value is None or value == "":
+        return ""
+    words = str(value).replace("_", " ").replace("-", " ").split()
+    return " ".join(
+        _STATUS_INITIALISMS.get(w.capitalize(), w.capitalize()) for w in words
+    )
+
+
 @register.filter
 def intcomma(value):
     """Thousands-separated integer, e.g. 118540 -> '118,540'. Safe on None/''."""

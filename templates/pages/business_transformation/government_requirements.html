@@ -7,12 +7,12 @@
   {% include "partials/business_transformation/school_portfolio_filters.html" with form_label="Government Requirements portfolio filters" endpoint="/business-transformation/government-requirements" %}
 
   <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio helper="Assigned, supported or SSA-referred" variant="primary" %}
-    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned helper="Live support assignments" variant="info" %}
-    {% include "components/kpi_card.html" with label="Schools supported" value=metrics.schoolsSupported helper="Delivered activities" variant="success" %}
-    {% include "components/kpi_card.html" with label="Compliance verified" value=metrics.compliant helper="At least one verified requirement" variant="success" %}
-    {% include "components/kpi_card.html" with label="Action required" value=metrics.actionRequired helper="Verified gap or expiry" variant="danger" %}
-    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving helper="Confirmed SSA movement" variant="success" %}
+    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio hint="Assigned, supported or SSA-referred" tone="primary" %}
+    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned hint="Live support assignments" tone="info" %}
+    {% include "components/kpi_card.html" with label="Schools supported" value=metrics.schoolsSupported hint="Delivered activities" tone="success" %}
+    {% include "components/kpi_card.html" with label="Compliance verified" value=metrics.compliant hint="At least one verified requirement" tone="success" %}
+    {% include "components/kpi_card.html" with label="Action required" value=metrics.actionRequired hint="Verified gap or expiry" tone="danger" %}
+    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving hint="Confirmed SSA movement" tone="success" %}
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">

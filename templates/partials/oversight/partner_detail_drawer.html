@@ -164,7 +164,7 @@ accountability record, because the CCEO is not the one who is late.
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Evidence</dt>
         <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Salesforce</dt>
-        <dd>{{ item.salesforce_status|title|default:"—" }}</dd></div>
+        <dd>{{ item.salesforce_status|status_label|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Impact Assessment</dt>
         <dd>{{ item.ia_status|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Payment</dt>

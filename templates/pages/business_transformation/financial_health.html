@@ -7,12 +7,12 @@
   {% include "partials/business_transformation/school_portfolio_filters.html" with form_label="Financial Health portfolio filters" endpoint="/business-transformation/business-accounting-finance" %}
 
   <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio helper="Assigned, supported or SSA-referred" variant="primary" %}
-    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned helper="Active BAFF assignments" variant="info" %}
-    {% include "components/kpi_card.html" with label="Schools trained" value=metrics.schoolsSupported helper="Delivered support" variant="success" %}
-    {% include "components/kpi_card.html" with label="Practice verified" value=metrics.practiceVerified helper="IA-verified adoption" variant="success" %}
-    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving helper="Confirmed SSA movement" variant="success" %}
-    {% include "components/kpi_card.html" with label="Declining" value=metrics.declining helper="Needs follow-up" variant="danger" %}
+    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio hint="Assigned, supported or SSA-referred" tone="primary" %}
+    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned hint="Active BAFF assignments" tone="info" %}
+    {% include "components/kpi_card.html" with label="Schools trained" value=metrics.schoolsSupported hint="Delivered support" tone="success" %}
+    {% include "components/kpi_card.html" with label="Practice verified" value=metrics.practiceVerified hint="IA-verified adoption" tone="success" %}
+    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving hint="Confirmed SSA movement" tone="success" %}
+    {% include "components/kpi_card.html" with label="Declining" value=metrics.declining hint="Needs follow-up" tone="danger" %}
   </div>
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">

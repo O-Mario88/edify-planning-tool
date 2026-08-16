@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 {% load table_pagination %}
 
 {% block title %}Trainings Log — Edify{% endblock %}
@@ -55,7 +56,7 @@ Schedule
 <p class="edify-text-caption text-slate-400">{{ t.cluster.name|default:"No cluster" }}</p>
 </td>
 <td class="px-4 py-3.5" data-label="Type">
-<span class="inline-flex items-center px-2 py-0.5 rounded-pill bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ t.activity_type|title }}</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-pill bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ t.activity_type|status_label }}</span>
 </td>
 <td class="px-4 py-3.5 text-slate-600" data-label="Date">{{ t.planned_date|default:"—" }}</td>
 <td class="px-4 py-3.5" data-label="Status">
@@ -63,7 +64,7 @@ Schedule
 {% if t.status == 'completed' %}bg-emerald-50 text-emerald-700
 {% elif t.status == 'scheduled' %}edify-primary-soft edify-primary-text
 {% else %}bg-slate-100 text-slate-500{% endif %}">
-{{ t.status|title }}
+{{ t.status|status_label }}
 </span>
 </td>
 <td class="px-4 py-3.5 text-slate-600 text-[12px]" data-label="Attendance">

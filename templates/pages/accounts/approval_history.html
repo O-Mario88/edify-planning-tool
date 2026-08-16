@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 {% load table_pagination %}
 
 {% block title %}Approval History - Edify Command Center{% endblock %}
@@ -75,7 +76,7 @@ dashboard renders.{% endcomment %}
 <!-- Status -->
 <td class="px-6 py-4 text-center" data-label="Status">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white border border-slate-950">
-{{ req.status|title }}
+{{ req.status|status_label }}
 </span>
 </td>
 <!-- Actions -->

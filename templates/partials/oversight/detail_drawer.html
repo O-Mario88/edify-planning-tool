@@ -157,7 +157,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Evidence</dt>
         <dd>{{ item.evidence_status|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Salesforce</dt>
-        <dd>{{ item.salesforce_status|title }}</dd></div>
+        <dd>{{ item.salesforce_status|status_label }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Impact Assessment</dt>
         <dd>{{ item.ia_status|replace_underscore|title|default:"—" }}</dd></div>
       <div><dt class="edify-text-caption edify-text-subtle uppercase">Finance</dt>
