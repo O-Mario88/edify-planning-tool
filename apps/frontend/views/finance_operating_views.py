@@ -725,8 +725,21 @@ def batch_payments_view(request):
 
 @require_page_permission("disbursements")
 def approval_history_view(request):
-    """Finance Approval History Page."""
-    requests = WeeklyFundRequest.objects.all().order_by("-week_start_date")
+    """Finance Approval History Page.
+
+    The approval columns are derived from each record's status, never assumed.
+    They were previously three hardcoded green "Approved" cells on a page that
+    calls itself a Traceability Ledger — so a request still awaiting its
+    owner's confirmation displayed three sign-offs that had not happened
+    (2026-08 UI/UX audit, UX-004).
+    """
+    from apps.fund_requests.disbursement_dashboard_service import _weekly_chain
+
+    # Materialised before stamping: `{% paginate %}` re-evaluates a queryset,
+    # which would rebuild the model instances and drop the attribute.
+    requests = list(WeeklyFundRequest.objects.all().order_by("-week_start_date"))
+    for req in requests:
+        req.approval_chain = _weekly_chain(req)
 
     context = {"requests": requests}
     return render(request, "pages/accounts/approval_history.html", context)

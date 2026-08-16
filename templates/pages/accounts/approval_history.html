@@ -30,9 +30,14 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 <tr>
 <th class="px-6 py-4 text-left">Fund Request / ID</th>
 <th class="px-6 py-4 text-left">Submitted By</th>
-<th class="px-6 py-4 text-center">PL Approval</th>
-<th class="px-6 py-4 text-center">CD Approval</th>
-<th class="px-6 py-4 text-center">RVP Approval</th>
+{% comment %}The real routing for a WEEKLY request is owner confirmation ->
+PL/finance approval -> disbursement. RVP approves the country envelope, never
+an individual weekly request, so a column for it could never be truthful.
+These stages come from the record's status via the same chain the disbursement
+dashboard renders.{% endcomment %}
+<th class="px-6 py-4 text-center">Owner Confirmation</th>
+<th class="px-6 py-4 text-center">Finance Approval</th>
+<th class="px-6 py-4 text-center">Disbursement</th>
 <th class="px-6 py-4 text-center">Status</th>
 <th class="px-6 py-4 text-right">Actions</th>
 </tr>
@@ -50,18 +55,23 @@ Audit trail of fund requests routing through PL, CD, RVP, and accountant sign-of
 <td class="px-6 py-4" data-label="Submitted By">
 <div class="font-semibold text-slate-800">{{ req.responsible_user }}</div>
 </td>
-<!-- PL Approval -->
-<td class="px-6 py-4 text-center" data-label="PL Approval">
-<span class="text-emerald-600 font-bold">Approved</span>
+{% for stage in req.approval_chain %}
+<td class="px-6 py-4 text-center" data-label="{{ stage.label }}">
+  {% if stage.state == "approved" or stage.state == "done" %}
+    <span class="text-emerald-600 font-bold">{% if stage.state == "done" %}Disbursed{% else %}Approved{% endif %}</span>
+  {% elif stage.state == "returned" %}
+    <span class="text-rose-600 font-bold">Returned</span>
+  {% elif stage.state == "held" %}
+    <span class="text-amber-600 font-bold">Held</span>
+  {% elif stage.state == "pending" %}
+    <span class="text-slate-500 font-bold">Awaiting</span>
+  {% elif stage.state == "not_required" %}
+    <span class="text-slate-400 font-semibold">Not required</span>
+  {% else %}
+    <span class="text-slate-400 font-semibold">Not yet</span>
+  {% endif %}
 </td>
-<!-- CD Approval -->
-<td class="px-6 py-4 text-center" data-label="CD Approval">
-<span class="text-emerald-600 font-bold">Approved</span>
-</td>
-<!-- RVP Approval -->
-<td class="px-6 py-4 text-center" data-label="RVP Approval">
-<span class="text-emerald-600 font-bold">Approved</span>
-</td>
+{% endfor %}
 <!-- Status -->
 <td class="px-6 py-4 text-center" data-label="Status">
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white border border-slate-950">

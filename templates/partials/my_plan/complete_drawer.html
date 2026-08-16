@@ -60,7 +60,13 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 
 {% if act.ssaCollectionExpected %}
 <hr class="border-slate-100">
-<div class="space-y-3" x-data="{ ssaCollected: true }">
+{% comment %}The model holds the radio's own string value. Alpine will not
+overwrite a radio's value when a static value= attribute is present, so the
+old `:value="true"`/`:value="false"` bindings were inert and the model never
+left its initial state: choosing "No" changed nothing on screen, the reason
+field stayed hidden, and the server then rejected the submit pointing at a
+field the user could not see (2026-08 UI/UX audit, UX-006).{% endcomment %}
+<div class="space-y-3" x-data="{ ssaCollected: 'yes' }">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-pill bg-[var(--edify-chart-blue)] text-white edify-text-caption font-bold">1.5</span>
 SSA Assessment Collection
@@ -71,17 +77,17 @@ An SSA score collection was expected for this activity. Please enter the scores 
 
 <div class="flex items-center gap-4 py-1">
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" :value="true" class="h-4 w-4 edify-primary-text edify-primary-focus">
+<input type="radio" name="ssa_collected" value="yes" x-model="ssaCollected" checked class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>Yes, collected SSA scores</span>
 </label>
 <label class="inline-flex items-center gap-1.5 cursor-pointer">
-<input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" :value="false" class="h-4 w-4 edify-primary-text edify-primary-focus">
+<input type="radio" name="ssa_collected" value="no" x-model="ssaCollected" class="h-4 w-4 edify-primary-text edify-primary-focus">
 <span>No, was not able to collect</span>
 </label>
 </div>
 
 <!-- SSA Scores Grid (data-driven from SsaIntervention enum) -->
-<div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-surface grid grid-cols-2 gap-3 mt-2">
+<div x-show="ssaCollected === 'yes'" class="bg-slate-50 p-4 rounded-surface grid grid-cols-2 gap-3 mt-2">
 <p class="col-span-2 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
 {% for code, label in interventions %}
 <div>
@@ -92,7 +98,7 @@ An SSA score collection was expected for this activity. Please enter the scores 
 </div>
 
 <!-- SSA Bypass Reason -->
-<div x-show="!ssaCollected" class="bg-rose-50 p-4 rounded-surface border border-rose-200 mt-2 space-y-2">
+<div x-show="ssaCollected === 'no'" class="bg-rose-50 p-4 rounded-surface border border-rose-200 mt-2 space-y-2">
 <label for="ssa_not_collected_reason" class="block edify-text-caption font-bold uppercase text-rose-800">Reason for not collecting SSA</label>
 <select name="ssa_not_collected_reason" id="ssa_not_collected_reason" class="w-full h-10 px-3 rounded-control border border-rose-200 edify-surface text-[12px] focus:outline-none">
 <option value="">-- Choose reason --</option>

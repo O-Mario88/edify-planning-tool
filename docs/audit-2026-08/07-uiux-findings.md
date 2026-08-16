@@ -106,3 +106,91 @@ state in one line what happens next.
 - **Loading feedback exists globally** (`.htmx-request` cursor treatment,
   `.htmx-indicator`, `.platform-skeleton`) — contrary to the inventory's
   per-template detector, which cannot see it.
+
+---
+
+# Sweep findings — verified before reporting
+
+A ten-lens sweep returned **118 findings, three of them Critical**. Given that
+three of this audit's own first findings dissolved under verification, each
+Critical was re-checked against the running application before being accepted.
+All three held. Two are fixed; one is recorded with a decision attached.
+
+## UX-004 · CRITICAL · FIXED — the Traceability Ledger attested to approvals that never happened
+
+**Surface:** `/accounts/approval-history`, titled *"Traceability Ledger"* and
+described as *"Audit trail of fund requests routing through PL, CD, RVP, and
+accountant sign-off stages."*
+
+`templates/pages/accounts/approval_history.html` rendered **three literal cells**
+— `<span class="text-emerald-600 font-bold">Approved</span>` for PL, CD and RVP —
+on every row, with no condition, over an unfiltered queryset
+(`finance_operating_views.py`: `WeeklyFundRequest.objects.all()`).
+
+**Verified against live data:** the only weekly request in the database is
+`pending_responsible_confirmation` — nobody has confirmed, approved or disbursed
+it — and the page displayed three green approvals for it. On the one page whose
+stated purpose is proving those approvals happened.
+
+The RVP column could never be truthful at all: the RVP approves the country
+envelope, not an individual weekly request.
+
+**Fixed.** Each stage is now derived from the record's status through the
+platform's existing `_weekly_chain()` — the same chain the disbursement
+dashboard renders — and shows Owner confirmation / Finance approval /
+Disbursement as *Awaiting*, *Returned*, *Held*, *Not yet* or *Approved*.
+Regression test: `apps/fund_requests/test_approval_history_honesty.py`, which
+asserts an unapproved request never renders as approved and that no RVP column
+claims a sign-off.
+
+## UX-005 · CRITICAL · FIXED — "could not collect SSA" was an unescapable dead end
+
+**Surface:** Complete Activity drawer, every activity expecting SSA collection.
+
+`templates/partials/my_plan/complete_drawer.html` initialised
+`x-data="{ ssaCollected: true }"` and bound each radio with **both** a static
+`value="yes"/"no"` and `:value="true"/"false"`. Alpine does not overwrite a
+radio's value when a static `value=` is present, so the boolean bindings were
+inert and the model never left its initial state.
+
+**Verified by running the exact pattern against the application's own Alpine
+build:** selecting *"No, was not able to collect"* left the model unchanged —
+the eight score inputs stayed visible and the required reason field **never
+appeared**. The server then refused the submission with *"Please select a reason
+why SSA was not collected"*, naming a field the user cannot see.
+
+A field officer who genuinely could not collect scores had no way forward except
+inventing them — the platform's first law, turned into the path of least
+resistance by an interaction bug.
+
+**Fixed:** the model holds the radio's own string value and the panels compare
+explicitly. Re-tested against the live Alpine build: choosing "No" now hides the
+scores and reveals the reason field.
+
+## UX-006 · HIGH (not Critical) · OPEN — the 44px touch floor is overridden to 28px on phones
+
+**Measured, not inferred.** `/my-plan` at 375px: **17 interactive controls below
+44px, the shortest at 28px** — including *Export*, *Filter*, *Open Calendar*,
+*More filters* and *Open Planning*.
+
+**Cause:** `static/css/components/mobile-micro-ux.css` sets
+`--edify-action-button-block-size: 1.875rem` under `@media (max-width: 36rem)`
+(and `1.75rem` under 22.5rem), then applies it with `!important` to
+`block-size`, `height` **and** `min-block-size`, with `padding-block: 0`. It
+overrides five separate 44px contracts elsewhere in the codebase — including one
+in the same file, which loses on source order alone.
+
+**Why HIGH and not Critical:** WCAG 2.2 AA's target-size minimum is 24×24px, so
+28px meets the letter of the standard. It breaks the platform's *own* repeatedly
+stated 44px contract and degrades one-handed outdoor use on the surface field
+staff use most — it does not prevent task completion.
+
+**Not fixed here, deliberately.** Removing the override touches every control on
+every phone-width page; it needs a rendered pass across the mobile surfaces
+rather than a blind deletion, and the change should be seen before it ships.
+
+**Related, and worth fixing first:** the guard that is supposed to protect this
+(`apps/frontend/test_mobile_micro_ux.py`) asserts only that the string
+`"min-block-size: 2.75rem !important"` **appears somewhere in the file**. It is
+green while the rule it protects is dead. A guard that cannot fail on the
+condition it names is worse than no guard, because it is trusted.
