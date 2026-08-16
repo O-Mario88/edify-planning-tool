@@ -415,8 +415,17 @@ class RolePermissionService:
 
     @staticmethod
     def can_verify_ia(user, activity) -> bool:
-        role = getattr(user, "active_role", None)
-        return role in ["ImpactAssessment", "Admin"]
+        """Verification authority, read from the matrix — never a role list.
+
+        `ia.verify` is one of the authorities ADMIN_EXCLUDED_PERMISSIONS
+        withholds from Admin, precisely so no single account can verify work
+        and release money for it. A hardcoded ["ImpactAssessment", "Admin"]
+        re-granted it on the page surface while the DRF surface refused it,
+        which is the asymmetry the 2026-08 audit found and this closes.
+        """
+        from apps.core.rbac import Permission
+
+        return has_permission(user, Permission.IA_VERIFY.value)
 
     @staticmethod
     def can_clear_accounts(user, activity) -> bool:

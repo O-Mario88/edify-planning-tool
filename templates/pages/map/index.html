@@ -51,9 +51,17 @@
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/vendor/leaflet-1.9.4.css' %}"/>
 <script src="{% static 'js/vendor/leaflet-1.9.4.js' %}"></script>
+{{ points_payload|json_script:"school-map-points" }}
 <script>
   (function () {
-    var points = {{ points_json|safe }};
+    // json_script, not `|safe`: school names are operator-supplied (CSV
+    // upload) and json.dumps does not escape "</script>", so a school named
+    // with a closing script tag would break out of this block and run in the
+    // browser of everyone who opens the map. json_script escapes the unsafe
+    // characters and keeps the payload out of executable position.
+    var points = JSON.parse(
+      document.getElementById('school-map-points').textContent
+    );
     var el = document.getElementById('school-map');
     if (!el) { return; }
 

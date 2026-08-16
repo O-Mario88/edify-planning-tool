@@ -3115,7 +3115,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2537,
+   "line": 2539,
    "label": "Assigned Schools",
    "keys": [
     "helper",
@@ -3131,7 +3131,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2545,
+   "line": 2547,
    "label": "Assigned Staff",
    "keys": [
     "helper",
@@ -3147,7 +3147,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2802,
+   "line": 2804,
    "label": null,
    "keys": [
     "label",
@@ -3159,7 +3159,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2974,
+   "line": 2976,
    "label": "Clean Schools",
    "keys": [
     "helper",
@@ -3174,7 +3174,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2981,
+   "line": 2983,
    "label": "Needs Review",
    "keys": [
     "helper",
@@ -3189,7 +3189,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2988,
+   "line": 2990,
    "label": "Needs Cleanup",
    "keys": [
     "helper",
@@ -3204,7 +3204,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2995,
+   "line": 2997,
    "label": "Duplicate Risk",
    "keys": [
     "helper",
@@ -3219,7 +3219,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3002,
+   "line": 3004,
    "label": "Missing Critical Data",
    "keys": [
     "helper",
@@ -3310,7 +3310,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1069,
+   "line": 1090,
    "label": "Search planned activities by item or responsible staff",
    "keys": [
     "action",
@@ -3326,7 +3326,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1136,
+   "line": 1157,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",

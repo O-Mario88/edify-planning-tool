@@ -1922,8 +1922,6 @@ def map_view(request):
     docstring used to claim parity with the directory and no longer does.
     Schools without coordinates are counted honestly and routed to location
     cleanup."""
-    import json
-
     scope = resolve_user_scope(request.user)
     schools = list(
         school_queryset(scope)
@@ -1956,7 +1954,11 @@ def map_view(request):
                 }
             )
     context = {
-        "points_json": json.dumps(points),
+        # Passed as the object, not a pre-dumped string: the template renders
+        # it through `json_script`, which escapes the characters that would
+        # otherwise let an operator-supplied school name close the <script>
+        # block it sits in.
+        "points_payload": points,
         "with_coords": len(points),
         "without_coords": len(schools) - len(points),
         "total": len(schools),

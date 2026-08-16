@@ -8,10 +8,12 @@ from django.views.decorators.http import require_POST
 from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
 from apps.core.permissions import (
+    has_permission,
     require_export_permission,
     render_access_denied,
     require_page_permission,
 )
+from apps.core.rbac import Permission
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -34,6 +36,21 @@ from apps.fund_requests.pl_approval_service import _ugx
 def fund_requests_list_view(request):
     """All fund requests list — redirect to weekly."""
     return redirect("/fund-requests/weekly")
+
+
+def _lacks_payment_authority(request):
+    """403 fragment when the caller may not move money, else None.
+
+    Reads the `payment.act` authority from the matrix rather than testing
+    `active_role in ("Accountant", "Admin")`. Those tuples re-granted Admin an
+    authority ADMIN_EXCLUDED_PERMISSIONS deliberately withholds, so the same
+    account could verify an activity on the IA page and then release its money
+    here — the separation of duties this platform's audit chain depends on.
+    Reading the queue stays open to Admin; releasing money does not.
+    """
+    if not has_permission(request.user, Permission.PAYMENT_ACT.value):
+        return HttpResponse("Unauthorized", status=403)
+    return None
 
 
 def _disb_filters(request):
@@ -258,8 +275,9 @@ def finance_action_drawer_view(request):
 @require_page_permission("disbursements")
 def disburse_advance_action(request):
     """POST to disburse weekly advance."""
-    if request.user.active_role not in ("Accountant", "Admin"):
-        return HttpResponse("Unauthorized", status=403)
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
 
     if request.method == "POST":
         request_id = request.POST.get("request_id")
@@ -291,8 +309,9 @@ def disburse_advance_action(request):
 @require_page_permission("disbursements")
 def clear_partner_payment_action(request):
     """POST to clear partner payment."""
-    if request.user.active_role not in ("Accountant", "Admin"):
-        return HttpResponse("Unauthorized", status=403)
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
 
     if request.method == "POST":
         activity_id = request.POST.get("activity_id")
@@ -352,8 +371,9 @@ def clear_partner_payment_action(request):
 @require_page_permission("disbursements")
 def process_reimbursement_action(request):
     """POST to disburse self-funded reimbursement."""
-    if request.user.active_role not in ("Accountant", "Admin"):
-        return HttpResponse("Unauthorized", status=403)
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
 
     if request.method == "POST":
         advance_id = request.POST.get("advance_id")
@@ -393,8 +413,9 @@ def confirm_accountability_action(request):
     enforces the hard gates: NetSuite Code present + IA verification done.
     The weekly request itself closes to "accounted" only when every one of
     its linked advances is accounted."""
-    if request.user.active_role not in ("Accountant", "Admin"):
-        return HttpResponse("Unauthorized", status=403)
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
 
     if request.method == "POST":
         request_id = request.POST.get("request_id")

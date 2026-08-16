@@ -115,6 +115,18 @@ def record_activity_progress(activity) -> int:
 
 
 def refresh_period_targets(milestone_id: str) -> None:
+    """Recompute every period's verified actual from the surviving credits.
+
+    Partner-delivered work is excluded from the employee and team scopes and
+    only from those: a partner visit is real programme delivery and belongs in
+    the country total, but it is Partner Contribution — never a named person's
+    personal achievement. The personal ledger states the same rule
+    (apps/targets/my_targets.py: "no silent partner→CCEO credit"); without the
+    exclusion here the two engines disagreed, and the cascade would book a
+    partner's visit as the supervising CCEO's verified result whenever the
+    milestone's rule left `required_executor_type` blank — which 45 of the 51
+    seeded rules do.
+    """
     targets = MilestonePeriodTarget.objects.filter(
         milestone_id=milestone_id
     ).select_related("employee", "allocation", "milestone")
@@ -132,7 +144,7 @@ def refresh_period_targets(milestone_id: str) -> None:
             credits = credits.filter(
                 Q(activity__responsible_staff_id__in=owner_ids)
                 | Q(activity__monitored_by_staff_id__in=owner_ids)
-            )
+            ).exclude(activity__delivery_type="partner")
         elif target.scope == "project" and target.allocation.project_id:
             credits = credits.filter(activity__project_id=target.allocation.project_id)
         elif target.scope == "team" and target.team_id:
@@ -146,7 +158,7 @@ def refresh_period_targets(milestone_id: str) -> None:
             credits = credits.filter(
                 Q(activity__responsible_staff_id__in=member_ids)
                 | Q(activity__monitored_by_staff_id__in=member_ids)
-            )
+            ).exclude(activity__delivery_type="partner")
         bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
         if bases & {
             "UNIQUE_SCHOOLS_SUPPORTED",

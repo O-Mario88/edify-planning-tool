@@ -1041,7 +1041,7 @@
       "template": "partials/dashboards/cd/body.html"
     },
     {
-      "bytes": 24939,
+      "bytes": 25407,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,

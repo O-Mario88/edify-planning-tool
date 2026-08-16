@@ -14,6 +14,22 @@ from .models import WeeklyFundRequest, WeeklyFundRequestLine
 
 logger = logging.getLogger("edify.weekly_fund_request")
 
+
+def _assert_may_disburse(principal) -> None:
+    """Only a holder of `payment.act` may release money.
+
+    Read from the permission matrix rather than a role tuple, so the
+    ADMIN_EXCLUDED_PERMISSIONS separation of duties holds on every door —
+    the DRF endpoint, the HTMX action, a management command, or whatever
+    calls this next.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if not has_permission(principal, Permission.PAYMENT_ACT.value):
+        raise Forbidden("Only a Program Accountant can disburse funds.")
+
+
 # Statuses in which a weekly request is in its OWNER's hands and may be
 # delete-and-rebuilt by the generator. Everything else (submitted, approved,
 # confirmed, disbursed, self-funded, not-requested) is a frozen finance
@@ -615,7 +631,14 @@ def not_requested(request_id: str, principal) -> dict:
 
 
 def disburse(request_id: str, data: dict, principal) -> dict:
-    """Accountant disburses a confirmed weekly request."""
+    """Accountant disburses a confirmed weekly request.
+
+    The authority is asserted here, not only at the view: a service that
+    trusts its caller is one new endpoint away from letting the wrong role
+    move money, which is how the 2026-08 audit found Admin disbursing through
+    the HTMX door while the DRF door correctly refused.
+    """
+    _assert_may_disburse(principal)
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()

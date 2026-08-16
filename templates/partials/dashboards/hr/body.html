@@ -297,9 +297,16 @@
   {% endif %}
 </a>
 
+{{ headcount_by_department.labels|json_script:"hr-dept-labels" }}
+{{ leave_overview.labels|json_script:"hr-leave-labels" }}
 <!-- ApexCharts initialization script -->
 <script>
   (function() {
+    // Operator-supplied names (free-text department, leave labels)
+    // arrive via json_script: rendered raw through |safe, a department
+    // named with a closing script tag would break out of this block.
+    var hrDeptLabels = JSON.parse(document.getElementById('hr-dept-labels').textContent);
+    var hrLeaveLabels = JSON.parse(document.getElementById('hr-leave-labels').textContent);
     // 1. Workforce Overview Chart (headcount exits/hires)
     var woOptions = {
       series: [
@@ -321,7 +328,7 @@
     var dhOptions = {
       series: {{ headcount_by_department.counts|safe }},
       chart: { type: 'donut', height: 180 },
-      labels: {{ headcount_by_department.labels|safe }},
+      labels: hrDeptLabels,
       colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
       legend: { show: false },
       dataLabels: { enabled: false },
@@ -333,7 +340,7 @@
     var loOptions = {
       series: {{ leave_overview.counts|safe }},
       chart: { type: 'donut', height: 180 },
-      labels: {{ leave_overview.labels|safe }},
+      labels: hrLeaveLabels,
       colors: ['var(--edify-chart-blue)', 'var(--edify-chart-red)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)', 'var(--edify-chart-pink)'],
       legend: { show: false },
       dataLabels: { enabled: false },

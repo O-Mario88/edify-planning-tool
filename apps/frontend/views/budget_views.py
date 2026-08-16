@@ -1429,7 +1429,13 @@ def generate_request_action(request):
 
 @require_page_permission("weekly_fund_request_disburse")
 def weekly_fund_request_disburse_action(request, request_id):
-    if request.user.active_role not in ("Accountant", "Admin"):
+    # The `payment.act` authority from the matrix, not a role tuple: the
+    # tuple re-granted Admin an authority ADMIN_EXCLUDED_PERMISSIONS
+    # withholds, so one account could verify work and then release its money.
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if not has_permission(request.user, Permission.PAYMENT_ACT.value):
         messages.error(
             request, "Only the Program Accountant can disburse fund requests."
         )
