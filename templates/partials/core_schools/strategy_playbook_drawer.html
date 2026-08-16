@@ -34,8 +34,10 @@ x-transition:leave-end="opacity-0 scale-95"
 <p class="edify-text-caption text-slate-400 font-semibold mt-1 ">Guidelines for executing the 4 Visits + 4 Trainings package.</p>
 </div>
 <button
+type="button"
 @click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
 class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
+aria-label="Close Core Strategy Playbook dialog"
 >
 &times;
 </button>

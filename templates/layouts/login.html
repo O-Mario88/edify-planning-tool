@@ -12,7 +12,8 @@
   a field user sees, so it is the last place that should be wrong.
   {% endcomment %}
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="var(--edify-primary-active)">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#2d4862">
   <title>{% block title %}Sign in | Edify Planning &amp; Monitoring{% endblock %}</title>
   {% include "partials/pwa_head.html" %}
   {% comment %}
@@ -78,9 +79,12 @@
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}?v=20260811geist2">
   <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260811geist2">
   <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260812checkbox1">
+  <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260816resilience1">
   <script defer src="{% static 'js/login.js' %}?v=20260812checkbox1"></script>
+  <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 </head>
 <body class="login-page">
+  {% include "partials/connectivity_status.html" %}
   <main class="login-shell">
     <section class="login-brand" aria-label="About Edify Planning and Monitoring">
       {% comment %}

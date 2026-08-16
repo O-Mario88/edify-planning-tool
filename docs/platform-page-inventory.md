@@ -11,11 +11,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **85**
 - Scheduled jobs: **22**
 - Activity states: **23**
-- Shared component templates: **330**
+- Shared component templates: **331**
 - Full pages: **351**
 - Partials and drawers: **164**
 - Permission-gated surfaces: **522**
-- Referenced by automated tests: **494**
+- Referenced by automated tests: **496**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -142,10 +142,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
 | /business-transformation | Business Transformation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/index.html | 9.7 | 0 | referenced by automated test |
-| /business-transformation/business-accounting-finance | Business Accounting & Finance | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/financial_health.html | 9.4 | 0 | coverage review required |
+| /business-transformation/business-accounting-finance | Business Accounting & Finance | ADMIN, BUSINESS_TRANSFORMATION | pages/business_transformation/financial_health.html | 9.4 | 0 | referenced by automated test |
 | /business-transformation/cases/<str:case_id>/triage | Business Transformation Triage | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /business-transformation/government-requirements | Government Requirements | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/government_requirements.html | 9.6 | 0 | referenced by automated test |
-| /business-transformation/impact-reports | Impact & Reports | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/impact_reports.html | 9.6 | 0 | coverage review required |
+| /business-transformation/government-requirements | Government Requirements | ADMIN, BUSINESS_TRANSFORMATION | pages/business_transformation/government_requirements.html | 9.6 | 0 | referenced by automated test |
+| /business-transformation/impact-reports | Impact & Reports | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/impact_reports.html | 9.6 | 0 | referenced by automated test |
 | /business-transformation/overview | Business Transformation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/index.html | 9.7 | 0 | referenced by automated test |
 | /business-transformation/portfolio | Business Transformation Portfolio | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/business_transformation/portfolio.html | 9.6 | 0 | referenced by automated test |
 | /calendar | Calendar | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.6 | 0 | referenced by automated test |

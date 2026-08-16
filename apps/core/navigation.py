@@ -35,6 +35,26 @@ ALL_ROLES = {
     MFI_OFFICER,
 }
 
+# These pages contain the Business Transformation Officer's specialist school
+# portfolio. Unlike general support pages, even the technical Admin role does
+# not inherit them: the product owner explicitly keeps this operating context
+# inside the active BT role. Loans remain the universal transparency surface.
+ROLE_EXCLUSIVE_PAGES = {
+    "business_transformation_finance",
+    "business_transformation_government",
+}
+
+# The Loans destination is the only Business Transformation navigation item
+# advertised outside the BT role. Leadership and support roles retain any
+# deliberately granted deep-link/report access, but their everyday workspace
+# does not present specialist BT tabs they do not operate.
+BT_SPECIALIST_NAV_PAGES = {
+    "business_transformation",
+    "business_transformation_finance",
+    "business_transformation_government",
+    "business_transformation_reports",
+}
+
 # Sidebar information architecture is narrower than route authorization. These
 # are the roles whose day-to-day work belongs in the field operations group;
 # leadership and support roles may retain scoped read access through their own
@@ -97,8 +117,8 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         PROJECT_COORDINATOR,
     },
     "loans": ALL_ROLES,
-    "business_transformation_finance": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
-    "business_transformation_government": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+    "business_transformation_finance": {BUSINESS_TRANSFORMATION},
+    "business_transformation_government": {BUSINESS_TRANSFORMATION},
     "business_transformation_reports": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
     "mfi_portal": {MFI_ADMIN, MFI_OFFICER},
     # Anyone can be handed a school action, so everyone can read their own
@@ -1196,7 +1216,7 @@ SIDEBAR_ITEMS = [
                 "label": "BT Overview",
                 "url": "/business-transformation/overview",
                 "page_key": "business_transformation",
-                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+                "visible_to": {BUSINESS_TRANSFORMATION},
             },
             {
                 "label": "Loans",
@@ -1209,21 +1229,21 @@ SIDEBAR_ITEMS = [
                 "url": "/business-transformation/business-accounting-finance",
                 "page_key": "business_transformation_finance",
                 "icon_key": "country_budget",
-                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+                "visible_to": {BUSINESS_TRANSFORMATION},
             },
             {
                 "label": "Government Requirements",
                 "url": "/business-transformation/government-requirements",
                 "page_key": "business_transformation_government",
                 "icon_key": "compliance_register",
-                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+                "visible_to": {BUSINESS_TRANSFORMATION},
             },
             {
                 "label": "Impact & Reports",
                 "url": "/business-transformation/impact-reports",
                 "page_key": "business_transformation_reports",
                 "icon_key": "reports",
-                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+                "visible_to": {BUSINESS_TRANSFORMATION},
             },
             {
                 "label": "Dashboard",
@@ -1866,6 +1886,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
             overridden = (
                 role == ADMIN
                 and not in_audience
+                and item.get("page_key") not in BT_SPECIALIST_NAV_PAGES
                 and not (
                     explicitly_scoped
                     and _page_key_counts.get(item.get("page_key"), 0) > 1

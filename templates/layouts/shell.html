@@ -88,7 +88,7 @@ empty, so the drawer is never unreachable.
 <button
 type="button"
 x-ref="mobileSidebarOpen"
-class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:outline-none edify-text-muted"
+class="edify-topbar__icon-control lg:hidden flex items-center justify-center focus:outline-none"
 @click="sidebarOpen = true; $nextTick(() => $refs.mobileSidebarClose?.focus())"
 >
 <span class="sr-only">Open sidebar</span>
@@ -99,14 +99,20 @@ class="lg:hidden h-9 w-9 flex items-center justify-center rounded-control focus:
 {% endif %}
 
 {% comment %}
-Visible at every width. This was `hidden sm:block`, so the platform's search
-simply did not exist below 640px — and once the top bar became the single
-canonical control and the duplicate page-body forms came out, that left a
-phone with no way to search those pages at all. The date block beside it is
-already `hidden md:flex`, so the room this needs is room the row was giving
-away.
+Desktop keeps the full canonical search field. Phone and tablet widths reduce
+it to one 44px icon; the first press expands this same contextual field over
+the top bar, while the second press submits it. This keeps one search per page
+without making an icon-only submit silently send an empty query.
 {% endcomment %}
-<search class="edify-topbar__search max-w-md w-full min-w-0 relative block">
+<search
+  class="edify-topbar__search max-w-md w-full min-w-0 relative block"
+  x-data="{ searchOpen: false, compactSearch: window.matchMedia('(max-width: 64rem)').matches }"
+  :class="{ 'is-open': searchOpen }"
+  @resize.window="compactSearch = window.matchMedia('(max-width: 64rem)').matches; if (!compactSearch) searchOpen = false"
+  @click="if ($event.target.closest('.edify-search-submit') && compactSearch && !searchOpen) { $event.preventDefault(); searchOpen = true; $nextTick(() => $refs.searchInput?.focus()) }"
+  @click.outside="if (compactSearch) searchOpen = false"
+  @keydown.escape.stop="if (compactSearch && searchOpen) { searchOpen = false; $nextTick(() => $refs.searchButton?.focus()) }"
+>
 {% comment %}
 The magnifier is a submit control, not an ornament. It used to be a
 pointer-events-none div, so the only way to run a search anywhere in the
@@ -128,6 +134,7 @@ and autosubmit to submit that form on keyup via Alpine.
 <input
 type="search"
 form="{{ topbar_search.attach_to }}"
+x-ref="searchInput"
 id="{{ topbar_search.input_id|default:'page-search-input' }}"
 name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
@@ -135,7 +142,7 @@ placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, distri
 class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 {% if topbar_search.autosubmit %}x-data="{ t: null }" @input.debounce.300ms="$el.form ? $el.form.requestSubmit() : null"{% endif %}
 >
-<button type="submit" form="{{ topbar_search.attach_to }}" aria-label="Search" class="edify-search-submit">
+<button type="submit" form="{{ topbar_search.attach_to }}" x-ref="searchButton" aria-label="Search" :aria-label="compactSearch ? (searchOpen ? 'Submit search' : 'Open search') : 'Search'" :aria-expanded="compactSearch ? searchOpen.toString() : null" class="edify-search-submit">
 {% include "partials/_search_icon.html" %}
 </button>
 {% else %}
@@ -167,6 +174,7 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 {% for hidden in topbar_search.hidden|default:'' %}<input type="hidden" name="{{ hidden.name }}" value="{{ hidden.value }}">{% endfor %}
 <input
 type="search"
+x-ref="searchInput"
 id="{{ topbar_search.input_id|default:'page-search-input' }}"
 name="{{ topbar_search.name|default:'q' }}"
 value="{{ topbar_search.value|default:'' }}"
@@ -174,7 +182,7 @@ placeholder="{{ topbar_search.placeholder|default:'Search schools, staff, distri
 class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
-<button type="submit" aria-label="Search" class="edify-search-submit">
+<button type="submit" x-ref="searchButton" aria-label="Search" :aria-label="compactSearch ? (searchOpen ? 'Submit search' : 'Open search') : 'Search'" :aria-expanded="compactSearch ? searchOpen.toString() : null" class="edify-search-submit">
 {% include "partials/_search_icon.html" %}
 </button>
 </form>
@@ -184,6 +192,7 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 <label class="sr-only" for="global-search-input">Search schools, staff and districts</label>
 <input
 type="search"
+x-ref="searchInput"
 id="global-search-input"
 name="q"
 value="{{ request.GET.q|default:'' }}"
@@ -191,7 +200,7 @@ placeholder="Search schools, staff, districts..."
 class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-none transition-all edify-surface-muted border edify-border edify-text"
 @input="const page = document.getElementById('filters-page-input'); if (page) page.value = '1'"
 >
-<button type="submit" aria-label="Search" class="edify-search-submit">
+<button type="submit" x-ref="searchButton" aria-label="Search" :aria-label="compactSearch ? (searchOpen ? 'Submit search' : 'Open search') : 'Search'" :aria-expanded="compactSearch ? searchOpen.toString() : null" class="edify-search-submit">
 {% include "partials/_search_icon.html" %}
 </button>
 </form>
@@ -212,7 +221,7 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 hx-get="/messages/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="edify-topbar__utility edify-topbar__utility--messages{% if mobile_nav %} edify-topbar__utility--mobile-redundant{% endif %} h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
+class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--messages{% if mobile_nav %} edify-topbar__utility--mobile-redundant{% endif %} flex items-center justify-center relative focus:outline-none"
 title="Messages"
 aria-label="Messages"
 >
@@ -228,7 +237,7 @@ aria-label="Messages"
 hx-get="/notifications/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="edify-topbar__utility edify-topbar__utility--notifications h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
+class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--notifications flex items-center justify-center relative focus:outline-none"
 title="Notifications"
 aria-label="Notifications"
 >
@@ -254,7 +263,7 @@ so it yields its space rather than the control every page depends on.
 {% endcomment %}
 <a
 href="/help/context?for={{ request.path|urlencode }}"
-class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
+class="edify-topbar__icon-control hidden sm:flex items-center justify-center"
 title="Help for this page"
 aria-label="Help for this page"
 >
@@ -271,7 +280,7 @@ route it was raised from. Same phone-width reasoning as the help control above.
 {% endcomment %}
 <a
 href="/support?route={{ request.path|urlencode }}"
-class="hidden sm:flex h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] items-center justify-center transition-all"
+class="edify-topbar__icon-control hidden sm:flex items-center justify-center"
 title="Report a problem with this page"
 aria-label="Report a problem with this page"
 >
@@ -287,7 +296,7 @@ type="button"
 :aria-pressed="$store.theme.actualTheme === 'dark'"
 :aria-label="$store.theme.actualTheme === 'dark' ? 'Turn off night black mode' : 'Turn on night black mode'"
 :title="$store.theme.actualTheme === 'dark' ? 'Use daytime workspace' : 'Use night black workspace'"
-class="edify-topbar__utility edify-topbar__utility--theme h-9 w-9 rounded-control hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
+class="edify-topbar__icon-control edify-topbar__utility edify-topbar__utility--theme flex items-center justify-center"
 >
 <svg x-show="$store.theme.actualTheme !== 'dark'" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
@@ -304,7 +313,7 @@ type="button"
 @click="open = !open"
 aria-label="Account menu"
 :aria-expanded="open"
-class="h-9 w-9 rounded-pill text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors edify-primary-solid"
+class="edify-topbar__icon-control edify-topbar__icon-control--avatar text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none"
 >
 <span>{{ request.user.name|avatar_initials }}</span>
 </button>

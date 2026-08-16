@@ -1,0 +1,185 @@
+/* Honest platform state for connectivity and expired sessions.
+ * These surfaces sit outside the page workspace so they remain available
+ * while drawers or partial updates are in flight. */
+
+.edify-connectivity-status {
+  position: fixed;
+  z-index: 120;
+  inset-block-start: max(0.75rem, env(safe-area-inset-top));
+  inset-inline: 50% auto;
+  display: flex;
+  inline-size: min(34rem, calc(100vw - 2rem));
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--edify-warning) 58%, transparent);
+  border-radius: var(--edify-radius-md);
+  background: color-mix(in srgb, var(--edify-surface) 94%, var(--edify-warning));
+  box-shadow: var(--edify-shadow-lg);
+  color: var(--edify-text);
+  transform: translateX(-50%);
+}
+
+.edify-connectivity-status[hidden] {
+  display: none;
+}
+
+.edify-connectivity-status[data-state="restored"] {
+  border-color: color-mix(in srgb, var(--edify-success) 58%, transparent);
+  background: color-mix(in srgb, var(--edify-surface) 94%, var(--edify-success));
+}
+
+.edify-connectivity-status__icon {
+  display: grid;
+  flex: 0 0 2.25rem;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  place-items: center;
+  border-radius: var(--edify-radius-sm);
+  background: color-mix(in srgb, var(--edify-warning) 18%, transparent);
+  color: var(--edify-warning-text);
+}
+
+[data-state="restored"] .edify-connectivity-status__icon {
+  background: color-mix(in srgb, var(--edify-success) 18%, transparent);
+  color: var(--edify-success-text);
+}
+
+.edify-connectivity-status__icon svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+.edify-connectivity-status__copy {
+  display: grid;
+  min-inline-size: 0;
+  gap: 0.1rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.edify-connectivity-status__copy strong {
+  font-size: 0.875rem;
+  font-weight: 750;
+}
+
+.edify-connectivity-status__copy span {
+  color: var(--edify-text-muted);
+}
+
+.edify-session-dialog {
+  inline-size: min(30rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-lg);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-lg);
+  color: var(--edify-text);
+}
+
+.edify-session-dialog::backdrop {
+  background: rgb(15 23 42 / 0.64);
+  backdrop-filter: blur(6px);
+}
+
+.edify-session-dialog[open] {
+  display: grid;
+  gap: 1rem;
+}
+
+.edify-session-dialog__icon {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  place-items: center;
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-warning-light);
+  color: var(--edify-warning-text);
+}
+
+.edify-session-dialog__icon svg {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+}
+
+.edify-session-dialog__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--edify-warning-text);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.edify-session-dialog h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+}
+
+.edify-session-dialog p:not(.edify-session-dialog__eyebrow) {
+  margin: 0.45rem 0 0;
+  color: var(--edify-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.edify-session-dialog__actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding-block-start: 0.25rem;
+}
+
+.edify-session-dialog__actions :is(a, button) {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1rem;
+  border-radius: var(--edify-radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 750;
+}
+
+.edify-session-dialog__primary {
+  background: var(--edify-accent);
+  color: var(--edify-on-accent);
+}
+
+.edify-session-dialog__secondary {
+  border: 1px solid var(--edify-border-strong);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+}
+
+@media (max-width: 30rem) {
+  .edify-connectivity-status {
+    inset-block-start: max(0.5rem, env(safe-area-inset-top));
+    inline-size: calc(100vw - 1rem);
+  }
+
+  .edify-session-dialog__actions :is(a, button) {
+    inline-size: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .edify-connectivity-status:not([hidden]) {
+    animation: edify-status-enter 180ms ease-out;
+  }
+
+  @keyframes edify-status-enter {
+    from { opacity: 0; transform: translate(-50%, -0.5rem); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+}
+
+@media (forced-colors: active) {
+  .edify-connectivity-status,
+  .edify-session-dialog {
+    border: 2px solid CanvasText;
+  }
+}

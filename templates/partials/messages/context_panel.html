@@ -4,7 +4,7 @@
 
   <!-- Workflow Context -->
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4" data-messages-plane>
-    <button @click="ctxOpen = !ctxOpen" class="w-full flex items-center justify-between">
+    <button type="button" @click="ctxOpen = !ctxOpen" :aria-expanded="ctxOpen" aria-controls="message-workflow-context" class="w-full flex items-center justify-between">
       <span class="inline-flex items-center gap-1.5">
         <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Workflow Context</h3>
         <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -12,7 +12,7 @@
       <svg class="h-4 w-4 text-slate-400 transition-transform" :class="ctxOpen ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
     </button>
 
-    <div x-show="ctxOpen" class="mt-3 space-y-3">
+    <div id="message-workflow-context" x-show="ctxOpen" class="mt-3 space-y-3">
       <div>
         <p class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider mb-1.5">Context Type</p>
         <div class="flex items-center gap-1.5 flex-wrap">

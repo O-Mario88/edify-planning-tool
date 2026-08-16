@@ -2846,6 +2846,39 @@ search:has(.edify-search-submit) input[type="search"] {
   box-shadow: var(--edify-focus-ring);
 }
 
+/* One round interaction language for every top-bar icon control: messages,
+   notifications, help, report a problem, the theme toggle and the account
+   avatar. They are icon-only, so the circle IS the target — width and height
+   are kept equal and the radius is fully round. The tablet/phone sizing lives
+   in components/mobile-shell.css, which raises these to 44px inside its
+   64rem media query; this block owns the shape, colour and states. */
+.edify-topbar__icon-control {
+  flex: 0 0 auto;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--edify-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--edify-transition-fast),
+    color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+.edify-topbar__icon-control:hover {
+  background: var(--edify-surface-muted, var(--edify-surface));
+  color: var(--edify-text);
+}
+.edify-topbar__icon-control:active {
+  background: var(--edify-surface-muted, var(--edify-surface));
+  transform: scale(0.96);
+}
+.edify-topbar__icon-control:focus-visible {
+  outline: none;
+  box-shadow: var(--edify-focus-ring);
+}
+
 /* The account avatar is the ONE filled control in the top bar, styled to match
    the search button beside it: a solid brand circle with white initials. Every
    other top-bar icon (messages, notifications, help, report a problem, the

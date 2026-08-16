@@ -80,6 +80,34 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertIn("inline-size: 44px", styles)
         self.assertIn("block-size: 44px", styles)
 
+    def test_phone_and_tablet_search_collapses_to_an_accessible_icon(self):
+        shell = _read("templates/layouts/shell.html")
+        styles = _read("static/css/components/mobile-shell.css")
+
+        self.assertIn("@media (max-width: 64rem)", styles)
+        self.assertIn(".edify-topbar__search:not(.is-open)", styles)
+        self.assertIn("visibility: hidden", styles)
+        self.assertIn(".edify-topbar__search.is-open", styles)
+        self.assertIn("compactSearch", shell)
+        self.assertIn(":aria-expanded", shell)
+        self.assertIn("'Submit search' : 'Open search'", shell)
+        self.assertIn("$refs.searchInput?.focus()", shell)
+
+    def test_topbar_icon_controls_share_one_round_interaction_language(self):
+        shell = _read("templates/layouts/shell.html")
+        components = _read("static/css/components.css")
+        mobile = _read("static/css/components/mobile-shell.css")
+
+        self.assertGreaterEqual(shell.count("edify-topbar__icon-control"), 6)
+        self.assertIn("edify-topbar__icon-control--avatar", shell)
+        self.assertIn(".edify-topbar__icon-control {", components)
+        self.assertIn("border-radius: 999px", components)
+        self.assertIn(".edify-topbar__icon-control:focus-visible", components)
+        self.assertIn(".edify-topbar__icon-control:active", components)
+        tablet = mobile.split("@media (max-width: 64rem)", 1)[1]
+        self.assertIn(".edify-topbar__icon-control", tablet)
+        self.assertIn("inline-size: 44px", tablet)
+
     def test_long_page_deferral_is_explicit_and_layout_stable(self):
         styles = _read("static/css/components/mobile-patterns.css")
         self.assertIn("@supports (content-visibility: auto)", styles)

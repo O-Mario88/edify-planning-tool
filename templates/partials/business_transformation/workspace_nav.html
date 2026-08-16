@@ -1,9 +1,13 @@
 <nav aria-label="Business Transformation workspace" class="overflow-x-auto">
   <div class="inline-flex min-w-full gap-1 rounded-surface border border-[var(--edify-border)] bg-[var(--edify-surface-raised)] p-1.5 shadow-sm">
+    {% if request.user.active_role == 'BusinessTransformationOfficer' %}
     <a href="/business-transformation/overview" class="min-h-10 whitespace-nowrap rounded-control px-4 py-2 text-sm font-bold {% if request.path == '/business-transformation' or request.path == '/business-transformation/overview' %}bg-[var(--edify-primary)] text-white{% else %}text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]{% endif %}">BT Overview</a>
+    {% endif %}
     <a href="/loans" class="min-h-10 whitespace-nowrap rounded-control px-4 py-2 text-sm font-bold {% if request.path == '/loans' %}bg-[var(--edify-primary)] text-white{% else %}text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]{% endif %}">Loans</a>
+    {% if request.user.active_role == 'BusinessTransformationOfficer' %}
     <a href="/business-transformation/business-accounting-finance" class="min-h-10 whitespace-nowrap rounded-control px-4 py-2 text-sm font-bold {% if request.path == '/business-transformation/business-accounting-finance' %}bg-[var(--edify-primary)] text-white{% else %}text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]{% endif %}">Business Accounting &amp; Finance</a>
     <a href="/business-transformation/government-requirements" class="min-h-10 whitespace-nowrap rounded-control px-4 py-2 text-sm font-bold {% if request.path == '/business-transformation/government-requirements' %}bg-[var(--edify-primary)] text-white{% else %}text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]{% endif %}">Government Requirements</a>
     <a href="/business-transformation/impact-reports" class="min-h-10 whitespace-nowrap rounded-control px-4 py-2 text-sm font-bold {% if request.path == '/business-transformation/impact-reports' %}bg-[var(--edify-primary)] text-white{% else %}text-[var(--edify-text-muted)] hover:bg-[var(--edify-surface-muted)]{% endif %}">Impact &amp; Reports</a>
+    {% endif %}
   </div>
 </nav>

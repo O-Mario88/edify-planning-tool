@@ -82,11 +82,21 @@ class RolePermissionService:
         if not user or not user.is_authenticated:
             return False
 
-        from apps.core.navigation import get_user_role_slug, PAGE_PERMISSIONS
+        from apps.core.navigation import (
+            get_user_role_slug,
+            PAGE_PERMISSIONS,
+            ROLE_EXCLUSIVE_PAGES,
+        )
 
         role_slug = get_user_role_slug(user)
         if not role_slug:
             return False
+
+        # Specialist operational pages can explicitly opt out of the Admin
+        # observation bypass. This is checked first so "role-exclusive" means
+        # exactly that in direct URLs as well as navigation.
+        if page in ROLE_EXCLUSIVE_PAGES:
+            return role_slug in PAGE_PERMISSIONS.get(page, set())
 
         # Admin bypass
         if role_slug == "ADMIN":

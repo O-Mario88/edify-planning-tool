@@ -114,7 +114,7 @@
  "cards": [
   {
    "template": "templates/layouts/login.html",
-   "line": 116,
+   "line": 120,
    "title": "Built for impact. Designed for results.",
    "heading_level": 2,
    "has_card_key": false,
@@ -123,7 +123,7 @@
   },
   {
    "template": "templates/layouts/login.html",
-   "line": 188,
+   "line": 192,
    "title": "Secure access",
    "heading_level": 2,
    "has_card_key": false,
@@ -4460,7 +4460,7 @@
   },
   {
    "template": "templates/partials/core_schools/strategy_playbook_drawer.html",
-   "line": 46,
+   "line": 48,
    "title": "The Core Program Rule",
    "heading_level": 3,
    "has_card_key": false,

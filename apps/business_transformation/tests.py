@@ -10,7 +10,7 @@ from apps.activity_catalogue.models import ActivityCatalogueItem
 from apps.command_center.todo_service import _business_transformation_todos
 from apps.core.enums import ActivityStatus, SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
-from apps.core.navigation import build_sidebar_for_user
+from apps.core.navigation import PAGE_PERMISSIONS, build_sidebar_for_user
 from apps.core.rbac import EdifyRole, Permission, permissions_for_role
 from apps.outbox.models import OutboxEvent
 from apps.outbox.services import drain
@@ -242,8 +242,8 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
             permissions_for_role(EdifyRole.CCEO),
         )
 
-    def test_government_requirements_uses_the_same_school_list_contract(self):
-        self.client.force_login(self.cceo)
+    def test_bt_government_requirements_uses_the_school_list_contract(self):
+        self.client.force_login(self.bt_user)
 
         response = self.client.get("/business-transformation/government-requirements")
 
@@ -251,7 +251,6 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
         self.assertContains(response, "Government Requirements portfolio")
         self.assertContains(response, "school-record-list")
         self.assertContains(response, self.school.name)
-        self.assertContains(response, "Plan")
 
     def test_bt_is_read_only_except_for_salesforce_confirmation(self):
         context = services.government_requirements_context(self.bt_user, {})
@@ -360,6 +359,79 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                     else "/loans"
                 )
                 self.assertIn(expected_url, sidebar_urls)
+
+    def test_only_bt_role_sees_the_extended_workspace_tabs_on_the_loan_page(self):
+        protected_links = (
+            "/business-transformation/overview",
+            "/business-transformation/business-accounting-finance",
+            "/business-transformation/government-requirements",
+            "/business-transformation/impact-reports",
+        )
+        for index, role in enumerate(EdifyRole):
+            if role in self.full_access_roles:
+                continue
+            user = User.objects.create_user(
+                email=f"loan-tabs-{index}@example.org",
+                name=f"{role.name} Loan Tabs",
+                roles=[role.value],
+                active_role=role.value,
+            )
+            self.client.force_login(user)
+            response = self.client.get("/loans")
+            html = response.content.decode()
+            nav_start = html.index(
+                '<nav aria-label="Business Transformation workspace"'
+            )
+            workspace_nav = html[nav_start : html.index("</nav>", nav_start)]
+
+            with self.subTest(role=role.value):
+                self.assertIn('href="/loans"', workspace_nav)
+                for link in protected_links:
+                    if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
+                        self.assertIn(f'href="{link}"', workspace_nav)
+                    else:
+                        self.assertNotIn(f'href="{link}"', workspace_nav)
+
+                sidebar_bt_urls = {
+                    item["url"]
+                    for section in build_sidebar_for_user(user, "/loans")
+                    if section["label"] == "BUSINESS TRANSFORMATION"
+                    for item in section["items"]
+                }
+                if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
+                    self.assertTrue(set(protected_links).issubset(sidebar_bt_urls))
+                else:
+                    self.assertEqual(sidebar_bt_urls, {"/loans"})
+
+    def test_business_accounting_and_government_pages_are_bt_role_only(self):
+        protected_pages = (
+            "business_transformation_finance",
+            "business_transformation_government",
+        )
+        self.assertEqual(
+            PAGE_PERMISSIONS["business_transformation_finance"],
+            {"BUSINESS_TRANSFORMATION"},
+        )
+        self.assertEqual(
+            PAGE_PERMISSIONS["business_transformation_government"],
+            {"BUSINESS_TRANSFORMATION"},
+        )
+
+        from apps.core.permissions import RolePermissionService
+
+        for index, role in enumerate(EdifyRole):
+            user = User.objects.create_user(
+                email=f"bt-page-access-{index}@example.org",
+                name=f"{role.name} BT Page Access",
+                roles=[role.value],
+                active_role=role.value,
+            )
+            with self.subTest(role=role.value):
+                expected = role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER
+                for page in protected_pages:
+                    self.assertEqual(
+                        RolePermissionService.can_view_page(user, page), expected
+                    )
 
     def test_bt_and_mfi_dashboard_entry_routes_to_the_loan_dashboard(self):
         for index, role in enumerate(

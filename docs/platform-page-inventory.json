@@ -713,7 +713,7 @@
       "template": "partials/business_transformation/school_portfolio_row.html"
     },
     {
-      "bytes": 1993,
+      "bytes": 2171,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -873,6 +873,14 @@
       "template": "partials/components/reason_disclosure.html"
     },
     {
+      "bytes": 702,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/connectivity_status.html"
+    },
+    {
       "bytes": 7460,
       "findings": [],
       "forms": 1,
@@ -881,7 +889,7 @@
       "template": "partials/core_schools/assign_partner_drawer.html"
     },
     {
-      "bytes": 10222,
+      "bytes": 10270,
       "findings": [],
       "forms": 2,
       "htmx_controls": 0,
@@ -889,7 +897,7 @@
       "template": "partials/core_schools/champion_review_drawer.html"
     },
     {
-      "bytes": 3912,
+      "bytes": 3975,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -953,7 +961,7 @@
       "template": "partials/core_schools/schedule_activity_drawer.html"
     },
     {
-      "bytes": 14466,
+      "bytes": 14529,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -961,7 +969,7 @@
       "template": "partials/core_schools/schedule_training_drawer.html"
     },
     {
-      "bytes": 14796,
+      "bytes": 14856,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -977,7 +985,7 @@
       "template": "partials/core_schools/school_row.html"
     },
     {
-      "bytes": 4064,
+      "bytes": 4127,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1001,7 +1009,7 @@
       "template": "partials/cost_preview.html"
     },
     {
-      "bytes": 5413,
+      "bytes": 5427,
       "findings": [],
       "forms": 1,
       "htmx_controls": 3,
@@ -1497,7 +1505,7 @@
       "template": "partials/fund_requests/workflow_strip.html"
     },
     {
-      "bytes": 2083,
+      "bytes": 2097,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1601,7 +1609,7 @@
       "template": "partials/leave/request_leave_drawer.html"
     },
     {
-      "bytes": 16166,
+      "bytes": 16199,
       "findings": [],
       "forms": 1,
       "htmx_controls": 0,
@@ -1609,7 +1617,7 @@
       "template": "partials/messages/compose_modal.html"
     },
     {
-      "bytes": 10794,
+      "bytes": 10904,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -1761,7 +1769,7 @@
       "template": "partials/my_plan/cluster_trainings.html"
     },
     {
-      "bytes": 14946,
+      "bytes": 15399,
       "findings": [],
       "forms": 1,
       "htmx_controls": 2,
@@ -1937,7 +1945,7 @@
       "template": "partials/oversight/cd_workspace.html"
     },
     {
-      "bytes": 9789,
+      "bytes": 9796,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -1961,7 +1969,7 @@
       "template": "partials/oversight/flagged_schools.html"
     },
     {
-      "bytes": 10786,
+      "bytes": 10793,
       "findings": [],
       "forms": 2,
       "htmx_controls": 2,
@@ -2449,7 +2457,7 @@
       "template": "partials/schools/tabs.html"
     },
     {
-      "bytes": 545,
+      "bytes": 593,
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -8410,7 +8418,7 @@
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
-      "notifications": false,
+      "notifications": true,
       "page_title": "Analytics Customize Dashboard",
       "permission_key": "analytics",
       "primary_action": "Requires manual product review",
@@ -9343,17 +9351,8 @@
       "purpose": "Requires product-purpose documentation",
       "responsive_state": "detected",
       "role_access": [
-        "ACCOUNTANT",
         "ADMIN",
-        "BUSINESS_TRANSFORMATION",
-        "CCEO",
-        "CD",
-        "HR",
-        "IA",
-        "PARTNER",
-        "PL",
-        "PROJECT_COORDINATOR",
-        "RVP"
+        "BUSINESS_TRANSFORMATION"
       ],
       "route": "/business-transformation/business-accounting-finance",
       "route_name": "business_transformation_finance",
@@ -9370,7 +9369,7 @@
       "templates": [
         "pages/business_transformation/financial_health.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "todos": false
     },
@@ -9449,17 +9448,8 @@
       "purpose": "Requires product-purpose documentation",
       "responsive_state": "detected",
       "role_access": [
-        "ACCOUNTANT",
         "ADMIN",
-        "BUSINESS_TRANSFORMATION",
-        "CCEO",
-        "CD",
-        "HR",
-        "IA",
-        "PARTNER",
-        "PL",
-        "PROJECT_COORDINATOR",
-        "RVP"
+        "BUSINESS_TRANSFORMATION"
       ],
       "route": "/business-transformation/government-requirements",
       "route_name": "business_transformation_government",
@@ -9530,7 +9520,7 @@
       "templates": [
         "pages/business_transformation/impact_reports.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "todos": false
     },
@@ -10050,7 +10040,7 @@
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
-      "notifications": false,
+      "notifications": true,
       "page_title": "Cluster Bulk Assign Drawer",
       "permission_key": "planning",
       "primary_action": "Requires manual product review",
@@ -29325,7 +29315,7 @@
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
-      "notifications": false,
+      "notifications": true,
       "page_title": "Add To Cluster Drawer",
       "permission_key": "school_directory",
       "primary_action": "Requires manual product review",
@@ -29396,7 +29386,7 @@
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
       "modals": false,
-      "notifications": false,
+      "notifications": true,
       "page_title": "Assign To Project Drawer",
       "permission_key": "school_directory",
       "primary_action": "Requires manual product review",
@@ -48938,7 +48928,7 @@
     "activity_states": 23,
     "all_routes": 952,
     "api_routes": 311,
-    "component_templates": 330,
+    "component_templates": 331,
     "full_pages": 351,
     "partials_and_drawers": 164,
     "permission_gated": 522,
@@ -48952,6 +48942,6 @@
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 494
+    "test_referenced": 496
   }
 }

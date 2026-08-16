@@ -24,6 +24,66 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Phone and tablet app bars expose search as one icon until it is needed.
+ * The icon expands the existing contextual input rather than navigating to a
+ * second search surface, so page filters, labels and HTMX targets stay intact.
+ * `visibility` removes the closed input from keyboard navigation; Alpine puts
+ * focus into it only after the visible overlay is open. */
+@media (max-width: 64rem) {
+  .edify-topbar__search:has(.edify-search-submit) {
+    flex: 0 0 44px;
+    inline-size: 44px;
+    max-inline-size: 44px;
+    block-size: 44px;
+  }
+
+  .edify-topbar__search:has(.edify-search-submit) form {
+    position: relative;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .edify-topbar__search:not(.is-open) input[type="search"] {
+    position: absolute;
+    inline-size: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .edify-topbar__search.is-open {
+    position: absolute;
+    inset-inline: max(0.75rem, env(safe-area-inset-left, 0px)) max(0.75rem, env(safe-area-inset-right, 0px));
+    top: 50%;
+    z-index: 20;
+    inline-size: auto;
+    max-inline-size: none;
+    transform: translateY(-50%);
+  }
+
+  .edify-topbar__search.is-open input[type="search"] {
+    inline-size: 100%;
+    min-block-size: 44px;
+  }
+
+  .edify-topbar__search .edify-search-submit {
+    inline-size: 44px;
+    block-size: 44px;
+    inset-inline-end: 0;
+  }
+
+  .edify-topbar__icon-control,
+  .edify-topbar__account > button {
+    inline-size: 44px;
+    block-size: 44px;
+    min-block-size: 44px;
+  }
+
+  .edify-topbar__search.is-open:has(.edify-search-submit) input[type="search"] {
+    padding-inline-end: 3rem;
+  }
+}
+
 /* Phones keep one contextual search plus notifications and account. Messages
  * already has a role-aware bottom-navigation destination, while appearance
  * lives in Settings; duplicating both in the app bar consumed the width the
@@ -44,10 +104,6 @@
     gap: 0.5rem;
   }
 
-  .edify-topbar__search {
-    max-inline-size: none;
-  }
-
   /* WCAG target sizing is a layout property, not a pointer-media hint. A
    * narrow browser can report a fine pointer while still being used by touch
    * or switch input, so the phone shell guarantees 44px targets directly. */
@@ -61,16 +117,6 @@
   .edify-topbar__account > button {
     inline-size: 44px;
     block-size: 44px;
-  }
-
-  .edify-search-submit {
-    inline-size: 44px;
-    block-size: 44px;
-    inset-inline-end: 0;
-  }
-
-  search:has(.edify-search-submit) input[type="search"] {
-    padding-inline-end: 3rem;
   }
 
   .edify-topbar > :last-child {

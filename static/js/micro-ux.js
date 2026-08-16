@@ -412,7 +412,7 @@
   }
 
   function controlHasName(control) {
-    if (cleanText(control.textContent) || control.getAttribute('aria-label') || control.getAttribute('aria-labelledby') || control.title) return true;
+    if (cleanText(control.textContent) || control.getAttribute('aria-label') || control.getAttribute('aria-labelledby')) return true;
     if (control.labels && control.labels.length) return true;
     if (control.tagName === 'INPUT' && ['hidden', 'submit', 'button'].includes(control.type)) return true;
     return false;
@@ -438,6 +438,33 @@
     });
   }
 
+  /* A button inside a form defaults to submit. Legacy HTMX and Alpine action
+   * buttons often predate the shared button component, so an innocent drawer
+   * close or tab switch can otherwise submit the surrounding workflow. Only
+   * controls with an unambiguous client/HTMX action are normalized here;
+   * unlabeled form actions remain server-owned and must declare submit at
+   * source. */
+  function normalizeActionButtonTypes(root) {
+    var buttons = [];
+    if (root.matches && root.matches('button:not([type])')) buttons.push(root);
+    root.querySelectorAll('button:not([type])').forEach(function (button) { buttons.push(button); });
+    buttons.forEach(function (button) {
+      var isAction = button.hasAttribute('hx-get') ||
+        button.hasAttribute('hx-post') ||
+        button.hasAttribute('@click') ||
+        button.hasAttribute('x-on:click') ||
+        button.hasAttribute('data-mobile-dialog-close') ||
+        button.hasAttribute('data-help-close') ||
+        button.getAttribute('role') === 'tab';
+      if (isAction) button.type = 'button';
+    });
+    var implicitActionButtons = Array.from(document.querySelectorAll('button:not([type])')).filter(function (button) {
+      return button.hasAttribute('hx-get') || button.hasAttribute('hx-post') ||
+        button.hasAttribute('@click') || button.hasAttribute('x-on:click');
+    });
+    document.documentElement.dataset.edifyImplicitActionButtons = String(implicitActionButtons.length);
+  }
+
   function auditInteractiveNames(root) {
     var controls = [];
     if (root.matches && root.matches('a[href], button, input, select, textarea, summary, [role="button"], [role="tab"]')) controls.push(root);
@@ -445,6 +472,7 @@
       controls.push(control);
     });
     controls.forEach(function (control) {
+      if (!controlHasName(control) && control.title) control.setAttribute('aria-label', control.title);
       if (!visible(control) || controlHasName(control)) delete control.dataset.edifyA11yWarning;
       else control.dataset.edifyA11yWarning = 'missing-name';
       control.querySelectorAll('svg:not([aria-hidden="true"]):not([role="img"])').forEach(function (svg) {
@@ -468,6 +496,7 @@
     enhanceTabs(root);
     enhanceCustomDialogs(root);
     enhanceFormLabels(root);
+    normalizeActionButtonTypes(root);
     auditInteractiveNames(root);
   }
 
@@ -478,6 +507,7 @@
       scanQueued = false;
       enhanceCustomDialogs(document);
       enhanceFormLabels(document);
+      normalizeActionButtonTypes(document);
       auditInteractiveNames(document);
     });
   }

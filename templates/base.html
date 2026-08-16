@@ -80,9 +80,9 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260811geist2">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260809surfaces1">
+    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260817roundcontrols1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260812tables1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260817compactsearch1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260812tables1">
   <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260812tables2">
 {% comment %}
@@ -107,6 +107,7 @@ other page was relying on them.
      always win across the platform. -->
 <link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260816filter2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812checkbox1">
+<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260816resilience1">
 <!-- How controls answer a pointer — hover inversion and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
@@ -303,6 +304,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/micro-ux.js' %}?v=20260812checkbox1"></script>
+<script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
      Self-hosted: if this does not load, every x-data on the page throws and
@@ -495,12 +497,38 @@ controller exists by the time a drawer's x-init runs.
 class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 >
+{% include "partials/connectivity_status.html" %}
+
 {% block content %}{% endblock %}
 
 <script src="{% static 'js/analytics-workspace.js' %}?v=20260808enterprise1" defer></script>
 
 <div id="edify-live-polite" class="edify-visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="edify-live-assertive" class="edify-visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<dialog
+  id="edify-session-expired-dialog"
+  class="edify-session-dialog"
+  aria-labelledby="edify-session-expired-title"
+  aria-describedby="edify-session-expired-description"
+>
+  <div class="edify-session-dialog__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+  <div>
+    <p class="edify-session-dialog__eyebrow">Session paused</p>
+    <h2 id="edify-session-expired-title">Sign in to continue</h2>
+    <p id="edify-session-expired-description">
+      Your session expired after inactivity. This page and anything you typed remain open here.
+    </p>
+  </div>
+  <div class="edify-session-dialog__actions">
+    <button type="button" data-session-dialog-close class="edify-session-dialog__secondary">Keep this page open</button>
+    <a href="/login" target="_blank" rel="noopener" class="edify-session-dialog__primary">Open sign in</a>
+  </div>
+</dialog>
 
 <!-- Global Flash/Alert Messages -->
 <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none" aria-live="polite" aria-atomic="false">

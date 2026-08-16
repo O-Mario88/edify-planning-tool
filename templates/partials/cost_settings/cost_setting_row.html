@@ -109,6 +109,7 @@ UGX {{ c.unit_cost|currency }}
 </td>
 <td class="px-4 py-3 text-right align-middle" data-record-action>
 <button
+type="button"
 hx-get="/cost-settings/row/{{ c.key }}?mode=edit"
 hx-target="#cost-setting-row-{{ c.key }}"
 hx-swap="outerHTML"

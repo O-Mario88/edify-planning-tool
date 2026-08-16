@@ -222,6 +222,19 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertIn("htmx:responseError", behavior)
         self.assertIn("htmx:sendError", behavior)
 
+    def test_legacy_action_buttons_cannot_accidentally_submit_forms(self):
+        behavior = _read("static/js/micro-ux.js")
+
+        self.assertIn("normalizeActionButtonTypes", behavior)
+        self.assertIn("button:not([type])", behavior)
+        self.assertIn("button.type = 'button'", behavior)
+        self.assertIn("dataset.edifyImplicitActionButtons", behavior)
+
+    def test_title_only_icon_controls_receive_a_real_accessible_name(self):
+        behavior = _read("static/js/micro-ux.js")
+
+        self.assertIn("control.setAttribute('aria-label', control.title)", behavior)
+
     def test_templates_do_not_use_positive_tabindex(self):
         offenders = []
         for path in ROOT.joinpath("templates").rglob("*.html"):
