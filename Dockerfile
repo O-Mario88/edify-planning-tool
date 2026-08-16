@@ -8,7 +8,8 @@ ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl && rm -rf /var/lib/apt/lists/*
 COPY requirements/ ./requirements/
-RUN pip install --prefix=/install -r requirements/prod.txt
+RUN pip install --prefix=/install -r requirements/prod.txt \
+    && pip install --prefix=/install --upgrade "setuptools>=78.1.1"
 
 FROM python:3.13-slim AS runtime
 WORKDIR /app
@@ -25,12 +26,25 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.
 COPY --from=build /install /usr/local
-# The slim base ships setuptools 70.3.0 (CVE-2025-47273 path traversal, fixed
-# in 78.1.1), which the scheduled Trivy scan rightly fails on. Upgrade in
-# place — an in-place pip upgrade removes the old dist-info the scanner reads,
-# which a build-stage --prefix copy would have merged alongside rather than
-# replaced.
-RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1"
+# The slim base ships setuptools 70.3.0 (CVE-2025-47273, path traversal, fixed
+# in 78.1.1). The prune below is the part that actually matters, and the reason
+# is worth writing down because the obvious fix silently does nothing:
+#
+# The build stage now installs a current setuptools into /install, and the COPY
+# above merges that tree into /usr/local — merges, not replaces. So /usr/local
+# ends up carrying TWO dist-info directories: the new one and the base image's
+# 70.3.0. A plain `pip install --upgrade` then reports "already satisfied" and
+# exits without touching anything, because the new version is genuinely there.
+# The stale metadata survives, and a container scanner reads dist-info rather
+# than the importable module — so it keeps reporting a version that is not
+# actually installed. That looks like a false positive and is not one: the
+# right answer is to remove the metadata that no longer describes reality.
+RUN pip install --no-cache-dir --upgrade "setuptools>=78.1.1" \
+    && find /usr/local/lib/python3.13/site-packages -maxdepth 1 \
+        -name 'setuptools-*.dist-info' -type d \
+        -not -name "setuptools-$(python -c 'import setuptools; print(setuptools.__version__)').dist-info" \
+        -exec rm -rf {} + \
+    && python -c "import setuptools; print('setuptools', setuptools.__version__)"
 # Application source.
 COPY . .
 # Docker preserves permissions from a local build context. Normalize read and

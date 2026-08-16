@@ -43,6 +43,11 @@ bcrypt==5.0.0
 daphne==4.2.3
 uvicorn==0.51.0
 gunicorn==26.0.0
+# Transitive via autobahn (daphne's WebSocket layer) and CacheControl. Pinned
+# forward explicitly because the resolver otherwise settles on 1.1.2, which
+# carries GHSA-6v7p-g79w-8964 (out-of-bounds read on malformed input) — the
+# container scan fails the build on it.
+msgpack==1.2.1
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
 #
