@@ -206,6 +206,11 @@ class LockoutUnificationTest(TestCase):
         for _ in range(_max_failed()):
             res = self._web_login("web-lock@edify.test", "WrongPassword")
             self.assertEqual(res.status_code, 200)
+        # The browser and API logins share one per-IP window (they are two
+        # doors to the same credential check, so alternating them must not buy
+        # a second budget). This test is about lockout parity, not throttling,
+        # so clear the window between the two phases.
+        reset_throttle_state(self._throttle_keys)
         for _ in range(_max_failed()):
             res = self._api_login("api-lock@edify.test", "WrongPassword")
             self.assertEqual(res.status_code, 401)
@@ -237,6 +242,10 @@ class LockoutUnificationTest(TestCase):
         # Lock via the WEB endpoint.
         for _ in range(_max_failed()):
             self._web_login("switcher@edify.test", "WrongPassword")
+
+        # Both doors share one per-IP window; clear it so the assertion below
+        # proves the lockout rejects the correct password, not the throttle.
+        reset_throttle_state(self._throttle_keys)
 
         # Correct password via the API endpoint must still be rejected.
         api_res = self._api_login("switcher@edify.test", "CorrectPassword1!")

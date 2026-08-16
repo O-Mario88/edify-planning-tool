@@ -1,12 +1,26 @@
+import hashlib
+
 from django.test import TestCase
 from django.urls import reverse
 from apps.accounts.models import User, StaffProfile, UserStatus, StaffSetupCandidate
 from apps.core.rbac import EdifyRole
+from apps.core.throttling import reset_throttle_state
 from apps.geography.models import Region, District, SubCounty
 
 
 class AdminUserOperationsTest(TestCase):
     def setUp(self):
+        # These tests sign in repeatedly to exercise lockout, and the login
+        # form is per-IP throttled (both login doors share one window). Give
+        # each test its own documentation-range address and clear just that
+        # key, so one test's attempts never spend another's budget — the same
+        # isolation apps/accounts/test_lockout_unification.py uses.
+        suffix = hashlib.sha256(self.id().encode()).hexdigest()[:16]
+        self.client.defaults["REMOTE_ADDR"] = f"2001:db8::{suffix}"
+        throttle_keys = [f"auth.login:2001:db8::{suffix}"]
+        reset_throttle_state(throttle_keys)
+        self.addCleanup(reset_throttle_state, throttle_keys)
+
         # Setup geography
         self.region = Region.objects.create(name="Central Region")
         self.district = District.objects.create(name="Kampala", region=self.region)
@@ -294,6 +308,12 @@ class AdminUserOperationsTest(TestCase):
         self.assertIsNotNone(target.locked_until)
         self.assertFalse(target.lockout_escalated)
         self.assertEqual(target.lockout_cycle_count, 1)
+
+        # AUTH_MAX_FAILED_LOGINS and RATE_LIMIT_LOGIN_PER_MIN are both 10 by
+        # default, so the burst above also spends the whole per-IP window.
+        # Clear it: the assertion below is about the LOCKOUT's rejection, and
+        # a 429 would satisfy "not 200" for entirely the wrong reason.
+        reset_throttle_state([f"auth.login:{self.client.defaults['REMOTE_ADDR']}"])
 
         # Verify login is blocked even with correct password while locked —
         # SEC-02: the public response must be the SAME generic message a
