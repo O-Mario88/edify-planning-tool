@@ -2845,6 +2845,31 @@ search:has(.edify-search-submit) input[type="search"] {
   outline: none;
   box-shadow: var(--edify-focus-ring);
 }
+
+/* The account avatar is the ONE filled control in the top bar, styled to match
+   the search button beside it: a solid brand circle with white initials. Every
+   other top-bar icon (messages, notifications, help, report a problem, the
+   theme toggle) stays a bare glyph, so exactly one element reads as "you" and
+   the rest read as tools.
+
+   Without the fill the markup's own `text-white` left the initials white on a
+   white bar — invisible (2026-08 UI/UX review). */
+.edify-topbar__icon-control--avatar {
+  background: var(--brand-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1;
+}
+.edify-topbar__icon-control--avatar:hover {
+  background: var(--brand-primary-hover, var(--brand-primary));
+  color: #fff;
+}
+.edify-topbar__icon-control--avatar:focus-visible {
+  outline: none;
+  box-shadow: var(--edify-focus-ring);
+}
 /* The glyph inherits the button's white, so the icon partial needs no
    per-instance colour. */
 .edify-search-submit svg {
