@@ -479,15 +479,7 @@ main #filters-form .school-filter-grid > * {
     font-size: var(--edify-text-display-size) !important;
   }
 
-  /* Icon-only round controls are excluded. They carry no label, so their
-     width has nothing to size to: raising the minimum on one axis alone
-     stretched them into ovals next to the perfectly circular search button.
-     They set their own equal h-9/w-9 and are already a comfortable target
-     (2026-08 UI/UX audit — the oval was introduced by this very rule). */
-  .edify-shell
-    :where(button, [role="button"], summary, [role="tab"]):not(
-      .edify-topbar__icon-control
-    ),
+  .edify-shell :where(button, [role="button"], summary, [role="tab"]),
   .edify-shell a:where(
     .btn,
     .edify-action-button,
@@ -497,8 +489,8 @@ main #filters-form .school-filter-grid > * {
     [class~="h-9"],
     [class~="min-h-8"],
     [class~="min-h-9"]
-  ):not(.edify-topbar__icon-control),
-  .edify-shell a[href]:not(.edify-topbar__icon-control) {
+  ),
+  .edify-shell a[href] {
     min-block-size: var(--edify-action-button-block-size) !important;
     min-inline-size: var(--edify-action-button-block-size);
   }
@@ -602,15 +594,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 36rem) {
   :root:root:root {
-    /* 44px, not 30px. This token is applied with !important to block-size,
-       height AND min-block-size, so whatever it holds is the final say for
-       every action button — it was overriding five separate 44px contracts
-       elsewhere in the codebase, including one earlier in this same file.
-       It also scaled the wrong way: desktop (a precise mouse) got 32px while
-       a 360px phone got 28px. Touch targets grow on touch devices; the
-       horizontal padding stays compact so rows still fit (2026-08 UI/UX
-       audit, UX-006). */
-    --edify-action-button-block-size: 2.75rem;
+    --edify-action-button-block-size: 1.875rem;
     --edify-action-button-padding-inline: 0.5rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -666,9 +650,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 22.5rem) {
   :root:root:root {
-    /* The narrowest supported width still gets a full 44px target; only the
-       inline padding tightens further. */
-    --edify-action-button-block-size: 2.75rem;
+    --edify-action-button-block-size: 1.75rem;
     --edify-action-button-padding-inline: 0.45rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
