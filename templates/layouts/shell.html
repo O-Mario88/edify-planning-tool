@@ -209,12 +209,12 @@ class="h-9 w-full rounded-control pl-4 text-[13px] font-normal focus:outline-non
 </div>
 
 <!-- Header Right Utilities -->
-<div class="flex items-center gap-2 shrink-0">
+<div class="edify-topbar__utilities flex items-center gap-2 shrink-0">
 <!-- Today's date + ISO week (shown on every page) -->
-<div class="hidden md:flex shrink-0 items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date">
+<div class="edify-topbar__date flex shrink-0 items-center gap-1.5 edify-surface px-3 py-1.5 rounded-control text-[12px] font-semibold text-slate-600 border edify-border" title="Today's date" aria-label="Today is {{ today|date:'F j, Y' }}, week {{ current_week_number }}">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg>
-<span class="xl:hidden whitespace-nowrap">{{ today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
-<span class="hidden xl:inline whitespace-nowrap">{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
+<span class="edify-topbar__date-short xl:hidden whitespace-nowrap">{{ today|date:"M j" }} &middot; Wk {{ current_week_number }}</span>
+<span class="edify-topbar__date-long hidden xl:inline whitespace-nowrap">{{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}</span>
 </div>
 <!-- Messages drawer — recent threads, each linking to the full thread page. -->
 <button
@@ -255,15 +255,9 @@ aria-label="Notifications"
 
 <!-- Contextual Help navigates directly to the full Knowledge Center article for
 the current page. The server resolves the route to a reviewed, role-aware article. -->
-{% comment %}
-Hidden on phones so the search field keeps a usable width. Seven controls
-shared a 375px row and squeezed search to about 100px; contextual help is the
-one of them reachable another way — the Knowledge Center is in the sidebar —
-so it yields its space rather than the control every page depends on.
-{% endcomment %}
 <a
 href="/help/context?for={{ request.path|urlencode }}"
-class="edify-topbar__icon-control hidden sm:flex items-center justify-center"
+class="edify-topbar__icon-control flex items-center justify-center"
 title="Help for this page"
 aria-label="Help for this page"
 >
@@ -276,11 +270,11 @@ aria-label="Help for this page"
 Report a Problem. Every user request for platform help must enter the canonical
 Support Ticket workflow rather than reaching an Admin by message or corridor,
 so the entry point lives beside contextual help on every page and carries the
-route it was raised from. Same phone-width reasoning as the help control above.
+route it was raised from.
 {% endcomment %}
 <a
 href="/support?route={{ request.path|urlencode }}"
-class="edify-topbar__icon-control hidden sm:flex items-center justify-center"
+class="edify-topbar__icon-control flex items-center justify-center"
 title="Report a problem with this page"
 aria-label="Report a problem with this page"
 >

@@ -84,24 +84,53 @@
   }
 }
 
-/* Phones keep one contextual search plus notifications and account. Messages
- * already has a role-aware bottom-navigation destination, while appearance
- * lives in Settings; duplicating both in the app bar consumed the width the
- * current task needs. The classes are explicit so a shell without bottom nav
- * retains its only Messages entry point. */
+/* Phones keep the complete operational utility set. The search remains one
+ * fixed icon; the utility rail consumes the rest of the row and scrolls only
+ * on unusually narrow viewports. The date becomes a calendar icon while its
+ * full value remains in the accessible name. Nothing is removed merely
+ * because the viewport is small. */
 @media (max-width: 47.5rem) {
   .edify-topbar {
     min-block-size: calc(3.25rem + env(safe-area-inset-top, 0px));
     block-size: auto;
-    gap: 0.5rem;
-    padding-inline: max(0.75rem, env(safe-area-inset-left, 0px)) max(0.75rem, env(safe-area-inset-right, 0px));
+    gap: 0;
+    padding-inline: max(0.25rem, env(safe-area-inset-left, 0px)) max(0.25rem, env(safe-area-inset-right, 0px));
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
 
   .edify-topbar > :first-child {
+    flex: 0 0 auto;
     min-inline-size: 0;
-    gap: 0.5rem;
+    gap: 0;
+  }
+
+  .edify-topbar__utilities {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    gap: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .edify-topbar__utilities::-webkit-scrollbar {
+    display: none;
+  }
+
+  .edify-topbar__date {
+    flex: 0 0 44px;
+    inline-size: 44px;
+    block-size: 44px;
+    justify-content: center;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .edify-topbar__date-short,
+  .edify-topbar__date-long {
+    display: none !important;
   }
 
   /* WCAG target sizing is a layout property, not a pointer-media hint. A
@@ -119,14 +148,6 @@
     block-size: 44px;
   }
 
-  .edify-topbar > :last-child {
-    gap: 0.25rem;
-  }
-
-  .edify-topbar__utility--mobile-redundant,
-  .edify-topbar__utility--theme {
-    display: none !important;
-  }
 }
 
 /* Landscape puts the notch on a side, where the topbar's own controls are. */

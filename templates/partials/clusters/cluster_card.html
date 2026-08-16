@@ -17,7 +17,7 @@ data-row-disclosure-summary
 <div class="cluster-card__title-row">
 <h3 class="cluster-card__title" data-list-title>
   {% comment %}The cluster profile existed at /clusters/<id> with nothing linking to it, so the page was only reachable by typing the URL — the same affordance a school name already carries in the directory.{% endcomment %}
-  <a href="/clusters/{{ cluster.id }}" class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
+  <a href="/clusters/{{ cluster.id }}" @click.stop class="text-slate-800 hover:underline focus-visible:underline" aria-label="Open {{ cluster.name }} cluster profile">{{ cluster.name }}</a>
 </h3>
 
 {% if cluster.risk == 'critical' %}
@@ -28,6 +28,69 @@ data-row-disclosure-summary
 <span class="edify-status-badge success">Healthy</span>
 {% endif %}
 </div>
+
+<dl class="school-record-row__metadata cluster-card__metadata">
+  <div>
+    <dt>Location:</dt>
+    <dd>{{ cluster.district }}, {{ cluster.sub_county }}</dd>
+  </div>
+  <div>
+    <dt>Cluster Leader:</dt>
+    <dd>{{ cluster.cluster_leader_name }}</dd>
+  </div>
+  <div>
+    <dt>Cluster Leader Phone:</dt>
+    <dd>{{ cluster.cluster_leader_phone }}</dd>
+  </div>
+  <div>
+    <dt>Schools:</dt>
+    <dd>{{ cluster.schools_count }}</dd>
+  </div>
+  <div>
+    <dt>Assigned Staff:</dt>
+    <dd>{{ cluster.staff_count }}</dd>
+  </div>
+  <div class="school-record-row__ssa {% if cluster.risk == 'critical' %}is-danger{% elif cluster.risk == 'needs_attention' %}is-warning{% else %}is-success{% endif %}">
+    <dt>Avg SSA:</dt>
+    <dd>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}</dd>
+  </div>
+  <div>
+    <dt>Meetings (FY):</dt>
+    <dd>{{ cluster.meeting_count_fy }}</dd>
+  </div>
+  <div>
+    <dt>Last Meeting:</dt>
+    <dd>{{ cluster.last_meeting_date }}</dd>
+  </div>
+  <div>
+    <dt>Last Training:</dt>
+    <dd>{{ cluster.last_training_date }}</dd>
+  </div>
+  <div>
+    <dt>SSA Coverage:</dt>
+    <dd>{{ cluster.planning.schoolsWithSsa|default:"0" }}/{{ cluster.schools_count }} ({{ cluster.planning.ssaCoveragePct|default:"0" }}%)</dd>
+  </div>
+  <div class="cluster-card__metadata-warning">
+    <dt>Without SSA:</dt>
+    <dd>{{ cluster.planning.schoolsWithoutSsa|default:"0" }} schools</dd>
+  </div>
+  <div class="cluster-card__metadata-danger">
+    <dt>SSA Required:</dt>
+    <dd>{{ cluster.planning.needingBaselineCount|default:"0" }}</dd>
+  </div>
+  <div>
+    <dt>Needing Cleanup:</dt>
+    <dd>{{ cluster.planning.needingCleanupCount|default:"0" }}</dd>
+  </div>
+  <div class="cluster-card__metadata-success">
+    <dt>Ready for Planning:</dt>
+    <dd>{{ cluster.planning.readySchoolsCount|default:"0" }}</dd>
+  </div>
+  <div class="cluster-card__metadata-action cluster-card__metadata-action--{{ cluster.risk }}">
+    <dt>Next Action:</dt>
+    <dd>{{ cluster.next_action }}</dd>
+  </div>
+</dl>
 </div>
 
 <div class="cluster-card__actions">
@@ -82,86 +145,10 @@ aria-controls="cluster-details-{{ cluster.id }}"
 </div>
 
 <!-- Expanded details block -->
-<div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-cloak class="cluster-card__details">
-  <section class="cluster-card__overview" aria-labelledby="cluster-{{ cluster.id }}-overview-title">
-    <div class="cluster-card__section-heading">
-      <div>
-        <p class="cluster-card__eyebrow">Cluster detail</p>
-        <h3 id="cluster-{{ cluster.id }}-overview-title" class="sr-only">Cluster overview</h3>
-      </div>
-      <span class="cluster-card__school-count">{{ cluster.schools_count }} school{{ cluster.schools_count|pluralize }}</span>
-    </div>
-
-    <dl class="school-record-row__metadata cluster-card__metadata">
-      <div>
-        <dt>Location:</dt>
-        <dd>{{ cluster.district }}, {{ cluster.sub_county }}</dd>
-      </div>
-      <div>
-        <dt>Cluster Leader:</dt>
-        <dd>{{ cluster.cluster_leader_name }}</dd>
-      </div>
-      <div>
-        <dt>Cluster Leader Phone:</dt>
-        <dd>{{ cluster.cluster_leader_phone }}</dd>
-      </div>
-      <div>
-        <dt>Schools:</dt>
-        <dd>{{ cluster.schools_count }}</dd>
-      </div>
-      <div>
-        <dt>Assigned Staff:</dt>
-        <dd>{{ cluster.staff_count }}</dd>
-      </div>
-      <div class="school-record-row__ssa {% if cluster.risk == 'critical' %}is-danger{% elif cluster.risk == 'needs_attention' %}is-warning{% else %}is-success{% endif %}">
-        <dt>Avg SSA:</dt>
-        <dd>
-          {% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa|floatformat:1 }}/10{% else %}—{% endif %}
-        </dd>
-      </div>
-      <div>
-        <dt>Meetings (FY):</dt>
-        <dd>{{ cluster.meeting_count_fy }}</dd>
-      </div>
-      <div>
-        <dt>Last Meeting:</dt>
-        <dd>{{ cluster.last_meeting_date }}</dd>
-      </div>
-      <div>
-        <dt>Last Training:</dt>
-        <dd>{{ cluster.last_training_date }}</dd>
-      </div>
-      <div>
-        <dt>SSA Coverage:</dt>
-        <dd>{{ cluster.planning.schoolsWithSsa|default:"0" }}/{{ cluster.schools_count }} ({{ cluster.planning.ssaCoveragePct|default:"0" }}%)</dd>
-      </div>
-      <div class="cluster-card__metadata-warning">
-        <dt>Without SSA:</dt>
-        <dd>{{ cluster.planning.schoolsWithoutSsa|default:"0" }} schools</dd>
-      </div>
-      <div class="cluster-card__metadata-danger">
-        <dt>SSA Required:</dt>
-        <dd>{{ cluster.planning.needingBaselineCount|default:"0" }}</dd>
-      </div>
-      <div>
-        <dt>Needing Cleanup:</dt>
-        <dd>{{ cluster.planning.needingCleanupCount|default:"0" }}</dd>
-      </div>
-      <div class="cluster-card__metadata-success">
-        <dt>Ready for Planning:</dt>
-        <dd>{{ cluster.planning.readySchoolsCount|default:"0" }}</dd>
-      </div>
-      <div class="cluster-card__metadata-action cluster-card__metadata-action--{{ cluster.risk }}">
-        <dt>Next Action:</dt>
-        <dd>{{ cluster.next_action }}</dd>
-      </div>
-    </dl>
-  </section>
-
-  <section class="cluster-ssa-summary" aria-labelledby="cluster-{{ cluster.id }}-ssa-title">
-    <h3 id="cluster-{{ cluster.id }}-ssa-title" class="sr-only">Cluster SSA intervention recommendations</h3>
-    {% include "partials/ssa/score_group_columns.html" with detail_id="cluster-ssa-"|add:cluster.id ssa_groups=cluster.ssa_groups has_ssa_scores=cluster.has_ssa_scores %}
-  </section>
+<div id="cluster-details-{{ cluster.id }}" x-show="cardExpanded" x-transition.opacity.duration.150ms x-cloak class="cluster-card__details">
+  <div class="cluster-ssa-summary">
+    {% include "partials/schools/ssa_score_groups.html" with detail_id="cluster-ssa-"|add:cluster.id ssa_groups=cluster.ssa_groups has_ssa_scores=cluster.has_ssa_scores selected_fy=selected_fy %}
+  </div>
 
   <!-- Nestable sub-table target -->
   <div

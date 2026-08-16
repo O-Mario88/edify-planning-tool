@@ -659,10 +659,21 @@ class FrontendViewsTestCase(TestCase):
         )
 
     def test_cluster_detail_view_renders(self):
+        School.objects.filter(pk=self.school.pk).update(
+            cluster_id=self.cluster.id,
+            cluster_status="clustered",
+        )
         self.client.force_login(self.cceo_user)
         response = self.client.get(f"/clusters/{self.cluster.id}")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/clusters/detail.html")
+        self.assertContains(response, "Schools in This Cluster")
+        self.assertContains(response, self.school.name)
+        self.assertContains(
+            response,
+            f'hx-get="/planning/schedule-modal?school_id={self.school.school_id}"',
+        )
+        self.assertContains(response, "Schedule Group Training")
 
     def test_planning_dashboard_view_renders(self):
         from django.utils import timezone

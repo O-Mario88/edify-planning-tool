@@ -786,6 +786,17 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   box-shadow: var(--edify-shadow-sm);
 }
 
+.edify-risk-card__icon {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: var(--edify-radius-sm);
+  background: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid);
+}
+
 /* Filter Chip */
 .edify-filter-chip {
   display: inline-flex;

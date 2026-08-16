@@ -61,14 +61,21 @@ class MobileFoundationContractTest(SimpleTestCase):
             with self.subTest(path=path):
                 self.assertIn(marker, _read(path))
 
-    def test_mobile_shell_removes_redundant_phone_utilities_only(self):
+    def test_mobile_shell_keeps_the_complete_utility_set(self):
         shell = _read("templates/layouts/shell.html")
         styles = _read("static/css/components/mobile-shell.css")
 
         self.assertIn("edify-topbar__utility--mobile-redundant", shell)
         self.assertIn("edify-topbar__utility--theme", shell)
-        self.assertIn(".edify-topbar__utility--mobile-redundant", styles)
-        self.assertIn(".edify-topbar__utility--theme", styles)
+        self.assertIn("edify-topbar__date", shell)
+        self.assertIn("edify-topbar__utilities", shell)
+        self.assertIn(".edify-topbar__utilities", styles)
+        self.assertIn("overflow-x: auto", styles)
+        self.assertNotIn(
+            ".edify-topbar__utility--mobile-redundant,\n  .edify-topbar__utility--theme",
+            styles,
+        )
+        self.assertNotIn('class="edify-topbar__icon-control hidden sm:flex', shell)
         self.assertIn("{% if mobile_nav %}", shell)
 
     def test_phone_topbar_targets_are_at_least_44_pixels(self):

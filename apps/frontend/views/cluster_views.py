@@ -655,6 +655,14 @@ def cluster_detail_view(request, cluster_id):
         "can_edit_cluster": RolePermissionService.can_view_page(
             request.user, "planning"
         ),
+        # Cluster-level planning and school-level scheduling use the same
+        # permission checks as the destinations behind their controls. This
+        # keeps the profile useful as a planning launch point without showing
+        # actions that will answer 403 for oversight-only roles.
+        "can_plan_clusters": RolePermissionService.can_view_page(
+            request.user, "planning"
+        ),
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
     }
     return render(request, "pages/clusters/detail.html", context)
 

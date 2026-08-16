@@ -49,8 +49,38 @@ class DrawerAsksForPurposeTest(TestCase):
         """The diagnostic the officer needs, shown as evidence rather than
         converted into an instruction."""
         source = _drawer_source()
-        self.assertIn("SSA interventions performing poorly", source)
-        self.assertIn("{% for r in recommendations %}", source)
+        self.assertIn("Top SSA recommendation", source)
+        self.assertIn("Additional SSA interventions performing poorly", source)
+        self.assertIn('{% for r in recommendations|slice:"1:" %}', source)
+
+    def test_top_ssa_recommendation_uses_the_risk_alert_format(self):
+        source = _drawer_source()
+
+        self.assertIn('class="edify-risk-card"', source)
+        self.assertIn('class="edify-risk-card__icon"', source)
+        self.assertIn("Top SSA recommendation", source)
+        self.assertIn("{{ recommendations.0.label }}", source)
+        self.assertIn("edify-danger-text", source)
+
+    def test_recommendation_scores_are_plain_red_text_not_border_pills(self):
+        source = _drawer_source()
+        recommendation_list = source.split(
+            "{% if recommendations|length > 1 %}", 1
+        )[1].split("{% endif %}", 1)[0]
+
+        self.assertIn("{{ r.band }} · {{ r.score }}/10", recommendation_list)
+        self.assertIn("edify-danger-text", recommendation_list)
+        self.assertNotIn("rounded-pill", recommendation_list)
+        self.assertNotIn("border-amber", recommendation_list)
+
+        top_recommendation = source.split("{% if recommendations %}", 1)[1].split(
+            "{% else %}", 1
+        )[0]
+        self.assertIn(
+            "{{ recommendations.0.band }} · {{ recommendations.0.score }}/10",
+            top_recommendation,
+        )
+        self.assertNotIn("rounded-pill", top_recommendation)
 
     def test_the_engine_no_longer_exposes_a_catalogue_picker(self):
         source = _drawer_source()
