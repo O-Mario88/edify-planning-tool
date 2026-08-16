@@ -72,6 +72,22 @@ def evidence_optional(activity) -> bool:
     return getattr(activity, "evidence_profile_snapshot", None) == "ADMIN_NONE"
 
 
+def _present_kinds(activity) -> set[str]:
+    """Which evidence kinds this activity already has, prefetch-aware.
+
+    A caller looping over many activities can prefetch the non-quarantined
+    evidence into `_unquarantined_evidence` (see apps/my_plan/day_package.py);
+    using it here turns one query per activity into none. Without the
+    attribute the behaviour is unchanged.
+    """
+    cached = getattr(activity, "_unquarantined_evidence", None)
+    if cached is not None:
+        return {record.kind for record in cached}
+    return set(
+        activity.evidence.filter(quarantined=False).values_list("kind", flat=True)
+    )
+
+
 def missing_evidence_kinds(activity) -> list[dict]:
     """Which required kinds are absent (non-quarantined) for this activity.
     Empty list = requirement satisfied. Types with no specific requirement
@@ -79,9 +95,7 @@ def missing_evidence_kinds(activity) -> list[dict]:
     needed = required_kinds_for_activity(activity)
     if not needed:
         return []
-    present = set(
-        activity.evidence.filter(quarantined=False).values_list("kind", flat=True)
-    )
+    present = _present_kinds(activity)
     return [
         {"kind": kind, "label": _LABELS.get(kind, kind)}
         for kind in needed

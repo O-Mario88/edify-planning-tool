@@ -69,25 +69,38 @@ jobs:
       - name: Run Ruff Formatter Check
         run: ruff format --check .
 
+      # Everything below runs even when a step above failed, and the reason is
+      # not tidiness. `ruff format --check` sits ahead of the suite, so for
+      # eight consecutive pushes a formatting drift failed this job before a
+      # single test executed — and the run reported only "failure", which
+      # reads identically to a real test failure. Weeks passed with nobody
+      # noticing the suite had stopped running (2026-08 audit, AUD-002).
+      # `!cancelled()` keeps the job's verdict honest (a lint failure still
+      # fails CI) while guaranteeing the test result is always visible.
       - name: Check for missing migrations
+        if: ${{ !cancelled() }}
         run: python manage.py makemigrations --check --dry-run
 
       - name: Run Tests
+        if: ${{ !cancelled() }}
         run: python manage.py test --parallel 4
 
       # The rendered CSS bundle is committed, so it can silently fall behind
       # the templates that generate it: a class added to a template renders as
       # nothing until someone rebuilds. This is the gate that catches it.
       - name: Set up Node
+        if: ${{ !cancelled() }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
           cache: "npm"
 
       - name: Install Node dependencies
+        if: ${{ !cancelled() }}
         run: npm ci
 
       - name: CSS bundle matches its source
+        if: ${{ !cancelled() }}
         run: |
           npm run build:css
           git diff --exit-code static/css/main.css \

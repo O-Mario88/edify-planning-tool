@@ -142,6 +142,11 @@ class RaceTestCase(TransactionTestCase):
             quarter="Q1",
             scheduled_date=timezone.now(),
             planned_date=timezone.now().date(),
+            # Verification refuses an activity with no Salesforce reference:
+            # the value locks at confirmation and the row could never close
+            # without one (2026-08 audit, AUD-009). Present here so the race
+            # under test is the certification race, not the missing id.
+            salesforce_activity_id="SVE-300001",
         )
 
 

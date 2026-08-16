@@ -7,7 +7,7 @@ environment could not produce evidence; it is never used to mean "probably fine"
 | --- | --- | --- | --- |
 | 1 | No unresolved Critical findings | **PASS** | One Critical found (AUD-004), reproduced, fixed, regression-tested |
 | 2 | No unresolved High in finance/security/permissions/verification/targets/data-integrity/loans/SF | **PASS** | AUD-002, AUD-003, AUD-005, AUD-006, AUD-011 all fixed and verified. The container scan was reproduced green locally with CI's exact scanner and flags before pushing |
-| 3 | Every mandatory end-to-end journey passes | **NOT ASSESSED** | §29's 16 journeys need a staging environment with real integration credentials and human actors; not performable here |
+| 3 | Every mandatory end-to-end journey passes | **1 of 16** | All 16 traced against the suite ([04-journey-coverage.md](04-journey-coverage.md)): **none was walked end to end** — each half of a journey faked its neighbour's outcome. Journey 1 (the primary spine) now has a real test that fakes nothing and proves a funded visit can be executed, verified, accounted and closed. 15 remain, with per-journey gaps listed |
 | 4 | Every critical handoff creates the correct notification and To-Do | **PARTIAL** | Verified structurally in the preceding alignment audit (12 seam fixes); not re-walked journey-by-journey here |
 | 5 | Every To-Do closes automatically when its condition resolves | **PARTIAL** | To-Dos are derived live from workflow state (cannot go stale by construction); per-producer closure not re-tested this pass |
 | 6 | Every role passes record-level access tests | **PASS** | All 952 routes walked; scope, IDOR, partner/MFI isolation verified; no unguarded state-changing endpoint |
@@ -15,9 +15,9 @@ environment could not produce evidence; it is never used to mean "probably fine"
 | 8 | Planned/actual/verified/paid/achieved remain separate | **PASS** | Distinct columns; no path writes planned into actual; four-value separation confirmed in the workspace payloads |
 | 9 | Every governed action produces an audit record | **PARTIAL** | Spot-verified (role switch logs both success and failure; 37,831 audit rows in dev); no exhaustive per-action census |
 | 10 | Locked figures change only through amendments | **PASS** | Costing refuses re-cost once money moved; `BudgetAmendment` carries previous/new/reason/actor/timestamp |
-| 11 | Every dashboard figure drills down to supporting records | **NOT ASSESSED** | Requires the per-metric reconciliation of §21.2 across all dashboards |
+| 11 | Every dashboard figure drills down to supporting records | **PARTIAL** | 68 registered metrics reconciled against their computing services ([05-metric-reconciliation.md](05-metric-reconciliation.md)): 50 disagree, mostly declaration drift, a minority materially. Drill-down link verification itself not yet walked |
 | 12 | No production page uses fake/mock/placeholder data | **PASS** | Enforced by an existing platform gate (`test_mock_purge`) that runs in the suite |
-| 13 | 50,000-school scale test passes | **PARTIAL** | See [02-scale.md](02-scale.md): school-population dimension proven; transactional volume not covered |
+| 13 | 50,000-school scale test passes | **PASS (both axes)** | School population proven flat at 50,000. The transactional axis is now covered too by a new gate — and it immediately caught two real defects: a closure queue taking 124s at 12,000 activities, and an N+1 in the offline day package. Both fixed; see [02-scale.md](02-scale.md) |
 | 14 | Routine field staff meet the 15-minute objective | **NOT ASSESSED** | Requires observed time studies with real users (§10.2). The instrument exists — telemetry with the §3a planning/execution split — but has no production data behind it |
 | 15 | Offline work recovers and syncs without duplication | **NOT ASSESSED** | Server half (day package) exists and is tested; the service-worker/queue client is unbuilt (roadmap B3) |
 | 16 | Salesforce/NetSuite/MFI failures are recoverable | **PARTIAL** | Outbox dead-letters, backs off, replays, and never un-verifies internal work — verified. But the transports are unimplemented and flag-off by design (roadmap B2), so no live failure was exercised |
@@ -48,25 +48,32 @@ paperwork.
 
 ## Recommended remediation order
 
-**Done this pass:** AUD-001, AUD-002, AUD-003, AUD-004, AUD-005, AUD-006,
-AUD-007, AUD-010, AUD-011, and the SF-ID half of AUD-009.
+**Closed in this audit:** AUD-001 through AUD-015 — the Critical
+separation-of-duties bypass, partner credit leaking into personal achievement,
+stored XSS, the silent-red pipeline, the container scan, Admin's budget
+authority, the browser-login throttle, the Salesforce gate on both verification
+doors, seed fidelity, the 124-second closure queue, the day-package N+1, and My
+Plan hiding a field officer's own work.
 
-**Before pilot (open, each needs a decision rather than a patch):**
-- Enforce the Salesforce ID at IA verification, or accept that an activity can
-  be verified without one and then never closed (AUD-009, related risk).
-- Decide the mixed-counting-basis behaviour in `refresh_period_targets`
-  (AUD-009 item 2) — latent today, wrong the moment a milestone mixes bases.
-- Make the formatter check a separate always-first CI job with an alert, so the
-  silent-red mode of AUD-002 cannot recur.
-- Reseed or accept the 23,560 impossible SSA rows in dev (AUD-008).
+**Before pilot — needs a decision, not a patch:**
+- Settle the material metric discrepancies in
+  [05-metric-reconciliation.md](05-metric-reconciliation.md), led by
+  `partner_oversight_payment_pending` treating `completed` as verified and
+  `bt_positive_impact` reading a column nothing writes.
+- Decide whether the headline target-achievement tiles should join the metric
+  registry; today several are raw dicts outside it.
 
-**Before production:**
-- Extend the scale fixture to transactional volume and add BT surfaces (gate 13).
-- Build the offline client and test real-device recovery (gate 15).
-- Credential the integrations and exercise real failure/replay (gate 16).
-- Run the §29 journeys on staging (gate 3) and the §21.2 metric reconciliation
-  (gate 11).
+**Before production — needs an environment this one is not:**
+- Walk the remaining 15 journeys ([04-journey-coverage.md](04-journey-coverage.md)),
+  ideally as tests rather than manual runs, since the gaps are seams.
+- Build the offline client and test recovery on a real device (gate 15).
+- Credential Salesforce/NetSuite/MFI and exercise a real failure and replay
+  (gate 16).
 - Rehearse a restore (gate 17).
+- Run this on staging before clients see it: 32 migrations and a new module is
+  not a routine deploy.
+- Note `REDIS_URL` is unset with `instance_count: 1`, so the platform cannot
+  scale horizontally as shipped; the scale evidence assumed a single process.
 
-**Within 30 days:** build the §7 requirements traceability matrix (gate 19), and
-run the observed time studies once there is production usage to measure (gate 14).
+**Within 30 days:** the §7 requirements traceability matrix (gate 19), and the
+observed staff time studies once there is production usage to measure (gate 14).

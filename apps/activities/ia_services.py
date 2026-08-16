@@ -338,6 +338,48 @@ class ActivityReturnService:
             return _serialize(activity)
 
 
+def _assert_verifiable(activity) -> None:
+    """The preconditions verification must not skip, on either door.
+
+    The Salesforce reference is LOCKED once IA confirms
+    (apps/frontend/views/my_plan_views.py refuses to change it afterwards) and
+    the database forbids closing without one
+    (`closed_activity_must_have_sf_id`). So an activity verified without a
+    reference can never acquire one and can never close — an unrecoverable
+    state reached by a single click, on the door Impact Assessment actually
+    uses. Refusing here fails early with something the verifier can fix in a
+    minute instead. (The DRF door, `apps.activities.services.ia_confirm`,
+    applies its own strict block to Core work; this mirrors it rather than
+    inventing a second standard.)
+    """
+    from apps.hr.milestone_progress import SALESFORCE_EXEMPT_RECORD_TYPES
+
+    exempt = activity.salesforce_record_type_snapshot in SALESFORCE_EXEMPT_RECORD_TYPES
+    if not exempt and not (activity.salesforce_activity_id or "").strip():
+        raise BadRequest(
+            "IA Verification failed: the Salesforce ID is missing. It cannot be "
+            "added after verification, and the activity cannot close without "
+            "it — ask the owner to enter it, then verify."
+        )
+
+    # Core work keeps the stricter checks the DRF door applies to it. They are
+    # deliberately NOT extended to every activity here: evidence requirements
+    # vary by type (apps/evidence/requirements.py), and a blanket rule would
+    # refuse types the platform never asks evidence of.
+    if activity.activity_type in ("core_visit", "core_training"):
+        from apps.evidence.models import EvidenceRecord
+
+        if (
+            EvidenceRecord.objects.filter(
+                activity_id=activity.id, quarantined=False
+            ).count()
+            == 0
+        ):
+            raise BadRequest("IA Verification failed: no evidence files uploaded.")
+        if not activity.focus_intervention:
+            raise BadRequest("IA Verification failed: focus intervention not recorded.")
+
+
 class ActivityCertificationService:
     """Certifies activity as official, updating status and triggering downstream integrations."""
 
@@ -353,6 +395,7 @@ class ActivityCertificationService:
         # verifier's identity on an audit-relevant field.
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
+        _assert_verifiable(activity)
         with transaction.atomic():
             activity = (
                 Activity.objects.select_for_update().filter(id=activity.id).first()
@@ -362,6 +405,7 @@ class ActivityCertificationService:
                 or activity.status != ActivityStatus.AWAITING_IA_VERIFICATION
             ):
                 raise BadRequest("Activity is not awaiting IA verification")
+            _assert_verifiable(activity)
             activity.status = ActivityStatus.IA_VERIFIED
             activity.ia_verification_status = VerificationStatus.CONFIRMED
             activity.ia_confirmed_at = timezone.now()

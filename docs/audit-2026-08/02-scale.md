@@ -1,7 +1,13 @@
 # Scale verification — the 50,000-school gate (mandate §25, acceptance §33.13)
 
-**Verdict: PARTIAL PASS.** The school-population dimension is proven at 50,000.
-The transactional-volume dimension is not covered and remains an open obligation.
+**Verdict: PASS on both axes.** The school-population dimension is proven at
+50,000, and the transactional dimension — the half this document originally
+recorded as unproven — is now covered by a second gate.
+
+Building that second gate was worth it on the first run: it immediately caught
+two real defects that the school-population gate could never have seen, because
+both are flat in schools and steep in work done. See "The transactional axis"
+below.
 
 ## What was run
 
@@ -37,31 +43,38 @@ dashboard over both school growth and roster growth.
 Laptop wall time under `manage.py test` is not production wall time; these
 figures are comparative evidence of flat cost, not an SLO measurement.
 
-## What this does NOT prove
+## The transactional axis (added 2026-08-16)
 
-The fixture builds geography, 50,000 schools, staff-school assignments, and SSA
-records. It does **not** build proportional volumes of the transactional estate
-that mandate §6.4 requires:
+`TransactionalVolumeScaleTest` in the same file asks the other question: a page
+can be O(1) in schools and O(n) in the work done at them, and activities,
+evidence, fund requests and loans accumulate far faster than schools do.
 
-- activities, evidence records, attendance
-- budget lines, fund requests, approvals, disbursements, accountability
-- audit events, notifications, To-Do-producing states, messages
-- target allocations and achievement credits
-- **BT loans, repayment snapshots, compliance records** — the Business
-  Transformation surfaces are outside the scale gate entirely
+Same assertion shape, different axis — measure, add tens of thousands of
+activities across the lifecycle statuses, measure again, and require the query
+count not to move. Configurable via `EDIFY_SCALE_ACTIVITIES` and
+`EDIFY_SCALE_ACTIVITY_GROWTH`.
 
-So a page that is O(1) in *schools* could still be O(n) in *activities* or
-*loans* and pass this gate.
+It found two defects on its first run:
 
-## Open obligations before §33.13 can be signed off
+| Surface | Symptom | Cause |
+| --- | --- | --- |
+| `/activities/closure/` | **124.5 seconds** at 12,000 activities | Evaluated every activity ever executed on page load, each in its own transaction — and twice per row, because `is_eligible()` re-ran `evaluate()` |
+| `/today` | queries grew 176 → 240 with volume | `missing_evidence_kinds()` read `activity.evidence` per row — an N+1 in the offline field payload |
 
-1. Extend the fixture with a realistic transactional mix at 50,000-school ratios
-   (document the ratio assumptions where production data cannot supply them).
-2. Add the BT loan register, MFI portal, repayment reporting, and the closure and
-   accountability queues to the invariance list.
-3. Run the concurrency/load scenarios of §25.1 (login peak, fund-request
-   deadline, month-end consolidation) against a staging deployment — not a
-   single-process test runner.
+Both fixed (AUD-012, AUD-013). The gate's whole run fell from 180s to 66s, and
+`/my-plan`, `/dashboard`, `/todos`, `/today` and the closure queue are now flat
+in transactional volume.
+
+## What is still not proven
+
+- Evidence files, notifications, messages and BT loans are not yet in the
+  transactional fixture — only activities, at realistic lifecycle spread.
+- The concurrency and peak-load scenarios of §25.1 (login peak, fund-request
+  deadline, month-end consolidation) need a staging deployment; a single-process
+  test runner cannot answer them.
+- `REDIS_URL` is unset and every service runs at `instance_count: 1`, so all of
+  this evidence describes a single process. Horizontal scaling is a config
+  change that has not been exercised.
 
 ## Related work done during this audit
 

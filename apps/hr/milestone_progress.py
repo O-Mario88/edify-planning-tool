@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 
 from django.db import transaction
@@ -13,7 +14,39 @@ from .models import (
 )
 
 
+logger = logging.getLogger("edify.milestone_progress")
+
 QUALIFYING_STATES = {"ia_verified", "accountant_confirmed", "closed"}
+
+# Counting bases grouped by the UNIT they produce. Bases inside one family
+# share an aggregation and combine correctly (two school bases both count
+# distinct schools). Bases across families do not: schools and teachers are
+# different things and have no shared total.
+SCHOOL_BASES = frozenset(
+    {
+        "UNIQUE_SCHOOLS_SUPPORTED",
+        "UNIQUE_SCHOOLS_TRAINED",
+        "PERCENT_OF_ELIGIBLE_SCHOOLS",
+    }
+)
+TEACHER_BASES = frozenset({"UNIQUE_PARTICIPANTS", "TEACHERS_TRAINED"})
+LEADER_BASES = frozenset({"SCHOOL_LEADERS_TRAINED"})
+
+
+def counting_basis_families(bases) -> set[str]:
+    """Which unit families a set of counting bases spans."""
+    families = set()
+    for family, members in (
+        ("schools", SCHOOL_BASES),
+        ("teachers", TEACHER_BASES),
+        ("leaders", LEADER_BASES),
+    ):
+        if set(bases) & members:
+            families.add(family)
+    if set(bases) - (SCHOOL_BASES | TEACHER_BASES | LEADER_BASES):
+        families.add("credited_value")
+    return families
+
 
 # Record types that legitimately carry no Salesforce Activity ID. Same set the
 # `closed_activity_must_have_sf_id` database constraint exempts — stated once
@@ -182,19 +215,32 @@ def refresh_period_targets(milestone_id: str) -> None:
                 | Q(activity__monitored_by_staff_id__in=member_ids)
             ).exclude(activity__delivery_type="partner")
         bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
-        if bases & {
-            "UNIQUE_SCHOOLS_SUPPORTED",
-            "UNIQUE_SCHOOLS_TRAINED",
-            "PERCENT_OF_ELIGIBLE_SCHOOLS",
-        }:
+        families = counting_basis_families(bases)
+        if len(families) > 1:
+            # Two counting bases from different UNIT families on one milestone
+            # (schools and teachers, say) have no common total: the branch
+            # order below would silently keep one and discard the rest, and a
+            # target would read as under-delivered for a reason nobody could
+            # see. This is a definition error in the rules, not a number to
+            # guess at, so say so loudly and name the milestone. The figure
+            # still computes from the first family, unchanged, so surfacing it
+            # never destabilises an existing number.
+            logger.error(
+                "milestone %s mixes counting-basis families %s — its verified "
+                "actual counts only %s; the rules must agree on one unit",
+                milestone_id,
+                sorted(families),
+                sorted(families)[0],
+            )
+        if bases & SCHOOL_BASES:
             actual = credits.exclude(activity__school__isnull=True).aggregate(
                 value=Count("activity__school", distinct=True)
             )["value"]
-        elif bases & {"UNIQUE_PARTICIPANTS", "TEACHERS_TRAINED"}:
+        elif bases & TEACHER_BASES:
             actual = credits.aggregate(value=Sum("activity__teachers_attended"))[
                 "value"
             ]
-        elif "SCHOOL_LEADERS_TRAINED" in bases:
+        elif bases & LEADER_BASES:
             actual = credits.aggregate(value=Sum("activity__leaders_attended"))["value"]
         else:
             actual = credits.aggregate(value=Sum("credited_value"))["value"]

@@ -14,6 +14,15 @@ from apps.activities.closure_services import (
     AnalyticsPublishingService,
 )
 
+# Ceilings for the closure queue. Deriving a checklist costs several queries
+# inside its own transaction, so the page's cost is the number of rows it
+# evaluates — and before these caps that number was "every activity ever
+# executed". The queue is a work list: the most recent rows are the ones
+# anybody acts on, and the Blocked page (/activities/closure/blocked/) exists
+# for the long tail.
+CLOSURE_QUEUE_LIMIT = 300
+CLOSURE_TAB_LIMIT = 100
+
 
 def _in_scope(request, queryset):
     """Narrow an Activity queryset to what the caller may actually see.
@@ -68,8 +77,7 @@ def _scoped_activity(request, activity_id, **extra):
 @require_page_permission("planning")  # Standard planner/admin roles
 def closure_readiness_queue_view(request):
     """Closure Readiness Queue (Filterable Tabs)."""
-    # Fetch all activities that are not planned/scheduled (executed or verification loop)
-    activities = (
+    base = (
         _in_scope(request, Activity.objects.filter(deleted_at__isnull=True))
         .exclude(
             status__in=[
@@ -84,33 +92,34 @@ def closure_readiness_queue_view(request):
         .order_by("-updated_at")
     )
 
-    # Run evaluation update on activities dynamically to ensure checklist exists.
-    # Must cover the full queryset -- the categorization loop below iterates
-    # every row in `activities`, so a partial refresh window would leave rows
-    # beyond it bucketed on stale/None checklists and able to silently vanish
-    # from tabs.
-    for a in activities:
-        ClosureEligibilityService.evaluate(a)
+    # A closed activity is terminal: it needs no checklist refresh, and
+    # re-deriving one for every activity ever closed is what made this page
+    # cost 124 seconds at twelve thousand activities (2026-08 audit). It is
+    # listed from the database and never evaluated.
+    closed_list = list(base.filter(status="closed")[:CLOSURE_TAB_LIMIT])
 
-    # Categorize items into tabs
+    # The live queue is bounded too. This is a work list, not an archive:
+    # everything past the cap is older, already-surfaced work, and an
+    # unbounded queue is precisely the shape that stops loading the year the
+    # platform gets busy.
+    open_activities = list(base.exclude(status="closed")[:CLOSURE_QUEUE_LIMIT])
+
     ready_list = []
     finance_pending_list = []
     accountability_list = []
     analytics_list = []
     blocked_list = []
-    closed_list = []
 
-    for a in activities:
-        if a.status == "closed":
-            closed_list.append(a)
+    for a in open_activities:
+        # Evaluate ONCE per activity and reuse the result. `is_eligible()`
+        # calls `evaluate()` internally, so the previous shape — a refresh
+        # loop, then `is_eligible` inside the bucketing loop — derived every
+        # checklist twice, each inside its own transaction.
+        checklist, _blockers = ClosureEligibilityService.evaluate(a)
+        if checklist is None:
             continue
 
-        checklist = getattr(a, "closure_checklist", None)
-        if not checklist:
-            continue
-
-        is_ready = ClosureEligibilityService.is_eligible(a)
-        if is_ready:
+        if ClosureEligibilityService._core_requirements_met(checklist):
             ready_list.append(a)
         elif checklist.finance_required and not checklist.accounts_cleared:
             finance_pending_list.append(a)

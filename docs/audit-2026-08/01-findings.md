@@ -323,3 +323,104 @@ paid-without-verification, zero duplicate open data-quality conditions. A DB CHE
 constraint enforces the Salesforce-ID-on-close law.
 
 **Scale (§33.13).** See [02-scale.md](02-scale.md) — **PARTIAL PASS**.
+
+---
+
+# Second pass (2026-08-16, later) — closing the open items
+
+The four items left open by the first pass were closed, and doing so surfaced
+four further defects. Each is recorded below with the evidence that found it.
+
+## AUD-012 · HIGH · FIXED — the closure queue took 124 seconds at 12,000 activities
+
+Found by the new transactional-volume scale gate (see
+[02-scale.md](02-scale.md)), which is the point of building it.
+
+`/activities/closure/` evaluated **every activity ever executed** on page load:
+a loop calling `ClosureEligibilityService.evaluate()`, which opens its own
+transaction and runs several queries per row — and then `is_eligible()` inside
+the bucketing loop called `evaluate()` a *second* time for the same row. At
+12,000 activities the page took **124.5 seconds**. In production, after a year
+of use, it would simply never load.
+
+**Fixed:** closed activities are listed straight from the database and never
+re-evaluated (they are terminal); the live queue is bounded; and each row is
+evaluated exactly once, with the result reused for both bucketing and
+eligibility. The gate's whole run dropped from 180s to 66s.
+
+## AUD-013 · MEDIUM · FIXED — the offline day package was N+1 in evidence
+
+Same gate, `/today`: query count grew 176 → 240 as activities grew, because
+`missing_evidence_kinds()` reads `activity.evidence` per row. That is the
+payload a field officer fetches over the worst connection they will have.
+**Fixed** with a filtered `Prefetch`, and `missing_evidence_kinds` now uses the
+prefetched rows when present.
+
+## AUD-014 · HIGH · FIXED — My Plan hid a field officer's own work
+
+`apps.core.scoping.owner_ids` exists because `Activity.responsible_staff_id`
+holds a StaffProfile id on some rows and a User id on others; its docstring
+records what happens when only one space is checked — it "silently disowns most
+of a field worker's activities". **My Plan filtered on `scope.staff_ids`
+alone**, covering the second space only when the first was empty, which never
+happens for a staff member with a profile.
+
+This is not hypothetical: **every one of the 599 activities in the development
+database stores a User id**, and none stores a profile id. A CCEO whose work was
+written by that path opened My Plan and saw an empty day.
+
+**Fixed:** both querysets now use `owner_ids(principal)`. A regression test
+creates one activity in each id space and asserts both appear.
+
+## AUD-015 · MEDIUM · FIXED — verification could reach an unrecoverable state
+
+The DRF door refuses to verify Core work without evidence, a Salesforce
+reference and an intervention. The live IA workspace — the door Impact
+Assessment actually uses — checked none of it. Because the reference locks at
+confirmation and the database forbids closing without one, a single click could
+put an activity in a state where it can never close and can never earn credit.
+**Fixed:** the workspace now asserts the reference for every non-exempt record
+type, and mirrors the DRF door's Core-strict checks. Five test fixtures that
+modelled verified-without-reference — a state the workflow cannot produce — were
+corrected.
+
+## Journey coverage: the sweep's verdict, and what changed
+
+A parallel sweep traced all sixteen mandated journeys against the suite. Its
+finding: **not one journey was walked end to end**. The suite tests steps in
+isolation and each half fabricates its neighbour's outcome — the money test
+hand-sets `ia_verification_status = "confirmed"` and never executes a visit;
+the execution test never touches money. Either half can pass while the seam
+between them is broken.
+
+Its sharpest open question was whether a visit funded through the weekly-advance
+chain could reach `closed` at all — nothing proved it could.
+
+**It can, and now there is a test that proves it.**
+`apps/core/tests/test_journey_school_visit.py` walks Journey 1 with nothing
+faked: plan through the costed funnel → weekly request → PL approval →
+disbursement → receipt confirmation → execution → evidence → Salesforce
+reservation → PL review → IA verification through the live service →
+accountability with the NetSuite code → PL and Accountant approval → `closed`.
+A second test proves the same chain credits the achievement ledger exactly once
+and does not double-count on replay.
+
+The remaining fifteen journeys are still covered only step-by-step. That work is
+scoped in [04-journey-coverage.md](04-journey-coverage.md).
+
+## Metric reconciliation (gate 11): first pass done, findings recorded
+
+68 registered metrics were reconciled against the services that compute them.
+50 disagree with their specification in some way. The distribution matters:
+
+- **Most are declaration drift, not wrong numbers** — a `service` field naming a
+  function that has been renamed, or a `date_basis` labelled SUBMISSION_DATE
+  where the query filters a disbursement date. The figure is right; the spec
+  describing it is not.
+- **A minority change what the reader sees.** The ones worth acting on before
+  rollout are listed in [05-metric-reconciliation.md](05-metric-reconciliation.md),
+  led by: `partner_oversight_payment_pending` counting `completed` as verified
+  (the platform's law is that only IA-verified work counts);
+  `bt_positive_impact` reading `MfiLoan.impact_status`, a column nothing in the
+  codebase ever writes; and several headline target-achievement tiles built as
+  raw dicts outside the registry entirely.

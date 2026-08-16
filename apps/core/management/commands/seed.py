@@ -596,6 +596,15 @@ class Command(BaseCommand):
                     verification_status="confirmed",
                     verification_source="staff_self_verified",
                     source="local_test_upload",
+                    # A confirmed record carries who confirmed it and when —
+                    # the real confirmation paths (apps/ssa/services.py and
+                    # upload_service.py) always stamp both. Seeding "confirmed"
+                    # with neither manufactured a state the application cannot
+                    # produce, so anything reading verification metadata off
+                    # seeded data was reasoning about an impossible row
+                    # (2026-08 audit, AUD-008).
+                    verified_at=timezone.now(),
+                    verified_by_user_id="seed",
                 )
                 for interv in interventions:
                     SsaScore.objects.create(

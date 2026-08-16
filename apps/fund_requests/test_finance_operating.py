@@ -608,6 +608,10 @@ class FinanceOperatingSystemTest(TestCase):
             payment_status="none",
             assigned_partner_id="partner_abc",
             planned_date=date(2026, 7, 25),
+            # Verification requires the Salesforce reference, because it is
+            # locked immediately afterwards and the activity could otherwise
+            # never close (2026-08 audit, AUD-009).
+            salesforce_activity_id="VS-PARTNER-QUEUE-1",
         )
         ActivityCertificationService.certify_activity(activity, {}, "ia_user")
         activity.refresh_from_db()

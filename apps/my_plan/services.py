@@ -15,7 +15,7 @@ from apps.accounts.models import User
 from apps.partners.models import Partner
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import owner_ids, resolve_user_scope
 
 ACTIVE_MY_PLAN_EXCLUDED_STATUSES = ("closed", "cancelled", "rejected")
 
@@ -149,15 +149,15 @@ def get(principal, query: dict) -> dict:
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
-        # Match the identifier space that activities.services.create writes.
-        # create() prefers the StaffProfile CUID (== scope.staff_ids) and falls
-        # back to the User CUID. Cover BOTH when scope.staff_ids is empty so a
-        # user without a StaffProfile still sees their scheduled activities.
-        staff_ids = scope.staff_ids or [
-            principal.staff_profile_id or principal.id,
-            principal.id,
-        ]
-        staff_ids = [s for s in staff_ids if s]
+        # BOTH identifier spaces, always — not just when the scope is empty.
+        # `Activity.responsible_staff_id` holds a StaffProfile id when the row
+        # came through activities.services.create and a User id when it came
+        # from the seeder or an older path; `owner_ids` is the one helper that
+        # knows this, and its docstring records what happens without it —
+        # "silently disowns most of a field worker's activities". Filtering on
+        # scope.staff_ids alone reproduced that bug on the field officer's
+        # primary daily surface (2026-08 audit).
+        staff_ids = [s for s in owner_ids(principal) if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids)
             | Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
@@ -541,14 +541,11 @@ def get_frontend_context(principal, query: dict) -> dict:
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
-        staff_ids = list(scope.staff_ids or [])
+        # Both id spaces for the caller's own work (see owner_ids), plus any
+        # supervisees a PL is looking at.
+        staff_ids = list(owner_ids(principal))
         if scope.supervised_staff_ids:
             staff_ids.extend(scope.supervised_staff_ids)
-        if not staff_ids:
-            # Match the identifier space that activities.services.create writes
-            # (StaffProfile CUID preferred, User CUID fallback). Cover BOTH so
-            # users without a StaffProfile still see their scheduled activities.
-            staff_ids = [principal.staff_profile_id or principal.id, principal.id]
         staff_ids = [s for s in staff_ids if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids)

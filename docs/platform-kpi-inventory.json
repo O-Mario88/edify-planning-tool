@@ -6767,7 +6767,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/system_health/page_inventory.py",
-   "line": 769,
+   "line": 783,
    "label": null,
    "keys": [
     "label",

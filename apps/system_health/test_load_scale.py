@@ -652,3 +652,190 @@ SLO_MS: dict[str, int] = {
 # already-substantial build time.
 LATENCY_SAMPLES = 7
 LATENCY_WARMUP = 2
+
+
+# ── The other half of the scale question ─────────────────────────────────────
+# ScaleGateTest above grows the SCHOOL population and proves the pages are flat
+# against it. That leaves the dimension the 2026-08 audit flagged as unproven:
+# a page can be O(1) in schools and O(n) in the work done at them. Activities,
+# evidence, fund requests, notifications and loans all accumulate every day the
+# platform is used, and they accumulate faster than schools do.
+#
+# Same assertion shape, different axis: measure, add transactions, measure
+# again. A page whose query count does not move when tens of thousands of
+# activities appear is flat in the transactional estate, at any size.
+BASE_ACTIVITIES = _env_int("EDIFY_SCALE_ACTIVITIES", 12_000)
+GROWTH_ACTIVITIES = _env_int("EDIFY_SCALE_ACTIVITY_GROWTH", 8_000)
+
+
+class TransactionalVolumeScaleTest(TestCase):
+    """Pages must cost the same as the WORK grows, not just the estate."""
+
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.user = User.objects.create(
+            id="txn-cceo",
+            email="txn-cceo@edify.org",
+            name="Txn CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+        )
+        cls.user.set_password("pass123")
+        cls.user.save()
+        cls.profile = StaffProfile.objects.create(
+            id="txn-staff-cceo", user=cls.user, title="CCEO"
+        )
+
+        cls.region = Region.objects.create(name="Txn Region")
+        cls.district = District.objects.create(name="Txn District", region=cls.region)
+
+        # A realistic portfolio, not the whole country: the point is that this
+        # ONE person's pages stay flat while the platform's total work grows.
+        schools = [
+            School(
+                school_id=f"TXN-{i:05d}",
+                name=f"Txn School {i:05d}",
+                region=cls.region,
+                district=cls.district,
+                school_type="client",
+                current_fy_ssa_status="not_done",
+                planning_readiness="ready",
+            )
+            for i in range(400)
+        ]
+        School.objects.bulk_create(schools, batch_size=1000)
+        cls.school_ids = list(
+            School.objects.order_by("school_id").values_list("id", flat=True)
+        )
+        StaffSchoolAssignment.objects.bulk_create(
+            [
+                StaffSchoolAssignment(staff=cls.profile, school_id=sid)
+                for sid in cls.school_ids
+            ],
+            batch_size=1000,
+        )
+
+        cls.fy = get_operational_fy()
+        cls._make_activities(BASE_ACTIVITIES, prefix="base")
+        _analyze()
+
+    @classmethod
+    def _make_activities(cls, count, *, prefix):
+        """Bulk-create `count` activities spread over the caller's portfolio.
+
+        Statuses are spread across the lifecycle so the queues under test
+        (To-Dos, closure, finance) all have real rows to filter rather than
+        one status that happens to miss every WHERE clause.
+        """
+        from datetime import timedelta
+
+        from apps.activities.models import Activity
+
+        statuses = [
+            "scheduled",
+            "completed",
+            "awaiting_ia_verification",
+            "ia_verified",
+            "closed",
+        ]
+        today = timezone.localdate()
+        rows = []
+        for i in range(count):
+            status = statuses[i % len(statuses)]
+            rows.append(
+                Activity(
+                    activity_type="school_visit",
+                    delivery_type="staff",
+                    status=status,
+                    school_id=cls.school_ids[i % len(cls.school_ids)],
+                    responsible_staff_id=cls.profile.id,
+                    planned_date=today - timedelta(days=i % 120),
+                    scheduled_date=timezone.now() - timedelta(days=i % 120),
+                    fy=cls.fy,
+                    quarter="Q1",
+                    salesforce_activity_id=f"VS-{prefix}-{i:07d}",
+                    est_cost_cents=50_000,
+                )
+            )
+            if len(rows) >= 2000:
+                Activity.objects.bulk_create(rows)
+                rows = []
+        if rows:
+            Activity.objects.bulk_create(rows)
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def _measure(self, url, *, allow_statuses=(200,)):
+        from apps.activities.models import Activity
+
+        reset_queries()
+        with CaptureQueriesContext(connection) as ctx:
+            started = time.perf_counter()
+            response = self.client.get(url)
+            elapsed = time.perf_counter() - started
+        self.assertIn(
+            response.status_code,
+            allow_statuses,
+            f"{url} returned {response.status_code} at "
+            f"{Activity.objects.count():,} activities",
+        )
+        self.assertLess(
+            elapsed,
+            CATASTROPHIC_SECONDS,
+            f"{url} took {elapsed:.2f}s at {Activity.objects.count():,} activities.",
+        )
+        return len(ctx.captured_queries)
+
+    def _assert_flat_in_transactions(self, url, *, allow_statuses=(200,)):
+        from apps.activities.models import Activity
+
+        before_rows = Activity.objects.count()
+        before = self._measure(url, allow_statuses=allow_statuses)
+        self._make_activities(GROWTH_ACTIVITIES, prefix="growth")
+        _analyze()
+        after = self._measure(url, allow_statuses=allow_statuses)
+        after_rows = Activity.objects.count()
+
+        self.assertGreater(
+            after_rows,
+            before_rows,
+            "the growth step added no activities, so this proves nothing",
+        )
+        self.assertLessEqual(
+            after,
+            before,
+            f"{url} issued {before} queries at {before_rows:,} activities and "
+            f"{after} at {after_rows:,}: its cost grows with the work done, "
+            f"not just with the estate. That is the N+1 shape that only "
+            f"appears once the platform has been in use for a while.",
+        )
+
+    def test_the_fixture_actually_built_a_transactional_estate(self):
+        """Without this, every assertion below could pass on an empty table."""
+        from apps.activities.models import Activity
+
+        self.assertGreaterEqual(Activity.objects.count(), BASE_ACTIVITIES)
+        self.assertGreaterEqual(School.objects.count(), 400)
+
+    def test_my_plan_is_flat_in_activity_volume(self):
+        self._assert_flat_in_transactions("/my-plan")
+
+    def test_dashboard_is_flat_in_activity_volume(self):
+        self._assert_flat_in_transactions("/dashboard")
+
+    def test_todo_queue_is_flat_in_activity_volume(self):
+        # The To-Do queue is derived live from workflow state, so it is the
+        # surface most exposed to transactional growth: every activity in a
+        # waiting state is a candidate row.
+        self._assert_flat_in_transactions("/todos")
+
+    def test_today_workbench_is_flat_in_activity_volume(self):
+        self._assert_flat_in_transactions("/today")
+
+    def test_closure_queue_is_flat_in_activity_volume(self):
+        self._assert_flat_in_transactions(
+            "/activities/closure/", allow_statuses=(200, 302)
+        )

@@ -18,11 +18,12 @@ from __future__ import annotations
 
 from datetime import date as date_type
 
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core.scoping import resolve_user_scope
+from apps.evidence.models import EvidenceRecord
 from apps.evidence.requirements import missing_evidence_kinds
 from apps.my_plan.services import ACTIVE_MY_PLAN_EXCLUDED_STATUSES
 
@@ -66,6 +67,19 @@ def build_day_package(principal, *, day: date_type | None = None) -> dict:
         .exclude(status__in=ACTIVE_MY_PLAN_EXCLUDED_STATUSES)
         .exclude(delivery_type="partner")
         .select_related("school", "school__sub_county", "school__district")
+        # `missing_evidence_kinds` reads `activity.evidence` per row, so
+        # without this the package costs one query per activity — an N+1 that
+        # hides at five visits a day and shows on a heavy one, on the payload
+        # a field officer fetches over the worst connection they will have.
+        # The prefetch is filtered the same way the requirement check filters,
+        # so the cached rows are exactly the ones it counts.
+        .prefetch_related(
+            Prefetch(
+                "evidence",
+                queryset=EvidenceRecord.objects.filter(quarantined=False),
+                to_attr="_unquarantined_evidence",
+            )
+        )
         .order_by("scheduled_date", "id")
     )
     from apps.routes.models import SchoolGeoPoint

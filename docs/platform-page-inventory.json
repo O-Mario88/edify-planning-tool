@@ -5073,7 +5073,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.activity_closure_detail_view",
@@ -5126,7 +5126,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.activity_closure_detail_view",
@@ -5179,7 +5179,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.close_activity_action",
@@ -5537,7 +5537,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.reopen_activity_action",
@@ -6142,7 +6142,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.activity_timeline_view",
@@ -6247,7 +6247,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.closure_readiness_queue_view",
@@ -6297,7 +6297,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.closure_readiness_queue_view",
@@ -6347,7 +6347,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.blocked_closure_view",
@@ -6397,7 +6397,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.blocked_closure_view",
@@ -8758,7 +8758,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.analytics_publishing_status_view",
@@ -8807,7 +8807,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.analytics_publishing_status_view",
@@ -10877,7 +10877,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.completed_activities_view",
@@ -10928,7 +10928,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.completed_activity_detail_view",
@@ -10978,7 +10978,7 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": false,
+      "audit_events": true,
       "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.closure_views",
       "backend_view": "apps.frontend.views.closure_views.completed_activity_detail_view",

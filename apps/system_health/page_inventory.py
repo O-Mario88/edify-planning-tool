@@ -64,6 +64,20 @@ _RAW_HEX_RE = re.compile(
     r"(?<!&)#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})"
     r"(?![0-9A-Za-z_-])"
 )
+# `<meta name="theme-color">` is read by the browser chrome before any CSS
+# exists, so it cannot reference a design token — a literal is the only thing
+# that works there. Stripping the tag before the hex scan keeps the rule honest
+# about real token bypasses instead of failing on the one place a hex is
+# correct.
+_BROWSER_COLOR_META_RE = re.compile(
+    r"<meta[^>]*name=[\"\']theme-color[\"\'][^>]*>", re.IGNORECASE
+)
+
+
+def _without_browser_color_meta(source: str) -> str:
+    return _BROWSER_COLOR_META_RE.sub("", source)
+
+
 # A bound Alpine ``:style`` attribute is executable state, not literal inline
 # presentation.  Match only the native HTML attribute so the audit does not
 # obscure real static style debt with false positives.
@@ -401,7 +415,7 @@ def _template_findings(source: str, name: str = "") -> list[Finding]:
         (
             "raw-hex",
             "medium",
-            _RAW_HEX_RE.search(source),
+            _RAW_HEX_RE.search(_without_browser_color_meta(source)),
             "A raw hexadecimal color bypasses semantic theme tokens.",
             "Map the color to an existing semantic token or add a documented token.",
         ),
