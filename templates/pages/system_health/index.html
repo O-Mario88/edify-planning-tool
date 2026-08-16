@@ -126,6 +126,112 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 </div>
 </div>
 
+<!-- Staff Time Standard (docs/STAFF_TIME_STANDARD.md): role-population
+     percentiles of active administration time. Aggregate by constitution —
+     this payload never names an individual, and no per-person surface may
+     ever be added here. -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Staff Time Standard</h3>
+{% if health.interactionTelemetry.report and health.interactionTelemetry.report.roles %}
+<div class="flex flex-wrap items-center gap-2">
+{% if health.interactionTelemetry.report.fieldWithinStandardPct != None %}
+<span class="edify-badge" {% if health.interactionTelemetry.report.meetsStandard %}data-tone="success"{% else %}data-tone="warning"{% endif %}>{{ health.interactionTelemetry.report.fieldWithinStandardPct }}% of field days ≤ {{ health.interactionTelemetry.report.ceilingMinutes }} min</span>
+{% if health.interactionTelemetry.report.fieldPlanningSharePct != None %}<span class="edify-badge">{{ health.interactionTelemetry.report.fieldPlanningSharePct }}% of field time on planning surfaces</span>{% endif %}
+<span class="edify-text-caption text-slate-500">{{ health.interactionTelemetry.report.fieldPersonDays }} field person-days · last {{ health.interactionTelemetry.report.windowDays }} days · population percentiles only · planning share should trend to zero as preparation automates</span>
+{% else %}
+<span class="edify-text-caption text-slate-500">No field-role person-days measured yet in the last {{ health.interactionTelemetry.report.windowDays }} days.</span>
+{% endif %}
+</div>
+<div class="space-y-2">
+{% for r in health.interactionTelemetry.report.roles %}
+<div class="p-3 rounded-surface bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+<div class="text-[12px] font-semibold text-slate-700">{{ r.role }}{% if r.covered_by_standard %} <span class="edify-badge" data-tone="info">Covered</span>{% endif %}</div>
+<div class="edify-text-caption text-slate-500 tabular-nums">{{ r.person_days }} days · p50 {{ r.p50_minutes }}m · p90 {{ r.p90_minutes }}m · p95 {{ r.p95_minutes }}m{% if r.within_standard_pct != None %} · {{ r.within_standard_pct }}% ≤ ceiling{% endif %}{% if r.planning_share_pct != None %} · planning {{ r.planning_share_pct }}%{% endif %}</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="text-[12px] text-slate-400 font-medium">No interaction data yet — the baseline builds as authenticated traffic is measured.</div>
+{% endif %}
+<div class="space-y-2">
+{% for c in health.interactionTelemetry.checks %}
+<div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+{% if c.severity != 'ok' %}<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Durable outbox (roadmap Phase 2): the event backbone's liveness —
+     depth, oldest pending age, dead letters, each with its replay path. -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Durable Outbox</h3>
+{% if health.outbox.summary %}
+<div class="flex flex-wrap items-center gap-2">
+<span class="edify-badge" {% if health.outbox.summary.dead %}data-tone="danger"{% elif health.outbox.summary.pending %}data-tone="info"{% else %}data-tone="success"{% endif %}>{{ health.outbox.summary.pending }} pending · {{ health.outbox.summary.dead }} dead</span>
+<span class="edify-text-caption text-slate-500 tabular-nums">{{ health.outbox.summary.processing }} processing · {{ health.outbox.summary.succeeded24h }} delivered in 24h · oldest pending {{ health.outbox.summary.oldestPendingMinutes }} min</span>
+</div>
+{% endif %}
+<div class="space-y-2">
+{% for c in health.outbox.checks %}
+<div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">The event backbone is quiet and healthy.</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- External-sync ledger (audit fix: IntegrationSync finally has a reader). -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">External Integrations</h3>
+<div class="flex flex-wrap items-center gap-2">
+{% for s in health.integrations.systems %}
+<span class="edify-badge" {% if s.enabled %}data-tone="info"{% endif %}>{{ s.system|title }}: {% if s.enabled %}enabled{% else %}manual references{% endif %} · {{ s.succeeded }} synced · {{ s.reconciledManual }} manual</span>
+{% endfor %}
+</div>
+<div class="space-y-2">
+{% for c in health.integrations.checks %}
+<div class="p-3 rounded-surface bg-amber-50">
+<div class="text-[12px] font-semibold text-amber-800">{{ c.component }}</div>
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Data-quality queues (roadmap Phase 1b): directory hygiene as owned,
+     self-closing exception queues — the precondition for the autopilot. -->
+<div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[21px] font-extrabold tracking-tight">Data Quality Queues</h3>
+{% if health.dataQuality.summary %}
+<div class="flex flex-wrap items-center gap-2">
+<span class="edify-badge" {% if health.dataQuality.summary.critical %}data-tone="danger"{% elif health.dataQuality.summary.openIssues %}data-tone="warning"{% else %}data-tone="success"{% endif %}>{{ health.dataQuality.summary.openIssues }} open issues</span>
+<span class="edify-text-caption text-slate-500 tabular-nums">{{ health.dataQuality.summary.critical }} critical · {{ health.dataQuality.summary.missingCoordinates }} without coordinates · {{ health.dataQuality.summary.pendingDuplicatePairs }} duplicate pairs pending · {{ health.dataQuality.summary.overCapacityStaff }} staff over capacity · {{ health.dataQuality.summary.unassignedOpenIssues }} unassigned</span>
+</div>
+{% endif %}
+<div class="space-y-2">
+{% for c in health.dataQuality.checks %}
+<div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
+<div class="flex items-center justify-between gap-3">
+<div class="text-[12px] font-semibold {% if c.severity == 'ok' %}text-emerald-800{% elif c.severity == 'warning' %}text-amber-800{% else %}text-rose-700{% endif %}">{{ c.component }}</div>
+<a href="{{ c.resolution_link }}" class="shrink-0 edify-text-caption font-bold edify-primary-text">Open queue</a>
+</div>
+<div class="edify-text-caption text-slate-500 mt-0.5">{{ c.current_state }}</div>
+<div class="edify-text-caption text-slate-400 mt-0.5">{{ c.recommended_action }} · {{ c.owner }}</div>
+</div>
+{% empty %}
+<div class="text-[12px] text-slate-400 font-medium">All data-quality queues are clear.</div>
+{% endfor %}
+</div>
+</div>
+
 <!-- Authentication Lockout unification health (Issue 3) -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
 <h3 class="text-[21px] font-extrabold tracking-tight">Authentication Lockout</h3>

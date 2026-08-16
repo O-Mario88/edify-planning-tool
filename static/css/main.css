@@ -1578,6 +1578,9 @@
   .min-w-\[1400px\] {
     min-width: 1400px;
   }
+  .min-w-full {
+    min-width: 100%;
+  }
   .min-w-max {
     min-width: max-content;
   }
@@ -2489,6 +2492,9 @@
       border-color: color-mix(in oklab, var(--color-white) 25%, transparent);
     }
   }
+  .border-t-\[var\(--edify-primary\)\] {
+    border-top-color: var(--edify-primary);
+  }
   .border-t-indigo-600 {
     border-top-color: var(--color-indigo-600);
   }
@@ -2579,6 +2585,9 @@
   .bg-\[var\(--edify-primary-active\)\] {
     background-color: var(--edify-primary-active);
   }
+  .bg-\[var\(--edify-primary-soft\)\] {
+    background-color: var(--edify-primary-soft);
+  }
   .bg-\[var\(--edify-purple-light\)\] {
     background-color: var(--edify-purple-light);
   }
@@ -2614,6 +2623,9 @@
   }
   .bg-\[var\(--edify-surface-muted\)\] {
     background-color: var(--edify-surface-muted);
+  }
+  .bg-\[var\(--edify-surface-raised\)\] {
+    background-color: var(--edify-surface-raised);
   }
   .bg-\[var\(--edify-teal\)\] {
     background-color: var(--edify-teal);
@@ -3674,6 +3686,10 @@
   .text-\[length\:var\(--edify-text-label-size\)\] {
     font-size: var(--edify-text-label-size);
   }
+  .leading-4 {
+    --tw-leading: calc(var(--spacing) * 4);
+    line-height: calc(var(--spacing) * 4);
+  }
   .leading-5 {
     --tw-leading: calc(var(--spacing) * 5);
     line-height: calc(var(--spacing) * 5);
@@ -3823,6 +3839,9 @@
   .text-ellipsis {
     text-overflow: ellipsis;
   }
+  .whitespace-normal {
+    white-space: normal;
+  }
   .whitespace-nowrap {
     white-space: nowrap;
   }
@@ -3888,6 +3907,9 @@
   }
   .text-\[var\(--edify-text-subtle\)\] {
     color: var(--edify-text-subtle);
+  }
+  .text-\[var\(--edify-warning\)\] {
+    color: var(--edify-warning);
   }
   .text-amber-200 {
     color: var(--color-amber-200);
@@ -5694,6 +5716,9 @@
     }
     .xl\:grid-cols-12 {
       grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+    .xl\:grid-cols-\[minmax\(0\,1\.65fr\)_minmax\(18rem\,\.7fr\)\] {
+      grid-template-columns: minmax(0,1.65fr) minmax(18rem,.7fr);
     }
     .xl\:flex-row {
       flex-direction: row;

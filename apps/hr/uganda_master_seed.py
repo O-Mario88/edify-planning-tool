@@ -650,7 +650,7 @@ UGANDA_MASTER = {
             "unit": "loans",
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
             "confirm": "Composite '300: 200, 100' — confirm what the 200/100 "
             "split means before distribution.",
         },
@@ -663,7 +663,9 @@ UGANDA_MASTER = {
             "unit": "loans",
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
+            "confirm": "The source states both 50% and 100 loans; confirm whether "
+            "100 is a target, current result, or subcategory before publication.",
         },
         {
             "code": "MFI_MENTORSHIP",
@@ -675,7 +677,7 @@ UGANDA_MASTER = {
             "cap_100": True,
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
         },
         {
             "code": "CREATIVE_VIDEOS",
@@ -698,7 +700,7 @@ UGANDA_MASTER = {
             "unit": "meetings",
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
         },
         {
             "code": "ACCOUNTANTS_TRAINING",
@@ -709,10 +711,10 @@ UGANDA_MASTER = {
             "unit": "schools",
             "method": SPECIALIST,
             "metric": "activity",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
             "confirm": "Confirm whether this is specialist-run or field-cascaded "
             "to CCEOs.",
-            "catalogue": [("ACCOUNTING_FINANCIAL_MANAGEMENT", {})],
+            "catalogue": [("BT_UG_ACCOUNTANT_TRAINING", {})],
             "basis": "UNIQUE_SCHOOLS_TRAINED",
         },
         {
@@ -725,7 +727,7 @@ UGANDA_MASTER = {
             "cap_100": True,
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
         },
     ],
     "EDUCATION_TECHNOLOGY": [
@@ -839,7 +841,7 @@ UGANDA_MASTER = {
             "client": 50,
             "method": SPECIALIST,
             "metric": "manual",
-            "role": "Accountant",
+            "role": "BusinessTransformationOfficer",
         },
     ],
     "GOVERNANCE_AND_PEOPLE_MANAGEMENT": [

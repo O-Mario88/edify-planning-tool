@@ -1,0 +1,33 @@
+<li class="core-school-row core-school-row--compact school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
+  <div class="school-record-row__summary">
+    <div class="school-record-row__content school-record-row__content--with-id">
+      <button type="button" class="school-record-row__expander" @click="openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'" @keydown.escape.window="openSchoolId = null" :aria-expanded="(openSchoolId === '{{ school.id }}').toString()" aria-controls="bt-school-details-{{ school.id }}" :aria-label="openSchoolId === '{{ school.id }}' ? 'Hide details for {{ school.name|escapejs }}' : 'Show details for {{ school.name|escapejs }}'"></button>
+      <span class="school-record-row__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8V21M9 9h1m4 0h1m-6 4h1m4 0h1m-5 8v-4h4v4"/></svg></span>
+      <span class="school-record-row__school-id" title="School ID {{ school.school_id }}"><span class="sr-only">School ID </span>{{ school.school_id }}</span>
+      <div class="school-record-row__identity">
+        <div class="core-school-row__headline">
+          <h3 class="school-record-row__title">{{ school.name }}</h3>
+          <div class="school-record-row__actions core-school-row__actions">{% if school.can_plan %}<button type="button" class="school-record-action school-record-action--schedule" hx-get="/planning/schedule-modal?school_id={{ school.school_id }}" hx-target="#drawer-container" hx-swap="innerHTML" aria-label="Plan support for {{ school.name }}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5.5" width="16" height="14" rx="2"/><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3"/></svg><span class="core-school-row__action-label">Plan</span></button>{% elif school.can_manage %}<a class="school-record-action school-record-action--schedule" href="{% url 'frontend:school_detail' school.school_id %}" aria-label="Monitor support for {{ school.name }}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"/><circle cx="12" cy="12" r="2"/></svg><span class="core-school-row__action-label">Monitor</span></a>{% else %}<a class="school-record-action school-record-action--schedule" href="{% url 'frontend:school_detail' school.school_id %}" aria-label="View support for {{ school.name }}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z"/><circle cx="12" cy="12" r="2"/></svg><span class="core-school-row__action-label">View</span></a>{% endif %}</div>
+        </div>
+        <dl class="school-record-row__metadata core-school-row__metadata">
+          <div><dt>District:</dt><dd>{{ school.district_name }}</dd></div>
+          <div><dt>Owner:</dt><dd>{{ school.owner_name }}</dd></div>
+          <div><dt>Partner:</dt><dd>{{ school.partner_name }}</dd></div>
+          <div><dt>Delivered:</dt><dd class="{% if school.support_delivered %}is-positive{% else %}is-attention{% endif %}">{{ school.support_delivered }} support action{{ school.support_delivered|pluralize }}</dd></div>
+          <div><dt>IA verified:</dt><dd class="{% if school.support_verified %}is-positive{% else %}is-attention{% endif %}">{{ school.support_verified }}</dd></div>
+          {% if portfolio_kind == 'financial_health' %}<div><dt>Practices:</dt><dd class="{% if school.practice_verified %}is-positive{% else %}is-attention{% endif %}">{% if school.practice_total %}{{ school.practice_adopted }}/{{ school.practice_total }} adopted{% else %}Not assessed{% endif %}</dd></div>{% else %}<div><dt>Compliance:</dt><dd class="{% if school.action_required %}is-attention{% elif school.compliant %}is-positive{% endif %}">{{ school.compliant }} verified · {{ school.action_required }} action</dd></div>{% endif %}
+          <div><dt>Performance:</dt><dd class="{% if school.performance.tone == 'success' %}is-positive{% elif school.performance.tone == 'danger' or school.performance.tone == 'warning' %}is-attention{% endif %}">{{ school.performance.label }}{% if school.performance.movement is not None %} ({{ school.performance.movement|stringformat:'+g' }}){% endif %}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div id="bt-school-details-{{ school.id }}" class="school-record-row__details">
+    <dl class="school-record-row__metadata core-school-row__metadata--secondary">
+      <div><dt>Region:</dt><dd>{{ school.region_name }}</dd></div><div><dt>School type:</dt><dd>{{ school.school_type }}</dd></div><div><dt>Enrollment:</dt><dd>{{ school.enrollment|default_if_none:"—" }}</dd></div><div><dt>Partner state:</dt><dd>{{ school.partner_status }}</dd></div>
+      <div><dt>Latest support:</dt><dd>{{ school.last_support_date|date:"d M Y"|default:"Not delivered" }}</dd></div><div><dt>Next support:</dt><dd class="{% if school.follow_up_overdue %}is-attention{% endif %}">{{ school.next_support_date|date:"d M Y"|default:"Not scheduled" }}{% if school.follow_up_overdue %} · overdue{% endif %}</dd></div>
+      <div><dt>Baseline SSA:</dt><dd>{{ school.performance.baseline_score|floatformat:"-1"|default:"—" }}</dd></div><div><dt>Latest SSA:</dt><dd>{{ school.performance.latest_score|floatformat:"-1"|default:"—" }}</dd></div>
+      {% if portfolio_kind == 'financial_health' %}<div><dt>Practice evidence:</dt><dd>{% if school.practice_verified %}IA verified{% elif school.practice_total %}Awaiting IA verification{% else %}Not assessed{% endif %}</dd></div>{% else %}<div><dt>Awaiting evidence review:</dt><dd>{{ school.awaiting_verification }}</dd></div><div><dt>Unknown / not assessed:</dt><dd>{{ school.unknown }}</dd></div><div><dt>Nearest expiry:</dt><dd>{{ school.nearest_expiry|date:"d M Y"|default:"—" }}</dd></div>{% endif %}
+    </dl>
+  </div>
+</li>

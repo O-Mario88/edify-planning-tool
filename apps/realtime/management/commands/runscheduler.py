@@ -72,6 +72,10 @@ class Command(BaseCommand):
             "performance_readiness": jobs.performance_readiness_job,
             "fiscal_year_rollover": jobs.fiscal_year_rollover_job,
             "mfa_challenge_purge": jobs.mfa_challenge_purge_job,
+            "interaction_rollup": jobs.interaction_rollup_job,
+            "data_quality_scan": jobs.data_quality_scan_job,
+            "outbox_drain": jobs.outbox_drain_job,
+            "autopilot_weekly_proposals": jobs.autopilot_weekly_proposals_job,
         }
 
         scheduler = BackgroundScheduler(timezone="Africa/Kampala")

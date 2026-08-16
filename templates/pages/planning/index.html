@@ -68,6 +68,14 @@ Open My Plan
 </div>
 </div>
 
+{% if planning_priority %}
+<aside class="rounded-surface border edify-primary-border edify-primary-soft px-4 py-3 edify-primary-text" role="status">
+  <p class="edify-text-caption font-bold uppercase tracking-wider">Planning from an approved priority</p>
+  <p class="mt-1 text-[13px] font-bold">{{ planning_priority.milestone.title }}</p>
+  <p class="mt-0.5 edify-text-caption">{{ planning_priority.milestone.priority.title }} · FY{{ planning_priority.milestone.priority.fy }} · target {{ planning_priority.allocated_target }}</p>
+</aside>
+{% endif %}
+
 <!-- Filters Row -->
 <form
 id="filters-form"
@@ -79,6 +87,7 @@ hx-push-url="true"
 class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption font-bold"
 >
 <input type="hidden" name="tab" value="{{ active_tab }}">
+{% if priority_allocation_id %}<input type="hidden" name="priority_allocation" value="{{ priority_allocation_id }}">{% endif %}
 
 <!-- Quarter -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">

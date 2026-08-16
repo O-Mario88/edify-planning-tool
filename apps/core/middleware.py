@@ -85,6 +85,10 @@ class RequestContextMiddleware:
             correlation_id=correlation_id,
         )
         set_request_context(ctx)
+        # Also stamp the request object: PlatformFailureDetectionMiddleware
+        # reads request.correlation_id, which was never set anywhere — it
+        # silently fell back to the X-Request-ID header on every request.
+        request.correlation_id = correlation_id
 
         response = self.get_response(request)
         # Echo the correlation id so client + logs tie together.

@@ -1,0 +1,32 @@
+<section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4" aria-labelledby="priority-portfolio-title">
+  <div>
+    <h2 id="priority-portfolio-title" class="text-[13px] font-bold text-slate-800">My Priority Portfolio</h2>
+    <p class="edify-text-caption text-slate-400">Grouped from the database by source. SSA and planning update automatically; manual agreements and PD remain owned by their workflows.</p>
+  </div>
+  <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    {% for group in priority_groups %}
+    <article class="rounded-surface border border-slate-100 bg-slate-50/50 p-3.5 space-y-3" aria-labelledby="priority-group-{{ group.key }}">
+      <div class="flex items-center justify-between gap-2">
+        <h3 id="priority-group-{{ group.key }}" class="text-[12px] font-bold text-slate-800">{{ group.label }}</h3>
+        <span class="edify-badge" data-tone="neutral">{{ group.rows|length }}</span>
+      </div>
+      {% if group.rows %}
+      <ul class="space-y-2">
+        {% for row in group.rows|slice:":8" %}
+        <li class="rounded-lg border border-slate-100 edify-surface p-3">
+          <div class="space-y-1.5">
+            <strong class="block edify-text-caption font-bold leading-4 text-slate-800">{{ row.title }}</strong>
+            <span class="edify-badge inline-flex max-w-full whitespace-normal text-left leading-4" data-tone="{{ row.tone }}">{{ row.meta }}</span>
+          </div>
+          <p class="mt-1 edify-text-caption leading-4 text-slate-500">{{ row.detail }}</p>
+          <a class="mt-2 inline-flex edify-text-caption font-bold edify-primary-text" href="{{ row.url }}">{{ row.action }} →</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="edify-text-caption leading-5 text-slate-400">Nothing open for FY{{ fy }}.</p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>

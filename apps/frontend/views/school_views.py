@@ -1323,9 +1323,14 @@ def school_detail_view(request, school_id):
     # same handover.
     partner_support = partner_oversight_service.build_items_for_school(school.id)
 
+    from apps.business_transformation.services import school_profile_context
+
+    business_transformation = school_profile_context(request.user, school)
+
     context = {
         "school": school,
         "partner_support": partner_support,
+        "business_transformation": business_transformation,
         "latest_ssa": latest_ssa,
         "ssa_scores": ssa_scores_list,
         "historical_ssas": historical_ssas,

@@ -115,6 +115,9 @@ class SchoolUploadTest(APITestCase):
                 "unmatched_staff",
                 "no_cluster",
                 "no_ssa",
+                # Roadmap Phase 1b: an uploaded school with no coordinates
+                # enters the route-readiness queue immediately.
+                "no_coordinates",
             },
         )
         self.assertEqual(

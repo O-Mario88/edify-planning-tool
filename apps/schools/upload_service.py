@@ -674,24 +674,12 @@ def _active_cluster_index() -> dict[str, object]:
 
 
 def _bulk_refresh_quality_issues(schools) -> None:
-    from apps.schools.models import (
-        DataQualityIssue,
-        build_data_quality_issues,
-    )
+    # Reconciliation, not delete-and-recreate: persisting issues keep their
+    # rows (and their assigned_to), cleared conditions resolve with a
+    # timestamp, and only new conditions create rows.
+    from apps.schools.data_quality import reconcile_issues
 
-    schools = list(schools)
-    if not schools:
-        return
-    school_ids = [school.id for school in schools]
-    DataQualityIssue.objects.filter(
-        school_id__in=school_ids,
-        status="open",
-    ).delete()
-    issues = [
-        issue for school in schools for issue in build_data_quality_issues(school)
-    ]
-    if issues:
-        DataQualityIssue.objects.bulk_create(issues, batch_size=1000)
+    reconcile_issues(list(schools))
 
 
 def _bulk_upsert_staff_candidates(

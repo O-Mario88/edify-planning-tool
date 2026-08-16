@@ -282,6 +282,13 @@ class ActivityReturnService:
             activity.save(
                 update_fields=["status", "ia_verification_status", "updated_at"]
             )
+            # A returned activity is no longer verified work: its milestone
+            # credit reverses with it — the same rule services.ia_return
+            # applies; this UI path previously left credits standing.
+            from apps.hr.milestone_progress import reverse_activity_progress
+
+            returned = activity
+            transaction.on_commit(lambda: reverse_activity_progress(returned))
 
             # Setup IAVerification record if not exists
             verification, _ = IAVerification.objects.get_or_create(
@@ -376,6 +383,21 @@ class ActivityCertificationService:
                     "updated_at",
                 ]
             )
+            # Milestone credit + integration sync — same rule as
+            # apps.activities.services.ia_confirm(). This live UI path
+            # previously wrote neither, so work verified through the IA
+            # workspace (the path IA actually uses) earned no
+            # MilestoneProgressCredit and every Uganda-cascade allocation's
+            # actuals stayed at zero. One verification, one credit engine,
+            # whichever door it came through.
+            from apps.hr.milestone_progress import record_activity_progress
+            from apps.integrations.services import (
+                enqueue_activity_salesforce_sync,
+            )
+
+            certified = activity
+            transaction.on_commit(lambda: record_activity_progress(certified))
+            enqueue_activity_salesforce_sync(certified.id)
 
             # Setup IAVerification record
             verification, _ = IAVerification.objects.get_or_create(

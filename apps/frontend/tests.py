@@ -1210,7 +1210,9 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/work-plan/add")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context["items"]), 28)
+        # 28 general programme titles + the Monthly MFI Review, the one
+        # Business Transformation meeting plannable at a venue.
+        self.assertEqual(len(response.context["items"]), 29)
         self.assertContains(response, "EdTech Foundations")
         self.assertContains(response, "Partner Meetings Admin budget")
         self.assertContains(response, 'data-requires-intervention="true"')
@@ -1232,11 +1234,12 @@ class FrontendViewsTestCase(TestCase):
 
         page = self.client.get("/cost-settings")
         self.assertEqual(page.status_code, 200)
-        # 28 governed curriculum titles + 12 standard field support items.
+        # 28 governed curriculum titles + 12 standard field support items +
+        # sixteen Uganda Business Transformation workflows.
         # Standard support is costed from the same CD catalogue as everything
         # else — that is what makes a school visit fundable at all.
-        self.assertEqual(page.context["governed_activity_count"], 40)
-        self.assertEqual(len(page.context["activity_cost_coverage"]), 40)
+        self.assertEqual(page.context["governed_activity_count"], 56)
+        self.assertEqual(len(page.context["activity_cost_coverage"]), 56)
         self.assertContains(page, "All approved budget activities")
 
         # 1. Initialize default catalogue

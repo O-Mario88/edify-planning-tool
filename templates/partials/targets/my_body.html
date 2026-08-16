@@ -39,6 +39,8 @@
 
   {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="my-project-priorities" only %}
 
+  {% include "partials/targets/priority_portfolio.html" with priority_groups=priority_groups fy=fy only %}
+
   <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="strategic-targets-title">
     <div>
       <h2 id="strategic-targets-title" class="text-[13px] font-bold text-slate-800">My Strategic Milestone Allocations</h2>

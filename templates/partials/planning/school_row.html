@@ -49,7 +49,7 @@
         <button
           type="button"
           class="school-record-action school-record-action--schedule"
-          hx-get="/planning/schedule-modal?school_id={{ school.schoolId }}"
+          hx-get="/planning/schedule-modal?school_id={{ school.schoolId }}{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}"
           hx-target="#drawer-container"
           hx-swap="innerHTML"
           aria-label="Schedule activity for {{ school.name }}"

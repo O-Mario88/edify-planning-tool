@@ -1,0 +1,65 @@
+{% load table_pagination %}
+<details class="ia-workspace" {% if selected_import_batch %}open{% endif %}>
+  <summary class="ia-workspace__header">
+    <span class="ia-workspace__title">
+      <strong>Import country priorities</strong>
+      <small>Impact Assessment stages and validates; the Country Director still confirms and publishes.</small>
+    </span>
+    <span class="ia-button ia-button--secondary">Upload / review</span>
+  </summary>
+
+  <form method="post" action="/target-distribution/import" enctype="multipart/form-data" class="ia-confirm-form">
+    {% csrf_token %}
+    <input type="hidden" name="fy" value="{{ fy }}">
+    <fieldset class="ia-confirm-form__wide">
+      <legend>Priority source file</legend>
+      <label for="priority-import-file">CSV or XLSX file
+        <input id="priority-import-file" type="file" name="priority_file" accept=".csv,.xlsx,.xlsm,text/csv" required aria-describedby="priority-import-help">
+      </label>
+      <p id="priority-import-help">Maximum 5 MB. The file is staged first; an upload never publishes or overwrites an approved master.</p>
+    </fieldset>
+    <div class="ia-confirm-form__actions">
+      <a class="ia-button ia-button--ghost" href="/target-distribution/import/template">Download template</a>
+      <button type="submit" class="ia-button ia-button--primary">Validate upload</button>
+    </div>
+  </form>
+
+  {% if selected_import_batch %}
+  <section aria-labelledby="priority-import-preview-title">
+    <header class="ia-workspace__header">
+      <div class="ia-workspace__title">
+        <h3 id="priority-import-preview-title">{{ selected_import_batch.original_file_name }}</h3>
+        <p>{{ selected_import_batch.total_rows }} rows · {{ selected_import_batch.valid_rows }} valid · {{ selected_import_batch.invalid_rows }} blocked · status {{ selected_import_batch.get_status_display }}</p>
+      </div>
+      {% if selected_import_batch.status == "validated" %}
+      <form method="post" action="/target-distribution/import/{{ selected_import_batch.id }}/commit">
+        {% csrf_token %}
+        <button type="submit" class="ia-button ia-button--primary">Commit draft master</button>
+      </form>
+      {% endif %}
+    </header>
+    {% paginate selected_import_batch.rows.all "import_rows_page" as import_rows %}
+    <div class="ia-master-table-wrap" tabindex="0" aria-label="Scrollable priority import preview">
+      <table class="ia-master-table">
+        <caption>Validated source rows before draft-master creation</caption>
+        <thead><tr><th scope="col">Row</th><th scope="col">Priority</th><th scope="col">Milestone</th><th scope="col">Target</th><th scope="col">Method</th><th scope="col">Validation</th></tr></thead>
+        <tbody>
+          {% for row in import_rows.rows %}
+          <tr>
+            <td data-label="Row">{{ row.row_number }}</td>
+            <td data-label="Priority"><strong>{{ row.priority_code }}</strong><br>{{ row.priority_title }}</td>
+            <td data-label="Milestone"><strong>{{ row.milestone_code }}</strong><br>{{ row.milestone_title }}</td>
+            <td data-label="Target">{{ row.target_value|default_if_none:"—" }} {{ row.target_unit }}</td>
+            <td data-label="Method">{{ row.allocation_method }}</td>
+            <td data-label="Validation"><span class="ia-status" data-tone="{% if row.status == 'blocked' %}danger{% elif row.status == 'review' %}warning{% else %}success{% endif %}">{{ row.get_status_display }}</span>{% if row.validation_errors %}<ul>{% for error in row.validation_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=import_rows param="import_rows_page" %}
+  </section>
+  {% elif import_batches %}
+  <p>Most recent: <a href="?fy={{ fy }}&import={{ import_batches.0.id }}">{{ import_batches.0.original_file_name }}</a> · {{ import_batches.0.get_status_display }}</p>
+  {% endif %}
+</details>

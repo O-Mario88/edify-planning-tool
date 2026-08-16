@@ -1740,3 +1740,22 @@ def request_budget_amendment_action(request, activity_id):
         except Exception as exc:
             messages.error(request, f"Amendment request failed: {exc}")
     return redirect("/my-plan")
+
+
+@require_page_permission("my_plan")
+def day_package_view(request):
+    """The offline day package (roadmap Phase 3): one JSON document carrying
+    the caller's field day — route-grouped activities, school locations,
+    evidence checklists, participant plans — for the client to cache before
+    travel. Own work only; scope comes from the same resolver as My Plan."""
+
+    from django.http import JsonResponse
+
+    from apps.my_plan.day_package import build_day_package
+
+    raw_date = (request.GET.get("date") or "").strip()
+    try:
+        target = date.fromisoformat(raw_date) if raw_date else None
+    except ValueError:
+        return JsonResponse({"error": "date must be YYYY-MM-DD"}, status=400)
+    return JsonResponse(build_day_package(request.user, day=target))

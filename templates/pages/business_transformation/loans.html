@@ -1,0 +1,364 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters table_pagination %}
+
+{% block title %}Loans — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="edify-page-canvas space-y-6" data-mobile-family="directory">
+  {% include "components/page_header.html" with eyebrow="Uganda lending portfolio" title="Loan dashboard" description="Track every governed school loan across lending partners, Salesforce confirmation, disbursement, repayment position, and student reach." %}
+  {% if not mfi_user %}{% include "partials/business_transformation/workspace_nav.html" %}{% endif %}
+
+  <div class="flex items-center justify-between gap-4">
+    <p class="text-sm text-[var(--edify-text-muted)]">Access follows your active platform role.</p>
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      {% if can_export_loans %}
+      <a href="/loans/export.csv{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-10">Export loan records</a>
+      {% endif %}
+      {% if can_write_loans and can_execute_loans %}
+        {% include "components/badge.html" with tone="success" label=access_label size="md" dot="true" %}
+      {% elif can_confirm_salesforce %}
+        {% include "components/badge.html" with tone="info" label=access_label size="md" dot="true" %}
+      {% else %}
+        {% include "components/badge.html" with tone="neutral" label=access_label size="md" %}
+      {% endif %}
+    </div>
+  </div>
+
+  <form id="bt-loan-filters" method="get" action="/loans" class="edify-filter-bar" aria-label="Loan register filters">
+    {% comment %}The loan search lives in the top bar (one search per page):
+    the shell binds its input to this form via
+    topbar_search.attach_to.{% endcomment %}
+    <label for="loan-fy">
+      <span class="edify-filter-label">Financial year</span>
+      <input id="loan-fy" type="text" inputmode="numeric" name="fy" value="{{ fy }}" pattern="[0-9]{4}" maxlength="4">
+    </label>
+    <label for="loan-period-type">
+      <span class="edify-filter-label">Period</span>
+      <select id="loan-period-type" name="period_type">
+        <option value="fy" {% if filters.period_type == "fy" or not filters.period_type %}selected{% endif %}>Annual financial year</option>
+        <option value="quarter" {% if filters.period_type == "quarter" %}selected{% endif %}>Quarter</option>
+        <option value="month" {% if filters.period_type == "month" %}selected{% endif %}>Month</option>
+        <option value="custom" {% if filters.period_type == "custom" %}selected{% endif %}>Custom period</option>
+      </select>
+    </label>
+    <label for="loan-quarter">
+      <span class="edify-filter-label">Quarter</span>
+      <select id="loan-quarter" name="quarter"><option value="">All quarters</option>{% for quarter in "Q1,Q2,Q3,Q4"|split:"," %}<option value="{{ quarter }}" {% if filters.quarter == quarter %}selected{% endif %}>{{ quarter }}</option>{% endfor %}</select>
+    </label>
+    <label for="loan-month">
+      <span class="edify-filter-label">FY month</span>
+      <select id="loan-month" name="month">
+        <option value="">All months</option>
+        <option value="1" {% if filters.month == "1" %}selected{% endif %}>October</option><option value="2" {% if filters.month == "2" %}selected{% endif %}>November</option><option value="3" {% if filters.month == "3" %}selected{% endif %}>December</option><option value="4" {% if filters.month == "4" %}selected{% endif %}>January</option><option value="5" {% if filters.month == "5" %}selected{% endif %}>February</option><option value="6" {% if filters.month == "6" %}selected{% endif %}>March</option><option value="7" {% if filters.month == "7" %}selected{% endif %}>April</option><option value="8" {% if filters.month == "8" %}selected{% endif %}>May</option><option value="9" {% if filters.month == "9" %}selected{% endif %}>June</option><option value="10" {% if filters.month == "10" %}selected{% endif %}>July</option><option value="11" {% if filters.month == "11" %}selected{% endif %}>August</option><option value="12" {% if filters.month == "12" %}selected{% endif %}>September</option>
+      </select>
+    </label>
+    <label for="loan-region">
+      <span class="edify-filter-label">Region</span>
+      <select id="loan-region" name="region">
+        <option value="">All regions</option>
+        {% for region in regions %}<option value="{{ region.id }}" {% if filters.region == region.id %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="loan-mfi-filter">
+      <span class="edify-filter-label">MFI</span>
+      <select id="loan-mfi-filter" name="mfi">
+        <option value="">All MFIs</option>
+        {% for mfi in mfis %}<option value="{{ mfi.id }}" {% if filters.mfi == mfi.id %}selected{% endif %}>{{ mfi.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="loan-district-filter">
+      <span class="edify-filter-label">District</span>
+      <select id="loan-district-filter" name="district"><option value="">All districts</option>{% for district in districts %}<option value="{{ district.id }}" {% if filters.district == district.id %}selected{% endif %}>{{ district.name }}</option>{% endfor %}</select>
+    </label>
+    <label for="loan-school-filter">
+      <span class="edify-filter-label">School</span>
+      <select id="loan-school-filter" name="school"><option value="">All financed schools</option>{% for school in schools %}<option value="{{ school.id }}" {% if filters.school == school.id %}selected{% endif %}>{{ school.name }}</option>{% endfor %}</select>
+    </label>
+    <label for="loan-purpose-filter">
+      <span class="edify-filter-label">Loan purpose</span>
+      <select id="loan-purpose-filter" name="purpose"><option value="">All purposes</option>{% for purpose in loan_purposes %}<option value="{{ purpose.id }}" {% if filters.purpose == purpose.id %}selected{% endif %}>{{ purpose.label }}</option>{% endfor %}</select>
+    </label>
+    <label for="loan-edtech-filter">
+      <span class="edify-filter-label">Classification</span>
+      <select id="loan-edtech-filter" name="edtech"><option value="">EdTech and non-EdTech</option><option value="yes" {% if filters.edtech == "yes" %}selected{% endif %}>EdTech</option><option value="no" {% if filters.edtech == "no" %}selected{% endif %}>Non-EdTech</option></select>
+    </label>
+    <label for="loan-status-filter">
+      <span class="edify-filter-label">Status</span>
+      <select id="loan-status-filter" name="status">
+        <option value="">All statuses</option>
+        {% for value, label in loan_statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label for="loan-repayment-filter"><span class="edify-filter-label">Repayment health</span><select id="loan-repayment-filter" name="repayment_health"><option value="">All repayment states</option>{% for value, label in repayment_statuses %}<option value="{{ value }}" {% if filters.repayment_health == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label for="loan-salesforce-filter"><span class="edify-filter-label">Salesforce</span><select id="loan-salesforce-filter" name="salesforce_status"><option value="">All Salesforce states</option>{% for value, label in salesforce_statuses %}<option value="{{ value }}" {% if filters.salesforce_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label for="loan-ia-filter"><span class="edify-filter-label">IA validation</span><select id="loan-ia-filter" name="ia_status"><option value="">All IA states</option>{% for value, label in ia_statuses %}<option value="{{ value }}" {% if filters.ia_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label for="loan-impact-filter"><span class="edify-filter-label">Impact</span><select id="loan-impact-filter" name="impact_status"><option value="">All impact states</option>{% for value, label in impact_statuses %}<option value="{{ value }}" {% if filters.impact_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label for="loan-custom-from"><span class="edify-filter-label">Custom from</span><input id="loan-custom-from" name="custom_from" type="date" value="{{ filters.custom_from }}"></label>
+    <label for="loan-custom-to"><span class="edify-filter-label">Custom to</span><input id="loan-custom-to" name="custom_to" type="date" value="{{ filters.custom_to }}"></label>
+    {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
+  </form>
+
+  {% include "components/kpi_strip.html" with items=kpi_strip_items title="Uganda loan scorecard" %}
+
+  <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="lending-partner-dashboard-title">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)]">
+      <h2 id="lending-partner-dashboard-title" class="text-base font-black text-[var(--edify-text)]">Lending partner dashboard</h2>
+      <p class="text-xs text-[var(--edify-text-muted)]">All lending partners represented in the governed loan records matching the current filters.</p>
+    </header>
+    {% paginate lending_partners "partners_page" as partners_pager %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full">
+        <caption class="sr-only">Loan portfolio performance by lending partner</caption>
+        <thead><tr><th scope="col">Lending partner</th><th scope="col">Loans</th><th scope="col">Disbursed</th><th scope="col">Value disbursed</th><th scope="col">Schools impacted</th><th scope="col">Salesforce confirmation</th><th scope="col">At risk</th><th scope="col">Latest repayment data</th></tr></thead>
+        <tbody>
+          {% for partner in partners_pager.rows %}
+          <tr>
+            <td data-record-title><strong>{{ partner.mfi__name }}</strong></td>
+            <td data-label="Loans">{{ partner.loan_count }}</td>
+            <td data-label="Disbursed">{{ partner.disbursed_loans }}</td>
+            <td data-label="Value disbursed">{{ partner.disbursed_value|ugx }}</td>
+            <td data-label="Schools impacted">{{ partner.schools_impacted }}</td>
+            <td data-label="Salesforce confirmation">
+              {% if partner.salesforce_pending == 0 %}
+                {% include "components/badge.html" with tone="success" label="Complete" %}
+              {% else %}
+                {% include "components/badge.html" with tone="warning" label="Action required" %}
+              {% endif %}
+              <small class="block mt-1 text-[var(--edify-text-muted)]">{{ partner.salesforce_confirmed }} of {{ partner.loan_count }} · {{ partner.salesforce_coverage_pct|default:"0" }}%</small>
+            </td>
+            <td data-label="At risk">{% if partner.at_risk %}{% include "components/badge.html" with tone="danger" label=partner.at_risk %}{% else %}0{% endif %}</td>
+            <td data-label="Latest repayment data">{{ partner.latest_repayment_update|date:"d M Y"|default:"Not submitted" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8">{% include "components/empty_state.html" with title="No lending partners found" message="No governed loans match the current filters." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=partners_pager param="partners_page" %}
+  </section>
+
+  {% if can_write_loans %}
+  <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="loan-record-title">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)]">
+      <h2 id="loan-record-title" class="text-base font-black text-[var(--edify-text)]">Create or update a loan</h2>
+      <p class="text-xs text-[var(--edify-text-muted)]">The selected referral supplies the governed school, MFI, and loan purpose.</p>
+    </header>
+    <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)]">
+      <h3 class="text-sm font-bold text-[var(--edify-text)]">Approved loan purposes</h3>
+      <p class="mt-1 text-xs text-[var(--edify-text-muted)]">New referrals and loan records must use one of these Uganda categories.</p>
+      <ul class="mt-3 flex flex-wrap gap-2" role="list">
+        {% for purpose in loan_purposes %}
+        <li>{% include "components/badge.html" with tone="info" label=purpose.label size="md" %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <form method="post" action="/loans/save" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {% csrf_token %}
+      <label class="md:col-span-2" for="loan-referral">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Governed referral</span>
+        <select id="loan-referral" name="referralId" required class="w-full">
+          <option value="">Select a referral</option>
+          {% for referral in referrals %}<option value="{{ referral.id }}">{{ referral.case.school.name }} · {{ referral.mfi.name }} · {{ referral.purpose.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label for="loan-reference">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">External loan reference</span>
+        <input id="loan-reference" name="externalLoanReference" type="text" maxlength="128" autocomplete="off" required class="w-full">
+      </label>
+      <label for="loan-status">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Status</span>
+        <select id="loan-status" name="status" required class="w-full">
+          {% for value, label in loan_statuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label for="loan-approved-amount">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Approved amount (UGX)</span>
+        <input id="loan-approved-amount" name="approvedAmount" type="text" inputmode="decimal" class="w-full">
+      </label>
+      <label for="loan-requested-amount">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Requested amount (UGX)</span>
+        <input id="loan-requested-amount" name="requestedAmount" type="text" inputmode="decimal" class="w-full">
+      </label>
+      <label for="loan-disbursed-amount">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Disbursed amount (UGX)</span>
+        <input id="loan-disbursed-amount" name="disbursedAmount" type="text" inputmode="decimal" class="w-full">
+      </label>
+      <label for="loan-approved-at">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Approved at</span>
+        <input id="loan-approved-at" name="approvedAt" type="datetime-local" class="w-full">
+      </label>
+      <label for="loan-processing-date">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Processing date</span>
+        <input id="loan-processing-date" name="processingDate" type="date" class="w-full">
+      </label>
+      <label for="loan-disbursement-date">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Disbursement date</span>
+        <input id="loan-disbursement-date" name="disbursementDate" type="date" class="w-full">
+      </label>
+      <label for="loan-term-months">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Term (months)</span>
+        <input id="loan-term-months" name="termMonths" type="number" inputmode="numeric" min="1" class="w-full">
+      </label>
+      <label for="loan-repayment-frequency">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Repayment frequency</span>
+        <input id="loan-repayment-frequency" name="repaymentFrequency" type="text" maxlength="32" autocomplete="off" class="w-full">
+      </label>
+      <label for="loan-installment-amount">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Installment amount (UGX)</span>
+        <input id="loan-installment-amount" name="installmentAmount" type="text" inputmode="decimal" class="w-full">
+      </label>
+      <label for="loan-maturity-date">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Maturity date</span>
+        <input id="loan-maturity-date" name="maturityDate" type="date" class="w-full">
+      </label>
+      <label for="loan-officer-reference">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Responsible loan officer reference</span>
+        <input id="loan-officer-reference" name="assignedOfficerReference" type="text" maxlength="128" autocomplete="off" class="w-full">
+      </label>
+      <label for="loan-default-date">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Default classification date</span>
+        <input id="loan-default-date" name="defaultClassifiedAt" type="date" class="w-full">
+      </label>
+      <label class="md:col-span-2" for="loan-status-reason">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Status change reason</span>
+        <input id="loan-status-reason" name="statusReason" type="text" maxlength="255" autocomplete="off" class="w-full" placeholder="Required when a defaulted loan returns to Active">
+      </label>
+      <div class="md:col-span-2 xl:col-span-4 flex justify-end">
+        {% include "components/button.html" with label="Save loan record" type="submit" variant="primary" size="lg" %}
+      </div>
+    </form>
+  </section>
+  {% endif %}
+
+  {% if can_execute_loans %}
+  <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="repayment-record-title">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)]">
+      <h2 id="repayment-record-title" class="text-base font-black text-[var(--edify-text)]">Record repayment position</h2>
+      <p class="text-xs text-[var(--edify-text-muted)]">A dated snapshot executes portfolio monitoring without rewriting prior submissions.</p>
+    </header>
+    <form method="post" action="/loans/repayment-snapshots" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {% csrf_token %}
+      <label class="md:col-span-2" for="repayment-loan">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Loan</span>
+        <select id="repayment-loan" name="loanId" required class="w-full">
+          <option value="">Select a disbursed loan</option>
+          {% for loan in loans %}{% if loan.disbursement_date %}<option value="{{ loan.id }}">{{ loan.school.name }} · {{ loan.mfi.name }} · {{ loan.external_loan_reference }}</option>{% endif %}{% endfor %}
+        </select>
+      </label>
+      <label for="repayment-as-of">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">As-of date</span>
+        <input id="repayment-as-of" name="asOfDate" type="date" required class="w-full">
+      </label>
+      <label for="repayment-outstanding">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Outstanding amount (UGX)</span>
+        <input id="repayment-outstanding" name="outstandingAmount" type="text" inputmode="decimal" required class="w-full">
+      </label>
+      <label for="repayment-reporting-month">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Reporting month</span>
+        <input id="repayment-reporting-month" name="reportingMonth" type="month" required class="w-full">
+      </label>
+      <label for="repayment-due-period">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Amount due in period (UGX)</span>
+        <input id="repayment-due-period" name="amountDueDuringPeriod" type="text" inputmode="decimal" value="0" required class="w-full">
+      </label>
+      <label for="repayment-paid-period">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Amount paid in period (UGX)</span>
+        <input id="repayment-paid-period" name="amountPaidDuringPeriod" type="text" inputmode="decimal" value="0" required class="w-full">
+      </label>
+      <label for="repayment-principal">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Principal repaid (UGX)</span>
+        <input id="repayment-principal" name="principalRepaid" type="text" inputmode="decimal" value="0" required class="w-full">
+      </label>
+      <label for="repayment-currently-due">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Currently due (UGX)</span>
+        <input id="repayment-currently-due" name="amountCurrentlyDue" type="text" inputmode="decimal" value="0" required class="w-full">
+      </label>
+      <label for="repayment-overdue">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Overdue amount (UGX)</span>
+        <input id="repayment-overdue" name="amountOverdue" type="text" inputmode="decimal" value="0" required class="w-full">
+      </label>
+      <label for="repayment-days-arrears">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Days in arrears</span>
+        <input id="repayment-days-arrears" name="daysInArrears" type="number" inputmode="numeric" min="0" value="0" required class="w-full">
+      </label>
+      <label for="repayment-last-payment">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Last payment date</span>
+        <input id="repayment-last-payment" name="lastPaymentDate" type="date" class="w-full">
+      </label>
+      <label for="repayment-next-payment">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Next payment date</span>
+        <input id="repayment-next-payment" name="nextPaymentDate" type="date" class="w-full">
+      </label>
+      <label for="repayment-loan-status">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Current loan lifecycle</span>
+        <select id="repayment-loan-status" name="loanStatus" class="w-full">
+          <option value="">Keep current lifecycle</option>
+          {% for value, label in loan_statuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label for="repayment-restructuring-status">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Restructuring status</span>
+        <input id="repayment-restructuring-status" name="restructuringStatus" type="text" maxlength="64" autocomplete="off" class="w-full">
+      </label>
+      <label for="repayment-health-status">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Repayment classification</span>
+        <select id="repayment-health-status" name="status" class="w-full">
+          <option value="">Derive from days past due</option>
+          <option value="restructured">Restructured</option>
+        </select>
+      </label>
+      <label for="repayment-default-date">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Default classification date</span>
+        <input id="repayment-default-date" name="defaultClassifiedAt" type="date" class="w-full">
+      </label>
+      <label class="md:col-span-2" for="repayment-status-reason">
+        <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Lifecycle change reason</span>
+        <input id="repayment-status-reason" name="statusReason" type="text" maxlength="255" autocomplete="off" class="w-full" placeholder="Required for restructuring or recovery transitions">
+      </label>
+      <div class="md:col-span-2 xl:col-span-4 flex justify-end">
+        {% include "components/button.html" with label="Record repayment snapshot" type="submit" variant="primary" size="lg" %}
+      </div>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="loan-register-title">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)] flex items-center justify-between gap-4">
+      <div>
+        <h2 id="loan-register-title" class="text-base font-black text-[var(--edify-text)]">Loan register</h2>
+        <p class="text-xs text-[var(--edify-text-muted)]">Uganda school loans matching the current filters.</p>
+      </div>
+      {% include "components/badge.html" with tone="neutral" label=access_label %}
+    </header>
+    {% paginate loans "loans_page" as loans_pager %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full">
+        <caption class="sr-only">Uganda school loan register</caption>
+        <thead><tr><th scope="col">Loan Reference</th><th scope="col">School</th><th scope="col">MFI</th><th scope="col">Purpose</th><th scope="col">Amount</th><th scope="col">Loan Status</th><th scope="col">Repayment</th><th scope="col">Salesforce</th><th scope="col">IA</th><th scope="col">Impact</th><th scope="col">Last Updated</th><th scope="col">Action</th></tr></thead>
+        <tbody>
+          {% for loan in loans_pager.rows %}
+          <tr>
+            <td data-record-title><strong>{{ loan.external_loan_reference }}</strong>{% if loan.assigned_officer_reference %}<small class="block text-[var(--edify-text-muted)]">Officer {{ loan.assigned_officer_reference }}</small>{% endif %}</td>
+            <td data-label="School"><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-[var(--edify-text-muted)]">{{ loan.school.district.name|default:"District not set" }}{% if loan.school.region %} · {{ loan.school.region.name }}{% endif %}</small></td>
+            <td data-label="MFI"><strong>{{ loan.mfi.name }}</strong></td>
+            <td data-label="Purpose">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
+            <td data-label="Amount"><span class="font-semibold">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}{% else %}Not disbursed{% endif %}</span><small class="block text-[var(--edify-text-muted)]">Approved {% if loan.approved_amount is not None %}{{ loan.approved_amount|ugx }}{% else %}—{% endif %}</small></td>
+            <td data-label="Loan Status">{% if loan.status == "active" or loan.status == "repaid" %}{% include "components/badge.html" with tone="success" label=loan.get_status_display %}{% elif loan.status == "defaulted" %}{% include "components/badge.html" with tone="danger" label=loan.get_status_display %}{% else %}{% include "components/badge.html" with tone="neutral" label=loan.get_status_display %}{% endif %}</td>
+            <td data-label="Repayment">{% if loan.latest_repayment_health %}{% include "components/badge.html" with tone="neutral" label=loan.latest_repayment_health_label %}<small class="block mt-1 text-[var(--edify-text-muted)]">Paid {% if loan.latest_amount_paid is not None %}{{ loan.latest_amount_paid|ugx }}{% else %}—{% endif %} · Outstanding {% if loan.latest_outstanding_amount is not None %}{{ loan.latest_outstanding_amount|ugx }}{% else %}—{% endif %}</small>{% else %}{% include "components/badge.html" with tone="neutral" label="Not Started" %}{% endif %}</td>
+            <td data-label="Salesforce">{% if loan.salesforce_status == "confirmed" %}{% include "components/badge.html" with tone="success" label="Confirmed" %}<small class="block mt-1 text-[var(--edify-text-muted)]">{{ loan.salesforce_loan_id }}</small>{% elif loan.salesforce_status == "returned" %}{% include "components/badge.html" with tone="danger" label="Returned" %}{% else %}{% include "components/badge.html" with tone="warning" label="Pending" %}{% endif %}</td>
+            <td data-label="IA">{% if loan.ia_validation_status == "verified" %}{% include "components/badge.html" with tone="success" label="Verified" %}{% elif loan.ia_validation_status == "returned" %}{% include "components/badge.html" with tone="danger" label="Returned" %}{% else %}{% include "components/badge.html" with tone="neutral" label="Pending" %}{% endif %}</td>
+            <td data-label="Impact">{% include "components/badge.html" with tone="neutral" label=loan.get_impact_status_display %}</td>
+            <td data-label="Last Updated">{% if loan.last_repayment_data_date %}{{ loan.last_repayment_data_date|date:"d M Y" }}{% else %}{{ loan.updated_at|date:"d M Y" }}{% endif %}</td>
+            <td data-label="Action"><button type="button" hx-get="/loans/{{ loan.id }}/drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn {% if can_confirm_salesforce and loan.salesforce_status == 'pending' %}btn-primary{% else %}btn-secondary{% endif %} min-h-10">{% if can_confirm_salesforce and loan.salesforce_status == "pending" %}Complete{% else %}View{% endif %}</button></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="12">{% include "components/empty_state.html" with title="No loans found" message="No Uganda loans match the current filters." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=loans_pager param="loans_page" %}
+  </section>
+</div>
+{% endblock %}

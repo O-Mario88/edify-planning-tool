@@ -74,6 +74,10 @@ def report() -> dict:
     data["projectPriorities"] = _project_priorities()
     data["planningOversight"] = _planning_oversight()
     data["portfolioAccess"] = _portfolio_access()
+    data["interactionTelemetry"] = _interaction_telemetry()
+    data["dataQuality"] = _data_quality()
+    data["outbox"] = _outbox()
+    data["integrations"] = _integrations()
     return data
 
 
@@ -293,6 +297,53 @@ def _school_actions() -> dict:
         return school_action_health()
     except Exception:  # noqa: BLE001 — the health page must render regardless
         return {"checks": []}
+
+
+def _interaction_telemetry() -> dict:
+    """The Staff Time Standard's instrument (docs/STAFF_TIME_STANDARD.md):
+    role-population percentiles of active administration time, plus checks
+    that the measurement itself is alive. Aggregate only — by the standard's
+    §5 this payload never names an individual."""
+    try:
+        from apps.telemetry.health import interaction_telemetry_health
+
+        return interaction_telemetry_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": [], "report": None, "enabled": False}
+
+
+def _data_quality() -> dict:
+    """Directory hygiene queues (roadmap Phase 1b): open issues, proposed
+    duplicates, coordinate coverage and portfolio capacity — each check
+    pointing at its owned, self-closing queue."""
+    try:
+        from apps.system_health.data_quality_health import data_quality_health
+
+        return data_quality_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": [], "summary": None}
+
+
+def _outbox() -> dict:
+    """The durable event backbone (roadmap Phase 2): queue depth, oldest
+    pending age and dead letters — with the replay path on every failure."""
+    try:
+        from apps.outbox.health import outbox_health
+
+        return outbox_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": [], "summary": None}
+
+
+def _integrations() -> dict:
+    """The external-sync ledger's reader (audit finding: it was write-only):
+    per-system reconciled counts beside the enable flags."""
+    try:
+        from apps.integrations.health import integrations_health
+
+        return integrations_health()
+    except Exception:  # noqa: BLE001 — the health page must render regardless
+        return {"checks": [], "systems": []}
 
 
 def _audit_chain_integrity() -> dict:

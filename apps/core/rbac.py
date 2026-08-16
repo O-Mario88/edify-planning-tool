@@ -31,6 +31,9 @@ class EdifyRole(str, Enum):
     PROJECT_COORDINATOR = "ProjectCoordinator"
     PARTNER_ADMIN = "PartnerAdmin"
     PARTNER_FIELD_OFFICER = "PartnerFieldOfficer"
+    BUSINESS_TRANSFORMATION_OFFICER = "BusinessTransformationOfficer"
+    MFI_PARTNER_ADMIN = "MfiPartnerAdmin"
+    MFI_LOAN_OFFICER = "MfiLoanOfficer"
     ADMIN = "Admin"
 
     @classmethod
@@ -80,6 +83,7 @@ class Permission(str, Enum):
     ACTIVITY_CATALOGUE_MAP_INTERVENTIONS = "activityCatalogue.mapInterventions"
     ACTIVITY_CATALOGUE_MANAGE_PROJECT_RULES = "activityCatalogue.manageProjectRules"
     STRATEGIC_PRIORITIES_VIEW = "strategicPriorities.view"
+    STRATEGIC_PRIORITIES_IMPORT = "strategicPriorities.import"
     STRATEGIC_PRIORITIES_CREATE = "strategicPriorities.create"
     STRATEGIC_PRIORITIES_EDIT = "strategicPriorities.edit"
     STRATEGIC_PRIORITIES_APPROVE = "strategicPriorities.approve"
@@ -156,16 +160,55 @@ class Permission(str, Enum):
     # Budget Intelligence & Financial Decision Engine — recommends; never moves money.
     BUDGET_INTELLIGENCE_VIEW = "budgetIntelligence.view"
     BUDGET_DECISION_REVIEW = "budgetDecision.review"
+    # Business Transformation is a separate portfolio authority inside the
+    # Edify platform. Every role may read the Uganda loan register; lender
+    # facts and repayment execution belong only to MFI Admin and MFI Loan
+    # Officer.
+    BUSINESS_TRANSFORMATION_VIEW = "businessTransformation.view"
+    BUSINESS_TRANSFORMATION_CASE_MANAGE = "businessTransformation.case.manage"
+    # Manage school-level BAFF / Financial Health and Government Requirements
+    # support. This is deliberately narrower than CASE_MANAGE and never grants
+    # access to edit MFI loan facts. BT works the Uganda portfolio; PLs and
+    # CCEOs work only the schools resolved by their normal operational scope.
+    BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE = (
+        "businessTransformation.schoolSupport.manage"
+    )
+    BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW = (
+        "businessTransformation.portfolio.view"
+    )
+    BUSINESS_TRANSFORMATION_SENSITIVE_VIEW = (
+        "businessTransformation.sensitive.view"
+    )
+    BUSINESS_TRANSFORMATION_MFI_MANAGE = "businessTransformation.mfi.manage"
+    BUSINESS_TRANSFORMATION_REFERRAL_MANAGE = (
+        "businessTransformation.referral.manage"
+    )
+    BUSINESS_TRANSFORMATION_LOAN_WRITE = "businessTransformation.loan.write"
+    BUSINESS_TRANSFORMATION_REPAYMENT_WRITE = (
+        "businessTransformation.repayment.write"
+    )
+    BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY = (
+        "businessTransformation.portfolio.certify"
+    )
+    BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM = (
+        "businessTransformation.salesforce.confirm"
+    )
+    BUSINESS_TRANSFORMATION_IA_VALIDATE = "businessTransformation.ia.validate"
+    BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE = (
+        "businessTransformation.mfiMember.manage"
+    )
+    BUSINESS_TRANSFORMATION_EXPORT = "businessTransformation.export"
 
 
 P = Permission
 
 
 # Admin is the platform super-role: it receives every current permission, and
-# newly introduced permissions are included automatically — EXCEPT the three
-# below, which are single-role authorities by doctrine.
+# newly introduced permissions are included automatically — EXCEPT the
+# operational authorities listed below, which are not technical-admin rights.
 #
-# Those three had been excluded deliberately, then the exclusion set was
+# The verification, disbursement, and budget-approval permissions had been
+# excluded deliberately, then the exclusion set was
 # emptied while making Admin "not read-only". Read-only was a real problem and
 # fixing it was right, but this went past access into authority: with these
 # granted, one account could approve a budget, disburse against it, and then
@@ -188,6 +231,13 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.PAYMENT_ACT,
         # Field budget approval is the CCEO→PL chain alone.
         Permission.BUDGET_APPROVE,
+        # A technical super-role remains read-only on the governed loan book.
+        Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
+        Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
+        Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM,
+        Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+        Permission.BUSINESS_TRANSFORMATION_EXPORT,
     }
 )
 
@@ -265,6 +315,14 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_DEFINE,
         P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_CASE_MANAGE,
+        P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_MFI_MANAGE,
+        P.BUSINESS_TRANSFORMATION_REFERRAL_MANAGE,
+        P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
         # May author and publish policy within its scope, and sees regional
@@ -300,6 +358,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_DEFINE,
         P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
         P.SCHOOL_VIEW,
@@ -341,6 +402,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STRATEGIC_PRIORITIES_VIEW,
         P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
     ],
     EdifyRole.CCEO: [
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
@@ -372,6 +434,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,
         P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
         # §5 — authorized non-school programme activities.
@@ -408,11 +471,17 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # IA works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,
+        P.STRATEGIC_PRIORITIES_IMPORT,
         # IA distributes the approved Uganda annual targets to Program Leads
         # and approves their quarterly spreads (Uganda Master Priority Plan).
         P.STRATEGIC_PRIORITIES_ALLOCATE,
         P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_EXPORT,
+        P.BUSINESS_TRANSFORMATION_IA_VALIDATE,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
@@ -497,7 +566,52 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PLANNING_VIEW,
         P.ACTIVITY_CATALOGUE_VIEW,
     ],
+    EdifyRole.BUSINESS_TRANSFORMATION_OFFICER: [
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.SSA_VIEW,
+        P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM,
+        P.BUSINESS_TRANSFORMATION_EXPORT,
+    ],
+    EdifyRole.MFI_PARTNER_ADMIN: [
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        P.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
+        P.BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE,
+    ],
+    EdifyRole.MFI_LOAN_OFFICER: [
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        P.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
+    ],
 }
+
+# The Loans page is a universal transparency surface. Keep this grant here so
+# adding a future role cannot accidentally produce a role with navigation but
+# no read permission. Loan-entry and repayment permissions remain explicit in
+# the two MFI role lists above.
+for _role_permissions in ROLE_PERMISSIONS.values():
+    for _loan_read_permission in (
+        P.BUSINESS_TRANSFORMATION_VIEW,
+        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+    ):
+        if _loan_read_permission not in _role_permissions:
+            _role_permissions.append(_loan_read_permission)
 
 
 def permissions_for_role(role: EdifyRole | str) -> list[str]:

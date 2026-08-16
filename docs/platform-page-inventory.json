@@ -673,6 +673,54 @@
       "template": "partials/budgets/budget_group_tables.html"
     },
     {
+      "bytes": 7337,
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/business_transformation/loan_drawer.html"
+    },
+    {
+      "bytes": 4848,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 2,
+      "template": "partials/business_transformation/portfolio.html"
+    },
+    {
+      "bytes": 2835,
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/business_transformation/school_portfolio_filters.html"
+    },
+    {
+      "bytes": 4255,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/business_transformation/school_portfolio_list.html"
+    },
+    {
+      "bytes": 6074,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "tables": 0,
+      "template": "partials/business_transformation/school_portfolio_row.html"
+    },
+    {
+      "bytes": 1993,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/business_transformation/workspace_nav.html"
+    },
+    {
       "bytes": 1523,
       "findings": [],
       "forms": 0,
@@ -1505,6 +1553,14 @@
       "template": "partials/hr/pd_dashboard/tracker_table.html"
     },
     {
+      "bytes": 4001,
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 0,
+      "tables": 1,
+      "template": "partials/hr/priority_import.html"
+    },
+    {
       "bytes": 10212,
       "findings": [],
       "forms": 1,
@@ -2009,7 +2065,7 @@
       "template": "partials/planning/route_preview.html"
     },
     {
-      "bytes": 18273,
+      "bytes": 18755,
       "findings": [],
       "forms": 1,
       "htmx_controls": 1,
@@ -2017,7 +2073,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 28454,
+      "bytes": 28936,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -2025,7 +2081,7 @@
       "template": "partials/planning/schedule_drawer.html"
     },
     {
-      "bytes": 5370,
+      "bytes": 5461,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
@@ -2033,7 +2089,7 @@
       "template": "partials/planning/school_row.html"
     },
     {
-      "bytes": 14227,
+      "bytes": 14409,
       "findings": [],
       "forms": 0,
       "htmx_controls": 6,
@@ -2273,6 +2329,14 @@
       "template": "partials/schools/assign_to_project_drawer.html"
     },
     {
+      "bytes": 7271,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/schools/business_transformation.html"
+    },
+    {
       "bytes": 8029,
       "findings": [],
       "forms": 1,
@@ -2417,12 +2481,20 @@
       "template": "partials/targets/area_drawer.html"
     },
     {
-      "bytes": 22814,
+      "bytes": 22922,
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
       "tables": 3,
       "template": "partials/targets/my_body.html"
+    },
+    {
+      "bytes": 1906,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "tables": 0,
+      "template": "partials/targets/priority_portfolio.html"
     },
     {
       "bytes": 3649,
@@ -4663,10 +4735,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -4720,10 +4795,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -9185,6 +9263,392 @@
     },
     {
       "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.workspace_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /business-transformation/portfolio{% if filter_query %}?{{ filter_query }}{% endif %}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Business Transformation",
+      "permission_key": "business_transformation",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation",
+      "route_name": "business_transformation",
+      "secondary_actions": [
+        "/business-transformation",
+        "/business-transformation/cases/{{ case.id }}/triage"
+      ],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": true
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.financial_health_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Business Accounting & Finance",
+      "permission_key": "business_transformation_finance",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/business-accounting-finance",
+      "route_name": "business_transformation_finance",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/business_transformation/financial_health.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.triage_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Business Transformation Triage",
+      "permission_key": "business_transformation",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/cases/<str:case_id>/triage",
+      "route_name": "business_transformation_triage",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.government_requirements_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Government Requirements",
+      "permission_key": "business_transformation_government",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/government-requirements",
+      "route_name": "business_transformation_government",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/business_transformation/government_requirements.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.impact_reports_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Impact & Reports",
+      "permission_key": "business_transformation_reports",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/impact-reports",
+      "route_name": "business_transformation_reports",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/impact_reports.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.workspace_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /business-transformation/portfolio{% if filter_query %}?{{ filter_query }}{% endif %}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Business Transformation",
+      "permission_key": "business_transformation",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/overview",
+      "route_name": "business_transformation_overview",
+      "secondary_actions": [
+        "/business-transformation",
+        "/business-transformation/cases/{{ case.id }}/triage"
+      ],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": true
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.portfolio_partial",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Business Transformation Portfolio",
+      "permission_key": "business_transformation",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/business-transformation/portfolio",
+      "route_name": "business_transformation_portfolio",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "tables": true,
+      "templates": [
+        "partials/business_transformation/portfolio.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.6,
@@ -9208,10 +9672,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -9291,10 +9758,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -12835,10 +13305,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -12969,10 +13442,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -13032,10 +13508,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -13095,10 +13574,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -13158,10 +13640,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -13225,10 +13710,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -13288,10 +13776,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -14003,10 +14494,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -16741,10 +17235,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -16796,10 +17293,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -16853,10 +17353,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -16906,10 +17409,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -16961,10 +17467,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17016,10 +17525,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17073,10 +17585,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17128,10 +17643,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17183,10 +17701,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17236,10 +17757,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17293,10 +17817,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17348,10 +17875,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17408,10 +17938,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17463,10 +17996,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17516,10 +18052,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17569,10 +18108,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17624,10 +18166,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17679,10 +18224,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17732,10 +18280,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17787,10 +18338,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -17842,10 +18396,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -18766,10 +19323,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -19310,10 +19870,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -19367,10 +19930,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -19424,10 +19990,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -19648,10 +20217,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -19703,10 +20275,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20045,6 +20620,505 @@
     },
     {
       "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_page",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [
+        "GET /loans/{{ loan.id }}/drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loans",
+      "permission_key": "loans",
+      "primary_action": "Complete View",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans",
+      "route_name": "loans",
+      "secondary_actions": [
+        "/loans",
+        "/loans/save",
+        "/loans/repayment-snapshots"
+      ],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/loans.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_drawer",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": true,
+      "notifications": false,
+      "page_title": "Loan Drawer",
+      "permission_key": "loans",
+      "primary_action": "Confirm &amp; Complete",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/<str:loan_id>/drawer",
+      "route_name": "loan_drawer",
+      "secondary_actions": [
+        "/loans/{{ loan.id }}/salesforce-confirmation",
+        "/loans/{{ loan.id }}/ia-validation"
+      ],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "tables": false,
+      "templates": [
+        "partials/business_transformation/loan_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.ia_validation_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Ia Validation",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/<str:loan_id>/ia-validation",
+      "route_name": "loan_ia_validation",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.repayment_snapshot_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Repayment Snapshot",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/<str:loan_id>/repayment-snapshots",
+      "route_name": "loan_repayment_snapshot",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.salesforce_confirmation_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Salesforce Confirmation",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/<str:loan_id>/salesforce-confirmation",
+      "route_name": "loan_salesforce_confirmation",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.salesforce_return_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Salesforce Return",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/<str:loan_id>/salesforce-return",
+      "route_name": "loan_salesforce_return",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_export_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Export",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/export.csv",
+      "route_name": "loan_export",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.repayment_snapshot_save_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Repayment Snapshot Save",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/repayment-snapshots",
+      "route_name": "loan_repayment_snapshot_save",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_save_action",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Loan Save",
+      "permission_key": "loans",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/loans/save",
+      "route_name": "loan_save",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.6,
@@ -20195,10 +21269,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20256,10 +21333,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20315,10 +21395,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20369,10 +21452,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20423,10 +21509,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20482,10 +21571,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20543,10 +21635,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20601,10 +21696,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20659,10 +21757,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20715,10 +21816,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20775,10 +21879,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20834,10 +21941,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20892,10 +22002,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20951,10 +22064,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -20978,6 +22094,102 @@
       "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.mfi_portal_page",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET /loans/{{ loan.id }}/drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "MFI Partner Portal",
+      "permission_key": "mfi_portal",
+      "primary_action": "Create or update loan",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "MFI_ADMIN",
+        "MFI_OFFICER"
+      ],
+      "route": "/mfi-portal",
+      "route_name": "mfi_portal",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/mfi_portal.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.mfi_portal_page",
+      "charts": false,
+      "drawers": true,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [
+        "GET /loans/{{ loan.id }}/drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "MFI Partner Portal",
+      "permission_key": "mfi_portal",
+      "primary_action": "Create or update loan",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "MFI_ADMIN",
+        "MFI_OFFICER"
+      ],
+      "route": "/mfi-portal/<str:section>",
+      "route_name": "mfi_portal_section",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": true,
+      "templates": [
+        "pages/business_transformation/mfi_portal.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
       "todos": false
     },
     {
@@ -21775,6 +22987,65 @@
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.day_package_view",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "My Plan Day Package",
+      "permission_key": "my_plan",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "The offline day package (roadmap Phase 3): one JSON document carrying the caller's field day \u2014 route-grouped activities, school locations, evidence checklists, participant plans \u2014 for the client to cache before travel. Own work only; scope comes from the same resolver as My Plan.",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/day-package",
+      "route_name": "my_plan_day_package",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.services",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -22725,10 +23996,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -22791,10 +24065,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -22859,10 +24136,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -22925,10 +24205,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -22991,10 +24274,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24221,10 +25507,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24282,10 +25571,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24345,10 +25637,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24856,10 +26151,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24917,10 +26215,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -24976,10 +26277,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -25031,10 +26335,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -25090,10 +26397,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -25315,8 +26625,8 @@
       "findings": [],
       "forms": true,
       "htmx_endpoints": [
-        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=training",
-        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=meeting",
+        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=training{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
+        "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=meeting{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
         "GET /planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
         "GET /planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
         "GET /planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
@@ -26174,10 +27484,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -27253,10 +28566,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -27312,10 +28628,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -27887,6 +29206,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -27943,6 +29263,7 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "IA",
@@ -27959,6 +29280,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28027,6 +29349,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28097,6 +29420,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28163,6 +29487,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28212,6 +29537,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "IA",
@@ -28225,6 +29551,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28276,6 +29603,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "IA",
@@ -28291,6 +29619,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28342,6 +29671,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "IA",
@@ -28355,6 +29685,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28423,6 +29754,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28474,6 +29806,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "IA",
@@ -28487,6 +29820,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28549,6 +29883,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28611,6 +29946,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28673,6 +30009,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28735,6 +30072,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28796,6 +30134,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28865,6 +30204,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28929,6 +30269,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -28999,6 +30340,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29063,6 +30405,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29127,6 +30470,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29190,6 +30534,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29250,6 +30595,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29308,6 +30654,7 @@
         "apps.accounts.models",
         "apps.analytics.services",
         "apps.audit.services",
+        "apps.business_transformation.services",
         "apps.clusters.models",
         "apps.clusters.services",
         "apps.core.scoping",
@@ -29360,10 +30707,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -29440,10 +30790,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -29573,10 +30926,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -29629,10 +30985,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -30362,10 +31721,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -30421,10 +31783,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -30649,6 +32014,144 @@
       "templates": [
         "partials/hr/target_distribution_form.html"
       ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_import",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Target Distribution Import",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution/import",
+      "route_name": "target_distribution_import",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_import_commit",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Target Distribution Import Commit",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution/import/<str:batch_id>/commit",
+      "route_name": "target_distribution_import_commit",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": false
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.target_distribution_views",
+      "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_import_template",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": false,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Target Distribution Import Template",
+      "permission_key": "target_distribution",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "IA"
+      ],
+      "route": "/target-distribution/import/template",
+      "route_name": "target_distribution_import_template",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.hr.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [],
       "test_status": "referenced-by-automated-test",
       "theme_state": "migration-required",
       "todos": false
@@ -31634,10 +33137,64 @@
     {
       "api_endpoints": [],
       "app": "frontend",
-      "audit_events": true,
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.today_views",
+      "backend_view": "apps.frontend.views.today_views.today_page",
+      "charts": false,
+      "drawers": false,
+      "findings": [],
+      "forms": true,
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "manual_quality_score": null,
+      "modals": false,
+      "notifications": false,
+      "page_title": "Today \u00b7 Edify",
+      "permission_key": "today",
+      "primary_action": "Requires manual product review",
+      "primary_user_decision": "Requires manual product review",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/today",
+      "route_name": "today",
+      "secondary_actions": [
+        "/today/action"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.autopilot.models",
+        "apps.autopilot.services",
+        "apps.debriefs.models"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "tables": false,
+      "templates": [
+        "pages/today/index.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "migration-required",
+      "todos": true
+    },
+    {
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
       "automated_quality_score": 9.4,
-      "backend_module": "apps.frontend.views.staff_views",
-      "backend_view": "apps.frontend.views.staff_views.today_view",
+      "backend_module": "apps.frontend.views.today_views",
+      "backend_view": "apps.frontend.views.today_views.today_action",
       "charts": false,
       "drawers": false,
       "findings": [],
@@ -31647,38 +33204,26 @@
       "manual_quality_score": null,
       "modals": false,
       "notifications": false,
-      "page_title": "Today",
-      "permission_key": "dashboard",
+      "page_title": "Today Action",
+      "permission_key": "today",
       "primary_action": "Requires manual product review",
       "primary_user_decision": "Requires manual product review",
-      "purpose": "Today's command center \u2014 overdue, today, upcoming, and pending actions.",
-      "responsive_state": "detected",
+      "purpose": "Requires product-purpose documentation",
+      "responsive_state": "manual-review-required",
       "role_access": [
-        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
-        "CD",
-        "HR",
-        "IA",
-        "PARTNER",
         "PL",
-        "PROJECT_COORDINATOR",
-        "RVP"
+        "PROJECT_COORDINATOR"
       ],
-      "route": "/today",
-      "route_name": "today",
+      "route": "/today/action",
+      "route_name": "today_action",
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
-        "apps.activities.models",
-        "apps.audit.services",
-        "apps.core.scoping",
-        "apps.core_schools.models",
-        "apps.geography.models",
-        "apps.notifications.models",
-        "apps.schools.models",
-        "apps.ssa.services",
-        "apps.targets.models"
+        "apps.autopilot.models",
+        "apps.autopilot.services",
+        "apps.debriefs.models"
       ],
       "state_coverage": {
         "disabled": false,
@@ -31688,11 +33233,9 @@
       },
       "surface_kind": "page",
       "tables": false,
-      "templates": [
-        "pages/today/index.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
+      "theme_state": "migration-required",
       "todos": false
     },
     {
@@ -31720,10 +33263,13 @@
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
+        "BUSINESS_TRANSFORMATION",
         "CCEO",
         "CD",
         "HR",
         "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
@@ -32508,8 +34054,10 @@
       "apps.analytics",
       "apps.assignment",
       "apps.audit",
+      "apps.autopilot",
       "apps.budget",
       "apps.budget_intelligence",
+      "apps.business_transformation",
       "apps.clusters",
       "apps.command_center",
       "apps.core",
@@ -32525,11 +34073,13 @@
       "apps.geography",
       "apps.help_center",
       "apps.hr",
+      "apps.integrations",
       "apps.leadership",
       "apps.messaging",
       "apps.monthly_work_plan",
       "apps.my_plan",
       "apps.notifications",
+      "apps.outbox",
       "apps.partners",
       "apps.pl_review",
       "apps.planning",
@@ -32544,7 +34094,8 @@
       "apps.ssa",
       "apps.staff_setup",
       "apps.system_health",
-      "apps.targets"
+      "apps.targets",
+      "apps.telemetry"
     ],
     "permission_keys": [
       "school.view",
@@ -32573,6 +34124,7 @@
       "activityCatalogue.mapInterventions",
       "activityCatalogue.manageProjectRules",
       "strategicPriorities.view",
+      "strategicPriorities.import",
       "strategicPriorities.create",
       "strategicPriorities.edit",
       "strategicPriorities.approve",
@@ -32616,7 +34168,21 @@
       "leadership.view",
       "leadership.review",
       "budgetIntelligence.view",
-      "budgetDecision.review"
+      "budgetDecision.review",
+      "businessTransformation.view",
+      "businessTransformation.case.manage",
+      "businessTransformation.schoolSupport.manage",
+      "businessTransformation.portfolio.view",
+      "businessTransformation.sensitive.view",
+      "businessTransformation.mfi.manage",
+      "businessTransformation.referral.manage",
+      "businessTransformation.loan.write",
+      "businessTransformation.repayment.write",
+      "businessTransformation.portfolio.certify",
+      "businessTransformation.salesforce.confirm",
+      "businessTransformation.ia.validate",
+      "businessTransformation.mfiMember.manage",
+      "businessTransformation.export"
     ],
     "roles": [
       "CCEO",
@@ -32629,6 +34195,9 @@
       "ProjectCoordinator",
       "PartnerAdmin",
       "PartnerFieldOfficer",
+      "BusinessTransformationOfficer",
+      "MfiPartnerAdmin",
+      "MfiLoanOfficer",
       "Admin"
     ],
     "scheduled_jobs": [
@@ -32867,6 +34436,65 @@
         "max_interval_minutes": 1560,
         "max_retries": 2,
         "name": "mfa_challenge_purge",
+        "retryable": true
+      },
+      {
+        "cron": "Fri 05:00 Africa/Kampala",
+        "cron_kwargs": {
+          "day_of_week": "fri",
+          "hour": 5
+        },
+        "description": "Drafts next week's proposed schedule for every active CCEO \u2014 the platform prepares; staff accept or adjust (roadmap Phase 4).",
+        "expected_runtime_seconds": 300,
+        "idempotency_note": "Regeneration supersedes the previous live draft (one live proposal per person-week, DB-enforced); accepted weeks are skipped \u2014 a re-run converges on the same drafts.",
+        "idempotent": true,
+        "max_interval_minutes": 11520,
+        "max_retries": 2,
+        "name": "autopilot_weekly_proposals",
+        "retryable": true
+      },
+      {
+        "cron": "every minute Africa/Kampala",
+        "cron_kwargs": {
+          "minute": "*"
+        },
+        "description": "Drains due durable-outbox events to their handlers with per-event retry, backoff and dead-lettering.",
+        "expected_runtime_seconds": 50,
+        "idempotency_note": "Claims use SELECT FOR UPDATE SKIP LOCKED and handlers are idempotent by registry contract \u2014 overlapping or repeated drains converge on the same delivered state.",
+        "idempotent": true,
+        "max_interval_minutes": 10,
+        "max_retries": 1,
+        "name": "outbox_drain",
+        "retryable": true
+      },
+      {
+        "cron": "daily 03:00 Africa/Kampala",
+        "cron_kwargs": {
+          "hour": 3,
+          "minute": 0
+        },
+        "description": "Proposes duplicate-school candidates, then reconciles every operating school's data-quality issues (coordinates, ownership, clustering, SSA) as durable, self-closing queues.",
+        "expected_runtime_seconds": 300,
+        "idempotency_note": "Issues reconcile on condition_key (open rows update or resolve, never duplicate) and duplicate pairs are unique per (school, candidate) \u2014 a re-run converges to the same state.",
+        "idempotent": true,
+        "max_interval_minutes": 1560,
+        "max_retries": 2,
+        "name": "data_quality_scan",
+        "retryable": true
+      },
+      {
+        "cron": "daily 02:40 Africa/Kampala",
+        "cron_kwargs": {
+          "hour": 2,
+          "minute": 40
+        },
+        "description": "Sessionises yesterday's interaction events into per-person-day aggregates for the Staff Time Standard and prunes raw events past retention.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "update_or_create keyed on (user_id, day) recomputed from the same raw events \u2014 a re-run rewrites identical rows.",
+        "idempotent": true,
+        "max_interval_minutes": 1560,
+        "max_retries": 2,
+        "name": "interaction_rollup",
         "retryable": true
       },
       {
@@ -37079,6 +38707,285 @@
       "templates": []
     },
     {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.view"
+      ],
+      "route": "/api/business-transformation(?:/|)cases",
+      "route_name": "cases",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.case.manage"
+      ],
+      "route": "/api/business-transformation(?:/|)cases/<str:case_id>/triage",
+      "route_name": "triage",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.view"
+      ],
+      "route": "/api/business-transformation(?:/|)loan-purposes",
+      "route_name": "loan-purposes",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/business-transformation(?:/|)loans",
+      "route_name": "loans",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.ia.validate"
+      ],
+      "route": "/api/business-transformation(?:/|)loans/<str:loan_id>/ia-validation",
+      "route_name": "loan-ia-validation",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.repayment.write"
+      ],
+      "route": "/api/business-transformation(?:/|)loans/<str:loan_id>/repayment-snapshots",
+      "route_name": "repayment-snapshots",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.salesforce.confirm"
+      ],
+      "route": "/api/business-transformation(?:/|)loans/<str:loan_id>/salesforce-confirmation",
+      "route_name": "loan-salesforce-confirmation",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.case.manage"
+      ],
+      "route": "/api/business-transformation(?:/|)loans/<str:loan_id>/salesforce-return",
+      "route_name": "loan-salesforce-return",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.portfolio.view"
+      ],
+      "route": "/api/business-transformation(?:/|)metrics",
+      "route_name": "metrics",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.mfiMember.manage"
+      ],
+      "route": "/api/business-transformation(?:/|)mfi-members",
+      "route_name": "mfi-members",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/business-transformation(?:/|)mfis",
+      "route_name": "mfis",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/api/business-transformation(?:/|)referrals",
+      "route_name": "referrals",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.loan.write"
+      ],
+      "route": "/api/business-transformation(?:/|)referrals/<str:referral_id>/decision",
+      "route_name": "referral-decision",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "businessTransformation.schoolSupport.manage"
+      ],
+      "route": "/api/business-transformation(?:/|)verification-requirements/<str:requirement_id>/activity",
+      "route_name": "verification-activity",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "activity.complete"
+      ],
+      "route": "/api/business-transformation(?:/|)verification-requirements/<str:requirement_id>/result",
+      "route_name": "loan-use-result",
+      "templates": []
+    },
+    {
       "callback": "apps.clusters.views.view",
       "kind": "api",
       "methods": [
@@ -41133,6 +43040,102 @@
       ]
     },
     {
+      "callback": "apps.business_transformation.frontend_views.workspace_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation",
+      "required_permissions": [],
+      "route": "/business-transformation",
+      "route_name": "business_transformation",
+      "templates": [
+        "pages/business_transformation/index.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.financial_health_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation_finance",
+      "required_permissions": [],
+      "route": "/business-transformation/business-accounting-finance",
+      "route_name": "business_transformation_finance",
+      "templates": [
+        "pages/business_transformation/financial_health.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.triage_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation",
+      "required_permissions": [],
+      "route": "/business-transformation/cases/<str:case_id>/triage",
+      "route_name": "business_transformation_triage",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.government_requirements_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation_government",
+      "required_permissions": [],
+      "route": "/business-transformation/government-requirements",
+      "route_name": "business_transformation_government",
+      "templates": [
+        "pages/business_transformation/government_requirements.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.impact_reports_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation_reports",
+      "required_permissions": [],
+      "route": "/business-transformation/impact-reports",
+      "route_name": "business_transformation_reports",
+      "templates": [
+        "pages/business_transformation/impact_reports.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.workspace_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation",
+      "required_permissions": [],
+      "route": "/business-transformation/overview",
+      "route_name": "business_transformation_overview",
+      "templates": [
+        "pages/business_transformation/index.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.portfolio_partial",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "business_transformation",
+      "required_permissions": [],
+      "route": "/business-transformation/portfolio",
+      "route_name": "business_transformation_portfolio",
+      "templates": [
+        "partials/business_transformation/portfolio.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.calendar_view",
       "kind": "page",
       "methods": [
@@ -43756,6 +45759,118 @@
       ]
     },
     {
+      "callback": "apps.business_transformation.frontend_views.loan_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans",
+      "route_name": "loans",
+      "templates": [
+        "pages/business_transformation/loans.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.loan_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/<str:loan_id>/drawer",
+      "route_name": "loan_drawer",
+      "templates": [
+        "partials/business_transformation/loan_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.ia_validation_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/<str:loan_id>/ia-validation",
+      "route_name": "loan_ia_validation",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.repayment_snapshot_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/<str:loan_id>/repayment-snapshots",
+      "route_name": "loan_repayment_snapshot",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.salesforce_confirmation_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/<str:loan_id>/salesforce-confirmation",
+      "route_name": "loan_salesforce_confirmation",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.salesforce_return_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/<str:loan_id>/salesforce-return",
+      "route_name": "loan_salesforce_return",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.loan_export_action",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/export.csv",
+      "route_name": "loan_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.repayment_snapshot_save_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/repayment-snapshots",
+      "route_name": "loan_repayment_snapshot_save",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.loan_save_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/save",
+      "route_name": "loan_save",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.auth_views.login_view",
       "kind": "page",
       "methods": [
@@ -44027,6 +46142,34 @@
       "templates": []
     },
     {
+      "callback": "apps.business_transformation.frontend_views.mfi_portal_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "mfi_portal",
+      "required_permissions": [],
+      "route": "/mfi-portal",
+      "route_name": "mfi_portal",
+      "templates": [
+        "pages/business_transformation/mfi_portal.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.mfi_portal_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "mfi_portal",
+      "required_permissions": [],
+      "route": "/mfi-portal/<str:section>",
+      "route_name": "mfi_portal_section",
+      "templates": [
+        "pages/business_transformation/mfi_portal.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.hr_views.my_performance_view",
       "kind": "page",
       "methods": [
@@ -44206,6 +46349,18 @@
       "templates": [
         "partials/planning/schedule_drawer.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.day_package_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/day-package",
+      "route_name": "my_plan_day_package",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.pd_views.my_professional_development_view",
@@ -46281,6 +48436,42 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_import",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/import",
+      "route_name": "target_distribution_import",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_import_commit",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/import/<str:batch_id>/commit",
+      "route_name": "target_distribution_import_commit",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.target_distribution_views.target_distribution_import_template",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "target_distribution",
+      "required_permissions": [],
+      "route": "/target-distribution/import/template",
+      "route_name": "target_distribution_import_template",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.target_distribution_views.team_distribution_page",
       "kind": "page",
       "methods": [
@@ -46510,18 +48701,30 @@
       ]
     },
     {
-      "callback": "apps.frontend.views.staff_views.today_view",
+      "callback": "apps.frontend.views.today_views.today_page",
       "kind": "page",
       "methods": [
         "GET"
       ],
-      "page_permission": "dashboard",
+      "page_permission": "today",
       "required_permissions": [],
       "route": "/today",
       "route_name": "today",
       "templates": [
         "pages/today/index.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.today_views.today_action",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "today",
+      "required_permissions": [],
+      "route": "/today/action",
+      "route_name": "today_action",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.extended_views.todos_view",
@@ -46733,22 +48936,22 @@
   ],
   "summary": {
     "activity_states": 23,
-    "all_routes": 914,
-    "api_routes": 296,
-    "component_templates": 321,
-    "full_pages": 331,
-    "partials_and_drawers": 162,
-    "permission_gated": 499,
-    "permission_keys": 70,
-    "roles": 11,
-    "routed_surfaces": 509,
-    "scheduled_jobs": 18,
+    "all_routes": 952,
+    "api_routes": 311,
+    "component_templates": 330,
+    "full_pages": 351,
+    "partials_and_drawers": 164,
+    "permission_gated": 522,
+    "permission_keys": 85,
+    "roles": 14,
+    "routed_surfaces": 532,
+    "scheduled_jobs": 22,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
       "medium": 0
     },
-    "test_referenced": 474
+    "test_referenced": 494
   }
 }

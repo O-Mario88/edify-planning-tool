@@ -21,7 +21,7 @@ from django.db.models import Avg, Count, Max, Min, Prefetch, Q, Sum
 from apps.core.enums import ClusterRecordStatus
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import Permission
-from apps.core.scoping import cluster_queryset, resolve_user_scope, school_queryset
+from apps.core.scoping import cluster_queryset, resolve_user_scope
 from apps.geography.models import District, SubCounty
 from apps.schools.models import School
 from apps.ssa.presentation import build_ssa_score_summary

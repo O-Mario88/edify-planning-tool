@@ -1085,6 +1085,12 @@ class MyTargetQueryService:
 
             project_priorities = staff_project_priorities(user=user, fy=fy)
 
+        from apps.hr.priority_portfolio import priority_portfolio
+
+        priority_groups = priority_portfolio(
+            user=user, fy=fy, strategic_milestones=strategic_milestones
+        )
+
         return {
             "fy": fy,
             "month_of_fy": month_of_fy,
@@ -1126,6 +1132,7 @@ class MyTargetQueryService:
             "strategic_milestones": strategic_milestones,
             "strategic_priorities": strategic_priorities,
             "project_priorities": project_priorities,
+            "priority_groups": priority_groups,
         }
 
     # ── Gap reasons + drawer detail (traceability) ───────────────────────────

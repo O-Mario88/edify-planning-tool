@@ -244,6 +244,83 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="autopilot_weekly_proposals",
+        description=(
+            "Drafts next week's proposed schedule for every active CCEO — "
+            "the platform prepares; staff accept or adjust (roadmap Phase 4)."
+        ),
+        cron="Fri 05:00 Africa/Kampala",
+        cron_kwargs={"day_of_week": "fri", "hour": 5},
+        expected_runtime_seconds=300,
+        max_interval_minutes=60 * 24 * 8,
+        idempotent=True,
+        idempotency_note=(
+            "Regeneration supersedes the previous live draft (one live "
+            "proposal per person-week, DB-enforced); accepted weeks are "
+            "skipped — a re-run converges on the same drafts."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="outbox_drain",
+        description=(
+            "Drains due durable-outbox events to their handlers with "
+            "per-event retry, backoff and dead-lettering."
+        ),
+        cron="every minute Africa/Kampala",
+        cron_kwargs={"minute": "*"},
+        expected_runtime_seconds=50,
+        max_interval_minutes=10,
+        idempotent=True,
+        idempotency_note=(
+            "Claims use SELECT FOR UPDATE SKIP LOCKED and handlers are "
+            "idempotent by registry contract — overlapping or repeated "
+            "drains converge on the same delivered state."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
+    JobSpec(
+        name="data_quality_scan",
+        description=(
+            "Proposes duplicate-school candidates, then reconciles every "
+            "operating school's data-quality issues (coordinates, ownership, "
+            "clustering, SSA) as durable, self-closing queues."
+        ),
+        cron="daily 03:00 Africa/Kampala",
+        cron_kwargs={"hour": 3, "minute": 0},
+        expected_runtime_seconds=300,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "Issues reconcile on condition_key (open rows update or resolve, "
+            "never duplicate) and duplicate pairs are unique per "
+            "(school, candidate) — a re-run converges to the same state."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="interaction_rollup",
+        description=(
+            "Sessionises yesterday's interaction events into per-person-day "
+            "aggregates for the Staff Time Standard and prunes raw events "
+            "past retention."
+        ),
+        cron="daily 02:40 Africa/Kampala",
+        cron_kwargs={"hour": 2, "minute": 40},
+        expected_runtime_seconds=60,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "update_or_create keyed on (user_id, day) recomputed from the "
+            "same raw events — a re-run rewrites identical rows."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="document_lifecycle",
         description=(
             "Activates effective documents, expires lapsed ones, retries failed "

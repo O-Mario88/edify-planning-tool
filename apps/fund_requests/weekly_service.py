@@ -690,6 +690,8 @@ def disburse(request_id: str, data: dict, principal) -> dict:
             for adv_id, _value in by_fraction[: max(0, remainder)]:
                 floors[adv_id] += 1
             shares = floors
+        from apps.integrations.services import enqueue_advance_netsuite_sync
+
         for line, adv in lines_with_adv:
             if adv:
                 adv.status = "disbursed"
@@ -698,6 +700,10 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 adv.disbursed_by_user_id = principal.user_id
                 adv.disburse_method = data.get("method")
                 adv.disburse_reference = data.get("reference")
+                # Phase 2c seam on the disburse path the UI actually uses
+                # (audit finding: only the DRF path enqueued). No-op unless
+                # the NetSuite flag is on; transactional with this write.
+                enqueue_advance_netsuite_sync(adv.id)
                 adv.save(
                     update_fields=[
                         "status",

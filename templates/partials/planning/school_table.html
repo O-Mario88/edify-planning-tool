@@ -101,14 +101,14 @@
 
               <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4" @click.stop>
                 <button
-                  hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
+                  hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}"
                   hx-target="#drawer-container"
                   class="h-8 px-4 rounded-control edify-primary-solid text-white edify-text-caption font-bold uppercase tracking-wider edify-primary-hover shadow-sm transition-all"
                 >
                   Group Training
                 </button>
                 <button
-                  hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting"
+                  hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}"
                   hx-target="#drawer-container"
                   class="h-8 px-4 rounded-control border border-slate-200 edify-surface text-slate-700 edify-text-caption font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all"
                 >

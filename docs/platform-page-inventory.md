@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **509**
-- All registered routes: **914**
-- API routes: **296**
-- Roles: **11**
-- Permission keys: **70**
-- Scheduled jobs: **18**
+- Routed product surfaces: **532**
+- All registered routes: **952**
+- API routes: **311**
+- Roles: **14**
+- Permission keys: **85**
+- Scheduled jobs: **22**
 - Activity states: **23**
-- Shared component templates: **321**
-- Full pages: **331**
-- Partials and drawers: **162**
-- Permission-gated surfaces: **499**
-- Referenced by automated tests: **474**
+- Shared component templates: **330**
+- Full pages: **351**
+- Partials and drawers: **164**
+- Permission-gated surfaces: **522**
+- Referenced by automated tests: **494**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -63,8 +63,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /accounts/variance-review/ | Variance Review - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/variance_review.html | 9.6 | 0 | referenced by automated test |
 | /accounts/weekly-requests | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
 | /accounts/weekly-requests/ | Weekly Fund Requests - Edify Command Center | ACCOUNTANT, ADMIN | pages/accounts/weekly_requests.html | 9.4 | 0 | referenced by automated test |
-| /actions/<str:action_id>/<str:transition> | Action Transition | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html | 9.6 | 0 | referenced by automated test |
-| /actions/mine | My Actions | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
+| /actions/<str:action_id>/<str:transition> | Action Transition | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html | 9.6 | 0 | referenced by automated test |
+| /actions/mine | My Actions | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
 | /actions/sent | Actions Sent | ADMIN, CD, IA, PL, RVP | partials/actions/table.html<br>pages/actions/workspace.html | 9.6 | 0 | referenced by automated test |
 | /activities/<str:activity_id> | Activity Details | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/activity_detail_drawer.html<br>pages/my_plan/detail.html | 9.4 | 0 | referenced by automated test |
 | /activities/<str:activity_id>/attendance | Attendance Upload Drawer | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/my_plan/attendance_drawer.html | 9.6 | 0 | referenced by automated test |
@@ -141,8 +141,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /api/analytics/map-subcounties | Map Subcounty Metrics | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/monthly | Monthly Budget | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /budgets/overview | Budget Overview | ACCOUNTANT, ADMIN, CD, IA, RVP | pages/budget/index.html | 9.4 | 0 | coverage review required |
-| /calendar | Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.6 | 0 | referenced by automated test |
-| /calendar/events | Calendar Event Create | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /business-transformation | Business Transformation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/index.html | 9.7 | 0 | referenced by automated test |
+| /business-transformation/business-accounting-finance | Business Accounting & Finance | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/financial_health.html | 9.4 | 0 | coverage review required |
+| /business-transformation/cases/<str:case_id>/triage | Business Transformation Triage | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /business-transformation/government-requirements | Government Requirements | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/government_requirements.html | 9.6 | 0 | referenced by automated test |
+| /business-transformation/impact-reports | Impact & Reports | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/impact_reports.html | 9.6 | 0 | coverage review required |
+| /business-transformation/overview | Business Transformation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/index.html | 9.7 | 0 | referenced by automated test |
+| /business-transformation/portfolio | Business Transformation Portfolio | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/business_transformation/portfolio.html | 9.6 | 0 | referenced by automated test |
+| /calendar | Calendar | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/calendar/index.html | 9.6 | 0 | referenced by automated test |
+| /calendar/events | Calendar Event Create | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /candidate-pipeline | Candidate Pipeline | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /change-password | Change Password | Unmapped | pages/auth/change_password.html | 9.6 | 0 | referenced by automated test |
 | /clusters | Clusters | ADMIN, CCEO, CD, IA, PARTNER, PL | partials/clusters/htmx_response.html<br>pages/clusters/index.html | 9.6 | 0 | referenced by automated test |
@@ -203,14 +210,14 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /cpd-learning/action | Pd Dashboard Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /cpd-learning/adjust-allocation | Pd Dashboard Adjust Allocation | ADMIN, CD, HR, PL, RVP | partials/hr/pd_dashboard/adjust_allocation_drawer.html | 9.4 | 0 | referenced by automated test |
 | /culture-engagement | Culture Engagement | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /dashboard | Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/cd/body.html<br>pages/dashboards/cd.html<br>partials/dashboards/pl/body.html<br>pages/dashboards/pl.html<br>pages/dashboards/rvp.html<br>partials/dashboards/hr/body.html<br>pages/dashboards/hr.html<br>pages/dashboards/cceo.html<br>pages/dashboards/special_projects.html<br>pages/dashboards/main.html | 9.7 | 0 | referenced by automated test |
+| /dashboard | Dashboard | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/cd/body.html<br>pages/dashboards/cd.html<br>partials/dashboards/pl/body.html<br>pages/dashboards/pl.html<br>pages/dashboards/rvp.html<br>partials/dashboards/hr/body.html<br>pages/dashboards/hr.html<br>pages/dashboards/cceo.html<br>pages/dashboards/special_projects.html<br>pages/dashboards/main.html | 9.7 | 0 | referenced by automated test |
 | /dashboard/cd-approve | Cd Dashboard Approve | ADMIN, CD | partials/dashboards/cd/body.html | 9.7 | 0 | referenced by automated test |
-| /dashboard/pl | Pl Dashboard | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /dashboard/pl-approve | Pl Dashboard Approve | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/body.html | 9.4 | 0 | referenced by automated test |
-| /dashboard/pl-drilldown | Pl Dashboard Drilldown | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/drilldown.html | 9.6 | 0 | referenced by automated test |
-| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_error.html<br>partials/dashboards/pl/urgent_action_sent.html | 9.6 | 0 | referenced by automated test |
-| /dashboard/pl-urgent-schools | Pl Urgent Schools Page | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_schools_page.html | 9.4 | 0 | referenced by automated test |
-| /dashboard/planning-progress | Planning Progress Fragment | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/admin/_planning_progress_body.html | 9.4 | 0 | referenced by automated test |
+| /dashboard/pl | Pl Dashboard | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /dashboard/pl-approve | Pl Dashboard Approve | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/body.html | 9.4 | 0 | referenced by automated test |
+| /dashboard/pl-drilldown | Pl Dashboard Drilldown | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/drilldown.html | 9.6 | 0 | referenced by automated test |
+| /dashboard/pl-send-urgent-action | Pl Send Urgent Action | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_action_error.html<br>partials/dashboards/pl/urgent_action_sent.html | 9.6 | 0 | referenced by automated test |
+| /dashboard/pl-urgent-schools | Pl Urgent Schools Page | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/pl/urgent_schools_page.html | 9.4 | 0 | referenced by automated test |
+| /dashboard/planning-progress | Planning Progress Fragment | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/dashboards/admin/_planning_progress_body.html | 9.4 | 0 | referenced by automated test |
 | /data-quality/duplicates | Duplicate Review | ADMIN, IA | pages/admin/duplicate_review.html | 9.6 | 0 | referenced by automated test |
 | /data-quality/issue/<str:issue_id>/action | Data Quality Issue Action | ADMIN, IA | partials/data_quality/issue_row.html | 9.4 | 0 | referenced by automated test |
 | /data-repair | Data Repair Center | ADMIN | pages/admin_ops/data_repair.html | 9.6 | 0 | referenced by automated test |
@@ -222,7 +229,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /debriefs/submit | Daily Debrief · Edify | ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/debriefs/submit.html<br>partials/debriefs/autosave_chip.html | 9.7 | 0 | referenced by automated test |
 | /debriefs/weekly-report | Weekly Debrief Report · Edify | ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/debriefs/weekly_report.html | 9.6 | 0 | referenced by automated test |
 | /debriefs/weekly-report/pdf | Debrief Weekly Report Pdf | ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /decision-log | Decision Log | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/audit/decision_log.html | 9.4 | 0 | referenced by automated test |
+| /decision-log | Decision Log | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/audit/decision_log.html | 9.4 | 0 | referenced by automated test |
 | /decisions | Decision Intelligence | ACCOUNTANT, ADMIN, CD, HR, PL, RVP | pages/decisions/index.html | 9.6 | 0 | referenced by automated test |
 | /declining-schools | Declining Schools | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR, RVP | pages/analytics/declining_schools.html | 9.4 | 0 | referenced by automated test |
 | /disbursements | Disbursement Dashboard | ACCOUNTANT, ADMIN | partials/disbursements/root.html<br>pages/disbursements/index.html | 9.7 | 0 | referenced by automated test |
@@ -268,27 +275,27 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /fund-requests/weekly/<str:request_id>/return | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fund-requests/weekly/<str:request_id>/self-funded | Fund Requests | ACCOUNTANT, ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/fund_requests/root.html<br>pages/fund_requests/weekly.html | 9.6 | 0 | referenced by automated test |
 | /fy | Fiscal Year Overview | ADMIN, CCEO, PL, PROJECT_COORDINATOR | pages/fy/index.html | 9.4 | 0 | referenced by automated test |
-| /help | Knowledge Center · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/index.html | 9.4 | 0 | referenced by automated test |
-| /help/articles/<slug:slug> | · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
-| /help/articles/<slug:slug>/feedback | Help Feedback | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /help/articles/<slug:slug>/print | Help Print | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/print_article.html | 9.4 | 0 | referenced by automated test |
-| /help/categories/<slug:slug> | · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/category.html | 9.6 | 0 | referenced by automated test |
-| /help/context | · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
-| /help/export/complete | Help Complete Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manual_export.html | 9.4 | 0 | referenced by automated test |
-| /help/export/role/<slug:role_slug> | Help Role Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manual_export.html | 9.4 | 0 | referenced by automated test |
-| /help/features/<slug:feature_slug> | Help Feature | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /help/getting-started | · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
-| /help/glossary | Glossary · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/glossary.html | 9.6 | 0 | referenced by automated test |
-| /help/manage | Manage Knowledge Center · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manage.html | 9.4 | 0 | referenced by automated test |
-| /help/manage/<slug:slug> | Edit Create Help Draft · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/edit_article.html | 9.6 | 0 | referenced by automated test |
-| /help/manage/<slug:slug>/<slug:action> | Help Manage Transition | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /help/manage/<slug:slug>/revision | Help Manage Revision | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /help/manage/new | Edit Create Help Draft · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/edit_article.html | 9.6 | 0 | referenced by automated test |
-| /help/release-notes | Release Notes · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/release_notes.html | 9.6 | 0 | referenced by automated test |
-| /help/roles/<slug:role_slug> | Help Role | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /help/search | Search Help · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/search.html | 9.6 | 0 | referenced by automated test |
-| /help/troubleshooting | · Knowledge Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/category.html | 9.6 | 0 | referenced by automated test |
-| /help/workflows/<slug:workflow_slug> | Help Workflow | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help | Knowledge Center · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/index.html | 9.4 | 0 | referenced by automated test |
+| /help/articles/<slug:slug> | · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
+| /help/articles/<slug:slug>/feedback | Help Feedback | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help/articles/<slug:slug>/print | Help Print | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/print_article.html | 9.4 | 0 | referenced by automated test |
+| /help/categories/<slug:slug> | · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/category.html | 9.6 | 0 | referenced by automated test |
+| /help/context | · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
+| /help/export/complete | Help Complete Export | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manual_export.html | 9.4 | 0 | referenced by automated test |
+| /help/export/role/<slug:role_slug> | Help Role Export | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manual_export.html | 9.4 | 0 | referenced by automated test |
+| /help/features/<slug:feature_slug> | Help Feature | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help/getting-started | · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/article.html | 9.4 | 0 | referenced by automated test |
+| /help/glossary | Glossary · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/glossary.html | 9.6 | 0 | referenced by automated test |
+| /help/manage | Manage Knowledge Center · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/manage.html | 9.4 | 0 | referenced by automated test |
+| /help/manage/<slug:slug> | Edit Create Help Draft · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/edit_article.html | 9.6 | 0 | referenced by automated test |
+| /help/manage/<slug:slug>/<slug:action> | Help Manage Transition | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help/manage/<slug:slug>/revision | Help Manage Revision | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help/manage/new | Edit Create Help Draft · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/edit_article.html | 9.6 | 0 | referenced by automated test |
+| /help/release-notes | Release Notes · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/release_notes.html | 9.6 | 0 | referenced by automated test |
+| /help/roles/<slug:role_slug> | Help Role | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /help/search | Search Help · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/search.html | 9.6 | 0 | referenced by automated test |
+| /help/troubleshooting | · Knowledge Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/help/category.html | 9.6 | 0 | referenced by automated test |
+| /help/workflows/<slug:workflow_slug> | Help Workflow | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-analytics | People Analytics | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr-audit-log | HR Audit Log | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /hr/performance-cycle | Performance Cycle Console · Edify | ADMIN, HR | pages/hr/performance_console.html | 9.7 | 0 | referenced by automated test |
@@ -305,7 +312,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /ia/verification/<str:activity_id>/return | Ia Return Action | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /ia/verification/<str:activity_id>/verify | Ia Verify Action | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /impact | Impact Analytics | ADMIN, CD, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /leave-requests | Leave Requests | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /leave-requests | Leave Requests | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /leave/approvals | Leave Approvals Cockpit | ADMIN, CD, HR, PL, RVP | pages/leave/leave_approvals.html | 9.7 | 0 | referenced by automated test |
 | /leave/approvals/ | Leave Approvals Cockpit | ADMIN, CD, HR, PL, RVP | pages/leave/leave_approvals.html | 9.7 | 0 | referenced by automated test |
 | /leave/approvals/<str:leave_id>/approve | Leave Approve Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
@@ -315,36 +322,47 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /leave/approvals/<str:leave_id>/reassign | Leave Reassign Coverage Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /leave/approvals/<str:leave_id>/reject | Leave Reject Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /leave/approvals/<str:leave_id>/return | Leave Return Action | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /leave/calendar | Team Availability Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/leave_calendar.html | 9.4 | 0 | referenced by automated test |
-| /leave/calendar/ | Team Availability Calendar | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/leave_calendar.html | 9.4 | 0 | referenced by automated test |
-| /leave/calendar/activities | Leave Calendar Activities | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/calendar_activity_panel.html | 9.4 | 0 | referenced by automated test |
+| /leave/calendar | Team Availability Calendar | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/leave_calendar.html | 9.4 | 0 | referenced by automated test |
+| /leave/calendar/ | Team Availability Calendar | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/leave_calendar.html | 9.4 | 0 | referenced by automated test |
+| /leave/calendar/activities | Leave Calendar Activities | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/calendar_activity_panel.html | 9.4 | 0 | referenced by automated test |
 | /leave/coverage | Delegated Coverage Access | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, RVP | pages/leave/leave_coverage.html | 9.7 | 0 | referenced by automated test |
 | /leave/coverage/ | Delegated Coverage Access | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, RVP | pages/leave/leave_coverage.html | 9.7 | 0 | referenced by automated test |
 | /leave/coverage/<str:assignment_id>/revoke | Revoke Coverage Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /leave/coverage/<str:leave_id>/accept | Leave Coverage Accept Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /leave/coverage/<str:leave_id>/decline | Leave Coverage Decline Action | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /leave/coverage/<str:leave_id>/accept | Leave Coverage Accept Action | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /leave/coverage/<str:leave_id>/decline | Leave Coverage Decline Action | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /leave/policies | HR Leave & Policy Settings | ADMIN, HR | pages/leave/leave_policies.html | 9.7 | 0 | referenced by automated test |
 | /leave/policies/ | HR Leave & Policy Settings | ADMIN, HR | pages/leave/leave_policies.html | 9.7 | 0 | referenced by automated test |
 | /leave/team-availability | Team Availability Heatmap | ADMIN, CD, HR, PL, RVP | pages/leave/team_availability.html | 9.6 | 0 | referenced by automated test |
 | /leave/team-availability/ | Team Availability Heatmap | ADMIN, CD, HR, PL, RVP | pages/leave/team_availability.html | 9.6 | 0 | referenced by automated test |
 | /leave/tracker | Team Leave & Coverage Tracker | ADMIN, CD, HR, PL, RVP | pages/leave/leave_tracker.html | 9.6 | 0 | referenced by automated test |
 | /leave/tracker/ | Team Leave & Coverage Tracker | ADMIN, CD, HR, PL, RVP | pages/leave/leave_tracker.html | 9.6 | 0 | referenced by automated test |
+| /loans | Loans | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/business_transformation/loans.html | 9.6 | 0 | referenced by automated test |
+| /loans/<str:loan_id>/drawer | Loan Drawer | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/business_transformation/loan_drawer.html | 9.4 | 0 | referenced by automated test |
+| /loans/<str:loan_id>/ia-validation | Loan Ia Validation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/<str:loan_id>/repayment-snapshots | Loan Repayment Snapshot | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/<str:loan_id>/salesforce-confirmation | Loan Salesforce Confirmation | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/<str:loan_id>/salesforce-return | Loan Salesforce Return | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/export.csv | Loan Export | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/repayment-snapshots | Loan Repayment Snapshot Save | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /loans/save | Loan Save | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /login | Sign in | Unmapped | pages/auth/login.html | 9.6 | 0 | referenced by automated test |
 | /map | School Map · Edify | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | pages/map/index.html | 9.4 | 0 | referenced by automated test |
-| /messages | Messages | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/inbox_update.html<br>pages/messages/index.html | 9.7 | 0 | referenced by automated test |
-| /messages/ | Messages | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/inbox_update.html<br>pages/messages/index.html | 9.7 | 0 | referenced by automated test |
-| /messages/<str:message_id> | Message Detail | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /messages/attachments/<str:attachment_id> | Message Attachment Download | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /messages/drawer | Messages Drawer | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/message_drawer.html | 9.6 | 0 | referenced by automated test |
-| /messages/new | New Message | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/messages/new.html | 9.8 | 0 | referenced by automated test |
-| /messages/new/ | New Message | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/messages/new.html | 9.8 | 0 | referenced by automated test |
-| /messages/new/records | Message Compose Records | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/context_records.html | 9.6 | 0 | referenced by automated test |
-| /messages/new/suggestions | Message Compose Suggestions | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/recipient_suggestions.html | 9.7 | 0 | referenced by automated test |
-| /messages/new/summary | Message Compose Summary | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/context_summary.html | 9.4 | 0 | referenced by automated test |
-| /messages/thread/<str:thread_id> | Message Thread | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
-| /messages/thread/<str:thread_id>/archive | Message Thread Archive | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /messages/thread/<str:thread_id>/reply | Message Thread Reply | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
-| /messages/thread/<str:thread_id>/star | Message Thread Star | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /messages | Messages | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/inbox_update.html<br>pages/messages/index.html | 9.7 | 0 | referenced by automated test |
+| /messages/ | Messages | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/inbox_update.html<br>pages/messages/index.html | 9.7 | 0 | referenced by automated test |
+| /messages/<str:message_id> | Message Detail | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /messages/attachments/<str:attachment_id> | Message Attachment Download | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /messages/drawer | Messages Drawer | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/message_drawer.html | 9.6 | 0 | referenced by automated test |
+| /messages/new | New Message | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/messages/new.html | 9.8 | 0 | referenced by automated test |
+| /messages/new/ | New Message | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/messages/new.html | 9.8 | 0 | referenced by automated test |
+| /messages/new/records | Message Compose Records | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/context_records.html | 9.6 | 0 | referenced by automated test |
+| /messages/new/suggestions | Message Compose Suggestions | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/recipient_suggestions.html | 9.7 | 0 | referenced by automated test |
+| /messages/new/summary | Message Compose Summary | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/context_summary.html | 9.4 | 0 | referenced by automated test |
+| /messages/thread/<str:thread_id> | Message Thread | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
+| /messages/thread/<str:thread_id>/archive | Message Thread Archive | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /messages/thread/<str:thread_id>/reply | Message Thread Reply | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/messages/conversation.html | 9.6 | 0 | referenced by automated test |
+| /messages/thread/<str:thread_id>/star | Message Thread Star | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /mfi-portal | MFI Partner Portal | ADMIN, MFI_ADMIN, MFI_OFFICER | pages/business_transformation/mfi_portal.html | 9.6 | 0 | referenced by automated test |
+| /mfi-portal/<str:section> | MFI Partner Portal | ADMIN, MFI_ADMIN, MFI_OFFICER | pages/business_transformation/mfi_portal.html | 9.6 | 0 | coverage review required |
 | /my-performance | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
 | /my-performance/development | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
 | /my-performance/documents | Priority Setting Dashboard · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/my_performance.html | 9.7 | 0 | referenced by automated test |
@@ -358,6 +376,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /my-plan/<str:activity_id>/request-amendment | Request Budget Amendment | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id>/reschedule | Reschedule Activity | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /my-plan/<str:activity_id>/reschedule-drawer | Reschedule Drawer | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | partials/planning/schedule_drawer.html | 9.7 | 0 | referenced by automated test |
+| /my-plan/day-package | My Plan Day Package | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /my-professional-development | My Professional Development | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/professional_development/body.html<br>pages/professional_development/index.html | 9.6 | 0 | referenced by automated test |
 | /my-professional-development/ | My Professional Development | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/professional_development/body.html<br>pages/professional_development/index.html | 9.6 | 0 | referenced by automated test |
 | /my-professional-development/allocation-history | Pd Allocation History | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | partials/professional_development/allocation_history_drawer.html | 9.4 | 0 | coverage review required |
@@ -374,11 +393,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /my-targets/export | My Targets Export | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /my-targets/mscs | My Targets Mscs | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /my-team | My Team | ADMIN, CD, HR, PL | pages/my_team/index.html | 9.4 | 0 | referenced by automated test |
-| /notifications | Notifications Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/notifications/index.html | 9.4 | 0 | referenced by automated test |
-| /notifications/ | Notifications Center | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/notifications/index.html | 9.4 | 0 | referenced by automated test |
-| /notifications/<str:notif_id>/read | Mark Notif Read | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer_list.html | 9.4 | 0 | referenced by automated test |
-| /notifications/drawer | Notifications Drawer | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer.html | 9.4 | 0 | referenced by automated test |
-| /notifications/mark-all-read | Mark All Notifications Read | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer_list.html | 9.4 | 0 | referenced by automated test |
+| /notifications | Notifications Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/notifications/index.html | 9.4 | 0 | referenced by automated test |
+| /notifications/ | Notifications Center | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/notifications/index.html | 9.4 | 0 | referenced by automated test |
+| /notifications/<str:notif_id>/read | Mark Notif Read | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer_list.html | 9.4 | 0 | referenced by automated test |
+| /notifications/drawer | Notifications Drawer | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer.html | 9.4 | 0 | referenced by automated test |
+| /notifications/mark-all-read | Mark All Notifications Read | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/notifications/notification_drawer_list.html | 9.4 | 0 | referenced by automated test |
 | /offboarding | Offboarding | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /onboarding | Onboarding | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /org-structure | Organization Structure | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -400,9 +419,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /partner/my-plan | Partner My Plan | ADMIN, PARTNER | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /partner/schools | Assigned Schools · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/schools.html | 9.4 | 0 | referenced by automated test |
 | /partner/today | Today · Partner Portal · Edify | ADMIN, PARTNER | pages/partner/today.html | 9.6 | 0 | referenced by automated test |
-| /partners | Partners | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /partners/<str:partner_id> | Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/partners/detail.html | 9.4 | 0 | referenced by automated test |
-| /partners/create | Create Partner | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/partners/create_partner_drawer.html | 9.4 | 0 | referenced by automated test |
+| /partners | Partners | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /partners/<str:partner_id> | Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/partners/detail.html | 9.4 | 0 | referenced by automated test |
+| /partners/create | Create Partner | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/partners/create_partner_drawer.html | 9.4 | 0 | referenced by automated test |
 | /payroll-readiness | Payroll Readiness | ACCOUNTANT, ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /performance-conversation | · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | pages/hr/performance_conversation.html | 9.6 | 0 | referenced by automated test |
 | /performance-conversation/<str:review_id>/acknowledge | Performance Acknowledge | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
@@ -411,11 +430,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /performance-conversation/priority/<str:priority_id>/save | Performance Input Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-conversation/value/<str:commitment_id>/save | Performance Value Save | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /performance-reviews | Performance Reviews | ADMIN, CD, HR, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /personal-time-off | Personal Time Off · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/personal_time_off.html | 9.7 | 0 | referenced by automated test |
-| /personal-time-off/ | Personal Time Off · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/personal_time_off.html | 9.7 | 0 | referenced by automated test |
-| /personal-time-off/eligible-cover | Eligible Cover Api | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /personal-time-off/request | Request Leave Drawer | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/request_leave_drawer.html | 9.8 | 0 | referenced by automated test |
-| /personal-time-off/request/ | Request Leave Drawer View | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/request_leave_drawer.html | 9.8 | 0 | referenced by automated test |
+| /personal-time-off | Personal Time Off · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/personal_time_off.html | 9.7 | 0 | referenced by automated test |
+| /personal-time-off/ | Personal Time Off · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/personal_time_off.html | 9.7 | 0 | referenced by automated test |
+| /personal-time-off/eligible-cover | Eligible Cover Api | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /personal-time-off/request | Request Leave Drawer | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/request_leave_drawer.html | 9.8 | 0 | referenced by automated test |
+| /personal-time-off/request/ | Request Leave Drawer View | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | partials/leave/request_leave_drawer.html | 9.8 | 0 | referenced by automated test |
 | /pl/review-queue | PL Review Queue - Edify Command Center | ADMIN, CCEO, PL, PROJECT_COORDINATOR | pages/my_plan/pl_queue.html | 9.4 | 0 | referenced by automated test |
 | /pl/review-queue/<str:activity_id>/confirm | Pl Confirm | ADMIN, CCEO, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /pl/review-queue/<str:activity_id>/return | Pl Return | ADMIN, CCEO, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -433,7 +452,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /policy-agreement/restricted | Access Restricted | Unmapped | pages/documents/restricted.html | 9.4 | 0 | referenced by automated test |
 | /policy-compliance | Policy Compliance | ADMIN, CD, HR, PL, RVP | pages/documents/compliance.html | 9.6 | 0 | referenced by automated test |
 | /policy-compliance/comments/<str:comment_id> | Respond Comment | ADMIN, CD, HR, PL, RVP | Dynamic / none detected | 9.4 | 0 | coverage review required |
-| /profile | My Profile | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/profile/index.html | 9.4 | 0 | referenced by automated test |
+| /profile | My Profile | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/profile/index.html | 9.4 | 0 | referenced by automated test |
 | /projects | Projects | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/projects/portfolio_list.html<br>pages/projects/index.html | 9.4 | 0 | referenced by automated test |
 | /projects/<str:project_id> | Edify Command Center | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | pages/projects/detail.html | 9.6 | 0 | referenced by automated test |
 | /projects/<str:project_id>/schools/assign | Project Assign School Action | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -447,8 +466,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /projects/planning | Planning | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/projects/planning_workspace.html<br>pages/projects/planning.html | 9.8 | 0 | referenced by automated test |
 | /projects/planning/bulk-partner | Special Projects Bulk Partner | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/projects/bulk_partner_drawer.html | 9.8 | 0 | referenced by automated test |
 | /projects/planning/bulk-schedule | Special Projects Bulk Schedule | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/projects/bulk_schedule_drawer.html | 9.8 | 0 | referenced by automated test |
-| /public-holidays | Calendar Blocks & Public Holidays | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/public_holidays.html | 9.7 | 0 | referenced by automated test |
-| /public-holidays/ | Calendar Blocks & Public Holidays | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/public_holidays.html | 9.7 | 0 | referenced by automated test |
+| /public-holidays | Calendar Blocks & Public Holidays | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/public_holidays.html | 9.7 | 0 | referenced by automated test |
+| /public-holidays/ | Calendar Blocks & Public Holidays | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/leave/public_holidays.html | 9.7 | 0 | referenced by automated test |
 | /quality-checks | Quality Checks | ADMIN, CD, IA, PL | pages/quality_checks/index.html | 9.4 | 0 | referenced by automated test |
 | /recovery-plans | Recovery Plans | ADMIN, HR, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /recruitment | Recruitment | ADMIN, CD, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -459,15 +478,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /rvp/project/<str:project_id>/decision | Rvp Project Decision | ADMIN | Dynamic / none detected | 9.4 | 0 | coverage review required |
 | /rvp/strategy-note | Rvp Strategy Note | ADMIN | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools | School Directory | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/htmx_response.html<br>pages/schools/index.html | 9.6 | 0 | referenced by automated test |
-| /schools/<str:school_id> | School 360 | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | pages/schools/detail.html | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id> | School 360 | ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, IA, PL, PROJECT_COORDINATOR | pages/schools/detail.html | 9.4 | 0 | referenced by automated test |
 | /schools/<str:school_id>/add-to-cluster | Add To Cluster Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/drawer_error.html<br>partials/schools/add_to_cluster_drawer.html<br>partials/schools/toast_success.html | 9.6 | 0 | referenced by automated test |
 | /schools/<str:school_id>/assign-to-project | Assign To Project Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/drawer_error.html<br>partials/schools/assign_to_project_drawer.html<br>partials/schools/toast_success.html | 9.6 | 0 | referenced by automated test |
 | /schools/<str:school_id>/change-type | School Change Type | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /schools/<str:school_id>/close | School Close | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /schools/<str:school_id>/close-drawer | School Close Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/close_drawer.html | 9.4 | 0 | referenced by automated test |
-| /schools/<str:school_id>/delete | School Delete | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/close | School Close | ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/close-drawer | School Close Drawer | ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/close_drawer.html | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/delete | School Delete | ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/<str:school_id>/edit-drawer | School Edit Drawer | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | partials/schools/edit_drawer.html | 9.7 | 0 | referenced by automated test |
-| /schools/<str:school_id>/reopen | School Reopen | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /schools/<str:school_id>/reopen | School Reopen | ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/add-school | Add School | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/bulk-assign-cluster | Bulk Assign Cluster | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/bulk-assign-project | Bulk Assign Project | ADMIN, CCEO, CD, IA, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
@@ -481,11 +500,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /schools/upload/<str:batch_id>/preview | School Upload Preview | ADMIN, IA | pages/schools/upload_preview.html | 9.7 | 0 | referenced by automated test |
 | /schools/upload/template | School Template Download | ADMIN, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /schools/uploads/<str:batch_id>/result | Import Results | ADMIN, IA | pages/schools/import_result.html | 9.4 | 0 | referenced by automated test |
-| /search | Search | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/search/index.html | 9.6 | 0 | referenced by automated test |
-| /settings | Settings · Edify | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/settings/index.html | 9.6 | 0 | referenced by automated test |
+| /search | Search | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/search/index.html | 9.6 | 0 | referenced by automated test |
+| /settings | Settings · Edify | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/settings/index.html | 9.6 | 0 | referenced by automated test |
 | /settings/activity-catalogue/ | Activity Catalogue · Edify | Unmapped | pages/settings/activity_catalogue.html | 9.6 | 0 | referenced by automated test |
-| /ssa | SSA Performance | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /ssa/export | Ssa Performance Export | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /ssa | SSA Performance | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /ssa/export | Ssa Performance Export | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /ssa/manual/ | Add SSA Score - Edify Command Center | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/manual_entry.html | 9.6 | 0 | referenced by automated test |
 | /ssa/unmatched | Unmatched SSA Queue | ADMIN, IA | pages/admin/unmatched_ssa_queue.html | 9.6 | 0 | referenced by automated test |
 | /ssa/upload/ | Upload SSA Scores | ADMIN, CCEO, CD, IA, PL, RVP | pages/ssa/upload_center.html | 9.7 | 0 | referenced by automated test |
@@ -498,12 +517,15 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /strategic-priorities | Priority Setting Dashboard · Edify | ADMIN, CD, HR, RVP | pages/hr/priority_configuration.html | 9.7 | 0 | referenced by automated test |
 | /strategic-priorities/action | Strategic Priority Action | ADMIN, CD, HR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /succession-planning | Succession Planning | ADMIN, HR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
-| /support | Report a Problem | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
-| /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /support | Report a Problem | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/admin_ops/report_problem.html | 9.6 | 0 | referenced by automated test |
+| /support/client-defect | Client Defect Beacon | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /system-health | System Health & Integrity - Edify | ADMIN | pages/system_health/index.html | 9.7 | 0 | referenced by automated test |
 | /target-distribution | Uganda Master Priority Plan · Edify | ADMIN, CD, IA | pages/hr/target_distribution.html | 10.0 | 0 | referenced by automated test |
 | /target-distribution/action | Target Distribution Action | ADMIN, CD, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /target-distribution/form | Target Distribution Form | ADMIN, CD, IA | partials/hr/target_distribution_form.html | 9.6 | 0 | referenced by automated test |
+| /target-distribution/import | Target Distribution Import | ADMIN, CD, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /target-distribution/import/<str:batch_id>/commit | Target Distribution Import Commit | ADMIN, CD, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /target-distribution/import/template | Target Distribution Import Template | ADMIN, CD, IA | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /target-distribution/team | Team Priority Distribution · Edify | ADMIN, PL | pages/hr/team_target_distribution.html | 9.6 | 0 | referenced by automated test |
 | /target-distribution/team/action | Team Target Distribution Action | ADMIN, PL | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
 | /team-planning-oversight/ | Team Oversight | ACCOUNTANT, ADMIN, CD, IA, PL, RVP | partials/targets/team/workspace.html<br>pages/oversight/team_planning.html | 9.8 | 0 | referenced by automated test |
@@ -521,8 +543,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | /team-targets/sfid-backlog | Team Targets Sfid Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/sfid_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/staff-drawer | Team Targets Staff Drawer | ADMIN, CD, HR, IA, PL | partials/targets/team/staff_drawer.html | 9.4 | 0 | referenced by automated test |
 | /team-targets/validation-backlog | Team Targets Validation Backlog | ADMIN, CD, HR, IA, PL | partials/targets/team/validation_drawer.html | 9.4 | 0 | referenced by automated test |
-| /today | Today | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/today/index.html | 9.4 | 0 | referenced by automated test |
-| /todos | To-Do | ACCOUNTANT, ADMIN, CCEO, CD, HR, IA, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/todos/index.html | 9.4 | 0 | referenced by automated test |
+| /today | Today · Edify | ADMIN, CCEO, PL, PROJECT_COORDINATOR | pages/today/index.html | 9.7 | 0 | referenced by automated test |
+| /today/action | Today Action | ADMIN, CCEO, PL, PROJECT_COORDINATOR | Dynamic / none detected | 9.4 | 0 | referenced by automated test |
+| /todos | To-Do | ACCOUNTANT, ADMIN, BUSINESS_TRANSFORMATION, CCEO, CD, HR, IA, MFI_ADMIN, MFI_OFFICER, PARTNER, PL, PROJECT_COORDINATOR, RVP | pages/todos/index.html | 9.4 | 0 | referenced by automated test |
 | /trainings | Trainings Log | ADMIN, CCEO, PARTNER, PL, PROJECT_COORDINATOR | pages/trainings/index.html | 9.4 | 0 | referenced by automated test |
 | /uploads | Upload Center | ADMIN, CD, HR, IA, RVP | partials/documents/upload_table.html<br>pages/documents/upload_center.html | 9.7 | 0 | referenced by automated test |
 | /uploads/new | New Training Resource New Policy or Manual | ADMIN, CD, HR, IA, RVP | pages/documents/new_document.html | 9.4 | 0 | referenced by automated test |

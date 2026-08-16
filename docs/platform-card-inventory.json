@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 564,
-  "templates": 201,
-  "distinct_titles": 537,
+  "titled_cards": 589,
+  "templates": 211,
+  "distinct_titles": 563,
   "with_card_key": 13,
-  "untitled_surfaces": 1051,
+  "untitled_surfaces": 1062,
   "untitled_chrome": 234,
-  "untitled_nested": 391,
-  "untitled_headless": 426,
+  "untitled_nested": 400,
+  "untitled_headless": 428,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 21,
+  "titles_in_several_templates": 20,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -94,10 +94,6 @@
   "team cost summary": [
    "templates/pages/budgets/monthly.html",
    "templates/partials/finance/monthly_request/root.html"
-  ],
-  "today's activities": [
-   "templates/pages/partner/today.html",
-   "templates/pages/today/index.html"
   ],
   "upcoming today": [
    "templates/pages/dashboards/main.html",
@@ -770,6 +766,172 @@
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4",
    "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/financial_health.html",
+   "line": 20,
+   "title": "What this portfolio measures",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm p-5 space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/government_requirements.html",
+   "line": 20,
+   "title": "Uganda requirements",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm p-5 space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/impact_reports.html",
+   "line": 18,
+   "title": "Loan impact pipeline",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/impact_reports.html",
+   "line": 19,
+   "title": "Disbursement cohort analysis",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/index.html",
+   "line": 39,
+   "title": "Triage queue",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/loans.html",
+   "line": 103,
+   "title": "Lending partner dashboard",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/loans.html",
+   "line": 142,
+   "title": "Create or update a loan",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     35,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/loans.html",
+   "line": 147,
+   "title": "Approved loan purposes",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "px-5 py-4 border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)]",
+   "branch_path": [
+    [
+     35,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/loans.html",
+   "line": 235,
+   "title": "Record repayment position",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     36,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/loans.html",
+   "line": 326,
+   "title": "Loan register",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/business_transformation/mfi_portal.html",
+   "line": 19,
+   "title": "Submission health",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay p-5",
+   "branch_path": [
+    [
+     5,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/mfi_portal.html",
+   "line": 21,
+   "title": "Your MFI loans",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     5,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/mfi_portal.html",
+   "line": 23,
+   "title": "Monthly Portfolio Return",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     5,
+     2
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/business_transformation/mfi_portal.html",
+   "line": 25,
+   "title": "Data Issues",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     5,
+     3
+    ]
+   ]
   },
   {
    "template": "templates/pages/closure/activity_closure_detail.html",
@@ -2627,7 +2789,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 307,
+   "line": 316,
    "title": "Schedule Recommended Activities",
    "heading_level": 4,
    "has_card_key": false,
@@ -2636,7 +2798,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 350,
+   "line": 359,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -2906,7 +3068,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 185,
+   "line": 187,
    "title": "Intervention Impact Timeline",
    "heading_level": 3,
    "has_card_key": false,
@@ -2915,7 +3077,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 249,
+   "line": 251,
    "title": "Recent Field Work",
    "heading_level": 3,
    "has_card_key": false,
@@ -2924,7 +3086,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 299,
+   "line": 301,
    "title": "Partner Support",
    "heading_level": 3,
    "has_card_key": false,
@@ -2938,7 +3100,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 337,
+   "line": 339,
    "title": "Data Quality Score",
    "heading_level": 3,
    "has_card_key": false,
@@ -2947,7 +3109,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 377,
+   "line": 379,
    "title": "Current SSA Assessment",
    "heading_level": 3,
    "has_card_key": false,
@@ -2956,7 +3118,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 411,
+   "line": 413,
    "title": "Annual SSA Progress",
    "heading_level": 3,
    "has_card_key": false,
@@ -2970,7 +3132,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 431,
+   "line": 433,
    "title": "Historical Averages",
    "heading_level": 3,
    "has_card_key": false,
@@ -2984,7 +3146,7 @@
   },
   {
    "template": "templates/pages/schools/detail.html",
-   "line": 453,
+   "line": 455,
    "title": "Danger Zone",
    "heading_level": 3,
    "has_card_key": false,
@@ -3322,7 +3484,43 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 130,
+   "line": 133,
+   "title": "Staff Time Standard",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 169,
+   "title": "Durable Outbox",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 191,
+   "title": "External Integrations",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 211,
+   "title": "Data Quality Queues",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/system_health/index.html",
+   "line": 236,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3331,7 +3529,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 146,
+   "line": 252,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3340,7 +3538,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 167,
+   "line": 273,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3349,7 +3547,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 970,
+   "line": 1076,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3358,7 +3556,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1003,
+   "line": 1109,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,
@@ -3385,40 +3583,48 @@
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 43,
-   "title": "Today's Activities",
+   "line": 38,
+   "title": "Today's route",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
    "branch_path": []
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 89,
-   "title": "Coming This Week",
+   "line": 69,
+   "title": "Waiting for your confirmation",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     8,
-     0
-    ]
-   ]
+   "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
+   "branch_path": []
   },
   {
    "template": "templates/pages/today/index.html",
-   "line": 109,
-   "title": "Evidence Missing ()",
-   "heading_level": 3,
+   "line": 85,
+   "title": "Exceptions requiring attention",
+   "heading_level": 2,
    "has_card_key": false,
-   "classes": "bg-amber-50 border border-amber-200 rounded-surface p-4",
-   "branch_path": [
-    [
-     10,
-     0
-    ]
-   ]
+   "classes": "edify-surface rounded-surface border {% if exceptions %}border-amber-200{% else %}border-slate-100{% endif %} p-4 sm:p-5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/today/index.html",
+   "line": 102,
+   "title": "Your proposed week",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/today/index.html",
+   "line": 145,
+   "title": "Day completion",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 sm:flex sm:items-center sm:justify-between sm:gap-4",
+   "branch_path": []
   },
   {
    "template": "templates/pages/todos/index.html",
@@ -4080,6 +4286,33 @@
      0
     ]
    ]
+  },
+  {
+   "template": "templates/partials/business_transformation/portfolio.html",
+   "line": 3,
+   "title": "MFI referral pipeline",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/business_transformation/portfolio.html",
+   "line": 30,
+   "title": "MFI loan portfolio",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/business_transformation/school_portfolio_list.html",
+   "line": 1,
+   "title": "( school)",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm overflow-hidden",
+   "branch_path": []
   },
   {
    "template": "templates/partials/clusters/edit_cluster_drawer.html",
@@ -5852,6 +6085,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/schools/business_transformation.html",
+   "line": 2,
+   "title": "Business Transformation",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/schools/close_drawer.html",
    "line": 52,
    "title": "Impact",
@@ -5939,7 +6181,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 42,
+   "line": 44,
    "title": "My Strategic Milestone Allocations",
    "heading_level": 2,
    "has_card_key": false,
@@ -5948,7 +6190,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 112,
+   "line": 114,
    "title": "No measurable performance priorities agreed for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -5962,7 +6204,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 121,
+   "line": 123,
    "title": "Performance Priorities by Time Period",
    "heading_level": 2,
    "has_card_key": false,
@@ -5976,7 +6218,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 205,
+   "line": 207,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -5985,7 +6227,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 222,
+   "line": 224,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -5994,11 +6236,20 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 251,
+   "line": 253,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/priority_portfolio.html",
+   "line": 1,
+   "title": "My Priority Portfolio",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4",
    "branch_path": []
   },
   {

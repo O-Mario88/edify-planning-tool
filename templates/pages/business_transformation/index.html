@@ -1,0 +1,88 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Business Transformation — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="edify-page-canvas space-y-6" data-mobile-family="directory">
+  {% include "partials/business_transformation/workspace_nav.html" %}
+  {% include "components/page_header.html" with eyebrow="Uganda portfolio" title="Business Transformation" description="Move verified financial and compliance needs through readiness, responsible finance, loan-use verification, repayment monitoring, and impact." %}
+
+  <form id="bt-workspace-filters" method="get" action="/business-transformation" class="edify-filter-bar" aria-label="Business Transformation filters">
+    {% comment %}The portfolio search lives in the top bar (one search per
+    page): the shell binds its input to this form via
+    topbar_search.attach_to.{% endcomment %}
+    <label>
+      <span class="edify-filter-label">Financial year</span>
+      <input type="text" inputmode="numeric" name="fy" value="{{ fy }}" pattern="[0-9]{4}" maxlength="4">
+    </label>
+    <label>
+      <span class="edify-filter-label">Region</span>
+      <select name="region">
+        <option value="">All regions</option>
+        {% for region in regions %}<option value="{{ region.id }}" {% if filters.region == region.id %}selected{% endif %}>{{ region.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>
+      <span class="edify-filter-label">MFI</span>
+      <select name="mfi">
+        <option value="">All MFIs</option>
+        {% for mfi in mfis %}<option value="{{ mfi.id }}" {% if filters.mfi == mfi.id %}selected{% endif %}>{{ mfi.name }}</option>{% endfor %}
+      </select>
+    </label>
+    {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
+  </form>
+
+  {% include "components/kpi_strip.html" with items=kpi_strip_items title="Business Transformation scorecard" %}
+
+  {% if not summary_only and not mfi_user %}
+  <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="bt-case-queue-title">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)] flex items-center justify-between gap-4">
+      <div>
+        <h2 id="bt-case-queue-title" class="text-base font-black text-slate-900">Triage queue</h2>
+        <p class="text-xs text-slate-500">Verified need requiring an authorized human decision.</p>
+      </div>
+      {% include "components/badge.html" with tone="warning" label=active_cases_label size="md" %}
+    </header>
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full">
+        <thead><tr><th>School</th><th>Location</th><th>Verified recommendation</th><th>Status</th><th>Opened</th><th><span class="sr-only">Action</span></th></tr></thead>
+        <tbody>
+          {% for case in cases %}
+          <tr>
+            <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{{ case.school.name }}</a><small class="block text-slate-500">{{ case.school.school_id }}</small></td>
+            <td data-label="Location">{{ case.school.district.name|default:"District not set" }} · {{ case.school.region.name|default:"Region not set" }}</td>
+            <td data-label="Recommendation">
+              {% for recommendation in case.recommendations.all|slice:":2" %}<span class="block text-xs">{{ recommendation.get_kind_display }}</span>{% empty %}<span class="text-slate-500">No open recommendation</span>{% endfor %}
+            </td>
+            <td data-label="Status">{% include "components/badge.html" with tone="neutral" label=case.get_status_display %}</td>
+            <td data-label="Opened">FY {{ case.opened_fy }}</td>
+            <td data-record-action>
+              {% if can_manage_cases and case.status == "recommended" %}
+              <form method="post" action="/business-transformation/cases/{{ case.id }}/triage" class="flex gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="decision" value="accept">
+                {% include "components/button.html" with label="Accept review" type="submit" variant="primary" %}
+              </form>
+              {% else %}<span class="text-xs text-slate-500">{{ case.triage_decision|default:"Monitoring" }}</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6">{% include "components/empty_state.html" with title="No cases found" message="No Business Transformation cases match the current filters." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section id="bt-portfolio" aria-live="polite" aria-busy="true"
+           hx-get="/business-transformation/portfolio{% if filter_query %}?{{ filter_query }}{% endif %}"
+           hx-trigger="load" hx-swap="outerHTML">
+    <div class="edify-surface border border-[var(--edify-border)] rounded-surface p-8 text-center text-slate-500">
+      <span class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[var(--edify-border)] border-t-[var(--edify-primary)]" aria-hidden="true"></span>
+      <p class="mt-3 text-sm font-semibold">Loading the scoped loan portfolio…</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

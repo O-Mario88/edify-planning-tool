@@ -405,13 +405,22 @@ class School(SoftDeleteModel):
                 )
 
 
-def build_data_quality_issues(school):
+def dq_condition_key(school_id, issue_type: str) -> str:
+    """The stable identity of one school's one quality condition."""
+
+    return f"school:{school_id}|dq:{issue_type}"
+
+
+def build_data_quality_issues(school, *, has_location=None):
     """Build the canonical open issues for a school without writing them.
 
     The ordinary ``School.save()`` path persists this list immediately.
-    High-volume imports use the same builder and bulk-create the combined
-    issue set, preserving the exact quality contract without an N+1 write
-    pattern.
+    High-volume imports and the nightly scan use the same builder and
+    reconcile the combined issue set, preserving the exact quality contract
+    without an N+1 write pattern.
+
+    ``has_location`` lets batch callers pass a prefetched answer for the
+    coordinates check; when None it is resolved per school.
     """
     if not school.pk:
         return []
@@ -419,6 +428,32 @@ def build_data_quality_issues(school):
     from apps.schools.models import DataQualityIssue
 
     issues = []
+    # Missing usable coordinates — the precondition for route optimisation
+    # (OPERATIONS_ROADMAP.md Phase 1b). A SchoolGeoPoint override counts as
+    # a location even when the directory columns are empty.
+    if has_location is None:
+        has_location = bool(
+            school.latitude is not None and school.longitude is not None
+        )
+        if not has_location:
+            from apps.routes.models import SchoolGeoPoint
+
+            has_location = SchoolGeoPoint.objects.filter(
+                school_id=school.id
+            ).exists()
+    if not has_location:
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="no_coordinates",
+                severity="warning",
+                field_name="latitude",
+                suggested_fix=(
+                    "Capture GPS coordinates on the next visit, or set a "
+                    "geo point in Route Intelligence"
+                ),
+            )
+        )
     # Missing Phone
     if not school.school_phone:
         issues.append(
@@ -523,19 +558,25 @@ def build_data_quality_issues(school):
             )
         )
 
+    for issue in issues:
+        issue.condition_key = dq_condition_key(school.pk, issue.issue_type)
     return issues
 
 
 def create_data_quality_issues(school):
+    """Reconcile one school's open issues against the canonical builder.
+
+    Reconciliation, never delete-and-recreate: an issue that persists keeps
+    its row — and therefore its ``assigned_to`` — an issue whose condition
+    cleared is resolved with a timestamp, and only genuinely new conditions
+    create rows. The old regeneration deleted every open row on every
+    ``School.save()``, silently discarding ownership each time.
+    """
     if not school.pk:
         return
+    from apps.schools.data_quality import reconcile_issues
 
-    from apps.schools.models import DataQualityIssue
-
-    DataQualityIssue.objects.filter(school=school, status="open").delete()
-    issues = build_data_quality_issues(school)
-    if issues:
-        DataQualityIssue.objects.bulk_create(issues)
+    reconcile_issues([school])
 
 
 class UploadBatch(TimeStampedModel):
@@ -757,10 +798,24 @@ class DataQualityIssue(TimeStampedModel):
     status = models.CharField(max_length=16, choices=STATUSES, default="open")
     assigned_to = models.CharField(max_length=30, null=True, blank=True)  # userId
     resolved_at = models.DateTimeField(null=True, blank=True)
+    # Stable identity (the TeamAction condition_key pattern): one OPEN row
+    # per condition, so regeneration reconciles in place instead of the old
+    # delete-and-recreate — which silently discarded `assigned_to` on every
+    # School.save(). Format: school:<school_id>|dq:<issue_type>.
+    condition_key = models.CharField(
+        max_length=191, null=True, blank=True, db_index=True
+    )
 
     class Meta:
         db_table = "data_quality_issue"
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["condition_key"],
+                condition=models.Q(status="open"),
+                name="uniq_open_dq_condition",
+            )
+        ]
 
 
 class SchoolChangeLog(TimeStampedModel):

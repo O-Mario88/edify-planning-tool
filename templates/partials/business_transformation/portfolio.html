@@ -1,0 +1,59 @@
+{% load frontend_filters table_pagination %}
+<div id="bt-portfolio" aria-busy="false" class="space-y-6">
+  <section aria-labelledby="bt-referrals-title" class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden">
+    <header class="px-5 py-4 border-b border-[var(--edify-border)]">
+      <h2 id="bt-referrals-title" class="text-base font-black text-slate-900">MFI referral pipeline</h2>
+      <p class="text-xs text-slate-500">Edify prepares the school; the MFI independently records its decision.</p>
+    </header>
+    {% paginate referrals "referrals_page" as referrals_pager %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full">
+        <thead><tr><th>School</th><th>MFI</th><th>Purpose</th><th>Requested</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for referral in referrals_pager.rows %}
+          <tr>
+            <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' referral.case.school.school_id %}">{{ referral.case.school.name }}</a><small class="block text-slate-500">{{ referral.case.school.school_id }}</small></td>
+            <td data-label="MFI">{{ referral.mfi.name }}</td>
+            <td data-label="Purpose">{{ referral.purpose.label }}{% if referral.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
+            <td data-label="Requested">{% if referral.requested_amount is not None %}{{ referral.requested_amount|ugx }}{% else %}—{% endif %}</td>
+            <td data-label="Status">{% include "components/badge.html" with tone="neutral" label=referral.get_status_display %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5">{% include "components/empty_state.html" with title="No referrals found" message="No MFI referrals are in this scoped pipeline." compact="true" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=referrals_pager param="referrals_page" %}
+  </section>
+
+<section aria-labelledby="bt-portfolio-title"
+         class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden">
+  <header class="px-5 py-4 border-b border-[var(--edify-border)]">
+    <h2 id="bt-portfolio-title" class="text-base font-black text-slate-900">MFI loan portfolio</h2>
+    <p class="text-xs text-slate-500">External lender facts remain separate from Edify activity costs and staff accountability.</p>
+  </header>
+  {% paginate loans "loans_page" as loans_pager %}
+  <div class="overflow-x-auto">
+    <table class="edify-record-table w-full">
+      <thead><tr><th>School</th><th>MFI / reference</th><th>Purpose</th><th>Disbursed</th><th>Current enrolment</th><th>Status</th><th>Repayment data</th></tr></thead>
+      <tbody>
+        {% for loan in loans_pager.rows %}
+        <tr>
+          <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-slate-500">{{ loan.school.district.name|default:"District not set" }}</small></td>
+          <td data-label="MFI / reference"><strong>{{ loan.mfi.name }}</strong><small class="block text-slate-500">{{ loan.external_loan_reference }}</small></td>
+          <td data-label="Purpose">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
+          <td data-label="Disbursed">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}<small class="block text-slate-500">{{ loan.disbursement_date|date:"d M Y" }}</small>{% else %}<span class="text-slate-500">Not disbursed</span>{% endif %}</td>
+          <td data-label="Current enrolment">{% if loan.school.enrollment %}{{ loan.school.enrollment }}{% else %}<span class="text-[var(--edify-warning)] font-semibold">Not recorded</span>{% endif %}</td>
+          <td data-label="Status">{% include "components/badge.html" with tone="neutral" label=loan.get_status_display %}</td>
+          <td data-label="Repayment data">{% if loan.last_repayment_data_date %}{{ loan.last_repayment_data_date|date:"d M Y" }}{% else %}<span class="font-bold text-[var(--edify-warning)]">Not submitted</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">{% include "components/empty_state.html" with title="No loans found" message="No MFI loans match the current filters." compact="true" %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=loans_pager param="loans_page" %}
+</section>
+</div>

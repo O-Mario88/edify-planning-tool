@@ -44,6 +44,8 @@
   <div class="space-y-2" aria-live="polite">{% for message in messages %}<div class="edify-alert" data-tone="{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>{% endfor %}</div>
   {% endif %}
 
+  {% if can_import %}{% include "partials/hr/priority_import.html" %}{% endif %}
+
   {% if hasMaster %}
   <section class="ia-command edify-inverse-surface" aria-labelledby="distribution-command-title">
     <div class="ia-command__main">

@@ -550,6 +550,16 @@ def import_ssa_batch(batch, user) -> dict:
         if records:
             SsaRecord.objects.bulk_create(records, batch_size=1000)
             SsaScore.objects.bulk_create(scores, batch_size=2000)
+            # bulk_create bypasses Django's post_save bridge. Enqueue the same
+            # durable, idempotent Business Transformation event explicitly so
+            # a verified Financial Health/Government Requirements weakness is
+            # never dependent on whether the SSA arrived through a form or a
+            # batch import. These rows share this transaction with the event.
+            from apps.business_transformation.signals import (
+                enqueue_ssa_confirmed_batch,
+            )
+
+            enqueue_ssa_confirmed_batch(records)
         if unmatched_records:
             UnmatchedSSARecord.objects.bulk_create(
                 unmatched_records,
@@ -588,14 +598,19 @@ def import_ssa_batch(batch, user) -> dict:
                 ],
                 batch_size=1000,
             )
+            from django.utils import timezone as _tz
+
             from apps.schools.models import DataQualityIssue
 
             if completed_school_ids:
+                # Resolve, never delete: the queue is durable (Phase 1b) —
+                # a cleared condition keeps its row, its assignee and its
+                # resolution timestamp for the record.
                 DataQualityIssue.objects.filter(
                     school_id__in=completed_school_ids,
                     status="open",
                     issue_type="no_ssa",
-                ).delete()
+                ).update(status="resolved", resolved_at=_tz.now())
             if full_quality_refresh:
                 from apps.schools.upload_service import _bulk_refresh_quality_issues
 

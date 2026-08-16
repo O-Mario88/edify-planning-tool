@@ -15,8 +15,25 @@ HR = "HR"
 ACCOUNTANT = "ACCOUNTANT"
 PARTNER = "PARTNER"
 PROJECT_COORDINATOR = "PROJECT_COORDINATOR"
+BUSINESS_TRANSFORMATION = "BUSINESS_TRANSFORMATION"
+MFI_ADMIN = "MFI_ADMIN"
+MFI_OFFICER = "MFI_OFFICER"
 
-ALL_ROLES = {ADMIN, CCEO, PL, CD, IA, RVP, HR, ACCOUNTANT, PARTNER, PROJECT_COORDINATOR}
+ALL_ROLES = {
+    ADMIN,
+    CCEO,
+    PL,
+    CD,
+    IA,
+    RVP,
+    HR,
+    ACCOUNTANT,
+    PARTNER,
+    PROJECT_COORDINATOR,
+    BUSINESS_TRANSFORMATION,
+    MFI_ADMIN,
+    MFI_OFFICER,
+}
 
 # Sidebar information architecture is narrower than route authorization. These
 # are the roles whose day-to-day work belongs in the field operations group;
@@ -54,6 +71,9 @@ def get_user_role_slug(user) -> str:
         "Project Coordinator": "PROJECT_COORDINATOR",
         "PartnerAdmin": "PARTNER",
         "PartnerFieldOfficer": "PARTNER",
+        "BusinessTransformationOfficer": "BUSINESS_TRANSFORMATION",
+        "MfiPartnerAdmin": "MFI_ADMIN",
+        "MfiLoanOfficer": "MFI_OFFICER",
     }
     return mapping.get(role, role.upper())
 
@@ -63,6 +83,24 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Main sidebar routes
     "dashboard": ALL_ROLES,
     "todos": ALL_ROLES,
+    "business_transformation": {
+        BUSINESS_TRANSFORMATION,
+        CD,
+        IA,
+        RVP,
+        ADMIN,
+        CCEO,
+        PL,
+        HR,
+        ACCOUNTANT,
+        PARTNER,
+        PROJECT_COORDINATOR,
+    },
+    "loans": ALL_ROLES,
+    "business_transformation_finance": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+    "business_transformation_government": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+    "business_transformation_reports": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+    "mfi_portal": {MFI_ADMIN, MFI_OFFICER},
     # Anyone can be handed a school action, so everyone can read their own
     # queue. Both views filter to the signed-in user's rows, so there is no
     # wider set for a permissive gate to expose.
@@ -202,7 +240,15 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "schools": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
     "core_schools": {CCEO, PL, IA, ADMIN},
     "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
-    "school_profile": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
+    "school_profile": {
+        CCEO,
+        PL,
+        PROJECT_COORDINATOR,
+        IA,
+        CD,
+        BUSINESS_TRANSFORMATION,
+        ADMIN,
+    },
     # The archive. IA and CD are here because closure data quality and country
     # closure trends are theirs to watch; RVP works from aggregates and is not.
     "closed_schools": {CCEO, PL, IA, CD, ADMIN},
@@ -396,6 +442,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # report — which published priorities reached nobody — is theirs to act on,
     # and it lives nowhere else.
     "strategic_priorities": {RVP, CD, HR, ADMIN},
+    # The Today workbench (roadmap Phase 5): the field roles' one primary
+    # daily surface — route, next action, waiting-on-you, exceptions, the
+    # proposed week, day completion.
+    "today": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
     # Uganda Master Priority Plan distribution: IA distributes the approved
     # country targets to Program Leads (CD owns/publishes the master and
     # monitors); each PL distributes their team target to supervised CCEOs.
@@ -482,6 +532,7 @@ ICONS = {
     "performance_reviews": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>',
     "strategic_priorities": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3m9-9h-3M6 12H3m12 0a3 3 0 11-6 0 3 3 0 016 0zm5.196 0a8.196 8.196 0 11-16.392 0 8.196 8.196 0 0116.392 0z" /></svg>',
     "target_distribution": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m0 0-3-2m3 2 3-2M5 13l-2 3 3.5 1M19 13l2 3-3.5 1M12 12v4m0 0-4 3m4-3 4 3" /></svg>',
+    "today": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /></svg>',
     "team_target_distribution": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM7 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" /></svg>',
     "performance_console": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>',
     "recovery_plans": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>',
@@ -533,6 +584,8 @@ ICONS.update(
         "data_repair": ICONS["cost_settings"],
         "leave_policies": ICONS["policies"],
         "policy_compliance": ICONS["compliance_register"],
+        "business_transformation": ICONS["partners"],
+        "loans": ICONS["disbursements"],
     }
 )
 
@@ -964,6 +1017,13 @@ SIDEBAR_ITEMS = [
         "group_label": "MY WORK",
         "items": [
             {
+                # Phase 5: the field day's one primary surface. Sits above
+                # Dashboard for the roles it serves; other roles never see it.
+                "label": "Today",
+                "url": "/today",
+                "page_key": "today",
+            },
+            {
                 "label": "Dashboard",
                 "url": "/dashboard",
                 "page_key": "dashboard",
@@ -1125,6 +1185,82 @@ SIDEBAR_ITEMS = [
                 "label": "Team Availability",
                 "url": "/leave/team-availability",
                 "page_key": "team_availability",
+            },
+        ],
+    },
+    {
+        "group_label": "BUSINESS TRANSFORMATION",
+        "visible_to": ALL_ROLES,
+        "items": [
+            {
+                "label": "BT Overview",
+                "url": "/business-transformation/overview",
+                "page_key": "business_transformation",
+                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Loans",
+                "url": "/loans",
+                "page_key": "loans",
+                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Business Accounting & Finance",
+                "url": "/business-transformation/business-accounting-finance",
+                "page_key": "business_transformation_finance",
+                "icon_key": "country_budget",
+                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Government Requirements",
+                "url": "/business-transformation/government-requirements",
+                "page_key": "business_transformation_government",
+                "icon_key": "compliance_register",
+                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Impact & Reports",
+                "url": "/business-transformation/impact-reports",
+                "page_key": "business_transformation_reports",
+                "icon_key": "reports",
+                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Dashboard",
+                "url": "/mfi-portal/dashboard",
+                "page_key": "mfi_portal",
+                "icon_key": "dashboard",
+                "visible_to": {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Loans",
+                "url": "/mfi-portal/loans",
+                "page_key": "mfi_portal",
+                "icon_key": "loans",
+                "visible_to": {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Monthly Portfolio Return",
+                "url": "/mfi-portal/monthly-return",
+                "page_key": "mfi_portal",
+                "icon_key": "monthly_request",
+                "visible_to": {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                "label": "Data Issues",
+                "url": "/mfi-portal/data-issues",
+                "page_key": "mfi_portal",
+                "icon_key": "ia_duplicates",
+                "visible_to": {MFI_ADMIN, MFI_OFFICER},
+            },
+            {
+                # Not the bare "Reports" — that label was merged away into the
+                # Analytics workspace and the workspace guard holds it there.
+                "label": "MFI Reports",
+                "url": "/mfi-portal/reports",
+                "page_key": "mfi_portal",
+                "icon_key": "reports",
+                "visible_to": {MFI_ADMIN, MFI_OFFICER},
             },
         ],
     },
@@ -1597,6 +1733,7 @@ SIDEBAR_GROUP_PRIORITY = {
     "SCHOOLS & FIELD": 0,
     "MY WORK": 1,
     "FINANCE & BUDGET": 2,
+    "BUSINESS TRANSFORMATION": 3,
 }
 
 
@@ -1837,15 +1974,16 @@ _MOBILE_NAV_STANDALONE = {
 # access" holds by construction. Anything unavailable is skipped and the slot
 # is backfilled from the role's own sidebar order.
 MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
-    # Field execution — the work is a plan and the schools it touches.
-    CCEO: ("dashboard", "my_plan", "schools", "messages"),
+    # Field execution — the phone IS the field device, so the Today
+    # workbench (roadmap Phase 5) leads; the plan and schools follow.
+    CCEO: ("today", "my_plan", "schools", "messages"),
     # A Partner is not authorized for the school directory at all; clusters is
     # the school-context surface they actually hold.
     PARTNER: ("dashboard", "my_plan", "clusters", "messages"),
     # A PL's second surface is the team, not their own plan alone.
-    PL: ("dashboard", "my_plan", "team_planning_oversight", "messages"),
+    PL: ("today", "my_plan", "team_planning_oversight", "messages"),
     # Projects lead for the coordinator; their planning is project-scoped.
-    PROJECT_COORDINATOR: ("dashboard", "projects", "my_plan", "messages"),
+    PROJECT_COORDINATOR: ("today", "projects", "my_plan", "messages"),
     # Verification is the whole job; SSA is its second queue.
     IA: ("dashboard", "ia_verification_queue", "ssa", "messages"),
     # Finance operates queues, not dashboards.

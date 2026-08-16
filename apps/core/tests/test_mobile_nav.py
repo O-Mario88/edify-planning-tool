@@ -179,10 +179,15 @@ class MobileNavDestinationTests(SimpleTestCase):
             with self.subTest(role=role):
                 self.assertIn("/messages", {i["url"] for i in nav_for(role)})
 
-    def test_dashboard_leads_for_every_role(self):
+    def test_lead_destination_for_every_role(self):
+        # The Today workbench (roadmap Phase 5) leads for the roles whose
+        # phone is the field device; every other role still opens on the
+        # dashboard.
+        today_first = {CCEO, PL, PROJECT_COORDINATOR}
         for role in ROLE_LABELS:
             with self.subTest(role=role):
-                self.assertEqual(nav_for(role)[0]["url"], "/dashboard")
+                expected = "/today" if role in today_first else "/dashboard"
+                self.assertEqual(nav_for(role)[0]["url"], expected)
 
     def test_ia_reaches_the_ssa_verification_queue(self):
         # ssa lives in IA_SECTIONS, not SIDEBAR_ITEMS, so it never appears in
@@ -206,8 +211,17 @@ class MobileNavActiveStateTests(SimpleTestCase):
         self.assertEqual([i["url"] for i in active], ["/my-plan"])
 
     def test_dashboard_is_active_on_root(self):
-        nav = nav_for(CCEO, path="/")
+        # A field role's bar leads with Today, which the root path does not
+        # highlight — the root-active contract belongs to a role whose bar
+        # still carries the dashboard first.
+        nav = nav_for(IA, path="/")
+        self.assertEqual(nav[0]["url"], "/dashboard")
         self.assertTrue(nav[0]["active"])
+
+    def test_today_is_active_on_today(self):
+        nav = nav_for(CCEO, path="/today")
+        active = [item for item in nav if item["active"]]
+        self.assertEqual([i["url"] for i in active], ["/today"])
 
     def test_messages_is_active_on_a_thread_page(self):
         nav = nav_for(CCEO, path="/messages/42")

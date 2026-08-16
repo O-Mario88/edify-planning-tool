@@ -2109,6 +2109,215 @@ def _field_debrief_todos(principal, role):
         return []
 
 
+def _business_transformation_todos(principal, role, today):
+    """Derived Uganda portfolio actions; the underlying state closes each task."""
+
+    from datetime import timedelta
+
+    from apps.business_transformation import services as bt_services
+    from apps.business_transformation.models import (
+        DISBURSED_LOAN_STATUSES,
+        IAValidationStatus,
+        LoanVerificationRequirement,
+        SalesforceStatus,
+        VerificationRequirementStatus,
+    )
+    from apps.core.rbac import EdifyRole
+
+    out = []
+    if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value:
+        pending = (
+            bt_services.scoped_loans(principal)
+            .filter(salesforce_status=SalesforceStatus.PENDING)
+            .select_related("school", "mfi", "purpose")
+            .order_by("submitted_at", "created_at")[:40]
+        )
+        for loan in pending:
+            submitted = loan.submitted_at.date() if loan.submitted_at else loan.created_at.date()
+            due = submitted + timedelta(days=3)
+            age = max((today - submitted).days, 0)
+            if today > due + timedelta(days=7):
+                priority = "critical"
+            elif today > due:
+                priority = "high"
+            elif today >= due - timedelta(days=1):
+                priority = "high"
+            else:
+                priority = "medium"
+            overdue = today > due
+            out.append(
+                {
+                    "id": f"bt-salesforce-{loan.id}",
+                    "title": "Confirm loan in Salesforce",
+                    "description": (
+                        f"{loan.school.name} · {loan.mfi.name} · "
+                        f"UGX {loan.disbursed_amount or loan.approved_amount or 0:,.0f}"
+                    ),
+                    "category": "Business Transformation",
+                    "priority": priority,
+                    "status_key": "overdue" if overdue else "waiting_me",
+                    "status_label": "Overdue" if overdue else "Waiting on Me",
+                    "status_tone": "danger" if overdue else "info",
+                    "due_label": "Overdue" if overdue else due.strftime("%b %-d"),
+                    "due_tone": "danger" if overdue else "info",
+                    "linked": f"{loan.mfi.name} · {loan.purpose.label} · {age} days old",
+                    "action_label": "Complete",
+                    "action_url": f"/loans?open={loan.id}#loan-register-title",
+                    "actionable": True,
+                    "source": "MFI loan submission",
+                    "_due_sort": due,
+                }
+            )
+
+    if role == EdifyRole.IMPACT_ASSESSMENT.value:
+        for loan in (
+            bt_services.scoped_loans(principal)
+            .filter(
+                salesforce_status=SalesforceStatus.CONFIRMED,
+                ia_validation_status=IAValidationStatus.PENDING,
+            )
+            .select_related("school", "mfi")
+            .order_by("salesforce_confirmed_at")[:40]
+        ):
+            out.append(
+                {
+                    "id": f"bt-ia-{loan.id}",
+                    "title": "Validate loan programme record",
+                    "description": f"{loan.school.name} · {loan.mfi.name} · {loan.salesforce_loan_id}",
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "—",
+                    "due_tone": "neutral",
+                    "linked": f"{loan.school.name} · {loan.external_loan_reference}",
+                    "action_label": "Validate",
+                    "action_url": f"/loans?open={loan.id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Salesforce confirmation",
+                    "_due_sort": loan.salesforce_confirmed_at.date()
+                    if loan.salesforce_confirmed_at
+                    else today,
+                }
+            )
+
+    if role in {
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    }:
+        loan_ids = bt_services.scoped_loans(principal).values("id")
+        requirements = (
+            LoanVerificationRequirement.objects.filter(
+                loan_id__in=loan_ids,
+                activity__isnull=True,
+                status__in=[
+                    VerificationRequirementStatus.NEEDS_SCHEDULING,
+                    VerificationRequirementStatus.OVERDUE,
+                ],
+            )
+            .select_related("loan__school", "loan__mfi")
+            .order_by("due_date")[:30]
+        )
+        for requirement in requirements:
+            overdue = requirement.due_date < today
+            out.append(
+                {
+                    "id": f"bt-verification-{requirement.id}",
+                    "title": "Schedule Loan-Use Verification",
+                    "description": (
+                        f"{requirement.loan.school.name} needs a governed "
+                        f"post-disbursement verification visit."
+                    ),
+                    "category": "Business Transformation",
+                    "priority": "critical" if overdue else "high",
+                    "status_key": "overdue" if overdue else "waiting_me",
+                    "status_label": "Overdue" if overdue else "Waiting on Me",
+                    "status_tone": "danger" if overdue else "info",
+                    "due_label": "Overdue"
+                    if overdue
+                    else requirement.due_date.strftime("%b %-d"),
+                    "due_tone": "danger" if overdue else "info",
+                    "linked": f"{requirement.loan.school.name} · {requirement.loan.mfi.name}",
+                    "action_label": "Plan Visit",
+                    "action_url": (
+                        f"/schools/{requirement.loan.school.school_id}"
+                        "#school-bt-title"
+                    ),
+                    "actionable": True,
+                    "source": "Business Transformation",
+                    "_due_sort": requirement.due_date,
+                }
+            )
+
+    if role in {
+        EdifyRole.MFI_PARTNER_ADMIN.value,
+        EdifyRole.MFI_LOAN_OFFICER.value,
+    }:
+        returned = (
+            bt_services.scoped_loans(principal)
+            .filter(salesforce_status=SalesforceStatus.RETURNED)
+            .select_related("school", "mfi")
+            .order_by("salesforce_returned_at")[:30]
+        )
+        for loan in returned:
+            out.append(
+                {
+                    "id": f"bt-returned-{loan.id}",
+                    "title": "Correct returned loan record",
+                    "description": f"{loan.school.name} · {loan.get_salesforce_return_reason_display() if hasattr(loan, 'get_salesforce_return_reason_display') else loan.salesforce_return_reason.replace('_', ' ').title()}",
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "returned",
+                    "status_label": "Returned",
+                    "status_tone": "danger",
+                    "due_label": "Today",
+                    "due_tone": "warning",
+                    "linked": f"{loan.school.name} · {loan.external_loan_reference}",
+                    "action_label": "Correct",
+                    "action_url": "/loans#loan-record-title",
+                    "actionable": True,
+                    "source": "Salesforce confirmation",
+                    "_due_sort": today,
+                }
+            )
+        stale_before = today - timedelta(days=31)
+        stale = (
+            bt_services.scoped_loans(principal)
+            .filter(status__in=DISBURSED_LOAN_STATUSES)
+            .filter(
+                Q(last_repayment_data_date__isnull=True)
+                | Q(last_repayment_data_date__lt=stale_before)
+            )
+            .order_by("last_repayment_data_date", "disbursement_date")[:30]
+        )
+        for loan in stale:
+            out.append(
+                {
+                    "id": f"bt-repayment-{loan.id}",
+                    "title": "Update Repayment Data",
+                    "description": f"{loan.school.name} has no current monthly repayment snapshot.",
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "Overdue",
+                    "due_tone": "danger",
+                    "linked": f"{loan.school.name} · {loan.external_loan_reference}",
+                    "action_label": "Update",
+                    "action_url": "/business-transformation",
+                    "actionable": True,
+                    "source": "Business Transformation",
+                    "_due_sort": loan.last_repayment_data_date
+                    or loan.disbursement_date
+                    or date.min,
+                }
+            )
+    return out
+
+
 def get_todos(principal) -> dict:
     """The full derived To-Do queue for a principal, sorted by priority then due."""
     role = getattr(principal, "active_role", None)
@@ -2141,6 +2350,7 @@ def get_todos(principal) -> dict:
     todos += _strategy_note_todos(principal, role)
     todos += _pd_todos(principal, role)
     todos += _field_debrief_todos(principal, role)
+    todos += _business_transformation_todos(principal, role, today)
 
     todos.sort(key=lambda t: (PRIORITY_ORDER.get(t["priority"], 9), t["_due_sort"]))
     for t in todos:

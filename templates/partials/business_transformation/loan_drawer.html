@@ -1,0 +1,72 @@
+{% load frontend_filters %}
+<div class="edify-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="loan-action-title" x-data="{ open: true }" x-show="open" x-cloak @keydown.escape.window="open = false; document.getElementById('drawer-container').innerHTML = ''">
+  <button type="button" class="edify-popup-dialog__backdrop" aria-label="Close loan details" @click="open = false; document.getElementById('drawer-container').innerHTML = ''"></button>
+  <div class="edify-popup-dialog__surface" tabindex="-1" x-init="$nextTick(() => $el.focus())">
+    <header class="drawer-header">
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-wide text-[var(--edify-primary)]">Loan workflow</p>
+        <h2 id="loan-action-title" class="mt-1 text-lg font-black text-[var(--edify-text)]">
+          {% if can_confirm_salesforce and loan.salesforce_status == "pending" %}Confirm Salesforce Entry{% elif can_validate_ia and loan.salesforce_status == "confirmed" and loan.ia_validation_status == "pending" %}Validate Loan Record{% else %}Loan Details{% endif %}
+        </h2>
+        <p class="mt-1 text-sm text-[var(--edify-text-muted)]">
+          {% if can_confirm_salesforce and loan.salesforce_status == "pending" %}Confirm that this loan has been entered into Salesforce.{% elif can_validate_ia and loan.salesforce_status == "confirmed" and loan.ia_validation_status == "pending" %}Independently validate the MFI submission and Salesforce control.{% else %}Read-only governed loan workflow status.{% endif %}
+        </p>
+      </div>
+      <button type="button" class="btn btn-ghost h-10 w-10" aria-label="Close" @click="open = false; document.getElementById('drawer-container').innerHTML = ''">&times;</button>
+    </header>
+
+    <div class="p-5 space-y-5">
+      <section aria-labelledby="loan-summary-title">
+        <h3 id="loan-summary-title" class="text-sm font-black text-[var(--edify-text)]">Read-only loan summary</h3>
+        <dl class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3 rounded-overlay border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] p-4 text-sm">
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">School</dt><dd class="mt-0.5 font-semibold">{{ loan.school.name }}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">MFI</dt><dd class="mt-0.5 font-semibold">{{ loan.mfi.name }}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">MFI loan reference</dt><dd class="mt-0.5 font-semibold">{{ loan.external_loan_reference }}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Loan purpose</dt><dd class="mt-0.5 font-semibold">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %} · EdTech{% endif %}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Approved amount</dt><dd class="mt-0.5 font-semibold">{% if loan.approved_amount is not None %}{{ loan.approved_amount|ugx }}{% else %}—{% endif %}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Disbursed amount</dt><dd class="mt-0.5 font-semibold">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}{% else %}—{% endif %}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Loan status</dt><dd class="mt-0.5 font-semibold">{{ loan.get_status_display }}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Disbursement date</dt><dd class="mt-0.5 font-semibold">{{ loan.disbursement_date|date:"d M Y"|default:"—" }}</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">Country</dt><dd class="mt-0.5 font-semibold">Uganda</dd></div>
+          <div><dt class="text-xs font-bold text-[var(--edify-text-muted)]">IA validation</dt><dd class="mt-0.5 font-semibold">{{ loan.get_ia_validation_status_display }}</dd></div>
+        </dl>
+      </section>
+
+      {% if can_confirm_salesforce and loan.salesforce_status == "pending" %}
+      <form method="post" action="/loans/{{ loan.id }}/salesforce-confirmation" class="space-y-4">
+        {% csrf_token %}
+        <label for="salesforce-loan-{{ loan.id }}" class="block">
+          <span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Salesforce ID <span aria-hidden="true">*</span></span>
+          <input id="salesforce-loan-{{ loan.id }}" name="salesforceLoanId" type="text" minlength="6" maxlength="32" pattern="Loan-[0-9]+" placeholder="Loan-19650" autocomplete="off" spellcheck="false" required class="w-full" aria-describedby="salesforce-help-{{ loan.id }}">
+          <small id="salesforce-help-{{ loan.id }}" class="block mt-1 text-[var(--edify-text-muted)]">Required format: Loan-19650. The ID must be unique.</small>
+        </label>
+        <button type="submit" class="btn btn-primary w-full min-h-12">Confirm &amp; Complete</button>
+      </form>
+      {% elif can_validate_ia and loan.salesforce_status == "confirmed" and loan.ia_validation_status == "pending" %}
+      <form method="post" action="/loans/{{ loan.id }}/ia-validation" class="space-y-4">
+        {% csrf_token %}
+        <fieldset>
+          <legend class="text-xs font-bold text-[var(--edify-text-muted)]">IA decision</legend>
+          <div class="mt-2 grid grid-cols-2 gap-3">
+            <label class="flex min-h-12 items-center gap-2 rounded-control border border-[var(--edify-border)] px-3"><input type="radio" name="decision" value="verified" required> Verify</label>
+            <label class="flex min-h-12 items-center gap-2 rounded-control border border-[var(--edify-border)] px-3"><input type="radio" name="decision" value="returned" required> Return</label>
+          </div>
+        </fieldset>
+        <label for="ia-reason-{{ loan.id }}" class="block"><span class="block text-xs font-bold text-[var(--edify-text-muted)] mb-1">Verification or return note</span><textarea id="ia-reason-{{ loan.id }}" name="reason" rows="3" maxlength="1000" class="w-full"></textarea></label>
+        <button type="submit" class="btn btn-primary w-full min-h-12">Submit IA Decision</button>
+      </form>
+      {% else %}
+      <section class="rounded-overlay border border-[var(--edify-border)] p-4">
+        <h3 class="text-sm font-black">Independent workflow status</h3>
+        <div class="mt-3 flex flex-wrap gap-2">
+          {% include "components/badge.html" with tone="neutral" label=loan.get_status_display %}
+          {% if loan.salesforce_status == "confirmed" %}{% include "components/badge.html" with tone="success" label="Salesforce confirmed" %}{% elif loan.salesforce_status == "returned" %}{% include "components/badge.html" with tone="danger" label="Salesforce returned" %}{% else %}{% include "components/badge.html" with tone="warning" label="Salesforce pending" %}{% endif %}
+          {% include "components/badge.html" with tone="neutral" label=loan.get_ia_validation_status_display %}
+          {% include "components/badge.html" with tone="neutral" label=loan.get_impact_status_display %}
+        </div>
+        {% if loan.salesforce_loan_id %}<p class="mt-3 text-sm"><strong>Salesforce ID:</strong> {{ loan.salesforce_loan_id }}</p>{% endif %}
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>

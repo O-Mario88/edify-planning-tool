@@ -33,6 +33,7 @@ COUNTRY_ROLES = {
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.IMPACT_ASSESSMENT.value,
     EdifyRole.PROGRAM_ACCOUNTANT.value,
+    EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
     EdifyRole.ADMIN.value,
 }
 # Seeing the whole country is not the same as running it. Impact Assessment and

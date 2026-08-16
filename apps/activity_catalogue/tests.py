@@ -43,17 +43,17 @@ class CatalogueSeedContractTests(TestCase):
         seed_activity_catalogue(actor_id="test")
         seed_activity_catalogue(actor_id="test")
 
-        self.assertEqual(ActivityCatalogueItem.objects.count(), 40)
+        self.assertEqual(ActivityCatalogueItem.objects.count(), 56)
         self.assertEqual(
             ActivityCatalogueItem.objects.values("stable_code").distinct().count(),
-            40,
+            56,
         )
-        # The programme's 28 named interventions, unchanged. Standard field
-        # support (school visit, in-school training, cluster meeting) is
-        # counted separately because it is not a curriculum title.
+        # The programme's 28 named interventions plus sixteen Uganda Business
+        # Transformation workflows. Standard field support is counted
+        # separately because it is not a curriculum title.
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=False).count(),
-            28,
+            44,
         )
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=True).count(),
@@ -63,8 +63,10 @@ class CatalogueSeedContractTests(TestCase):
             ActivityCatalogueItem.objects.filter(
                 non_school_allowed=True, standard_support=False
             ).count(),
-            28,
-            "Every governed title must also be available for dated central budgeting.",
+            29,
+            "The general programme titles remain available for dated central "
+            "budgeting — plus the Monthly MFI Review, a venue meeting that "
+            "belongs to no single school.",
         )
         # Standard support is school/cluster work. Planning it as a standalone
         # dated programme line at a venue would let "School Visit" be budgeted
@@ -228,25 +230,15 @@ class SsaLedRecommendationTests(TestCase):
         self.assertNotIn("ACCOUNTING_FINANCIAL_MANAGEMENT", codes)
         self.assertIn("ACCOUNTING_FINANCIAL_MANAGEMENT", clustered_codes)
 
-        # Withholding it is right; doing so silently is not. The banner names
-        # Financial Health while every activity offered answers a lower-ranked
-        # need, which reads as the engine ignoring the SSA score. Say which
-        # need is unmet and why its own response is unavailable here.
-        unmet = result["unmetPriority"]
-        self.assertIsNotNone(unmet, "the unaddressed top need must be surfaced")
-        self.assertEqual(
-            unmet["need"]["intervention"], SsaIntervention.FINANCIAL_HEALTH
+        # Since the Uganda Business Transformation catalogue landed, Financial
+        # Health has governed school-visit responses of its own, so the
+        # individual-school context answers the top need directly instead of
+        # surfacing an unmet-need notice.
+        self.assertTrue(
+            {code for code in codes if code.startswith("BT_UG_")},
+            "a BT financial-health response must be offered at school level",
         )
-        self.assertIn(
-            "Accounting and Financial Management",
-            [blocked["displayName"] for blocked in unmet["blockedBy"]],
-        )
-        # School planning is for visits and partner assignment. A programme
-        # activity is planned centrally from the Work Plan, so the notice must
-        # name that surface rather than leaving a need nobody can act on.
-        self.assertEqual(
-            unmet["blockedBy"][0]["route"], "Schedule it from the Work Plan page"
-        )
+        self.assertIsNone(result["unmetPriority"])
 
         # In the cluster context the need IS answered, so the notice must go
         # quiet rather than warning about a need that is being addressed.
@@ -255,7 +247,12 @@ class SsaLedRecommendationTests(TestCase):
     def test_a_follow_up_activity_does_not_count_as_addressing_a_need(self):
         """Dynamic follow-ups inherit the top need's label when no source
         activity exists. Counting that as coverage would silence the notice
-        using an activity that does nothing about the need."""
+        using an activity that does nothing about the need.
+
+        Leadership is the needy intervention here because its governed
+        responses (School Leadership, New School Orientation) remain
+        cluster-only — Financial Health gained school-level BT responses,
+        so it can no longer stage this scenario."""
         record = SsaRecord.objects.create(
             school=self.school,
             date_of_ssa=timezone.now(),
@@ -269,7 +266,7 @@ class SsaLedRecommendationTests(TestCase):
             SsaScore.objects.create(
                 ssa_record=record,
                 intervention=intervention,
-                score=1 if intervention == SsaIntervention.FINANCIAL_HEALTH else 9,
+                score=1 if intervention == SsaIntervention.LEADERSHIP else 9,
             )
 
         result = recommend_activities(school=self.school, limit=3)
@@ -277,7 +274,7 @@ class SsaLedRecommendationTests(TestCase):
         inherited = [
             row
             for row in [*result["primary"], *result["otherEligible"]]
-            if row.get("targetIntervention") == SsaIntervention.FINANCIAL_HEALTH
+            if row.get("targetIntervention") == SsaIntervention.LEADERSHIP
         ]
         self.assertTrue(
             inherited, "a follow-up should still inherit the unresolved need's label"

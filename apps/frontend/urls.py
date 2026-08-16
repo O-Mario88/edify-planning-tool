@@ -37,6 +37,7 @@ from .views import (
     catalogue_views,
     priority_views,
     target_distribution_views,
+    today_views,
 )
 
 app_name = "frontend"
@@ -114,6 +115,21 @@ urlpatterns = [
         "target-distribution/form",
         target_distribution_views.target_distribution_form,
         name="target_distribution_form",
+    ),
+    path(
+        "target-distribution/import",
+        target_distribution_views.target_distribution_import,
+        name="target_distribution_import",
+    ),
+    path(
+        "target-distribution/import/template",
+        target_distribution_views.target_distribution_import_template,
+        name="target_distribution_import_template",
+    ),
+    path(
+        "target-distribution/import/<str:batch_id>/commit",
+        target_distribution_views.target_distribution_import_commit,
+        name="target_distribution_import_commit",
     ),
     path(
         "target-distribution/team",
@@ -580,7 +596,14 @@ urlpatterns = [
         analytics_views.map_subcounty_metrics_view,
         name="map_subcounty_metrics",
     ),
+    path("today", today_views.today_page, name="today"),
+    path("today/action", today_views.today_action, name="today_action"),
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),
+    path(
+        "my-plan/day-package",
+        my_plan_views.day_package_view,
+        name="my_plan_day_package",
+    ),
     path(
         "my-plan/<str:activity_id>",
         my_plan_views.activity_detail_view,
@@ -843,7 +866,6 @@ urlpatterns = [
     path("staff", staff_views.staff_directory_view, name="staff_directory"),
     path("staff/<str:user_id>", staff_views.staff_profile_view, name="staff_profile"),
     # Today
-    path("today", staff_views.today_view, name="today"),
     # Visits
     path("visits", staff_views.visits_log_view, name="visits_log"),
     # Trainings

@@ -983,6 +983,20 @@ def approve_quarters(
     from .milestone_progress import refresh_period_targets
 
     refresh_period_targets(allocation.milestone_id)
+    # The spread is the figure the holder plans against — they hear about
+    # its approval like they hear about the annual one (audit finding: the
+    # annual approval notified, this didn't).
+    holder = allocation.employee_id or allocation.team_id
+    if holder:
+        _notify_allocation_holders(
+            allocation.milestone,
+            [str(holder)],
+            body=(
+                f"Your FY{allocation.milestone.priority.fy} quarterly spread "
+                f"for “{allocation.milestone.title}” is approved — monthly "
+                "targets are phased to your calendar."
+            ),
+        )
     _audit(
         "hr.milestone_allocation_quarters_approved",
         allocation,

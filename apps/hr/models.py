@@ -1308,6 +1308,116 @@ class StrategicPriorityCycle(TimeStampedModel):
         db_table = "hr_strategic_priority_cycle"
 
 
+class PriorityImportStatus(models.TextChoices):
+    VALIDATED = "validated", "Validated"
+    NEEDS_CORRECTION = "needs_correction", "Needs correction"
+    COMMITTED = "committed", "Committed"
+    REJECTED = "rejected", "Rejected"
+
+
+class PriorityImportBatch(TimeStampedModel):
+    """Immutable staging envelope for an IA country-priority upload.
+
+    Uploading is deliberately separate from publication: IA validates and
+    commits a draft master, while the existing Country Director gate remains
+    the authority that confirms ambiguous figures and publishes the plan.
+    """
+
+    id = CuidField()
+    fy = models.CharField(max_length=16, db_index=True)
+    country_id = models.CharField(max_length=64, default="Uganda", db_index=True)
+    original_file_name = models.CharField(max_length=255)
+    file_sha256 = models.CharField(max_length=64)
+    uploaded_by = models.CharField(max_length=30)
+    status = models.CharField(
+        max_length=24,
+        choices=PriorityImportStatus.choices,
+        default=PriorityImportStatus.VALIDATED,
+    )
+    total_rows = models.PositiveIntegerField(default=0)
+    valid_rows = models.PositiveIntegerField(default=0)
+    invalid_rows = models.PositiveIntegerField(default=0)
+    duplicate_rows = models.PositiveIntegerField(default=0)
+    validation_summary = models.JSONField(default=dict, blank=True)
+    committed_at = models.DateTimeField(null=True, blank=True)
+    committed_by = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_priority_import_batch"
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["fy", "country_id", "file_sha256"],
+                name="uniq_priority_import_file_per_scope",
+            )
+        ]
+
+
+class PriorityImportRowStatus(models.TextChoices):
+    READY = "ready", "Ready"
+    REVIEW = "review", "Review required"
+    BLOCKED = "blocked", "Blocked"
+    IMPORTED = "imported", "Imported"
+
+
+class PriorityImportRow(TimeStampedModel):
+    """One normalized, reviewable row from a priority upload."""
+
+    id = CuidField()
+    batch = models.ForeignKey(
+        PriorityImportBatch, on_delete=models.CASCADE, related_name="rows"
+    )
+    row_number = models.PositiveIntegerField()
+    group_code = models.CharField(max_length=96)
+    group_title = models.CharField(max_length=255)
+    priority_code = models.CharField(max_length=96)
+    priority_title = models.CharField(max_length=255)
+    milestone_code = models.CharField(max_length=128)
+    milestone_title = models.CharField(max_length=255)
+    target_value = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    target_unit = models.CharField(max_length=64, blank=True)
+    core_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    client_target = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    measurement_type = models.CharField(max_length=24, blank=True)
+    metric_key = models.CharField(max_length=128, blank=True)
+    allocation_method = models.CharField(max_length=24, blank=True)
+    responsible_role = models.CharField(max_length=64, blank=True)
+    needs_confirmation = models.BooleanField(default=False)
+    confirmation_note = models.TextField(blank=True)
+    quality_gate = models.CharField(max_length=128, blank=True)
+    counting_basis = models.CharField(max_length=64, blank=True)
+    activity_codes = models.JSONField(default=list, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=PriorityImportRowStatus.choices,
+        default=PriorityImportRowStatus.READY,
+    )
+    validation_errors = models.JSONField(default=list, blank=True)
+    raw_data = models.JSONField(default=dict, blank=True)
+    imported_milestone = models.ForeignKey(
+        "PriorityMilestone",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="import_rows",
+    )
+
+    class Meta:
+        db_table = "hr_priority_import_row"
+        ordering = ["row_number"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["batch", "row_number"], name="uniq_priority_import_row"
+            )
+        ]
+
+
 class StrategicPriority(TimeStampedModel):
     """One strategic priority, authored by the RVP or the Country Director.
 
@@ -1684,6 +1794,41 @@ class MilestoneAllocation(TimeStampedModel):
 
     class Meta:
         db_table = "hr_milestone_allocation"
+
+
+class ActivityPriorityLink(TimeStampedModel):
+    """Explicit planning trace from scheduled work to an approved allocation."""
+
+    id = CuidField()
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.CASCADE,
+        related_name="priority_links",
+    )
+    allocation = models.ForeignKey(
+        MilestoneAllocation,
+        on_delete=models.PROTECT,
+        related_name="activity_links",
+    )
+    is_primary = models.BooleanField(default=True)
+    planned_contribution = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True
+    )
+    linked_by = models.CharField(max_length=30)
+
+    class Meta:
+        db_table = "hr_activity_priority_link"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "allocation"],
+                name="uniq_activity_priority_allocation",
+            ),
+            models.UniqueConstraint(
+                fields=["activity"],
+                condition=models.Q(is_primary=True),
+                name="uniq_primary_priority_per_activity",
+            ),
+        ]
 
 
 class MilestonePeriodTarget(TimeStampedModel):

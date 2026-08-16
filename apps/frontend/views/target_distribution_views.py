@@ -17,7 +17,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -66,7 +66,7 @@ def _is_ia_distributor(request) -> bool:
 @require_page_permission("target_distribution")
 @_permission(Permission.STRATEGIC_PRIORITIES_VIEW.value)
 def target_distribution_page(request):
-    from apps.hr.models import StrategicPriorityCycle
+    from apps.hr.models import PriorityImportBatch, StrategicPriorityCycle
     from apps.hr.target_distribution import country_distribution_workspace
 
     raw_fy = (request.GET.get("fy") or "").strip()
@@ -155,6 +155,24 @@ def target_distribution_page(request):
     active_filter_count = sum(
         bool(selected[key]) for key in ("q", "priority", "portfolio", "status")
     )
+    can_import = has_permission(
+        request.user, Permission.STRATEGIC_PRIORITIES_IMPORT.value
+    )
+    import_batches = []
+    selected_import_batch = None
+    if can_import:
+        import_batches = list(
+            PriorityImportBatch.objects.filter(fy=fy, country_id="Uganda")[:5]
+        )
+        selected_batch_id = (request.GET.get("import") or "").strip()
+        if selected_batch_id:
+            selected_import_batch = (
+                PriorityImportBatch.objects.prefetch_related("rows")
+                .filter(id=selected_batch_id, fy=fy, country_id="Uganda")
+                .first()
+            )
+        elif import_batches:
+            selected_import_batch = import_batches[0]
     return render(
         request,
         "pages/hr/target_distribution.html",
@@ -163,6 +181,9 @@ def target_distribution_page(request):
             "cycle_years": cycle_years,
             "is_cd": _is_cd(request),
             "can_distribute": _is_ia_distributor(request),
+            "can_import": can_import,
+            "import_batches": import_batches,
+            "selected_import_batch": selected_import_batch,
             "today": timezone.localdate().isoformat(),
             # One search: the top bar binds this page's milestone search and
             # carries the active filters, per the consolidation contract.
@@ -191,6 +212,78 @@ def target_distribution_page(request):
             "active_filter_count": active_filter_count,
         },
     )
+
+
+@require_page_permission("target_distribution")
+@_permission(Permission.STRATEGIC_PRIORITIES_IMPORT.value)
+def target_distribution_import(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr.priority_import import stage_priority_file
+
+    fy = request.POST.get("fy") or _requested_fy(request)
+    upload = request.FILES.get("priority_file")
+    if upload is None:
+        messages.error(request, "Choose a CSV or XLSX priority file.")
+        return redirect(f"/target-distribution?fy={fy}")
+    try:
+        batch, created = stage_priority_file(
+            file=upload, fy=fy, principal=request.user
+        )
+        if created:
+            if batch.invalid_rows:
+                messages.error(
+                    request,
+                    f"Upload staged with {batch.invalid_rows} blocked row(s). "
+                    "Correct the source file and upload it again.",
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Validated {batch.total_rows} priority row(s). Review the "
+                    "preview, then commit them as a draft master.",
+                )
+        else:
+            messages.info(request, "This exact file was already staged; showing it now.")
+        return redirect(f"/target-distribution?fy={fy}&import={batch.id}")
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(exc))
+        return redirect(f"/target-distribution?fy={fy}")
+
+
+@require_page_permission("target_distribution")
+@_permission(Permission.STRATEGIC_PRIORITIES_IMPORT.value)
+def target_distribution_import_commit(request, batch_id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    from apps.core.exceptions import BadRequest, ConflictError, Forbidden
+    from apps.hr.models import PriorityImportBatch
+    from apps.hr.priority_import import commit_priority_batch
+
+    batch = PriorityImportBatch.objects.filter(id=batch_id).first()
+    if batch is None:
+        return HttpResponseBadRequest("Choose a valid priority import.")
+    try:
+        commit_priority_batch(batch_id=batch_id, principal=request.user)
+        messages.success(
+            request,
+            "Priority master committed as a draft. The Country Director can now "
+            "confirm source figures and publish it for distribution.",
+        )
+    except (BadRequest, ConflictError, Forbidden) as exc:
+        messages.error(request, str(exc))
+    return redirect(f"/target-distribution?fy={batch.fy}&import={batch.id}")
+
+
+@require_page_permission("target_distribution")
+@_permission(Permission.STRATEGIC_PRIORITIES_IMPORT.value)
+def target_distribution_import_template(request):
+    from apps.hr.priority_import import csv_template
+
+    response = HttpResponse(csv_template(), content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="edify-priority-import.csv"'
+    return response
 
 
 @require_page_permission("target_distribution")

@@ -76,6 +76,8 @@ INTENTIONALLY_UNGATED_PAGES = {
     "country for the CD, own-decisions-only for everyone else",
     "report_problem": "reporting a platform problem is every role's right; the "
     "page shows only the reporter's own tickets, and triage is Admin-only",
+    "loans": "the Uganda loan register is an intentional transparency surface; "
+    "write and execution actions remain separately permission-gated",
 }
 
 

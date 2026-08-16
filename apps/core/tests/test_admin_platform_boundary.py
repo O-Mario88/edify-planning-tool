@@ -1,8 +1,9 @@
 """Regression contract for the Admin platform super-role.
 
 Admin holds every application permission and may execute every role-gated
-workflow EXCEPT three single-role authorities: IA verification, disbursement,
-and field budget approval. Admin sees all three and exercises none of them.
+workflow EXCEPT reserved operational authorities: IA verification,
+disbursement, field budget approval, and governed loan execution. Admin sees
+them and exercises none of them.
 
 That boundary is the point. Admin was briefly given the full set while fixing a
 real problem — the role was read-only and blocked ordinary administration — but
@@ -50,7 +51,7 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
 
     def test_new_permissions_reach_admin_automatically(self):
         """The super-role must not need editing every time a permission is
-        added — only the three exclusions are deliberate."""
+        added — only the documented exclusions are deliberate."""
         missing = set(Permission) - set(ROLE_PERMISSIONS[EdifyRole.ADMIN])
         self.assertEqual(missing, set(ADMIN_EXCLUDED_PERMISSIONS))
 
@@ -62,10 +63,15 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
                     Permission.IA_VERIFY,
                     Permission.PAYMENT_ACT,
                     Permission.BUDGET_APPROVE,
+                    Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+                    Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
+                    Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
+                    Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM,
+                    Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+                    Permission.BUSINESS_TRANSFORMATION_EXPORT,
                 }
             ),
-            "verification, disbursement and field approval each belong to one "
-            "role; Admin observes them and performs none",
+            "reserved operational actions stay outside the technical Admin role",
         )
 
     def test_admin_can_execute_field_workflow_actions(self):

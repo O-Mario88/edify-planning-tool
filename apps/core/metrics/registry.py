@@ -1520,6 +1520,252 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         drilldown="/accounts/partner-payments",
         refresh_events=("activity_verified", "partner_paid"),
     ),
+    # ── Business Transformation: the Uganda MFI portfolio scorecard ──────────
+    # Owned by the BT workspace; the Loan Register repeats the strip because
+    # its reader is making the same portfolio judgement over the filtered
+    # register rather than a different one. All eleven tiles come from
+    # `services.portfolio_metrics` over the caller's scoped loans.
+    MetricSpec(
+        key="bt_new_loans",
+        label="New Loans",
+        definition=(
+            "MFI loans submitted within the selected financial-year period "
+            "for schools in the caller's Business Transformation scope."
+        ),
+        question="How much new lending is the programme originating?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.MfiLoan",),
+        numerator="Loans with a submission date inside the selected FY period",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_value_disbursed",
+        label="Value Disbursed",
+        definition=(
+            "MFI-confirmed disbursed principal on loans in the selected "
+            "period, in UGX."
+        ),
+        question="How much financing actually reached schools?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.DISBURSED,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.MfiLoan",),
+        numerator="Disbursed amounts on MFI-confirmed loans in the period",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_schools_financed",
+        label="Schools Financed",
+        definition="Unique schools holding at least one disbursed MFI loan.",
+        question="How broad is the financed footprint?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.MfiLoan", "schools.School"),
+        numerator="Distinct schools across disbursed loans in scope",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_active_portfolio",
+        label="Active Portfolio",
+        definition=(
+            "Latest MFI-reported outstanding principal across active loans, "
+            "in UGX."
+        ),
+        question="How much financed money is still at work?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.OUTSTANDING,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.RepaymentSnapshot",),
+        numerator="Outstanding balances on the latest repayment snapshots",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+        notes="A portfolio position: the period filter narrows loans, not snapshots.",
+    ),
+    MetricSpec(
+        key="bt_repaid_amount",
+        label="Repaid Amount",
+        definition=(
+            "Principal the schools repaid to their MFIs within the selected "
+            "period, in UGX."
+        ),
+        question="Is the portfolio actually being serviced?",
+        category=Category.PROGRESS,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.RETURNED,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.RepaymentSnapshot",),
+        numerator="Repayment deltas recorded inside the selected period",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+        notes=(
+            "School→MFI repayments; RETURNED is the closest pipeline stage — "
+            "this money leaves the portfolio rather than Edify's books."
+        ),
+    ),
+    MetricSpec(
+        key="bt_amount_overdue",
+        label="Amount Overdue",
+        definition=(
+            "Latest MFI-reported overdue principal across the scoped "
+            "portfolio, in UGX."
+        ),
+        question="How much repayment is late right now?",
+        category=Category.RISK,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.OUTSTANDING,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.RepaymentSnapshot",),
+        numerator="Overdue balances on the latest repayment snapshots",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_defaulted_portfolio",
+        label="Defaulted Portfolio",
+        definition=(
+            "Outstanding principal on loans the MFI has classified as "
+            "defaulted, in UGX."
+        ),
+        question="How much of the portfolio has been lost to default?",
+        category=Category.RISK,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.OUTSTANDING,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.RepaymentSnapshot",),
+        numerator="Outstanding balances on defaulted loans",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_edtech_share",
+        label="EdTech Share",
+        definition=(
+            "Share of disbursed loans whose governed purpose is an EdTech "
+            "purpose."
+        ),
+        question="Is the lending advancing the EdTech objective?",
+        category=Category.QUALITY,
+        unit=Unit.PERCENT,
+        denominator="All disbursed loans in the selected period",
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.MfiLoan",),
+        numerator="Disbursed loans with an EdTech purpose",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_use_verified",
+        label="Loan Use Verified",
+        definition=(
+            "Share of due loan-use verifications that a governed verification "
+            "visit has completed."
+        ),
+        question="Are we actually checking that loans bought what they promised?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Loan-use verifications currently due",
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.LoanVerificationRequirement",),
+        numerator="Due verifications with a completed verification activity",
+        date_basis=DateBasis.EXECUTION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_salesforce_backlog",
+        label="Salesforce Backlog",
+        definition=(
+            "Loan records whose Salesforce reference has not yet been "
+            "confirmed."
+        ),
+        question="Which loan records still need their Salesforce proof?",
+        category=Category.PENDING_ACTION,
+        unit=Unit.COUNT,
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.MfiLoan",),
+        numerator="Loan records minus Salesforce-confirmed records",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_positive_impact",
+        label="Positive Impact",
+        definition=(
+            "Share of impact-assessed loans whose assessment concluded a "
+            "positive school-level outcome."
+        ),
+        question="Is the financing changing school outcomes for the better?",
+        category=Category.QUALITY,
+        unit=Unit.PERCENT,
+        denominator="Loans with a completed impact assessment",
+        service="apps.business_transformation.services.workspace_context",
+        source_models=("business_transformation.LoanImpactAssessment",),
+        numerator="Completed assessments with a positive conclusion",
+        date_basis=DateBasis.SUBMISSION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
 )
 
 

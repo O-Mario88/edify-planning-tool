@@ -46,6 +46,11 @@ class NotificationLinkResolver:
                 return "/admin-ops/my-plan", "Open Admin My Plan"
             return "/admin-ops/my-plan", "Open Platform Operations"
 
+        # Platform operations: a dead-lettered outbox event lands the Admin
+        # on the health panel that carries its error and replay path.
+        if event_type == "outbox.dead_letter":
+            return "/system-health", "Open System Health"
+
         # Uganda Master Priority Plan cascade: each recipient lands on the
         # surface where the allocated target is now theirs to act on.
         if event_type.startswith("target_allocation."):
@@ -56,6 +61,9 @@ class NotificationLinkResolver:
             if role in ("impactassessment", "countrydirector", "admin"):
                 return "/target-distribution", "Open Target Distribution"
             return "/my-targets", "View My Targets"
+
+        if event_type.startswith("bt."):
+            return "/business-transformation", "Open Uganda Portfolio"
 
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):

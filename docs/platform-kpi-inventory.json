@@ -2984,7 +2984,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 773,
+   "line": 783,
    "label": "Completed Tasks",
    "keys": [
     "helper",
@@ -2999,7 +2999,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 780,
+   "line": 790,
    "label": "In Progress",
    "keys": [
     "helper",
@@ -3014,7 +3014,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 787,
+   "line": 797,
    "label": "Planned Tasks",
    "keys": [
     "helper",
@@ -3029,7 +3029,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 794,
+   "line": 804,
    "label": "Overdue Tasks",
    "keys": [
     "helper",
@@ -3044,7 +3044,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 858,
+   "line": 868,
    "label": "Completed",
    "keys": [
     "color",
@@ -3058,7 +3058,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 864,
+   "line": 874,
    "label": "In Progress",
    "keys": [
     "color",
@@ -3072,7 +3072,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 870,
+   "line": 880,
    "label": "Planned",
    "keys": [
     "color",
@@ -3086,7 +3086,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 876,
+   "line": 886,
    "label": "Overdue",
    "keys": [
     "color",
@@ -4070,7 +4070,7 @@
   {
    "kind": "other",
    "module": "apps/frontend/views/target_distribution_views.py",
-   "line": 169,
+   "line": 190,
    "label": "Search master milestones and activities",
    "keys": [
     "action",
@@ -6901,7 +6901,7 @@
   {
    "kind": "kpi-tile",
    "module": "apps/targets/my_targets.py",
-   "line": 1123,
+   "line": 1129,
    "label": null,
    "keys": [
     "label",

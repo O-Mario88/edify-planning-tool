@@ -543,6 +543,75 @@ def mfa_challenge_purge_job():
     run_tracked_job("mfa_challenge_purge", _do_mfa_challenge_purge)
 
 
+# ── 14. Staff Time Standard rollup ───────────────────────────────────────────
+def _do_interaction_rollup() -> int:
+    """Sessionise yesterday's interaction events into person-day aggregates
+    (docs/STAFF_TIME_STANDARD.md §4) and prune raw events past retention.
+    The aggregates feed role-population percentiles only — the report layer
+    exposes no individual."""
+
+    from apps.telemetry.services import rollup_interaction_days
+
+    return rollup_interaction_days()
+
+
+def interaction_rollup_job():
+    if not _enabled():
+        return
+    run_tracked_job("interaction_rollup", _do_interaction_rollup)
+
+
+# ── 15. Data-quality scan ────────────────────────────────────────────────────
+def _do_data_quality_scan() -> int:
+    """Nightly directory hygiene (roadmap Phase 1b): propose duplicate
+    candidates, then reconcile every operating school's quality issues as
+    durable queues. Detection proposes; humans resolve."""
+
+    from apps.schools.data_quality import scan_all
+
+    result = scan_all()
+    logger.info("Data-quality scan: %s", result)
+    return result["schools"]
+
+
+def data_quality_scan_job():
+    if not _enabled():
+        return
+    run_tracked_job("data_quality_scan", _do_data_quality_scan)
+
+
+# ── 16. Durable outbox drain ─────────────────────────────────────────────────
+def _do_outbox_drain() -> int:
+    """One drain pass over the durable event backbone (roadmap Phase 2)."""
+
+    from apps.outbox.services import drain
+
+    result = drain()
+    if result["failed"]:
+        logger.warning("Outbox drain: %s", result)
+    return result["processed"]
+
+
+def _do_autopilot_weekly_proposals() -> int:
+    """Draft next week for the field roster (roadmap Phase 4 slice 1)."""
+
+    from apps.autopilot.services import generate_weekly_proposals_for_all
+
+    return generate_weekly_proposals_for_all()
+
+
+def autopilot_weekly_proposals_job():
+    if not _enabled():
+        return
+    run_tracked_job("autopilot_weekly_proposals", _do_autopilot_weekly_proposals)
+
+
+def outbox_drain_job():
+    if not _enabled():
+        return
+    run_tracked_job("outbox_drain", _do_outbox_drain)
+
+
 # ── Admin platform maintenance ───────────────────────────────────────────────
 def _do_admin_maintenance_generation() -> int:
     """Turn every due MaintenanceTemplate into scheduled Admin work.

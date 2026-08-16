@@ -143,6 +143,8 @@ urlpatterns = [
     # Partners — partner-org directory + self-service.
     *api("partners", "apps.partners.urls"),
     *api("partner-assignments", "apps.partners.assignment_urls"),
+    # Uganda Business Transformation — cases, MFI portfolio and recovery.
+    *api("business-transformation", "apps.business_transformation.urls"),
     # Assignment — capacity + valid options.
     *api("assignment", "apps.assignment.urls"),
     # Filters — shared filter-bar options + counts.
@@ -210,6 +212,7 @@ urlpatterns = [
     # frontend pattern.
     path("", include("apps.admin_ops.urls")),
     path("", include("apps.documents.urls")),
+    path("", include("apps.business_transformation.frontend_urls")),
     # /lander never belonged to this application. It was GoDaddy's parked-domain
     # page, reached because the apex A record pointed at GoDaddy Forwarding
     # rather than at the origin (INC-2026-08-03-01). Once the apex resolves here

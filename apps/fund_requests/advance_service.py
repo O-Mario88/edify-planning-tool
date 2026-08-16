@@ -306,6 +306,14 @@ def disburse(advance_id: str, data: dict, principal) -> dict:
                 "updated_at",
             ]
         )
+        # Phase 2c: when the NetSuite sync is enabled, the disbursement
+        # enqueues its accountability push on the durable outbox — inside
+        # this transaction, so the event exists iff the disbursement does.
+        # Disabled (the default), this is a no-op and the Accountant's
+        # manual NetSuite-ID entry remains the law.
+        from apps.integrations.services import enqueue_advance_netsuite_sync
+
+        enqueue_advance_netsuite_sync(adv.id)
     # Money out of the account must be on the tamper-evident chain like every
     # other accountant action in this module.
     _audit(

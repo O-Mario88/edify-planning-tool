@@ -2056,6 +2056,15 @@ def create(
                 override_reason=data.get("overrideReason", ""),
                 recommendation_source=governed_recommendation_source,
             )
+        if data.get("priorityAllocationId"):
+            from apps.hr.priority_linking import link_activity
+
+            link_activity(
+                activity=activity,
+                allocation_id=str(data["priorityAllocationId"]),
+                principal=principal,
+                planned_contribution=data.get("plannedContribution"),
+            )
         # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
         # each school's Activity via this function, then prices the whole batch in
         # one pass afterward — skip the single-activity cost snapshot here so a
@@ -2642,6 +2651,13 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         from apps.hr.milestone_progress import record_activity_progress
 
         transaction.on_commit(lambda: record_activity_progress(a))
+        # Phase 2c: when the Salesforce sync is enabled, IA verification
+        # enqueues the activity's push on the durable outbox (transactional —
+        # the event commits with the verification). Disabled by default; a
+        # manually pasted SF id always wins over the sync.
+        from apps.integrations.services import enqueue_activity_salesforce_sync
+
+        enqueue_activity_salesforce_sync(a.id)
     return _serialize(a)
 
 

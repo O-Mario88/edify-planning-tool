@@ -250,6 +250,16 @@ def dashboard_view(request):
         # instead of building a second parallel dashboard.
         return redirect("/partner/today")
 
+    if role == "BusinessTransformationOfficer":
+        # The governed loan dashboard is the operating cockpit for these
+        # roles. Sending them through the generic Admin dashboard attempts to
+        # render country-admin cards outside their authority and gives them no
+        # useful MFI/loan workflow.
+        return redirect("/business-transformation/overview")
+
+    if role in ("MfiPartnerAdmin", "MfiLoanOfficer"):
+        return redirect("/mfi-portal/dashboard")
+
     # Fetch common alerts and todays items
     alerts_list = cc_services.alerts(user)
     alerts_summary = cc_services.alerts_summary(user)

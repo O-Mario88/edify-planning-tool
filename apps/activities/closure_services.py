@@ -468,6 +468,14 @@ class ActivityReopenService:
                 activity.save(
                     update_fields=["status", "ia_verification_status", "updated_at"]
                 )
+                # The comment above promises "target ledger reverses" — the
+                # personal ledger does on its next rebuild, but the milestone
+                # credit engine needed this explicit reversal or invalidated
+                # work stayed credited against the Uganda cascade.
+                from apps.hr.milestone_progress import reverse_activity_progress
+
+                invalidated = activity
+                transaction.on_commit(lambda: reverse_activity_progress(invalidated))
             else:
                 # Finance/audit/analytics corrections: the field work itself
                 # stands, so keep the verified (credited) state.

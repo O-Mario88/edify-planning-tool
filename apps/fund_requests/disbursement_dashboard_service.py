@@ -1484,6 +1484,13 @@ def disburse(principal, fund_request_id, data=None):
                 disburse_reference=reference,
                 updated_at=now,
             )
+            # Phase 2c seam on the period-channel disburse path (audit
+            # finding: only the DRF advance path enqueued). No-op unless the
+            # NetSuite flag is on; transactional with the release above.
+            from apps.integrations.services import enqueue_advance_netsuite_sync
+
+            for advance in locked_advances:
+                enqueue_advance_netsuite_sync(advance.id)
 
         # One DisbursementRecord per activity the plan actually funds — the same
         # audit trail apps.fund_requests.finance_services.AdvanceDisbursementService

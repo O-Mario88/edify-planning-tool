@@ -1,0 +1,31 @@
+{% extends base_template %}
+{% block title %}Business Accounting & Finance — Edify{% endblock %}
+{% block shell_content %}
+<div id="bt-school-portfolio-container" class="edify-page-canvas space-y-6">
+  {% include "components/page_header.html" with eyebrow="Uganda Business Transformation" title="Business Accounting & Finance" description="A school-centred view of BAFF and Financial Health support, verified practice adoption and SSA performance." %}
+  {% include "partials/business_transformation/workspace_nav.html" %}
+  {% include "partials/business_transformation/school_portfolio_filters.html" with form_label="Financial Health portfolio filters" endpoint="/business-transformation/business-accounting-finance" %}
+
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio helper="Assigned, supported or SSA-referred" variant="primary" %}
+    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned helper="Active BAFF assignments" variant="info" %}
+    {% include "components/kpi_card.html" with label="Schools trained" value=metrics.schoolsSupported helper="Delivered support" variant="success" %}
+    {% include "components/kpi_card.html" with label="Practice verified" value=metrics.practiceVerified helper="IA-verified adoption" variant="success" %}
+    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving helper="Confirmed SSA movement" variant="success" %}
+    {% include "components/kpi_card.html" with label="Declining" value=metrics.declining helper="Needs follow-up" variant="danger" %}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">
+    {% include "partials/business_transformation/school_portfolio_list.html" with list_title="Financial Health portfolio" list_helper="Performance compares the first and latest confirmed Financial Health SSA; training and verified practice adoption remain separate." %}
+    <aside class="edify-surface border border-[var(--edify-border)] rounded-overlay shadow-sm p-5 space-y-4" aria-labelledby="financial-portfolio-guide">
+      <div><h2 id="financial-portfolio-guide" class="text-base font-black">What this portfolio measures</h2><p class="mt-1 text-xs text-[var(--edify-text-muted)]">Attendance is an output. Practice adoption and SSA movement show whether support is changing school performance.</p></div>
+      <dl class="space-y-3 text-sm">
+        <div><dt class="font-bold">Partner assigned</dt><dd class="text-[var(--edify-text-muted)]">The school has live BAFF or Financial Health work with a delivery partner.</dd></div>
+        <div><dt class="font-bold">Practice adoption</dt><dd class="text-[var(--edify-text-muted)]">Budgeting, cashbook, reconciliations and controls recorded separately from training.</dd></div>
+        <div><dt class="font-bold">Performance</dt><dd class="text-[var(--edify-text-muted)]">Movement between confirmed Financial Health SSA assessments.</dd></div>
+      </dl>
+      <p class="rounded-control bg-[var(--edify-primary-soft)] p-3 text-xs font-semibold text-[var(--edify-primary)]">BT reads this portfolio and only writes the Salesforce Loan ID confirmation on the Loans page. The responsible CCEO or PL plans every training and visit.</p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

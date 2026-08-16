@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     "apps.activities",
     "apps.budget",
     "apps.partners",
+    "apps.business_transformation",
     "apps.assignment",
     "apps.filters",
     "apps.search",
@@ -130,6 +131,10 @@ INSTALLED_APPS = [
     "apps.budget_intelligence",
     "apps.audit",
     "apps.realtime",
+    "apps.outbox",
+    "apps.integrations",
+    "apps.autopilot",
+    "apps.telemetry",
     "apps.help_center",
     "apps.frontend",
     # ... (registered as each module is built)
@@ -171,6 +176,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # After authentication so request.user is resolved. Records route
+    # patterns + timing only (STAFF_TIME_STANDARD.md); never breaks a
+    # request; disabled under test so assertNumQueries contracts hold.
+    "apps.telemetry.middleware.InteractionTelemetryMiddleware",
     # The first authenticated request in a new Oct-Sep FY is a deployment-
     # independent safety net for the annual rollover. The middleware memoizes
     # success for the process lifetime; normal requests do no database work.
@@ -239,6 +248,17 @@ IS_TESTING = _is_testing
 # it on.
 ADMIN_OPS_DETECTION_ENABLED = not _is_testing
 FISCAL_YEAR_ROLLOVER_ENABLED = not _is_testing
+# The Staff Time Standard's measurement (docs/STAFF_TIME_STANDARD.md). Off
+# under test by default — an unconditional INSERT per request would shift
+# every assertNumQueries contract; telemetry tests opt in explicitly.
+INTERACTION_TELEMETRY_ENABLED = (
+    os.environ.get("INTERACTION_TELEMETRY_ENABLED", "1") == "1"
+) and not _is_testing
+# Phase 2c integration flags — OFF until the transports are credentialed and
+# implemented (apps.integrations.services.push_to_external). With a flag off
+# nothing enqueues and the manual SF/NetSuite reference entry remains the law.
+SALESFORCE_SYNC_ENABLED = os.environ.get("SALESFORCE_SYNC_ENABLED", "0") == "1"
+NETSUITE_SYNC_ENABLED = os.environ.get("NETSUITE_SYNC_ENABLED", "0") == "1"
 
 # Parse DigitalOcean DATABASE_URL values, including managed-Postgres
 # query parameters such as sslmode=require. The settings below layer the

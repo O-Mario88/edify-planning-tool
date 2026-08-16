@@ -148,10 +148,21 @@ class DevelopmentMergeTests(EngineFixture):
         review = build_draft_agreement(self.sp, self.cycle, self.hr)
         ProfessionalDevelopmentRequest.objects.create(
             staff_id=self.sp.id,
+            fy="2026",
             staff_name="PE CCEO",
             course_name="Instructional Leadership",
             course_category="leadership",
             requested_amount_cents=100_00,
+            status="approved",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date(),
+        )
+        ProfessionalDevelopmentRequest.objects.create(
+            staff_id=self.sp.id,
+            fy="2025",
+            staff_name="PE CCEO",
+            course_name="Old financial year course",
+            course_category="leadership",
             status="approved",
             start_date=timezone.now().date(),
             end_date=timezone.now().date(),
@@ -164,6 +175,7 @@ class DevelopmentMergeTests(EngineFixture):
         self.assertEqual(sources, {"pd_workflow", "manual"})
         pd_row = next(r for r in rows if r["source"] == "pd_workflow")
         self.assertFalse(pd_row["editable"], "the PD lifecycle stays in the PD app")
+        self.assertNotIn("Old financial year course", {r["description"] for r in rows})
 
 
 class AmendmentTests(EngineFixture):

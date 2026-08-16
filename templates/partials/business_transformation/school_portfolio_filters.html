@@ -1,0 +1,23 @@
+<form id="bt-school-portfolio-filters"
+      method="get"
+      action="{{ endpoint }}"
+      hx-get="{{ endpoint }}"
+      hx-trigger="change delay:100ms"
+      hx-target="#bt-school-portfolio-container"
+      hx-swap="outerHTML"
+      hx-push-url="true"
+      @change="if ($event.target.name !== 'page') { const p = document.getElementById('bt-portfolio-page'); if (p) p.value = '1' }"
+      class="edify-filter-bar"
+      aria-label="{{ form_label }}">
+  <input id="bt-portfolio-page" type="hidden" name="page" value="{{ page_obj.number|default:1 }}">
+  <input id="bt-portfolio-per-page" type="hidden" name="per_page" value="{{ per_page }}">
+  {% comment %}The school search lives in the top bar (one search per page):
+  the shell binds its input to this form via topbar_search.attach_to, so q
+  submits and swaps with the rest of the filters.{% endcomment %}
+  <label for="bt-portfolio-fy"><span class="edify-filter-label">Financial year</span><input id="bt-portfolio-fy" name="fy" value="{{ fy }}" pattern="[0-9]{4}" maxlength="4" inputmode="numeric"></label>
+  <label for="bt-portfolio-region"><span class="edify-filter-label">Region</span><select id="bt-portfolio-region" name="region"><option value="">All regions</option>{% for region in regions %}<option value="{{ region.id }}" {% if filters.region == region.id|stringformat:'s' %}selected{% endif %}>{{ region.name }}</option>{% endfor %}</select></label>
+  <label for="bt-portfolio-district"><span class="edify-filter-label">District</span><select id="bt-portfolio-district" name="district"><option value="">All districts</option>{% for district in districts %}<option value="{{ district.id }}" {% if filters.district == district.id|stringformat:'s' %}selected{% endif %}>{{ district.name }}</option>{% endfor %}</select></label>
+  <label for="bt-portfolio-partner"><span class="edify-filter-label">Partner</span><select id="bt-portfolio-partner" name="partner"><option value="">All partners</option>{% for partner in partners %}<option value="{{ partner.id }}" {% if filters.partner == partner.id|stringformat:'s' %}selected{% endif %}>{{ partner.name }}</option>{% endfor %}</select></label>
+  <label for="bt-portfolio-support"><span class="edify-filter-label">Support</span><select id="bt-portfolio-support" name="support_status"><option value="">All support states</option><option value="assigned" {% if filters.support_status == 'assigned' %}selected{% endif %}>Partner assigned</option><option value="delivered" {% if filters.support_status == 'delivered' %}selected{% endif %}>Support delivered</option><option value="follow_up_due" {% if filters.support_status == 'follow_up_due' %}selected{% endif %}>Follow-up overdue</option></select></label>
+  {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
+</form>

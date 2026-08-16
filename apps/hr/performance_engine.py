@@ -736,7 +736,7 @@ def development_rows(review) -> list[dict]:
         )
 
         for r in ProfessionalDevelopmentRequest.objects.filter(
-            staff_id=review.staff_id
+            staff_id=review.staff_id, fy=review.fy
         ).order_by("created_at"):
             rows.append(
                 {

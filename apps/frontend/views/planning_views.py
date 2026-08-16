@@ -19,7 +19,6 @@ from urllib.parse import urlencode
 
 from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
-from apps.schools.lifecycle_service import active_schools
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
@@ -391,7 +390,19 @@ def special_projects_bulk_partner_view(request):
 @require_page_permission("planning")
 @require_export_permission
 def planning_dashboard_view(request):
-    fy = get_operational_fy()
+    fy = request.GET.get("fy") or get_operational_fy()
+    priority_allocation_id = (request.GET.get("priority_allocation") or "").strip()
+    planning_priority = None
+    if priority_allocation_id:
+        try:
+            from apps.hr.priority_linking import allocation_for_planning
+
+            planning_priority = allocation_for_planning(
+                allocation_id=priority_allocation_id, principal=request.user
+            )
+        except Exception as exc:  # rendered as a normal page-level correction
+            messages.error(request, str(exc))
+            priority_allocation_id = ""
 
     # 1. Gather all filters from GET
     filters = {
@@ -601,6 +612,8 @@ def planning_dashboard_view(request):
         # Guards
         "can_schedule": RolePermissionService.can_schedule_activity(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
+        "planning_priority": planning_priority,
+        "priority_allocation_id": priority_allocation_id,
     }
 
     # If the target is only the school table
@@ -628,6 +641,14 @@ def schedule_modal_view(request):
             "Access Denied: You do not have permission to schedule activities."
         )
 
+    priority_allocation_id = (request.GET.get("priority_allocation") or "").strip()
+    planning_priority = None
+    if priority_allocation_id:
+        from apps.hr.priority_linking import allocation_for_planning
+
+        planning_priority = allocation_for_planning(
+            allocation_id=priority_allocation_id, principal=request.user
+        )
     cluster_id = request.GET.get("cluster_id")
     if cluster_id:
         cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
@@ -655,6 +676,8 @@ def schedule_modal_view(request):
             "certified_agencies": _certified_agency_options(
                 district_name=(cluster.district.name if cluster.district_id else "")
             ),
+            "planning_priority": planning_priority,
+            "priority_allocation_id": priority_allocation_id,
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context
@@ -825,6 +848,8 @@ def schedule_modal_view(request):
         "certified_agencies": _certified_agency_options(
             district_name=(school.district.name if school.district_id else "")
         ),
+        "planning_priority": planning_priority,
+        "priority_allocation_id": priority_allocation_id,
     }
     return render(request, "partials/planning/schedule_drawer.html", context)
 
@@ -871,6 +896,7 @@ def schedule_action_view(request):
     executor_type = request.POST.get("executor_type", "").strip()
     partner_id = request.POST.get("assigned_partner_id", "").strip()
     project_id = request.POST.get("project_id", "").strip()
+    priority_allocation_id = request.POST.get("priority_allocation_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     recommendation_reason = request.POST.get("recommendation_reason", "").strip()
     override_reason = request.POST.get("override_reason", "").strip()
@@ -1022,6 +1048,8 @@ def schedule_action_view(request):
         payload["assignedPartnerId"] = partner_id
     if project_id:
         payload["projectId"] = project_id
+    if priority_allocation_id:
+        payload["priorityAllocationId"] = priority_allocation_id
 
     try:
         if school_id:

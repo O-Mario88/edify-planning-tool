@@ -78,7 +78,15 @@ plannedParticipants: ''
 {% csrf_token %}
 {% if not reschedule_mode %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
+{% if priority_allocation_id %}<input type="hidden" name="priority_allocation_id" value="{{ priority_allocation_id }}">{% endif %}
 {% if project_id %}<input type="hidden" name="project_id" value="{{ project_id }}">{% endif %}
+{% endif %}
+
+{% if planning_priority %}
+<div class="rounded-surface border edify-primary-border edify-primary-soft p-3 edify-primary-text" role="status">
+  <p class="font-bold">Links to priority: {{ planning_priority.milestone.title }}</p>
+  <p class="mt-1 font-medium">The scheduled activity will be traceable to this approved allocation.</p>
+</div>
 {% endif %}
 
 <!-- Form Error Messages container -->

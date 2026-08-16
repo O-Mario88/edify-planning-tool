@@ -8,6 +8,7 @@ from django.db.models import Count, Q
 from apps.core.exceptions import BadRequest
 
 from .models import (
+    ActivityPriorityLink,
     MilestoneAllocation,
     MilestoneProgressCredit,
     PriorityMilestone,
@@ -318,17 +319,22 @@ def strategic_priority_overview(
 
 
 def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
-    """Count unique credited Activities per milestone/employee without N+1s."""
+    """Count explicit planning links plus legacy credited work without N+1s."""
 
     allocation_rows = list(allocations)
     if not allocation_rows:
         return {}
     owner_to_staff: dict[str, set[str]] = {}
     milestone_ids = set()
+    allocation_keys = {}
     for allocation in allocation_rows:
         if not allocation.employee_id:
             continue
         milestone_ids.add(allocation.milestone_id)
+        allocation_keys[str(allocation.id)] = (
+            str(allocation.milestone_id),
+            str(allocation.employee_id),
+        )
         owner_ids = {
             str(allocation.employee_id),
             str(getattr(allocation.employee, "user_id", "") or ""),
@@ -338,6 +344,15 @@ def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
     if not milestone_ids or not owner_to_staff:
         return {}
     owner_ids = list(owner_to_staff)
+    linked: dict[tuple[str, str], set[str]] = {}
+    explicit_links = ActivityPriorityLink.objects.filter(
+        allocation_id__in=allocation_keys
+    ).values("allocation_id", "activity_id")
+    for row in explicit_links:
+        key = allocation_keys.get(str(row["allocation_id"]))
+        if key:
+            linked.setdefault(key, set()).add(str(row["activity_id"]))
+
     credits = (
         MilestoneProgressCredit.objects.filter(
             rule__milestone_id__in=milestone_ids,
@@ -353,7 +368,6 @@ def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
             "activity__monitored_by_staff_id",
         )
     )
-    linked: dict[tuple[str, str], set[str]] = {}
     for credit in credits:
         matched_staff_ids = set()
         for owner_field in (
@@ -392,7 +406,15 @@ def _allocation_projection(
     quarter_start = ((month_of_fy - 1) // 3) * 3
     quarter = periods[quarter_start : quarter_start + 3]
     if summable:
-        fy_plan = sum((target.planned_value for target in periods), Decimal("0"))
+        # The annual allocation remains authoritative before quarterly/monthly
+        # phasing is generated. Showing 0 / 0 during that interval hides a
+        # real approved commitment and makes its Planning entry point look
+        # complete before any work exists.
+        fy_plan = (
+            sum((target.planned_value for target in periods), Decimal("0"))
+            if periods
+            else allocation.allocated_target or Decimal("0")
+        )
         fy_actual = sum((target.actual_value for target in periods), Decimal("0"))
         quarter_plan = sum((target.planned_value for target in quarter), Decimal("0"))
         quarter_actual = sum((target.actual_value for target in quarter), Decimal("0"))

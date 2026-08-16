@@ -215,7 +215,9 @@ class UgandaMasterSeedTests(DistributionFixture):
             priority__country_id="Uganda",
             needs_confirmation=True,
         )
-        self.assertEqual(flagged.count(), 27)
+        # 28 = the original 27 ambiguous source values + the 50%-vs-100-loans
+        # composite the Business Transformation reassignment surfaced.
+        self.assertEqual(flagged.count(), 28)
         ecd = PriorityMilestone.objects.get(
             code="ECD_TEACHERS", priority__level="country"
         )
@@ -813,6 +815,52 @@ class CreditReversalTests(DistributionFixture):
         )
         october.refresh_from_db()
         self.assertEqual(october.actual_value, Decimal("0"))
+
+
+class IaWorkspaceCreditTests(DistributionFixture):
+    def test_the_live_ia_workspace_path_credits_milestones_too(self):
+        # The audit's severest finding: only the DRF ia_confirm path wrote
+        # milestone credits; the certification service behind the actual IA
+        # workspace wrote none, so every Uganda allocation's actuals stayed
+        # at zero in production. This pins the fix.
+        from apps.activities.ia_services import ActivityCertificationService
+
+        milestone = self._milestone("IAUI_1", target="10")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="VERIFIED_ACTIVITIES",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        allocation = self._team_allocation(milestone, self.pl_sp, 10)
+        approve_allocation(allocation, principal=self.ia)
+        activity = Activity.objects.create(
+            activity_type=item.workflow_kind,
+            status="awaiting_ia_verification",
+            planned_date=date(2026, 10, 22),
+            fy=FY,
+            responsible_staff_id=self.cceo_a_sp.id,
+            focus_intervention="christlike_behaviour",
+        )
+        apply_catalogue_snapshot(
+            activity, item=item, requested_intervention="christlike_behaviour"
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            ActivityCertificationService.certify_activity(activity, {}, str(self.ia.id))
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "ia_verified")
+        self.assertEqual(
+            MilestoneProgressCredit.objects.filter(activity=activity).count(),
+            1,
+        )
+        october = allocation.period_targets.get(
+            period_type="month", period_start=date(2026, 10, 1)
+        )
+        self.assertEqual(october.actual_value, Decimal("1"))
 
 
 class PlannedOutputTests(DistributionFixture):

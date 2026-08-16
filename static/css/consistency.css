@@ -1022,6 +1022,15 @@ main :is(
   box-shadow: none !important;
 }
 
+/* Search fields routinely carry longer labels and query text than compact
+   selectors. This shared modifier keeps their label and control together on
+   narrow toolbars without changing the one-row scrolling contract. */
+main :is(.platform-filter-bar, .edify-filter-bar, [data-component="filter-toolbar"])
+  > :is(label, div).platform-filter-search:has(> :is(select, input:not([type="hidden"]), textarea)) {
+  flex: 1 0 12rem !important;
+  min-inline-size: 12rem !important;
+}
+
 /* Labels and field groups are layout only. Legacy analytics, planning,
    cluster, core-school and finance templates previously put a small card
    around each actual field; the native field is now the only bounded layer. */

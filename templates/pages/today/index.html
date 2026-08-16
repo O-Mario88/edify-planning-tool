@@ -1,122 +1,157 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
-{% block title %}Today — Edify Command Center{% endblock %}
+{% block title %}Today · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
-<!-- Header -->
-<header class="edify-page-header">
-  <div class="edify-page-header__lead">
-  <p class="edify-page-eyebrow">My Work</p>
-  <h1 class="edify-page-title edify-page-header__title">Today</h1>
-  <p class="edify-page-header__description">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
+<div class="edify-page-canvas today-workbench space-y-5" aria-labelledby="today-title" data-mobile-family="performance">
+  <header class="edify-page-header">
+    <div class="min-w-0 max-w-3xl edify-page-header__lead">
+      <p class="edify-page-eyebrow">{{ today_label }}</p>
+      <h1 id="today-title" class="edify-page-title edify-page-header__title">Today</h1>
+      <p class="edify-page-subtitle edify-page-header__description">Your prepared day: the route, the next action, what waits on you, and what needs attention. Everything else stays in the background.</p>
+    </div>
+  </header>
+
+  {% if messages %}
+    {% for message in messages %}
+    <div role="status" class="rounded-surface border px-4 py-3 text-[12px] {% if message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="next-activity-title">
+    <p class="edify-text-caption uppercase tracking-wider text-slate-400">Your next activity</p>
+    {% if next_activity %}
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h2 id="next-activity-title" class="text-[15px] font-extrabold text-slate-800">{{ next_activity.name }}</h2>
+        <p class="mt-0.5 text-[12px] text-slate-500">{% if next_activity.school %}{{ next_activity.school.name }} · {% firstof next_activity.school.subCounty next_activity.school.district %}{% else %}Programme activity{% endif %}</p>
+      </div>
+      <a href="/my-plan" class="edify-primary-solid edify-primary-on-solid rounded-control px-4 py-2 text-[12px] font-bold">Open in My Plan</a>
+    </div>
+    {% else %}
+    <h2 id="next-activity-title" class="mt-2 text-[14px] font-bold text-slate-700">Nothing scheduled for today</h2>
+    <p class="mt-1 text-[12px] text-slate-500">A quiet schedule is honest — prepare next week below, or open My Plan to schedule work.</p>
+    {% endif %}
+  </section>
+
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="route-title">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <p class="edify-text-caption uppercase tracking-wider text-slate-400">Your route · {{ package.activityCount }} activit{{ package.activityCount|pluralize:"y,ies" }}</p>
+      <span class="edify-text-caption text-slate-400 tabular-nums">{{ done_count }} of {{ package.activityCount }} moved past scheduling</span>
+    </div>
+    <h2 id="route-title" class="sr-only">Today's route</h2>
+    {% if package.routeGroups %}
+    <div class="mt-3 space-y-3">
+      {% for group in package.routeGroups %}
+      <div>
+        <p class="text-[12px] font-bold text-slate-600">{{ group.area }}</p>
+        <ul class="mt-1 space-y-1">
+          {% for activity in group.activities %}
+          <li class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2">
+            <div class="min-w-0">
+              <p class="truncate text-[12px] font-semibold text-slate-700">{% if activity.school %}{{ activity.school.name }}{% else %}{{ activity.name }}{% endif %}</p>
+              <p class="edify-text-caption text-slate-400">{{ activity.name }}{% if activity.plannedParticipants %} · {{ activity.plannedParticipants }} planned participants{% endif %}</p>
+            </div>
+            <span class="edify-badge" {% if activity.status == 'scheduled' or activity.status == 'planned' %}data-tone="info"{% else %}data-tone="success"{% endif %}>{{ activity.status|replace_underscore|title }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="mt-2 text-[12px] text-slate-500">No route today.</p>
+    {% endif %}
+  </section>
+
+  <div class="grid gap-5 lg:grid-cols-2">
+    <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="waiting-title">
+      <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting for your confirmation</h2>
+      <ul class="mt-2 space-y-1">
+        {% for todo in waiting %}
+        <li class="rounded-control bg-slate-50 px-3 py-2">
+          <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
+            <p class="text-[12px] font-semibold text-slate-700">{{ todo.title }}</p>
+            {% if todo.description %}<p class="edify-text-caption text-slate-400">{{ todo.description }}</p>{% endif %}
+          </a>
+        </li>
+        {% empty %}
+        <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">Nothing waits on you right now.</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="edify-surface rounded-surface border {% if exceptions %}border-amber-200{% else %}border-slate-100{% endif %} p-4 sm:p-5" aria-labelledby="exceptions-title">
+      <h2 id="exceptions-title" class="text-[13px] font-bold {% if exceptions %}text-amber-900{% else %}text-slate-800{% endif %}">Exceptions requiring attention</h2>
+      <ul class="mt-2 space-y-1">
+        {% for todo in exceptions %}
+        <li class="rounded-control bg-amber-50/70 px-3 py-2">
+          <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
+            <p class="text-[12px] font-semibold text-amber-900">{{ todo.title }}</p>
+            {% if todo.description %}<p class="edify-text-caption text-amber-700">{{ todo.description }}</p>{% endif %}
+          </a>
+        </li>
+        {% empty %}
+        <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">No exceptions — normal work is being managed automatically.</li>
+        {% endfor %}
+      </ul>
+    </section>
   </div>
-</header>
 
-<!-- Overdue Alert -->
-{% if overdue %}
-<div class="bg-rose-50 border border-rose-200 rounded-surface p-4">
-<div class="flex items-center gap-3 mb-3">
-<div class="h-8 w-8 rounded-surface bg-rose-100 grid place-items-center">
-<svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-</div>
-<div>
-<p class="text-[14px] font-semibold text-rose-800">{{ overdue|length }} Overdue Activit{{ overdue|length|pluralize:"y,ies" }}</p>
-<p class="edify-text-caption text-rose-500">These were due in the past and need urgent action</p>
-</div>
-</div>
-<ul class="space-y-2">
-{% for act in overdue %}
-<li class="flex items-center justify-between edify-surface rounded-surface px-4 py-3 border border-rose-100">
-<div>
-<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<p class="edify-text-caption text-slate-400">Due {{ act.planned_date }}</p>
-</div>
-<a href="/my-plan/{{ act.id }}" class="edify-text-caption font-bold text-rose-600 hover:underline">Take Action →</a>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% endif %}
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="proposed-week-title">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h2 id="proposed-week-title" class="text-[13px] font-bold text-slate-800">Your proposed week</h2>
+        <p class="mt-0.5 text-[12px] text-slate-500">The platform prepares; you confirm. A draft creates nothing until you accept it.</p>
+      </div>
+      <form method="post" action="/today/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="prepare_week">
+        <button type="submit" class="rounded-control border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700">{% if proposal %}Regenerate draft{% else %}Prepare my week{% endif %}</button>
+      </form>
+    </div>
+    {% if proposal %}
+    <ul class="mt-3 space-y-1">
+      {% for item in proposal.items.all %}
+      <li class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2">
+        <div class="min-w-0">
+          <p class="truncate text-[12px] font-semibold text-slate-700">{{ item.school_name }}</p>
+          <p class="edify-text-caption text-slate-400">{{ item.proposed_date|date:"D d M" }} · {{ item.area }} · {{ item.reason }}</p>
+        </div>
+        <span class="edify-badge">Draft</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="mt-3 flex flex-wrap justify-end gap-2">
+      <form method="post" action="/today/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="dismiss_week">
+        <input type="hidden" name="plan" value="{{ proposal.id }}">
+        <button type="submit" class="rounded-control border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-600">Dismiss</button>
+      </form>
+      <form method="post" action="/today/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="accept_week">
+        <input type="hidden" name="plan" value="{{ proposal.id }}">
+        <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-control px-4 py-2 text-[12px] font-bold">Accept week</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="mt-3 rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">No draft week right now. Prepare one and review it here — SSA-outstanding schools first, grouped into route-coherent days that respect your calendar.</p>
+    {% endif %}
+  </section>
 
-<!-- Today's Activities -->
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-<h2 class="text-[14px] font-semibold">Today's Activities</h2>
-<span class="text-[12px] font-bold text-slate-400">{{ today|date:"j F" }}</span>
-</div>
-{% if today_activities %}
-<ul class="divide-y divide-slate-100">
-{% for act in today_activities %}
-<li class="px-5 py-3.5 flex items-center justify-between group">
-<div class="flex items-center gap-3">
-<div class="h-9 w-9 rounded-surface grid place-items-center
-{% if act.activity_type == 'school_visit' %}edify-primary-soft{% elif act.activity_type == 'group_training' %}bg-violet-50{% else %}bg-slate-50{% endif %}">
-<svg class="h-4 w-4 {% if act.activity_type == 'school_visit' %}edify-primary-text{% elif act.activity_type == 'group_training' %}text-violet-600{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-{% if act.activity_type == 'school_visit' %}
-<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-{% else %}
-<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
-{% endif %}
-</svg>
-</div>
-<div>
-<p class="text-[14px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<p class="edify-text-caption text-slate-400">{{ act.cluster.name|default:"No cluster" }}</p>
-</div>
-</div>
-<div class="flex items-center gap-3">
-<span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill
-{% if act.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif act.status == 'scheduled' %}edify-primary-soft edify-primary-text{% else %}bg-amber-50 text-amber-700{% endif %}">
-{{ act.status|title }}
-</span>
-<a href="/my-plan/{{ act.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 edify-text-caption font-bold text-[var(--edify-accent)] transition-opacity">View →</a>
-</div>
-</li>
-{% endfor %}
-</ul>
-{% else %}
-<div class="p-8 text-center">
-<p class="text-[20px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></p>
-<p class="text-[14px] font-semibold text-slate-500">No activities scheduled for today</p>
-<a href="/planning" class="mt-3 inline-flex items-center text-[12px] font-bold text-[var(--edify-accent)] hover:underline">Schedule an activity →</a>
-</div>
-{% endif %}
-</div>
-
-<!-- This Week Upcoming -->
-{% if upcoming_week %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold">Coming This Week</h2>
-</div>
-<ul class="divide-y divide-slate-100">
-{% for act in upcoming_week %}
-<li class="px-5 py-3 flex items-center justify-between">
-<div>
-<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<p class="edify-text-caption text-slate-400">{{ act.planned_date|date:"D, j M" }}</p>
-</div>
-<a href="/my-plan/{{ act.id }}" class="edify-text-caption text-slate-400 edify-primary-text-hover transition-colors">→</a>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% endif %}
-
-<!-- Evidence Gap -->
-{% if evidence_gap %}
-<div class="bg-amber-50 border border-amber-200 rounded-surface p-4">
-<h3 class="text-[14px] font-semibold text-amber-800 mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg> Evidence Missing ({{ evidence_gap|length }})</h3>
-<ul class="space-y-2">
-{% for act in evidence_gap %}
-<li class="flex items-center justify-between edify-surface rounded-surface px-4 py-2.5 border border-amber-100">
-<p class="text-[12px] font-semibold">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<a href="/my-plan/{{ act.id }}" class="edify-text-caption font-bold text-amber-700 hover:underline">Upload Evidence →</a>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% endif %}
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 sm:flex sm:items-center sm:justify-between sm:gap-4" aria-labelledby="day-completion-title">
+    <div class="min-w-0">
+      <h2 id="day-completion-title" class="text-[13px] font-bold text-slate-800">Day completion</h2>
+      <p class="mt-0.5 text-[12px] text-slate-500">{% if debrief_done %}Today's debrief is submitted — the day is closed.{% else %}The debrief pulls today's activities automatically; you confirm what was materially different.{% endif %}</p>
+    </div>
+    {% if debrief_done %}
+    <span class="edify-badge mt-3 sm:mt-0" data-tone="success">Debrief submitted</span>
+    {% else %}
+    <a href="/debriefs/submit" class="edify-primary-solid edify-primary-on-solid mt-3 inline-block rounded-control px-4 py-2 text-[12px] font-bold sm:mt-0">Complete debrief</a>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}
