@@ -41,8 +41,8 @@ class DirectoryRowInteractionContractTests(SimpleTestCase):
         card = (ROOT / "templates/partials/clusters/cluster_card.html").read_text()
 
         expanded = card.split("<!-- Expanded details block -->", 1)[1]
-        self.assertIn('x-transition.opacity.duration.150ms', expanded)
-        self.assertIn('partials/schools/ssa_score_groups.html', expanded)
+        self.assertIn("x-transition.opacity.duration.150ms", expanded)
+        self.assertIn("partials/schools/ssa_score_groups.html", expanded)
         self.assertIn("selected_fy=selected_fy", expanded)
         self.assertLess(
             expanded.index("partials/schools/ssa_score_groups.html"),

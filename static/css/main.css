@@ -5377,9 +5377,6 @@
     .md\:col-span-6 {
       grid-column: span 6 / span 6;
     }
-    .md\:flex {
-      display: flex;
-    }
     .md\:hidden {
       display: none;
     }
