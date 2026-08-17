@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 589,
-  "templates": 211,
-  "distinct_titles": 563,
+  "titled_cards": 590,
+  "templates": 212,
+  "distinct_titles": 564,
   "with_card_key": 13,
   "untitled_surfaces": 1062,
   "untitled_chrome": 234,
-  "untitled_nested": 400,
-  "untitled_headless": 428,
+  "untitled_nested": 402,
+  "untitled_headless": 426,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 20,
   "ambiguous_titles": 1
@@ -819,7 +819,7 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 103,
+   "line": 60,
    "title": "Lending partner dashboard",
    "heading_level": 2,
    "has_card_key": false,
@@ -828,49 +828,49 @@
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 142,
+   "line": 99,
    "title": "Create or update a loan",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
    "branch_path": [
     [
-     35,
+     11,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 147,
+   "line": 104,
    "title": "Approved loan purposes",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "px-5 py-4 border-b border-[var(--edify-border)] bg-[var(--edify-surface-muted)]",
    "branch_path": [
     [
-     35,
+     11,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 235,
+   "line": 192,
    "title": "Record repayment position",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden",
    "branch_path": [
     [
-     36,
+     12,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/business_transformation/loans.html",
-   "line": 326,
+   "line": 283,
    "title": "Loan register",
    "heading_level": 2,
    "has_card_key": false,
@@ -1008,7 +1008,7 @@
   {
    "template": "templates/pages/clusters/detail.html",
    "line": 83,
-   "title": "Assigned Roster",
+   "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
@@ -1016,7 +1016,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 135,
+   "line": 154,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -1025,7 +1025,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 170,
+   "line": 189,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -1034,7 +1034,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 193,
+   "line": 212,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -5664,6 +5664,28 @@
    "has_card_key": false,
    "classes": "rounded-surface edify-primary-soft-alpha-50 border edify-primary-border p-4 space-y-2 flex flex-col justify-center",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/planning/schedule_drawer.html",
+   "line": 116,
+   "title": "Top SSA recommendation:",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-risk-card",
+   "branch_path": [
+    [
+     9,
+     0
+    ],
+    [
+     11,
+     1
+    ],
+    [
+     12,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/partials/professional_development/body.html",

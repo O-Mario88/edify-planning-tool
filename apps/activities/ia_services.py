@@ -84,18 +84,17 @@ class SSAValidationService:
         if not activity.school:
             return False, "SSA missing: No school associated with the activity."
 
-        from apps.ssa.models import SsaRecord
+        # Confirmed records only -- an unverified upload must never satisfy a
+        # verification gate (apps.ssa.services.latest_applicable_record).
+        from apps.ssa.services import latest_applicable_record
 
-        latest_ssa = (
-            SsaRecord.objects.filter(school=activity.school, deleted_at__isnull=True)
-            .order_by("-date_of_ssa")
-            .first()
-        )
+        latest_ssa = latest_applicable_record(activity.school)
 
         if not latest_ssa:
             return (
                 False,
-                "SSA Required: no assessment score is recorded for this school.",
+                "SSA Required: no confirmed assessment score is recorded for "
+                "this school.",
             )
 
         # Check if it was uploaded/completed

@@ -753,7 +753,7 @@
       "template": "partials/clusters/cluster_action_planner_drawer.html"
     },
     {
-      "bytes": 7547,
+      "bytes": 6701,
       "findings": [],
       "forms": 0,
       "htmx_controls": 3,
@@ -2081,7 +2081,7 @@
       "template": "partials/planning/schedule_cluster_drawer.html"
     },
     {
-      "bytes": 28936,
+      "bytes": 30016,
       "findings": [],
       "forms": 2,
       "htmx_controls": 1,
@@ -9976,11 +9976,12 @@
       "findings": [],
       "forms": false,
       "htmx_endpoints": [
-        "GET /clusters/{{ cluster.id }}/edit-drawer"
+        "GET /clusters/{{ cluster.id }}/edit-drawer",
+        "GET /planning/schedule-modal?school_id={{ s.schoolId }}"
       ],
       "implementation_status": "existing-routed-surface",
       "manual_quality_score": null,
-      "modals": false,
+      "modals": true,
       "notifications": false,
       "page_title": "Cluster details",
       "permission_key": "cluster_detail",

@@ -1847,9 +1847,14 @@ class ClusterRecommendationService:
                 "Cluster has solid SSA scores and frequent meetings.",
             ),
             "activity_label": planning.get("recommendationActivityLabel", "Schedule"),
-            "focus_intervention": planning.get(
-                "recommendationFocusIntervention", "leadership"
-            ),
+            # cluster_planning() sets recommendationFocusIntervention on no
+            # branch of its gap ladder, so this key is always present and
+            # always None -- meaning dict.get never returned the "leadership"
+            # default it appeared to have, and could not have: naming an
+            # intervention the cluster's SSA never identified is fabrication.
+            # The drawer preselects from the cluster's real weakest ranking
+            # (cluster_weakest_interventions) instead.
+            "focus_intervention": planning.get("recommendationFocusIntervention"),
         }
 
 

@@ -2585,16 +2585,16 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
             raise BadRequest("IA Verification failed: Focus intervention not recorded.")
 
         if a.school and a.school.school_type == "core":
-            from apps.ssa.models import SsaRecord
+            # Confirmed records only. This read used to take the newest record
+            # regardless of verification_status, so a pending upload satisfied
+            # the gate and advanced the activity to ia_verified -- exactly what
+            # latest_applicable_record exists to prevent.
+            from apps.ssa.services import latest_applicable_record
 
-            latest_ssa = (
-                SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True)
-                .order_by("-date_of_ssa")
-                .first()
-            )
-            if not latest_ssa:
+            if not latest_applicable_record(a.school):
                 raise BadRequest(
-                    "IA Verification failed: no Core Assessment / SSA score exists for this school."
+                    "IA Verification failed: no confirmed Core Assessment / SSA "
+                    "score exists for this school."
                 )
 
     a.status = "ia_verified"

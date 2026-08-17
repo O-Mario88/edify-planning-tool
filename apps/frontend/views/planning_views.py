@@ -900,8 +900,9 @@ def schedule_action_view(request):
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     recommendation_reason = request.POST.get("recommendation_reason", "").strip()
     override_reason = request.POST.get("override_reason", "").strip()
+    # One read. The second assignment used to overwrite the first and drop the
+    # `or None`, so an unset field arrived as "" instead of None.
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
-    source_activity_id = request.POST.get("source_activity_id", "").strip()
     if cluster_id and activity_type == "cluster_training":
         if not project_id:
             return error_fragment(
@@ -959,6 +960,61 @@ def schedule_action_view(request):
         except Exception as exc:
             return error_fragment(exc, status=400)
         activity_type = purpose_activity_type(purpose_of_visit, activity_type)
+
+        # Reconcile the pinned catalogue item with the purpose the planner
+        # actually chose. The drawer writes catalogue_item_id ONCE, from the
+        # SSA-ranked top recommendation, and never rebinds it when Purpose of
+        # Visit changes (the Core drawers do rebind, on @change). Because
+        # services.create() takes activity_type from catalogue_item
+        # .workflow_kind, a stale pin silently overrode the planner: choosing
+        # "Donor Visit" at a school whose top pick was an in-school training
+        # created -- and costed, and reported -- an in_school_training.
+        #
+        # Only a genuine conflict counts. A governed item may carry a broader
+        # kind than the purpose's own (an SSA-recommended curriculum title is
+        # `training` while "In-school Training" derives `in_school_training`),
+        # and several governed items can share one kind -- which is exactly
+        # why the drawer posts the visible recommendation instead of letting
+        # the ambiguity-safe resolver refuse. So the pin is only overridden
+        # when its kind is the signature kind of a DIFFERENT purpose, i.e.
+        # when the planner demonstrably named something else.
+        if catalogue_item_id and not cluster_id:
+            from apps.activity_catalogue.models import ActivityCatalogueItem
+            from apps.activity_catalogue.services import (
+                resolve_item_for_workflow_kind,
+            )
+            from apps.partners.purposes import PURPOSE_ACTIVITY_TYPES
+
+            purpose_of_kind = {
+                kind: purpose for purpose, kind in PURPOSE_ACTIVITY_TYPES.items()
+            }
+            pinned = ActivityCatalogueItem.objects.filter(id=catalogue_item_id).first()
+            conflicting = (
+                pinned is not None
+                and pinned.workflow_kind != activity_type
+                and purpose_of_kind.get(pinned.workflow_kind)
+                not in (None, purpose_of_visit)
+            )
+            if conflicting:
+                resolved = resolve_item_for_workflow_kind(activity_type)
+                if resolved is None:
+                    label = visit_purpose_label(
+                        purpose_of_visit, fallback=activity_type
+                    )
+                    return error_fragment(
+                        ValueError(
+                            f"No single approved Catalogue Activity costs "
+                            f"“{label}”. Ask the Country Director to "
+                            f"define one costing for it before scheduling this "
+                            f"purpose."
+                        ),
+                        status=400,
+                    )
+                catalogue_item_id = resolved.id
+                # That reason described the SSA recommendation for the item we
+                # just replaced; keeping it would attribute this activity to a
+                # recommendation it no longer follows.
+                recommendation_reason = ""
 
     if cluster_id and not catalogue_item_id:
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind

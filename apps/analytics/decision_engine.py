@@ -199,13 +199,21 @@ def intervention_analytics(principal, query: dict) -> dict:
             score__lt=5.0,
         ).count()
         out[interv] = {
-            "current": round(curr, 2) if curr else None,
-            "previous": round(prev, 2) if prev else None,
+            # `if curr` would record a genuine 0.0 average as "no data".
+            "current": round(curr, 2) if curr is not None else None,
+            "previous": round(prev, 2) if prev is not None else None,
             "delta": delta,
             "schoolsBelowThreshold": below_threshold,
         }
-    # Rank by current score (strongest → weakest).
-    ranked = sorted(out.items(), key=lambda x: -(x[1]["current"] or 0))
+    # Rank by current score (strongest → weakest), over interventions that
+    # actually have confirmed scores. `-(current or 0)` mapped a missing
+    # average to 0 and therefore sorted an UNASSESSED intervention last —
+    # crowning it "weakest" and naming it in the suggested action. Missing
+    # data is not a bad score; ranking it as one recommends work off an
+    # assessment nobody collected. Alphabetical tiebreak keeps tied averages
+    # in a stable order.
+    scored = [(k, v) for k, v in out.items() if v["current"] is not None]
+    ranked = sorted(scored, key=lambda x: (-x[1]["current"], x[0]))
     return {
         "fy": fy,
         "interventions": out,
