@@ -48,6 +48,31 @@ from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf
 REGION_BEHIND_THRESHOLD = 60  # attention trigger: region achievement below this
 HIGH_RISK_PL_BANDS = ("High Risk", "Critical")
 
+#: What each gap actually means for a school, so the Priority Schools table
+#: ranks by severity instead of by how many boxes happen to be unticked.
+#:
+#: A measured Critical assessment is the worst thing this table can say about a
+#: school. No assessment at all is nearly as bad in a different way — the need
+#: is unknown, and nothing can be planned against it. A missing Salesforce ID
+#: is a data-quality chore, not a programme risk, and must never be able to
+#: push a school up the list on its own.
+_PRIORITY_WEIGHTS = {
+    "SSA Critical": 4,
+    "No SSA": 3,
+    "SSA Warning": 2,
+    "No Visit": 2,
+    "No Training": 2,
+    "SF ID Missing": 1,
+}
+
+#: One Critical assessment is enough to list a school on its own, and so is any
+#: pair of ordinary gaps. A lone missing Salesforce ID is not.
+_PRIORITY_FLOOR = 3
+
+#: Reached by a Critical assessment plus any ordinary gap, or by three ordinary
+#: gaps together.
+_PRIORITY_HIGH = 6
+
 
 def _ugx_compact(amount: int) -> str:
     if amount >= 1_000_000_000:
@@ -798,8 +823,15 @@ class CDDashboardService:
 
     @staticmethod
     def priority_schools(cd, acts, limit=6) -> list[dict]:
-        """Schools with the most compounded workflow gaps — inspect /
-        assign-follow-up only, never direct scheduling."""
+        """Schools ranked by how badly they need attention — inspect /
+        assign-follow-up only, never direct scheduling.
+
+        Ranked by severity, not by a tally. Counting issues made a school
+        missing a Salesforce ID and a training outrank one scoring Critical on
+        its assessment, and the two-issue floor meant a single catastrophic
+        weakness never appeared at all.
+        """
+        from apps.core.enums import ssa_score_band
         from apps.ssa.models import SsaRecord
 
         completed = acts.filter(status__in=COMPLETED_STATUSES)
@@ -817,15 +849,19 @@ class CDDashboardService:
             .values_list("school_id", flat=True)
         )
         latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
-        weak = set()
+        # The score itself, not a yes/no. `average_score__lt=5.0` is exactly
+        # the Critical band, so the old set threw away every Warning school
+        # before ranking began — and then weighed the Critical ones it kept
+        # the same as a missing Salesforce ID.
+        ssa_scores: dict[str, object] = {}
         if latest:
-            weak = set(
+            ssa_scores = dict(
                 SsaRecord.objects.filter(
                     school_id__in=cd.school_ref,
                     verification_status="confirmed",
                     fy=latest,
-                    average_score__lt=5.0,
-                ).values_list("school_id", flat=True)
+                    average_score__isnull=False,
+                ).values_list("school_id", "average_score")
             )
         sf_missing = set(
             _requires_sf_id(acts)
@@ -845,12 +881,18 @@ class CDDashboardService:
                 issues.append("No Training")
             if s.current_fy_ssa_status != "done":
                 issues.append("No SSA")
-            if s.id in weak:
-                issues.append("SSA Weakness")
+            else:
+                # A confirmed assessment with no score is not a weakness. Say
+                # nothing rather than invent one.
+                band, _hex, _tone = ssa_score_band(ssa_scores.get(s.id))
+                if band in ("Critical", "Warning"):
+                    issues.append(f"SSA {band}")
             if s.id in sf_missing:
                 issues.append("SF ID Missing")
-            if len(issues) >= 2:
-                risk = "High" if len(issues) >= 3 else "Medium"
+
+            weight = sum(_PRIORITY_WEIGHTS.get(issue, 1) for issue in issues)
+            if weight >= _PRIORITY_FLOOR:
+                risk = "High" if weight >= _PRIORITY_HIGH else "Medium"
                 rows.append(
                     {
                         "id": s.id,
@@ -860,12 +902,15 @@ class CDDashboardService:
                             if s.district_id
                             else (s.region.name if s.region_id else "—")
                         ),
-                        "issues": issues[:3],
+                        # Every factor that moved the rank stays visible. The
+                        # old [:3] could hide one that did.
+                        "issues": issues,
+                        "weight": weight,
                         "risk": risk,
                         "risk_tone": "danger" if risk == "High" else "warning",
                     }
                 )
-        rows.sort(key=lambda r: (-len(r["issues"]), r["school"]))
+        rows.sort(key=lambda r: (-r["weight"], r["school"]))
         return rows[:limit]
 
     # ── Quick leadership actions (mandate §14 — all real routes) ─────────────
