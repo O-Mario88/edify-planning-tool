@@ -70,10 +70,11 @@ UGANDA_MASTER = {
         },
         {
             "code": "ACTIVE_SOCIAL_MEDIA",
-            "title": "Active social media and internal marketing — 24 posts",
+            "title": "Active social media and internal marketing — 2 posts/month",
             "source_text": "Keep active social media — 2 posts per month",
             "measurement": "count",
             "target": 24,
+            "recurrence_per_month": 2,
             "unit": "posts",
             "method": COUNTRY,
             "metric": "manual",
@@ -292,6 +293,23 @@ UGANDA_MASTER = {
             "method": COUNTRY,
             "metric": "manual",
             "role": "ImpactAssessment",
+        },
+        {
+            "code": "TRAINED_90_PERCENT",
+            "title": "90% trained",
+            "source_text": "90% trained",
+            "measurement": "percentage",
+            "target": None,
+            "unit": "percent",
+            "method": NON_SCOREABLE,
+            "metric": None,
+            "role": "",
+            "confirm": (
+                "Source row '90% trained' carries no Uganda target and no "
+                "definition of the trained population — confirm meaning "
+                "before it can be scored (2026-08-20 audit: row restored; "
+                "it had been silently omitted)."
+            ),
         },
         {
             "code": "DC_TRAINING",
@@ -643,6 +661,22 @@ UGANDA_MASTER = {
     "BUSINESS_TRANSFORMATION": [
         {
             "code": "LOANS",
+            "components": [
+                {
+                    "code": "LOANS_GENERAL",
+                    "label": "General MFI loans",
+                    "value": 200,
+                    "unit": "loans",
+                    "confirm": "Source shows 300: 200, 100 — component labels inferred (100 matches the EdTech loans row); confirm.",
+                },
+                {
+                    "code": "LOANS_EDTECH",
+                    "label": "EdTech loans",
+                    "value": 100,
+                    "unit": "loans",
+                    "confirm": "Source shows 300: 200, 100 — component labels inferred; confirm.",
+                },
+            ],
             "title": "Loans — 300",
             "source_text": "# Loans - 300 — 300: 200, 100",
             "measurement": "count",
@@ -847,6 +881,7 @@ UGANDA_MASTER = {
     "GOVERNANCE_AND_PEOPLE_MANAGEMENT": [
         {
             "code": "ANNUAL_PLAN_BUDGETS",
+            "due_date": "2027-08-31",
             "title": "Annual plan and budgets — by August",
             "source_text": "Complete annual plan and budgets by September — August",
             "measurement": "date",
@@ -935,6 +970,7 @@ UGANDA_MASTER = {
         },
         {
             "code": "PARTNER_MOUS_SAFEGUARDING",
+            "due_date": "2027-03-31",
             "title": "All partners: MOUs + safeguarding — by March",
             "source_text": "All partners sign MOUs and complete safeguarding training — by March",
             "measurement": "date",

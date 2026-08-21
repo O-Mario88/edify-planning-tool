@@ -23,6 +23,8 @@ from django.contrib.auth.models import (
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+from django.core.files.storage import storages
+
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 from apps.core.rbac import EdifyRole
 
@@ -551,6 +553,27 @@ class StaffTargetProfile(TimeStampedModel):
         ]
 
 
+def private_upload_storage():
+    """The private alias — never the public-capable `default` bucket."""
+    return storages["private_uploads"]
+
+
+def leave_attachment_name(instance, filename: str) -> str:
+    """Randomise the stored name for a leave attachment.
+
+    These files are sick notes, bereavement documents and medical
+    certificates. The default FileField behaviour keeps the CLIENT-supplied
+    filename, so the employee themselves chose the path an attacker would
+    guess — `leave_attachments/hiv_test_results.pdf` is a real shape this
+    produced. The name now carries no information (2026-08-20 HR audit).
+    """
+    import os
+    import uuid
+
+    ext = os.path.splitext(filename or "")[1].lower()[:10]
+    return f"leave_attachments/{uuid.uuid4().hex}{ext}"
+
+
 class Leave(TimeStampedModel):
     """HR leave requests. type/status are plain strings (legacy convention)."""
 
@@ -580,7 +603,14 @@ class Leave(TimeStampedModel):
     emergency_contact = models.TextField(null=True, blank=True)
     handover_notes = models.TextField(null=True, blank=True)
     urgent_activities = models.TextField(null=True, blank=True)
-    attachment = models.FileField(upload_to="leave_attachments/", null=True, blank=True)
+    # Private storage, not the public-capable default alias: the day anyone
+    # serves MEDIA_URL these become unauthenticated downloads.
+    attachment = models.FileField(
+        upload_to=leave_attachment_name,
+        storage=private_upload_storage,
+        null=True,
+        blank=True,
+    )
     reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
 

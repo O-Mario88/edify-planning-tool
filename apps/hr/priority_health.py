@@ -43,7 +43,8 @@ def priority_health() -> dict:
         .filter(rule_count=0)
     )
     duplicate_credit = (
-        MilestoneProgressCredit.objects.values("rule_id", "activity_id")
+        MilestoneProgressCredit.objects.filter(reversed_at__isnull=True)
+        .values("rule_id", "activity_id")
         .annotate(total=Count("id"))
         .filter(total__gt=1)
     )

@@ -105,25 +105,31 @@ def _rule_matches(rule, activity) -> bool:
 
 
 @transaction.atomic
-def reverse_activity_progress(activity) -> int:
-    """Remove the credits of an activity that is no longer verified.
+def reverse_activity_progress(
+    activity, *, reason: str = "IA returned/invalidated"
+) -> int:
+    """Reverse the credits of an activity that is no longer verified.
 
-    Called when IA returns a completion. The credit rows are deleted (they are
-    derived, dedup'd facts, not history — the audit trail lives on the
-    Activity and the verification records) and every affected milestone's
-    period actuals are recomputed, so verified figures never keep counting
-    rejected work.
+    Called when IA returns a completion. 2026-08-20 audit: credits are
+    APPEND-ONLY — the row survives with `reversed_at`/`reversed_reason` so
+    the value and its source snapshot remain auditable history. Every
+    consumer excludes reversed rows, and a later re-verification un-reverses
+    the same row instead of duplicating it.
     """
 
+    from django.utils import timezone as _tz
+
     credits = list(
-        MilestoneProgressCredit.objects.filter(activity=activity).select_related("rule")
+        MilestoneProgressCredit.objects.filter(
+            activity=activity, reversed_at__isnull=True
+        ).select_related("rule")
     )
     if not credits:
         return 0
     milestone_ids = {credit.rule.milestone_id for credit in credits}
     MilestoneProgressCredit.objects.filter(
         id__in=[credit.id for credit in credits]
-    ).delete()
+    ).update(reversed_at=_tz.now(), reversed_reason=reason[:255])
     for milestone_id in milestone_ids:
         refresh_period_targets(milestone_id)
     return len(credits)
@@ -144,8 +150,36 @@ def record_activity_progress(activity) -> int:
         milestone__requires_definition=False,
     ).select_related("milestone", "catalogue_item")
     created_count = 0
+    # A previously reversed credit for this source comes back to life rather
+    # than duplicating (append-only history) — but only when its rule STILL
+    # matches the re-verified activity.
+    revive_ids, revived_milestones = [], []
+    for _cr in MilestoneProgressCredit.objects.filter(
+        activity=activity, reversed_at__isnull=False
+    ).select_related("rule"):
+        if _rule_matches(_cr.rule, activity):
+            revive_ids.append(_cr.id)
+            revived_milestones.append(_cr.rule.milestone_id)
+    if revive_ids:
+        MilestoneProgressCredit.objects.filter(id__in=revive_ids).update(
+            reversed_at=None, reversed_reason=""
+        )
+        for _mid in set(revived_milestones):
+            refresh_period_targets(_mid)
+        created_count += len(revive_ids)
+    credited_milestones = set(
+        MilestoneProgressCredit.objects.filter(
+            activity=activity, reversed_at__isnull=True
+        ).values_list("rule__milestone_id", flat=True)
+    )
     for rule in rules:
         if not _rule_matches(rule, activity):
+            continue
+        # 2026-08-20 audit: one source earns ONE credit per MILESTONE. Two
+        # rules on the same milestone (a project-specific one plus a general
+        # one whose null project matches everything) both matched a
+        # project-bearing activity and double-counted it.
+        if rule.milestone_id in credited_milestones:
             continue
         _credit, created = MilestoneProgressCredit.objects.get_or_create(
             rule=rule,
@@ -165,6 +199,7 @@ def record_activity_progress(activity) -> int:
             },
         )
         created_count += int(created)
+        credited_milestones.add(rule.milestone_id)
         refresh_period_targets(rule.milestone_id)
     return created_count
 
@@ -188,6 +223,7 @@ def refresh_period_targets(milestone_id: str) -> None:
     for target in targets:
         credits = MilestoneProgressCredit.objects.filter(
             rule__milestone_id=milestone_id,
+            reversed_at__isnull=True,
             activity__planned_date__gte=target.period_start,
             activity__planned_date__lte=target.period_end,
         )

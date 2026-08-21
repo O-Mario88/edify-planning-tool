@@ -60,15 +60,16 @@ def _is_owner(review, principal) -> bool:
 
 
 def _is_manager_of(review, principal) -> bool:
-    """The supervisor of record, or anyone actively covering for them."""
-    from apps.accounts.models import StaffSupervisorAssignment
+    """The person the reporting rule says reviews them, or their active cover.
 
-    uid = getattr(principal, "user_id", None)
-    if review.manager_id and _staff_id(principal) == review.manager_id:
-        return True
-    return StaffSupervisorAssignment.objects.filter(
-        supervisee_id=review.staff_id, supervisor__user_id=uid
-    ).exists()
+    This used to accept `review.manager_id` — a value written once when the
+    cycle opened and never updated — so the manager an employee had LEFT kept
+    the authority to rate them. Authority is resolved live now; see
+    apps.hr.review_authority for the rule.
+    """
+    from apps.hr.review_authority import is_reviewer_of
+
+    return is_reviewer_of(review.staff, principal)
 
 
 def _assert_not_self(review, principal, action: str) -> None:
@@ -377,15 +378,36 @@ def submit_assessment(
     review_id: str, principal, *, assessment: str, rating: str = "", per_priority=None
 ):
     """The manager's judgement, kept separate from the computed evidence."""
+    from apps.hr.review_authority import assert_reviewer
+
     review = get_for_actor(review_id, principal)
     _assert_not_self(review, principal, "assess")
-    if not (_is_manager_of(review, principal) or _role(principal) in _HR_ROLES):
-        raise Forbidden("Only the employee's manager or HR may assess this review.")
+    # PLs assess their CCEOs, the CD assesses PLs/IA/Accountant, HR oversees.
+    # This used to accept HR as an alternative assessor, so a governance role
+    # could write the manager's judgment on the manager's behalf.
+    assert_reviewer(review.staff, principal, action="assess")
     if not (assessment or "").strip():
         raise BadRequest("An assessment is required.")
+    # An assessment belongs at the assessment step. Without a stage guard this
+    # re-opened a CLOSED review, and could be posted before the employee had
+    # written a word of their own reflection.
+    if review.stage in (
+        ReviewStage.CLOSED,
+        ReviewStage.SIGNED_AND_ARCHIVED,
+        ReviewStage.EMPLOYEE_ACKNOWLEDGED,
+        ReviewStage.FINAL_RATING_CONFIRMED,
+    ):
+        raise BadRequest(
+            f"This review is {review.get_stage_display()} — reopen it before "
+            f"assessing."
+        )
     review.manager_feedback = assessment
     review.manager_rating = rating or None
-    review.rating = rating or review.rating
+    # `review.rating` is the FINAL, post-calibration rating. Writing it here
+    # meant a manager could set the employee's final rating directly and skip
+    # the calibration gate that `confirm_final_rating` exists to enforce
+    # (2026-08-20 HR audit, Critical). The manager's judgment lives in
+    # `manager_rating`; calibration decides what becomes final.
     review.manager_assessed_at = timezone.now()
     review.stage = ReviewStage.CALIBRATION
     review.status = "Calibration pending"
@@ -413,10 +435,20 @@ def calibrate(review_id: str, principal, *, result: str, note: str = ""):
     review.calibration_note = note
     review.calibrated_by_id = getattr(principal, "user_id", None)
     review.calibrated_at = timezone.now()
+    # Calibration is where the final rating is decided — it is the only step
+    # that has seen the manager's judgment, the verified evidence and the
+    # cohort together. Where calibration confirms rather than changes, the
+    # manager's rating stands, but it stands because calibration said so.
+    review.rating = result or review.manager_rating or review.rating
     review.stage = ReviewStage.AWAITING_ACKNOWLEDGEMENT
     review.status = "Awaiting acknowledgement"
     review.save()
-    _audit("hr.review_calibrated", review, principal, {"result": result})
+    _audit(
+        "hr.review_calibrated",
+        review,
+        principal,
+        {"result": result, "managerRating": review.manager_rating},
+    )
     return review
 
 

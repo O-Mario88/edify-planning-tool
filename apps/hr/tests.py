@@ -204,10 +204,18 @@ class HRDashboardNoMockDataTestCase(TestCase):
             roles=["HumanResources"],
             active_role="HumanResources",
         )
+        # HR is a country function, so the viewer needs a People record for
+        # the dashboard to have any scope at all. Kenya here because the
+        # fixtures below are Kenyan; a viewer with no profile now correctly
+        # sees nothing and is told why (2026-08-20 HR audit, Critical).
+        self.hr_profile = StaffProfile.objects.create(
+            user=self.hr_user, title="HumanResources", country="Kenya"
+        )
 
     def test_kpis_are_honest_zeros_with_no_hr_data_seeded(self):
         """With zero Vacancy/OnboardingPlan/PerformanceReview/PIP/CPD/Payroll
-        rows in the DB, every KPI must be a real 0 — never a fabricated
+        rows in the DB, count KPIs must be real zeroes and readiness KPIs with
+        no denominator must be explicitly unavailable — never a fabricated
         fallback such as 412, 18, 14, 12, 16, 72, 96, 68 or 95."""
         data = HRDashboardService.get_dashboard(self.hr_user)
         by_label = {k["label"]: k["value"] for k in data["kpi_strip_items"]}
@@ -219,10 +227,10 @@ class HRDashboardNoMockDataTestCase(TestCase):
         self.assertEqual(by_label["Performance Reviews Due"], "0")
         # Previously a bare literal with no query at all.
         self.assertEqual(by_label["Staff On Track"], "0%")
-        self.assertEqual(by_label["Payroll Readiness"], "0%")
+        self.assertEqual(by_label["Payroll Readiness"], "—")
         # Previously fell back to a hardcoded percentage when empty.
-        self.assertEqual(by_label["Compliance Completion"], "0%")
-        self.assertEqual(by_label["CPD Completion"], "0%")
+        self.assertEqual(by_label["Compliance Completion"], "—")
+        self.assertEqual(by_label["CPD Completion"], "—")
 
         # Previously entirely-fabricated data structures must now be honest
         # empty states, not fictional content.
@@ -230,7 +238,14 @@ class HRDashboardNoMockDataTestCase(TestCase):
         self.assertEqual(data["compliance_status"], [])
         self.assertEqual(data["job_levels"], [])
         self.assertTrue(all(row["count"] == 0 for row in data["recruitment_funnel"]))
-        self.assertEqual(data["workforce_by_country"], [])
+        # The viewer is themselves a staff record, so their own country shows
+        # a headcount of one — with every derived figure an honest zero.
+        self.assertEqual(len(data["workforce_by_country"]), 1)
+        own_country = data["workforce_by_country"][0]
+        self.assertEqual(own_country["country"], "Kenya")
+        self.assertEqual(own_country["headcount"], 1)
+        self.assertEqual(own_country["on_track"], 0)
+        self.assertEqual(own_country["at_risk"], 0)
 
         # Leadership-attention banner values must also be real, not the old
         # "4"/"2"/"16"/"5"/"27"/"8" static HTML.
@@ -289,7 +304,7 @@ class HRDashboardNoMockDataTestCase(TestCase):
             roles=["CCEO"],
             active_role="CCEO",
         )
-        sp1 = StaffProfile.objects.create(user=u1, title="CCEO")
+        sp1 = StaffProfile.objects.create(user=u1, title="CCEO", country="Kenya")
         u2 = User.objects.create_user(
             email="payroll2@edify.org",
             password="x",
@@ -297,7 +312,7 @@ class HRDashboardNoMockDataTestCase(TestCase):
             roles=["CCEO"],
             active_role="CCEO",
         )
-        sp2 = StaffProfile.objects.create(user=u2, title="CCEO")
+        sp2 = StaffProfile.objects.create(user=u2, title="CCEO", country="Kenya")
         period = date.today().strftime("%Y-%m")
         PayrollReadinessRecord.objects.create(
             staff=sp1, payroll_period=period, is_payroll_ready=True
@@ -340,7 +355,8 @@ class HRDashboardNoMockDataTestCase(TestCase):
         country_row = next(
             r for r in data["workforce_by_country"] if r["country"] == "Kenya"
         )
-        self.assertEqual(country_row["headcount"], 2)
+        # Two fixtures plus the HR viewer's own Kenyan People record.
+        self.assertEqual(country_row["headcount"], 3)
 
         labels = data["headcount_by_department"]["labels"]
         self.assertIn("Program Operations", labels)

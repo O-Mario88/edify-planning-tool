@@ -26,6 +26,7 @@ from apps.core.exceptions import BadRequest
 
 from .models import (
     MilestoneActivityRule,
+    MilestoneTargetComponent,
     MilestoneDefinitionStatus,
     MilestoneMetricDefinition,
     MilestoneType,
@@ -165,30 +166,47 @@ def seed_uganda_master(*, fy: str = "2027", actor_id="system", dry_run=False) ->
     }
     for sequence, (group_code, rows) in enumerate(UGANDA_MASTER.items(), 1):
         regional = regional_by_code.get(group_code)
-        priority, _ = StrategicPriority.objects.update_or_create(
+        # 2026-08-20 priorities audit G3/A3: the milestone loop below already
+        # skips published priorities, but this header write did NOT — a
+        # reseed rewrote a PUBLISHED priority's title/cycle/parent/source
+        # fields. A published header is part of the locked master.
+        _published = StrategicPriority.objects.filter(
             fy=fy,
             level=StrategicPriorityLevel.COUNTRY,
             code=group_code,
             country_id=UGANDA,
-            defaults={
-                "cycle": cycle,
-                "parent": regional,
-                "title": (regional.title if regional else group_code.title()),
-                "source_title": regional.title if regional else group_code,
-                "source_document": SOURCE_DOCUMENT,
-                "source_reference": f"uganda-priority-{sequence}",
-                "strategic_purpose": (
-                    "Uganda's confirmed contribution to the regional priority "
-                    f"“{regional.title if regional else group_code}”."
-                ),
-                "expected_result": (
-                    "Confirmed Uganda targets distributed IA → PL → CCEO and "
-                    "delivered through verified activities."
-                ),
-                "author_id": actor_id,
-                "sequence": sequence,
-            },
-        )
+            status=StrategicPriorityStatus.PUBLISHED,
+        ).first()
+        if _published is not None:
+            # Keep the locked header untouched; the row loop below already
+            # handles milestone-level skipping for published priorities.
+            priority = _published
+            report["skippedPublished"] += 1
+        else:
+            priority, _ = StrategicPriority.objects.update_or_create(
+                fy=fy,
+                level=StrategicPriorityLevel.COUNTRY,
+                code=group_code,
+                country_id=UGANDA,
+                defaults={
+                    "cycle": cycle,
+                    "parent": regional,
+                    "title": (regional.title if regional else group_code.title()),
+                    "source_title": regional.title if regional else group_code,
+                    "source_document": SOURCE_DOCUMENT,
+                    "source_reference": f"uganda-priority-{sequence}",
+                    "strategic_purpose": (
+                        "Uganda's confirmed contribution to the regional priority "
+                        f"“{regional.title if regional else group_code}”."
+                    ),
+                    "expected_result": (
+                        "Confirmed Uganda targets distributed IA → PL → CCEO and "
+                        "delivered through verified activities."
+                    ),
+                    "author_id": actor_id,
+                    "sequence": sequence,
+                },
+            )
         report["priorities"] += 1
         for source_order, row in enumerate(rows, 1):
             scoreable = (
@@ -211,6 +229,18 @@ def seed_uganda_master(*, fy: str = "2027", actor_id="system", dry_run=False) ->
                 report["skippedPublished"] += 1
                 if milestone is not None:
                     report["milestones"] += 1
+                continue
+            # 2026-08-20 audit: a HUMAN-touched row survives a reseed even
+            # before publication. confirm_milestone/define_milestone bump
+            # `version` past 1 — a CD confirmation or redefinition must not
+            # be replaced by the source-file default on the next deploy.
+            _touched = PriorityMilestone.objects.filter(
+                priority=priority, code=row["code"], version__gt=1
+            ).first()
+            if _touched is not None:
+                milestone = _touched
+                report["milestones"] += 1
+                report["skippedPublished"] += 1
                 continue
             milestone, _ = PriorityMilestone.objects.update_or_create(
                 priority=priority,
@@ -243,6 +273,12 @@ def seed_uganda_master(*, fy: str = "2027", actor_id="system", dry_run=False) ->
                         else None
                     ),
                     "participants_per_school": row.get("pps"),
+                    "recurrence_per_month": (
+                        Decimal(str(row["recurrence_per_month"]))
+                        if row.get("recurrence_per_month") is not None
+                        else None
+                    ),
+                    "due_date": row.get("due_date"),
                     "allocation_method": row["method"],
                     "responsible_role": row.get("role", ""),
                     "cap_at_100": bool(row.get("cap_100")),
@@ -266,6 +302,19 @@ def seed_uganda_master(*, fy: str = "2027", actor_id="system", dry_run=False) ->
                     "source_order": source_order,
                 },
             )
+            for _ci, _comp in enumerate(row.get("components") or [], 1):
+                MilestoneTargetComponent.objects.update_or_create(
+                    milestone=milestone,
+                    code=_comp["code"],
+                    defaults={
+                        "label": _comp["label"],
+                        "target_value": Decimal(str(_comp["value"])),
+                        "target_unit": _comp.get("unit", ""),
+                        "sequence": _ci,
+                        "needs_confirmation": bool(_comp.get("confirm")),
+                        "confirmation_note": _comp.get("confirm", "") or "",
+                    },
+                )
             report["milestones"] += 1
             if needs_confirmation:
                 report["needsConfirmation"] += 1

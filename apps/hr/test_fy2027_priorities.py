@@ -212,19 +212,32 @@ class MilestoneAllocationProjectionTests(TestCase):
                 "updated_at",
             ]
         )
+        # 2026-08-20 audit G1: approval now enforces authority + exact-zero.
+        # A parentless single-holder allocation must equal the milestone
+        # target, and only a distribution approver (IA/Admin) may lock it —
+        # the old shape here (CCEO self-approving a fractional 100.01 of a
+        # larger target) is precisely what the audit closed.
+        ia_user = User.objects.create_user(
+            email="milestone-ia@example.test",
+            name="IA Approver",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            password="test-password",
+            is_active=True,
+        )
         allocation = create_allocation(
             milestone=milestone,
             data={
                 "allocatedToType": "employee",
                 "employeeId": staff.id,
-                "allocatedTarget": "100.01",
+                "allocatedTarget": str(milestone.target_value),
                 "weight": "20",
                 "effectiveDate": "2026-10-01",
                 "allocationReason": "Approved FY2027 country cascade.",
             },
             principal=user,
         )
-        approve_allocation(allocation, principal=user)
+        approve_allocation(allocation, principal=ia_user)
         allocation.refresh_from_db()
         months = list(
             allocation.period_targets.filter(period_type="month").order_by(

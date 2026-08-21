@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from django.utils.html import escape
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
@@ -86,7 +89,9 @@ def _cell(label: str, value, *, primary=False, status=False) -> dict:
 
 
 def _metric(label: str, value, helper: str, tone="info") -> dict:
-    return {"label": label, "value": value, "helper": helper, "tone": tone}
+    return render_precomputed_metric_for_source(
+        "apps.frontend.views.hr_views:_metric", label, value, helper=helper, tone=tone
+    )
 
 
 def _profile_scope(request):
@@ -855,7 +860,10 @@ def recovery_plans_view(request):
             ),
         ],
         rows=rows,
-        primary_action={"label": "Review Team Performance", "href": "/team-targets/"},
+        primary_action={
+            "label": "Review Performance Cycle",
+            "href": "/hr/performance-cycle",
+        },
         empty_title="No recovery plans in this scope",
     )
 
@@ -944,6 +952,14 @@ def employee_relations_view(request):
     # label that filtered nothing. The model carries no country or subject
     # field, so the owner's country is the available bound today.
     cases = _employee_relations_scope(request.user)
+    # Opening a restricted people register is itself an accountable act. The
+    # service has always had `record_access`, and its only caller was a
+    # case-detail path with no route — so browsing every grievance and
+    # safeguarding case in a country left no trace at all to attribute after
+    # a leak (2026-08-20 HR audit).
+    from apps.hr import employee_relations_service
+
+    employee_relations_service.record_access(request.user, what="case_register")
     if query:
         cases = cases.filter(
             Q(case_type__icontains=query)
@@ -1207,8 +1223,8 @@ def payroll_readiness_view(request):
         ],
         rows=rows,
         primary_action={
-            "label": "Review Finance Operations",
-            "href": "/finance/fund-allocation",
+            "label": "Open the People Directory",
+            "href": "/staff",
         },
         empty_title="No payroll-readiness checks in this scope",
     )
@@ -1779,8 +1795,16 @@ def _resolve_conversation(request):
     is_hr = role in ("HumanResources", "Admin")
 
     if staff_param and staff_param != getattr(viewer_sp, "id", None):
+        # The lookup was unscoped: any HR account could name any staff id in
+        # any country and read that person's ratings, self-reflection and
+        # manager assessment — then download them as a document. HR oversight
+        # of the performance CYCLE does not require reading every country's
+        # conversations (2026-08-20 HR audit).
         target = (
-            StaffProfile.objects.filter(id=staff_param).select_related("user").first()
+            _profile_scope(request)
+            .filter(id=staff_param)
+            .select_related("user")
+            .first()
         )
     else:
         target = viewer_sp
@@ -1805,6 +1829,9 @@ def _resolve_conversation(request):
         caps.add("functional")
     if is_hr:
         caps.add("hr")
+    if not caps:
+        # No employee/manager/functional/HR relationship to this person at all.
+        return None, None, set()
     return review, target, caps
 
 
@@ -2591,6 +2618,16 @@ def strategic_priority_action_view(request):
             if priority is None:
                 raise BadRequest("Unknown strategic priority.")
             priority_cascade._assert_can_author(request.user, priority.level)
+            # G4 (2026-08-20 audit): role rules on a PUBLISHED priority are
+            # part of the locked commitment — weight/metric changes after
+            # publication go through amendments.
+            from apps.hr.models import StrategicPriorityStatus as _SPS
+
+            if priority.status == _SPS.PUBLISHED:
+                raise BadRequest(
+                    "This priority is published and locked — role-rule "
+                    "changes require an amendment."
+                )
             target_role = request.POST.get("role") or ""
             if target_role not in _CASCADE_ROLES:
                 raise BadRequest("Unknown role.")

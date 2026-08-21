@@ -68,6 +68,9 @@ class DistributionFixture(TestCase):
         seed_uganda_master(actor_id="test")
         cls.cd, cls.cd_sp = _user("CountryDirector", "cd@ug.test", "CD Uganda")
         cls.ia, cls.ia_sp = _user("ImpactAssessment", "ia@ug.test", "IA Uganda")
+        # A second IA: amendments now require requester != approver
+        # (2026-08-20 audit G2).
+        cls.ia2, cls.ia2_sp = _user("ImpactAssessment", "ia2@ug.test", "IA Two")
         cls.pl, cls.pl_sp = _user("Program Lead", "pl1@ug.test", "PL One")
         cls.pl2, cls.pl2_sp = _user("Program Lead", "pl2@ug.test", "PL Two")
         cls.cceo_a, cls.cceo_a_sp = _user("CCEO", "cceo-a@ug.test", "CCEO Alpha")
@@ -179,7 +182,9 @@ class UgandaMasterSeedTests(DistributionFixture):
             priority__level="country", priority__country_id="Uganda"
         ).count()
         self.assertEqual(first, second)
-        self.assertEqual(first, 74)
+        # 75 = the 74 transcribed source rows + TRAINED_90_PERCENT, the
+        # percentage milestone the source states as prose.
+        self.assertEqual(first, 75)
         country = StrategicPriority.objects.filter(
             fy=FY, level="country", country_id="Uganda"
         ).order_by("sequence")
@@ -215,9 +220,10 @@ class UgandaMasterSeedTests(DistributionFixture):
             priority__country_id="Uganda",
             needs_confirmation=True,
         )
-        # 28 = the original 27 ambiguous source values + the 50%-vs-100-loans
-        # composite the Business Transformation reassignment surfaced.
-        self.assertEqual(flagged.count(), 28)
+        # 29 = the original 27 ambiguous source values + the 50%-vs-100-loans
+        # composite + TRAINED_90_PERCENT, whose denominator the source never
+        # states.
+        self.assertEqual(flagged.count(), 29)
         ecd = PriorityMilestone.objects.get(
             code="ECD_TEACHERS", priority__level="country"
         )
@@ -233,28 +239,62 @@ class UgandaMasterSeedTests(DistributionFixture):
 
 
 class ClassificationTests(SimpleTestCase):
-    def test_the_five_official_bands(self):
+    """The five approved bands, tested at their exact boundaries.
+
+    A boundary that "roughly" works is a boundary that disagrees with itself
+    at 89.99 vs 90.00, which is precisely where someone's rating changes.
+    """
+
+    def test_the_five_bands_at_their_exact_boundaries(self):
         cases = [
-            (0, "behind"),
-            (79.9, "behind"),
-            (80, "near"),
-            (99, "near"),
-            (100, "achieved"),
-            (120, "exceeded"),
-            (149.9, "exceeded"),
+            (0, "not_met"),
+            (89.99, "not_met"),
+            (90, "met_some"),
+            (90.00, "met_some"),
+            (99.99, "met_some"),
+            (100, "met"),
+            (100.00, "met"),
+            (100.01, "exceeded"),
+            (149.99, "exceeded"),
             (150, "far_exceeded"),
+            (150.00, "far_exceeded"),
             (210, "far_exceeded"),
         ]
         for pct, expected in cases:
             self.assertEqual(engine.classify_achievement(pct)["key"], expected, msg=pct)
 
-    def test_capped_percentages_classify_achieved_never_far_exceeded(self):
-        capped = engine.classify_achievement(150, cap_at_100=True)
-        self.assertEqual(capped["key"], "achieved")
-        self.assertEqual(capped["pct"], 100.0)
+    def test_the_labels_are_the_approved_wording(self):
+        self.assertEqual(engine.classify_achievement(50)["label"], "Not Met the Target")
+        self.assertEqual(
+            engine.classify_achievement(95)["label"], "Met Some of the Target"
+        )
+        self.assertEqual(engine.classify_achievement(100)["label"], "Met the Target")
+        self.assertEqual(engine.classify_achievement(120)["label"], "Exceeded")
+        self.assertEqual(engine.classify_achievement(150)["label"], "Far Exceeded")
 
-    def test_no_data_is_not_started_never_zero_percent_behind(self):
-        self.assertEqual(engine.classify_achievement(None)["key"], "not_started")
+    def test_a_coverage_target_can_reach_met_and_no_further(self):
+        capped = engine.classify_achievement(150, cap_at_100=True)
+        self.assertEqual(capped["key"], "met")
+        self.assertEqual(capped["pct"], 100.0)
+        self.assertTrue(capped["capped"])
+
+    def test_no_data_is_not_started_never_zero_percent(self):
+        result = engine.classify_achievement(None)
+        self.assertEqual(result["key"], "not_started")
+        self.assertFalse(result["is_scoring"])
+
+    def test_a_zero_target_is_not_applicable_never_a_division(self):
+        result = engine.classify_achievement(0, target=0)
+        self.assertEqual(result["key"], "not_applicable")
+        self.assertFalse(result["is_scoring"])
+
+    def test_a_non_scoreable_milestone_is_never_averaged_in(self):
+        result = engine.classify_achievement(120, scoreable=False)
+        self.assertEqual(result["key"], "non_scoreable")
+        self.assertFalse(result["is_scoring"])
+
+    def test_only_real_percentages_are_scoring(self):
+        self.assertTrue(engine.classify_achievement(42)["is_scoring"])
 
 
 class WeightedSplitTests(SimpleTestCase):
@@ -336,7 +376,10 @@ class ReconciliationTests(DistributionFixture):
 
 class EmployeeDistributionTests(DistributionFixture):
     def _approved_team(self, code="EMP_1", target=40):
-        milestone = self._milestone(code)
+        # approve_allocation now enforces reconcile-to-zero (2026-08-20
+        # audit G1) — a lone team allocation approves only when it IS the
+        # whole country distribution, so the milestone target matches it.
+        milestone = self._milestone(code, target=str(target))
         allocation = self._team_allocation(milestone, self.pl_sp, target)
         # approve_allocation re-fetches under lock — use the fresh instance.
         allocation = approve_allocation(allocation, principal=self.ia)
@@ -648,7 +691,7 @@ class AmendmentTests(DistributionFixture):
             new_target="80",
             principal=self.ia,
         )
-        engine.approve_amendment(amendment, principal=self.ia)
+        engine.approve_amendment(amendment, principal=self.ia2)
         allocation.refresh_from_db()
         self.assertEqual(allocation.allocated_target, Decimal("80"))
         self.assertEqual(allocation.version, 2)
@@ -714,7 +757,7 @@ class AmendmentTests(DistributionFixture):
                 new_quarters={"Q1": "25", "Q2": "25", "Q3": "15", "Q4": "35"},
                 principal=self.ia,
             )
-            engine.approve_amendment(amendment, principal=self.ia)
+            engine.approve_amendment(amendment, principal=self.ia2)
         allocation.refresh_from_db()
         self.assertEqual(allocation.allocated_target, Decimal("100"))
         self.assertEqual(allocation.quarter_distribution["Q4"], "35.00")
@@ -812,9 +855,11 @@ class CreditReversalTests(DistributionFixture):
         activity.status = "returned"
         activity.save(update_fields=["status"])
         self.assertEqual(reverse_activity_progress(activity), 1)
-        self.assertFalse(
-            MilestoneProgressCredit.objects.filter(activity=activity).exists()
-        )
+        # Credits are append-only: the row survives as history, stamped
+        # reversed, and stops counting. Deleting it would erase the fact that
+        # the work was once credited.
+        credit = MilestoneProgressCredit.objects.get(activity=activity)
+        self.assertIsNotNone(credit.reversed_at)
         october.refresh_from_db()
         self.assertEqual(october.actual_value, Decimal("0"))
 
@@ -1000,6 +1045,17 @@ class WorkspacePageTests(DistributionFixture):
         self.assertContains(response, "DC Training")
         self.assertContains(response, "Remaining to distribute")
         self.assertContains(response, "Every row below is fetched")
+
+    def test_the_country_workspace_builds_staff_capacity_once(self):
+        with patch.object(
+            engine,
+            "_staff_recommendation_context",
+            wraps=engine._staff_recommendation_context,
+        ) as capacity_context:
+            workspace = engine.country_distribution_workspace(FY)
+
+        self.assertTrue(workspace["groups"])
+        self.assertEqual(capacity_context.call_count, 1)
 
     def test_the_cd_sees_the_confirmation_controls(self):
         self.client.force_login(self.cd)

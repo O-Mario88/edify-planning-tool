@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.db import models
 from apps.core.models import CuidField, TimeStampedModel
 from apps.accounts.models import StaffProfile, User
@@ -984,6 +986,20 @@ class PerformanceCycle(TimeStampedModel):
     opened_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True
     )
+    # §17.4: closing and reopening are governed acts in their own right. The
+    # cycle recorded who OPENED a window and nothing about who shut it or who
+    # pushed it back open — so "why is Q2 editable again?" had no answer in
+    # the record.
+    window_closed_at = models.DateTimeField(null=True, blank=True)
+    reopened_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reopened_performance_cycles",
+    )
+    reopened_at = models.DateTimeField(null=True, blank=True)
+    reopening_reason = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "hr_performance_cycle"
@@ -1500,6 +1516,17 @@ class StrategicPriority(TimeStampedModel):
                 condition=models.Q(weight_max__gte=models.F("weight_min")),
                 name="strategic_priority_weight_range_ordered",
             ),
+            # 2026-08-20 audit G10: a duplicate country master would silently
+            # double every Uganda total. nulls_distinct=False so the regional
+            # rows (country_id NULL) are covered too. The code condition keeps
+            # this to NAMED masters — ad-hoc priorities carry no code and any
+            # number of them may share a scope.
+            models.UniqueConstraint(
+                fields=["fy", "level", "country_id", "code"],
+                condition=~models.Q(code=None) & ~models.Q(code=""),
+                nulls_distinct=False,
+                name="uniq_strategic_priority_per_scope",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -1681,6 +1708,11 @@ class PriorityMilestone(TimeStampedModel):
     # Percentage metrics that logically cannot exceed 100% (coverage) are
     # capped and classified "Achieved", never "Far exceeded".
     cap_at_100 = models.BooleanField(default=False)
+    # Recurring targets (§14.4): "2 posts per month" phases as 2 into EVERY
+    # applicable month (annual figure derived, never capacity-weighted).
+    recurrence_per_month = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
     # A source figure the CD has not yet confirmed (composite values, unclear
     # metrics, FY ambiguity). Confirmation happens in-app before publication;
     # the flag blocks distribution, not visibility.
@@ -1791,9 +1823,38 @@ class MilestoneAllocation(TimeStampedModel):
     quarter_approved_at = models.DateTimeField(null=True, blank=True)
     locked_at = models.DateTimeField(null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
+    # Composite milestones (§12.4): the holder's share of each defined
+    # component, {component_code: "value"}. Reconciliation checks every
+    # component column exactly like the Core/Client columns.
+    component_split = models.JSONField(default=dict, blank=True)
 
     class Meta:
         db_table = "hr_milestone_allocation"
+        constraints = [
+            # One LIVE allocation per holder per milestone (2026-08-20 audit
+            # G10) — previously a Python-only check.
+            models.UniqueConstraint(
+                fields=["milestone", "employee"],
+                condition=models.Q(
+                    status__in=("draft", "approved"), employee__isnull=False
+                ),
+                name="uniq_live_allocation_per_employee",
+            ),
+            models.UniqueConstraint(
+                fields=["milestone", "team_id"],
+                condition=models.Q(
+                    status__in=("draft", "approved"), team_id__isnull=False
+                ),
+                name="uniq_live_allocation_per_team",
+            ),
+            models.UniqueConstraint(
+                fields=["milestone", "project"],
+                condition=models.Q(
+                    status__in=("draft", "approved"), project__isnull=False
+                ),
+                name="uniq_live_allocation_per_project",
+            ),
+        ]
 
 
 class ActivityPriorityLink(TimeStampedModel):
@@ -1828,6 +1889,36 @@ class ActivityPriorityLink(TimeStampedModel):
                 condition=models.Q(is_primary=True),
                 name="uniq_primary_priority_per_activity",
             ),
+        ]
+
+
+class MilestoneTargetComponent(TimeStampedModel):
+    """One defined component of a composite milestone target (§12.4).
+
+    "300: 200, 100" stores the parent (300) on the milestone and each
+    component here; the components must sum to the parent, and distribution
+    reconciles every component column independently — a zero parent balance
+    never masks an unbalanced component."""
+
+    id = CuidField()
+    milestone = models.ForeignKey(
+        PriorityMilestone, on_delete=models.CASCADE, related_name="components"
+    )
+    code = models.CharField(max_length=64)
+    label = models.CharField(max_length=160)
+    target_value = models.DecimalField(max_digits=18, decimal_places=2)
+    target_unit = models.CharField(max_length=64, blank=True, default="")
+    sequence = models.PositiveIntegerField(default=1)
+    needs_confirmation = models.BooleanField(default=False)
+    confirmation_note = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "hr_milestone_target_component"
+        ordering = ("sequence",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["milestone", "code"], name="uniq_component_per_milestone"
+            )
         ]
 
 
@@ -1939,6 +2030,12 @@ class MilestoneProgressCredit(TimeStampedModel):
     credited_value = models.DecimalField(max_digits=18, decimal_places=2, default=1)
     source_snapshot = models.JSONField(default=dict)
     credited_at = models.DateTimeField()
+    # Append-only reversal (2026-08-20 audit): a returned/invalidated source
+    # REVERSES its credit — the row, its value and its snapshot survive as
+    # history. Reversed credits are excluded from every progress figure; a
+    # re-verified source un-reverses the same row rather than duplicating.
+    reversed_at = models.DateTimeField(null=True, blank=True)
+    reversed_reason = models.CharField(max_length=255, blank=True, default="")
 
     class Meta:
         db_table = "hr_milestone_progress_credit"
@@ -1998,3 +2095,164 @@ class MilestoneAllocationAmendment(TimeStampedModel):
     class Meta:
         db_table = "hr_milestone_allocation_amendment"
         ordering = ["-created_at"]
+
+
+class ExtraWorkScoringPolicy(TimeStampedModel):
+    """The governed scoring policy for Extra Assigned Work (§18.8).
+
+    Contribution enters performance ONLY under an APPROVED policy — absence
+    of one keeps extra work tracked-but-unscored (the audit's release rule).
+    """
+
+    id = CuidField()
+    fy = models.CharField(max_length=16, unique=True)
+    mode = models.CharField(
+        max_length=16,
+        choices=[("additive", "Additive"), ("bonus", "Bonus")],
+        default="bonus",
+    )
+    max_contribution_points = models.DecimalField(
+        max_digits=6, decimal_places=2, default=10
+    )
+    complexity_weights = models.JSONField(
+        default=dict,
+        help_text='Points per verified task by complexity, e.g. {"low": 1, "medium": 2, "high": 4}.',
+    )
+    overdue_multiplier = models.DecimalField(
+        max_digits=4, decimal_places=2, default=Decimal("0.5")
+    )
+    can_offset_mandatory = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=16,
+        choices=[("draft", "Draft"), ("approved", "Approved")],
+        default="draft",
+    )
+    approved_by = models.CharField(max_length=30, blank=True, default="")
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_extra_work_scoring_policy"
+
+
+class ExtraAssignment(TimeStampedModel):
+    """Governed extra work: CD → PL/CCEO, PL → supervised CCEO (§18).
+
+    Extra work NEVER changes distributed targets, never earns milestone
+    credit (it does not touch MilestoneProgressCredit or the achievement
+    ledger), and contributes to performance separately, once, after
+    independent verification — the assignee can never verify their own work.
+    """
+
+    CATEGORIES = [
+        ("priority_linked", "Priority-linked additional work"),
+        ("operational_support", "Operational support"),
+        ("strategic", "Strategic assignment"),
+        ("emergency", "Emergency assignment"),
+        ("cross_team", "Cross-team support"),
+        ("special_project", "Special project"),
+        ("leadership", "Leadership responsibility"),
+        ("non_scoreable_support", "Non-scoreable support task"),
+    ]
+    STATUSES = [
+        ("draft", "Draft"),
+        ("assigned", "Assigned"),
+        ("acknowledged", "Acknowledged"),
+        ("in_progress", "In Progress"),
+        ("submitted", "Submitted"),
+        ("returned", "Returned for Correction"),
+        ("verified", "Completed & Verified"),
+        ("cancelled", "Cancelled"),
+    ]
+    OPEN_STATUSES = ("assigned", "acknowledged", "in_progress", "returned")
+
+    id = CuidField()
+    fy = models.CharField(max_length=16)
+    title = models.CharField(max_length=200)
+    instruction = models.TextField()
+    reason = models.TextField(blank=True, default="")
+    category = models.CharField(max_length=32, choices=CATEGORIES)
+    linked_priority = models.ForeignKey(
+        StrategicPriority,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="extra_assignments",
+    )
+    linked_milestone = models.ForeignKey(
+        PriorityMilestone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="extra_assignments",
+    )
+    linked_activity_id = models.CharField(max_length=30, blank=True, default="")
+    assigner_id = models.CharField(max_length=30, db_index=True)
+    assigner_role = models.CharField(max_length=48)
+    assignee_id = models.CharField(max_length=30, db_index=True)
+    assignee_role = models.CharField(max_length=48)
+    supervising_pl_id = models.CharField(max_length=30, blank=True, default="")
+    country = models.CharField(max_length=64, default="Uganda")
+    start_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField()
+    expected_output = models.CharField(max_length=255, blank=True, default="")
+    output_unit = models.CharField(max_length=64, blank=True, default="")
+    evidence_required = models.BooleanField(default=True)
+    reviewer_id = models.CharField(max_length=30, db_index=True)
+    complexity = models.CharField(
+        max_length=12,
+        choices=[("low", "Low"), ("medium", "Medium"), ("high", "High")],
+        default="medium",
+    )
+    urgency = models.CharField(
+        max_length=12,
+        choices=[("normal", "Normal"), ("high", "High"), ("urgent", "Urgent")],
+        default="normal",
+    )
+    status = models.CharField(max_length=16, choices=STATUSES, default="assigned")
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    outcome = models.TextField(blank=True, default="")
+    evidence_note = models.TextField(blank=True, default="")
+    evidence_uri = models.CharField(max_length=500, blank=True, default="")
+    return_reason = models.TextField(blank=True, default="")
+    return_count = models.PositiveIntegerField(default=0)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.CharField(max_length=30, blank=True, default="")
+    completion_date = models.DateField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancel_reason = models.TextField(blank=True, default="")
+    # Set ONCE at verification, from the approved scoring policy; None while
+    # no approved policy exists (tracked but unscored — never invented).
+    contribution_points = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    scoring_policy = models.ForeignKey(
+        ExtraWorkScoringPolicy,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assignments",
+    )
+
+    class Meta:
+        db_table = "hr_extra_assignment"
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["assignee_id", "status"]),
+            models.Index(fields=["assigner_id", "status"]),
+            models.Index(fields=["fy", "status"]),
+        ]
+        constraints = [
+            # No self-assignment: the assigner cannot be their own assignee,
+            # which would collapse assigner/reviewer/assignee into one person.
+            models.CheckConstraint(
+                condition=~models.Q(assignee_id=models.F("assigner_id")),
+                name="extra_work_no_self_assignment",
+            ),
+            # The assignee can never be the reviewer (no self-verification).
+            models.CheckConstraint(
+                condition=~models.Q(reviewer_id=models.F("assignee_id")),
+                name="extra_work_no_self_review",
+            ),
+        ]

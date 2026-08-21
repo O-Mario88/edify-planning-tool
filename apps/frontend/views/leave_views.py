@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 import logging
 
 from datetime import datetime, date, timedelta
@@ -510,6 +512,16 @@ def leave_tracker_view(request):
             supervisor__user=user
         ).values_list("supervisee_id", flat=True)
         qs = qs.filter(id__in=supervisee_ids)
+    elif role != "Admin":
+        # Only the PL arm was ever narrowed, so HR, CD and RVP each read every
+        # country's roster — including per-person SICK-leave balances. HR is a
+        # country function (apps/hr/services.py:79); this page is now too.
+        viewer = getattr(user, "staff_profile", None)
+        qs = (
+            qs.filter(country=viewer.country)
+            if viewer and viewer.country
+            else qs.none()
+        )
 
     q = request.GET.get("q", "").strip()
     if q:
@@ -774,52 +786,50 @@ def leave_approvals_view(request):
         approved_helper = "Same as previous 7 days"
 
     leave_kpi_items = [
-        {
-            "label": "Pending Approvals",
-            "value": str(pending_count),
-            "helper": "Authorized requests awaiting a decision",
-            "icon": "clock",
-            "variant": "warning",
-        },
-        {
-            "label": "Approved · 7 Days",
-            "value": str(approved_this_week_count),
-            "helper": approved_helper,
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Coverage Ready",
-            "value": str(coverage_assigned_count),
-            "helper": (
-                f"{coverage_rate}% of pending requests"
-                if coverage_rate is not None
-                else "No pending requests"
-            ),
-            "icon": "users",
-            "variant": "info",
-        },
-        {
-            "label": "Critical Conflicts",
-            "value": str(conflicts_detected_count),
-            "helper": "Detected in the pending queue",
-            "icon": "warning",
-            "variant": "danger" if conflicts_detected_count else "success",
-        },
-        {
-            "label": "Away This Week",
-            "value": str(staff_on_leave_this_week),
-            "helper": "Approved leave overlapping this week",
-            "icon": "calendar",
-            "variant": "primary",
-        },
-        {
-            "label": "Balance Alerts",
-            "value": str(leave_balance_alerts),
-            "helper": "PTO balances below five days",
-            "icon": "warning",
-            "variant": "warning" if leave_balance_alerts else "success",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_pending_approvals",
+            str(pending_count),
+            helper="Authorized requests awaiting a decision",
+            icon="clock",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_approved_7_days",
+            str(approved_this_week_count),
+            helper=approved_helper,
+            icon="check",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_coverage_ready",
+            str(coverage_assigned_count),
+            helper=f"{coverage_rate}% of pending requests"
+            if coverage_rate is not None
+            else "No pending requests",
+            icon="users",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_critical_conflicts",
+            str(conflicts_detected_count),
+            helper="Detected in the pending queue",
+            icon="warning",
+            variant="danger" if conflicts_detected_count else "success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_away_this_week",
+            str(staff_on_leave_this_week),
+            helper="Approved leave overlapping this week",
+            icon="calendar",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_leave_views_balance_alerts",
+            str(leave_balance_alerts),
+            helper="PTO balances below five days",
+            icon="warning",
+            variant="warning" if leave_balance_alerts else "success",
+        ),
     ]
 
     # Recent approval activities list
@@ -1690,6 +1700,43 @@ def team_availability_view(request):
     return render(request, "pages/leave/team_availability.html", context)
 
 
+@require_page_permission("personal_time_off")
+def leave_attachment_view(request, leave_id):
+    """Serve a leave attachment to the people entitled to see it.
+
+    A policy could REQUIRE a medical certificate and there was no way to open
+    one: the field had no view, no URL and no template — sensitive documents
+    accumulated that nobody could read and nothing could delete. Access is the
+    employee, their authorised approver, or HR (2026-08-20 HR audit).
+    """
+    from django.http import FileResponse, HttpResponseNotFound
+    from django.utils.http import content_disposition_header
+
+    leave = Leave.objects.select_related("staff__user").filter(id=leave_id).first()
+    if not leave or not leave.attachment:
+        return HttpResponseNotFound("File not found.")
+
+    viewer = request.user
+    is_owner = leave.staff.user_id == viewer.id
+    is_hr = get_user_role_slug(viewer) == "HR"
+    if not (
+        is_owner or is_hr or LeaveApprovalService.is_authorized_approver(viewer, leave)
+    ):
+        # 404 rather than 403: confirming the id exists is itself a leak.
+        return HttpResponseNotFound("File not found.")
+
+    try:
+        handle = leave.attachment.open("rb")
+    except (FileNotFoundError, ValueError, OSError):
+        return HttpResponseNotFound("File not found in private storage.")
+    response = FileResponse(handle, content_type="application/octet-stream")
+    response["Content-Disposition"] = content_disposition_header(
+        True, leave.attachment.name.rsplit("/", 1)[-1]
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 @require_POST
 @require_page_permission("personal_time_off")
 def leave_coverage_accept_action(request, leave_id):
@@ -1743,6 +1790,8 @@ def leave_reassign_coverage_action(request, leave_id):
             "Awaiting Acceptance" if covering_staff else "Not Required"
         )
         leave.save(update_fields=["covering_staff", "coverage_status", "updated_at"])
+        # The delegated ACCESS has to move with the name on the form.
+        LeaveApprovalService.reassign_coverage(leave, covering_staff, request.user)
 
         from apps.audit.services import log as audit_log
 
