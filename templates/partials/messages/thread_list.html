@@ -24,7 +24,7 @@
               {% if t.unread %}<span data-unread-indicator class="h-2 w-2 rounded-pill edify-primary-solid"><span class="sr-only">Unread</span></span>{% endif %}
             </span>
           </div>
-          <p class="text-[12.5px] {% if t.unread %}font-bold text-slate-900{% else %}font-semibold text-slate-700{% endif %} truncate mt-0.5">{{ t.subject }}</p>
+          <p class="text-[13px] {% if t.unread %}font-bold text-slate-900{% else %}font-semibold text-slate-700{% endif %} truncate mt-0.5">{{ t.subject }}</p>
           <p class="edify-text-caption text-slate-400 font-medium truncate mt-0.5">{{ t.snippet }}</p>
           <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {% if t.context_badge %}

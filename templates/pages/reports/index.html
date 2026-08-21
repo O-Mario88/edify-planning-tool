@@ -51,10 +51,10 @@
 <span class="edify-report-period__kind">{{ period.kind_label }}</span>
 </div>
 {% if period.has_target %}
-<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }} / {{ period.target|floatformat:0 }}</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }} / {{ period.target|floatformat:0 }}</h3>
 <span class="edify-text-caption font-bold text-slate-400 block">Targets Achieved</span>
 {% else %}
-<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }}</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }}</h3>
 <span class="edify-text-caption font-bold text-slate-400 block">Achieved (no target set)</span>
 {% endif %}
 </div>
@@ -87,32 +87,7 @@
 </div>
 <p>Compare verified activity volumes with the approved FY{{ fy }} operating targets.</p>
 </header>
-<div class="edify-report-summary-grid edify-kpi-strip grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Core target summary">
-{% for card in core_cards %}
-<div class="edify-report-summary-card edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-3 flex flex-col justify-between">
-<div>
-<span class="edify-kpi-label edify-text-caption text-slate-400 block">{{ card.label }}</span>
-{% if card.has_target %}
-<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ card.achieved }} / {{ card.target|floatformat:0 }}</h3>
-<span class="edify-text-caption {{ card.color }} font-semibold block mt-1.5">{{ card.pct }}% of FY{{ fy }} Target</span>
-{% else %}
-<h3 class="text-[21px] font-extrabold tracking-tight mt-1 leading-none">{{ card.achieved }}</h3>
-<span class="edify-text-caption text-slate-400 font-semibold block mt-1.5">No FY{{ fy }} target configured</span>
-{% endif %}
-</div>
-<!-- Bar reflecting real % of target (flat/grey when no target exists) -->
-<div class="h-8 w-full pt-1 flex items-end">
-{% if card.has_target %}
-<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
-<div class="h-full rounded-pill {% if card.pct >= 75 %}bg-emerald-500{% elif card.pct >= 60 %}edify-primary-solid{% else %}bg-amber-500{% endif %}" style="width: {% if card.pct > 100 %}100{% else %}{{ card.pct }}{% endif %}%"></div>
-</div>
-{% else %}
-<div class="h-2 w-full bg-slate-100 rounded-pill"></div>
-{% endif %}
-</div>
-</div>
-{% endfor %}
-</div>
+{% include "components/kpi_strip.html" with items=core_kpi_items variant="executive" title="Core target headline" %}
 </section>
 
 

@@ -30,7 +30,7 @@
       <p class="edify-page-eyebrow">My Work</p>
       <h1 class="edify-page-title edify-page-header__title">{{ debrief.title }}</h1>
       <p class="edify-page-header__description">{{ debrief.submitted_by_role }} · {{ debrief.date|date:"d M Y, H:i" }} · Risk: {{ debrief.get_risk_level_display }}</p>
-      {% if debrief.summary %}<p class="text-[12.5px] edify-text">{{ debrief.summary }}</p>{% endif %}
+      {% if debrief.summary %}<p class="text-[13px] edify-text">{{ debrief.summary }}</p>{% endif %}
     </div>
     <div class="edify-page-header__controls">
       <span class="px-2 py-0.5 rounded-pill edify-text-caption font-extrabold whitespace-nowrap
@@ -43,7 +43,7 @@
   <!-- Linked activities -->
   {% if activity_links %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Linked Activities</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Linked Activities</h2>
     {% for link in activity_links %}
     <div class="edify-text-caption py-1">
       <span class="font-bold edify-text">{{ link.activity.get_activity_type_display }}</span>
@@ -55,7 +55,7 @@
 
   <!-- Execution + observations -->
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Execution &amp; Observations</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Execution &amp; Observations</h2>
     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 edify-text-caption">
       {% if debrief.completion_status %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Completion Status</dt><dd class="edify-text">{{ debrief.get_completion_status_display }}</dd></div>{% endif %}
       {% if debrief.engagement_level %}<div><dt class="text-slate-400 edify-text-caption uppercase font-bold">Engagement</dt><dd class="edify-text">{{ debrief.get_engagement_level_display }}</dd></div>{% endif %}
@@ -69,7 +69,7 @@
   <!-- Challenges -->
   {% if challenges %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Challenges</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Challenges</h2>
     {% for c in challenges %}
     <div class="edify-text-caption py-1.5 border-b last:border-0 edify-border">
       <span class="font-bold edify-text">{{ c.get_challenge_type_display }}</span>
@@ -84,7 +84,7 @@
   <!-- Commitments -->
   {% if commitments %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Commitments</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Commitments</h2>
     {% for c in commitments %}
     <div class="edify-text-caption py-1.5 border-b last:border-0 flex items-center justify-between gap-2 edify-border">
       <span class="edify-text"><span class="font-bold">{{ c.get_party_display }}: </span>{{ c.commitment_text }}</span>
@@ -104,7 +104,7 @@
   <!-- Recommendation -->
   {% if debrief.recommended_next_activity_type %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Recommendation</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Recommendation</h2>
     <p class="edify-text-caption edify-text">{{ debrief.get_recommended_next_activity_type_display }} — <span class="text-slate-400">{{ debrief.get_recommendation_status_display }}</span></p>
     {% if can_manage and debrief.recommendation_status == "proposed" %}
     <div class="flex gap-2 pt-1">
@@ -122,7 +122,7 @@
   <!-- Support requests -->
   {% if support_requests %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Support Requested</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Support Requested</h2>
     {% for s in support_requests %}
     <div class="edify-text-caption py-1 flex items-center justify-between gap-2 edify-text">
       <span>{{ s.get_support_type_display }} <span class="text-slate-400">from {{ s.requested_from_role }} — {{ s.status }}</span></span>
@@ -139,7 +139,7 @@
   <!-- Leadership actions -->
   <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
     <div class="flex items-center justify-between pb-2 border-b edify-border">
-      <h2 class="text-[12.5px] font-bold uppercase tracking-wide edify-text">Leadership Actions</h2>
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Leadership Actions</h2>
     </div>
     {% for a in actions %}
     <div class="edify-text-caption py-2 border-b last:border-0 edify-border">
@@ -174,7 +174,7 @@
   <!-- Peer solutions -->
   {% if not debrief.is_restricted_incident %}
   <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Peer Solutions</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Peer Solutions</h2>
     {% for s in peer_solutions %}
     <div class="edify-text-caption py-2 border-b last:border-0 edify-border">
       <p class="edify-text">{{ s.suggestion }}</p>
@@ -199,7 +199,7 @@
 
   {% if can_manage and debrief.status != "clarification_requested" %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Supervisor Review</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Supervisor Review</h2>
     <form method="post" action="/debriefs/action" class="space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="request_clarification"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
       <textarea name="note" rows="2" placeholder="What needs clarifying?" class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
@@ -210,7 +210,7 @@
 
   {% if is_own and debrief.status == "clarification_requested" %}
   <div class="rounded-surface border p-5 space-y-2 border-amber-500/30 edify-surface">
-    <h2 class="text-[12.5px] font-bold uppercase tracking-wide pb-2 border-b border-amber-500/20 edify-text">Clarification Requested</h2>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b border-amber-500/20 edify-text">Clarification Requested</h2>
     <p class="edify-text-caption text-amber-400">{{ debrief.review_note }}</p>
     <form method="post" action="/debriefs/action" class="space-y-2">
       {% csrf_token %}<input type="hidden" name="action" value="update_after_clarification"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">

@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load kpi_metrics %}
 {% block title %}Government Requirements — Edify{% endblock %}
 {% block shell_content %}
 <div id="bt-school-portfolio-container" class="edify-page-canvas space-y-6">
@@ -6,14 +7,12 @@
   {% include "partials/business_transformation/workspace_nav.html" %}
   {% include "partials/business_transformation/school_portfolio_filters.html" with form_label="Government Requirements portfolio filters" endpoint="/business-transformation/government-requirements" %}
 
-  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio hint="Assigned, supported or SSA-referred" tone="primary" %}
-    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned hint="Live support assignments" tone="info" %}
-    {% include "components/kpi_card.html" with label="Schools supported" value=metrics.schoolsSupported hint="Delivered activities" tone="success" %}
-    {% include "components/kpi_card.html" with label="Compliance verified" value=metrics.compliant hint="At least one verified requirement" tone="success" %}
-    {% include "components/kpi_card.html" with label="Action required" value=metrics.actionRequired hint="Verified gap or expiry" tone="danger" %}
-    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving hint="Confirmed SSA movement" tone="success" %}
-  </div>
+  {% legacy_kpi_item "Portfolio schools" metrics.portfolio helper="Assigned, supported or SSA-referred" tone="primary" icon="school" as portfolio_kpi %}
+  {% legacy_kpi_item "Compliance verified" metrics.compliant helper="At least one verified requirement" tone="success" icon="check" as compliant_kpi %}
+  {% legacy_kpi_item "Action required" metrics.actionRequired helper="Verified gap or expiry" tone="danger" icon="warning" as action_kpi %}
+  {% legacy_kpi_item "Awaiting verification" metrics.awaitingVerification helper="Evidence pending IA review" tone="warning" icon="clock" as awaiting_kpi %}
+  {% collect_kpi_items portfolio_kpi compliant_kpi action_kpi awaiting_kpi as government_kpis %}
+  {% include "components/kpi_strip.html" with items=government_kpis variant="executive" title="Government requirements headline" %}
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">
     {% include "partials/business_transformation/school_portfolio_list.html" with list_title="Government Requirements portfolio" list_helper="Schools supported for Government Requirements, with verified compliance evidence kept distinct from SSA improvement." %}

@@ -9,7 +9,7 @@ The body, swapped on its own so a future filter row in the header survives.
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <div class="card p-4">
       <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Clusters</p>
-      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ total_clusters|intcomma }}</p>
+      <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ total_clusters|intcomma }}</p>
       <p class="edify-text-caption edify-text-muted">
         {% if is_team_lens %}Across your team{% else %}Across the country{% endif %}
       </p>
@@ -18,17 +18,17 @@ The body, swapped on its own so a future filter row in the header survives.
       <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">
         {% if is_team_lens %}CCEOs{% else %}Programme Leads{% endif %}
       </p>
-      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ groups|length|intcomma }}</p>
+      <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ groups|length|intcomma }}</p>
       <p class="edify-text-caption edify-text-muted">Holding at least one cluster</p>
     </div>
     <div class="card p-4">
       <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Schools clustered</p>
-      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ total_schools|intcomma }}</p>
+      <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ total_schools|intcomma }}</p>
       <p class="edify-text-caption edify-text-muted">Members of these clusters</p>
     </div>
     <div class="card p-4">
       <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Unassigned</p>
-      <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ unassigned|intcomma }}</p>
+      <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ unassigned|intcomma }}</p>
       {% comment %}
       Named rather than hidden. A cluster nobody is responsible for reaches no
       CCEO's picker, so it is invisible work — which is the thing an oversight

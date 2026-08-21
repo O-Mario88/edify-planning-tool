@@ -1,4 +1,5 @@
 {% extends base_template %}
+{% load kpi_metrics %}
 {% block title %}Business Accounting & Finance — Edify{% endblock %}
 {% block shell_content %}
 <div id="bt-school-portfolio-container" class="edify-page-canvas space-y-6">
@@ -6,14 +7,12 @@
   {% include "partials/business_transformation/workspace_nav.html" %}
   {% include "partials/business_transformation/school_portfolio_filters.html" with form_label="Financial Health portfolio filters" endpoint="/business-transformation/business-accounting-finance" %}
 
-  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
-    {% include "components/kpi_card.html" with label="Portfolio schools" value=metrics.portfolio hint="Assigned, supported or SSA-referred" tone="primary" %}
-    {% include "components/kpi_card.html" with label="Partner assigned" value=metrics.partnerAssigned hint="Active BAFF assignments" tone="info" %}
-    {% include "components/kpi_card.html" with label="Schools trained" value=metrics.schoolsSupported hint="Delivered support" tone="success" %}
-    {% include "components/kpi_card.html" with label="Practice verified" value=metrics.practiceVerified hint="IA-verified adoption" tone="success" %}
-    {% include "components/kpi_card.html" with label="Improving" value=metrics.improving hint="Confirmed SSA movement" tone="success" %}
-    {% include "components/kpi_card.html" with label="Declining" value=metrics.declining hint="Needs follow-up" tone="danger" %}
-  </div>
+  {% legacy_kpi_item "Portfolio schools" metrics.portfolio helper="Assigned, supported or SSA-referred" tone="primary" icon="school" as portfolio_kpi %}
+  {% legacy_kpi_item "Partner assigned" metrics.partnerAssigned helper="Active BAFF assignments" tone="info" icon="partner" as partner_kpi %}
+  {% legacy_kpi_item "Practice verified" metrics.practiceVerified helper="IA-verified adoption" tone="success" icon="check" as practice_kpi %}
+  {% legacy_kpi_item "Declining" metrics.declining helper="Needs follow-up" tone="danger" icon="warning" as declining_kpi %}
+  {% collect_kpi_items portfolio_kpi partner_kpi practice_kpi declining_kpi as financial_health_kpis %}
+  {% include "components/kpi_strip.html" with items=financial_health_kpis variant="executive" title="Financial health headline" %}
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">
     {% include "partials/business_transformation/school_portfolio_list.html" with list_title="Financial Health portfolio" list_helper="Performance compares the first and latest confirmed Financial Health SSA; training and verified practice adoption remain separate." %}

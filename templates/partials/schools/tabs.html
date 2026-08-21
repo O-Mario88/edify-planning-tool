@@ -16,7 +16,7 @@ hx-indicator="#schools-tab-loading"
 @click="document.getElementById('filters-tab-input').value = 'all'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'all' or not active_tab %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-semibold">{{ all_count }}</span>
+All Schools <span data-edify-tab-count class="ml-1.5 px-1.5 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-semibold">{{ all_count }}</span>
 </button>
 
 <!-- Unclustered -->
@@ -35,7 +35,7 @@ hx-indicator="#schools-tab-loading"
 @click="document.getElementById('filters-tab-input').value = 'unclustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'unclustered' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ unclustered_count }}</span>
+Unclustered <span data-edify-tab-count class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ unclustered_count }}</span>
 </button>
 
 <!-- Clustered -->
@@ -54,7 +54,7 @@ hx-indicator="#schools-tab-loading"
 @click="document.getElementById('filters-tab-input').value = 'clustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'clustered' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Clustered <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ clustered_count }}</span>
+Clustered <span data-edify-tab-count class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ clustered_count }}</span>
 </button>
 
 <!-- Not Assigned to Project -->
@@ -73,7 +73,7 @@ hx-indicator="#schools-tab-loading"
 @click="document.getElementById('filters-tab-input').value = 'not_assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'not_assigned' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Not Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ not_assigned_count }}</span>
+Not Assigned to Project <span data-edify-tab-count class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ not_assigned_count }}</span>
 </button>
 
 <!-- Assigned to Project -->
@@ -92,7 +92,7 @@ hx-indicator="#schools-tab-loading"
 @click="document.getElementById('filters-tab-input').value = 'assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'assigned' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
-Assigned to Project <span class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ assigned_count }}</span>
+Assigned to Project <span data-edify-tab-count class="ml-1.5 px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold">{{ assigned_count }}</span>
 </button>
 </div>
 <span id="schools-tab-loading" class="htmx-indicator sr-only" role="status">Updating school directory…</span>

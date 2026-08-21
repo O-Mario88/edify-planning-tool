@@ -1,0 +1,81 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Assignment · {% firstof a.school.name a.cluster.name a.subtype_label %} · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1000px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href=back_url back_label="Assignments" %}
+      <h1 class="edify-page-title edify-page-header__title">{% firstof a.school.name a.cluster.name a.subtype_label %}</h1>
+      <p class="edify-page-header__description">
+        {{ a.subtype_label }} · Assigned {{ a.created_at|date:"d M Y" }}
+        {% if a.scheduled_date %} · Expected by {{ a.scheduled_date|date:"d M Y" }}{% endif %}
+      </p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if a.status == "returned" %}
+      <span class="inline-flex rounded-pill bg-rose-50 px-2.5 py-1 edify-text-caption font-bold text-rose-700">Returned</span>
+      {% elif a.status == "partner_scheduled" %}
+      <span class="inline-flex rounded-pill bg-emerald-50 px-2.5 py-1 edify-text-caption font-bold text-emerald-700">Scheduled — on My Plan</span>
+      {% else %}
+      <span class="inline-flex rounded-pill bg-amber-50 px-2.5 py-1 edify-text-caption font-bold text-amber-700">Awaiting Your Decision</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Assignment brief</h2>
+      <p class="edify-section__description">Everything below is read-only — your decision is Schedule or Return.</p>
+    </div>
+    <div class="edify-data-list">
+      <div class="edify-data-row"><span class="edify-data-row__label">What you are asked to deliver</span><span class="edify-data-row__value">{{ a.subtype_label }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Purpose</span><span class="edify-data-row__value">{{ a.purpose_label }}</span></div>
+      {% if a.school %}
+      <div class="edify-data-row"><span class="edify-data-row__label">School</span><span class="edify-data-row__value">{{ a.school.name }} ({{ a.school.school_id }})</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Location</span><span class="edify-data-row__value">{% firstof a.school.district.name "—" %}{% if a.school.sub_county %} · {{ a.school.sub_county }}{% endif %}</span></div>
+      {% if a.school.headteacher_name or a.school.school_phone %}
+      <div class="edify-data-row"><span class="edify-data-row__label">School contact</span><span class="edify-data-row__value">{% firstof a.school.headteacher_name "—" %}{% if a.school.school_phone %} · {{ a.school.school_phone }}{% endif %}</span></div>
+      {% endif %}
+      {% endif %}
+      {% if a.cluster %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Cluster</span><span class="edify-data-row__value">{{ a.cluster.name }}</span></div>
+      {% endif %}
+      {% if a.focus_intervention %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Focus intervention</span><span class="edify-data-row__value">{{ a.focus_intervention|cut:"_"|title }}</span></div>
+      {% endif %}
+      {% if a.recommendation_reason %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Why this school</span><span class="edify-data-row__value">{{ a.recommendation_reason }}</span></div>
+      {% endif %}
+      {% if a.notes %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Implementation notes</span><span class="edify-data-row__value">{{ a.notes }}</span></div>
+      {% endif %}
+      {% if a.return_reason %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Previous return</span><span class="edify-data-row__value edify-danger-text">{{ a.return_reason_category|cut:"_"|title }} — {{ a.return_reason }}</span></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if can_decide %}
+  <div class="flex flex-wrap items-center justify-end gap-2.5">
+    <button type="button"
+            hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex h-11 items-center rounded-control border border-rose-200 edify-surface px-5 text-[13px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+      Return
+    </button>
+    <button type="button"
+            hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors">
+      Schedule
+    </button>
+  </div>
+  {% elif a.status == "partner_scheduled" %}
+  <p class="text-right text-[12px] font-semibold text-slate-500">This work is on <a href="/partner/my-plan" class="edify-primary-text font-bold">My Plan</a> — reschedule or start it from there.</p>
+  {% endif %}
+
+  <div id="drawer-container"></div>
+</div>
+{% endblock %}

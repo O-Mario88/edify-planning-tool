@@ -1,0 +1,96 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Priorities · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1400px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Strategy</p>
+      <h1 class="edify-page-title edify-page-header__title">Uganda Priorities</h1>
+      <p class="edify-page-header__description">
+        {% if is_scoped_viewer %}The country plan with <strong>your</strong> approved share of every target — the number in the last column is yours, not the country total.{% else %}The Uganda Master Priority Plan, exactly as sourced — priorities, milestones, activities and Uganda's targets · FY {{ fy }}.{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <form method="get"
+        class="platform-filter-bar flex items-center gap-2"
+        data-component="filter-toolbar"
+        x-data>
+    <label for="priorities-fy" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</label>
+    <select id="priorities-fy" name="fy" @change="$el.form.submit()"
+            class="h-9 rounded-control border border-slate-200 edify-surface px-2.5 text-[12px] font-semibold">
+      {% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY{{ option }}</option>{% endfor %}
+    </select>
+  </form>
+
+  {% if not groups %}
+  <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
+    <p class="text-[15px] font-bold text-slate-800">No priority plan for FY {{ fy }}</p>
+    <p class="mt-1 text-[12px] font-semibold text-slate-500">The master plan appears here once it is seeded and confirmed.</p>
+  </div>
+  {% else %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[13px] font-semibold min-w-[1080px]">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
+          <tr>
+            <th class="px-4 py-3 w-[160px]">Priorities</th>
+            <th class="px-4 py-3 min-w-[320px]">Milestones</th>
+            <th class="px-4 py-3 min-w-[220px]">Activities</th>
+            <th class="px-4 py-3 whitespace-nowrap">{% if is_scoped_viewer %}My Target{% else %}Uganda's Targets{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in groups %}
+          {% for row in group.rows %}
+          <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors align-top">
+            {% if forloop.first %}
+            <td class="px-4 py-3.5 font-bold text-slate-800 border-r border-slate-100 align-top" rowspan="{{ group.rows|length }}">
+              {{ group.priority.title }}
+              <p class="edify-text-caption font-semibold text-slate-400 mt-1 normal-case">{{ group.rows|length }} milestone{{ group.rows|length|pluralize }}</p>
+            </td>
+            {% endif %}
+            <td class="px-4 py-3.5 text-slate-700">
+              {% firstof row.milestone.source_text row.milestone.title %}
+              {% if row.milestone.needs_confirmation %}
+              <span class="ml-1.5 inline-flex rounded-pill bg-amber-50 px-2 py-0.5 edify-text-caption font-bold text-amber-700 whitespace-nowrap" title="{{ row.milestone.confirmation_note }}">Confirm source</span>
+              {% endif %}
+              {% if row.milestone.allocation_method == "non_scoreable" %}
+              <span class="ml-1.5 inline-flex rounded-pill bg-slate-100 px-2 py-0.5 edify-text-caption font-bold text-slate-500 whitespace-nowrap">Not scored</span>
+              {% endif %}
+              {% if row.components %}
+              <p class="edify-text-caption font-semibold text-slate-400 mt-1">
+                Components: {% for c in row.components %}{{ c.label }} — {{ c.target_value|floatformat:"0" }}{% if not forloop.last %} · {% endif %}{% endfor %}
+              </p>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3.5 text-slate-600">
+              {% if row.activities %}{{ row.activities|join:", " }}{% else %}<span class="text-slate-300">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-3.5 tabular-nums whitespace-nowrap">
+              {% if is_scoped_viewer %}
+                {% if row.my_value %}
+                <span class="font-bold text-slate-800">{{ row.my_value }}{% if row.is_percent %}%{% endif %}</span>
+                {% if row.my_is_draft %}<span class="ml-1 edify-text-caption font-bold text-amber-600">draft</span>{% endif %}
+                {% else %}
+                <span class="text-slate-300" title="No allocation assigned to you for this milestone">—</span>
+                {% endif %}
+              {% else %}
+              <span class="font-bold text-slate-800">{{ row.target_display }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="edify-text-caption font-medium text-slate-500">{{ total_rows }} milestones across {{ groups|length }} priority groups · source text shown exactly as approved{% if is_scoped_viewer %} · your figures come from your approved allocations{% endif %}.</p>
+  {% endif %}
+</div>
+{% endblock %}

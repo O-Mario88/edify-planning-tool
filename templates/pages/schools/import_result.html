@@ -40,19 +40,19 @@ Resolve Data Quality Issues
 <div class="grid grid-cols-2 gap-4">
 <div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Created (New)</span>
-<p class="text-[21px] font-extrabold tracking-tight">{{ stats.created }}</p>
+<p class="text-[22px] font-extrabold tracking-tight">{{ stats.created }}</p>
 </div>
 <div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Updated (Upserts)</span>
-<p class="text-[21px] font-extrabold tracking-tight">{{ stats.updated }}</p>
+<p class="text-[22px] font-extrabold tracking-tight">{{ stats.updated }}</p>
 </div>
 <div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Clean Records</span>
 <p class="text-[28px] font-semibold text-emerald-600">{{ stats.clean }}</p>
 </div>
 <div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Blocked / Ignored</span>
-<p class="text-[28px] font-semibold text-slate-400">{{ stats.blocked }}</p>
+<span class="edify-text-caption font-bold uppercase tracking-wider {% if stats.blocked %}text-rose-600{% else %}text-slate-400{% endif %}">Blocked / Ignored</span>
+<p class="text-[28px] font-semibold {% if stats.blocked %}text-rose-600{% else %}text-slate-400{% endif %}">{{ stats.blocked }}</p>
 </div>
 </div>
 

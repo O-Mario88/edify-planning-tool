@@ -71,7 +71,7 @@
       </div>
       <div class="flex items-center gap-2">
         <span class="w-4.5 h-4.5 rounded-pill bg-slate-600 inline-block shadow-sm"></span>
-        <span class="text-slate-700">Blocked (Blackout Date)</span>
+        <span class="edify-danger-text font-semibold">Blocked (Blackout Date)</span>
       </div>
       <div class="flex items-center gap-2">
         <span class="w-4.5 h-4.5 rounded-pill bg-amber-500 inline-block shadow-sm"></span>
@@ -109,7 +109,7 @@
             <td class="px-4 py-4 text-center">
               <div
                 class="inline-flex flex-col items-center justify-center p-3 rounded-surface text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
-                style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-text-muted){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
+                style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-chart-red){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
               >
                 <span class="text-[12px] font-extrabold">{{ wk.status }}</span>
                 <span class="edify-text-caption opacity-90 font-bold mt-1">{{ wk.act_count }} activities</span>

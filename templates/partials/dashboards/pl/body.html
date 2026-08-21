@@ -2,9 +2,7 @@
 <div class="pl-dashboard-stack space-y-4">
 
   {# ── KPI strip ──────────────────────────────────────────────────────── #}
-  <div class="mobile-home-hide">
-    {% include "components/kpi_strip.html" with items=kpi_strip_items drilldown_mode="program_lead_dashboard" %}
-  </div>
+  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Team pulse" drilldown_mode="program_lead_dashboard" %}
 
   {# ── Leadership Attention ───────────────────────────────────────────── #}
   {% if leadership_attention %}
@@ -47,10 +45,6 @@
     </div>
   </div>
   {% endif %}
-
-  <div class="mobile-home-only">
-    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Team pulse" drilldown_mode="program_lead_dashboard" %}
-  </div>
 
   {# ── Team Performance + Personal Targets ────────────────────────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">

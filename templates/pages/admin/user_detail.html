@@ -4,7 +4,7 @@
 {% block title %}Manage User: {{ member.name }} — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1000px] mx-auto">
 
 <!-- Breadcrumbs & Header -->
 <div class="edify-page-header">
@@ -71,54 +71,54 @@ You must edit it to their valid operational email address before sending the inv
 
 <!-- General Settings Form -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-6 space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-2">Profile Details</h3>
 
-<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4 font-semibold text-[12px]">
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4">
 {% csrf_token %}
 <input type="hidden" name="action" value="edit">
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Full Name</label>
+<label class="edify-profile-field__label block mb-1.5">Full Name</label>
 <input aria-label="Name"
 type="text"
 name="name"
 value="{{ member.name }}"
 required
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+class="edify-profile-field__value w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Email Address</label>
+<label class="edify-profile-field__label block mb-1.5">Email Address</label>
 <input aria-label="Email"
 type="email"
 name="email"
 value="{{ member.email }}"
 required
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+class="edify-profile-field__value w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 </div>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Phone Number</label>
+<label class="edify-profile-field__label block mb-1.5">Phone Number</label>
 <input
 type="text"
 name="phone"
 value="{{ member.phone|default:'' }}"
 placeholder="+256..."
-class="w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
+class="edify-profile-field__value w-full h-9 px-3 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface focus:ring-2 edify-primary-focus transition-all"
 >
 </div>
 
 <!-- Role Assignment -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
+<label class="edify-profile-field__label block mb-1.5">Primary Active Role</label>
 <select aria-label="Role"
 name="role"
-class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+class="edify-profile-field__value w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >
 {% for r in available_roles %}
 <option value="{{ r }}" {% if member.active_role == r %}selected{% endif %}>{{ r }}</option>
@@ -127,7 +127,7 @@ class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-n
 </div>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
+<label class="edify-profile-field__label block mb-1.5">Additional/Secondary Roles</label>
 <div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
 {% for r in available_roles %}
 <label class="flex items-center gap-2 cursor-pointer select-none">
@@ -148,10 +148,10 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 <!-- District Assignment -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Primary District Assignment</label>
+<label class="edify-profile-field__label block mb-1.5">Primary District Assignment</label>
 <select aria-label="Primary district"
 name="primary_district"
-class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
+class="edify-profile-field__value w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-none edify-primary-focus bg-slate-50/50 edify-focus-surface transition-all cursor-pointer"
 >
 <option value="">None (HQ / Regional)</option>
 {% for d in districts %}
@@ -161,7 +161,7 @@ class="w-full h-9 px-2.5 rounded-control border border-slate-200 focus:outline-n
 </div>
 
 <div>
-<label class="block edify-text-caption uppercase font-bold text-slate-400 mb-1.5">Additional District Assignments</label>
+<label class="edify-profile-field__label block mb-1.5">Additional District Assignments</label>
 <div class="bg-slate-50/50 border border-slate-100 rounded-surface p-3 space-y-2 max-h-48 overflow-y-auto">
 {% for d in districts %}
 <label class="flex items-center gap-2 cursor-pointer select-none">

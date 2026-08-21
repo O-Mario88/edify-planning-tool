@@ -548,3 +548,93 @@
   font-size: var(--edify-text-label-size);
   color: var(--edify-text-subtle);
 }
+/* Standalone Knowledge Center print documents share one governed export
+   pattern. Keeping it here removes template-private CSS while preserving
+   semantic headings and print pagination. */
+.edify-print-document {
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  color: var(--edify-text);
+  font-family: var(--edify-font-sans);
+  font-size-adjust: from-font;
+  font-weight: var(--edify-text-body-weight);
+  line-height: 1.55;
+}
+
+.edify-print-document * {
+  letter-spacing: normal;
+}
+
+.edify-print-document--article {
+  max-width: 51.25rem;
+}
+
+.edify-print-document--manual {
+  max-width: 56.25rem;
+  margin-block: 1.75rem;
+  padding-inline: 1.875rem;
+}
+
+.edify-print-document h1 {
+  font-size: 1.75rem;
+  font-weight: var(--edify-text-display-weight);
+}
+
+.edify-print-document--manual h1 {
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--edify-primary);
+}
+
+.edify-print-document h2 {
+  margin-top: 1.625rem;
+  font-size: 1.125rem;
+  font-weight: var(--edify-text-heading-weight);
+}
+
+.edify-print-document--manual h2 {
+  margin-top: 2.125rem;
+  font-size: 1.375rem;
+}
+
+.edify-print-document h3 {
+  margin-top: 1.25rem;
+  font-size: 1rem;
+  font-weight: var(--edify-text-title-weight);
+}
+
+.edify-print-document :is(p, li) {
+  font-size: 0.875rem;
+}
+
+.edify-print-document--manual :is(p, li) {
+  font-size: var(--edify-text-label-size);
+}
+
+.edify-print-document footer {
+  margin-top: 2.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+.edify-print-document--manual footer {
+  margin-top: 2.125rem;
+  page-break-after: always;
+}
+
+@media print {
+  .edify-print-document {
+    max-width: none;
+    margin: 0;
+  }
+
+  .edify-print-document a {
+    color: var(--edify-text);
+    text-decoration: none;
+  }
+
+  .edify-print-document--manual article {
+    page-break-inside: avoid;
+  }
+}

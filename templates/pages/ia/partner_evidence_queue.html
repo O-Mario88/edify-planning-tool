@@ -1,0 +1,60 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Partner Evidence &amp; Salesforce Confirmation · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1400px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Verification</p>
+      <h1 class="edify-page-title edify-page-header__title">Partner Evidence &amp; Salesforce Confirmation</h1>
+      <p class="edify-page-header__description">Partner submissions come directly to IA — review each against its plan, then Return it for correction or Complete it with its Salesforce entry.</p>
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+          <tr>
+            <th class="px-5 py-3">School / Activity</th>
+            <th class="px-5 py-3">Partner</th>
+            <th class="px-5 py-3">Activity</th>
+            <th class="px-5 py-3">Submitted</th>
+            <th class="px-5 py-3">Evidence</th>
+            <th class="px-5 py-3">Salesforce</th>
+            <th class="px-5 py-3">Payment</th>
+            <th class="px-5 py-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 max-xl:block">
+          {% for row in rows|slice:":50" %}
+          <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
+            <td class="px-5 py-3.5 max-xl:px-0" data-record-title>
+              <a href="/ia/partner-evidence/{{ row.a.id }}/" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
+            </td>
+            <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Partner">{{ row.partner_name }}{% if row.partner_officer %}<p class="edify-text-caption text-slate-400 mt-0.5">{{ row.partner_officer }}</p>{% endif %}</td>
+            <td class="px-5 py-3.5 text-slate-600 max-xl:px-0" data-label="Activity">{{ row.a.get_activity_type_display }}</td>
+            <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0" data-label="Submitted">{% if row.submitted %}{{ row.submitted|date:"d M Y" }}{% if row.age_days %} <span class="edify-text-caption {% if row.age_days > 5 %}text-rose-600{% else %}text-slate-400{% endif %}">({{ row.age_days }}d)</span>{% endif %}{% else %}&mdash;{% endif %}</td>
+            <td class="px-5 py-3.5 max-xl:px-0" data-label="Evidence"><span class="edify-status-text" data-edify-tone="{% if row.evidence_complete %}success{% else %}warning{% endif %}">{{ row.evidence_label }}</span></td>
+            <td class="px-5 py-3.5 max-xl:px-0" data-label="Salesforce"><span class="edify-status-text" data-edify-tone="neutral">Pending</span></td>
+            <td class="px-5 py-3.5 max-xl:px-0" data-label="Payment"><span class="edify-status-text" data-edify-tone="neutral">Not Yet Eligible</span></td>
+            <td class="px-5 py-3.5 text-right max-xl:px-0 max-xl:border-t max-xl:border-slate-100 max-xl:py-3" data-record-action>
+              <a href="/ia/partner-evidence/{{ row.a.id }}/" class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Review</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="max-xl:block"><td colspan="8" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing awaiting review — partner submissions land here the moment they are sent.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if total > shown %}
+    <p class="px-5 py-3 border-t border-slate-100 edify-text-caption font-semibold text-slate-400">Showing the {{ shown }} oldest of {{ total }} — clear these to see the rest.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

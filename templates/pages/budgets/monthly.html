@@ -7,14 +7,14 @@
 {% block shell_content %}
 <div class="px-4 py-5 space-y-4 sm:px-6 max-w-[1500px] mx-auto">
   <div class="edify-page-header edify-page-hero">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div class="edify-page-hero__row">
       <div class="edify-page-header__lead">
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} funding workspace</p>
         <p class="edify-page-eyebrow">Finance</p>
         <h1 class="edify-page-title edify-page-header__title">{{ workspace_title }}</h1>
         <p class="edify-page-header__description">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
       </div>
-      <div class="rounded-control border border-white/10 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200">
+      <div class="edify-page-hero__summary">
         {% if workspace_kind == "admin" %}
         {{ admin_item_count }} administrative item{{ admin_item_count|pluralize }} · {{ source_description }}
         {% else %}
@@ -141,7 +141,7 @@
       <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
         <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
         <p class="mt-1 edify-text-caption font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
-        <p class="mt-2 text-[17px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total|ugx }}</p>
+        <p class="mt-2 text-[18px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total|ugx }}</p>
       </div>
       {% endfor %}
     </div>
@@ -154,10 +154,22 @@
         <h2 class="text-[15px] font-bold text-slate-800">{% if workspace_kind == "admin" %}Administrative cost plan{% else %}Activity cost plan{% endif %}</h2>
         <p class="mt-0.5 text-[12px] font-medium text-slate-500">{% if workspace_kind == "admin" %}Administrative items are grouped by category and come only from the Country Director's monthly admin plan.{% else %}Costs come directly from scheduled planned activities and are grouped by activity and item. Training and meeting tables show sessions and participants.{% endif %}</p>
       </div>
-      <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm md:text-right">
-        <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
-        <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ total|ugx }}</p>
-      </div>
+      {% if districts %}
+      {% comment %}Budgets are submitted per district, so every horizon of
+      this workspace can be narrowed to one. The country admin plan has no
+      district and drops out of a district view.{% endcomment %}
+      <form method="get" action="{{ workspace_base_url }}" class="flex items-center gap-2" x-data>
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="date" value="{{ anchor|date:'Y-m-d' }}">
+        <input type="hidden" name="period" value="{{ selected_period }}">
+        <label for="budget-district-filter" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
+        <select id="budget-district-filter" name="district" @change="$el.form.submit()"
+                class="h-9 rounded-control border border-slate-200 edify-surface px-2.5 text-[12px]">
+          <option value="">All districts</option>
+          {% for d in districts %}<option value="{{ d.id }}" {% if selected_district == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+        </select>
+      </form>
+      {% endif %}
     </div>
     {% if admin_weekly_note %}
     <div class="mx-5 mt-4 rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800">Country admin costs are planned by month, so they appear in the Month, Quarter and Fiscal Year views rather than being estimated into a week.</div>

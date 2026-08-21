@@ -3,7 +3,7 @@
 {% block title %}{{ project.name }} — Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="edify-profile-page edify-page-canvas space-y-4">
 
 <!-- Page Header -->
 <div class="edify-page-header">
@@ -24,7 +24,7 @@ Project
 </div>
 
 <!-- Unified KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Project context" %}
 
 <div class="grid gap-4 xl:grid-cols-2">
 {% if can_assign_staff %}
@@ -140,19 +140,19 @@ View Profile
 
 <div class="space-y-6">
 <div class="card p-6">
-<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Project Details</h3>
+<h3 class="edify-profile-section-title mb-4">Project Details</h3>
 <div class="space-y-4">
 <div>
-<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Project Name</p>
-<p class="text-[14px] font-semibold text-slate-800">{{ project.name }}</p>
+<p class="edify-profile-field__label mb-1">Project Name</p>
+<p class="edify-profile-field__value">{{ project.name }}</p>
 </div>
 <div>
-<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">School Focus</p>
-<p class="text-[14px] font-semibold text-slate-800">{{ project.get_school_focus_display }}</p>
+<p class="edify-profile-field__label mb-1">School Focus</p>
+<p class="edify-profile-field__value">{{ project.get_school_focus_display }}</p>
 </div>
 <div>
-<p class="edify-text-caption text-slate-400 font-semibold uppercase tracking-wider mb-1">Description</p>
-<p class="text-[14px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
+<p class="edify-profile-field__label mb-1">Description</p>
+<p class="edify-profile-field__value">Special initiative to track progress and interventions across a selected cohort of schools.</p>
 </div>
 </div>
 </div>

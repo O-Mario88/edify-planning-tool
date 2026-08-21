@@ -2,6 +2,8 @@ from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
     action_views,
+    extra_work_views,
+    hr_today_views,
     work_plan_views,
     visit_effectiveness_views,
     closure_quality_views,
@@ -100,6 +102,42 @@ urlpatterns = [
         "strategic-priorities/cycles/<str:cycle_id>/approve",
         priority_views.cycle_approve_action,
         name="priority_cycle_approve",
+    ),
+    path(
+        "priorities",
+        target_distribution_views.priorities_master_page,
+        name="priorities_master",
+    ),
+    # §2.2 compatibility: saved links, older notifications and bookmarks that
+    # still say "priority dashboard" land on the one canonical page, keeping
+    # the financial year and any filters they carried. Remove once no stored
+    # notification still points here.
+    path(
+        "priority-dashboard",
+        target_distribution_views.priority_dashboard_redirect,
+        name="priority_dashboard_redirect",
+    ),
+    path("extra-work", extra_work_views.extra_work_page, name="extra_work"),
+    path("hr-today", hr_today_views.hr_today_page, name="hr_today"),
+    path(
+        "extra-work/assign-drawer",
+        extra_work_views.extra_work_assign_drawer,
+        name="extra_work_assign_drawer",
+    ),
+    path(
+        "extra-work/assign",
+        extra_work_views.extra_work_assign_action,
+        name="extra_work_assign",
+    ),
+    path(
+        "extra-work/<str:assignment_id>/submit-drawer",
+        extra_work_views.extra_work_submit_drawer,
+        name="extra_work_submit_drawer",
+    ),
+    path(
+        "extra-work/<str:assignment_id>/<str:action>",
+        extra_work_views.extra_work_action,
+        name="extra_work_action",
     ),
     path(
         "target-distribution",
@@ -445,6 +483,16 @@ urlpatterns = [
         name="partner_oversight",
     ),
     path(
+        "partner-oversight/allowance-drawer",
+        oversight_views.partner_allowance_drawer,
+        name="partner_allowance_drawer",
+    ),
+    path(
+        "partner-oversight/allowance-grant",
+        oversight_views.partner_allowance_grant_action,
+        name="partner_allowance_grant",
+    ),
+    path(
         "partner-oversight/detail",
         oversight_views.partner_oversight_detail_view,
         name="partner_oversight_detail",
@@ -781,6 +829,36 @@ urlpatterns = [
         ia_views.ia_return_action,
         name="ia_return_action",
     ),
+    path(
+        "ia/partner-evidence/",
+        ia_views.ia_partner_evidence_queue_view,
+        name="ia_partner_evidence",
+    ),
+    path(
+        "ia/partner-evidence/<str:activity_id>/",
+        ia_views.ia_partner_review_view,
+        name="ia_partner_review",
+    ),
+    path(
+        "ia/partner-evidence/<str:activity_id>/return-drawer",
+        ia_views.ia_partner_return_drawer,
+        name="ia_partner_return_drawer",
+    ),
+    path(
+        "ia/partner-evidence/<str:activity_id>/return-action",
+        ia_views.ia_partner_return_action,
+        name="ia_partner_return_action",
+    ),
+    path(
+        "ia/partner-evidence/<str:activity_id>/complete-drawer",
+        ia_views.ia_partner_complete_drawer,
+        name="ia_partner_complete_drawer",
+    ),
+    path(
+        "ia/partner-evidence/<str:activity_id>/complete-action",
+        ia_views.ia_partner_complete_action,
+        name="ia_partner_complete_action",
+    ),
     path("ia/returned/", ia_views.ia_returned_view, name="ia_returned"),
     path("ia/history/", ia_views.ia_history_view, name="ia_history"),
     path("ia/duplicates/", ia_views.ia_duplicates_view, name="ia_duplicates"),
@@ -1002,6 +1080,11 @@ urlpatterns = [
     path("leave/tracker", leave_views.leave_tracker_view, name="leave_tracker"),
     path("leave/tracker/", leave_views.leave_tracker_view),
     path("leave/approvals", leave_views.leave_approvals_view, name="leave_approvals"),
+    path(
+        "leave/<str:leave_id>/attachment",
+        leave_views.leave_attachment_view,
+        name="leave_attachment",
+    ),
     path("leave/approvals/", leave_views.leave_approvals_view),
     path(
         "leave/approvals/<str:leave_id>/approve",
@@ -1319,6 +1402,41 @@ urlpatterns = [
     ),
     path("accounts/partner-payments/", finance_operating_views.partner_payments_view),
     path(
+        "accounts/transport-payments/<str:payment_id>/pay",
+        finance_operating_views.pay_transport_action,
+        name="pay_transport",
+    ),
+    path(
+        "partner/invoices/new",
+        partner_views.partner_invoice_drawer,
+        name="partner_invoice_drawer",
+    ),
+    path(
+        "partner/invoices",
+        partner_views.partner_invoice_submit,
+        name="partner_invoice_submit",
+    ),
+    path(
+        "fund-approvals/invoices/<str:invoice_id>/action",
+        extended_views.pl_partner_invoice_action,
+        name="pl_partner_invoice_action",
+    ),
+    path(
+        "fund-approvals/invoices/<str:invoice_id>/download",
+        extended_views.pl_partner_invoice_download,
+        name="pl_partner_invoice_download",
+    ),
+    path(
+        "accounts/partner-invoices/<str:invoice_id>/download",
+        finance_operating_views.partner_invoice_download,
+        name="partner_invoice_download",
+    ),
+    path(
+        "accounts/partner-invoices/<str:invoice_id>/pay",
+        finance_operating_views.partner_invoice_pay_action,
+        name="partner_invoice_pay",
+    ),
+    path(
         "accounts/partner-payments/<str:activity_id>/pay",
         finance_operating_views.pay_partner_action,
         name="finance_pay_partner",
@@ -1481,6 +1599,31 @@ urlpatterns = [
         name="partner_activities",
     ),
     path(
+        "partner/assignments",
+        partner_views.partner_assignments_view,
+        name="partner_assignments",
+    ),
+    path(
+        "partner/assigned-schools",
+        partner_views.partner_assigned_schools_view,
+        name="partner_assigned_schools",
+    ),
+    path(
+        "partner/assigned-activities",
+        partner_views.partner_assigned_activities_view,
+        name="partner_assigned_activities",
+    ),
+    path(
+        "partner/assignments/<str:assignment_id>",
+        partner_views.partner_assignment_detail_view,
+        name="partner_assignment_detail",
+    ),
+    path(
+        "partner/completed",
+        partner_views.partner_completed_payments_view,
+        name="partner_completed_payments",
+    ),
+    path(
         "partner/assignments/<str:assignment_id>/schedule-drawer",
         partner_views.partner_schedule_assignment_drawer,
         name="partner_schedule_assignment_drawer",
@@ -1502,6 +1645,21 @@ urlpatterns = [
     ),
     path(
         "partner/evidence", partner_views.partner_evidence_view, name="partner_evidence"
+    ),
+    path(
+        "partner/activities/<str:activity_id>/evidence",
+        partner_views.partner_activity_workroom_view,
+        name="partner_activity_workroom",
+    ),
+    path(
+        "partner/activities/<str:activity_id>/start-action",
+        partner_views.partner_activity_start_action,
+        name="partner_activity_start",
+    ),
+    path(
+        "partner/activities/<str:activity_id>/submit-action",
+        partner_views.partner_activity_submit_action,
+        name="partner_activity_submit",
     ),
     path("partner/my-plan", partner_views.partner_my_plan_view, name="partner_my_plan"),
     # ── GROUP 4: SSA, FY & Planning ──────────────────────────────────────────

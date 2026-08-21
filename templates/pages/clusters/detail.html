@@ -5,7 +5,7 @@
 {% block title %}{{ cluster.name }} - Cluster details{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Back Nav & Header -->
 <div>
 {% include "partials/_back_link.html" with back_href="/clusters" back_label="Cluster Directory" %}
@@ -58,23 +58,23 @@ Schedule Cluster Meeting
 <div class="lg:col-span-2 space-y-6">
 <!-- Cluster Info Card -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Cluster Type</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>
+<p class="edify-profile-field__label">Cluster Type</p>
+<p class="edify-profile-field__value mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Status</p>
-<p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ cluster.status }}</p>
+<p class="edify-profile-field__label">Status</p>
+<p class="edify-profile-field__value mt-0.5 capitalize">{{ cluster.status }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Cluster Leader</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderName|default:"None assigned" }}</p>
+<p class="edify-profile-field__label">Cluster Leader</p>
+<p class="edify-profile-field__value mt-0.5">{{ cluster.clusterLeaderName|default:"None assigned" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Leader Phone</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
+<p class="edify-profile-field__label">Leader Phone</p>
+<p class="edify-profile-field__value mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
 </div>
 </div>
 </div>
@@ -114,9 +114,9 @@ Schedule Cluster Meeting
 <td class="px-4 py-3" data-label="School Name">
 <a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
 </td>
-<td class="px-4 py-3 font-semibold text-slate-800 tabular-nums" data-label="SSA Average">{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:1 }}/10{% else %}Not assessed{% endif %}</td>
-<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Visit">{{ s.lastVisitDate }}</td>
-<td class="px-4 py-3 text-slate-500 font-semibold" data-label="Last Training">{{ s.lastTrainingDate }}</td>
+<td class="px-4 py-3 font-semibold tabular-nums" data-label="SSA Average"><span class="edify-status-text" data-edify-tone="{{ s.ssaAverageTone|default:'neutral' }}">{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:1 }}/10{% else %}Not assessed{% endif %}</span></td>
+<td class="px-4 py-3 font-semibold" data-label="Last Visit"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</span></td>
+<td class="px-4 py-3 font-semibold" data-label="Last Training"><span class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</span></td>
 <td class="px-4 py-3" data-label="Readiness">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider {% if s.planningStatus == 'ready_for_support_planning' %}bg-emerald-50 text-emerald-700{% elif s.planningStatus == 'ready_for_baseline_ssa' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
 {{ s.planningStatusLabel }}

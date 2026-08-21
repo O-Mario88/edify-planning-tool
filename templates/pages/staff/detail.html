@@ -1,10 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 {% load frontend_filters %}
 
 {% block title %}{{ member.name }} — Staff Profile{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
 <!-- Breadcrumb -->
 {% include "partials/_back_link.html" with back_href="/staff" back_label="Staff Directory" %}
 
@@ -28,21 +29,10 @@
 </div>
 </div>
 
-<!-- KPI Strip -->
-<div class="edify-kpi-strip edify-kpi-strip--value-first grid grid-cols-3 gap-4" aria-label="Staff activity summary">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-emerald-600">{{ completed_count }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-rose-500">{{ overdue_count }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Overdue</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold edify-primary-text">{{ schools_covered|length }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Schools Covered</p>
-</div>
-</div>
+{% legacy_kpi_item "Overdue activities" overdue_count helper="Needs recovery" tone="danger" icon="warning" as overdue_kpi %}
+{% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" as completed_kpi %}
+{% collect_kpi_items overdue_kpi completed_kpi as staff_activity_kpis %}
+{% include "components/kpi_strip.html" with items=staff_activity_kpis variant="executive" density="compact" title="Activity headline" %}
 
 <!-- Annual SSA Progress (Assigned Schools) -->
 {% if staff_progress %}

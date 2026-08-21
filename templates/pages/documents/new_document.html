@@ -49,6 +49,15 @@
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Review date</span>
         <input type="date" name="review_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
       </label>
+      {% comment %}
+      The nightly expiry job and the System Health check both read this field,
+      and no form ever posted it — so expire_documents() always returned zero
+      and a lapsed policy stayed effective indefinitely.
+      {% endcomment %}
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expiry date</span>
+        <input type="date" name="expiry_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      </label>
     </div>
     <label class="flex flex-col gap-1">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">File</span>
@@ -70,6 +79,16 @@
       <label class="flex flex-col gap-1">
         <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Days to respond</span>
         <input type="number" name="acknowledgement_due_days" min="1" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface w-32">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Required active reading time</span>
+        <span class="edify-text-caption font-semibold text-slate-400">Set the minimum time a reader must actively spend with this policy or manual. This remains separate from whether they agree.</span>
+        <span class="flex items-center gap-2">
+          <input type="number" name="required_reading_minutes" min="1" max="180" value="1" required
+                 class="h-9 w-24 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"
+                 aria-describedby="reading-time-unit">
+          <span id="reading-time-unit" class="text-[12px] font-semibold text-slate-500">minutes</span>
+        </span>
       </label>
     </fieldset>
     {% endif %}

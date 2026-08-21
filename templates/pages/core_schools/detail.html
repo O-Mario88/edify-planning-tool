@@ -13,7 +13,7 @@
 </div>
 </div>
 
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[21px] font-extrabold tracking-tight">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[22px] font-extrabold tracking-tight">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
 {% if slots %}<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-semibold">Activity Slots</h3></div><ul class="divide-y divide-slate-100">{% for s in slots %}<li class="px-5 py-3.5 flex items-center justify-between"><p class="text-[12px] font-bold text-slate-800">Slot #{% firstof s.slot_number forloop.counter %} — {{ s.kind|default:"Activity" }}</p><span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text">{{ s.status }}</span></li>{% endfor %}</ul></div>{% endif %}
 
 </div>

@@ -38,17 +38,19 @@ ALL_ROLES = {
 # These pages contain the Business Transformation Officer's specialist school
 # portfolio. Unlike general support pages, even the technical Admin role does
 # not inherit them: the product owner explicitly keeps this operating context
-# inside the active BT role. Loans remain the universal transparency surface.
+# inside the active BT role. The record-level Loans page follows the same
+# least-privilege rule.
 ROLE_EXCLUSIVE_PAGES = {
+    "loans",
     "business_transformation_finance",
     "business_transformation_government",
 }
 
-# The Loans destination is the only Business Transformation navigation item
-# advertised outside the BT role. Leadership and support roles retain any
-# deliberately granted deep-link/report access, but their everyday workspace
-# does not present specialist BT tabs they do not operate.
+# The Loans destination is advertised only to roles that operate or validate
+# the record-level portfolio. Impact-only and executive roles use their scoped
+# reporting surfaces instead.
 BT_SPECIALIST_NAV_PAGES = {
+    "loans",
     "business_transformation",
     "business_transformation_finance",
     "business_transformation_government",
@@ -62,7 +64,7 @@ BT_SPECIALIST_NAV_PAGES = {
 # Admin is deliberately absent: Platform Operations observes field work
 # through Team Plans, Support Tickets, Incidents and Search, and never
 # carries a field workspace of its own.
-FIELD_NAV_ROLES = {CCEO, PL, PARTNER, PROJECT_COORDINATOR}
+FIELD_NAV_ROLES = {CCEO, PL, PROJECT_COORDINATOR}
 
 
 def get_user_role_slug(user) -> str:
@@ -116,7 +118,14 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         PARTNER,
         PROJECT_COORDINATOR,
     },
-    "loans": ALL_ROLES,
+    "loans": {
+        BUSINESS_TRANSFORMATION,
+        CD,
+        IA,
+        RVP,
+        MFI_ADMIN,
+        MFI_OFFICER,
+    },
     "business_transformation_finance": {BUSINESS_TRANSFORMATION},
     "business_transformation_government": {BUSINESS_TRANSFORMATION},
     "business_transformation_reports": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
@@ -244,7 +253,8 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "daily_debrief": {CCEO, PARTNER, PL, PROJECT_COORDINATOR, CD, HR, IA, RVP, ADMIN},
     "debriefs_list": {CCEO, PARTNER, PL, PROJECT_COORDINATOR, CD, HR, IA, RVP, ADMIN},
     "debrief_detail": {CCEO, PARTNER, PL, PROJECT_COORDINATOR, CD, HR, IA, RVP, ADMIN},
-    "personal_time_off": ALL_ROLES,
+    # Field partners are external organisations — no leave entitlements.
+    "personal_time_off": ALL_ROLES - {PARTNER},
     "leave_requests": ALL_ROLES,
     "leave_tracker": {HR, PL, CD, RVP, ADMIN},
     "leave_approvals": {PL, CD, RVP, HR, ADMIN},
@@ -274,16 +284,19 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "closed_schools": {CCEO, PL, IA, CD, ADMIN},
     "school_action_drawer": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
     "school_upload": {IA, ADMIN},
-    "clusters": {CCEO, PL, IA, PARTNER, CD, ADMIN},
-    "cluster_planning": {CCEO, PL, IA, PARTNER, CD, ADMIN},
-    "cluster_detail": {CCEO, PL, IA, PARTNER, CD, ADMIN},
+    "clusters": {CCEO, PL, IA, CD, ADMIN},
+    "cluster_planning": {CCEO, PL, IA, CD, ADMIN},
+    "cluster_detail": {CCEO, PL, IA, CD, ADMIN},
     "partners": ALL_ROLES,
     "partner_detail": ALL_ROLES,
     "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN},
     # Calendar is a shared read-only operational surface. The view applies its
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
-    "planning": {CCEO, PL, PROJECT_COORDINATOR, ADMIN},
+    # The CD plans plenty of non-school work (district trips, boot camps,
+    # partner meetings), so they hold the planning surface too — the field-
+    # event drawer is its entry point for them (owner, 2026-08-19).
+    "planning": {CCEO, PL, PROJECT_COORDINATOR, CD, ADMIN},
     # Work Plan is the FY-level roll-up of the same activity ledger Planning
     # writes. Field planners keep it, and the leadership/verification roles
     # (CD, IA, HR) read it without being able to plan. The RVP gets aggregate
@@ -411,6 +424,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "closure_impact": {CD, RVP, ADMIN},
     # Partner sub-routes
     "partner_today": {PARTNER, ADMIN},
+    "partner_assignments": {PARTNER, ADMIN},
     "partner_schools": {PARTNER, ADMIN},
     "partner_activities": {PARTNER, ADMIN},
     "partner_evidence": {PARTNER, ADMIN},
@@ -426,6 +440,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
     "ia_verification_queue": {IA, ADMIN},
+    "ia_partner_evidence": {IA, ADMIN},
     "ia_duplicates": {IA, ADMIN},
     "ia_compare": {IA, ADMIN},
     "ia_returned": {IA, ADMIN},
@@ -470,6 +485,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # country targets to Program Leads (CD owns/publishes the master and
     # monitors); each PL distributes their team target to supervised CCEOs.
     "target_distribution": {IA, CD, ADMIN},
+    # The canonical master table (§9): every staff role reads the SAME rows;
+    # the target column is role-scoped (PL/CCEO see their own allocation).
+    "priorities_master": {CCEO, PL, CD, IA, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    # §18 Extra Assigned Work: CD/PL assign, CCEO executes; Admin supports.
+    "extra_work": {CD, PL, CCEO, ADMIN},
+    "hr_today": {HR, CD, PL, RVP, ADMIN},
     "team_target_distribution": {PL, ADMIN},
     "recovery_plans": {HR, PL, ADMIN},
     "culture_engagement": {HR, ADMIN},
@@ -589,6 +610,7 @@ ICONS = {
 ICONS.update(
     {
         "team_planning_oversight": ICONS["planning"],
+        "partner_assignments": ICONS["planning"],
         "country_planning_oversight": ICONS["work_plan"],
         "partner_oversight": ICONS["partners"],
         "my_actions": ICONS["todos"],
@@ -596,6 +618,9 @@ ICONS.update(
         "uploads": ICONS["ia_upload_center"],
         "closed_schools": ICONS["completed_archive"],
         "leave_tracker": ICONS["team_availability"],
+        "priorities_master": ICONS["target_distribution"],
+        "extra_work": ICONS["todos"],
+        "hr_today": ICONS["todos"],
         "admin_my_plan": ICONS["my_plan"],
         "admin_planning": ICONS["planning"],
         "admin_team_plans": ICONS["team_targets"],
@@ -634,7 +659,7 @@ ANALYTICS_SECTIONS = [
         "url": "/analytics",
         "page_key": "analytics",
         "match": "exact",
-        "cluster": "programme",
+        "cluster": "overview",
         "description": "Programme performance, field execution and delivery.",
         # Coordinators get Special Project Impact Intelligence; Program Leads
         # their supervised-team cockpit; the Country Director the national one.
@@ -650,7 +675,7 @@ ANALYTICS_SECTIONS = [
         "url": "/ssa",
         "page_key": "ssa_performance",
         "match": "exact",
-        "cluster": "programme",
+        "cluster": "school_performance",
         "description": "Verified school self-assessment scores and movement.",
     },
     {
@@ -658,7 +683,7 @@ ANALYTICS_SECTIONS = [
         "label": "Visit Effectiveness",
         "url": "/analytics/visit-effectiveness",
         "page_key": "visit_effectiveness",
-        "cluster": "programme",
+        "cluster": "school_performance",
         "description": "How school visits relate to verified SSA change.",
     },
     {
@@ -666,7 +691,7 @@ ANALYTICS_SECTIONS = [
         "label": "Impact Analytics",
         "url": "/impact",
         "page_key": "impact_analytics",
-        "cluster": "programme",
+        "cluster": "impact_decisions",
         "description": "Did visits, trainings and money move the scores?",
     },
     {
@@ -674,7 +699,7 @@ ANALYTICS_SECTIONS = [
         "label": "Declining Schools",
         "url": "/declining-schools",
         "page_key": "declining_schools",
-        "cluster": "programme",
+        "cluster": "school_performance",
         "description": "Schools losing ground, ranked by drop.",
     },
     {
@@ -682,7 +707,7 @@ ANALYTICS_SECTIONS = [
         "label": "Core School Health",
         "url": "/core-school-health",
         "page_key": "core_school_health",
-        "cluster": "programme",
+        "cluster": "school_performance",
         "description": "Core service package delivery, read-only.",
     },
     {
@@ -690,7 +715,7 @@ ANALYTICS_SECTIONS = [
         "label": "Decision Intelligence",
         "url": "/decisions",
         "page_key": "decision_intelligence",
-        "cluster": "decisions",
+        "cluster": "impact_decisions",
         "description": "What leadership is being asked to decide, and why.",
     },
     {
@@ -698,7 +723,7 @@ ANALYTICS_SECTIONS = [
         "label": "Decision Log",
         "url": "/decision-log",
         "page_key": "decision_log",
-        "cluster": "decisions",
+        "cluster": "impact_decisions",
         "description": "What was decided, by whom, on what evidence.",
     },
     {
@@ -730,7 +755,7 @@ ANALYTICS_SECTIONS = [
         "label": "School Closures",
         "url": "/analytics/school-closures",
         "page_key": "closure_impact",
-        "cluster": "programme",
+        "cluster": "school_performance",
         "description": "Where the country is losing schools, and what it cost the plan.",
     },
     {
@@ -788,6 +813,15 @@ IA_SECTIONS = [
         "match": "exact",
         "cluster": "verification",
         "description": "Evidence and Salesforce checks awaiting an IA decision.",
+    },
+    {
+        "key": "partner_evidence",
+        "label": "Partner Evidence",
+        "url": "/ia/partner-evidence/",
+        "page_key": "ia_partner_evidence",
+        "match": "exact",
+        "cluster": "verification",
+        "description": "Partner submissions awaiting review and Salesforce confirmation.",
     },
     {
         "key": "ssa_verification",
@@ -897,8 +931,9 @@ LEAVE_SECTIONS = [
 
 # Every multi-page workspace, keyed by the eyebrow its section strip shows.
 WORKSPACE_CLUSTER_LABELS = {
-    "programme": "Programme Health",
-    "decisions": "Decisions",
+    "overview": "Overview",
+    "school_performance": "School Performance",
+    "impact_decisions": "Impact & Decisions",
     "delivery": "Delivery & Quality",
     "reporting": "Reporting",
 }
@@ -1017,9 +1052,24 @@ def build_workspace(user, current_path: str = "") -> dict | None:
                 group["sections"].append(section)
                 group["active"] = group["active"] or section["active"]
             groups = list(groups_by_key.values())
+            # Each area has one durable destination in the primary strip. Its
+            # individual analyses remain real permission-scoped routes and are
+            # exposed by the compact view menu in the shared template. This
+            # keeps the information architecture small without flattening
+            # distinct datasets into one misleading client-side tab panel.
+            for group in groups:
+                active_section = next(
+                    (section for section in group["sections"] if section["active"]),
+                    None,
+                )
+                group["active_section"] = active_section or group["sections"][0]
+                group["url"] = group["active_section"]["url"]
             active_group = next(
                 (group["key"] for group in groups if group["active"]),
                 groups[0]["key"],
+            )
+            active_group_detail = next(
+                group for group in groups if group["key"] == active_group
             )
             return {
                 "key": key,
@@ -1027,6 +1077,7 @@ def build_workspace(user, current_path: str = "") -> dict | None:
                 "sections": sections,
                 "groups": groups,
                 "active_group": active_group,
+                "active_group_detail": active_group_detail,
             }
     return None
 
@@ -1047,6 +1098,8 @@ SIDEBAR_ITEMS = [
                 "label": "Dashboard",
                 "url": "/dashboard",
                 "page_key": "dashboard",
+                # A partner's home IS their assigned work.
+                "role_urls": {PARTNER: "/partner/assigned-schools"},
             },
             {
                 # Planning, targets, clusters and flagged schools are lenses
@@ -1060,12 +1113,40 @@ SIDEBAR_ITEMS = [
                 "extra_active_paths": ("/team-targets",),
             },
             {
+                # The CD has no SCHOOLS & FIELD group, but they plan plenty of
+                # non-school work (district trips, boot camps, partner
+                # meetings) — Planning surfaces here for them; field roles
+                # keep their entry in SCHOOLS & FIELD (owner, 2026-08-19).
+                "label": "Planning",
+                "url": "/planning",
+                "page_key": "planning",
+                "visible_to": {CD},
+            },
+            {
+                # The canonical Uganda Master table in its four source
+                # columns; PL/CCEO read their OWN allocated figure here
+                # (owner, 2026-08-20).
+                "label": "Priorities",
+                "url": "/priorities",
+                "page_key": "priorities_master",
+            },
+            {
+                "label": "Extra Work",
+                "url": "/extra-work",
+                "page_key": "extra_work",
+            },
+            {
                 "label": "My Plan",
                 "url": "/my-plan",
                 "page_key": "my_plan",
-                # Project Coordinators plan only project work — route them to the
-                # project-scoped My Plan.
-                "role_urls": {PROJECT_COORDINATOR: "/projects/my-plan"},
+                # Project Coordinators plan only project work — route them to
+                # the project-scoped My Plan. Partners use the default URL:
+                # their plan RENDERS at /my-plan (the partner layout), and the
+                # old /partner/my-plan redirect hop meant the sidebar item
+                # never matched the current path, so it never highlighted.
+                "role_urls": {
+                    PROJECT_COORDINATOR: "/projects/my-plan",
+                },
             },
             # Calendar is the operational projection of the same activity
             # ledger My Plan executes. It remains in MY WORK because every
@@ -1133,6 +1214,35 @@ SIDEBAR_ITEMS = [
                 "label": "Leave Approvals",
                 "url": "/leave/approvals",
                 "page_key": "leave_approvals",
+            },
+        ],
+    },
+    {
+        "group_label": "MY FIELD WORK",
+        "visible_to": {PARTNER},
+        "items": [
+            {
+                "label": "Assigned Schools",
+                "url": "/partner/assigned-schools",
+                "page_key": "partner_schools",
+                "icon_key": "schools",
+            },
+            {
+                "label": "Assigned Activities",
+                "url": "/partner/assigned-activities",
+                "page_key": "partner_assignments",
+            },
+            {
+                "label": "Evidence",
+                "url": "/partner/evidence",
+                "page_key": "partner_evidence",
+                "icon_key": "uploads",
+            },
+            {
+                "label": "Completed & Payments",
+                "url": "/partner/completed",
+                "page_key": "partner_activities",
+                "icon_key": "disbursements",
             },
         ],
     },
@@ -1222,7 +1332,7 @@ SIDEBAR_ITEMS = [
                 "label": "Loans",
                 "url": "/loans",
                 "page_key": "loans",
-                "visible_to": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+                "visible_to": {BUSINESS_TRANSFORMATION, CD, IA, RVP},
             },
             {
                 "label": "Business Accounting & Finance",
@@ -1291,7 +1401,12 @@ SIDEBAR_ITEMS = [
         "group_label": "MY PERFORMANCE",
         "items": [
             {
-                "label": "Priority Dashboard",
+                # Was labelled "Priority Dashboard", which named a surface the
+                # platform does not have: this is the individual's own
+                # performance agreement. /priorities is the one canonical
+                # priority page, and two things called a priority dashboard is
+                # how two pages end up answering the same question differently.
+                "label": "My Performance Agreement",
                 "url": "/my-performance",
                 "page_key": "my_performance",
                 # Regional and country strategy authors enter the governed
@@ -1556,6 +1671,11 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "PEOPLE & TEAMS",
         "items": [
+            {
+                "label": "HR Today",
+                "url": "/hr-today",
+                "page_key": "hr_today",
+            },
             {
                 "label": "Policy Compliance",
                 "url": "/policy-compliance",
@@ -1998,9 +2118,10 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # Field execution — the phone IS the field device, so the Today
     # workbench (roadmap Phase 5) leads; the plan and schools follow.
     CCEO: ("today", "my_plan", "schools", "messages"),
-    # A Partner is not authorized for the school directory at all; clusters is
-    # the school-context surface they actually hold.
-    PARTNER: ("dashboard", "my_plan", "clusters", "messages"),
+    # A Partner is not authorized for the school directory at all. Their
+    # phone opens on the Assigned Schools intake — the same place their
+    # sidebar home points.
+    PARTNER: ("partner_schools", "my_plan", "calendar", "messages"),
     # A PL's second surface is the team, not their own plan alone.
     PL: ("today", "my_plan", "team_planning_oversight", "messages"),
     # Projects lead for the coordinator; their planning is project-scoped.

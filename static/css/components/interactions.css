@@ -168,7 +168,13 @@ main :is(
   .edify-section-nav__inner
 ) {
   gap: 0 !important;
-  padding: 0.1875rem !important;
+  /* Selected segments meet the rail border on every edge. An inset track left
+     a visible white seam under fixed-height legacy tabs and made the active
+     fill look unfinished. */
+  padding: 0 !important;
+  min-block-size: 0 !important;
+  block-size: auto !important;
+  height: auto !important;
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface) !important;
 }
@@ -187,6 +193,13 @@ main :is(
   .edify-section-nav__link
 ) {
   position: relative;
+  /* This sheet loads after responsive density rules. Keep each segment on the
+     flex rail's cross axis instead of allowing a legacy h-8/h-9 or compact
+     desktop rule to reintroduce a shorter 32px tab and a seam underneath. */
+  align-self: stretch !important;
+  block-size: auto !important;
+  height: auto !important;
+  min-block-size: 0 !important;
   /* Square, because a segment is a division of one rail rather than a pill
      sitting on it. Only the two extreme ends curve, and they curve to the
      same radius a button uses (--radius-control) so a rail and a button read
@@ -233,6 +246,23 @@ main :is(
   border-end-end-radius: var(--edify-radius-sm) !important;
 }
 
+/* Some shared rails contain visually hidden context and divider spans before
+   their controls. DOM position must not change tab geometry: curve the first
+   and last real segment, not merely the first and last child node. The base
+   :first-child/:last-child rules above remain the fast path for simple rails;
+   these component-specific rules make grouped and route-linked rails match. */
+main .edify-section-nav__clusters > .edify-section-nav__cluster:first-of-type,
+main .edify-section-nav__inner > .edify-section-nav__link:first-of-type {
+  border-start-start-radius: var(--edify-radius-sm) !important;
+  border-end-start-radius: var(--edify-radius-sm) !important;
+}
+
+main .edify-section-nav__clusters > .edify-section-nav__cluster:last-of-type,
+main .edify-section-nav__inner > .edify-section-nav__link:last-of-type {
+  border-start-end-radius: var(--edify-radius-sm) !important;
+  border-end-end-radius: var(--edify-radius-sm) !important;
+}
+
 /* The divider between two segments: a short hairline, inset from the rail's
    top and bottom so it reads as a division inside one control rather than as
    a border around several. It hangs off the segment to its right, which is
@@ -274,6 +304,8 @@ main :is(
   .edify-section-nav__clusters,
   .edify-section-nav__inner
 ) > :first-child,
+main .edify-section-nav__clusters > .edify-section-nav__cluster:first-of-type,
+main .edify-section-nav__inner > .edify-section-nav__link:first-of-type,
 main :is(
   [role="tab"][aria-selected="true"],
   .edify-tab-btn.active,
@@ -378,6 +410,56 @@ main :is(
   box-shadow: none !important;
 }
 
+/* Dynamic counts and labels are content inside one segment, never badges or
+   independently selected surfaces. This final layer deliberately outranks
+   legacy `bg-*`, `edify-primary-soft`, pill, text-colour and padding utilities
+   so an HTMX-refreshed value looks identical before and after it changes. */
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) > :is(span, strong, b, small),
+main :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) :is(
+  .rounded-pill,
+  [data-edify-tab-count],
+  .messages-inbox-tab__count,
+  .oversight-entity-tabs__count,
+  .edify-section-nav__cluster-count
+) {
+  min-inline-size: auto !important;
+  block-size: auto !important;
+  margin-block: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  font: inherit !important;
+  letter-spacing: inherit !important;
+  opacity: 1 !important;
+}
+
 /* ── Tabs do not invert on hover ───────────────────────────────────────────
    A rail is a set of choices, and only one of them is true. Filling a segment
    blue under the pointer says "this is selected" about four things at once,
@@ -479,5 +561,151 @@ main :is(
     transform: translateY(var(--edify-press-shift)) !important;
     box-shadow: none !important;
     transition-duration: 60ms !important;
+  }
+}
+
+/* ── Consolidated analytics navigation ───────────────────────────────────
+   Analytics has five durable product areas in its primary rail. Distinct
+   server routes inside the current area live in this compact disclosure,
+   rather than becoming another full-width rail (or several hidden rails that
+   a legacy !important display rule can accidentally reveal). */
+main .edify-section-nav__workspace {
+  gap: 0.625rem;
+}
+
+main .edify-section-nav__view-switcher {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-block-size: 2.5rem;
+}
+
+main .edify-section-nav__view-label {
+  flex: 0 0 auto;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 400;
+  line-height: var(--edify-text-label-leading);
+}
+
+main .edify-section-nav__view-menu {
+  position: relative;
+  inline-size: min(100%, 18rem);
+}
+
+main .edify-section-nav__view-button {
+  display: flex;
+  inline-size: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-block-size: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: 400;
+  line-height: var(--edify-text-label-leading);
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+main .edify-section-nav__view-button svg {
+  flex: 0 0 auto;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--edify-text-muted);
+  transition: transform .15s ease;
+}
+
+main .edify-section-nav__view-button.is-open {
+  border-color: var(--edify-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-accent) 14%, transparent);
+}
+
+main .edify-section-nav__view-button.is-open svg {
+  transform: rotate(180deg);
+}
+
+main .edify-section-nav__view-button:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: 2px;
+}
+
+main .edify-section-nav__view-options {
+  position: absolute;
+  inset-block-start: calc(100% + 0.375rem);
+  inset-inline: 0;
+  z-index: 20;
+  display: grid;
+  gap: 0.125rem;
+  max-block-size: min(24rem, 55vh);
+  padding: 0.375rem;
+  overflow-y: auto;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  background: var(--edify-surface-raised);
+  box-shadow: var(--edify-shadow-lg);
+}
+
+main .edify-section-nav__view-link {
+  display: flex;
+  align-items: center;
+  min-block-size: 2.5rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: calc(var(--edify-radius-control) - 2px);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 400;
+  line-height: var(--edify-text-label-leading);
+  text-decoration: none;
+}
+
+main .edify-section-nav__view-link:hover {
+  background: var(--edify-surface-hover);
+  color: var(--edify-text);
+}
+
+main .edify-section-nav__view-link.is-active {
+  background: color-mix(in srgb, var(--edify-accent) 10%, transparent);
+  color: var(--edify-accent);
+  font-weight: 400;
+}
+
+main .edify-section-nav__view-link.is-active::after {
+  content: "";
+  flex: 0 0 auto;
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+main .edify-section-nav__view-link:focus-visible {
+  outline: var(--edify-focus-outline);
+  outline-offset: -2px;
+}
+
+@media (max-width: 48rem) {
+  main .edify-section-nav__view-switcher {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  main .edify-section-nav__view-menu {
+    inline-size: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main .edify-section-nav__view-button,
+  main .edify-section-nav__view-button svg {
+    transition: none;
   }
 }

@@ -25,7 +25,7 @@
   </div>
 </form>
 
-{% include "components/kpi_strip.html" with items=kpis title="Project planning summary" %}
+{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Project planning context" %}
 
 <section class="spp-band-grid" aria-label="Planning readiness bands">
   {% for item in band_cards %}

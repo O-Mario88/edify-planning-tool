@@ -907,9 +907,11 @@ main :where(
 ) {
   display: inline-flex !important;
   align-items: center !important;
+  align-self: stretch !important;
   justify-content: center !important;
   min-inline-size: 7rem !important;
   min-block-size: 2.375rem !important;
+  block-size: auto !important;
   /* Size from the complete label before sharing any spare rail width. The
      old fixed 7rem basis made long nowrap labels paint outside their active
      surface, so the highlight appeared shorter than its text. `auto` keeps
@@ -925,6 +927,7 @@ main :where(
   color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-label-size) !important;
   font-weight: 600 !important;
+  line-height: var(--edify-text-label-leading) !important;
   white-space: nowrap;
   text-align: center;
   text-decoration: none;
@@ -1019,7 +1022,7 @@ main :where(
   box-shadow: none !important;
   color: currentColor !important;
   font-variant-numeric: tabular-nums;
-  opacity: 0.78;
+  opacity: 1;
 }
 
 /* Oversight links are route navigation rather than ARIA tabs, but visually
@@ -1067,8 +1070,8 @@ main :where(.status, .status-pill, .edify-status-badge, .badge):not(.notificatio
 main :where([class*="text-[19px]"], [class*="text-[21px]"], [class*="text-[24px]"])[class*="tabular"] {
   color: var(--edify-text) !important;
   font-size: var(--edify-text-tile-value-size) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.025em !important;
+  font-weight: var(--edify-text-label-weight) !important;
+  letter-spacing: normal !important;
 }
 
 main .apexcharts-canvas,
@@ -1158,7 +1161,7 @@ main .apexcharts-canvas:has(
 ) .apexcharts-legend-text {
   white-space: nowrap !important;
   font-size: var(--edify-text-micro-size) !important;
-  font-weight: 600 !important;
+  font-weight: var(--edify-text-label-weight) !important;
   line-height: 1.2 !important;
 }
 

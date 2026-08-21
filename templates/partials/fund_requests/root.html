@@ -4,7 +4,6 @@ automatically. There is no manual "enter an amount" step anywhere here.{% endcom
 <div
 id="fund-requests-page-root"
 x-data="{
-activeTab: '{{ active_tab }}',
 selectedWeek: '{{ selected_week }}'
 }"
 class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
@@ -107,7 +106,6 @@ hx-swap="innerHTML"
 hx-push-url="true"
 class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
 >
-<input type="hidden" name="tab" :value="activeTab">
 
 <!-- Fiscal Year -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
@@ -227,6 +225,27 @@ Clear Filters
 {% include "partials/fund_requests/kpis.html" %}
 </div>
 
+{% if team_tabs %}
+<!-- Manager team tabs: who the page is reviewing. The viewer's own requests
+     first, then each supervised member — the tab drives the same `staff`
+     filter the dropdown uses, so every panel below (KPIs, budget card,
+     workflow) follows the selected member. The amber dot marks a request
+     awaiting this manager's approval for the selected week. Real links; the
+     server renders the page for the chosen member. -->
+<nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Team member requests">
+  {% for t in team_tabs %}
+  <a
+    href="?{{ team_tab_query }}staff={{ t.user_id }}"
+    {% if t.active %}aria-current="page"{% endif %}
+    class="px-4 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap inline-flex items-center gap-1.5 {% if t.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
+  >
+    {{ t.label }}
+    {% if t.awaiting_review %}<span class="h-1.5 w-1.5 rounded-pill bg-amber-500" title="Awaiting your approval" aria-label="Awaiting your approval"></span>{% endif %}
+  </a>
+  {% endfor %}
+</nav>
+{% endif %}
+
 <!-- Budget period tabs. These replaced three links to OTHER pages (Weekly
      Fund Request / Monthly Request / General Budget) at the owner's request:
      one set of tabs, on this page, showing this person's budget at the four
@@ -281,13 +300,6 @@ Clear Filters
 </div>
 
 </div>
-</div>
-
-<!-- Monthly summary tiles — full width, like the KPI strip above. The
-     "Monthly Fund Request" preview card that used to render with them was
-     removed; the My Budget card's Week and Month tabs carry that story. -->
-<div id="fund-requests-monthly-preview">
-{% include "partials/fund_requests/monthly_preview.html" %}
 </div>
 
 <!-- Breakdown Strip -->

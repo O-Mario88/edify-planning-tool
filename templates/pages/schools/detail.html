@@ -4,7 +4,7 @@
 {% block title %}{{ school.name }} - School 360{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Back navigation and Header -->
 <div>
 {% if school.is_closed %}
@@ -102,31 +102,31 @@ class="flex items-center gap-1.5 px-3 py-1.5 border edify-border edify-text-capt
 <div class="lg:col-span-2 space-y-6">
 <!-- School Information Card -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Region</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.region.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Region</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.region.name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">District</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.district.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">District</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.district.name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Sub-county</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.sub_county.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Sub-county</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.sub_county.name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Parish</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.parish.name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Parish</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.parish.name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Pupil Enrolment</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.enrollment|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Pupil Enrolment</p>
+<p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school.enrollment|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Coordinates</p>
-<p class="font-semibold text-slate-800 mt-0.5 tabular-nums">
+<p class="edify-profile-field__label">Coordinates</p>
+<p class="edify-profile-field__value mt-0.5 tabular-nums">
 {% if school.latitude != None and school.longitude != None %}
 {{ school.latitude|floatformat:6 }}, {{ school.longitude|floatformat:6 }}
 {% else %}
@@ -135,47 +135,47 @@ Not specified
 </p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Current Partner Type</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.get_school_type_display }}</p>
+<p class="edify-profile-field__label">Current Partner Type</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.get_school_type_display }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Assigned Staff</p>
-<p class="font-semibold text-[var(--edify-accent)] mt-0.5">{{ school.assigned_staff }}</p>
+<p class="edify-profile-field__label">Assigned Staff</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.assigned_staff }}</p>
 </div>
 </div>
 
 <div class="border-t border-slate-100 pt-5">
 <div class="flex items-center justify-between gap-3 mb-4">
-<h4 class="text-[13px] font-semibold text-slate-700">Contact &amp; operational details</h4>
+<h4 class="edify-profile-section-title">Contact &amp; operational details</h4>
 <p class="edify-text-caption font-medium text-slate-400">Optional fields can be completed through Edit Details.</p>
 </div>
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">School Phone</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.school_phone|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">School Phone</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.school_phone|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Primary Contact</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.primary_contact_name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Primary Contact</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.primary_contact_name|default:"Not specified" }}</p>
 {% if school.primary_contact_phone %}
-<p class="edify-text-caption font-medium text-slate-500 mt-0.5">{{ school.primary_contact_phone }}</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.primary_contact_phone }}</p>
 {% endif %}
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Director</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.director_name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Director</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.director_name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Headteacher</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.headteacher_name|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Headteacher</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.headteacher_name|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Last Enrolment Date</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.last_enrollment_date|date:"d M Y"|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Last Enrolment Date</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.last_enrollment_date|date:"d M Y"|default:"Not specified" }}</p>
 </div>
 <div>
-<p class="edify-text-caption uppercase font-bold text-slate-400">Physical Address</p>
-<p class="font-semibold text-slate-800 mt-0.5">{{ school.shipping_address|default:"Not specified" }}</p>
+<p class="edify-profile-field__label">Physical Address</p>
+<p class="edify-profile-field__value mt-0.5">{{ school.shipping_address|default:"Not specified" }}</p>
 </div>
 </div>
 </div>
@@ -242,7 +242,7 @@ Improved: {{ impact_data.improvedCount }}
 {% endfor %}
 </div>
 {% else %}
-<p class="text-center text-slate-400 text-[12px] font-semibold py-4">No completed intervention visits found for this school.</p>
+<p class="text-center edify-danger-text text-[12px] font-semibold py-4">No completed intervention visits found for this school.</p>
 {% endif %}
 </div>
 </div>
@@ -283,7 +283,7 @@ Improved: {{ impact_data.improvedCount }}
 </div>
 {% endfor %}
 {% else %}
-<div class="p-8 text-center text-slate-400 font-semibold">No planned or completed activities recorded.</div>
+<div class="p-8 text-center edify-danger-text font-semibold">No planned or completed activities recorded.</div>
 {% endif %}
 </div>
 </div>
@@ -384,7 +384,7 @@ would read as free work rather than unpriced work.
 </div>
 <div class="text-right">
 <p class="edify-text-caption uppercase font-bold text-slate-400">Average</p>
-<p class="text-[21px] font-extrabold tracking-tight mt-0.5">{{ latest_ssa.average_score|floatformat:1|default:"-" }}</p>
+<p class="text-[22px] font-extrabold tracking-tight mt-0.5">{{ latest_ssa.average_score|floatformat:1|default:"-" }}</p>
 </div>
 </div>
 

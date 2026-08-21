@@ -46,7 +46,7 @@
           <div class="h-10 w-10 rounded-surface edify-primary-soft edify-primary-text flex items-center justify-center shrink-0">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           </div>
-          <h2 class="text-[17px] font-semibold text-slate-800 tracking-tight">Compose Message</h2>
+          <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">Compose Message</h2>
         </div>
 
         <!-- Step indicator -->
@@ -155,7 +155,7 @@
           <div class="space-y-1">
             <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
             <select aria-label="Category" name="category" x-model="category" required
-                    class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold edify-primary-focus focus:outline-none cursor-pointer">
+                    class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[13px] font-semibold edify-primary-focus focus:outline-none cursor-pointer">
               <option value="" disabled {% if not pre_category %}selected{% endif %}>Select category…</option>
               {% for c in categories %}
               <option value="{{ c }}" {% if pre_category == c %}selected{% endif %}>{{ c }}</option>
@@ -184,7 +184,7 @@
           <label class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Subject <span class="text-rose-500">*</span></label>
           <input type="text" name="subject" x-model="subject" required value="{{ pre_subject }}"
                  placeholder="What is this topic about?"
-                 class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[12.5px] font-semibold text-slate-800 placeholder-slate-400 edify-primary-focus focus:outline-none">
+                 class="w-full h-11 px-3 edify-surface border border-slate-200 rounded-control text-[13px] font-semibold text-slate-800 placeholder-slate-400 edify-primary-focus focus:outline-none">
         </div>
 
         <!-- Context tabs + linked items picker -->
@@ -276,7 +276,7 @@
             </div>
             <textarea name="body" x-model="body" x-ref="editor" required rows="6"
                       placeholder="Type your message…"
-                      class="w-full px-3 py-2.5 edify-surface border-0 text-[12.5px] font-medium text-slate-800 placeholder-slate-400 focus:outline-none">{{ pre_body }}</textarea>
+                      class="w-full px-3 py-2.5 edify-surface border-0 text-[13px] font-medium text-slate-800 placeholder-slate-400 focus:outline-none">{{ pre_body }}</textarea>
           </div>
         </div>
 

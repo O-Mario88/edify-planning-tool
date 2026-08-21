@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 
 {% block title %}Human Resource Dashboard - Edify Command Center{% endblock %}
 
@@ -20,52 +21,10 @@ New Staff Member
 </div>
 </div>
 
-<!-- KPI Grid -->
-<div class="edify-kpi-strip grid grid-cols-1 sm:grid-cols-4 gap-4" aria-label="Workforce summary">
-<!-- Total Active Staff -->
-<div class="card p-4 flex items-center justify-between">
-<div>
-<p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Total Active Staff</p>
-<p class="text-[24px] font-semibold text-slate-800 mt-1">{{ kpis.total_active }}</p>
-</div>
-<div class="h-10 w-10 rounded-pill edify-primary-soft flex items-center justify-center edify-primary-text">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-</div>
-</div>
-
-<!-- Pending Onboarding -->
-<div class="card p-4 flex items-center justify-between">
-<div>
-<p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Pending Onboarding</p>
-<p class="text-[24px] font-semibold text-slate-800 mt-1">{{ kpis.pending_onboarding }}</p>
-</div>
-<div class="h-10 w-10 rounded-pill bg-amber-50 flex items-center justify-center text-amber-500">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-</div>
-</div>
-
-<!-- Average Coverage Gap -->
-<div class="card p-4 flex items-center justify-between">
-<div>
-<p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Average Coverage Gap</p>
-<p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-1">{{ kpis.average_coverage_gap }}%</p>
-</div>
-<div class="h-10 w-10 rounded-pill bg-[var(--edify-surface-muted)] flex items-center justify-center text-[var(--edify-accent)]">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-</div>
-</div>
-
-<!-- High Risk -->
-<div class="card p-4 flex items-center justify-between">
-<div>
-<p class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">High Risk</p>
-<p class="text-[24px] font-semibold text-rose-600 mt-1">{{ kpis.high_risk }}</p>
-</div>
-<div class="h-10 w-10 rounded-pill bg-rose-50 flex items-center justify-center text-rose-500">
-<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-</div>
-</div>
-</div>
+{% legacy_kpi_item "Pending onboarding" kpis.pending_onboarding helper="Needs HR completion" tone="warning" icon="clock" as onboarding_kpi %}
+{% legacy_kpi_item "High-risk staff" kpis.high_risk helper="Needs intervention" tone="danger" icon="warning" as risk_kpi %}
+{% collect_kpi_items onboarding_kpi risk_kpi as workforce_kpis %}
+{% include "components/kpi_strip.html" with items=workforce_kpis variant="executive" density="compact" title="Workforce attention" %}
 
 <!-- Main Content Card -->
 <div class="card">

@@ -129,19 +129,23 @@
     display: contents;
   }
 
-  [data-cd-operational-risk-card] {
-    grid-column: span 2 / span 2;
-    grid-row: 2;
-  }
-
+  /* Three full-width bands rather than a 2/3 split on row two. The priority
+     table carries five columns and the risk card six tiles; sharing a row put
+     the table in ~640px of a 1440px screen and the tiles in ~420px, so both
+     were reading in about half the space they need. */
   [data-cd-ssa-heatmap-card] {
     grid-column: 1 / -1;
     grid-row: 1;
   }
 
-  [data-cd-priority-schools-card] {
-    grid-column: span 3 / span 3;
+  [data-cd-operational-risk-card] {
+    grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  [data-cd-priority-schools-card] {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 }
 
@@ -4491,5 +4495,37 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .work-plan-approval {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+/* Priority configuration uses the shared responsive page grid rather than a
+   template-private style block. Off-screen milestone rendering is deferred
+   without changing the server-rendered document or keyboard order. */
+.priority-group-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.priority-milestone-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.36fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+
+.priority-milestone-record {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 10rem;
+}
+
+@media (max-width: 47.9375rem) {
+  .priority-group-summary,
+  .priority-milestone-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .priority-group-summary > :first-child {
+    grid-row: 1;
   }
 }

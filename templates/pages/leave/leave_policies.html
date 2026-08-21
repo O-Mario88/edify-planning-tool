@@ -61,7 +61,7 @@
                 type="number"
                 name="entitlement"
                 value="{{ p.annual_entitlement }}"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
                 required
               />
             </div>
@@ -71,7 +71,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Review/Approver Role</label>
               <select aria-label="Approver role"
                 name="approver_role"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 {% for role in approver_roles %}
                 <option value="{{ role }}" {% if p.approver_role == role %}selected{% endif %}>{{ role }}</option>
@@ -86,7 +86,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requires Supporting Doc?</label>
               <select aria-label="Requires attachment"
                 name="requires_attachment"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 <option value="yes" {% if p.requires_attachment %}selected{% endif %}>Yes</option>
                 <option value="no" {% if not p.requires_attachment %}selected{% endif %}>No</option>
@@ -97,7 +97,7 @@
               <label class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Calculate Weekends?</label>
               <select aria-label="Weekends count"
                 name="weekends_count"
-                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+                class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
               >
                 <option value="yes" {% if p.weekends_count %}selected{% endif %}>Include Weekends</option>
                 <option value="no" {% if not p.weekends_count %}selected{% endif %}>Exclude Weekends</option>
@@ -171,7 +171,7 @@
             type="text"
             name="holiday_name"
             placeholder="e.g. Independence Day"
-            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
             required
           />
         </div>
@@ -181,7 +181,7 @@
           <input aria-label="Holiday date"
             type="date"
             name="holiday_date"
-            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[12.5px] font-semibold focus:outline-none edify-primary-focus transition"
+            class="w-full bg-slate-50 border border-slate-200 rounded-control px-3 py-2 text-[13px] font-semibold focus:outline-none edify-primary-focus transition"
             required
           />
         </div>

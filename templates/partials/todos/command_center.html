@@ -23,8 +23,8 @@
       <p class="edify-text-caption font-bold edify-primary-text uppercase tracking-wide mt-1">Waiting on Me</p>
     </div>
     <div class="rounded-surface bg-slate-100 border border-slate-200 py-2 text-center">
-      <p class="text-[18px] font-bold text-slate-600 tabular-nums leading-none">{{ todo_counts.blocked }}</p>
-      <p class="edify-text-caption font-bold text-slate-500 uppercase tracking-wide mt-1">Blocked</p>
+      <p class="text-[18px] font-bold {% if todo_counts.blocked %}text-rose-600{% else %}text-slate-600{% endif %} tabular-nums leading-none">{{ todo_counts.blocked }}</p>
+      <p class="edify-text-caption font-bold {% if todo_counts.blocked %}text-rose-600{% else %}text-slate-500{% endif %} uppercase tracking-wide mt-1">Blocked</p>
     </div>
   </div>
 

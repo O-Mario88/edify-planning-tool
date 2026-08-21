@@ -19,7 +19,7 @@
 {% if not has_results %}
 <section class="spa-empty spa-empty--compact"><span>{% include "partials/projects/planning_icon.html" with name="search" %}</span><h2>No verified project impact matches these filters</h2><p>Try a wider filter or complete the project planning, delivery, evidence, IA review, and annual SSA follow-up workflow.</p><a href="/projects/analytics" class="spa-button spa-button--secondary">Clear Filters</a></section>
 {% else %}
-{% include "components/kpi_strip.html" with items=kpis title="Special project impact summary" %}
+{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Special project impact summary" %}
 
 <div class="spa-layout">
   <div class="spa-main">

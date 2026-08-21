@@ -42,6 +42,15 @@
     {% endfor %}
   </section>
 
+  {% if document.required_reading_minutes %}
+  <section class="card p-4">
+    <h2 class="text-[14px] font-extrabold text-slate-800">Reading completion</h2>
+    <p class="mt-1 text-[12px] font-semibold text-slate-600">
+      Readers complete this document after <strong class="tabular-nums">{{ document.required_reading_minutes }} minute{{ document.required_reading_minutes|pluralize }}</strong> of active viewer time. Agreement is recorded separately.
+    </p>
+  </section>
+  {% endif %}
+
   <section class="card p-4">
     <h2 class="text-[14px] font-extrabold text-slate-800 mb-2">Versions</h2>
     {% for version in versions %}
@@ -52,9 +61,49 @@
         {% if version.published_at %}· published {{ version.published_at|date:"d M Y" }}{% endif %}
         {% if version.superseded_at %}· superseded{% endif %}
       </p>
+      {% if version.review_date %}<p class="edify-text-caption font-semibold text-slate-400">Review due {{ version.review_date|date:"d M Y" }}{% if version.expiry_date %} · expires {{ version.expiry_date|date:"d M Y" }}{% endif %}</p>{% endif %}
       {% if version.preview_error %}<p class="edify-text-caption font-semibold text-rose-500">{{ version.preview_error }}</p>{% endif %}
     </div>
     {% endfor %}
+
+    {% comment %}
+    Until this form existed there was no way to revise a published document at
+    all: correcting a live policy meant creating a new asset under a new slug,
+    which orphaned its audience, its Help article and every acknowledgement
+    ever recorded against it.
+    {% endcomment %}
+    <form method="post" action="/documents/{{ document.slug }}/versions/new"
+          enctype="multipart/form-data"
+          class="mt-4 border-t border-slate-100 pt-4 space-y-3">
+      {% csrf_token %}
+      <h3 class="text-[13px] font-extrabold text-slate-700">Upload a new version</h3>
+      <p class="edify-text-caption font-semibold text-slate-500">The published version stays live and readable until this one is reviewed and published in its place.</p>
+      <input type="file" name="file" required
+             class="block w-full text-[12px] font-semibold text-slate-600 file:mr-3 file:rounded-control file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-[12px] file:font-bold file:text-slate-700">
+      <div class="grid gap-3 sm:grid-cols-3">
+        <label class="block">
+          <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date</span>
+          <input type="date" name="effective_date" class="mt-1 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px]">
+        </label>
+        <label class="block">
+          <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Review date</span>
+          <input type="date" name="review_date" class="mt-1 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px]">
+        </label>
+        <label class="block">
+          <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expiry date</span>
+          <input type="date" name="expiry_date" class="mt-1 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px]">
+        </label>
+      </div>
+      <label class="block">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">What changed</span>
+        <textarea name="change_summary" rows="2" class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[13px]"></textarea>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" name="material_change" checked class="h-4 w-4 rounded border-slate-300">
+        <span class="text-[13px] font-semibold text-slate-600">Material change — everyone must acknowledge it again</span>
+      </label>
+      <button type="submit" class="h-9 rounded-control bg-[var(--color-edify-primary)] px-4 text-[12px] font-bold text-white">Upload version</button>
+    </form>
   </section>
 
   {% if acknowledgements %}

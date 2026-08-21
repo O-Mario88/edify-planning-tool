@@ -14,25 +14,25 @@
 
   <div class="p-5 space-y-5">
     {% if business_transformation.ssa_scores %}
-    <div>
-      <h4 class="edify-text-caption uppercase tracking-wider font-bold text-slate-500">Verified SSA signals</h4>
-      <div class="mt-2 grid sm:grid-cols-2 gap-2">
+    <section class="edify-section" aria-labelledby="school-bt-ssa-title">
+      <h4 id="school-bt-ssa-title" class="edify-section__heading">Verified SSA signals</h4>
+      <div class="edify-data-list mt-2 sm:grid-cols-2 sm:gap-x-6">
         {% for score in business_transformation.ssa_scores|slice:":4" %}
-        <div class="rounded-control border border-[var(--edify-border)] px-3 py-2 flex items-center justify-between gap-3">
+        <div class="edify-data-row">
           <div>
-            <p class="text-[12px] font-semibold text-slate-700">{{ score.get_intervention_display }}</p>
-            <p class="edify-text-caption text-slate-400">FY{{ score.ssa_record.fy }} · {{ score.ssa_record.date_of_ssa|date:"j M Y" }}</p>
+            <p class="edify-data-row__label">{{ score.get_intervention_display }}</p>
+            <p class="edify-data-row__meta">FY{{ score.ssa_record.fy }} · {{ score.ssa_record.date_of_ssa|date:"j M Y" }} · {{ score.band_label }}</p>
           </div>
-          <span class="text-[15px] font-extrabold tabular-nums text-slate-800">{{ score.score|floatformat:1 }}</span>
+          <span class="edify-data-row__value edify-status-text" data-edify-tone="{{ score.band_tone }}">{{ score.score|floatformat:1 }}</span>
         </div>
         {% endfor %}
       </div>
-    </div>
+    </section>
     {% endif %}
 
     {% if business_transformation.active_case %}
-    <div>
-      <h4 class="edify-text-caption uppercase tracking-wider font-bold text-slate-500">Current response</h4>
+    <section class="edify-section" aria-labelledby="school-bt-response-title">
+      <h4 id="school-bt-response-title" class="edify-section__heading">Current response</h4>
       <div class="mt-2 flex flex-wrap gap-2">
         {% for recommendation in business_transformation.active_case.recommendations.all %}
         <span class="inline-flex rounded-pill border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] px-2.5 py-1 edify-text-caption font-semibold text-slate-700">
@@ -42,18 +42,18 @@
         <span class="text-[12px] text-slate-500">Awaiting triage.</span>
         {% endfor %}
       </div>
-    </div>
+    </section>
     {% endif %}
 
     {% if business_transformation.loans %}
-    <div>
+    <section class="edify-section" aria-labelledby="school-bt-finance-title">
       <div class="flex items-center justify-between gap-3">
-        <h4 class="edify-text-caption uppercase tracking-wider font-bold text-slate-500">Finance portfolio</h4>
+        <h4 id="school-bt-finance-title" class="edify-section__heading">Finance portfolio</h4>
         {% if not business_transformation.sensitive %}<span class="edify-text-caption text-slate-400">Summary view</span>{% endif %}
       </div>
       <div class="mt-2 space-y-2">
         {% for loan in business_transformation.loans %}
-        <article class="rounded-control border border-[var(--edify-border)] p-3">
+        <article class="py-3{% if not forloop.last %} border-b border-[var(--edify-divider)]{% endif %}">
           <div class="flex flex-wrap justify-between gap-3">
             <div>
               <p class="text-[12px] font-semibold text-slate-800">{{ loan.purpose }}{% if loan.is_edtech %} · EdTech{% endif %}</p>
@@ -79,20 +79,20 @@
         </article>
         {% endfor %}
       </div>
-    </div>
+    </section>
     {% elif not business_transformation.active_case %}
     <p class="text-[12px] text-slate-500">No active Business Transformation case or Edify-linked MFI loan is recorded for this school.</p>
     {% endif %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <section class="rounded-control border border-[var(--edify-border)] p-4" aria-labelledby="school-financial-practice-title">
-        <h4 id="school-financial-practice-title" class="edify-text-caption uppercase tracking-wider font-bold text-slate-500">Business Accounting &amp; Finance</h4>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
+      <section class="edify-section" aria-labelledby="school-financial-practice-title">
+        <h4 id="school-financial-practice-title" class="edify-section__heading">Business Accounting &amp; Finance</h4>
         {% with assessment=business_transformation.financial_practices|first %}
           {% if assessment %}<p class="mt-2 text-[12px] font-semibold text-slate-700">Latest practice assessment · {{ assessment.assessed_on|date:"j M Y" }}</p><p class="mt-1 edify-text-caption text-slate-500">{{ assessment.get_verification_status_display }} · {{ assessment.practices|length }} practices recorded</p>{% else %}<p class="mt-2 text-[12px] text-slate-500">No financial-practice adoption assessment recorded.</p>{% endif %}
         {% endwith %}
       </section>
-      <section class="rounded-control border border-[var(--edify-border)] p-4" aria-labelledby="school-government-title">
-        <h4 id="school-government-title" class="edify-text-caption uppercase tracking-wider font-bold text-slate-500">Government Requirements</h4>
+      <section class="edify-section" aria-labelledby="school-government-title">
+        <h4 id="school-government-title" class="edify-section__heading">Government Requirements</h4>
         <div class="mt-2 space-y-2">{% for assessment in business_transformation.compliance_assessments %}<div class="flex items-center justify-between gap-3 text-[12px]"><span class="font-semibold text-slate-700">{{ assessment.requirement.label }}</span><span class="text-slate-500">{{ assessment.get_status_display }}</span></div>{% empty %}<p class="text-[12px] text-slate-500">Not assessed. No negative compliance conclusion is inferred.</p>{% endfor %}</div>
       </section>
     </div>

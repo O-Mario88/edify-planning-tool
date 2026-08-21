@@ -2018,13 +2018,6 @@ html, body {
     transition: none !important;
   }
 }
-@view-transition {
-  navigation: auto;
-}
-::view-transition-old(root), ::view-transition-new(root) {
-  animation-duration: 220ms;
-  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
-}
 .page-title {
   font-size: 22px;
   font-weight: 800;

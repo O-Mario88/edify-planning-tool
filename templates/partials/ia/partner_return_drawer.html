@@ -1,0 +1,42 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Return for Correction{% endblock %}
+{% block drawer_subtitle %}{% firstof a.school.name a.cluster.name "Partner work" %} · the partner corrects and resubmits from the same evidence page{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/ia/partner-evidence/{{ a.id }}/return-action"
+      hx-post="/ia/partner-evidence/{{ a.id }}/return-action"
+      hx-target="#ia-return-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="ia-return-errors" aria-live="polite"></div>
+
+  <div>
+    <label for="iar-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Return reason <span class="text-rose-500">*</span></label>
+    <input id="iar-reason" name="reason" type="text" required maxlength="200" placeholder="Why this cannot be verified as submitted"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+  <div>
+    <label for="iar-fields" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence or field requiring correction <span class="text-rose-500">*</span></label>
+    <input id="iar-fields" name="correction_fields" type="text" required maxlength="200" placeholder="e.g. attendance photo, actual attendance count"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+  <div>
+    <label for="iar-instruction" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Detailed instruction <span class="text-rose-500">*</span></label>
+    <textarea id="iar-instruction" name="instruction" rows="3" required placeholder="Exactly what the partner should do"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+  <div>
+    <label for="iar-deadline" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Deadline <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+    <input id="iar-deadline" name="deadline" type="date"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="px-6 h-10 rounded-control bg-rose-600 text-white font-bold hover:bg-rose-700">Return to Partner</button>
+  </div>
+</form>
+{% endblock %}

@@ -14,14 +14,14 @@ grouping changes — so the header keeps the control that fired the request.
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Schools lost</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.schools_lost|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.schools_lost|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">
           {% if summary.reopened %}{{ summary.reopened }} reopened and no longer counted as lost{% else %}Still closed{% endif %}
         </p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Learners removed</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.learners_lost|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.learners_lost|intcomma }}</p>
         {% comment %}
         The coverage is stated with the number, never after it. A bare total
         implies a completeness this data does not have: some closed schools
@@ -37,14 +37,14 @@ grouping changes — so the header keeps the control that fired the request.
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Districts affected</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.districts_affected|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.districts_affected|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">
           {% if summary.average_school_size %}Average closed school held {{ summary.average_school_size|intcomma }} learners{% else %}No enrolment counts recorded{% endif %}
         </p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Budget released</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.budget_released|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.budget_released|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">UGX, from work that will not now happen</p>
       </div>
     </div>
@@ -57,22 +57,22 @@ grouping changes — so the header keeps the control that fired the request.
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Activities cancelled</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.activities_cancelled|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.activities_cancelled|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Planned visits and trainings stopped</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Partner work withdrawn</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.partners_withdrawn|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.partners_withdrawn|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Assignments taken back from partners</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Awaiting finance</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.awaiting_finance|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.awaiting_finance|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Money already moved — settled, not cancelled</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Operating again, excluded from the losses</p>
       </div>
     </div>

@@ -46,7 +46,7 @@
 
   <div class="partner-workspace__layout">
     <section class="partner-workspace__main" aria-label="Partner activity records">
-      {% include "components/kpi_strip.html" with items=partner_kpi_items title="Partner activity overview" %}
+      {% include "components/kpi_strip.html" with items=partner_kpi_items variant="executive" title="Partner activity context" %}
 
       <section class="partner-activity-groups" aria-label="Partner activity groups">
         {% for card in partner_cards %}

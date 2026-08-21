@@ -2,41 +2,6 @@
 
 {% block title %}Upload Center — Edify{% endblock %}
 
-{% block feature_css %}
-<style>
-  #admin-upload-drawer {
-    inset: 0 0 0 auto;
-    width: min(30rem, 100vw);
-    max-width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: var(--edify-surface);
-    color: var(--edify-text);
-    box-shadow: -18px 0 50px rgba(15, 23, 42, 0.18);
-  }
-  #admin-upload-drawer::backdrop {
-    background: rgba(15, 23, 42, 0.48);
-    backdrop-filter: blur(2px);
-  }
-  #admin-upload-drawer[open] {
-    display: flex;
-    flex-direction: column;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    #admin-upload-drawer[open] {
-      animation: upload-drawer-enter 160ms ease-out;
-    }
-    @keyframes upload-drawer-enter {
-      from { transform: translateX(1.5rem); opacity: 0.75; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-  }
-</style>
-{% endblock %}
-
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-[1600px] mx-auto space-y-6" data-mobile-family="upload">
 
@@ -111,7 +76,7 @@
     period and scope -- which is what lets the platform's duplication and
     denominator guards audit them. A hand-rolled tile is invisible to those.
   {% endcomment %}
-  {% include "components/kpi_strip.html" with items=kpis title="Upload summary" %}
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Upload context" %}
 
   {% comment %}
     Navigation, not an ARIA tablist. Each of these navigates to its own URL and

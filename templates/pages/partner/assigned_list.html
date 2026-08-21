@@ -1,0 +1,99 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}{{ page_title }} · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1400px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Field Work</p>
+      <h1 class="edify-page-title edify-page-header__title">{{ page_title }}</h1>
+      <p class="edify-page-header__description">{{ page_blurb }}</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/partner/my-plan" class="inline-flex h-9 items-center rounded-control edify-primary-solid edify-primary-hover px-3.5 text-[12px] font-semibold text-white transition-colors">Open My Plan</a>
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    {% comment %} A wide record table: it scrolls horizontally inside this
+    container on narrow screens (min-width below) rather than block-ifying
+    its rows — the old max-xl:block collapsed each cell to ~1 char in the
+    1024–1279px band. {% endcomment %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[12px] font-semibold {% if school_scoped %}min-w-[1080px]{% else %}min-w-[680px]{% endif %}">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
+          {% if school_scoped %}
+          <tr>
+            <th class="px-4 py-3 whitespace-nowrap">Date Assigned</th>
+            <th class="px-4 py-3 whitespace-nowrap">School ID</th>
+            <th class="px-4 py-3">School Name</th>
+            <th class="px-4 py-3 whitespace-nowrap">District</th>
+            <th class="px-4 py-3 whitespace-nowrap">Phone</th>
+            <th class="px-4 py-3 whitespace-nowrap">Primary Contact</th>
+            <th class="px-4 py-3">Shipping Address</th>
+            <th class="px-4 py-3">Assignment Purpose</th>
+            <th class="px-4 py-3 text-right whitespace-nowrap">Decision</th>
+          </tr>
+          {% else %}
+          <tr>
+            <th class="px-4 py-3 whitespace-nowrap">Date Assigned</th>
+            <th class="px-4 py-3">Activity</th>
+            <th class="px-4 py-3 whitespace-nowrap">Cluster / Area</th>
+            <th class="px-4 py-3 whitespace-nowrap">Status</th>
+            <th class="px-4 py-3 text-right whitespace-nowrap">Decision</th>
+          </tr>
+          {% endif %}
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for a in rows|slice:":200" %}
+          <tr class="hover:bg-slate-50/60 transition-colors">
+            <td class="px-4 py-3.5 text-slate-600 tabular-nums whitespace-nowrap">{{ a.created_at|date:"d M Y" }}</td>
+            {% if school_scoped %}
+            <td class="px-4 py-3.5 text-slate-600 tabular-nums whitespace-nowrap">{% firstof a.school.school_id "—" %}</td>
+            <td class="px-4 py-3.5 min-w-[14rem]">
+              <a href="/partner/assignments/{{ a.id }}" class="font-bold text-slate-800 hover:edify-primary-text">{% firstof a.school.name "School" %}</a>
+              <p class="edify-text-caption text-slate-400 mt-0.5">{{ a.subtype_label }}</p>
+            </td>
+            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">{% firstof a.school.district.name "—" %}</td>
+            <td class="px-4 py-3.5 text-slate-600 tabular-nums whitespace-nowrap">{% firstof a.school.school_phone "—" %}</td>
+            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">{% firstof a.school.primary_contact_name a.school.headteacher_name "—" %}</td>
+            <td class="px-4 py-3.5 text-slate-600 max-w-[220px] truncate">{% firstof a.school.shipping_address "—" %}</td>
+            <td class="px-4 py-3.5 text-slate-600 max-w-[240px] truncate">{{ a.purpose_label }}</td>
+            {% else %}
+            <td class="px-4 py-3.5 min-w-[14rem]">
+              <a href="/partner/assignments/{{ a.id }}" class="font-bold text-slate-800 hover:edify-primary-text">{{ a.subtype_label }}</a>
+            </td>
+            <td class="px-4 py-3.5 text-slate-600 whitespace-nowrap">{% firstof a.cluster.name a.school.district.name "—" %}</td>
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              {% if a.status == "returned" %}
+              <span class="inline-flex rounded-pill bg-rose-50 px-2 py-0.5 edify-text-caption font-bold text-rose-700">Returned</span>
+              {% else %}
+              <span class="inline-flex rounded-pill bg-amber-50 px-2 py-0.5 edify-text-caption font-bold text-amber-700">Awaiting Schedule</span>
+              {% endif %}
+            </td>
+            {% endif %}
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5">
+                <button type="button"
+                        hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+                        class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-2.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50 transition-colors">Return</button>
+                <button type="button"
+                        hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+                        class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Schedule</button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="{% if school_scoped %}9{% else %}5{% endif %}" class="px-4 py-12 text-center text-[13px] font-semibold text-slate-400">Nothing awaiting your decision — new assignments appear here.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="drawer-container"></div>
+</div>
+{% endblock %}

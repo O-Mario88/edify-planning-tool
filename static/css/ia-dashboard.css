@@ -3,10 +3,8 @@
   color: var(--edify-text);
 }
 
-/* The IA workload carries unusually long operational labels. Keep the shared
-   KPI component, but give this report a content-aware column budget: two
-   columns while the report canvas is medium, one on narrow canvases, and
-   three only when every label has enough room to remain on one line. */
+/* The IA workload carries unusually long operational labels. It uses the
+   platform KPI grid unchanged; only label wrapping is specialized here. */
 .ia-dashboard .kpi-strip {
   container-name: kpi-strip ia-report-kpis;
 }
@@ -17,12 +15,6 @@
   text-overflow: clip;
   text-wrap: nowrap;
   white-space: nowrap;
-}
-
-@container ia-report-kpis (max-width: 64rem) {
-  .ia-dashboard .kpi-strip__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
 }
 
 @container ia-report-kpis (max-width: 34rem) {

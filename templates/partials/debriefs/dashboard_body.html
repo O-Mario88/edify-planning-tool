@@ -4,7 +4,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  {% include "components/kpi_strip.html" with items=kpis %}
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Debrief context" %}
 
   <!-- Row: Trend + Activity Type -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -98,7 +98,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
           <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.clarifications %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.clarifications }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">
-          <span class="text-slate-400">Overdue Actions</span>
+          <span class="{% if action_center.overdue %}text-rose-500{% else %}text-slate-400{% endif %}">Overdue Actions</span>
           <span class="px-2 py-0.5 rounded-pill edify-text-caption font-black tabular-nums {% if action_center.overdue %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ action_center.overdue }}</span>
         </div>
         <div class="flex items-center justify-between edify-text-caption font-semibold">

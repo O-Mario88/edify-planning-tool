@@ -26,7 +26,6 @@
         {% endfor %}
       </div>
     </section>
-    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Verification workload" %}
   </div>
   {% comment %}
   The canonical page header (§8) — the same surface every major page uses,
@@ -70,9 +69,7 @@
   definition, period and drilldown live with the metric rather than in this
   template. Replaces the page-local `ia-metric` tiles.
   {% endcomment %}
-  <div class="mobile-home-hide">
-    {% include "components/kpi_strip.html" with items=kpi_strip_items title="Verification workload" %}
-  </div>
+  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Verification workload" %}
 
   <div class="ia-focus-grid">
     <section class="ia-panel ia-queue mobile-home-hide" aria-labelledby="ia-queue-title">

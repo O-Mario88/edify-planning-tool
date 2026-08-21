@@ -2,77 +2,73 @@
 {% load frontend_filters %}
 
 {% block drawer_title %}Upload Evidence{% endblock %}
-{% block drawer_subtitle %}Provide verification evidence for {{ act.activity_type|title|replace_underscore }}{% endblock %}
+{% block drawer_subtitle %}{{ act.activity_type|title|replace_underscore }} — the platform asks only for what this activity requires{% endblock %}
 
 {% block drawer_body %}
-<form
-hx-post="/activities/{{ act.id }}/evidence/action"
-hx-encoding="multipart/form-data"
-hx-target="#evidence-errors"
-class="space-y-5 text-[12px] font-bold text-slate-600"
->
-<div id="evidence-errors"></div>
+{% comment %}
+THE evidence drawer — one for every role (staff and partner alike; the view
+route is /activities/<id>/evidence, scoped by can_view_record). The two-form
+law applies: a school visit needs its Visit Form, a training or cluster
+session its Training Attendance form — both as PDF. The Salesforce ID is
+optional here for staff and never shown to partners: IA records it for
+partner work at Confirm Salesforce Entry.
+{% endcomment %}
+<div class="space-y-4 text-[12px] font-semibold text-slate-600">
+  <div id="evidence-errors" aria-live="polite"></div>
 
-<div class="space-y-3">
-<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
-<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
-Select Evidence File
-</h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
-Upload photos, signed attendance sheets, or completed school visit forms confirming the execution.
-</p>
+  {% for item in evidence_checklist %}
+  <form hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
+        hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
+        class="edify-surface rounded-overlay border {% if item.uploaded %}border-emerald-200{% else %}border-[var(--border-card)]{% endif %} p-4 shadow-sm space-y-2.5">
+    {% csrf_token %}
+    <input type="hidden" name="evidence_kind" value="{{ item.kind }}">
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-[13px] font-bold text-slate-800">{{ item.label }} <span class="text-rose-500">*</span></p>
+      {% if item.uploaded %}<span class="edify-status-text" data-edify-tone="success">Uploaded</span>{% else %}<span class="edify-status-text" data-edify-tone="warning">Still needed</span>{% endif %}
+    </div>
+    <p class="edify-text-caption font-medium text-slate-400">PDF only — scan or export the signed form.</p>
+    <input type="file" name="evidence_file" required accept="application/pdf,.pdf"
+           aria-label="{{ item.label }} PDF file"
+           class="block w-full text-[12px] font-semibold text-slate-500 file:mr-3 file:py-2 file:cursor-pointer file:rounded-control file:border-0 file:bg-[var(--edify-surface-muted)] file:px-3 file:text-[12px] file:font-semibold file:text-[var(--edify-accent)]">
+    {% if not is_partner_viewer %}
+    {% comment %} Required for staff — their upload carries its Salesforce
+    entry. Partners never see this field: IA records theirs at Confirm
+    Salesforce Entry (§12). {% endcomment %}
+    <div>
+      <label for="ev-sf-{{ item.kind }}" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce ID <span class="text-rose-500">*</span></label>
+      <input id="ev-sf-{{ item.kind }}" name="salesforce_id" type="text" maxlength="30" required
+             {% if act.salesforce_activity_id %}value="{{ act.salesforce_activity_id }}"{% endif %}
+             placeholder="The activity's Salesforce entry ID"
+             class="mt-1 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    {% endif %}
+    <button type="submit" class="inline-flex h-9 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold text-white transition-colors">
+      Upload {{ item.label }}
+    </button>
+  </form>
+  {% empty %}
+  <p class="rounded-surface border border-slate-100 bg-slate-50 p-3 text-[13px] font-semibold text-slate-500">This activity type declares no required form — upload is optional.</p>
+  {% endfor %}
 
-<div class="mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between">
-<input
-type="file"
-name="evidence_file"
-required
-class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer"
->
-</div>
+  {% if evidence_list %}
+  <div class="space-y-1.5 pt-1">
+    <p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded</p>
+    <div class="divide-y divide-slate-100 rounded-control border border-slate-100">
+      {% for ev in evidence_list %}
+      <div class="flex items-center justify-between gap-3 px-3 py-2">
+        <a href="/api/evidence/{{ ev.id }}/file" target="_blank" rel="noopener" class="font-bold text-slate-700 truncate hover:edify-primary-text">{{ ev.original_name }}</a>
+        <span class="flex items-center gap-2 shrink-0">
+          <span class="edify-text-caption text-slate-400 font-semibold">{{ ev.kind }}</span>
+          <a href="/api/evidence/{{ ev.id }}/file?download=1" class="edify-text-caption font-bold edify-primary-text hover:underline">Download</a>
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
-<div class="mt-2">
-<label for="evidence_kind-ev" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</label>
-<select name="evidence_kind" id="evidence_kind-ev"
-        class="w-full h-9 px-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 edify-text-caption font-semibold focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer">
-{% for item in evidence_checklist %}<option value="{{ item.kind }}" {% if not item.uploaded %}selected{% endif %}>{{ item.label }}{% if item.uploaded %} — already uploaded{% endif %}</option>{% endfor %}
-{% for value, label in evidence_kind_choices %}{% if value not in evidence_required_kinds %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}
-</select>
-{% if evidence_checklist %}<p class="mt-1 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">This activity needs {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %} before it can be submitted.</p>{% endif %}
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Done</button>
+  </div>
 </div>
-
-
-<!-- Listed uploaded evidence files if any exist -->
-{% if evidence_list %}
-<div class="space-y-1.5 pt-2">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
-<div class="space-y-1">
-{% for ev in evidence_list %}
-<div class="flex items-center justify-between edify-text-caption bg-slate-50 border border-slate-100 rounded-surface p-2">
-<span class="font-bold text-slate-700 truncate max-w-[200px]">{{ ev.original_name }}</span>
-<span class="edify-text-caption text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; {{ ev.status }}</span>
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
-</div>
-
-<!-- Drawer Footer (Sticky Actions) -->
-<div class="drawer-footer">
-<button
-type="button"
-@click="$dispatch('close-drawer')"
-class="edify-action-button secondary h-9 transition-colors"
->
-Cancel
-</button>
-<button
-type="submit"
-class="edify-action-button primary h-9 transition-colors shadow-sm"
->
-Upload & Save
-</button>
-</div>
-</form>
 {% endblock %}

@@ -1,0 +1,229 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Evidence · {% firstof a.school.name a.cluster.name "Field Work" %} · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1000px] mx-auto space-y-5"
+     x-data="partnerEvidence('{{ a.id }}')" x-init="init()">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href=back_url back_label="My Plan" %}
+      <h1 class="edify-page-title edify-page-header__title">{% firstof a.school.name a.cluster.name "Field Work" %}</h1>
+      <p class="edify-page-header__description">
+        {{ a.get_activity_type_display }} · Planned {{ a.planned_date|date:"d M Y" }}
+        {% if a.execution_started_at %} · Started {{ a.execution_started_at|date:"d M Y H:i" }}{% endif %}
+      </p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if state == "submitted" %}
+      <span class="inline-flex rounded-pill bg-sky-50 px-2.5 py-1 edify-text-caption font-bold text-sky-700">Submitted for Verification</span>
+      {% elif state == "done" %}
+      <span class="inline-flex rounded-pill bg-emerald-50 px-2.5 py-1 edify-text-caption font-bold text-emerald-700">Verified</span>
+      {% elif state == "returned" %}
+      <span class="inline-flex rounded-pill bg-rose-50 px-2.5 py-1 edify-text-caption font-bold text-rose-700">Returned for Correction</span>
+      {% elif state == "startable" %}
+      <span class="inline-flex rounded-pill bg-amber-50 px-2.5 py-1 edify-text-caption font-bold text-amber-700">Ready to Start</span>
+      {% else %}
+      <span class="inline-flex rounded-pill bg-[var(--color-edify-soft)] px-2.5 py-1 edify-text-caption font-bold edify-primary-text">In Progress</span>
+      {% endif %}
+      <span class="edify-text-caption font-semibold text-slate-400" x-show="!online" x-cloak>Offline — drafts saved on this device</span>
+      <span class="edify-text-caption font-semibold text-emerald-600" x-show="online && savedAt" x-cloak>Draft saved <span x-text="savedAt"></span></span>
+    </div>
+  </div>
+
+  {% if state == "returned" and a.pl_review_note %}
+  <div class="rounded-surface border border-rose-200 bg-rose-50 p-4 text-[13px] font-semibold text-rose-800" role="alert">
+    <p class="font-bold">Returned by IA — correct and resubmit</p>
+    <p class="mt-1">{{ a.pl_review_note }}</p>
+  </div>
+  {% endif %}
+
+  {% comment %} §9.1 read-only brief — planned facts, never editable here. {% endcomment %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Assignment brief</h2>
+      <p class="edify-section__description">What was planned. Your actual delivery is entered below — planned figures are never copied in for you.</p>
+    </div>
+    <div class="edify-data-list">
+      {% if partner_org %}<div class="edify-data-row"><span class="edify-data-row__label">Organisation</span><span class="edify-data-row__value">{{ partner_org.name }} · {{ request.user.name }}</span></div>{% endif %}
+      <div class="edify-data-row"><span class="edify-data-row__label">{% if a.school %}School{% else %}Cluster{% endif %}</span><span class="edify-data-row__value">{% if a.school %}{{ a.school.name }} ({{ a.school.school_id }}) · {% firstof a.school.district.name "" %}{% else %}{{ a.cluster.name }}{% endif %}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Activity</span><span class="edify-data-row__value">{{ a.get_activity_type_display }}</span></div>
+      {% if a.activity_purpose_text %}<div class="edify-data-row"><span class="edify-data-row__label">Purpose</span><span class="edify-data-row__value">{{ a.activity_purpose_text }}</span></div>{% endif %}
+      <div class="edify-data-row"><span class="edify-data-row__label">Planned date</span><span class="edify-data-row__value">{{ a.planned_date|date:"d M Y" }}</span></div>
+      {% if a.expected_participants %}<div class="edify-data-row"><span class="edify-data-row__label">Planned participants</span><span class="edify-data-row__value">{{ a.expected_participants }}</span></div>{% endif %}
+      {% if a.expected_outcome %}<div class="edify-data-row"><span class="edify-data-row__label">Planned outcome</span><span class="edify-data-row__value">{{ a.expected_outcome }}</span></div>{% endif %}
+      {% if assignment.source_ssa %}<div class="edify-data-row"><span class="edify-data-row__label">SSA context</span><span class="edify-data-row__value">SSA of {{ assignment.source_ssa.date_of_ssa }} · {{ assignment.source_ssa.verification_status|title }}</span></div>{% endif %}
+      {% if assignment.notes %}<div class="edify-data-row"><span class="edify-data-row__label">Instructions</span><span class="edify-data-row__value">{{ assignment.notes }}</span></div>{% endif %}
+    </div>
+  </div>
+
+  {% if state == "startable" %}
+  <form method="post" action="/partner/activities/{{ a.id }}/start-action" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-wrap items-center justify-between gap-3">
+    {% csrf_token %}
+    <div>
+      <p class="text-[14px] font-bold text-slate-800">Ready to deliver this work?</p>
+      <p class="mt-0.5 text-[12px] font-semibold text-slate-500">Start records the moment you began — it never marks anything complete.</p>
+    </div>
+    <button type="submit" class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors">Start Activity</button>
+  </form>
+  {% else %}
+
+  {% comment %} Evidence checklist + uploads. {% endcomment %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Evidence</h2>
+      <p class="edify-section__description">{% if evidence_is_optional %}Evidence is optional for this activity type — upload what you have.{% else %}Every required item below must be uploaded before you can submit.{% endif %}</p>
+    </div>
+
+    {% if evidence_checklist %}
+    <ul class="space-y-1.5">
+      {% for item in evidence_checklist %}
+      <li class="flex items-center gap-2 text-[13px] font-semibold {% if item.uploaded %}text-emerald-700{% else %}text-slate-500{% endif %}">
+        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full {% if item.uploaded %}bg-emerald-100{% else %}bg-slate-100{% endif %} edify-text-caption font-bold">{% if item.uploaded %}<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<span class="h-1 w-1 rounded-full bg-slate-400"></span>{% endif %}</span>
+        {{ item.label }}{% if not item.uploaded %} — still needed{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if evidence %}
+    <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
+      {% for e in evidence %}
+      <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
+        <span class="truncate">{{ e.original_name }}</span>
+        <span class="edify-text-caption text-slate-400 shrink-0">{{ e.kind }} · {{ e.created_at|date:"d M H:i" }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if state != "submitted" and state != "done" %}
+    {% comment %} Uploads happen in the ONE shared evidence drawer — the
+    two-form law: Visit Form for school-visit work, Training Attendance for
+    trainings and cluster meetings, both PDF. {% endcomment %}
+    <button type="button"
+            hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex h-10 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
+      Upload Evidence
+    </button>
+    {% endif %}
+  </div>
+
+  {% comment %} §9.2 actuals — partner-entered only. {% endcomment %}
+  <form hx-post="/partner/activities/{{ a.id }}/submit-action" hx-target="#workroom-errors" hx-disabled-elt="find button[type=submit]"
+        class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 text-[12px] font-semibold text-slate-600"
+        @submit="submitting = true">
+    {% csrf_token %}
+    <div class="edify-section">
+      <h2 class="edify-section__heading">What actually happened</h2>
+      <p class="edify-section__description">Drafts save automatically on this device as you type.</p>
+    </div>
+    <div id="workroom-errors" aria-live="polite"></div>
+
+    <fieldset {% if state == "submitted" or state == "done" %}disabled{% endif %} class="space-y-4">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="wr-actual-date" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Actual delivery date</label>
+          <input id="wr-actual-date" name="actual_delivery_date" type="date" required x-model="draft.actual_delivery_date" @change="save()"
+                 value="{{ a.actual_delivery_date|date:'Y-m-d' }}"
+                 class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        </div>
+        {% if is_training_kind %}
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label for="wr-teachers" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers</label>
+            <input id="wr-teachers" name="teachers_attended" type="number" min="0" inputmode="numeric" x-model="draft.teachers_attended" @input.debounce.600ms="save()" value="{{ a.teachers_attended|default_if_none:'' }}" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          </div>
+          <div>
+            <label for="wr-leaders" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Leaders</label>
+            <input id="wr-leaders" name="leaders_attended" type="number" min="0" inputmode="numeric" x-model="draft.leaders_attended" @input.debounce.600ms="save()" value="{{ a.leaders_attended|default_if_none:'' }}" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          </div>
+          <div>
+            <label for="wr-others" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Others</label>
+            <input id="wr-others" name="other_participants" type="number" min="0" inputmode="numeric" x-model="draft.other_participants" @input.debounce.600ms="save()" value="{{ a.other_participants|default_if_none:'' }}" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if member_schools %}
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools represented</p>
+        <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
+          {% for s in member_schools %}
+          <label class="flex items-center gap-2 text-[13px] font-semibold text-slate-600">
+            <input type="checkbox" name="attended_school_ids" value="{{ s.id }}" {% if s.id in attended_ids %}checked{% endif %} class="h-4 w-4 rounded edify-primary-text edify-primary-focus">
+            {{ s.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="wr-outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity outcome</label>
+        <textarea id="wr-outcome" name="actual_outcome" rows="3" x-model="draft.actual_outcome" @input.debounce.600ms="save()"
+                  class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.actual_outcome|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="wr-observations" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Observations</label>
+        <textarea id="wr-observations" name="actual_observations" rows="3" x-model="draft.actual_observations" @input.debounce.600ms="save()"
+                  class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.actual_observations|default:"" }}</textarea>
+      </div>
+      <div>
+        <label for="wr-follow-up" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up required <span class="normal-case tracking-normal font-semibold text-slate-400">(optional)</span></label>
+        <textarea id="wr-follow-up" name="follow_up_note" rows="2" x-model="draft.follow_up_note" @input.debounce.600ms="save()"
+                  class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.follow_up_note|default:"" }}</textarea>
+      </div>
+    </fieldset>
+
+    {% if state == "submitted" %}
+    <p class="text-[13px] font-semibold text-sky-700">Submitted to IA — your entries are locked while verification runs. Track it on <a href="/partner/completed" class="font-bold edify-primary-text">Completed &amp; Payments</a>.</p>
+    {% elif state == "done" %}
+    <p class="text-[13px] font-semibold text-emerald-700">Verified — see payment progress on <a href="/partner/completed" class="font-bold edify-primary-text">Completed &amp; Payments</a>.</p>
+    {% else %}
+    <div class="flex items-center justify-end gap-3">
+      <button type="submit" :disabled="submitting"
+              class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+        Submit Evidence to IA
+      </button>
+    </div>
+    {% endif %}
+  </form>
+  {% endif %}
+
+  <div id="drawer-container"></div>
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('partnerEvidence', (activityId) => ({
+    draft: {}, savedAt: '', online: navigator.onLine, submitting: false,
+    key() { return 'partner-evidence-draft-' + activityId; },
+    init() {
+      window.addEventListener('online', () => { this.online = true; });
+      window.addEventListener('offline', () => { this.online = false; });
+      try {
+        const stored = JSON.parse(localStorage.getItem(this.key()) || '{}');
+        // Restore only into EMPTY fields — server values win over stale drafts.
+        this.$nextTick(() => {
+          for (const [name, value] of Object.entries(stored)) {
+            const el = document.querySelector(`[name="${name}"]`);
+            if (el && !el.value && value) { el.value = value; this.draft[name] = value; }
+          }
+        });
+      } catch (e) { /* corrupt draft — start clean */ }
+    },
+    save() {
+      const fields = ['actual_delivery_date','teachers_attended','leaders_attended','other_participants','actual_outcome','actual_observations','follow_up_note'];
+      const data = {};
+      fields.forEach(f => { const el = document.querySelector(`[name="${f}"]`); if (el && el.value) data[f] = el.value; });
+      try { localStorage.setItem(this.key(), JSON.stringify(data)); } catch (e) {}
+      this.savedAt = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    },
+  }));
+});
+</script>
+{% endblock %}

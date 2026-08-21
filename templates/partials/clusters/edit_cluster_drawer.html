@@ -4,48 +4,6 @@
 {% block drawer_subtitle %}Modify cluster name, type, geographical boundaries, assigned staff, and leadership details.{% endblock %}
 
 {% block drawer_body %}
-<style>
-/* Modal Overrides to match reference exactly */
-.drawer-surface.type-center {
-  border-radius: 20px !important;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
-  background-color: white !important;
-  border: 1px solid var(--edify-border) !important;
-}
-.drawer-header {
-  border-bottom: none !important;
-  background: white !important;
-  padding: 24px 28px 4px 28px !important;
-}
-.drawer-header h3 {
-  font-size: 19px !important;
-  font-weight: 700 !important;
-  color: var(--edify-text) !important;
-  letter-spacing: -0.025em !important;
-}
-.drawer-header p {
-  font-size: 13px !important;
-  font-weight: 400 !important;
-  color: var(--edify-text-muted) !important;
-  margin-top: 6px !important;
-  line-height: 1.5 !important;
-}
-.drawer-close-btn {
-  border: 1.5px solid var(--edify-border) !important;
-  border-radius: 10px !important;
-  padding: 7px !important;
-  color: var(--edify-text-muted) !important;
-  background: white !important;
-  transition: all 0.2s !important;
-}
-.drawer-close-btn:hover {
-  background: var(--edify-surface-muted) !important;
-  border-color: var(--edify-text-subtle) !important;
-}
-.drawer-body {
-  padding: 4px 28px 28px 28px !important;
-}
-</style>
 <div
   x-data='{
     selectedDistrictId: "{{ cluster.district_id|default:"" }}",

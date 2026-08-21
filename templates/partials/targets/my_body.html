@@ -2,7 +2,7 @@
 <div class="space-y-5">
 
   {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
-  <div class="edify-kpi-strip edify-kpi-strip--timeline flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
+  <div class="target-period-progression flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
     {% for c in period_cards %}
     <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
       <div class="flex items-center justify-between">
@@ -86,30 +86,8 @@
   </section>
 
   {# ── User-owned performance priority cards ─────────────────────────────── #}
-  {% if area_cards %}
-  <div class="edify-kpi-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" aria-label="Performance priority summary">
-    {% for a in area_cards %}
-    <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
-         hx-target="#drawer-container" hx-swap="innerHTML"
-         class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 cursor-pointer hover:border-slate-200 hover:shadow transition-all">
-      <div class="flex items-center justify-between">
-        <p class="edify-text-caption font-bold text-slate-600 truncate">{{ a.label }}</p>
-        <svg class="h-3 w-3 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-      </div>
-      <p class="text-[17px] font-bold text-slate-800 tabular-nums mt-1.5">{{ a.achieved|intcomma }} <span class="text-[12px] text-slate-400">/ {{ a.target|intcomma }}</span></p>
-      <div class="flex items-center justify-between mt-1">
-        <span class="edify-text-caption font-bold {% if a.tone == 'success' %}text-emerald-600{% elif a.tone == 'warning' %}text-amber-600{% elif a.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">
-          {% if a.pct is not None %}{{ a.pct }}% · {% endif %}{{ a.status }}
-        </span>
-        {% if a.spark_points %}
-        <svg viewBox="0 0 60 20" class="h-5 w-[60px] shrink-0">
-          <polyline points="{{ a.spark_points }}" fill="none" stroke="{% if a.tone == 'danger' %}var(--edify-chart-red){% elif a.tone == 'warning' %}var(--edify-chart-amber){% else %}var(--edify-chart-green){% endif %}" stroke-width="1.6"/>
-        </svg>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-  </div>
+  {% if area_kpi_items %}
+  {% include "components/kpi_strip.html" with items=area_kpi_items variant="executive" title="Performance priorities" %}
   {% else %}
   <section class="edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6" aria-labelledby="no-performance-priorities-title">
     <h2 id="no-performance-priorities-title" class="text-[13px] font-bold text-slate-800">No measurable performance priorities agreed for FY {{ fy }}</h2>

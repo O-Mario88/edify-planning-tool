@@ -32,7 +32,7 @@
                       {{ c.name }}
                     </h3>
                   </div>
-                  <p class="text-[12.5px] text-slate-500 font-medium flex items-center gap-1.5">
+                  <p class="text-[13px] text-slate-500 font-medium flex items-center gap-1.5">
                     <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     </svg>
@@ -240,4 +240,8 @@
 
 {% if is_planning_htmx_table %}
 {% include "partials/planning/tabs.html" with planning_tabs_oob=True %}
+{% comment %} The view toggle + calendar follow the active tab exactly like
+the tab strip does — without this OOB swap they only existed on full page
+loads (2026-08-20 tab audit). {% endcomment %}
+{% include "partials/planning/view_toggle_and_calendar.html" with planning_view_oob=True %}
 {% endif %}

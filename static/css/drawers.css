@@ -179,6 +179,40 @@
   overflow-y: auto;
 }
 
+/* Cluster activity choices are a shared form pattern inside the canonical
+   drawer surface. The drawer chrome itself deliberately has no page-level
+   overrides: geometry, theme and focus all come from the base drawer. */
+.cluster-activity-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.5rem 1.5rem;
+}
+
+.cluster-activity-type-option {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.cluster-activity-type-option input[type="radio"] {
+  flex: 0 0 1.25rem;
+  inline-size: 1.25rem;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  min-block-size: 1.25rem;
+  margin: 0;
+  accent-color: var(--edify-accent);
+  vertical-align: middle;
+}
+
+.cluster-activity-type-option span {
+  line-height: 1.25rem;
+}
+
 /* The completion drawer scrolls and the centered surface clips overflow.
    Promote the school checklist to the browser top layer so it remains
    tethered to its trigger without being cropped by either ancestor. */
@@ -244,32 +278,6 @@
   box-shadow: none !important;
 }
 
-/* Add-to-cluster is intentionally a single-plane confirmation form. Keep its
-   elevated surface, header, controls, and cards white in every theme; nearby
-   selection only appears when the school's sub-county has no covering cluster. */
-.drawer-surface:has(.cluster-assignment-drawer) {
-  --edify-surface: #ffffff;
-  --edify-surface-muted: #ffffff;
-  --edify-surface-raised: #ffffff;
-  --edify-surface-hover: #f8fafb;
-  --edify-text: #17232b;
-  --edify-text-body: #324650;
-  --edify-text-muted: #526570;
-  background: #ffffff !important;
-}
-
-.drawer-surface:has(.cluster-assignment-drawer) :where(
-  .drawer-header,
-  .drawer-body,
-  .cluster-assignment-drawer,
-  .cluster-assignment-drawer form,
-  .cluster-assignment-drawer section,
-  .cluster-assignment-drawer dl
-) {
-  background-color: #ffffff !important;
-  background-image: none !important;
-}
-
 /* Table styling inside drawers */
 .drawer-body table { width: 100%; border-collapse: collapse; }
 .drawer-body table thead th {
@@ -284,9 +292,15 @@
   padding: 7px 10px; font-size: var(--edify-text-label-size); color: var(--edify-text);
 }
 .drawer-body table tbody tr:nth-child(even) { background: var(--edify-surface-muted); }
-.drawer-body table tbody tr:hover { background: rgba(37,99,235,.06); }
-.dark .drawer-body table tbody tr:nth-child(even) { background: rgba(255,255,255,.025); }
-.dark .drawer-body table tbody tr:hover { background: rgba(59,130,246,.08); }
+.drawer-body table tbody tr:hover {
+  background: color-mix(in srgb, var(--edify-accent) 6%, transparent);
+}
+.dark .drawer-body table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--edify-on-accent) 2.5%, transparent);
+}
+.dark .drawer-body table tbody tr:hover {
+  background: color-mix(in srgb, var(--edify-accent) 8%, transparent);
+}
 
 /* Inputs inside drawers */
 .drawer-body input[type="text"], .drawer-body input[type="email"],

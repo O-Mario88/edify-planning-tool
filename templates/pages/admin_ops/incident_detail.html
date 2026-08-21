@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 
 {% block title %}{{ incident.reference }} — Edify{% endblock %}
 
@@ -13,12 +14,10 @@
     </div>
   </header>
 
-  <div class="edify-kpi-strip grid grid-cols-2 sm:grid-cols-4 gap-3" aria-label="Incident summary">
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Severity</p><p class="text-[15px] font-bold text-slate-800 mt-1">{{ incident.get_severity_display }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Occurrences</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ incident.occurrence_count }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">First Detected</p><p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ incident.first_detected_at|date:"d M H:i" }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Last Detected</p><p class="text-[13px] font-bold text-slate-800 mt-1 tabular-nums">{{ incident.last_detected_at|date:"d M H:i" }}</p></div>
-  </div>
+  {% legacy_kpi_item "Severity" incident.get_severity_display helper="Current incident level" tone="danger" icon="warning" as severity_kpi %}
+  {% legacy_kpi_item "Occurrences" incident.occurrence_count helper="Recorded detections" tone="warning" icon="chart" as occurrence_kpi %}
+  {% collect_kpi_items severity_kpi occurrence_kpi as incident_kpis %}
+  {% include "components/kpi_strip.html" with items=incident_kpis variant="executive" density="compact" title="Incident headline" %}
 
   <section class="card p-4 space-y-2" aria-labelledby="incident-context-title">
     <h2 id="incident-context-title" class="text-[14px] font-extrabold text-slate-800">Error Context</h2>

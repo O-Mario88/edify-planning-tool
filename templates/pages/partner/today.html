@@ -30,10 +30,6 @@
         {% endfor %}
       </div>
     </section>
-    <section class="mobile-home-metrics" aria-label="Partner work summary">
-      <div class="mobile-home-metric"><span>Scheduled today</span><strong>{{ today_activities|length }}</strong></div>
-      <div class="mobile-home-metric"><span>Coming up</span><strong>{{ upcoming|length }}</strong></div>
-    </section>
   </div>
 
   <div class="edify-page-header mobile-home-hide">
@@ -48,24 +44,6 @@
     </a>
   </div>
 
-  <div class="mobile-home-hide grid grid-cols-2 sm:grid-cols-3 gap-3">
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Scheduled Today</p>
-      <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ today_activities|length }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">assigned to your organization</p>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Upcoming</p>
-      <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ upcoming|length }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">next scheduled visits</p>
-    </div>
-    <a href="/partner/evidence" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5 block hover:border-slate-200 hover:shadow transition-all">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence</p>
-      <p class="text-[13px] font-bold edify-primary-text mt-1.5">Upload & track →</p>
-      <p class="edify-text-caption font-semibold text-slate-400">completed work needs evidence</p>
-    </a>
-  </div>
-
   <div class="edify-surface mobile-home-hide rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Today's Activities</h2>
     {% if today_activities %}
@@ -73,7 +51,7 @@
       {% for a in today_activities %}
       <div class="py-3 flex items-center justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[12.5px] font-semibold truncate">{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}Activity{% endif %}</p>
+          <p class="text-[13px] font-semibold truncate">{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}Activity{% endif %}</p>
           <p class="edify-text-caption text-slate-400 capitalize">{{ a.activity_type|cut:"_" }}{% if a.focus_intervention %} · {{ a.focus_intervention|cut:"_" }}{% endif %}</p>
         </div>
         <span class="px-2 py-0.5 rounded-pill edify-text-caption font-bold shrink-0
@@ -98,9 +76,46 @@
       {% endfor %}
     </div>
     {% else %}
-    <p class="edify-text-caption text-slate-400 font-medium py-2">No upcoming scheduled visits yet.</p>
+    <p class="edify-text-caption edify-danger-text font-medium py-2">No upcoming scheduled visits yet.</p>
     {% endif %}
   </div>
 
+  {% if mou_tracker %}
+  <div class="edify-surface mobile-home-deferred rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div>
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">MOU Payments</h2>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">50% advance up front · balance cleared after IA verifies the work.</p>
+    </div>
+    {% if mou_awaiting_invoice %}
+    <div class="rounded-control border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] font-semibold text-amber-800" data-edify-tone="warning">
+      IA has verified {{ mou_awaiting_invoice }} advance-paid activit{{ mou_awaiting_invoice|pluralize:"y,ies" }} — you are eligible for clearance. Send your invoice for the remaining balance to the accountant.
+    </div>
+    {% endif %}
+    <div class="divide-y divide-slate-50">
+      {% for row in mou_tracker %}
+      <div class="py-2.5 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[12px] font-semibold truncate">{% firstof row.activity.school.name row.activity.get_activity_type_display %}</p>
+          <p class="edify-text-caption font-medium text-slate-400 truncate">{{ row.stage }}</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-[12px] font-semibold tabular-nums {% if row.tone == 'success' %}text-emerald-600{% elif row.tone == 'warning' %}text-amber-700{% else %}text-slate-600{% endif %}">{{ row.paid|ugx_amount }} / {{ row.planned|ugx_amount }}</p>
+          {% if row.balance and row.paid %}<p class="edify-text-caption font-medium text-slate-400 tabular-nums">balance {{ row.balance|ugx_amount }}</p>{% endif %}
+          {% if row.invoice_phase %}
+          <button type="button"
+                  hx-get="/partner/invoices/new?activity={{ row.activity.id }}"
+                  hx-target="#drawer-container" hx-swap="innerHTML"
+                  class="mt-1 inline-flex h-7 items-center rounded-control edify-primary-solid edify-primary-hover px-2.5 edify-text-caption font-bold text-white transition-colors">
+            {% if row.invoice_phase == "advance" %}Submit 50% invoice{% else %}Invoice the balance{% endif %}
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
 </div>
+<div id="drawer-container"></div>
 {% endblock %}
