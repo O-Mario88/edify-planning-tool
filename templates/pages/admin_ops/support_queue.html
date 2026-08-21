@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 
 {% block title %}Support Tickets — Edify{% endblock %}
 
@@ -7,10 +8,10 @@
 
   {% include "pages/admin_ops/_header.html" with page_title="Support Tickets" page_purpose="Every user request for platform help, in one canonical workflow — submitted through triage and verification to a resolution the reporter is told about." %}
 
-  <div class="edify-kpi-strip grid grid-cols-2 gap-3" aria-label="Support queue summary">
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Awaiting Triage</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ counts.untriaged }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Open Tickets</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ counts.open }}</p></div>
-  </div>
+  {% legacy_kpi_item "Awaiting triage" counts.untriaged helper="Needs an owner" tone="warning" icon="clock" as triage_kpi %}
+  {% legacy_kpi_item "Open tickets" counts.open helper="Active support workload" tone="primary" icon="document" as open_kpi %}
+  {% collect_kpi_items triage_kpi open_kpi as support_kpis %}
+  {% include "components/kpi_strip.html" with items=support_kpis variant="executive" density="compact" title="Support attention" %}
 
   <div class="card divide-y divide-slate-50">
     {% for ticket in tickets %}

@@ -149,19 +149,21 @@ class RedirectRolesSkipPageDataTest(TestCase):
     def test_the_accountant_redirect_costs_almost_nothing(self):
         """Session, user, and the policy gate's one EXISTS.
 
-        The third query is `PolicyGateMiddleware` asking whether any live
+        One query is `PolicyGateMiddleware` asking whether any live
         policy withholds the application. It runs on every authenticated
         request because that is what makes it a gate rather than a page --
         and it is one EXISTS, memoised per request, which short-circuits
-        before any per-user read. The budget is 3 rather than 2 for exactly
-        that reason; a fourth query here would mean the short-circuit broke.
+        before any per-user read. A warm shared session cache can remove the
+        session-table read, so this is an upper-bound contract: a fourth query
+        would mean the short-circuit broke, while two is a valid improvement.
         """
         user = _user("acct-queries@edify.test", "Accountant")
         self.client.force_login(user)
         self.client.get("/dashboard")  # warm any per-process caches
 
-        with self.assertNumQueries(3):
+        with CaptureQueriesContext(connection) as queries:
             response = self.client.get("/dashboard")
 
+        self.assertLessEqual(len(queries), 3)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response["Location"], "/accounts")

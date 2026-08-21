@@ -3,7 +3,7 @@
 {% block title %}My Profile — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 <!-- Page hero -->
 <div class="edify-page-header edify-page-hero">
 <div class="flex items-start gap-5">
@@ -45,13 +45,13 @@
 <!-- Account Details -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold">Account Details</h2>
+<h2 class="edify-profile-section-title">Account Details</h2>
 <p class="mt-1 edify-text-caption font-medium text-slate-500">Your name and phone number are yours to change. Email, status and roles are set by an administrator.</p>
 </div>
 <form method="post" action="{% url 'frontend:profile' %}" class="px-5 py-4 space-y-4">
 {% csrf_token %}
 <div class="py-2 border-b border-slate-50">
-<label for="profile-name" class="block text-[12px] font-semibold text-slate-500">Full Name</label>
+<label for="profile-name" class="edify-profile-field__label block">Full Name</label>
 <input
 id="profile-name"
 name="name"
@@ -60,11 +60,11 @@ value="{{ member.name }}"
 maxlength="255"
 required
 autocomplete="name"
-class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
 >
 </div>
 <div class="py-2 border-b border-slate-50">
-<label for="profile-phone" class="block text-[12px] font-semibold text-slate-500">Phone Number</label>
+<label for="profile-phone" class="edify-profile-field__label block">Phone Number</label>
 <input
 id="profile-phone"
 name="phone"
@@ -74,7 +74,7 @@ maxlength="64"
 autocomplete="tel"
 inputmode="tel"
 placeholder="Not set"
-class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 text-[14px] font-semibold text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
+class="edify-profile-field__value mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)] edify-surface px-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 edify-primary-focus-visible"
 >
 </div>
 <div class="flex justify-end pt-1">
@@ -83,18 +83,18 @@ class="mt-1.5 w-full min-h-11 rounded-control border border-[var(--edify-border)
 </form>
 <div class="px-5 pb-4 space-y-4">
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
-<span class="text-[12px] font-semibold text-slate-500">Email</span>
-<span class="text-[14px] font-bold text-slate-800">{{ member.email }}</span>
+<span class="edify-profile-field__label">Email</span>
+<span class="edify-profile-field__value">{{ member.email }}</span>
 </div>
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
-<span class="text-[12px] font-semibold text-slate-500">Status</span>
+<span class="edify-profile-field__label">Status</span>
 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-pill bg-emerald-50 text-emerald-700 edify-text-caption font-bold">
 <span class="h-1.5 w-1.5 rounded-pill bg-emerald-500"></span>
 {{ member.status|title }}
 </span>
 </div>
 <div class="flex items-center justify-between py-2">
-<span class="text-[12px] font-semibold text-slate-500">Roles</span>
+<span class="edify-profile-field__label">Roles</span>
 <div class="flex gap-1.5">
 {% for role in member.roles %}
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ role }}</span>

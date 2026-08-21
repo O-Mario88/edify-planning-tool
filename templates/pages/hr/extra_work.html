@@ -1,0 +1,168 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Extra Work · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1300px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Performance</p>
+      <h1 class="edify-page-title edify-page-header__title">Extra Assigned Work</h1>
+      <p class="edify-page-header__description">Governed assignments beyond your targets — assigned by the CD or your Program Lead, verified independently, and counted in performance separately from target achievement.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if can_assign %}
+      <button type="button"
+              hx-get="/extra-work/assign-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="inline-flex h-9 items-center rounded-control edify-primary-solid edify-primary-hover px-3.5 text-[12px] font-bold text-white transition-colors">
+        Assign Extra Work
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not summary.policy_approved and summary.verified %}
+  <div class="rounded-surface border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-800">
+    Verified extra work is tracked but not yet scored — the FY scoring policy awaits approval. Points appear here the moment it is approved.
+  </div>
+  {% endif %}
+
+  {% if mine %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Assigned to me</h2>
+      <p class="edify-section__description">{{ summary.open }} open · {{ summary.submitted }} awaiting review · {{ summary.verified }} verified{% if summary.points %} · {{ summary.points }} performance point{{ summary.points|pluralize }}{% endif %}{% if summary.overdue %} · <span class="text-rose-600 font-bold">{{ summary.overdue }} overdue</span>{% endif %}{% if mine|length > 25 %} · showing the 25 soonest of {{ mine|length }}{% endif %}</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[13px] font-semibold min-w-[820px]">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
+          <tr>
+            <th class="px-3 py-2.5">Task</th>
+            <th class="px-3 py-2.5 whitespace-nowrap">From</th>
+            <th class="px-3 py-2.5 whitespace-nowrap">Due</th>
+            <th class="px-3 py-2.5 whitespace-nowrap">Status</th>
+            <th class="px-3 py-2.5 text-right whitespace-nowrap">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for a in mine|slice:":25" %}
+          <tr class="align-top hover:bg-slate-50/60 transition-colors">
+            <td class="px-3 py-3 min-w-[280px]">
+              <p class="font-bold text-slate-800">{{ a.title }}</p>
+              <p class="edify-text-caption text-slate-500 mt-0.5">{{ a.instruction|truncatechars:140 }}</p>
+              {% if a.status == "returned" %}<p class="edify-text-caption font-bold text-rose-600 mt-1">Returned: {{ a.return_reason|truncatechars:110 }}</p>{% endif %}
+            </td>
+            <td class="px-3 py-3 whitespace-nowrap text-slate-600">{{ a.assigner_role }}</td>
+            <td class="px-3 py-3 whitespace-nowrap tabular-nums {% if a.is_overdue %}text-rose-600 font-bold{% else %}text-slate-600{% endif %}">{{ a.due_date|date:"d M Y" }}</td>
+            <td class="px-3 py-3 whitespace-nowrap"><span class="edify-status-text" data-edify-tone="{% if a.status == 'verified' %}success{% elif a.status == 'returned' %}danger{% elif a.status == 'submitted' %}info{% else %}neutral{% endif %}">{{ a.get_status_display }}{% if a.is_overdue %} · Overdue{% endif %}</span></td>
+            <td class="px-3 py-3 text-right whitespace-nowrap">
+              {% if a.status == "assigned" %}
+              <form hx-post="/extra-work/{{ a.id }}/start" hx-target="this" hx-swap="none" class="inline">{% csrf_token %}
+                <button type="submit" class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Start</button>
+              </form>
+              {% elif a.status == "acknowledged" or a.status == "in_progress" or a.status == "returned" %}
+              <button type="button" hx-get="/extra-work/{{ a.id }}/submit-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+                      class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Submit Result</button>
+              {% elif a.status == "verified" and a.contribution_points is not None %}
+              <span class="edify-text-caption font-bold text-emerald-700">+{{ a.contribution_points }} pts</span>
+              {% else %}
+              <span class="text-slate-300">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if to_review %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Awaiting my review</h2>
+      <p class="edify-section__description">Verify what was delivered, or return it with what must be corrected — the assignee can never verify their own work.</p>
+    </div>
+    <div class="divide-y divide-slate-100">
+      {% for a in to_review %}
+      <div class="py-3 flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-bold text-slate-800 text-[13px]">{{ a.title }} <span class="edify-text-caption font-semibold text-slate-400">· submitted {{ a.submitted_at|date:"d M Y" }}</span></p>
+          <p class="text-[13px] font-semibold text-slate-600 mt-1">Outcome: {{ a.outcome|truncatechars:220 }}</p>
+          {% if a.evidence_note %}<p class="edify-text-caption text-slate-500 mt-0.5">Evidence: {{ a.evidence_note|truncatechars:160 }}</p>{% endif %}
+          {% if a.evidence_uri %}<p class="edify-text-caption mt-0.5"><a href="{{ a.evidence_uri }}" class="edify-primary-text font-bold" rel="noopener" target="_blank">Evidence link</a></p>{% endif %}
+        </div>
+        <div class="flex items-center gap-2 shrink-0" x-data="{ returning: false }">
+          <form hx-post="/extra-work/{{ a.id }}/verify" hx-target="this" hx-swap="none" class="inline">{% csrf_token %}
+            <button type="submit" class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3 text-[12px] font-semibold text-white transition-colors">Verify &amp; Complete</button>
+          </form>
+          <form hx-post="/extra-work/{{ a.id }}/return" hx-target="this" hx-swap="none" class="inline-flex items-center gap-1.5">{% csrf_token %}
+            <input name="reason" x-show="returning" x-cloak required placeholder="What must be corrected" aria-label="Return reason"
+                   class="h-8 w-52 rounded-control border border-slate-200 px-2 text-[12px] font-semibold">
+            <button type="submit" x-show="returning" x-cloak class="inline-flex h-8 items-center rounded-control border border-rose-200 px-2.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50">Return</button>
+            <button type="button" x-show="!returning" @click="returning = true" class="inline-flex h-8 items-center rounded-control border border-rose-200 px-2.5 text-[12px] font-semibold text-rose-600 hover:bg-rose-50">Return…</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if assigned_by_me %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">Assigned by me</h2>
+      <p class="edify-section__description">Everything you handed out, and where it stands.</p>
+    </div>
+    <div class="divide-y divide-slate-100">
+      {% for a in assigned_by_me %}
+      <div class="py-2.5 flex flex-wrap items-center justify-between gap-3 text-[13px] font-semibold">
+        <div class="min-w-0">
+          <span class="font-bold text-slate-800">{{ a.title }}</span>
+          <span class="text-slate-400"> · {{ a.assignee_role }} · due {{ a.due_date|date:"d M Y" }}</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="edify-status-text" data-edify-tone="{% if a.status == 'verified' %}success{% elif a.status == 'returned' %}warning{% elif a.is_overdue %}danger{% else %}neutral{% endif %}">{{ a.get_status_display }}{% if a.is_overdue %} · Overdue{% endif %}</span>
+          {% if a.status not in "verified,cancelled" %}
+          <form hx-post="/extra-work/{{ a.id }}/cancel" hx-target="this" hx-swap="none" class="inline">{% csrf_token %}
+            <input type="hidden" name="reason" value="Cancelled by assigner">
+            <button type="submit" class="inline-flex h-7 items-center rounded-control border border-slate-200 px-2 edify-text-caption font-semibold text-slate-500 hover:bg-slate-50">Cancel</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if monitoring %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="edify-section">
+      <h2 class="edify-section__heading">On my team (assigned by the CD)</h2>
+      <p class="edify-section__description">You monitor these; the Country Director owns them.</p>
+    </div>
+    <div class="divide-y divide-slate-100">
+      {% for a in monitoring %}
+      <div class="py-2.5 flex items-center justify-between gap-3 text-[13px] font-semibold">
+        <span class="font-bold text-slate-800 truncate">{{ a.title }}</span>
+        <span class="edify-status-text shrink-0" data-edify-tone="{% if a.status == 'verified' %}success{% elif a.is_overdue %}danger{% else %}neutral{% endif %}">{{ a.get_status_display }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not mine and not assigned_by_me and not to_review and not monitoring %}
+  <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
+    <p class="text-[15px] font-bold text-slate-800">No extra work this year</p>
+    <p class="mt-1 text-[12px] font-semibold text-slate-500">Assignments from the CD or your Program Lead appear here, with their own performance lane.</p>
+  </div>
+  {% endif %}
+
+  <div id="drawer-container"></div>
+</div>
+{% endblock %}

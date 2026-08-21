@@ -18,6 +18,16 @@ class ProjectFilterPlacementTests(TestCase):
         self.assertIn('data-component="filter-toolbar"', self.template[filter_start:])
         self.assertIn('aria-label="Project filters"', self.template[filter_start:])
 
+    def test_project_pages_use_the_shared_gold_standard_canvas(self):
+        for path in (
+            "templates/pages/projects/index.html",
+            "templates/pages/projects/detail.html",
+            "templates/pages/dashboards/special_projects.html",
+        ):
+            source = (ROOT / path).read_text()
+            self.assertIn("edify-page-canvas", source, path)
+            self.assertIn("edify-page-header", source, path)
+
     def test_header_controls_keep_actions_but_not_filters(self):
         controls = self.template.split('<div class="edify-page-header__controls">', 1)[
             1

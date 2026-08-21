@@ -29,7 +29,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 
 <!-- Security Leakage audit -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Data Leakage Scan</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Data Leakage Scan</h3>
 
 {% if health.mockDataLeakage.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-surface text-[12px] font-semibold border border-emerald-150">
@@ -49,7 +49,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 
 <!-- RBAC audit -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">RBAC Gating Scan</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">RBAC Gating Scan</h3>
 
 {% if health.permissionAudit.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-surface text-[12px] font-semibold border border-emerald-150">
@@ -72,7 +72,7 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 
 <!-- Audit log tamper-evidence -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Audit Chain Integrity</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Audit Chain Integrity</h3>
 
 {% if health.auditChainIntegrity.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-surface text-[12px] font-semibold border border-emerald-150">
@@ -93,7 +93,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
      quantities match the activities that carry them, and did certified
      agency bookings reach the agency. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Scheduling Rules</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Scheduling Rules</h3>
 <div class="space-y-2">
 {% for c in health.schedulingRules.checks %}
 <div class="p-3 rounded-surface {% if c.status == 'pass' %}bg-emerald-50{% elif c.status == 'warn' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
@@ -112,7 +112,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 <!-- Background Automation (scheduler + jobs) health -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Background Automation</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Background Automation</h3>
 <div class="space-y-2">
 {% for c in health.backgroundAutomation.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
@@ -131,7 +131,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
      this payload never names an individual, and no per-person surface may
      ever be added here. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Staff Time Standard</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Staff Time Standard</h3>
 {% if health.interactionTelemetry.report and health.interactionTelemetry.report.roles %}
 <div class="flex flex-wrap items-center gap-2">
 {% if health.interactionTelemetry.report.fieldWithinStandardPct != None %}
@@ -167,7 +167,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <!-- Durable outbox (roadmap Phase 2): the event backbone's liveness —
      depth, oldest pending age, dead letters, each with its replay path. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Durable Outbox</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Durable Outbox</h3>
 {% if health.outbox.summary %}
 <div class="flex flex-wrap items-center gap-2">
 <span class="edify-badge" {% if health.outbox.summary.dead %}data-tone="danger"{% elif health.outbox.summary.pending %}data-tone="info"{% else %}data-tone="success"{% endif %}>{{ health.outbox.summary.pending }} pending · {{ health.outbox.summary.dead }} dead</span>
@@ -189,7 +189,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 <!-- External-sync ledger (audit fix: IntegrationSync finally has a reader). -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">External Integrations</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">External Integrations</h3>
 <div class="flex flex-wrap items-center gap-2">
 {% for s in health.integrations.systems %}
 <span class="edify-badge" {% if s.enabled %}data-tone="info"{% endif %}>{{ s.system|title }}: {% if s.enabled %}enabled{% else %}manual references{% endif %} · {{ s.succeeded }} synced · {{ s.reconciledManual }} manual</span>
@@ -209,7 +209,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <!-- Data-quality queues (roadmap Phase 1b): directory hygiene as owned,
      self-closing exception queues — the precondition for the autopilot. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Data Quality Queues</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Data Quality Queues</h3>
 {% if health.dataQuality.summary %}
 <div class="flex flex-wrap items-center gap-2">
 <span class="edify-badge" {% if health.dataQuality.summary.critical %}data-tone="danger"{% elif health.dataQuality.summary.openIssues %}data-tone="warning"{% else %}data-tone="success"{% endif %}>{{ health.dataQuality.summary.openIssues }} open issues</span>
@@ -234,7 +234,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 <!-- Authentication Lockout unification health (Issue 3) -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Authentication Lockout</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Authentication Lockout</h3>
 <div class="space-y-2">
 {% for c in health.authLockout.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
@@ -250,7 +250,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 
 <!-- Unmatched SSA queue health (Issue 5) -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[21px] font-extrabold tracking-tight">Unmatched SSA Queue</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Unmatched SSA Queue</h3>
 <div class="space-y-2">
 {% for c in health.unmatchedSsa.checks %}
 <div class="p-3 rounded-surface {% if c.severity == 'ok' %}bg-emerald-50{% elif c.severity == 'warning' %}bg-amber-50{% else %}bg-rose-50{% endif %}">
@@ -272,7 +272,7 @@ Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. I
 <!-- Core workflow breaks checklist -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[21px] font-extrabold tracking-tight">Operational Exception Ledger</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Operational Exception Ledger</h3>
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white">
 {{ health.fy }} Checks
 </span>
@@ -1075,7 +1075,7 @@ these now; these count the rows that predate the rule. -->
 source — mock data, emojis, dead links, static charts, theme/responsive. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[21px] font-extrabold tracking-tight">Design System Quality Lints</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Design System Quality Lints</h3>
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white">Gold Standard</span>
 </div>
 <div class="divide-y divide-slate-100 space-y-3.5">
@@ -1108,7 +1108,7 @@ source — mock data, emojis, dead links, static charts, theme/responsive. -->
 gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[21px] font-extrabold tracking-tight">Professional Development</h3>
+<h3 class="text-[22px] font-extrabold tracking-tight">Professional Development</h3>
 </div>
 <div class="divide-y divide-slate-100 space-y-3.5">
 {% for c in health.professionalDevelopment.checks %}

@@ -66,7 +66,12 @@ class TabContractTest(SimpleTestCase):
         contract = self.css.split("Tabs, pills and workflow state", 1)[1]
 
         self.assertIn("flex: 1 0 auto !important", contract)
+        self.assertIn("align-self: stretch !important", contract)
+        self.assertIn("block-size: auto !important", contract)
         self.assertIn("white-space: nowrap", contract)
+        self.assertIn(
+            "line-height: var(--edify-text-label-leading) !important", contract
+        )
         self.assertNotIn(
             "flex: 1 0 7rem !important",
             contract,
@@ -102,6 +107,15 @@ class TabContractTest(SimpleTestCase):
         ):
             self.assertIn(selector, contract)
 
+    def test_dynamic_tab_counts_are_plain_inherited_text(self):
+        contract = self.css.split("Counts belong to the tab label", 1)[1]
+        self.assertIn("background: transparent !important", contract)
+        self.assertIn("color: currentColor !important", contract)
+        self.assertIn("opacity: 1", contract)
+
+        schools = (ROOT / "templates/partials/schools/tabs.html").read_text()
+        self.assertEqual(schools.count("data-edify-tab-count"), 5)
+
     def test_analytics_route_navigation_has_no_legacy_underline(self):
         contract = self.css.split("Tabs, pills and workflow state", 1)[1]
 
@@ -120,7 +134,6 @@ class TabContractTest(SimpleTestCase):
     def test_legacy_alpine_tab_rows_opt_into_the_shared_contract(self):
         sources = (
             "templates/pages/messages/index.html",
-            "templates/partials/analytics/cd/budget_finance.html",
             "templates/pages/hr/my_performance.html",
             "templates/partials/professional_development/body.html",
             "templates/pages/ssa/upload_preview.html",

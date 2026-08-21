@@ -39,6 +39,9 @@ STAGE_RETURNED = "returned"
 
 # Delivery states, read from the activity the partner created.
 _IN_PROGRESS_STATUSES = ("in_progress", "completion_started")
+# Partner evidence goes DIRECTLY to IA (§10, 2026-08-20) — there is no
+# CCEO/PL review stage. Legacy rows may still sit in the two retired
+# statuses; they read as "with the partner to submit".
 _EVIDENCE_REVIEW_STATUSES = ("evidence_uploaded", "submitted_to_pl", "returned_by_pl")
 _AWAITING_IA_STATUSES = ("awaiting_ia_verification", "salesforce_id_required")
 _COMPLETE_STATUSES = ("ia_verified", "accountant_confirmed", "completed", "closed")
@@ -633,9 +636,11 @@ def _set_next_action(item) -> None:
                 "Verify the submission",
             )
     elif item.activity_status in _EVIDENCE_REVIEW_STATUSES:
+        # Evidence exists but the partner has not pressed Submit — direct
+        # IA handoff means nobody reviews it before IA (§10).
         item.next_action_owner, item.next_action = (
-            item.responsible_cceo_name or "CCEO",
-            "Review the partner's evidence",
+            item.partner_name or "Partner",
+            "Submit the evidence to IA",
         )
     elif item.evidence_status in ("", "none"):
         item.next_action_owner, item.next_action = (

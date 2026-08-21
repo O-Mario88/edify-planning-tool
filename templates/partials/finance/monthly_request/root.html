@@ -74,7 +74,7 @@
       <div class="rounded-control border border-slate-200 bg-slate-50 px-3 py-3">
         <p class="truncate text-[13px] font-bold text-slate-800">{{ member.name }}</p>
         <p class="mt-1 edify-text-caption font-semibold text-slate-500">{{ member.activity_count }} activit{{ member.activity_count|pluralize:'y,ies' }}</p>
-        <p class="mt-2 text-[17px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total_fmt }}</p>
+        <p class="mt-2 text-[18px] font-bold tabular-nums text-[var(--edify-accent)]">{{ member.total_fmt }}</p>
       </div>
       {% endfor %}
     </div>
@@ -96,7 +96,7 @@
       <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
         <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm sm:text-right">
           <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
-          <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
+          <p class="text-[20px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row">
           {% if can_submit_to_rvp %}

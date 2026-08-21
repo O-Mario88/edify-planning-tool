@@ -1,46 +1,6 @@
-{% load frontend_filters %}
-<!-- Monthly summary band. Was five separate kpi_card tiles, each its own
-     bordered card with its own padding -- five surfaces tall enough to crowd
-     the page. One band now: icon, label, value, caption, divided by rules,
-     in the pattern of the login page's stats strip but on the light surface.
-     The edify-kpi-strip marker stays: the theme CSS exempts this strip's
-     children from its border overrides by that class. -->
-<div class="edify-kpi-strip edify-surface rounded-surface border border-slate-100 shadow-sm px-2 py-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-y-4 lg:gap-y-0 lg:divide-x divide-slate-100"
-     aria-label="Monthly request summary">
-  {% comment %}
-    Items come from the metric registry (render_metric), so each carries its
-    key, definition and PLANNED finance stage; the data-* attributes are what
-    the platform's duplication guard greps for. Icons stay here in the
-    template, keyed by metric, because a spec describes meaning, not artwork.
-  {% endcomment %}
-  {% for tile in monthly_summary_band %}
-  <div class="flex items-center gap-3 px-4 min-w-0"
-       data-component="kpi-card"
-       data-metric-key="{{ tile.metric_key }}"
-       data-metric-period="{{ tile.period }}"
-       {% if tile.definition %}title="{{ tile.definition }}"{% endif %}>
-    <span class="h-9 w-9 rounded-pill bg-slate-50 border border-slate-100 text-slate-500 flex items-center justify-center shrink-0" aria-hidden="true">
-      <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        {% if tile.metric_key == "fund_request_monthly_visits_budget" %}<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-        {% elif tile.metric_key == "fund_request_monthly_trainings_budget" %}<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-        {% elif tile.metric_key == "fund_request_monthly_meetings_budget" %}<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-        {% elif tile.metric_key == "fund_request_monthly_admin_budget" %}<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        {% else %}<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        {% endif %}
-      </svg>
-    </span>
-    <div class="min-w-0">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 truncate">{{ tile.label }}</p>
-      <p class="text-[17px] font-extrabold text-slate-800 tabular-nums leading-tight">{{ tile.display_value }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">{{ selected_month }} {{ selected_fy }}</p>
-    </div>
-  </div>
-  {% endfor %}
-</div>
 {% comment %}
-  Only the five summary tiles remain here. The "Monthly Fund Request — <month>"
-  preview card that followed (a Preview pill plus per-week total tiles) was
-  removed at the owner's request: the My Budget card's Week and Month tabs
-  answer the same questions from the same canonical source, so the card was a
-  second monthly surface saying it again.
+  Retired duplicate KPI surface. The page-level Request and budget context
+  tray already owns the six headline metrics, while My Budget's Month tab and
+  the period breakdown provide the monthly detail. Keeping a second five-card
+  tray made the page render eleven KPIs and repeated the same decision context.
 {% endcomment %}

@@ -134,41 +134,7 @@ items are the only manual country-level costs.{% endcomment %}
   </details>
   {% endif %}
 
-  <!-- KPI strip -->
-  <div class="edify-kpi-strip grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" aria-label="General budget summary">
-    {% for k in kpis %}
-    <div class="card p-4">
-      <div class="flex items-start justify-between">
-        <div class="h-9 w-9 rounded-surface flex items-center justify-center shrink-0
-          {% if k.variant == 'primary' %}bg-emerald-50 text-emerald-600
-          {% elif k.variant == 'info' %}edify-primary-soft edify-primary-text
-          {% elif k.variant == 'success' %}bg-teal-50 text-teal-600
-          {% elif k.variant == 'warning' %}bg-amber-50 text-amber-600
-          {% elif k.variant == 'finance' %}bg-violet-50 text-violet-600
-          {% elif k.variant == 'danger' %}bg-rose-50 text-rose-600
-          {% else %}edify-primary-soft edify-primary-text{% endif %}">
-          {% include "partials/finance/country_budget/_kpi_icon.html" with variant=k.variant %}
-        </div>
-        {% if k.trend_pct is not None %}
-        <span class="inline-flex items-center gap-0.5 edify-text-caption font-bold {% if k.trend_up %}text-emerald-600{% else %}text-rose-600{% endif %}">
-          {% if k.trend_up %}&#9650;{% else %}&#9660;{% endif %}{{ k.trend_pct }}%
-        </span>
-        {% endif %}
-      </div>
-      <p class="edify-kpi-label edify-text-caption text-slate-400 mt-2.5">{{ k.label }}</p>
-      <p class="text-[18px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
-      <div class="flex items-center justify-between mt-1.5">
-        <span class="edify-text-caption font-semibold text-slate-400">{{ k.helper }}</span>
-        {% if k.sparkline %}
-        <svg class="h-5 w-16 shrink-0" viewBox="0 0 60 20" preserveAspectRatio="none">
-          <polyline points="{{ k.sparkline }}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
-            class="{% if k.trend_up == False %}text-rose-400{% else %}text-emerald-400{% endif %}"/>
-        </svg>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-  </div>
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="General budget headline" %}
 
   <!-- Main workspace -->
   <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">

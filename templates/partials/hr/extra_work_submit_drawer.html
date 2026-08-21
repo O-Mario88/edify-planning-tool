@@ -1,0 +1,40 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Submit Result{% endblock %}
+{% block drawer_subtitle %}{{ a.title }} · due {{ a.due_date|date:"d M Y" }} — what was actually delivered goes to {{ a.assigner_role }} for verification.{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/extra-work/{{ a.id }}/submit"
+      hx-post="/extra-work/{{ a.id }}/submit" hx-target="#extra-work-submit-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="extra-work-submit-errors" aria-live="polite"></div>
+
+  <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">The ask</p>
+    <p class="mt-1.5 text-[13px] font-semibold text-slate-700">{{ a.instruction }}</p>
+    {% if a.expected_output %}<p class="mt-1.5 edify-text-caption font-semibold text-slate-500">Expected output: {{ a.expected_output }}</p>{% endif %}
+    {% if a.status == "returned" %}<p class="mt-1.5 edify-text-caption font-bold text-rose-600">Returned: {{ a.return_reason }}</p>{% endif %}
+  </div>
+
+  <div>
+    <label for="xw-outcome" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Outcome — what was delivered <span class="text-rose-500">*</span></label>
+    <textarea id="xw-outcome" name="outcome" rows="3" required
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.outcome }}</textarea>
+  </div>
+
+  <div>
+    <label for="xw-evnote" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Evidence {% if a.evidence_required %}<span class="text-rose-500">*</span>{% else %}<span class="normal-case tracking-normal font-semibold">(optional)</span>{% endif %}</label>
+    <textarea id="xw-evnote" name="evidence_note" rows="2" placeholder="What proves it — attendance, document name, record reference"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">{{ a.evidence_note }}</textarea>
+    <input name="evidence_uri" type="url" value="{{ a.evidence_uri }}" placeholder="Optional link to the evidence"
+           class="mt-2 h-10 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Submit for Verification</button>
+  </div>
+</form>
+{% endblock %}

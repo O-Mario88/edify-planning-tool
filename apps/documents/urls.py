@@ -36,6 +36,11 @@ urlpatterns = [
         name="manage_document",
     ),
     path(
+        "documents/<slug:slug>/versions/new",
+        views.new_version_view,
+        name="new_document_version",
+    ),
+    path(
         "documents/<slug:slug>/<str:action>",
         views.document_action_view,
         name="document_action",

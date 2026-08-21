@@ -1,8 +1,22 @@
 {% load frontend_filters %}
 {% load static %}
 
+{% comment %}
+Every figure below is bounded by the viewer's people scope. Naming that scope
+is not decoration: the same page used to report organisation-wide numbers
+under whatever country the filter bar happened to show.
+{% endcomment %}
+<p class="mb-3 edify-text-caption font-semibold edify-text-muted">
+  Showing <span class="font-bold edify-text">{{ scope_label }}</span>
+</p>
+{% if scope_warning %}
+  <p class="mb-3 rounded-control border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-900">
+    {{ scope_warning }}
+  </p>
+{% endif %}
+
 <!-- KPI Strip -->
-<div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
+{% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="People pulse" %}
 
 <!-- Leadership Attention Alert Banner -->
 <div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
@@ -64,10 +78,6 @@
       </div>
     </a>
   </div>
-</div>
-
-<div class="mobile-home-only">
-  {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="People pulse" %}
 </div>
 
 <!-- Row 1: Workforce Overview Charts -->

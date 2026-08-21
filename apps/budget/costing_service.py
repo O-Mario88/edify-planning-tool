@@ -122,6 +122,7 @@ _COSTING_PROFILE_ACTIVITY_TYPE = {
     "SSA_DATA_GATHERING": "baseline_ssa_visit",
     "GROUP_YOUTH_CAMP": "training",
     "PROGRAMME_EVENT": "programme_event",
+    "FIELD_TRAVEL": "field_event",
 }
 
 
@@ -607,6 +608,14 @@ def apply_to_activity(
                 "monthly fund request. Return that request before changing its cost."
             )
 
+        # Finance's vendor-booking decision (hotel paid direct) must survive
+        # a re-price: capture which accommodation keys were vendor-paid and
+        # re-stamp them on the rebuilt rows.
+        vendor_paid_keys = set(
+            ActivityScheduleCostLine.objects.filter(
+                activity=activity, vendor_paid=True
+            ).values_list("cost_setting_key", flat=True)
+        )
         ActivityScheduleCostLine.objects.filter(activity=activity).delete()
 
         # Tag Core activity budget lines
@@ -665,6 +674,7 @@ def apply_to_activity(
                     activity_catalogue_version=activity.catalogue_version,
                     costing_profile=activity.costing_profile_snapshot,
                     line_item_type=_line_item_type(line.key),
+                    vendor_paid=line.key in vendor_paid_keys,
                     currency="UGX",
                     description=f"[{tag}] {line.label}" if tag else line.label,
                     total_cost=int(amount),

@@ -43,7 +43,7 @@ _STATE_TONE = {
     ActionState.OPEN: ("Open", "info"),
     ActionState.ACKNOWLEDGED: ("Acknowledged", "info"),
     ActionState.IN_PROGRESS: ("In progress", "info"),
-    ActionState.BLOCKED: ("Blocked", "neutral"),
+    ActionState.BLOCKED: ("Blocked", "danger"),
     ActionState.OVERDUE: ("Overdue", "danger"),
     ActionState.ESCALATED: ("Escalated", "danger"),
     ActionState.RESOLVED: ("Resolved", "success"),

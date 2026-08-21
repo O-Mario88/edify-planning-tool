@@ -24,6 +24,7 @@ from apps.core.metrics.spec import (
     Period,
     Unit,
 )
+from apps.core.metrics.reconciled_registry import RECONCILED_METRICS
 
 
 # ── Labels that describe nothing ─────────────────────────────────────────────
@@ -1523,7 +1524,9 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
     # ── Business Transformation: the Uganda MFI portfolio scorecard ──────────
     # Owned by the BT workspace; the Loan Register repeats the strip because
     # its reader is making the same portfolio judgement over the filtered
-    # register rather than a different one. All eleven tiles come from
+    # register rather than a different one. The workspace renders no more than
+    # six decision-grade tiles; the remaining governed measures live in the
+    # register and drill-down views.
     # `services.portfolio_metrics` over the caller's scoped loans.
     MetricSpec(
         key="bt_new_loans",
@@ -1550,16 +1553,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_value_disbursed",
         label="Value Disbursed",
         definition=(
-            "MFI-confirmed disbursed principal on loans in the selected "
-            "period, in UGX."
+            "Net principal confirmed through append-only disbursement and "
+            "reversal postings in the selected period, in the facility currency."
         ),
         question="How much financing actually reached schools?",
         category=Category.FINANCE,
         unit=Unit.MONEY_UGX,
         finance_stage=FinanceStage.DISBURSED,
         service="apps.business_transformation.services.workspace_context",
-        source_models=("business_transformation.MfiLoan",),
-        numerator="Disbursed amounts on MFI-confirmed loans in the period",
+        source_models=(
+            "business_transformation.LoanDisbursement",
+            "business_transformation.LoanDisbursementReversal",
+        ),
+        numerator="Confirmed disbursement postings less reversal postings",
         date_basis=DateBasis.SUBMISSION_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The caller's scoped Business Transformation loan portfolio",
@@ -1590,15 +1596,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_active_portfolio",
         label="Active Portfolio",
         definition=(
-            "Latest MFI-reported outstanding principal across active loans, " "in UGX."
+            "Net confirmed principal disbursed less principal repayment "
+            "allocations and their reversals at the reporting date."
         ),
         question="How much financed money is still at work?",
         category=Category.FINANCE,
         unit=Unit.MONEY_UGX,
         finance_stage=FinanceStage.OUTSTANDING,
         service="apps.business_transformation.services.workspace_context",
-        source_models=("business_transformation.RepaymentSnapshot",),
-        numerator="Outstanding balances on the latest repayment snapshots",
+        source_models=(
+            "business_transformation.LoanDisbursement",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Net confirmed principal less net principal collected",
         date_basis=DateBasis.SUBMISSION_DATE,
         period=Period.POINT_IN_TIME,
         scope="The caller's scoped Business Transformation loan portfolio",
@@ -1606,7 +1616,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         filter_behaviour=FilterBehaviour.PARTIAL,
         drilldown="/loans",
         secondary_pages=("loans",),
-        notes="A portfolio position: the period filter narrows loans, not snapshots.",
+        notes="A ledger position: the period filter narrows loans, not postings.",
     ),
     MetricSpec(
         key="bt_repaid_amount",
@@ -1620,8 +1630,11 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         unit=Unit.MONEY_UGX,
         finance_stage=FinanceStage.RETURNED,
         service="apps.business_transformation.services.workspace_context",
-        source_models=("business_transformation.RepaymentSnapshot",),
-        numerator="Repayment deltas recorded inside the selected period",
+        source_models=(
+            "business_transformation.RepaymentTransaction",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Net principal allocations posted inside the selected period",
         date_basis=DateBasis.SUBMISSION_DATE,
         period=Period.FINANCIAL_YEAR,
         scope="The caller's scoped Business Transformation loan portfolio",
@@ -1638,16 +1651,19 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         key="bt_amount_overdue",
         label="Amount Overdue",
         definition=(
-            "Latest MFI-reported overdue principal across the scoped "
-            "portfolio, in UGX."
+            "Scheduled principal, interest and fees due by the reporting date "
+            "that remain unallocated after repayment reversals."
         ),
         question="How much repayment is late right now?",
         category=Category.RISK,
         unit=Unit.MONEY_UGX,
         finance_stage=FinanceStage.OUTSTANDING,
         service="apps.business_transformation.services.workspace_context",
-        source_models=("business_transformation.RepaymentSnapshot",),
-        numerator="Overdue balances on the latest repayment snapshots",
+        source_models=(
+            "business_transformation.LoanRepaymentInstallment",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Due scheduled components less net repayment allocations",
         date_basis=DateBasis.SUBMISSION_DATE,
         period=Period.POINT_IN_TIME,
         scope="The caller's scoped Business Transformation loan portfolio",
@@ -1668,13 +1684,67 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         unit=Unit.MONEY_UGX,
         finance_stage=FinanceStage.OUTSTANDING,
         service="apps.business_transformation.services.workspace_context",
-        source_models=("business_transformation.RepaymentSnapshot",),
-        numerator="Outstanding balances on defaulted loans",
+        source_models=(
+            "business_transformation.LoanDisbursement",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Ledger-derived outstanding principal on defaulted loans",
         date_basis=DateBasis.SUBMISSION_DATE,
         period=Period.POINT_IN_TIME,
         scope="The caller's scoped Business Transformation loan portfolio",
         owner_page="business_transformation",
         filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_par30",
+        label="Portfolio at Risk 30",
+        definition=(
+            "Outstanding principal on loans more than 30 days past due as a "
+            "share of total outstanding principal."
+        ),
+        question="How much outstanding principal is materially delinquent?",
+        category=Category.RISK,
+        unit=Unit.PERCENT,
+        denominator="Total outstanding principal in the scoped portfolio",
+        service="apps.business_transformation.services.workspace_context",
+        source_models=(
+            "business_transformation.LoanRepaymentInstallment",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Outstanding principal on loans more than 30 days past due",
+        date_basis=DateBasis.EXECUTION_DATE,
+        period=Period.POINT_IN_TIME,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.PARTIAL,
+        drilldown="/loans",
+        secondary_pages=("loans",),
+    ),
+    MetricSpec(
+        key="bt_collection_rate",
+        label="Collection Rate",
+        definition=(
+            "Net repayment value collected during the selected period as a "
+            "share of scheduled principal, interest and fees due in that period."
+        ),
+        question="Are scheduled repayments being collected?",
+        category=Category.PROGRESS,
+        unit=Unit.PERCENT,
+        denominator="Scheduled principal, interest and fees due in the period",
+        service="apps.business_transformation.services.workspace_context",
+        source_models=(
+            "business_transformation.LoanRepaymentInstallment",
+            "business_transformation.RepaymentTransaction",
+            "business_transformation.RepaymentAllocation",
+        ),
+        numerator="Repayment allocations less reversal allocations in the period",
+        date_basis=DateBasis.EXECUTION_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="The caller's scoped Business Transformation loan portfolio",
+        owner_page="business_transformation",
+        filter_behaviour=FilterBehaviour.FILTERED,
         drilldown="/loans",
         secondary_pages=("loans",),
     ),
@@ -1763,6 +1833,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         drilldown="/loans",
         secondary_pages=("loans",),
     ),
+    *RECONCILED_METRICS,
 )
 
 

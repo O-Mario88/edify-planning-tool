@@ -54,6 +54,10 @@ class Unit(str, Enum):
     MONEY_UGX = "money_ugx"
     SCORE = "score"
     DAYS = "days"
+    # Composite states such as "4 / 7" and categorical results such as the
+    # weakest intervention are server-produced facts, but are not scalar
+    # counts. Calling them COUNT would promise arithmetic they do not support.
+    STATUS = "status"
 
 
 class DateBasis(str, Enum):
@@ -173,6 +177,9 @@ class MetricSpec:
     refresh_events: tuple[str, ...] = ()
     roles: tuple[str, ...] = ()
     notes: str = ""
+    # Exact source location for generated/reconciled metrics. Older hand-written
+    # specs predate this field and remain traceable through ``service``.
+    source_location: str | None = None
 
     def __post_init__(self) -> None:
         if not self.key or self.key != self.key.lower().strip():

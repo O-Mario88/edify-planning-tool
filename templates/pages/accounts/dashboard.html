@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters kpi_metrics %}
 
 {% block title %}Fund Disbursement Dashboard — Edify{% endblock %}
 
@@ -56,12 +56,6 @@ return matchesStatus && (!query || haystack.includes(query));
       {% endfor %}
     </div>
   </section>
-  <section class="mobile-home-metrics" aria-label="Finance workflow summary">
-    <div class="mobile-home-metric"><span>Pending disbursement</span><strong>{{ kpis.pending_disb }}</strong></div>
-    <div class="mobile-home-metric"><span>Awaiting approvals</span><strong>{{ kpis.awaiting_approval }}</strong></div>
-    <div class="mobile-home-metric"><span>Reconciliation rate</span><strong>{{ kpis.recon_rate }}</strong></div>
-    <div class="mobile-home-metric"><span>Budget utilization</span><strong>{{ kpis.budget_util }}</strong></div>
-  </section>
 </div>
 
 <!-- ================= TOP HEADER BAR ================= -->
@@ -103,80 +97,13 @@ FY {{ fy }} · Live workflow data
 
 <div class="mobile-home-hide">{% include "components/analytics_provenance.html" with engine=analytics.engine %}</div>
 
-<!-- ================= TOP KPI STRIP ================= -->
-{% comment %}
-  Four columns, not seven. At 1366px a seven-column strip gave each tile 139px
-  while its content needed 185-246px, so every one of the six overflowed and
-  values collided with their labels. Four columns give ~320px each, which fits
-  the longest figure ("UGX 27.1M") with room to spare; the Budget Utilization
-  tile still spans two, so the six tiles fill two tidy rows.
-{% endcomment %}
-<div class="edify-kpi-strip mobile-home-hide grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" aria-label="Account workflow summary">
-{% comment %}
-  consistency.css sets `display: flex` on every legacy KPI tile and
-  expects a single content child, the way .admin-kpi wraps its copy.
-  These tiles had three bare siblings, so on a narrow tile flex-row
-  laid label, value and context side by side and clipped the context
-  ("121 requ in ch"). One wrapper restores the intended stack.
-{% endcomment %}
-<!-- Total Funds -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_approved }}</h3>
-<span class="edify-text-caption text-emerald-600 font-semibold block pt-1">FY {{ fy }}</span>
-</div>
-</div>
-
-<!-- Pending Disbursement -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.pending_disb }}</h3>
-<span class="edify-text-caption text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
-</div>
-</div>
-
-<!-- Total Disbursed -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_disbursed }}</h3>
-<span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
-</div>
-</div>
-
-<!-- Awaiting Approval -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.awaiting_approval }}</h3>
-<span class="edify-text-caption edify-primary-text font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
-</div>
-</div>
-
-<!-- Reconciliation Rate -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.recon_rate }}</h3>
-<span class="edify-text-caption text-emerald-600 font-semibold block pt-1">{{ kpis.accounted_count }} of {{ kpis.disbursed_count }} accounted</span>
-</div>
-</div>
-
-<!-- Budget Utilization -->
-<div class="edify-surface p-4 rounded-surface border border-slate-100 shadow-sm space-y-1 col-span-2">
-<div class="min-w-0 w-full space-y-1">
-<p class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
-<div class="flex items-baseline justify-between mt-1">
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.budget_util }}</h3>
-<span class="edify-text-caption text-slate-400 font-bold">{{ kpis.total_disbursed }} used</span>
-</div>
-<div class="w-full bg-slate-100 h-1.5 rounded-pill mt-1 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-pill" style="width: {{ kpis.budget_util_pct }}%"></div>
-</div>
-</div>
-</div>
+{% legacy_kpi_item "Pending disbursement" kpis.pending_disb helper="Requests awaiting payment" tone="warning" icon="clock" as pending_kpi %}
+{% legacy_kpi_item "Awaiting approvals" kpis.awaiting_approval helper="Requests in the approval chain" tone="danger" icon="warning" as approval_kpi %}
+{% legacy_kpi_item "Reconciliation rate" kpis.recon_rate helper="Disbursements accounted for" tone="success" icon="check" as reconciliation_kpi %}
+{% legacy_kpi_item "Budget utilization" kpis.budget_util helper="Approved funds used" tone="finance" icon="finance" as utilization_kpi %}
+{% collect_kpi_items pending_kpi approval_kpi reconciliation_kpi utilization_kpi as account_kpis %}
+<div>
+  {% include "components/kpi_strip.html" with items=account_kpis variant="executive" title="Finance headline" %}
 </div>
 
 
@@ -256,7 +183,7 @@ class="p-3 border rounded-surface cursor-pointer flex items-center gap-3 transit
 <div class="flex items-center gap-3">
 <div class="h-10 w-10 rounded-pill bg-slate-100 font-semibold flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
-<h3 class="text-[21px] font-extrabold tracking-tight leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
+<h3 class="text-[22px] font-extrabold tracking-tight leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
 <p class="edify-text-caption text-slate-500 font-bold mt-1.5">
 <span x-text="selectedItem ? selectedItem.role : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
 </p>
@@ -546,11 +473,11 @@ Open Canonical Disbursement Queue
 <!-- mini status labels -->
 <div class="grid grid-cols-2 gap-2 mt-4 text-center">
 <div class="p-2 bg-slate-50 border border-slate-100 rounded-surface">
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ recon_stats.awaiting_receipts }}</h4>
+<h4 class="text-[22px] font-extrabold tracking-tight leading-none">{{ recon_stats.awaiting_receipts }}</h4>
 <span class="edify-text-caption text-slate-400 font-bold uppercase tracking-wider block mt-1">Awaiting Receipts</span>
 </div>
 <div class="p-2 bg-emerald-50 border border-emerald-100 rounded-surface">
-<h4 class="text-[21px] font-extrabold tracking-tight text-emerald-600 leading-none">{{ recon_stats.closed }}</h4>
+<h4 class="text-[22px] font-extrabold tracking-tight text-emerald-600 leading-none">{{ recon_stats.closed }}</h4>
 <span class="edify-text-caption text-emerald-500 font-bold uppercase tracking-wider block mt-1">Closed</span>
 </div>
 </div>
@@ -594,21 +521,21 @@ Open Canonical Disbursement Queue
 <!-- 1 -->
 <div class="p-3 bg-slate-50 border border-slate-100 rounded-surface">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Committed</span>
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.pending_disb }}</h4>
+<h4 class="text-[22px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.pending_disb }}</h4>
 <span class="edify-text-caption text-slate-400 block mt-1">Approved, not disbursed</span>
 </div>
 
 <!-- 2 -->
 <div class="p-3 bg-slate-50 border border-slate-100 rounded-surface">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Pending Requests</span>
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.awaiting_approval }}</h4>
+<h4 class="text-[22px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.awaiting_approval }}</h4>
 <span class="edify-text-caption text-slate-400 block mt-1">Awaiting approval decision</span>
 </div>
 
 <!-- 3 -->
 <div class="p-3 bg-slate-50 border border-slate-100 rounded-surface col-span-2">
 <span class="edify-text-caption font-semibold text-slate-500 uppercase tracking-wide block">Program Funds</span>
-<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.total_approved }}</h4>
+<h4 class="text-[22px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.total_approved }}</h4>
 <span class="edify-text-caption text-slate-500 block mt-1">{{ kpis.budget_util_pct }}% utilized</span>
 </div>
 </div>

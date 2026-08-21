@@ -4,14 +4,26 @@
   <!-- Header -->
   <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
     <div class="min-w-0">
-      <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">{{ selected.name }} — {{ month_label }} Fund Plan</h2>
+      <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">{{ selected.name }} — Weekly Fund Request</h2>
       <p class="text-[12px] font-semibold text-slate-400 mt-0.5">{{ selected.district }} · {{ selected.region }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">Plan Period · {{ selected.period }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1.5">{{ selected.period }}</p>
     </div>
     <div class="text-right shrink-0">
       {% include "components/badge.html" with tone=selected.status_tone label=selected.status size="sm" %}
       <p class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider mt-2">Total Requested</p>
       <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ selected.total_fmt }}</p>
+      {% if selected.vendor_transport_fmt %}
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">+ {{ selected.vendor_transport_fmt }} transport · paid direct to provider</p>
+      {% endif %}
+      {% if selected.vendor_accommodation_fmt %}
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">+ {{ selected.vendor_accommodation_fmt }} accommodation · booked by Finance</p>
+      {% endif %}
+      {% if selected.vendor_transport_fmt or selected.vendor_accommodation_fmt %}
+      <p class="edify-text-caption font-bold edify-primary-text mt-0.5">Daily Mission Cost (week) {{ selected.mission_total_fmt }}</p>
+      {% endif %}
+      {% if selected.partner_total_fmt %}
+      <p class="edify-text-caption font-semibold text-slate-400 mt-1">+ {{ selected.partner_total_fmt }} partner-delivered · paid via partner payments</p>
+      {% endif %}
     </div>
   </div>
 
@@ -22,9 +34,13 @@
   </div>
   {% endif %}
 
-  <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+  {% comment %}The Plan Snapshot column was removed (owner, 2026-08-18) so the
+  funding breakdown reads at full width instead of squeezing its quantity and
+  cost columns; the plan detail it summarised is one click away via View Full
+  Plan.{% endcomment %}
+  <div>
     <!-- Funding breakdown from planned activities -->
-    <div class="xl:col-span-2">
+    <div>
       <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Funding Breakdown from Planned Activities</h3>
       <div class="overflow-x-auto rounded-surface border border-slate-100">
         <table class="w-full text-left">
@@ -34,54 +50,60 @@
           <tbody class="divide-y divide-slate-50">
             {% for b in selected.breakdown %}
             <tr>
-              <td class="px-3 py-2 text-[12px] font-semibold text-slate-700">{{ b.category }}</td>
+              <td class="px-3 py-2 text-[12px] font-semibold text-slate-700">
+                {{ b.category }}
+                {% if b.category == "Staff School Visits" and selected.visit_unit_cost %}
+                <span class="block edify-text-caption font-medium text-slate-400">
+                  {% if selected.school_visit_allocation_fmt %}School Visit Cost Allocation {{ selected.school_visit_allocation_fmt }} · {% endif %}Daily Field Cost (School Visit) — Planned ≈ {{ selected.visit_unit_cost }} per school
+                </span>
+                {% endif %}
+              </td>
               <td class="px-3 py-2 text-[12px] text-slate-500 text-center tabular-nums">{{ b.qty }}</td>
               <td class="px-3 py-2 text-[12px] text-slate-500 text-right tabular-nums">{{ b.unit_cost }}</td>
               <td class="px-3 py-2 text-[12px] font-bold text-slate-700 text-right tabular-nums">{{ b.total }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" class="px-3 py-6 text-center text-[12px] font-semibold text-slate-400">No costed activities this month.</td></tr>
+            <tr><td colspan="4" class="px-3 py-6 text-center text-[12px] font-semibold text-slate-400">No costed activities this week.</td></tr>
             {% endfor %}
           </tbody>
           <tfoot><tr class="border-t border-slate-100 bg-slate-50/40">
-            <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700" colspan="3">Total Requested</td>
-            <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700 text-right tabular-nums">{{ selected.total_fmt }}</td>
+            <td class="px-3 py-2.5 text-[13px] font-bold edify-primary-text" colspan="3">Total Requested</td>
+            <td class="px-3 py-2.5 text-[13px] font-bold edify-primary-text text-right tabular-nums">{{ selected.total_fmt }}</td>
           </tr></tfoot>
         </table>
       </div>
     </div>
 
-    <!-- Plan snapshot -->
-    <div>
-      <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Plan Snapshot</h3>
-      <div class="rounded-surface border border-slate-100 divide-y divide-slate-50">
-        {% include "partials/fund_approvals/snapshot_row.html" with label="Planned schools by staff" value=selected.snapshot.staff_schools %}
-        {% include "partials/fund_approvals/snapshot_row.html" with label="Partner school visits" value=selected.snapshot.partner_visits %}
-        {% include "partials/fund_approvals/snapshot_row.html" with label="Cluster meetings planned" value=selected.snapshot.cluster_meetings %}
-        {% include "partials/fund_approvals/snapshot_row.html" with label="Trainings planned" value=selected.snapshot.trainings %}
-        {% include "partials/fund_approvals/snapshot_row.html" with label="Total schools covered" value=selected.snapshot.total_schools %}
-      </div>
-    </div>
   </div>
 
   <!-- Actions -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-    <a href="/planning" class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">
+    {% comment %}Straight to this CCEO's tab on Team Oversight's planned
+    activities — the page the plan actually lives on — not the generic
+    planning workspace.{% endcomment %}
+    <a href="/team-planning-oversight/?view=planning&owner={{ selected.cceo_user_id }}" class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border edify-primary-border edify-primary-soft edify-primary-text text-[13px] font-bold transition-colors edify-primary-soft-hover">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       View Full Plan
     </a>
+    {% if selected.can_approve or selected.can_return %}
     <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
-            hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
-            {% if not selected.valid %}disabled{% endif %}
-            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control text-[12.5px] font-bold text-white transition-colors {% if selected.valid %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+            hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}","week":"{{ week }}"}'
+            {% if not selected.can_approve %}disabled{% endif %}
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control text-[13px] font-bold text-white transition-colors {% if selected.can_approve %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      Approve
+      Approve &amp; Send to Accountant
     </button>
-    <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
+    <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}&week={{ week }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[13px] font-bold text-rose-600 transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>
+    {% else %}
+    <div class="sm:col-span-2 flex items-center gap-2 rounded-control border border-slate-200 bg-slate-50/70 px-4 text-[12px] font-semibold text-slate-500 min-h-11">
+      <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>{{ selected.waiting_hint }}</span>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% else %}

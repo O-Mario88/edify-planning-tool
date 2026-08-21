@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -20,6 +21,7 @@ from apps.schools.models import School
 from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners import services as partner_services
 from apps.partners.purposes import PARTNER_VISIT_PURPOSES
 from apps.activities.models import Activity
 from apps.core_schools.models import (
@@ -194,64 +196,57 @@ def core_schools_view(request):
     total_regions = Region.objects.count()
 
     kpi_strip_items = [
-        {
-            "label": "Total Core Schools",
-            "value": f"{total_core}",
-            "icon": "school",
-            "variant": "primary",
-        },
-        {
-            "label": "Core Schools Ready for Planning",
-            "value": f"{ready_core}",
-            "helper": f"{int((ready_core/total_core)*100) if total_core else 0}% of core",
-            "icon": "check",
-            "variant": "warning",
-        },
-        {
-            "label": "Avg. Core Assessment Score",
-            "value": f"{round(avg_score, 1)}/10",
-            "icon": "trending-up",
-            "variant": "success",
-        },
-        {
-            "label": "Visits Scheduled",
-            "value": f"{visits_scheduled} / {total_target}",
-            "helper": f"{int((visits_scheduled/total_target)*100) if total_target else 0}% complete",
-            "icon": "calendar",
-            "variant": "info",
-        },
-        {
-            "label": "Trainings Scheduled",
-            "value": f"{trainings_scheduled} / {total_target}",
-            "helper": f"{int((trainings_scheduled/total_target)*100) if total_target else 0}% complete",
-            "icon": "calendar",
-            "variant": "info",
-        },
-        {
-            "label": "Staff vs Partner Performance Delta",
-            # SSA movement is measured in score points on the 0–10 scale. The
-            # KPI used to suffix "pp", which reads as percentage points and
-            # describes a different quantity entirely.
-            "value": (
-                f"{'+' if delta_points >= 0 else ''}{delta_points}"
-                if delta_points is not None
-                else "—"
-            ),
-            "helper": (
-                f"score points · {'Staff' if delta_points >= 0 else 'Partner'} ahead"
-                if delta_points is not None
-                else "No paired SSA cycles yet"
-            ),
-            "icon": "chart",
-            "variant": "primary",
-        },
-        {
-            "label": "Regions Covered",
-            "value": f"{regions_covered} / {total_regions}",
-            "helper": f"{int((regions_covered/total_regions)*100) if total_regions else 0}% coverage",
-            "icon": "target",
-            "variant": "success",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_total_core_schools",
+            f"{total_core}",
+            icon="school",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_core_schools_ready_for_planning",
+            f"{ready_core}",
+            helper=f"{int((ready_core/total_core)*100) if total_core else 0}% of core",
+            icon="check",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_avg_core_assessment_score",
+            f"{round(avg_score, 1)}/10",
+            icon="trending-up",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_visits_scheduled",
+            f"{visits_scheduled} / {total_target}",
+            helper=f"{int((visits_scheduled/total_target)*100) if total_target else 0}% complete",
+            icon="calendar",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_trainings_scheduled",
+            f"{trainings_scheduled} / {total_target}",
+            helper=f"{int((trainings_scheduled/total_target)*100) if total_target else 0}% complete",
+            icon="calendar",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_staff_vs_partner_performance_delta",
+            f"{'+' if delta_points >= 0 else ''}{delta_points}"
+            if delta_points is not None
+            else "—",
+            helper=f"score points · {'Staff' if delta_points >= 0 else 'Partner'} ahead"
+            if delta_points is not None
+            else "No paired SSA cycles yet",
+            icon="chart",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_core_schools_views_regions_covered",
+            f"{regions_covered} / {total_regions}",
+            helper=f"{int((regions_covered/total_regions)*100) if total_regions else 0}% coverage",
+            icon="target",
+            variant="success",
+        ),
     ]
 
     # Dropdowns Options
@@ -905,7 +900,7 @@ def core_assign_partner_action(request):
             )
 
             # 1. Create PartnerAssignment in DB
-            pa = PartnerAssignment.objects.create(
+            pa = partner_services.create_assignment(
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.staff_profile_id,
@@ -925,7 +920,6 @@ def core_assign_partner_action(request):
                 purpose_of_visit=purpose_of_visit,
                 expected_activity_type=catalogue_item.workflow_kind,
                 notes=notes,
-                status="assigned",
                 visit_number=visit_training_number if support_type == "Visit" else "",
                 training_number=visit_training_number
                 if support_type == "Training"

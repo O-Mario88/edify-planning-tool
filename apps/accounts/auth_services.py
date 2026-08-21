@@ -486,10 +486,25 @@ def set_password(token: str, new_password: str, confirm: str) -> dict:
         # `CoverageAssignmentService.get_eligible_coverage_staff` filters on
         # "active", which meant nobody could be nominated to cover anyone's
         # leave, ever.
+        #
+        # But it must not override an onboarding plan. Where one exists, HR
+        # closing it is the activation event — it is the step that checks the
+        # policies were acknowledged, the supervisor confirmed and the
+        # portfolio assigned. Activating on invite acceptance let a new hire
+        # become a nominatable cover and a scoped team member with every
+        # onboarding task still open (2026-08-20 HR audit).
         profile = getattr(user, "staff_profile", None)
         if profile is not None and profile.onboarding_state == "pending":
-            profile.onboarding_state = "active"
-            profile.save(update_fields=["onboarding_state", "updated_at"])
+            from apps.hr.models import OnboardingPlan, OnboardingStatus
+
+            gated = (
+                OnboardingPlan.objects.filter(staff_id=profile.id)
+                .exclude(status=OnboardingStatus.CLOSED)
+                .exists()
+            )
+            if not gated:
+                profile.onboarding_state = "active"
+                profile.save(update_fields=["onboarding_state", "updated_at"])
 
     from apps.audit.services import log as audit_log
 

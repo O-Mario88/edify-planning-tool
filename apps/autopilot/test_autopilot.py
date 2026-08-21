@@ -30,6 +30,29 @@ from .services import (
     live_proposal_for,
 )
 
+
+def _confirmed_ssa(school, *, fy=None, score=6.0):
+    """A confirmed assessment, so intervention work can be planned at all."""
+    from django.utils import timezone
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.fy import get_operational_fy
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    record = SsaRecord.objects.create(
+        school=school,
+        fy=fy or get_operational_fy(),
+        date_of_ssa=timezone.now(),
+        average_score=score,
+        verification_status="confirmed",
+    )
+    for intervention, _ in SsaIntervention.choices:
+        SsaScore.objects.create(
+            ssa_record=record, intervention=intervention, score=score
+        )
+    return record
+
+
 # A fixed Monday inside FY2027 keeps the week deterministic.
 WEEK = date(2026, 10, 19)
 
@@ -61,6 +84,11 @@ class AutopilotFixture(TestCase):
             school_type="client",
             **overrides,
         )
+
+        # An ordinary school visit is "scheduled against the intervention it is
+        # meant to move", so the school must be assessed before that work can
+        # be planned. The fixture starts where real work starts.
+        _confirmed_ssa(school)
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=school.id)
         return school
 

@@ -347,8 +347,31 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn("EdTech Integration", html)
         self.assertIn('name="schools_invited"', html)
         self.assertIn('name="teachers_per_school"', html)
+        self.assertIn(
+            "Lower it when some do not qualify or did not confirm",
+            html,
+        )
+        attendance_row = html.split("data-cluster-training-attendance-row", 1)[1].split(
+            'aria-live="polite"', 1
+        )[0]
+        self.assertIn('name="schools_invited"', attendance_row)
+        self.assertIn('name="scheduled_date"', attendance_row)
         self.assertNotIn("Purpose for Meeting / Training", html)
         self.assertNotIn("Session Goal", html)
+
+    def test_cluster_planner_radios_align_and_only_schedule(self):
+        html = self._cluster_card_drawer()
+
+        self.assertIn("cluster-activity-type-options", html)
+        self.assertEqual(
+            html.count('class="cluster-activity-type-option '),
+            2,
+        )
+        self.assertIn('id="cluster-activity-training"', html)
+        self.assertIn('id="cluster-activity-meeting"', html)
+        self.assertNotIn('id="assigned-partner-select"', html)
+        self.assertNotIn("Choose a partner before assigning", html)
+        self.assertNotIn("bg-emerald-600 hover:bg-emerald-700", html)
 
     def test_cluster_card_cost_preview_refreshes_for_numeric_input(self):
         html = self._cluster_card_drawer()

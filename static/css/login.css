@@ -39,6 +39,26 @@ body.login-page {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-weight: var(--edify-text-body-weight);
+}
+
+/* Match the authenticated workspace: light body copy, regular labels and
+   controls, with strong weight reserved for real titles. */
+.login-page :is(p, li, small) {
+  font-weight: var(--edify-text-body-weight) !important;
+}
+
+.login-page :is(label, input, button, .login-brand__eyebrow, [class*="__label"], [class*="__meta"]) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+.login-page :is(h1, h2, h3, .login-brand__title, .impact-card__title) {
+  font-weight: var(--edify-text-heading-weight) !important;
+}
+
+.login-page,
+.login-page * {
+  letter-spacing: normal !important;
 }
 
 button,

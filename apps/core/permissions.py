@@ -374,8 +374,9 @@ class RolePermissionService:
 
         mine = owner_ids(user)
         # The owner in either id space, or the staff member monitoring a
-        # partner-delivered activity — they are the one who must accept the
-        # partner's evidence before the chain can move.
+        # partner-delivered activity. Monitoring is visibility, not a gate:
+        # partner evidence goes directly to IA (§10, 2026-08-20) — the
+        # monitor sees the work, chases delays, and never approves evidence.
         return (
             activity.responsible_staff_id in mine
             or getattr(activity, "monitored_by_staff_id", None) in mine
@@ -616,12 +617,7 @@ def require_any_page_permission(*page_names: str):
                 audit_log(
                     action="unauthorized_page_access",
                     subject_kind="Page",
-                    # AuditLog.subject_id is intentionally compact (30 chars).
-                    # Keep the complete any-of permission list in ``reason``
-                    # and use the canonical/first page key for the indexable
-                    # subject, otherwise legitimate composite guards can make
-                    # the denial audit itself fail to persist.
-                    subject_id=page_names[0][:30],
+                    subject_id=page_names[0],
                     actor_id=str(request.user.id),
                     actor_role=getattr(request.user, "active_role", None),
                     success=False,

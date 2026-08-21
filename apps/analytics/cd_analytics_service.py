@@ -14,6 +14,9 @@ apps.analytics.pl_analytics_service so counts never diverge across the app.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -519,14 +522,15 @@ class CDAnalyticsService:
             # (`analytics["Overall Target Achievement"]`), so rewording a card
             # would have broken the Country Director dashboard with a KeyError
             # that no test covered.
-            return {
-                "key": key,
-                "icon": icon,
-                "label": label,
-                "value": value,
-                "variant": variant,
-                "helper": helper,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.cd_analytics_service:kpis.card",
+                label,
+                value,
+                key=key,
+                icon=icon,
+                variant=variant,
+                helper=helper,
+            )
 
         return [
             card(

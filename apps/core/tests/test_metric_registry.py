@@ -22,9 +22,11 @@ from apps.core.metrics import (
     Unit,
     all_metrics,
     check,
+    consolidate_kpi_items,
     format_value,
     get_metric,
     render_metric,
+    render_precomputed_metric_item,
     render_strip,
 )
 
@@ -234,6 +236,33 @@ class RenderTests(SimpleTestCase):
         self.assertEqual(tile.period, spec.period.value)
         self.assertEqual(tile.scope, spec.scope)
 
+    def test_precomputed_renderer_preserves_a_measured_zero(self):
+        item = render_precomputed_metric_item(
+            "accounts_hr_dashboard_service_open_positions", "0"
+        )
+        self.assertEqual(item["value"], "0")
+        self.assertEqual(item["data_state"], DataState.MEASURED.value)
+        self.assertTrue(item["is_measured"])
+
+    def test_precomputed_renderer_keeps_source_contract_and_canonical_label(self):
+        item = render_precomputed_metric_item(
+            "analytics_analytics_dashboard_service_schools_impacted", "3"
+        )
+        self.assertEqual(item["label"], "Schools Impacted")
+        self.assertEqual(
+            item["canonical_label"], "Schools Impacted — Platform analytics"
+        )
+
+    def test_precomputed_renderer_marks_missing_raw_data_without_faking_zero(self):
+        item = render_precomputed_metric_item(
+            "analytics_analytics_dashboard_service_overall_target_achievement",
+            "No Target Set",
+            raw_value=None,
+        )
+        self.assertEqual(item["data_state"], DataState.NO_DATA.value)
+        self.assertEqual(item["value"], "No Target Set")
+        self.assertIsNone(item["raw_value"])
+
 
 class StripDuplicationTests(SimpleTestCase):
     """Section 5: required same-page duplicate KPI count is zero."""
@@ -278,6 +307,49 @@ class StripDuplicationTests(SimpleTestCase):
         items = render_strip([self._tile(self.WEEK)])
         self.assertEqual(items[0]["metric_key"], self.WEEK)
         self.assertIn("data_state", items[0])
+
+
+class ProfessionalKpiConsolidationTests(SimpleTestCase):
+    def _item(self, spec):
+        return {"metric_key": spec.key, "label": spec.label, "value": "3"}
+
+    def test_headline_set_is_bounded_and_preserves_authored_order(self):
+        by_category = {}
+        for spec in METRIC_REGISTRY:
+            by_category.setdefault(spec.category, spec)
+        candidates = [self._item(spec) for spec in by_category.values()]
+
+        selected = consolidate_kpi_items(candidates, max_items=6)
+
+        self.assertEqual(len(selected), 6)
+        self.assertEqual(selected, candidates[:6])
+
+    def test_repeated_category_keeps_distinct_business_metrics(self):
+        scale_specs = [
+            spec for spec in METRIC_REGISTRY if spec.category is Category.SCALE
+        ][:2]
+        self.assertEqual(len(scale_specs), 2)
+
+        selected = consolidate_kpi_items(
+            [self._item(spec) for spec in scale_specs], max_items=6
+        )
+
+        self.assertEqual(
+            [item["metric_key"] for item in selected],
+            [spec.key for spec in scale_specs],
+        )
+
+    def test_duplicate_metric_is_removed_not_hidden(self):
+        item = self._item(get_metric("my_plan_activities_planned_week"))
+        self.assertEqual(consolidate_kpi_items([item, item]), [item])
+
+    def test_zero_limit_returns_an_empty_render_payload(self):
+        item = self._item(get_metric("my_plan_activities_planned_week"))
+        self.assertEqual(consolidate_kpi_items([item], max_items=0), [])
+
+    def test_negative_limit_is_rejected(self):
+        with self.assertRaises(ValueError):
+            consolidate_kpi_items([], max_items=-1)
 
 
 class FormatTests(SimpleTestCase):

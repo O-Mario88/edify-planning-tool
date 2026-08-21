@@ -37,23 +37,23 @@ Confirm & Import
 <div class="edify-tab-container" role="tablist" aria-label="Upload validation views">
 <a id="upload-tab-ready" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'ready' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'ready' %}0{% else %}-1{% endif %}" href="?tab=ready" class="p-4 rounded-surface border transition-all {% if tab == 'ready' %}bg-emerald-50/50 border-emerald-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Ready to Import</span>
-<span class="text-[21px] font-extrabold tracking-tight text-emerald-600 mt-2">{{ stats.ready }}</span>
+<span class="text-[22px] font-extrabold tracking-tight text-emerald-600 mt-2">{{ stats.ready }}</span>
 </a>
 <a id="upload-tab-update" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'update' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'update' %}0{% else %}-1{% endif %}" href="?tab=update" class="p-4 rounded-surface border transition-all {% if tab == 'update' %}edify-primary-soft-alpha-50 edify-primary-border{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Will Update</span>
-<span class="text-[21px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.update }}</span>
+<span class="text-[22px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.update }}</span>
 </a>
 <a id="upload-tab-review" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'review' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'review' %}0{% else %}-1{% endif %}" href="?tab=review" class="p-4 rounded-surface border transition-all {% if tab == 'review' %}edify-primary-soft-alpha-50 edify-primary-border{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Needs Review</span>
-<span class="text-[21px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.review }}</span>
+<span class="text-[22px] font-extrabold tracking-tight edify-primary-text mt-2">{{ stats.review }}</span>
 </a>
 <a id="upload-tab-duplicate" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'duplicate' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'duplicate' %}0{% else %}-1{% endif %}" href="?tab=duplicate" class="p-4 rounded-surface border transition-all {% if tab == 'duplicate' %}bg-amber-50/50 border-amber-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Duplicate Risk</span>
-<span class="text-[21px] font-extrabold tracking-tight text-amber-600 mt-2">{{ stats.duplicate }}</span>
+<span class="text-[22px] font-extrabold tracking-tight text-amber-600 mt-2">{{ stats.duplicate }}</span>
 </a>
 <a id="upload-tab-blocked" role="tab" aria-controls="upload-preview-panel" aria-selected="{% if tab == 'blocked' %}true{% else %}false{% endif %}" tabindex="{% if tab == 'blocked' %}0{% else %}-1{% endif %}" href="?tab=blocked" class="p-4 rounded-surface border transition-all {% if tab == 'blocked' %}bg-rose-50/50 border-rose-200{% else %}edify-surface border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Blocked Rows</span>
-<span class="text-[21px] font-extrabold tracking-tight text-rose-600 mt-2">{{ stats.blocked }}</span>
+<span class="text-[22px] font-extrabold tracking-tight text-rose-600 mt-2">{{ stats.blocked }}</span>
 </a>
 </div>
 

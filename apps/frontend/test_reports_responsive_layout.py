@@ -50,7 +50,7 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         for responsive_hook in (
             "edify-report-workspace",
             "edify-report-timeline",
-            "edify-report-summary-grid",
+            "components/kpi_strip.html",
             "edify-report-matrix__table",
             "edify-report-insight-grid",
             "edify-report-trend-chart",
@@ -76,16 +76,14 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         self.assertIn("min-inline-size: 70rem !important;", css)
 
     def test_period_timelines_wrap_across_report_and_target_pages(self):
-        adapter = _read("static/css/consistency.css")
         targets = _read("templates/partials/targets/my_body.html")
 
-        self.assertIn("edify-kpi-strip--timeline", targets)
-        self.assertIn(
-            "grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;",
-            adapter,
+        self.assertIn("target-period-progression", targets)
+        self.assertIn("flex flex-col lg:flex-row", targets)
+        self.assertNotIn(
+            "overflow-x-auto",
+            targets.split("target-period-progression", 1)[1].split("</div>", 1)[0],
         )
-        self.assertNotIn("flex: 1 0 12.5rem !important;", adapter)
-        self.assertNotIn("overflow-x: auto !important;", adapter)
 
     def test_shared_section_nav_scrolls_only_when_the_active_link_is_hidden(self):
         partial = _read("templates/partials/_section_nav.html")

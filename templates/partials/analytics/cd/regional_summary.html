@@ -22,7 +22,7 @@
           {% if r.trend is not None %}{% if r.trend > 0 %}▲{% elif r.trend < 0 %}▼{% endif %}{{ r.trend }}{% endif %}
         </span>
       </div>
-      <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-none mt-1">{% if r.avg_ssa is not None %}{{ r.avg_ssa|floatformat:1 }}<span class="text-[12px] text-slate-400">/10</span>{% else %}—{% endif %}</p>
+      <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none mt-1">{% if r.avg_ssa is not None %}{{ r.avg_ssa|floatformat:1 }}<span class="text-[12px] text-slate-400">/10</span>{% else %}—{% endif %}</p>
       <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.districts }} district{{ r.districts|pluralize }}</p>
     </div>
     {% empty %}

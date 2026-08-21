@@ -197,19 +197,28 @@ def _do_activity_reminders() -> int:
     from apps.notifications.models import Notification
     from apps.notifications.services import WorkflowNotificationService
 
+    from django.db.models import Q
+
     tomorrow = timezone.localdate() + timedelta(days=1)
+    # Staff work is owned through responsible_staff_id; partner-delivered
+    # work deliberately carries responsible_staff_id=None and is owned via
+    # assigned_partner_id. Excluding null owners alone made every partner
+    # activity structurally unreachable for the eve-of-delivery reminder
+    # (2026-08-19 audit F6).
     upcoming = (
         Activity.objects.filter(
             deleted_at__isnull=True,
             planned_date=tomorrow,
         )
         .exclude(status__in=("cancelled", "rejected", "deferred", "not_planned"))
-        .exclude(responsible_staff_id__isnull=True)
-        .exclude(responsible_staff_id="")
+        .filter(
+            (Q(responsible_staff_id__isnull=False) & ~Q(responsible_staff_id=""))
+            | Q(delivery_type="partner", assigned_partner_id__isnull=False)
+        )
     )
     created = 0
     for activity in upcoming:
-        recipient = _funding_owner_user_id(activity)
+        recipient = _funding_owner_user_id(activity) or _partner_owner_user_id(activity)
         if not recipient:
             continue
         act_hash = hashlib.blake2s(activity.id.encode(), digest_size=6).hexdigest()
@@ -241,6 +250,8 @@ def _do_activity_reminders() -> int:
 
 def _funding_owner_user_id(activity):
     """responsible_staff_id may be a StaffProfile id or a User id."""
+    if not activity.responsible_staff_id:
+        return None
     from apps.accounts.models import StaffProfile
 
     resolved = (
@@ -249,6 +260,19 @@ def _funding_owner_user_id(activity):
         .first()
     )
     return resolved or activity.responsible_staff_id
+
+
+def _partner_owner_user_id(activity):
+    """The partner organisation's login, for partner-delivered work."""
+    if not activity.assigned_partner_id:
+        return None
+    from apps.partners.models import Partner
+
+    return (
+        Partner.objects.filter(id=activity.assigned_partner_id)
+        .values_list("user_id", flat=True)
+        .first()
+    )
 
 
 def activity_reminders_job():

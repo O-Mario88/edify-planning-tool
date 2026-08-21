@@ -110,6 +110,16 @@ class PartnerAssignmentEligibleActivitiesView(APIView):
             if assignment.catalogue_item_id
             else list(assignment.allowed_catalogue_items.values_list("id", flat=True))
         )
+        if not ids:
+            # No pinned choice recorded — resolve the assigner's decision from
+            # the recorded purpose, exactly as the schedule drawer self-heals.
+            from apps.activity_catalogue.services import resolve_assignment_item
+
+            resolved = resolve_assignment_item(
+                purpose_of_visit=assignment.purpose_of_visit or None,
+                expected_activity_type=assignment.expected_activity_type or None,
+            )
+            ids = [resolved.id] if resolved else []
         allowed = []
         for item in (
             effective_items()

@@ -1,0 +1,104 @@
+{% comment %} List/Calendar view controls + the calendar region for the
+"Scheduled / In My Plan" tab.
+
+2026-08-20 tab audit: these lived inline on the page OUTSIDE the htmx swap
+target, so switching onto the Scheduled tab via the tab strip never showed
+them — they only appeared on a full page load. They are now OOB-swapped by
+the school-table fragment exactly like the tab strip is
+(school_table.html tail), and the calendar init is idempotent + re-runs on
+swap instead of hoping for DOMContentLoaded. Buttons are matched by
+data-planning-view, never by their label text. {% endcomment %}
+
+<div id="planning-view-controls" {% if planning_view_oob %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if active_tab != 'scheduled' %}
+  {% comment %} Leaving the Scheduled tab while in Calendar view must not
+  leave the list hidden — the toggle is gone, so the view resets with it.
+  {% endcomment %}
+  <span x-init="activeView = 'list'" hidden></span>
+  {% endif %}
+  {% if active_tab == 'scheduled' %}
+  <div class="flex justify-end mb-4">
+    <div class="flex items-center bg-slate-100 p-1 rounded-surface border border-slate-200 shadow-sm" role="group" aria-label="Scheduled work view">
+      <button type="button" data-planning-view="list" @click="activeView = 'list'" :class="activeView === 'list' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">List View</button>
+      <button type="button" data-planning-view="calendar" @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'edify-surface text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-control text-[12px] font-semibold transition-all">Calendar View</button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div id="planning-calendar-region" {% if planning_view_oob %}hx-swap-oob="outerHTML"{% endif %}>
+  {% if active_tab == 'scheduled' %}
+  <div x-show="activeView === 'calendar'" style="display: none;" class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm">
+    <div id="planning-calendar-view" class="w-full"></div>
+  </div>
+
+  <script id="calendar-events-data" type="application/json">
+    [
+      {% for a in scheduled_activities %}
+        {
+          "id": "{{ a.id }}",
+          "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
+          "start": "{{ a.planned_date|date:'Y-m-d' }}",
+          "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
+          "extendedProps": {
+            "status": "{{ a.status }}",
+            "school": "{{ a.school.name|default:'' }}",
+            "activity_type": "{{ a.activity_type|title }}"
+          }
+        }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  </script>
+
+  <script>
+    (function () {
+      // Idempotent init: runs on full load AND whenever this region is
+      // OOB-swapped in by the tab strip (htmx executes swapped scripts).
+      function initPlanningCalendar() {
+        const calendarEl = document.getElementById('planning-calendar-view');
+        const dataEl = document.getElementById('calendar-events-data');
+        if (!calendarEl || !dataEl || typeof FullCalendar === 'undefined') return;
+        if (window._planningCalendar) {
+          try { window._planningCalendar.destroy(); } catch (e) { /* stale */ }
+        }
+        const eventsData = JSON.parse(dataEl.textContent);
+        window._planningCalendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+          },
+          events: eventsData,
+          themeSystem: 'standard',
+          height: 'auto',
+          eventClick: function (info) {
+            htmx.ajax('GET', `/my-plan/${info.event.id}/reschedule-drawer`, {target: '#drawer-container', swap: 'innerHTML'});
+          }
+        });
+        window._planningCalendar.render();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPlanningCalendar);
+      } else {
+        initPlanningCalendar();
+      }
+
+      // FullCalendar sizes itself wrong inside a display:none panel — render
+      // again the moment the Calendar View is chosen. One delegated,
+      // attribute-matched listener; installed once.
+      if (!window._planningCalendarClickBound) {
+        window._planningCalendarClickBound = true;
+        document.addEventListener('click', function (e) {
+          if (e.target.closest && e.target.closest('[data-planning-view="calendar"]')) {
+            setTimeout(function () {
+              if (window._planningCalendar) window._planningCalendar.render();
+            }, 100);
+          }
+        });
+      }
+    })();
+  </script>
+  {% endif %}
+</div>

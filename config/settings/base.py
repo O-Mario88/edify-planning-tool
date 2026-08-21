@@ -274,6 +274,12 @@ if "OPTIONS" in _db_config:
 
 DATABASES = {"default": _db_config}
 
+# Parallel local/CI suites must not contend for Django's derived ``test_*``
+# database. Callers may provide an exact disposable database name without
+# changing the application database URL or credentials.
+if os.environ.get("TEST_DATABASE_NAME"):
+    DATABASES["default"]["TEST"] = {"NAME": os.environ["TEST_DATABASE_NAME"]}
+
 # Apply default config parameters
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 # This application is ASGI-only in production. A persistent connection is held
@@ -759,9 +765,7 @@ SESSION_SAVE_EVERY_REQUEST = False
 # copy of every session, and a session ended or changed on one worker would
 # have stayed live in the others' caches until their entries lapsed.
 SESSION_ENGINE = (
-    "django.contrib.sessions.backends.cached_db"
-    if _use_redis
-    else "django.contrib.sessions.backends.db"
+    "apps.core.session_backend" if _use_redis else "django.contrib.sessions.backends.db"
 )
 
 # Read-only administrative snapshots are expensive and do not need sub-second
@@ -771,6 +775,13 @@ ANALYTICS_DASHBOARD_CACHE_SECONDS = (
     0
     if _is_testing
     else _as_int(os.environ.get("ANALYTICS_DASHBOARD_CACHE_SECONDS"), 30)
+)
+# Dashboard, Today and To-Do all consume the same derived action queue. It is
+# expensive enough to dominate those pages but operational enough that a long
+# cache would be misleading after a user completes work. A small shared window
+# removes back-to-back rebuilds while keeping workflow state effectively live.
+TODO_SNAPSHOT_CACHE_SECONDS = (
+    0 if _is_testing else _as_int(os.environ.get("TODO_SNAPSHOT_CACHE_SECONDS"), 15)
 )
 # 120s, not 30s. The report runs ~50 integrity checks across the whole estate
 # and was measured at 6.4s cold on production (16,274 schools / 123k SSA

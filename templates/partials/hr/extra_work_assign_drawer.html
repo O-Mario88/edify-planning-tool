@@ -1,0 +1,95 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Assign Extra Work{% endblock %}
+{% block drawer_subtitle %}A governed assignment beyond targets — independently verified, counted in performance separately, and never a change to anyone's distributed target.{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/extra-work/assign"
+      hx-post="/extra-work/assign" hx-target="#extra-work-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="extra-work-errors" aria-live="polite"></div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="xw-assignee" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assign to <span class="text-rose-500">*</span></label>
+      <select id="xw-assignee" name="assignee_id" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Choose a staff member…</option>
+        {% for u in assignees %}<option value="{{ u.id }}">{{ u.name }} — {{ u.active_role }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="xw-due" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Due date <span class="text-rose-500">*</span></label>
+      <input id="xw-due" name="due_date" type="date" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+  </div>
+
+  <div>
+    <label for="xw-title" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Title <span class="text-rose-500">*</span></label>
+    <input id="xw-title" name="title" type="text" maxlength="200" required placeholder="What is being asked, in one line"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div>
+    <label for="xw-instruction" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Detailed instruction <span class="text-rose-500">*</span></label>
+    <textarea id="xw-instruction" name="instruction" rows="3" required placeholder="Exactly what to deliver, and how it will be judged"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <label for="xw-category" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Category <span class="text-rose-500">*</span></label>
+      <select id="xw-category" name="category" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        {% for value, label in categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="xw-complexity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Complexity</label>
+      <select id="xw-complexity" name="complexity" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div>
+      <label for="xw-urgency" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Urgency</label>
+      <select id="xw-urgency" name="urgency" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="normal" selected>Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label for="xw-milestone" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Linked priority milestone <span class="normal-case tracking-normal font-semibold">(optional — linkage never double-credits the target)</span></label>
+    <select id="xw-milestone" name="linked_milestone_id" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <option value="">None</option>
+      {% for m in milestones %}<option value="{{ m.id }}">{{ m.title|truncatechars:70 }}</option>{% endfor %}
+    </select>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="xw-output" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expected output <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+      <input id="xw-output" name="expected_output" type="text" maxlength="255" placeholder="e.g. One report, 3 sessions"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    <label class="flex items-end gap-2 pb-2 cursor-pointer">
+      <input type="checkbox" name="evidence_required" checked class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+      <span class="text-[13px] font-semibold text-slate-600">Evidence required at submission</span>
+    </label>
+  </div>
+
+  <div>
+    <label for="xw-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Business reason <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+    <textarea id="xw-reason" name="reason" rows="2" class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Assign</button>
+  </div>
+</form>
+{% endblock %}

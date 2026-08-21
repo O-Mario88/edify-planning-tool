@@ -167,10 +167,12 @@ def non_school_activity_drawer(request):
     for item in items:
         item.programme_metadata = _programme_item_metadata(item)
 
+    date_prefill = (request.GET.get("date") or "").strip()[:10]
     return render(
         request,
         "partials/work_plan/non_school_activity_drawer.html",
         {
+            "date_prefill": date_prefill,
             "items": items,
             "rationales": SupportRationale.choices,
             "projects": scoped_projects(request.user).order_by("name"),
@@ -184,6 +186,30 @@ def non_school_activity_drawer(request):
             "drawer_size": "lg",
         },
     )
+
+
+def _travel_district_type(dest_district_id: str, responsible_id: str) -> str:
+    """Preview-side twin of activities.services._field_event_district_type."""
+    if not dest_district_id:
+        return "primary"
+    from django.db.models import Q
+
+    from apps.accounts.models import StaffProfile
+    from apps.geography.models import District
+
+    home = (
+        StaffProfile.objects.filter(Q(id=responsible_id) | Q(user_id=responsible_id))
+        .values_list("primary_district_id", flat=True)
+        .first()
+    )
+    if home:
+        return "primary" if home == dest_district_id else "secondary"
+    dtype = (
+        District.objects.filter(id=dest_district_id)
+        .values_list("district_type", flat=True)
+        .first()
+    )
+    return dtype or "secondary"
 
 
 @_manual_activity_permission
@@ -210,25 +236,57 @@ def non_school_activity_preview(request):
         if not item_id:
             raise ValueError("Choose an Activity title to preview its cost.")
         item = get_selectable_item(item_id)
-        result = cost_preview(
-            {
-                "activityType": item.workflow_kind,
-                "costingProfile": item.costing_profile,
-                "deliveryType": (
-                    "partner"
-                    if request.POST.get("responsibility_type") == "partner"
-                    else "staff"
-                ),
-                "expectedParticipants": participants,
-                "days": days,
-            }
-        )
+        payload = {
+            "activityType": item.workflow_kind,
+            "costingProfile": item.costing_profile,
+            "deliveryType": (
+                "partner"
+                if request.POST.get("responsibility_type") == "partner"
+                else "staff"
+            ),
+            "expectedParticipants": participants,
+            "days": days,
+        }
+        travel_profile = None
+        if item.costing_profile == "FIELD_TRAVEL":
+            responsible = (
+                (request.POST.get("responsible_staff_id") or "").strip()
+                or request.user.staff_profile_id
+                or request.user.user_id
+            )
+            district_type = _travel_district_type(
+                (request.POST.get("district_id") or "").strip(), responsible
+            )
+            payload["districtType"] = district_type
+            if district_type == "secondary":
+                # Every secondary away-day carries the full per-diem set —
+                # meals and a night's accommodation per day (owner rule,
+                # 2026-08-19), matching the secondary visit-day policy.
+                travel_profile = (
+                    f"Another district · {days} day"
+                    f"{'' if days == 1 else 's'} · full per-diems per day"
+                )
+            else:
+                travel_profile = "Home district — transport and lunch per day"
+        result = cost_preview(payload)
     except Exception as exc:  # noqa: BLE001 — preview must degrade, not 500
         return error_fragment(exc, action="Could not preview the cost", status=400)
     return render(
         request,
         "partials/work_plan/non_school_cost_preview.html",
-        {"preview": result, "days": days},
+        {"preview": result, "days": days, "travel_profile": travel_profile},
+    )
+
+
+def _district_name(district_id) -> str:
+    from apps.geography.models import District
+
+    district_id = (district_id or "").strip()
+    if not district_id:
+        return ""
+    return (
+        District.objects.filter(id=district_id).values_list("name", flat=True).first()
+        or ""
     )
 
 
@@ -238,6 +296,11 @@ def non_school_activity_action(request):
     from apps.planning.services import schedule_programme_activity
     from apps.activity_catalogue.services import get_selectable_item
 
+    # Simplified drawer (2026-08-19): the planner schedules their OWN
+    # attendance, and the governed catalogue item is the authorization. The
+    # removed inputs default here so the create funnel still receives a
+    # complete, honest payload. Legacy callers that still post the old
+    # fields keep working — an explicit value always wins over a default.
     responsibility_type = (request.POST.get("responsibility_type") or "staff").strip()
     if responsibility_type not in ("staff", "partner"):
         return error_fragment(
@@ -289,9 +352,14 @@ def non_school_activity_action(request):
         "catalogueItemId": catalogue_item_id,
         "scheduledDate": f"{start_raw}T09:00:00+03:00" if start_raw else "",
         "endDate": (request.POST.get("end_date") or "").strip() or None,
-        "supportRationale": (request.POST.get("support_rationale") or "").strip(),
+        "supportRationale": (
+            (request.POST.get("support_rationale") or "").strip()
+            or "organizational_priority"
+        ),
         "projectId": (request.POST.get("project_id") or "").strip() or None,
-        "activityPurposeText": (request.POST.get("purpose") or "").strip(),
+        "activityPurposeText": (
+            (request.POST.get("purpose") or "").strip() or item.display_name
+        ),
         "programmeActivityType": metadata["programme_activity_type"],
         "programmeDeliveryMode": metadata["programme_delivery_mode"],
         "focusIntervention": (
@@ -302,7 +370,14 @@ def non_school_activity_action(request):
         "plannedSchoolCount": schools,
         "expectedOutcome": (request.POST.get("expected_outcome") or "").strip(),
         "expectedParticipants": participants or None,
-        "venue": (request.POST.get("venue") or "").strip(),
+        # Venue is optional in the simplified drawer; the funnel requires
+        # one, so an unnamed venue defaults to the destination district (or
+        # a neutral placeholder) rather than blocking the plan.
+        "venue": (
+            (request.POST.get("venue") or "").strip()
+            or _district_name(request.POST.get("district_id"))
+            or "To be confirmed"
+        ),
         "districtId": (request.POST.get("district_id") or "").strip() or None,
         "deliveryType": responsibility_type,
     }

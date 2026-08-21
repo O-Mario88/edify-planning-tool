@@ -25,17 +25,19 @@ from .priority_seed import ACTIVITY_MAPPINGS, PRIORITIES, ROLE_APPLICABILITY
 
 @transaction.atomic
 def seed_fy2027_priorities(*, actor_id="system", dry_run=False):
-    cycle, _ = StrategicPriorityCycle.objects.update_or_create(
-        financial_year="2027",
-        defaults={
-            "title": "FY2027 RVP Strategic Priorities",
-            "scope_type": "regional",
-            "status": "draft",
-            "version": 1,
-            "created_by": actor_id,
-            "updated_by": actor_id,
-        },
-    )
+    # Create-only (audit G3): re-running must never reset an approved or
+    # locked cycle back to draft.
+    cycle = StrategicPriorityCycle.objects.filter(financial_year="2027").first()
+    if cycle is None:
+        cycle = StrategicPriorityCycle.objects.create(
+            financial_year="2027",
+            title="FY2027 RVP Strategic Priorities",
+            scope_type="regional",
+            status="draft",
+            version=1,
+            created_by=actor_id,
+            updated_by=actor_id,
+        )
     activity_metric, _ = MilestoneMetricDefinition.objects.update_or_create(
         metric_key="verified_activity_catalogue_progress",
         defaults={
@@ -101,29 +103,49 @@ def seed_fy2027_priorities(*, actor_id="system", dry_run=False):
     )
     report = {"priorities": 0, "milestones": 0, "needsDefinition": 0, "rules": 0}
     for priority_order, (code, title, milestones) in enumerate(PRIORITIES, 1):
-        priority, _ = StrategicPriority.objects.update_or_create(
+        # 2026-08-20 priorities audit G3: this runs from the reference-data
+        # registry on EVERY post_migrate. `status` in the defaults was
+        # UN-PUBLISHING a published RVP priority on every deploy — exactly
+        # what the registry contract ("only ever create what is missing —
+        # never update or delete") forbids. Existing rows are now left
+        # exactly as they are; only genuinely missing rows are created.
+        priority = StrategicPriority.objects.filter(
             fy="2027",
             level=StrategicPriorityLevel.REGIONAL,
             code=code,
             country_id=None,
-            defaults={
-                "cycle": cycle,
-                "title": title,
-                "source_title": title,
-                "source_document": "2027 priorities to be set by RVP.docx",
-                "source_reference": f"priority-{priority_order}",
-                "strategic_purpose": title,
-                "expected_result": "Defined through approved milestone metrics and allocations.",
-                "status": StrategicPriorityStatus.DRAFT,
-                "author_id": actor_id,
-                "sequence": priority_order,
-                "version": 1,
-            },
-        )
+        ).first()
+        if priority is None:
+            priority = StrategicPriority.objects.create(
+                fy="2027",
+                level=StrategicPriorityLevel.REGIONAL,
+                code=code,
+                country_id=None,
+                cycle=cycle,
+                title=title,
+                source_title=title,
+                source_document="2027 priorities to be set by RVP.docx",
+                source_reference=f"priority-{priority_order}",
+                strategic_purpose=title,
+                expected_result="Defined through approved milestone metrics and allocations.",
+                status=StrategicPriorityStatus.DRAFT,
+                author_id=actor_id,
+                sequence=priority_order,
+                version=1,
+            )
         report["priorities"] += 1
         for source_order, raw in enumerate(milestones, 1):
             milestone_code, source_text, target_value, source_kind = raw
             defined = target_value is not None and source_kind != "needs_definition"
+            # Same create-only contract as the priority above (audit G3):
+            # a defined/approved/confirmed milestone must survive deploys.
+            _existing = PriorityMilestone.objects.filter(
+                priority=priority, code=milestone_code
+            ).first()
+            if _existing is not None:
+                milestone = _existing
+                report["milestones"] += 1
+                continue
             milestone, _ = PriorityMilestone.objects.update_or_create(
                 priority=priority,
                 code=milestone_code,

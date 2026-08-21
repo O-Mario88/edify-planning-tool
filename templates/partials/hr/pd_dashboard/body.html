@@ -5,7 +5,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  {% include "components/kpi_strip.html" with items=kpis %}
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Professional development context" %}
 
   <!-- 1. Staff Professional Development Tracker -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
@@ -253,8 +253,8 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       </div>
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="edify-text-caption font-extrabold uppercase text-slate-400">Overdue — No Certificate</span>
-          <span class="edify-text-caption font-black text-amber-400">{{ overdue_no_cert_count }}</span>
+          <span class="edify-text-caption font-extrabold uppercase text-rose-500">Overdue — No Certificate</span>
+          <span class="edify-text-caption font-black text-rose-500">{{ overdue_no_cert_count }}</span>
         </div>
         <div class="space-y-2">
           {% for r in overdue_no_cert %}
@@ -266,7 +266,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
       </div>
       <div>
         <div class="flex items-center justify-between mb-2">
-          <span class="edify-text-caption font-extrabold uppercase text-slate-400">Overdue — Accountability</span>
+          <span class="edify-text-caption font-extrabold uppercase text-rose-500">Overdue — Accountability</span>
           <span class="edify-text-caption font-black text-rose-400">{{ overdue_accountability_count }}</span>
         </div>
         <div class="space-y-2">

@@ -46,6 +46,10 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         raise BadRequest("Allocated target must be numeric.") from exc
     if target <= 0:
         raise BadRequest("Allocated target must be greater than zero.")
+    # 2026-08-20 audit G8: a count target is whole schools/visits/people —
+    # fractional staff targets are not allocatable.
+    if milestone.measurement_type == "count" and target != target.to_integral_value():
+        raise BadRequest("Count targets must be whole numbers.")
     employee_id = data.get("employeeId") if allocated_to_type == "employee" else None
     project_id = data.get("projectId") if allocated_to_type == "project" else None
     team_id = data.get("teamId") if allocated_to_type == "team" else None
@@ -238,6 +242,55 @@ def approve_allocation(allocation, *, principal) -> MilestoneAllocation:
     _assert_allocatable(allocation.milestone)
     if allocation.status == "approved":
         return allocation
+    # 2026-08-20 priorities audit G1: approval LOCKS a figure into somebody's
+    # My Targets, so it carries the same authority and arithmetic rules as
+    # the distribution workspace — previously this had neither, and the
+    # strategic-priorities page auto-approved any amount for any holder,
+    # bypassing reconcile-to-zero entirely.
+    from apps.core.exceptions import Forbidden as _Forbidden
+
+    from .target_distribution import (
+        DISTRIBUTION_APPROVER_ROLES,
+        is_summable,
+        reconcile_employee_level,
+        reconcile_team_level,
+    )
+
+    _role = getattr(principal, "active_role", "")
+    if allocation.allocated_to_type == "employee" and allocation.parent_id:
+        # Employee rows under a team parent are approved by the supervising
+        # flow (approve_employee_distribution) — that path reconciles.
+        from .target_distribution import _assert_may_approve_spread
+
+        _assert_may_approve_spread(allocation, principal)
+    elif _role not in DISTRIBUTION_APPROVER_ROLES:
+        raise _Forbidden(
+            "Only the distribution approver may lock an annual allocation."
+        )
+    if is_summable(allocation.milestone):
+        milestone = allocation.milestone
+        if allocation.allocated_to_type == "team":
+            errors = reconcile_team_level(milestone).get("errors") or []
+        elif allocation.parent_id:
+            errors = reconcile_employee_level(allocation.parent).get("errors") or []
+        else:
+            # A single-holder (specialist / country-owned) allocation IS the
+            # whole distribution: it must equal the milestone target exactly.
+            errors = (
+                []
+                if milestone.target_value is not None
+                and allocation.allocated_target == milestone.target_value
+                else [
+                    "A single-holder allocation must equal the milestone "
+                    f"target exactly ({milestone.target_value} — got "
+                    f"{allocation.allocated_target})."
+                ]
+            )
+        if errors:
+            raise BadRequest(
+                "Approval blocked — the distribution does not reconcile to "
+                "zero: " + " · ".join(str(e) for e in errors[:3])
+            )
     # Approval locks the annual figure and writes the quarter rows plus the
     # capacity-aware month rows (working days − holidays − the holder's
     # approved leave). The quarterly spread starts from the working-day
@@ -356,6 +409,7 @@ def _linked_activity_counts(allocations) -> dict[tuple[str, str], int]:
     credits = (
         MilestoneProgressCredit.objects.filter(
             rule__milestone_id__in=milestone_ids,
+            reversed_at__isnull=True,
         )
         .filter(
             Q(activity__responsible_staff_id__in=owner_ids)
@@ -433,23 +487,30 @@ def _allocation_projection(
     remaining = max(Decimal("0"), fy_plan - fy_actual)
     month_plan = current.planned_value if current else Decimal("0")
     month_actual = current.actual_value if current else Decimal("0")
-    status = (
-        "Achieved"
-        if fy_plan and fy_actual >= fy_plan
-        else "In Progress"
-        if fy_actual
-        else "Not Started"
+    progress = round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
+    # One vocabulary. This block used to compute its own "Achieved / In
+    # Progress / Not Started" and "On track / Watch / Needs attention" beside
+    # the canonical classification, so the same allocation could be described
+    # three different ways on three different surfaces.
+    classification = classify_achievement(
+        progress if fy_plan else None,
+        cap_at_100=milestone.cap_at_100,
+        target=fy_plan,
     )
-    if status == "Achieved" or (month_plan and month_actual >= month_plan):
+    status = classification["label"]
+    # Pace is a different question from achievement — "am I keeping up this
+    # month?" rather than "did I hit the annual number?" — so it keeps its own
+    # reading, but only ever against the month's own plan.
+    if not classification["is_scoring"]:
+        risk, risk_tone = classification["label"], classification["tone"]
+    elif classification["key"] in ("met", "exceeded", "far_exceeded") or (
+        month_plan and month_actual >= month_plan
+    ):
         risk, risk_tone = "On track", "success"
     elif month_actual:
         risk, risk_tone = "Watch", "warning"
     else:
         risk, risk_tone = "Needs attention", "danger"
-    progress = round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
-    classification = classify_achievement(
-        progress if fy_plan else None, cap_at_100=milestone.cap_at_100
-    )
     return {
         "allocationId": allocation.id,
         "priority": milestone.priority.title,

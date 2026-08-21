@@ -47,7 +47,12 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("View all {{ group.districts|length }} districts", template)
 
     def test_map_keeps_original_visual_while_distribution_uses_new_layout(self):
-        map_template = _read("templates/partials/analytics/regional_performance.html")
+        map_template = "\n".join(
+            (
+                _read("templates/partials/analytics/regional_performance.html"),
+                _read("static/css/components.css"),
+            )
+        )
         layout = _read("static/css/pages/analytics-dashboard.css")
 
         self.assertIn(
@@ -82,14 +87,22 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         partial = _read("templates/partials/_section_nav.html")
 
         for label in (
-            "Programme Health",
-            "Decisions",
+            "Overview",
+            "School Performance",
+            "Impact & Decisions",
             "Delivery & Quality",
             "Reporting",
         ):
             self.assertIn(label, navigation)
         self.assertIn("workspace.groups", partial)
         self.assertIn("edify-section-nav__cluster", partial)
+        self.assertIn("edify-section-nav__view-menu", partial)
+        self.assertNotIn("edify-section-nav__inner--group", partial)
+        self.assertNotIn(
+            'workspace.key == "analytics" and workspace.groups|length > 1',
+            partial,
+        )
+        self.assertIn('x-show="open"', partial)
         self.assertNotIn('role="tab"', partial)
         self.assertIn(
             "Admin can inspect every role-specific Overview cockpit", navigation

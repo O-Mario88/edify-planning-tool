@@ -328,29 +328,74 @@ _WORKFLOW_FIELDS = {
 }
 
 
+# Workflow-chain models whose OPENING/TRANSITION status must never be chosen
+# by a view — creation goes through the canonical creator, transitions
+# through the canonical services. Scoped to a fixed list because a bare
+# `status=` kwarg is common on non-workflow models (notifications, filters).
+_WORKFLOW_MODELS = {
+    "Activity",
+    "PartnerAssignment",
+    "PartnerInvoice",
+    "WeeklyFundRequest",
+    "AdvanceRequest",
+}
+
+_MUTATING_CALLS = {"create", "update", "get_or_create", "update_or_create"}
+
+
+def _call_base_name(node: ast.AST) -> str | None:
+    """The leftmost Name of an attribute chain: PartnerAssignment.objects.create."""
+    while isinstance(node, ast.Attribute):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else None
+
+
 def _workflow_mutations_in_source(source: str, relative: str) -> list[Finding]:
     """Return raw transition writes from one Python source string."""
     findings: list[Finding] = []
     tree = ast.parse(source)
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Assign):
-            continue
-        for target in node.targets:
-            if (
-                isinstance(target, ast.Attribute)
-                and target.attr in _WORKFLOW_FIELDS
-                and isinstance(target.value, ast.Name)
-                and target.value.id not in ("self", "cls")
-            ):
-                findings.append(
-                    Finding(
-                        "raw_workflow_mutation",
-                        relative,
-                        node.lineno,
-                        f"{target.value.id}.{target.attr} = …",
-                        "workflow state set outside a canonical service",
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if (
+                    isinstance(target, ast.Attribute)
+                    and target.attr in _WORKFLOW_FIELDS
+                    and isinstance(target.value, ast.Name)
+                    and target.value.id not in ("self", "cls")
+                ):
+                    findings.append(
+                        Finding(
+                            "raw_workflow_mutation",
+                            relative,
+                            node.lineno,
+                            f"{target.value.id}.{target.attr} = …",
+                            "workflow state set outside a canonical service",
+                        )
                     )
-                )
+        # The 2026-08-19 audit found the blind spot this closes: a
+        # `status=` KEYWORD to .create()/.update() is an ast.keyword, not
+        # an ast.Assign, so five PartnerAssignment creation sites chose
+        # their own opening workflow status invisibly for months.
+        elif isinstance(node, ast.Call):
+            func = node.func
+            if not (isinstance(func, ast.Attribute) and func.attr in _MUTATING_CALLS):
+                continue
+            base = _call_base_name(func)
+            if base not in _WORKFLOW_MODELS:
+                continue
+            for kw in node.keywords:
+                if kw.arg in _WORKFLOW_FIELDS:
+                    findings.append(
+                        Finding(
+                            "raw_workflow_mutation",
+                            relative,
+                            node.lineno,
+                            f"{base}.….{func.attr}({kw.arg}=…)",
+                            "workflow state chosen by a view at "
+                            "creation/update — route through the "
+                            "canonical service",
+                        )
+                    )
     return findings
 
 

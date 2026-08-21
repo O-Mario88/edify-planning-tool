@@ -31,11 +31,18 @@ TEMPLATE = (
     / "documents"
     / "canonical_document.html"
 )
+STYLESHEET = (
+    Path(settings.BASE_DIR)
+    / "static"
+    / "css"
+    / "pages"
+    / "document-agreement.css"
+)
 
 
 class AgreementAccentIsThemeAwareTest(SimpleTestCase):
     def test_dark_themes_override_the_agreement_accent_tokens(self):
-        source = TEMPLATE.read_text(encoding="utf-8")
+        source = STYLESHEET.read_text(encoding="utf-8")
 
         self.assertIn(
             ":root.theme-dark",
@@ -60,7 +67,7 @@ class AgreementAccentIsThemeAwareTest(SimpleTestCase):
             )
 
     def test_the_light_surface_brand_blue_is_not_reintroduced_for_dark_text(self):
-        source = TEMPLATE.read_text(encoding="utf-8")
+        source = STYLESHEET.read_text(encoding="utf-8")
         block = re.search(
             r":root\.theme-dark\s*,\s*:root\.theme-blue\s*\{(.*?)\}", source, re.S
         )

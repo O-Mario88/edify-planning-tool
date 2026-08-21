@@ -16,7 +16,7 @@
 
   <!-- Header -->
   <div class="edify-page-header edify-page-hero">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div class="edify-page-hero__row">
       <div class="edify-page-header__lead">
         <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">Country funding roll-up</p>
         <p class="edify-page-eyebrow">Finance</p>
@@ -27,7 +27,7 @@
         <button type="button"
                 hx-get="/finance/fund-allocation/admin-budget-drilldown?month={{ admin_month_name }}&fy={{ fy }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
-                class="rounded-control border border-white/15 bg-white/5 px-3 py-2 text-[12px] font-semibold text-slate-200 hover:bg-white/10 transition-colors">Admin Budget Breakdown</button>
+                class="rounded-control border border-slate-200 edify-surface px-3 py-2 text-[12px] font-semibold edify-text shadow-sm hover:opacity-90 transition-opacity">Admin Budget Breakdown</button>
         <button type="button"
                 hx-get="/finance/fund-allocation/export-drawer?month={{ admin_month_name }}&fy={{ fy }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
@@ -39,22 +39,21 @@
     </div>
   </div>
 
-  <div class="edify-kpi-strip edify-kpi-strip--finance grid grid-cols-1 max-w-sm gap-3" aria-label="Budget period summary">
+  {% comment %} 2026-08-20 tab audit: this strip rendered ONE hard-coded
+  month card that linked to the page you were already on — a control that
+  did nothing. The backend (budget_workspace) has always supported all four
+  periods; now all four render as a real rail and the chosen one carries
+  aria-current. {% endcomment %}
+  <nav class="budget-period-rail" aria-label="Budget period">
     {% for period in comparison %}
-    {% if period.key == 'month' %}
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month" class="edify-primary-solid edify-primary-on-solid rounded-surface border border-[var(--edify-accent)] p-4 shadow-md transition-all">
-      <span class="edify-kpi-strip__icon !text-white" aria-hidden="true">
-        {% include "partials/analytics/pl/_icon.html" with name="currency" %}
-      </span>
-      <span class="edify-kpi-strip__copy">
-        <span class="edify-kpi-strip__label !edify-primary-on-solid">Monthly Budget</span>
-        <strong class="edify-kpi-strip__value edify-primary-on-solid">{{ period.total|ugx }}</strong>
-        <small class="edify-kpi-strip__helper !edify-primary-on-solid">{{ month_label }} FY {{ fy }} · {{ period.title }}</small>
-      </span>
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ period.key }}"
+       {% if period.selected %}aria-current="page"{% endif %}
+       class="budget-period-rail__option{% if period.selected %} budget-period-rail__option--current{% endif %}">
+      <span>{{ period.title }}</span>
+      <strong>{{ period.total|ugx }}</strong>
     </a>
-    {% endif %}
     {% endfor %}
-  </div>
+  </nav>
 
   <!-- Activity cost plan (country-wide) -->
   <div class="rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4">
@@ -63,65 +62,26 @@
         <h2 class="text-[15px] font-bold text-slate-800">Activity cost plan — whole country</h2>
         <p class="mt-0.5 text-[12px] font-medium text-slate-500">Costs are grouped by activity and item across every staff member. Training and meeting tables show sessions and participants; the country admin budget is included in the Month, Quarter and Fiscal Year views.</p>
       </div>
-      <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm md:text-right">
-        <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Grand total</p>
-        <p class="text-[19px] font-bold tabular-nums text-slate-800">{{ total|ugx }}</p>
-      </div>
+      {% if districts %}
+      <form method="get" class="flex items-center gap-2" x-data>
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="date" value="{{ anchor|date:'Y-m-d' }}">
+        <input type="hidden" name="period" value="{{ selected_period }}">
+        <label for="allocation-district-filter" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</label>
+        <select id="allocation-district-filter" name="district" @change="$el.form.submit()"
+                class="h-9 rounded-control border border-slate-200 edify-surface px-2.5 text-[12px]">
+          <option value="">All districts</option>
+          {% for d in districts %}<option value="{{ d.id }}" {% if selected_district == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+        </select>
+      </form>
+      {% endif %}
     </div>
     {% if admin_weekly_note %}
     <div class="mx-5 mt-4 rounded-control border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800">Country admin costs are planned by month, so they appear in the Month, Quarter and Fiscal Year views rather than being estimated into a week.</div>
     {% endif %}
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
       {% paginate groups "groups_page" as groups_pager %}
-<table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
-        <tbody class="divide-y divide-slate-200">
-          {% for group in groups_pager.rows %}
-          <tr>
-            <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
-              <div class="flex items-center gap-2">
-                <span class="budget-category-name">{{ group.label }}</span>
-                <span class="edify-text-caption font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
-              </div>
-            </td>
-          </tr>
-          <tr class="font-bold">
-            <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Item</th>
-            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
-            <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
-            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit</th>
-            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity</th>
-          </tr>
-          {% for row in group.rows %}
-          <tr class="edify-primary-soft-hover">
-            <td class="px-4 py-3">
-              <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
-            </td>
-            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}{{ row.activity_count }}{% else %}{{ row.days }}{% endif %}</td>
-            <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.people }}</td>
-            <td class="px-3 py-3 text-right font-semibold tabular-nums text-slate-700">{% if row.mixed_rate %}Mixed{% else %}{{ row.rate|ugx }}{% endif %}</td>
-            <td class="px-3 py-3 text-right font-semibold tabular-nums text-emerald-700">{% if row.staff_total %}{{ row.staff_total|ugx }}{% else %}—{% endif %}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total|ugx }}</td>
-          </tr>
-          {% endfor %}
-          <tr class="budget-subtotal-row">
-            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
-            <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx }}</td>
-            <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-        {% if groups %}
-        <tfoot>
-          <tr class="text-[15px] font-extrabold">
-            <td colspan="4" class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Grand total</td>
-            <td class="px-3 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ staff_total|ugx }}</td>
-            <td class="px-4 py-3 text-right tabular-nums edify-primary-solid edify-primary-on-solid">{{ total|ugx }}</td>
-          </tr>
-        </tfoot>
-        {% endif %}
-      </table>
-{% include "components/table_pager.html" with pager=groups_pager param="groups_page" %}
+{% include "partials/budgets/budget_group_tables.html" with groups=groups_pager.rows all_groups=groups groups_pager=groups_pager %}
     </div>
   </div>
 

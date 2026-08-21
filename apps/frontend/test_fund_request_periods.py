@@ -561,40 +561,23 @@ class TwoColumnLayoutTest(TestCase):
             f"div has re-flattened the layout (saw {walker.events})",
         )
 
-    def test_the_monthly_summary_spans_the_full_width(self):
-        """The five summary tiles fill a full row like the KPI strip above.
+    def test_the_monthly_summary_does_not_create_a_second_kpi_tray(self):
+        """Month detail belongs to My Budget and the period breakdown.
 
-        Inside the left 70% column they filled the column exactly, and the
-        shorter right column had already ended beside them -- which read as a
-        row stopping 70% of the way across."""
+        A second five-card summary underneath the six-card headline made this
+        one page render eleven KPIs, bypassing the page-level professional
+        maximum even though each individual tray passed its own limit.
+        """
         from django.test import Client
 
         client = Client()
         client.force_login(self.user)
         body = client.get("/fund-requests/weekly").content.decode()
+        self.assertNotIn('id="fund-requests-monthly-preview"', body)
+        self.assertEqual(body.count('data-component="kpi-card"'), 6)
 
-        grid_open = body.index("lg:grid-cols-10")
-        preview = body.index('id="fund-requests-monthly-preview"')
-        # The preview must open AFTER the grid has closed: walk the grid to
-        # its close and compare positions.
-        import re
-
-        start = body.rindex("<div", 0, grid_open)
-        depth = 0
-        for match in re.finditer(r"<div\b|</div>", body[start:]):
-            depth += 1 if match.group(0) == "<div" else -1
-            if depth == 0:
-                grid_close = start + match.end()
-                break
-        self.assertGreater(
-            preview,
-            grid_close,
-            "the monthly summary is inside the two-column grid again",
-        )
-
-    def test_the_monthly_preview_is_balanced(self):
-        """The partial that carried the orphan. Textual balance is a weaker
-        check than the tree walk above, but it points at the file itself."""
+    def test_the_retired_monthly_preview_cannot_regrow_kpi_markup(self):
+        """Keep the retired partial inert if an old include is reintroduced."""
         from pathlib import Path
 
         from django.conf import settings
@@ -603,4 +586,5 @@ class TwoColumnLayoutTest(TestCase):
             Path(settings.BASE_DIR)
             / "templates/partials/fund_requests/monthly_preview.html"
         ).read_text()
-        self.assertEqual(source.count("<div"), source.count("</div>"))
+        self.assertNotIn("components/kpi_strip.html", source)
+        self.assertNotIn('data-component="kpi-card"', source)

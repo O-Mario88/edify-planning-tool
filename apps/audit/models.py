@@ -32,7 +32,10 @@ class AuditLog(models.Model):
     seq = models.BigIntegerField(null=True, blank=True, unique=True)
     action = models.CharField(max_length=128)
     subject_kind = models.CharField(max_length=64, null=True, blank=True)
-    subject_id = models.CharField(max_length=30, null=True, blank=True)
+    # Page/permission subjects can be longer than a CUID. Keeping the audit
+    # index narrower than the identifiers it records caused denied-page events
+    # to be silently dropped for long permission keys.
+    subject_id = models.CharField(max_length=128, null=True, blank=True)
     actor_id = models.CharField(max_length=30, null=True, blank=True)
     actor_role = models.CharField(
         max_length=64,

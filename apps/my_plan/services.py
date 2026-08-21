@@ -281,27 +281,41 @@ def compute_next_action(a, today) -> dict:
         "returned_by_ia",
     ):
         return {
-            "text": "Fix and Resubmit",
+            "text": (
+                "Correct Returned Evidence"
+                if a.delivery_type == "partner"
+                else "Fix and Resubmit"
+            ),
             "action": "fix",
-            "url": f"/activities/{a.id}/complete",
+            "url": (
+                f"/partner/activities/{a.id}/evidence"
+                if a.delivery_type == "partner"
+                else f"/activities/{a.id}/complete"
+            ),
             "description": "Returned for correction",
         }
 
-    # 1.5 Partner uploaded evidence and is blocked until the monitoring staff
-    # member accepts it. `complete()` and `ia_confirm()` both refuse partner
-    # work whose evidence is not "accepted", so without this the partner chain
-    # simply stops — the reviewer holds evidence.review and had no button.
+    # 1.5 Partner evidence goes DIRECTLY to IA (§10) — there is no staff
+    # acceptance step. Evidence uploaded but not yet submitted means the
+    # partner's next move is the submission itself, from their evidence page.
     if (
         a.delivery_type == "partner"
         and a.evidence_status == "uploaded"
         and a.status
-        not in ("closed", "cancelled", "rejected", "ia_verified", "returned_by_ia")
+        not in (
+            "closed",
+            "cancelled",
+            "rejected",
+            "ia_verified",
+            "returned_by_ia",
+            "awaiting_ia_verification",
+        )
     ):
         return {
-            "text": "Review Partner Evidence",
-            "action": "review_partner_evidence",
-            "url": f"/activities/{a.id}/evidence",
-            "description": "Partner submitted evidence — accept or return it",
+            "text": "Submit Evidence to IA",
+            "action": "submit_evidence",
+            "url": f"/partner/activities/{a.id}/evidence",
+            "description": "Evidence uploaded — submit it to IA for verification",
         }
 
     # 2. Due today and not started -> Start
@@ -316,7 +330,11 @@ def compute_next_action(a, today) -> dict:
         return {
             "text": "Start",
             "action": "start",
-            "url": f"/activities/{a.id}/start",
+            "url": (
+                f"/partner/activities/{a.id}/evidence"
+                if a.delivery_type == "partner"
+                else f"/activities/{a.id}/start"
+            ),
             "description": "Due today",
         }
 

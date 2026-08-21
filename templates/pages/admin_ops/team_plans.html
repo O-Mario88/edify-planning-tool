@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 {% load table_pagination %}
 
 {% block title %}Team Plans — Edify{% endblock %}
@@ -13,13 +14,10 @@
     <p class="text-[12px] font-semibold text-slate-600">Consolidated Team Plans view — open the relevant Planning, My Plan, approval or finance workspace to execute an action.</p>
   </div>
 
-  <div class="edify-kpi-strip grid grid-cols-2 sm:grid-cols-5 gap-3" aria-label="Team plan health">
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Active Plan Items</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ health.total_active }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Overdue</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ health.overdue }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">No Next Action</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ health.no_next_action }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Cost Missing</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ health.cost_missing }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Unassigned</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ health.unassigned }}</p></div>
-  </div>
+  {% legacy_kpi_item "Overdue plan items" health.overdue helper="Needs immediate recovery" tone="danger" icon="warning" as overdue_kpi %}
+  {% legacy_kpi_item "No next action" health.no_next_action helper="Needs a clear owner step" tone="warning" icon="target" as action_kpi %}
+  {% collect_kpi_items overdue_kpi action_kpi as team_plan_kpis %}
+  {% include "components/kpi_strip.html" with items=team_plan_kpis variant="executive" density="compact" title="Team plan attention" %}
 
   <form method="get" class="edify-filter-bar" aria-label="Team plan filters">
     <label class="flex flex-col gap-1"><span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>

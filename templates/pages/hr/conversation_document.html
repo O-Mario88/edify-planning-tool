@@ -31,7 +31,7 @@
     <section>
       <h3 class="text-[14px] font-bold text-slate-800 mb-2">Priorities</h3>
       {% paginate doc_rows "doc_rows_page" as doc_rows_pager %}
-<table class="w-full text-[12.5px] border-collapse">
+<table class="w-full text-[13px] border-collapse">
         <thead><tr class="text-left text-slate-400 border-b border-slate-200">
           <th class="py-1.5 pr-2">Priority</th>
           <th class="py-1.5 px-2">Target</th>
@@ -69,7 +69,7 @@
     {% if development %}
     <section>
       <h3 class="text-[14px] font-bold text-slate-800 mb-1">Development Plan</h3>
-      <ul class="text-[12.5px] text-slate-600 list-disc pl-5 space-y-0.5">
+      <ul class="text-[13px] text-slate-600 list-disc pl-5 space-y-0.5">
         {% for d in development %}<li>{{ d.description }}{% if d.source == "pd_workflow" %} <span class="text-slate-400">(PD workflow)</span>{% endif %}</li>{% endfor %}
       </ul>
     </section>
@@ -80,7 +80,7 @@
     <section>
       <h3 class="text-[14px] font-bold text-slate-800 mb-1">Spiritual Formation</h3>
       {% for v in spiritual %}
-      <p class="text-[12.5px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.employee_reflection %} — {{ v.employee_reflection }}{% endif %}</p>
+      <p class="text-[13px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.employee_reflection %} — {{ v.employee_reflection }}{% endif %}</p>
       {% endfor %}
     </section>
     {% endif %}
@@ -90,7 +90,7 @@
     <section>
       <h3 class="text-[14px] font-bold text-slate-800 mb-1">Edify Values</h3>
       {% for v in values %}
-      <p class="text-[12.5px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.agreed_behaviour %} — {{ v.agreed_behaviour }}{% endif %}{% if v.employee_reflection %} · {{ v.employee_reflection }}{% endif %}</p>
+      <p class="text-[13px] text-slate-600"><strong>{{ v.value_name }}</strong>{% if v.agreed_behaviour %} — {{ v.agreed_behaviour }}{% endif %}{% if v.employee_reflection %} · {{ v.employee_reflection }}{% endif %}</p>
       {% endfor %}
     </section>
     {% endif %}

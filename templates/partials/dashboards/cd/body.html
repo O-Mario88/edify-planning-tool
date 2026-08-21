@@ -6,7 +6,7 @@
   {% endif %}
 
   {# ── Executive KPI strip ──────────────────────────────────────────────── #}
-  <div class="mobile-home-hide">{% include "components/kpi_strip.html" with items=kpi_strip_items %}</div>
+  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Country pulse" %}
 
   {# ── Leadership Attention ──────────────────────────────────────────────── #}
   {% if leadership_attention %}
@@ -19,7 +19,7 @@
         {% include "partials/analytics/pl/_icon.html" with name="warning" %}
       </span>
       <div class="min-w-0">
-        <p class="text-[12.5px] font-bold text-slate-800">{{ c.title }}</p>
+        <p class="text-[13px] font-bold text-slate-800">{{ c.title }}</p>
         <p class="edify-text-caption font-semibold text-slate-600 leading-snug mt-0.5">{{ c.line1 }}</p>
         <a href="{{ c.link }}" class="inline-block mt-1.5 edify-text-caption font-bold {% if c.tone == 'danger' %}text-rose-700{% elif c.tone == 'warning' %}text-amber-700{% else %}text-sky-700{% endif %} hover:underline">{{ c.action }} →</a>
       </div>
@@ -27,10 +27,6 @@
     {% endfor %}
   </div>
   {% endif %}
-
-  <div class="mobile-home-only">
-    {% include "components/kpi_strip.html" with items=kpi_strip_items density="compact" title="Country pulse" %}
-  </div>
 
   {# ── Country Performance Overview | Regional Performance ──────────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -112,9 +108,14 @@
     </div>
   </div>
 
-  {# ── PL Performance | Fund Approval & Finance Snapshot ────────────────── #}
-  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5">
-    <div class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+  {% comment %}
+  Country Program Leads Performance — a full row of its own. This shared three
+  fifths of a five-column row with the finance snapshot, so a ten-column table
+  lived in roughly 620px and scrolled horizontally at every screen size. Ten
+  columns need the width.
+  {% endcomment %}
+  <div class="edify-card-row grid grid-cols-1 gap-5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
       <div class="flex items-center justify-between">
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
           <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>Country Program Leads Performance
@@ -122,7 +123,7 @@
         <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
       </div>
       <div class="overflow-x-auto -mx-1">
-        <table class="w-full min-w-[1080px] edify-text-caption">
+        <table class="w-full min-w-[980px] edify-text-caption">
           <thead>
             <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
               <th class="text-left font-bold py-1.5 pl-1">Lead</th>
@@ -171,8 +172,11 @@
       </div>
       <p class="edify-text-caption text-slate-400 font-medium">Area results pool the validated performance of each lead's supervised CCEOs: visits, meetings, trainings, SSA and MSCS. Select the lead in Analytics for individual CCEO detail.</p>
     </div>
+  </div>
 
-    <div class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+  {# ── Fund Approval & Finance Snapshot ────────────────────────────────── #}
+  <div class="edify-card-row grid grid-cols-1 gap-5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
         <div class="flex items-center justify-between">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="currency" %}</span>Fund Approval &amp; Finance Snapshot
@@ -209,7 +213,7 @@
         <div class="rounded-surface border border-violet-100 bg-violet-50/50 p-3 flex items-center justify-between">
           <div class="min-w-0">
             <p class="edify-text-caption font-bold uppercase tracking-wider text-violet-500">General Budget{% if budget_stage.month %} · {{ budget_stage.month }}{% endif %}</p>
-            <p class="text-[12.5px] font-bold text-slate-800 mt-0.5 truncate">{{ budget_stage.label }}{% if budget_stage.amount %} <span class="edify-text-caption text-slate-500 font-semibold">· {{ budget_stage.amount }}</span>{% endif %}</p>
+            <p class="text-[13px] font-bold text-slate-800 mt-0.5 truncate">{{ budget_stage.label }}{% if budget_stage.amount %} <span class="edify-text-caption text-slate-500 font-semibold">· {{ budget_stage.amount }}</span>{% endif %}</p>
             <p class="edify-text-caption font-semibold text-slate-500">{{ budget_stage.helper }} · Accountant disburses after approval</p>
           </div>
           <a href="/country-budget/" class="h-8 px-3 rounded-control bg-violet-600 hover:bg-violet-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">Open</a>
@@ -222,14 +226,14 @@
       <div class="min-w-0">
         <div class="flex items-center gap-3">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Funded Not Completed</h2>
-          <span class="text-[19px] font-bold text-slate-800 tabular-nums leading-none">{{ finance_snapshot.funded_not_completed.amount }}</span>
+          <span class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ finance_snapshot.funded_not_completed.amount }}</span>
         </div>
         <p class="edify-text-caption font-semibold text-slate-400 mt-1">across {{ finance_snapshot.funded_not_completed.activities|intcomma }} funded activities</p>
       </div>
       <div class="grid grid-cols-3 gap-2 lg:min-w-[360px]">
         <div class="rounded-surface bg-rose-50 border border-rose-100 px-3 py-2 text-center">
           <p class="text-[14px] font-bold text-rose-700 tabular-nums">{{ finance_snapshot.funded_not_completed.overdue }}</p>
-          <p class="edify-text-caption font-bold text-slate-500 uppercase">Overdue</p>
+          <p class="edify-text-caption font-bold text-rose-600 uppercase">Overdue</p>
         </div>
         <div class="rounded-surface bg-amber-50 border border-amber-100 px-3 py-2 text-center">
           <p class="text-[14px] font-bold text-amber-700 tabular-nums">{{ finance_snapshot.funded_not_completed.in_progress }}</p>
@@ -247,11 +251,11 @@
   {# ── Operational Risk & Backlog | School & SSA Intelligence ───────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5" data-cd-school-ssa-cards>
     <div data-cd-risk-priority-row class="contents">
-    <div data-cd-operational-risk-card class="lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <div data-cd-operational-risk-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
         <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Operational Risk &amp; Backlog
       </h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {% for c in operational_risk %}
         <a href="{{ c.link }}" class="rounded-surface p-3 border transition-all hover:shadow-sm
            {% if c.tone == 'danger' %}bg-rose-50 border-rose-100
@@ -271,7 +275,7 @@
       <p class="edify-text-caption text-slate-400 font-medium">Every card drills to a filtered oversight list — follow-up routes to the responsible PL.</p>
     </div>
 
-      <section data-cd-ssa-heatmap-card class="lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
+      <section data-cd-ssa-heatmap-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
         <div>
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Cluster SSA Heatmap
@@ -320,7 +324,7 @@
       </section>
     </div>
 
-      <section data-cd-priority-schools-card class="lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <section data-cd-priority-schools-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
         <div class="flex items-center justify-between mb-1.5">
           <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
             <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Priority Schools Needing Urgent Attention

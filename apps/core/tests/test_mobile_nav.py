@@ -181,12 +181,17 @@ class MobileNavDestinationTests(SimpleTestCase):
 
     def test_lead_destination_for_every_role(self):
         # The Today workbench (roadmap Phase 5) leads for the roles whose
-        # phone is the field device; every other role still opens on the
-        # dashboard.
+        # phone is the field device; a partner's phone opens on their
+        # Assigned Schools intake; every other role opens on the dashboard.
         today_first = {CCEO, PL, PROJECT_COORDINATOR}
         for role in ROLE_LABELS:
             with self.subTest(role=role):
-                expected = "/today" if role in today_first else "/dashboard"
+                if role in today_first:
+                    expected = "/today"
+                elif role == PARTNER:
+                    expected = "/partner/assigned-schools"
+                else:
+                    expected = "/dashboard"
                 self.assertEqual(nav_for(role)[0]["url"], expected)
 
     def test_ia_reaches_the_ssa_verification_queue(self):

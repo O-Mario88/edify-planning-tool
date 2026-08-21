@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from collections import defaultdict
 from datetime import date, timedelta
@@ -255,41 +256,70 @@ class DashboardMetricsService:
         ]
 
         # 7. Priority Schools Table
-        priority_schools_qs = (
-            schools_qs.exclude(current_fy_ssa_status="done")
-            .select_related("district")
-            .order_by("name")[:5]
-        )
+        #
+        # This used to be alphabetical order presented as prioritisation:
+        # schools without a done SSA, ordered by name, padded to five with any
+        # ready school, and a hardcoded em-dash in the column headed "weakest".
+        # Nothing about it was a priority and nothing filled the one field a
+        # reader would act on.
+        #
+        # It now reads the live SSA recommendation queue, which ranks by
+        # measured weakness and carries its own explanation. Schools with no
+        # confirmed assessment still appear — they are genuinely a priority —
+        # but as their own honest category, because "we do not know yet" is a
+        # different problem from "we know, and it is bad".
+        from apps.ssa.recommendation_service import open_recommendations
 
+        school_ids = list(schools_qs.values_list("id", flat=True))
         priority_schools = []
-        for s in priority_schools_qs:
+        seen_schools: set[str] = set()
+
+        for recommendation in open_recommendations(school_ids=school_ids, fy=fy)[:5]:
+            school = recommendation.school
+            seen_schools.add(school.id)
+            band = (recommendation.score_band or "").lower()
             priority_schools.append(
                 {
-                    "name": s.name,
-                    "district": s.district.name if s.district else "—",
-                    "cluster": s.cluster_id or "—",
-                    "weakest": "\u2014",
-                    "readiness": "At Risk",
-                    "readiness_class": "s-orange",
-                    "action": "Upload SSA",
+                    "name": school.name,
+                    "district": school.district.name if school.district else "—",
+                    "cluster": school.cluster_id or "—",
+                    "weakest": recommendation.get_intervention_display(),
+                    "readiness": recommendation.score_band or "Assessed",
+                    "readiness_class": (
+                        "s-red"
+                        if band == "critical"
+                        else "s-orange"
+                        if band == "warning"
+                        else "s-green"
+                    ),
+                    "action": "Plan support",
+                    "reason": recommendation.reason,
                 }
             )
 
-        # If not enough, fill with standard ready schools
+        # Unassessed schools: the SSA-collection visit is what resolves them,
+        # and that is exactly the visit the platform allows without an SSA.
         if len(priority_schools) < 5:
-            ready_schools_qs = schools_qs.filter(
-                planning_readiness="ready_for_support_planning"
-            ).select_related("district")[: 5 - len(priority_schools)]
-            for s in ready_schools_qs:
+            unassessed = (
+                schools_qs.exclude(current_fy_ssa_status="done")
+                .exclude(id__in=seen_schools)
+                .select_related("district")
+                .order_by("name")[: 5 - len(priority_schools)]
+            )
+            for school in unassessed:
                 priority_schools.append(
                     {
-                        "name": s.name,
-                        "district": s.district.name if s.district else "—",
-                        "cluster": s.cluster_id or "—",
-                        "weakest": "\u2014",
-                        "readiness": "Ready",
-                        "readiness_class": "s-green",
-                        "action": "Schedule",
+                        "name": school.name,
+                        "district": school.district.name if school.district else "—",
+                        "cluster": school.cluster_id or "—",
+                        "weakest": "Not assessed",
+                        "readiness": "No SSA",
+                        "readiness_class": "s-orange",
+                        "action": "Collect SSA",
+                        "reason": (
+                            "No confirmed assessment this year, so no need has "
+                            "been measured yet."
+                        ),
                     }
                 )
 
@@ -530,38 +560,38 @@ class DashboardMetricsService:
 
         if role == "CCEO":
             kpi_items = [
-                {
-                    "label": "My Target Achievement",
-                    "value": f"{target_achievement}%",
-                    "raw_value": target_achievement,
-                    "helper": "completed vs scheduled",
-                    "icon": "target",
-                    "variant": "success",
-                },
-                {
-                    "label": "Planned This Week",
-                    "value": str(activities_this_week),
-                    "raw_value": activities_this_week,
-                    "helper": "scheduled",
-                    "icon": "calendar",
-                    "variant": "info",
-                },
-                {
-                    "label": "Schools Visited",
-                    "value": str(ready_count),
-                    "raw_value": ready_count,
-                    "helper": "visited",
-                    "icon": "school",
-                    "variant": "blue",
-                },
-                {
-                    "label": "Evidence Pending",
-                    "value": str(without_ssa_count),
-                    "raw_value": without_ssa_count,
-                    "helper": "needing uploads",
-                    "icon": "warning",
-                    "variant": "warning",
-                },
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_my_target_achievement",
+                    f"{target_achievement}%",
+                    raw_value=target_achievement,
+                    helper="completed vs scheduled",
+                    icon="target",
+                    variant="success",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_planned_this_week",
+                    str(activities_this_week),
+                    raw_value=activities_this_week,
+                    helper="scheduled",
+                    icon="calendar",
+                    variant="info",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_schools_visited",
+                    str(ready_count),
+                    raw_value=ready_count,
+                    helper="visited",
+                    icon="school",
+                    variant="blue",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_evidence_pending",
+                    str(without_ssa_count),
+                    raw_value=without_ssa_count,
+                    helper="needing uploads",
+                    icon="warning",
+                    variant="warning",
+                ),
             ]
         elif role == "Program Lead":
             # Reuse the canonical PL team-execution formula (same source as
@@ -578,38 +608,38 @@ class DashboardMetricsService:
                 pl_scope, fy, current_quarter
             )
             kpi_items = [
-                {
-                    "label": "Team Execution Progress %",
-                    "value": f"{team_execution_pct}%",
-                    "raw_value": team_execution_pct,
-                    "helper": "field completions vs target (not IA-verified)",
-                    "icon": "target",
-                    "variant": "success",
-                },
-                {
-                    "label": "CCEOs On Track",
-                    "value": f"{cceos_on_track} / {len(pl_scope.cceos)}",
-                    "raw_value": cceos_on_track,
-                    "helper": "at or above pace",
-                    "icon": "users",
-                    "variant": "info",
-                },
-                {
-                    "label": "Pending Reviews",
-                    "value": str(fund_requests_pending),
-                    "raw_value": fund_requests_pending,
-                    "helper": "awaiting PL",
-                    "icon": "clock",
-                    "variant": "warning",
-                },
-                {
-                    "label": "Scheduled This Week",
-                    "value": str(activities_this_week),
-                    "raw_value": activities_this_week,
-                    "helper": "across team",
-                    "icon": "calendar",
-                    "variant": "blue",
-                },
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_team_execution_progress",
+                    f"{team_execution_pct}%",
+                    raw_value=team_execution_pct,
+                    helper="field completions vs target (not IA-verified)",
+                    icon="target",
+                    variant="success",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_cceos_on_track",
+                    f"{cceos_on_track} / {len(pl_scope.cceos)}",
+                    raw_value=cceos_on_track,
+                    helper="at or above pace",
+                    icon="users",
+                    variant="info",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_pending_reviews",
+                    str(fund_requests_pending),
+                    raw_value=fund_requests_pending,
+                    helper="awaiting PL",
+                    icon="clock",
+                    variant="warning",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_scheduled_this_week",
+                    str(activities_this_week),
+                    raw_value=activities_this_week,
+                    helper="across team",
+                    icon="calendar",
+                    variant="blue",
+                ),
             ]
         elif role in ["CountryDirector", "RegionalVicePresident", "Admin"]:
             # Real country-wide disbursed/approved utilization for the FY
@@ -648,46 +678,39 @@ class DashboardMetricsService:
                 .count()
             )
             kpi_items = [
-                {
-                    # Was "Country Target Achievement · vs last quarter". It
-                    # compares nothing to last quarter, and it measures no
-                    # target: CDAnalyticsService owns the weighted, validated
-                    # target achievement, so reusing that name here gave one
-                    # phrase two different numbers. This says what it counts.
-                    "label": "Country Activities Completed This Month",
-                    "value": f"{target_achievement}%",
-                    "raw_value": target_achievement,
-                    "helper": (
-                        f"{completed_this_month:,} of "
-                        f"{activities_this_month:,} scheduled this month"
-                    ),
-                    "icon": "target",
-                    "variant": "success",
-                },
-                {
-                    "label": "Budget Utilization",
-                    "value": f"{budget_utilization_pct}%",
-                    "raw_value": budget_utilization_pct,
-                    "helper": "disbursed / approved",
-                    "icon": "currency",
-                    "variant": "finance",
-                },
-                {
-                    "label": "Schools Impacted",
-                    "value": str(schools_impacted),
-                    "raw_value": schools_impacted,
-                    "helper": f"reached, of {total_schools:,} in scope",
-                    "icon": "school",
-                    "variant": "blue",
-                },
-                {
-                    "label": "Pending Approvals",
-                    "value": str(fund_requests_pending),
-                    "raw_value": fund_requests_pending,
-                    "helper": "needs action",
-                    "icon": "warning",
-                    "variant": "warning",
-                },
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_country_activities_completed_this_month",
+                    f"{target_achievement}%",
+                    raw_value=target_achievement,
+                    helper=f"{completed_this_month:,} of "
+                    f"{activities_this_month:,} scheduled this month",
+                    icon="target",
+                    variant="success",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_budget_utilization",
+                    f"{budget_utilization_pct}%",
+                    raw_value=budget_utilization_pct,
+                    helper="disbursed / approved",
+                    icon="currency",
+                    variant="finance",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_schools_impacted",
+                    str(schools_impacted),
+                    raw_value=schools_impacted,
+                    helper=f"reached, of {total_schools:,} in scope",
+                    icon="school",
+                    variant="blue",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_pending_approvals",
+                    str(fund_requests_pending),
+                    raw_value=fund_requests_pending,
+                    helper="needs action",
+                    icon="warning",
+                    variant="warning",
+                ),
             ]
         elif role == "Accountant":
             # Real FY aggregates from WeeklyFundRequest (mirrors
@@ -726,73 +749,73 @@ class DashboardMetricsService:
             )
 
             kpi_items = [
-                {
-                    "label": "Total Allocation",
-                    "value": _ugx_compact(total_allocation),
-                    "raw_value": total_allocation,
-                    "helper": "approved current FY",
-                    "icon": "currency",
-                    "variant": "finance",
-                },
-                {
-                    "label": "Pending Clearance",
-                    "value": _ugx_compact(pending_clearance),
-                    "raw_value": pending_clearance,
-                    "helper": "advances",
-                    "icon": "clock",
-                    "variant": "warning",
-                },
-                {
-                    "label": "Cleared Amount",
-                    "value": _ugx_compact(cleared_amount),
-                    "raw_value": cleared_amount,
-                    "helper": "accounted",
-                    "icon": "check",
-                    "variant": "success",
-                },
-                {
-                    "label": "Planned Activities",
-                    "value": str(activities_this_month),
-                    "raw_value": activities_this_month,
-                    "helper": "this month",
-                    "icon": "calendar",
-                    "variant": "info",
-                },
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_total_allocation",
+                    _ugx_compact(total_allocation),
+                    raw_value=total_allocation,
+                    helper="approved current FY",
+                    icon="currency",
+                    variant="finance",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_pending_clearance",
+                    _ugx_compact(pending_clearance),
+                    raw_value=pending_clearance,
+                    helper="advances",
+                    icon="clock",
+                    variant="warning",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_cleared_amount",
+                    _ugx_compact(cleared_amount),
+                    raw_value=cleared_amount,
+                    helper="accounted",
+                    icon="check",
+                    variant="success",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_planned_activities",
+                    str(activities_this_month),
+                    raw_value=activities_this_month,
+                    helper="this month",
+                    icon="calendar",
+                    variant="info",
+                ),
             ]
         else:
             kpi_items = [
-                {
-                    "label": "Schools Ready for Planning",
-                    "value": str(ready_count),
-                    "raw_value": ready_count,
-                    "helper": f"{ready_pct}% of total",
-                    "icon": "school",
-                    "variant": "success",
-                },
-                {
-                    "label": "Schools Without SSA",
-                    "value": str(without_ssa_count),
-                    "raw_value": without_ssa_count,
-                    "helper": f"{without_ssa_pct}% of total",
-                    "icon": "warning",
-                    "variant": "danger",
-                },
-                {
-                    "label": "Activities This Week",
-                    "value": str(activities_this_week),
-                    "raw_value": activities_this_week,
-                    "helper": "scheduled",
-                    "icon": "calendar",
-                    "variant": "info",
-                },
-                {
-                    "label": "Planned This Month",
-                    "value": str(activities_this_month),
-                    "raw_value": activities_this_month,
-                    "helper": "scheduled",
-                    "icon": "chart",
-                    "variant": "blue",
-                },
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_schools_ready_for_planning",
+                    str(ready_count),
+                    raw_value=ready_count,
+                    helper=f"{ready_pct}% of total",
+                    icon="school",
+                    variant="success",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_schools_without_ssa",
+                    str(without_ssa_count),
+                    raw_value=without_ssa_count,
+                    helper=f"{without_ssa_pct}% of total",
+                    icon="warning",
+                    variant="danger",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_activities_this_week",
+                    str(activities_this_week),
+                    raw_value=activities_this_week,
+                    helper="scheduled",
+                    icon="calendar",
+                    variant="info",
+                ),
+                render_precomputed_metric_item(
+                    "command_center_dashboard_service_planned_this_month",
+                    str(activities_this_month),
+                    raw_value=activities_this_month,
+                    helper="scheduled",
+                    icon="chart",
+                    variant="blue",
+                ),
             ]
 
         return {

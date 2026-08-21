@@ -208,6 +208,8 @@ def _query_string(base: dict, **overrides) -> str:
 
 
 def build_work_plan_context(user, params) -> dict:
+    from apps.monthly_work_plan.schedule_plan import monthly_work_plan
+
     today = ClockService.today()
     operational_fy = get_operational_fy(today)
 
@@ -712,4 +714,31 @@ def build_work_plan_context(user, params) -> dict:
         ),
         "can_export": has_permission(user, Permission.EXPORT.value),
         "work_plan_approval": approval_context(user, fy),
+        # §18: the schedule-derived monthly plan. Computed by the canonical
+        # service so the page never re-derives a target contribution or a cost
+        # of its own — the two places would drift the first time either
+        # changed.
+        "monthly_plan": monthly_work_plan(staff_ids=_work_plan_staff_ids(user), fy=fy),
     }
+
+
+def _work_plan_staff_ids(user) -> list[str]:
+    """Whose scheduled work this Work Plan covers.
+
+    A staff member sees their own; a manager sees themselves and the people
+    they supervise, because a Work Plan that stops at the viewer cannot show a
+    Program Lead what their team has committed the month to.
+    """
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    own = getattr(user, "staff_profile_id", None)
+    if not own:
+        return []
+    ids = [str(own)]
+    ids.extend(
+        str(supervisee_id)
+        for supervisee_id in StaffSupervisorAssignment.objects.filter(
+            supervisor_id=own
+        ).values_list("supervisee_id", flat=True)
+    )
+    return ids

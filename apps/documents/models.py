@@ -147,6 +147,13 @@ class DocumentAsset(TimeStampedModel):
     blocks_application_access = models.BooleanField(default=False)
     require_reacknowledgement_on_new_version = models.BooleanField(default=True)
     acknowledgement_due_days = models.PositiveIntegerField(null=True, blank=True)
+    required_reading_minutes = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            "Minimum active time in the Edify viewer before reading is marked "
+            "complete. Set by the uploader for each policy or manual."
+        ),
+    )
 
     # ── Delivery permissions ─────────────────────────────────────────────────
     download_allowed = models.BooleanField(default=True)
@@ -186,6 +193,10 @@ class DocumentAsset(TimeStampedModel):
     def is_mandatory(self) -> bool:
         """Mandatory means the reader must answer, not merely that it exists."""
         return self.acknowledgement_required or self.agreement_required
+
+    @property
+    def required_reading_seconds(self) -> int:
+        return self.required_reading_minutes * 60
 
 
 class DocumentVersion(TimeStampedModel):
@@ -365,6 +376,35 @@ class DocumentAcknowledgement(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.user_id} · {self.document_id} v{self.version_id} · {self.state}"
+
+    @property
+    def reading_completion_key(self) -> str:
+        """Completion derived from auditable sessions, never from agreement.
+
+        A person may accept immediately and finish reading on a later visit;
+        the legal response and the reading-duration requirement deliberately
+        remain two separate facts.
+        """
+        if self.offline_attestation:
+            return "completed_offline"
+        required = self.document.required_reading_seconds
+        if required <= 0:
+            return "not_monitored"
+        if self.active_reading_seconds >= required:
+            return "completed"
+        if self.active_reading_seconds <= 0:
+            return "not_read"
+        return "partial"
+
+    @property
+    def reading_completion_label(self) -> str:
+        return {
+            "completed": "Completed reading",
+            "completed_offline": "Completed outside viewer",
+            "partial": "Partial read",
+            "not_read": "Did not read",
+            "not_monitored": "Not monitored",
+        }[self.reading_completion_key]
 
 
 class DocumentEngagementSession(TimeStampedModel):

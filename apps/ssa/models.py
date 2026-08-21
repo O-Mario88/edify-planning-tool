@@ -124,4 +124,22 @@ class SsaScore(TimeStampedModel):
         ]
 
 
-__all__ = ["SsaRecord", "SsaScore"]
+# Recommendations live in their own module for readability, but Django only
+# discovers models imported from models.py.
+from apps.ssa.recommendation_models import (  # noqa: E402,F401
+    CLOSED_UNDONE,
+    LIVE_STATES,
+    RecommendationState,
+    SsaRecommendation,
+    condition_key_for,
+)
+
+__all__ = [
+    "SsaRecord",
+    "SsaScore",
+    "SsaRecommendation",
+    "RecommendationState",
+    "LIVE_STATES",
+    "CLOSED_UNDONE",
+    "condition_key_for",
+]

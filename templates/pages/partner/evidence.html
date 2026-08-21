@@ -16,12 +16,14 @@
 
   {% if pending %}
   <div class="rounded-surface border border-amber-200 bg-amber-50/60 p-4 space-y-2">
-    <p class="text-[12.5px] font-bold text-amber-800">{{ pending|length }} completed activit{{ pending|length|pluralize:"y,ies" }} missing evidence</p>
+    <p class="text-[13px] font-bold text-amber-800">{{ pending|length }} completed activit{{ pending|length|pluralize:"y,ies" }} missing evidence</p>
     <div class="divide-y divide-amber-100">
       {% for a in pending %}
       <div class="py-2 flex items-center justify-between gap-3">
         <p class="text-[12px] font-semibold truncate">{{ a.school.name|default:"Activity" }} <span class="text-slate-400 font-medium capitalize">· {{ a.activity_type|cut:"_" }}</span></p>
-        <a href="/my-plan" class="edify-text-caption font-bold text-amber-700 hover:underline shrink-0">Upload via My Plan →</a>
+        <button type="button"
+                hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="inline-flex h-8 items-center rounded-control border border-amber-300 bg-amber-100/60 px-3 edify-text-caption font-bold text-amber-800 hover:bg-amber-100 shrink-0 transition-colors">Upload Evidence</button>
       </div>
       {% endfor %}
     </div>
@@ -49,5 +51,6 @@
     {% endif %}
   </div>
 
+  <div id="drawer-container"></div>
 </div>
 {% endblock %}

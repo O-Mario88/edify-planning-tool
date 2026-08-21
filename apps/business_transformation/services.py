@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
@@ -11,7 +13,7 @@ from django.db.models import Count, Max, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from apps.core.enums import SsaIntervention
+from apps.core.enums import SsaIntervention, ssa_score_band
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import (
     get_fy_date_range,
@@ -30,16 +32,22 @@ from .models import (
     CaseStatus,
     CaseTrigger,
     DISBURSED_LOAN_STATUSES,
+    EnrolmentSnapshot,
+    EnrolmentSnapshotKind,
     FinanceReferral,
     FinancialPracticeAssessment,
     IAValidationStatus,
+    LoanAmendment,
+    ImpactEvidenceStatus,
     LoanImpactStatus,
     LoanImpactAssessment,
+    LoanDisbursement,
     LoanPurpose,
     LoanStatus,
     LoanStatusDimension,
     LoanStatusHistory,
     LoanUseResult,
+    LoanUseFinding,
     LoanVerificationRequirement,
     MfiLoan,
     MfiMembership,
@@ -53,6 +61,7 @@ from .models import (
     RepaymentSnapshot,
     RepaymentStatus,
     SalesforceStatus,
+    SalesforceConfirmation,
     SchoolComplianceAssessment,
     ComplianceRequirement,
     TransformationCase,
@@ -65,9 +74,10 @@ UGANDA_WIDE_ROLES = {
     EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
     EdifyRole.COUNTRY_DIRECTOR.value,
     EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.REGIONAL_VICE_PRESIDENT.value,
     EdifyRole.ADMIN.value,
 }
-SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
+SUMMARY_ONLY_ROLES = set()
 MFI_ROLES = {
     EdifyRole.MFI_PARTNER_ADMIN.value,
     EdifyRole.MFI_LOAN_OFFICER.value,
@@ -139,6 +149,7 @@ def _audit_loan_event(action: str, loan: MfiLoan, principal, payload: dict) -> N
         actor_id=_actor_id(principal),
         actor_role=getattr(principal, "active_role", None),
         payload=payload,
+        required=True,
     )
 
 
@@ -218,9 +229,39 @@ def _mfi_ids_for(principal, *, admin_only: bool = False) -> list[str]:
     return list(qs.values_list("mfi_id", flat=True))
 
 
+def _loan_officer_scope(principal) -> Q:
+    """Records owned by this loan officer, never the whole MFI portfolio."""
+
+    actor_id = _actor_id(principal)
+    references = list(
+        MfiMembership.objects.filter(
+            user_id=actor_id,
+            role=MfiMembershipRole.LOAN_OFFICER,
+            active=True,
+        )
+        .exclude(officer_reference="")
+        .values_list("officer_reference", flat=True)
+    )
+    scope = Q(registered_by=actor_id)
+    if references:
+        scope |= Q(assigned_officer_reference__in=references)
+    return scope
+
+
 def _assert_mfi_scope(principal, mfi_id: str, *, admin_only: bool = False) -> None:
     if str(mfi_id) not in set(_mfi_ids_for(principal, admin_only=admin_only)):
         raise NotFoundError("MFI record not found in your portfolio.")
+
+
+def _assert_loan_record_scope(principal, loan: MfiLoan) -> None:
+    _assert_mfi_scope(principal, loan.mfi_id)
+    if (
+        getattr(principal, "active_role", "") == EdifyRole.MFI_LOAN_OFFICER.value
+        and not MfiLoan.objects.filter(id=loan.id)
+        .filter(_loan_officer_scope(principal))
+        .exists()
+    ):
+        raise NotFoundError("Loan record not found in your assigned portfolio.")
 
 
 def scoped_mfis(principal):
@@ -411,19 +452,27 @@ def scoped_cases(principal):
 
 
 def scoped_loans(principal):
-    """Universal Uganda loan register.
+    """Return only record-level loans the principal is allowed to inspect.
 
-    Every authenticated platform role receives the register. MFI roles remain
-    bounded to their governed organization; other platform roles read the
-    Uganda-wide transparency view. Mutation is permission-gated separately.
+    MFI roles are tenant-bound. BT, Country Director, Impact Assessment and RVP
+    have programme read scope. Impact-only, technical administration and
+    unrelated roles use deliberately minimized projections and receive no
+    record-level queryset here.
     """
 
     qs = MfiLoan.objects.select_related(
         "mfi", "school", "school__region", "school__district", "purpose", "case"
     )
-    if getattr(principal, "active_role", "") in MFI_ROLES:
-        return qs.filter(mfi_id__in=_mfi_ids_for(principal))
-    return qs
+    role = getattr(principal, "active_role", "")
+    if role == EdifyRole.MFI_PARTNER_ADMIN.value:
+        return qs.filter(mfi_id__in=_mfi_ids_for(principal, admin_only=True))
+    if role == EdifyRole.MFI_LOAN_OFFICER.value:
+        return qs.filter(mfi_id__in=_mfi_ids_for(principal)).filter(
+            _loan_officer_scope(principal)
+        )
+    if role in UGANDA_WIDE_ROLES - {EdifyRole.ADMIN.value}:
+        return qs
+    return qs.none()
 
 
 def scoped_referrals(principal):
@@ -678,21 +727,33 @@ def register_or_update_loan(data: dict, principal):
             raise BadRequest(f"{field} does not match the selected referral.")
     _assert_mfi_scope(principal, mfi_id)
     status = (data.get("status") or LoanStatus.PROCESSING).strip()
-    if status not in LoanStatus.values:
-        raise BadRequest("Unknown loan status.")
-    disbursement_date = _date(data.get("disbursementDate"), field="Disbursement date")
-    disbursed_amount = _decimal(data.get("disbursedAmount"), field="Disbursed amount")
-    if status in DISBURSED_LOAN_STATUSES and (
-        disbursement_date is None or disbursed_amount is None
-    ):
+    if status not in {LoanStatus.PROCESSING, LoanStatus.CANCELED}:
         raise BadRequest(
-            "A disbursed loan requires its confirmed disbursement date and amount."
+            "Disbursed, active, repaid and defaulted states are ledger-derived; "
+            "post the governed financial event instead."
         )
+    if data.get("disbursementDate") not in (None, "") or data.get(
+        "disbursedAmount"
+    ) not in (None, ""):
+        raise BadRequest(
+            "Disbursement facts cannot be entered on a loan record; post a "
+            "facility-backed disbursement."
+        )
+    disbursement_date = None
+    disbursed_amount = None
     loan = (
         MfiLoan.objects.select_for_update()
         .filter(mfi_id=mfi_id, external_loan_reference=external_ref)
         .first()
     )
+    if (
+        loan
+        and getattr(principal, "active_role", "") == EdifyRole.MFI_LOAN_OFFICER.value
+        and not MfiLoan.objects.filter(id=loan.id)
+        .filter(_loan_officer_scope(principal))
+        .exists()
+    ):
+        raise NotFoundError("Loan record not found in your assigned portfolio.")
     was_disbursed = bool(loan and loan.status in DISBURSED_LOAN_STATUSES)
     previous_status = loan.status if loan else ""
     status_reason = (data.get("statusReason") or "").strip()
@@ -708,6 +769,11 @@ def register_or_update_loan(data: dict, principal):
     if loan and loan.certified_at:
         raise Forbidden(
             "This loan is certified. Submit an amendment instead of rewriting it."
+        )
+    if loan and was_disbursed:
+        raise Forbidden(
+            "A financially posted loan cannot be rewritten. Submit a governed "
+            "amendment or financial reversal."
         )
     if loan and loan.core_identity_locked:
         proposed_identity = {
@@ -758,9 +824,7 @@ def register_or_update_loan(data: dict, principal):
         "processing_date": _date(data.get("processingDate"), field="Processing date"),
         "approved_at": _datetime(data.get("approvedAt"), field="Approved at"),
         "disbursement_date": disbursement_date,
-        "disbursement_confirmed_at": (
-            timezone.now() if status in DISBURSED_LOAN_STATUSES else None
-        ),
+        "disbursement_confirmed_at": None,
         "term_months": term_months,
         "repayment_frequency": (data.get("repaymentFrequency") or "").strip(),
         "installment_amount": _decimal(
@@ -771,9 +835,12 @@ def register_or_update_loan(data: dict, principal):
         "default_classified_at": _date(
             data.get("defaultClassifiedAt"), field="Default classification date"
         ),
+        "default_reason": (data.get("defaultReason") or "").strip(),
     }
     if status == LoanStatus.DEFAULTED and values["default_classified_at"] is None:
         raise BadRequest("A defaulted loan requires its classification date.")
+    if status == LoanStatus.DEFAULTED and not values["default_reason"]:
+        raise BadRequest("A defaulted loan requires a classification reason.")
     if status == LoanStatus.CANCELED and disbursement_date is not None:
         raise BadRequest("A canceled loan cannot have a disbursement date.")
     if loan is None:
@@ -825,23 +892,14 @@ def register_or_update_loan(data: dict, principal):
             principal,
             reason=status_reason,
         )
-    if status in DISBURSED_LOAN_STATUSES:
-        _ensure_verification_requirement(loan)
-        if case.status in {
-            CaseStatus.RECOMMENDED,
-            CaseStatus.TRIAGE,
-            CaseStatus.ACTIVE,
-        }:
-            case.status = CaseStatus.MONITORING
-            case.save(update_fields=["status", "updated_at"])
-        if not was_disbursed:
-            _notify_disbursement(loan)
     _audit_loan_event(
         "bt.loan.submitted" if not previous_status else "bt.loan.updated",
         loan,
         principal,
         {"lifecycle_status": status, "mfi_id": str(loan.mfi_id)},
     )
+    if not previous_status:
+        _notify_loan_submitted(loan)
     return serialize_loan(loan)
 
 
@@ -886,6 +944,21 @@ def confirm_salesforce_loan(loan_id: str, data: dict, principal):
         .exists()
     ):
         raise BadRequest("That Salesforce Loan ID is already linked to another loan.")
+    idempotency_key = str(
+        data.get("idempotencyKey") or f"salesforce-confirm:{loan.id}:{salesforce_id}"
+    ).strip()
+    existing_confirmation = SalesforceConfirmation.objects.filter(
+        idempotency_key=idempotency_key
+    ).first()
+    if existing_confirmation:
+        if (
+            existing_confirmation.loan_id != loan.id
+            or existing_confirmation.salesforce_loan_id != salesforce_id
+        ):
+            raise BadRequest(
+                "Idempotency key was already used for another Salesforce confirmation."
+            )
+        return serialize_loan(loan)
     previous_status = loan.salesforce_status
     loan.salesforce_loan_id = salesforce_id
     loan.salesforce_status = SalesforceStatus.CONFIRMED
@@ -921,6 +994,22 @@ def confirm_salesforce_loan(loan_id: str, data: dict, principal):
         principal,
         reason="Salesforce entry confirmed",
     )
+    canonical_payload = {
+        "loanId": loan.id,
+        "salesforceLoanId": salesforce_id,
+        "status": SalesforceStatus.CONFIRMED,
+    }
+    SalesforceConfirmation.objects.create(
+        loan=loan,
+        status=SalesforceStatus.CONFIRMED,
+        salesforce_loan_id=salesforce_id,
+        payload_sha256=hashlib.sha256(
+            json.dumps(canonical_payload, sort_keys=True).encode("utf-8")
+        ).hexdigest(),
+        idempotency_key=idempotency_key,
+        recorded_by=_actor_id(principal),
+        recorded_at=timezone.now(),
+    )
     _audit_loan_event(
         "bt.loan.salesforce_confirmed",
         loan,
@@ -931,6 +1020,12 @@ def confirm_salesforce_loan(loan_id: str, data: dict, principal):
         },
     )
     _notify_salesforce_confirmation(loan)
+    from apps.notifications.services import resolve_condition
+
+    resolve_condition("bt.loan.submitted", "MfiLoan", loan.id)
+    from apps.integrations.services import enqueue_loan_salesforce_reconciliation
+
+    enqueue_loan_salesforce_reconciliation(loan.id)
     return serialize_loan(loan)
 
 
@@ -987,7 +1082,218 @@ def return_salesforce_loan(loan_id: str, data: dict, principal):
         {"reason": reason, "note": note},
     )
     _notify_mfi_return(loan, explanation, note)
+    from apps.notifications.services import resolve_condition
+
+    resolve_condition("bt.loan.submitted", "MfiLoan", loan.id)
     return serialize_loan(loan)
+
+
+@transaction.atomic
+def resubmit_returned_loan(loan_id: str, data: dict, principal):
+    """Resubmit a returned record without rewriting posted financial facts.
+
+    Factual corrections use the amendment workflow. This action records the
+    MFI's correction note and moves only the independent Salesforce review
+    state back to Pending.
+    """
+
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        "Only an authorized lending-partner operator may resubmit a loan.",
+    )
+    loan = MfiLoan.objects.select_for_update().filter(id=loan_id).first()
+    if loan is None:
+        raise NotFoundError("Loan not found.")
+    _assert_loan_record_scope(principal, loan)
+    if loan.salesforce_status != SalesforceStatus.RETURNED:
+        raise BadRequest("Only a returned loan can be resubmitted.")
+    correction_note = str(data.get("correctionNote") or "").strip()
+    if not correction_note:
+        raise BadRequest("Explain what was corrected before resubmitting.")
+    previous_status = loan.salesforce_status
+    loan.salesforce_status = SalesforceStatus.PENDING
+    loan.submitted_by = _actor_id(principal)
+    loan.submitted_at = timezone.now()
+    loan.save(
+        update_fields=[
+            "salesforce_status",
+            "submitted_by",
+            "submitted_at",
+            "updated_at",
+        ]
+    )
+    _record_status_change(
+        loan,
+        LoanStatusDimension.SALESFORCE,
+        previous_status,
+        SalesforceStatus.PENDING,
+        principal,
+        reason=correction_note,
+    )
+    _audit_loan_event(
+        "bt.loan.returned_record_resubmitted",
+        loan,
+        principal,
+        {"correction_note": correction_note},
+    )
+    from apps.notifications.services import resolve_condition
+
+    resolve_condition("bt.loan.returned_to_mfi", "MfiLoan", loan.id)
+    _notify_loan_submitted(loan)
+    return serialize_loan(loan)
+
+
+@transaction.atomic
+def request_loan_amendment(loan_id: str, data: dict, principal) -> LoanAmendment:
+    """Request a whitelisted source-fact correction with before/after evidence."""
+
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        "Only an authorized lending-partner administrator may request an amendment.",
+    )
+    loan = MfiLoan.objects.select_for_update().filter(id=loan_id).first()
+    if loan is None:
+        raise NotFoundError("Loan not found.")
+    _assert_mfi_scope(principal, loan.mfi_id, admin_only=True)
+    reason = str(data.get("reason") or "").strip()
+    key = str(data.get("idempotencyKey") or "").strip()
+    if not reason or not key:
+        raise BadRequest("Amendment reason and idempotency key are required.")
+    existing = LoanAmendment.objects.filter(idempotency_key=key).first()
+    if existing:
+        if existing.loan_id != loan.id:
+            raise BadRequest("Idempotency key was already used for another amendment.")
+        return existing
+    changes = data.get("changes") or {}
+    if not isinstance(changes, dict) or not changes:
+        raise BadRequest("At least one amendment change is required.")
+    from .lending_ledger import _money, loan_position
+
+    previous_values = {}
+    new_values = {}
+    for api_field, model_field in {
+        "requestedAmount": "requested_amount",
+        "approvedAmount": "approved_amount",
+        "termMonths": "term_months",
+        "approvedAt": "approved_at",
+        "assignedOfficerReference": "assigned_officer_reference",
+    }.items():
+        if api_field not in changes:
+            continue
+        current = getattr(loan, model_field)
+        raw = changes[api_field]
+        if api_field in {"requestedAmount", "approvedAmount"}:
+            parsed = _money(raw, field=api_field)
+            value = str(parsed)
+        elif api_field == "termMonths":
+            try:
+                parsed = int(raw)
+            except (TypeError, ValueError) as exc:
+                raise BadRequest("Term months must be a whole number.") from exc
+            if parsed <= 0:
+                raise BadRequest("Term months must be greater than zero.")
+            value = parsed
+        elif api_field == "approvedAt":
+            parsed = _datetime(raw, field="Approved at", required=True)
+            value = parsed.isoformat()
+        else:
+            value = str(raw or "").strip()
+        previous = current.isoformat() if hasattr(current, "isoformat") else current
+        previous_values[model_field] = (
+            str(previous) if isinstance(previous, Decimal) else previous
+        )
+        new_values[model_field] = value
+    if not new_values:
+        raise BadRequest("No supported amendment fields were supplied.")
+    if "approved_amount" in new_values:
+        outstanding_basis = loan_position(loan)["netDisbursedPrincipal"]
+        if Decimal(new_values["approved_amount"]) < outstanding_basis:
+            raise BadRequest("Approved amount cannot be below confirmed disbursements.")
+    if all(previous_values[field] == value for field, value in new_values.items()):
+        raise BadRequest("The amendment does not change any value.")
+    amendment = LoanAmendment.objects.create(
+        loan=loan,
+        idempotency_key=key,
+        reason=reason,
+        previous_values=previous_values,
+        new_values=new_values,
+        requested_by=_actor_id(principal),
+    )
+    _audit_loan_event(
+        "bt.loan.amendment_requested",
+        loan,
+        principal,
+        {
+            "amendment_id": amendment.id,
+            "previous_values": previous_values,
+            "new_values": new_values,
+            "reason": reason,
+        },
+    )
+    return amendment
+
+
+@transaction.atomic
+def approve_loan_amendment(amendment_id: str, data: dict, principal) -> LoanAmendment:
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_AMENDMENT_APPROVE,
+        "Only the Country Director may approve a loan amendment.",
+    )
+    amendment = (
+        LoanAmendment.objects.select_for_update()
+        .select_related("loan")
+        .filter(id=amendment_id)
+        .first()
+    )
+    if amendment is None:
+        raise NotFoundError("Loan amendment not found.")
+    if amendment.status != "requested":
+        return amendment
+    if amendment.requested_by == _actor_id(principal):
+        raise Forbidden("The amendment requester cannot approve the same correction.")
+    note = str(data.get("approvalNote") or "").strip()
+    if not note:
+        raise BadRequest("An approval note is required.")
+    loan = MfiLoan.objects.select_for_update().get(id=amendment.loan_id)
+    update_fields = []
+    for field, value in amendment.new_values.items():
+        if field in {"requested_amount", "approved_amount"}:
+            value = Decimal(value)
+        elif field == "approved_at":
+            value = _datetime(value, field="Approved at", required=True)
+        elif field == "term_months":
+            value = int(value)
+        setattr(loan, field, value)
+        update_fields.append(field)
+    loan.save(update_fields=[*update_fields, "updated_at"])
+    amendment.status = "approved"
+    amendment.approved_by = _actor_id(principal)
+    amendment.approved_at = timezone.now()
+    amendment.approval_note = note
+    amendment.save(
+        update_fields=[
+            "status",
+            "approved_by",
+            "approved_at",
+            "approval_note",
+            "updated_at",
+        ]
+    )
+    _audit_loan_event(
+        "bt.loan.amendment_approved",
+        loan,
+        principal,
+        {
+            "amendment_id": amendment.id,
+            "previous_values": amendment.previous_values,
+            "new_values": amendment.new_values,
+            "approval_note": note,
+        },
+    )
+    return amendment
 
 
 @transaction.atomic
@@ -1040,6 +1346,9 @@ def validate_loan_by_ia(loan_id: str, data: dict, principal):
     )
     if decision == IAValidationStatus.RETURNED:
         _notify_ia_return(loan, reason)
+    from apps.notifications.services import resolve_condition
+
+    resolve_condition("bt.loan.salesforce_confirmed", "MfiLoan", loan.id)
     return serialize_loan(loan)
 
 
@@ -1058,6 +1367,26 @@ def _notify_salesforce_confirmation(loan: MfiLoan) -> None:
         priority="medium",
         title="Salesforce confirmation complete",
         body=f"{loan.school.name} · {loan.salesforce_loan_id} is ready for IA validation.",
+        context_type="MfiLoan",
+        context_id=loan.id,
+        recipients=recipients,
+    )
+
+
+def _notify_loan_submitted(loan: MfiLoan) -> None:
+    from apps.accounts.models import User
+    from apps.notifications.services import WorkflowNotificationService
+
+    recipients = User.objects.filter(
+        is_active=True,
+        active_role=EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+    )
+    WorkflowNotificationService.trigger(
+        event_type="bt.loan.submitted",
+        category="business_transformation",
+        priority="high",
+        title="Loan ready for Salesforce confirmation",
+        body=f"{loan.school.name} · {loan.mfi.name} submitted a governed loan record.",
         context_type="MfiLoan",
         context_id=loan.id,
         recipients=recipients,
@@ -1154,7 +1483,7 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
     loan = MfiLoan.objects.select_for_update().filter(id=loan_id).first()
     if loan is None:
         raise NotFoundError("Loan not found.")
-    _assert_mfi_scope(principal, loan.mfi_id)
+    _assert_loan_record_scope(principal, loan)
     if loan.status not in DISBURSED_LOAN_STATUSES:
         raise BadRequest("Repayment data can be added only after disbursement.")
     as_of = _date(data.get("asOfDate"), field="As-of date", required=True)
@@ -1182,6 +1511,9 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
         and not loan.default_classified_at
     ):
         raise BadRequest("A defaulted loan requires its classification date.")
+    default_reason = (data.get("defaultReason") or loan.default_reason or "").strip()
+    if lifecycle_status == LoanStatus.DEFAULTED and not default_reason:
+        raise BadRequest("A defaulted loan requires a classification reason.")
     previous_lifecycle = loan.status
     status_reason = (data.get("statusReason") or "").strip()
     if (
@@ -1244,11 +1576,14 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
             field="Default classification date",
             required=True,
         )
+    if lifecycle_status == LoanStatus.DEFAULTED:
+        loan.default_reason = default_reason
     loan.save(
         update_fields=[
             "last_repayment_data_date",
             "status",
             "default_classified_at",
+            "default_reason",
             "updated_at",
         ]
     )
@@ -1268,7 +1603,44 @@ def add_repayment_snapshot(loan_id: str, data: dict, principal):
         principal,
         reason=status_reason,
     )
+    _route_repayment_risk_notification(loan, snapshot)
     return serialize_snapshot(snapshot)
+
+
+def _route_repayment_risk_notification(
+    loan: MfiLoan, snapshot: RepaymentSnapshot
+) -> None:
+    from apps.notifications.services import (
+        WorkflowNotificationService,
+        resolve_condition,
+    )
+
+    context_type = "MfiLoan"
+    if snapshot.status not in {
+        RepaymentStatus.OVERDUE_31_90,
+        RepaymentStatus.OVERDUE_90_PLUS,
+    }:
+        resolve_condition("bt.loan.arrears_threshold", context_type, loan.id)
+        return
+    from apps.accounts.models import User
+
+    recipients = User.objects.filter(
+        is_active=True,
+        active_role__in=[
+            EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+        ],
+    )
+    WorkflowNotificationService.trigger(
+        event_type="bt.loan.arrears_threshold",
+        category="business_transformation",
+        priority="urgent" if snapshot.days_in_arrears > 90 else "high",
+        title="School loan crossed an arrears threshold",
+        body=f"{loan.school.name} · {snapshot.days_in_arrears} days in arrears.",
+        context_type=context_type,
+        context_id=loan.id,
+        recipients=recipients,
+    )
 
 
 @transaction.atomic
@@ -1326,8 +1698,6 @@ def link_verification_activity(requirement_id: str, activity_id: str, principal)
 
 @transaction.atomic
 def record_loan_use_result(requirement_id: str, data: dict, principal):
-    from .models import LoanUseFinding
-
     requirement = (
         LoanVerificationRequirement.objects.select_for_update()
         .filter(id=requirement_id)
@@ -1357,7 +1727,101 @@ def record_loan_use_result(requirement_id: str, data: dict, principal):
     )
     requirement.status = VerificationRequirementStatus.AWAITING_VERIFICATION
     requirement.save(update_fields=["status", "updated_at"])
+    _notify_loan_use_evidence(result)
+    if result.finding != LoanUseFinding.FULLY_APPROVED:
+        _notify_loan_use_concern(result)
     return serialize_loan_use_result(result)
+
+
+@transaction.atomic
+def review_loan_use_concern(result_id: str, data: dict, principal):
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_CASE_MANAGE,
+        "Only Business Transformation or the Country Director may review a loan-use concern.",
+    )
+    result = (
+        LoanUseResult.objects.select_for_update()
+        .select_related("requirement__loan")
+        .filter(id=result_id)
+        .first()
+    )
+    if result is None:
+        raise NotFoundError("Loan-use finding not found.")
+    if result.finding == LoanUseFinding.FULLY_APPROVED:
+        raise BadRequest("This finding is not a loan-use concern.")
+    note = str(data.get("note") or "").strip()
+    if not note:
+        raise BadRequest("A concern review note is required.")
+    if result.concern_reviewed_at:
+        return serialize_loan_use_result(result)
+    result.concern_reviewed_by = _actor_id(principal)
+    result.concern_reviewed_at = timezone.now()
+    result.concern_review_note = note
+    result.save(
+        update_fields=[
+            "concern_reviewed_by",
+            "concern_reviewed_at",
+            "concern_review_note",
+            "updated_at",
+        ]
+    )
+    _audit_loan_event(
+        "bt.loan.use_concern_reviewed",
+        result.requirement.loan,
+        principal,
+        {"result_id": result.id, "finding": result.finding, "note": note},
+    )
+    from apps.notifications.services import resolve_condition
+
+    resolve_condition("bt.loan.use_concern", "LoanUseResult", result.id)
+    return serialize_loan_use_result(result)
+
+
+def _notify_loan_use_evidence(result: LoanUseResult) -> None:
+    from apps.accounts.models import User
+    from apps.notifications.services import WorkflowNotificationService
+
+    loan = result.requirement.loan
+    recipients = User.objects.filter(
+        is_active=True, active_role=EdifyRole.IMPACT_ASSESSMENT.value
+    )
+    WorkflowNotificationService.trigger(
+        event_type="bt.loan.use_evidence_submitted",
+        category="business_transformation",
+        priority="high",
+        title="Loan-use evidence ready for IA review",
+        body=f"{loan.school.name} has a structured loan-use finding ready for assurance.",
+        context_type="LoanUseResult",
+        context_id=result.id,
+        recipients=recipients,
+    )
+
+
+def _notify_loan_use_concern(result: LoanUseResult) -> None:
+    from apps.accounts.models import User
+    from apps.notifications.services import WorkflowNotificationService
+
+    loan = result.requirement.loan
+    recipients = User.objects.filter(
+        is_active=True,
+        active_role__in=[
+            EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+            EdifyRole.COUNTRY_DIRECTOR.value,
+        ],
+    )
+    WorkflowNotificationService.trigger(
+        event_type="bt.loan.use_concern",
+        category="business_transformation",
+        priority=(
+            "urgent" if result.finding == LoanUseFinding.POSSIBLE_DIVERSION else "high"
+        ),
+        title="Loan-use concern requires review",
+        body=f"{loan.school.name} · {result.get_finding_display()}.",
+        context_type="LoanUseResult",
+        context_id=result.id,
+        recipients=recipients,
+    )
 
 
 @transaction.atomic
@@ -1391,6 +1855,9 @@ def project_activity_state(activity_id: str):
         )
         requirement.status = VerificationRequirementStatus.VERIFIED
         requirement.verified_at = result.ia_verified_at
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition("bt.loan.use_evidence_submitted", "LoanUseResult", result.id)
     elif activity.status in {"returned", "returned_by_ia", "returned_by_pl"}:
         if result:
             result.verification_status = "provisional"
@@ -1543,6 +2010,7 @@ def loan_export_rows(principal, filters: dict):
 
 def portfolio_metrics(principal, *, fy: str | None = None, filters=None) -> dict:
     from apps.schools.models import School
+    from .lending_ledger import loan_position, portfolio_ratios
 
     fy = fy or get_operational_fy()
     filters = filters or {}
@@ -1552,86 +2020,95 @@ def portfolio_metrics(principal, *, fy: str | None = None, filters=None) -> dict
         confirmed=Count("id", filter=Q(salesforce_status=SalesforceStatus.CONFIRMED)),
     )
     fy_start, fy_end = _selected_period_bounds(fy, filters)
-    disbursed = loans.filter(
-        disbursement_confirmed_at__isnull=False,
-        disbursement_date__gte=fy_start.date(),
-        disbursement_date__lt=fy_end.date(),
+    disbursement_postings = LoanDisbursement.objects.filter(
+        loan__in=loans,
+        reversal__isnull=True,
+        value_date__gte=fy_start.date(),
+        value_date__lt=fy_end.date(),
     )
-    headline = disbursed.aggregate(
-        count=Count("id"),
-        value=Sum("disbursed_amount"),
-        schools=Count("school_id", distinct=True),
-        edtech=Count("id", filter=Q(purpose__is_edtech=True)),
+    disbursed_loan_ids = disbursement_postings.order_by().values("loan_id")
+    disbursed = loans.filter(id__in=disbursed_loan_ids)
+    headline = disbursement_postings.aggregate(
+        count=Count("loan_id", distinct=True),
+        value=Sum("amount"),
+        schools=Count("loan__school_id", distinct=True),
+        edtech=Count("loan_id", filter=Q(loan__purpose__is_edtech=True), distinct=True),
     )
+    latest_verified_enrolment = EnrolmentSnapshot.objects.filter(
+        loan__school_id=OuterRef("pk"),
+        loan__in=disbursed,
+        # Portfolio reach is the verified enrolment baseline closest to the
+        # financing event. Follow-up snapshots are trend/outcome evidence and
+        # must not silently replace the cohort reach measure.
+        kind=EnrolmentSnapshotKind.BASELINE,
+        status=ImpactEvidenceStatus.VERIFIED,
+    ).order_by("-as_of_date", "-created_at")
     impacted_schools = School.objects.filter(
         id__in=disbursed.order_by().values("school_id")
+    ).annotate(
+        verified_learner_count=Subquery(
+            latest_verified_enrolment.values("learner_count")[:1]
+        )
     )
     impact = impacted_schools.aggregate(
-        students=Sum("enrollment", filter=Q(enrollment__gt=0)),
-        schools_with_enrollment=Count("id", filter=Q(enrollment__gt=0)),
+        students=Sum(
+            "verified_learner_count", filter=Q(verified_learner_count__isnull=False)
+        ),
+        schools_with_enrollment=Count(
+            "id", filter=Q(verified_learner_count__isnull=False)
+        ),
         schools_missing_enrollment=Count(
-            "id", filter=Q(enrollment__isnull=True) | Q(enrollment__lte=0)
+            "id", filter=Q(verified_learner_count__isnull=True)
         ),
     )
     due = LoanVerificationRequirement.objects.filter(
         loan__in=loans, due_date__lte=timezone.localdate()
     )
     verified = due.filter(status=VerificationRequirementStatus.VERIFIED).count()
-    latest_status = (
-        RepaymentSnapshot.objects.filter(loan_id=OuterRef("pk"))
-        .order_by("-as_of_date", "-created_at")
-        .values("status")[:1]
+    ledger_loans = list(
+        loans.filter(disbursements__isnull=False).distinct().select_related("purpose")
     )
-    latest_outstanding = (
-        RepaymentSnapshot.objects.filter(loan_id=OuterRef("pk"))
-        .order_by("-as_of_date", "-created_at")
-        .values("outstanding_amount")[:1]
+    ratios = portfolio_ratios(
+        ledger_loans,
+        period_start=fy_start.date(),
+        period_end=(fy_end - timedelta(days=1)).date(),
+        as_of=min(timezone.localdate(), (fy_end - timedelta(days=1)).date()),
     )
-    latest_overdue = (
-        RepaymentSnapshot.objects.filter(loan_id=OuterRef("pk"))
-        .order_by("-as_of_date", "-created_at")
-        .values("amount_overdue")[:1]
+    positions = {
+        loan.id: loan_position(
+            loan, as_of=min(timezone.localdate(), (fy_end - timedelta(days=1)).date())
+        )
+        for loan in ledger_loans
+    }
+    par30 = sum(1 for value in positions.values() if value["daysPastDue"] > 30)
+    defaulted_portfolio = sum(
+        (
+            positions[loan.id]["outstandingPrincipal"]
+            for loan in ledger_loans
+            if loan.status == LoanStatus.DEFAULTED
+        ),
+        Decimal("0"),
     )
-    positioned = loans.annotate(
-        latest_repayment_status=Subquery(latest_status),
-        latest_outstanding_amount=Subquery(latest_outstanding),
-        latest_overdue_amount=Subquery(latest_overdue),
-    )
-    par30 = positioned.filter(
-        latest_repayment_status__in=[
-            RepaymentStatus.OVERDUE_31_90,
-            RepaymentStatus.OVERDUE_90_PLUS,
-        ]
+    unledgered_financial_records = loans.filter(
+        Q(disbursed_amount__isnull=False) | Q(disbursement_confirmed_at__isnull=False),
+        disbursements__isnull=True,
     ).count()
-    position = positioned.aggregate(
-        active_portfolio=Sum(
-            "latest_outstanding_amount",
-            filter=Q(status__in=[LoanStatus.DISBURSED, LoanStatus.ACTIVE]),
-        ),
-        amount_overdue=Sum("latest_overdue_amount"),
-        defaulted_portfolio=Sum(
-            "latest_outstanding_amount", filter=Q(status=LoanStatus.DEFAULTED)
-        ),
-    )
-    period_repaid = RepaymentSnapshot.objects.filter(
+    verified_impact = LoanImpactAssessment.objects.filter(
         loan__in=loans,
-        as_of_date__gte=fy_start.date(),
-        as_of_date__lt=fy_end.date(),
-    ).aggregate(value=Sum("amount_paid_during_period"))["value"] or Decimal("0")
-    positive_impact = loans.filter(
-        impact_status__in=[
-            LoanImpactStatus.STRONG_POSITIVE,
-            LoanImpactStatus.POSITIVE,
-        ]
-    ).count()
-    assessed_impact = loans.exclude(
-        impact_status__in=[
-            LoanImpactStatus.NOT_DUE,
-            LoanImpactStatus.BASELINE_REQUIRED,
-            LoanImpactStatus.DUE,
-            LoanImpactStatus.UNDER_REVIEW,
-        ]
-    ).count()
+        ia_status=IAValidationStatus.VERIFIED,
+    )
+    positive_impact = (
+        verified_impact.filter(
+            classification__in=[
+                LoanImpactStatus.STRONG_POSITIVE,
+                LoanImpactStatus.POSITIVE,
+            ]
+        )
+        .values("loan_id")
+        .distinct()
+        .count()
+    )
+    assessed_impact = verified_impact.values("loan_id").distinct().count()
     total = headline["count"] or 0
     edtech = headline["edtech"] or 0
     role = getattr(principal, "active_role", "")
@@ -1669,13 +2146,16 @@ def portfolio_metrics(principal, *, fy: str | None = None, filters=None) -> dict
             submitted_at__gte=fy_start, submitted_at__lt=fy_end
         ).count(),
         "valueDisbursed": headline["value"] or Decimal("0"),
-        "activePortfolioValue": position["active_portfolio"] or Decimal("0"),
-        "repaidAmount": period_repaid,
-        "amountOverdue": position["amount_overdue"] or Decimal("0"),
-        "defaultedPortfolio": position["defaulted_portfolio"] or Decimal("0"),
+        "activePortfolioValue": ratios["totalOutstandingPrincipal"],
+        "repaidAmount": ratios["amountCollected"],
+        "amountOverdue": sum(
+            (value["amountOverdue"] for value in positions.values()), Decimal("0")
+        ),
+        "defaultedPortfolio": defaulted_portfolio,
         "schoolsFinanced": schools_impacted,
         "schoolsImpacted": schools_impacted,
         "studentsReached": students_reached,
+        "verifiedLearnersObserved": students_reached,
         "schoolsWithEnrollment": schools_with_enrollment,
         "schoolsMissingEnrollment": impact["schools_missing_enrollment"] or 0,
         "enrollmentCoveragePct": (
@@ -1691,6 +2171,15 @@ def portfolio_metrics(principal, *, fy: str | None = None, filters=None) -> dict
         if due.exists()
         else None,
         "portfolioAtRisk30Count": par30,
+        "portfolioAtRisk30Pct": ratios["par30Pct"],
+        "portfolioAtRisk90Pct": ratios["par90Pct"],
+        "portfolioAtRisk30Principal": ratios["par30Principal"],
+        "portfolioOutstandingPrincipal": ratios["totalOutstandingPrincipal"],
+        "amountDueDuringPeriod": ratios["amountDue"],
+        "amountCollectedDuringPeriod": ratios["amountCollected"],
+        "collectionRatePct": ratios["collectionRatePct"],
+        "onTimeRepaymentRatePct": ratios["onTimeRatePct"],
+        "unledgeredFinancialRecords": unledgered_financial_records,
         "positiveImpactCount": positive_impact,
         "impactAssessedCount": assessed_impact,
         "positiveImpactPct": (
@@ -1710,7 +2199,9 @@ def portfolio_metrics(principal, *, fy: str | None = None, filters=None) -> dict
     }
 
 
-def _portfolio_kpi_items(metrics: dict, fy: str) -> list[dict]:
+def _portfolio_kpi_items(
+    metrics: dict, fy: str, *, operational: bool = False
+) -> list[dict]:
     """Project governed portfolio metrics into the shared KPI-strip contract.
 
     Every tile binds a registry metric (apps.core.metrics) so the label,
@@ -1722,16 +2213,10 @@ def _portfolio_kpi_items(metrics: dict, fy: str) -> list[dict]:
     measured = MetricValue.measured
     tiles = [
         (
-            render_metric("bt_new_loans", measured(metrics["newLoans"])),
-            f"Submitted in selected FY {fy} period",
-            "currency",
-            "primary",
-        ),
-        (
             render_metric(
                 "bt_value_disbursed", measured(float(metrics["valueDisbursed"]))
             ),
-            "MFI-confirmed UGX",
+            f"Net confirmed in FY {fy}",
             "currency",
             "info",
         ),
@@ -1746,41 +2231,33 @@ def _portfolio_kpi_items(metrics: dict, fy: str) -> list[dict]:
                 "bt_active_portfolio",
                 measured(float(metrics["activePortfolioValue"])),
             ),
-            "Latest MFI-reported outstanding",
+            "Ledger-derived outstanding principal",
             "chart",
             "info",
         ),
         (
-            render_metric("bt_repaid_amount", measured(float(metrics["repaidAmount"]))),
-            "Paid in selected period",
-            "currency",
-            "success",
-        ),
-        (
             render_metric(
-                "bt_amount_overdue", measured(float(metrics["amountOverdue"]))
+                "bt_par30",
+                MetricValue.ratio(
+                    float(metrics["portfolioAtRisk30Principal"]),
+                    float(metrics["portfolioOutstandingPrincipal"]),
+                ),
             ),
-            "Latest portfolio position",
+            "Outstanding principal over 30 days past due",
             "warning",
-            "danger" if metrics["amountOverdue"] else "neutral",
+            "danger" if metrics["portfolioAtRisk30Pct"] else "neutral",
         ),
         (
             render_metric(
-                "bt_defaulted_portfolio",
-                measured(float(metrics["defaultedPortfolio"])),
+                "bt_collection_rate",
+                MetricValue.ratio(
+                    float(metrics["amountCollectedDuringPeriod"]),
+                    float(metrics["amountDueDuringPeriod"]),
+                ),
             ),
-            "Outstanding on defaulted loans",
-            "warning",
-            "danger" if metrics["defaultedPortfolio"] else "neutral",
-        ),
-        (
-            render_metric(
-                "bt_edtech_share",
-                MetricValue.ratio(metrics["edtechLoans"], metrics["loansDisbursed"]),
-            ),
-            f"{metrics['edtechLoans']} disbursements",
+            "Collected against scheduled amount due",
             "chart",
-            "info" if metrics["edtechPct"] is not None else "neutral",
+            "success" if metrics["collectionRatePct"] is not None else "neutral",
         ),
         (
             render_metric(
@@ -1793,29 +2270,14 @@ def _portfolio_kpi_items(metrics: dict, fy: str) -> list[dict]:
             "shield",
             "success" if metrics["verificationPct"] is not None else "neutral",
         ),
-        (
-            render_metric(
-                "bt_salesforce_backlog", measured(metrics["salesforcePending"])
-            ),
-            f"{metrics['salesforceConfirmed']} confirmed",
-            "warning",
-            "warning" if metrics["salesforcePending"] else "success",
-        ),
-        (
-            render_metric(
-                "bt_positive_impact",
-                MetricValue.ratio(
-                    metrics["positiveImpactCount"], metrics["impactAssessedCount"]
-                ),
-            ),
-            f"{metrics['positiveImpactCount']} of "
-            f"{metrics['impactAssessedCount']} assessed",
-            "chart",
-            "success" if metrics["positiveImpactPct"] is not None else "neutral",
-        ),
     ]
-    items = render_strip([tile for tile, _helper, _icon, _variant in tiles])
-    for item, (_tile, helper, icon, variant) in zip(items, tiles):
+    # The lending audit deliberately sets a tighter hierarchy than the
+    # platform-wide six-card ceiling: dashboards may lead with four measures,
+    # while the operational register gets only the two financial position
+    # facts needed before the action queue and table.
+    selected_tiles = [tiles[0], tiles[2]] if operational else tiles[:4]
+    items = render_strip([tile for tile, _helper, _icon, _variant in selected_tiles])
+    for item, (_tile, helper, icon, variant) in zip(items, selected_tiles):
         item["helper"] = helper
         item["icon"] = icon
         item["variant"] = variant
@@ -2435,7 +2897,7 @@ def mfi_portal_context(principal, section: str, filters: dict) -> dict:
 
 
 def loan_register_context(principal, filters: dict) -> dict:
-    """Universal Uganda loan register with an explicit read/write projection."""
+    """Governed record-level loan register for authorized operational roles."""
 
     from apps.geography.models import District, Region
     from apps.schools.models import School
@@ -2475,7 +2937,7 @@ def loan_register_context(principal, filters: dict) -> dict:
         "fy": fy,
         "filters": filters,
         "metrics": metrics,
-        "kpi_strip_items": _portfolio_kpi_items(metrics, fy),
+        "kpi_strip_items": _portfolio_kpi_items(metrics, fy, operational=True),
         "loans": loan_rows,
         "lending_partners": lending_partner_dashboard(principal, filters),
         "salesforce_pending_loans": (
@@ -2542,9 +3004,18 @@ def school_profile_context(principal, school) -> dict:
         .order_by("-as_of_date", "-created_at")
         .values("outstanding_amount")[:1]
     )
+    if sensitive:
+        visible_loans = scoped_loans(principal)
+    else:
+        from .lending_impact import scoped_impact_loans
+
+        visible_loans = (
+            scoped_impact_loans(principal)
+            .filter(disbursements__reversal__isnull=True)
+            .distinct()
+        )
     loans = list(
-        scoped_loans(principal)
-        .filter(school=school)
+        visible_loans.filter(school=school)
         .annotate(
             latest_repayment_status=Subquery(latest_repayment_status),
             latest_outstanding_amount=Subquery(latest_outstanding),
@@ -2598,6 +3069,10 @@ def school_profile_context(principal, school) -> dict:
         .select_related("ssa_record")
         .order_by("-ssa_record__date_of_ssa")[:12]
     )
+    for score_row in score_rows:
+        score_row.band_label, _, score_row.band_tone = ssa_score_band(
+            float(score_row.score)
+        )
     financial_practices = list(
         FinancialPracticeAssessment.objects.filter(case__school=school).order_by(
             "-assessed_on"
@@ -2741,4 +3216,10 @@ def serialize_loan_use_result(result: LoanUseResult) -> dict:
         "requirementId": result.requirement_id,
         "finding": result.finding,
         "verificationStatus": result.verification_status,
+        "concernReviewedAt": (
+            result.concern_reviewed_at.isoformat()
+            if result.concern_reviewed_at
+            else None
+        ),
+        "concernReviewNote": result.concern_review_note,
     }

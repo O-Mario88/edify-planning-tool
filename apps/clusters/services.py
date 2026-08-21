@@ -8,6 +8,8 @@ active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from apps.core.activity_types import (
     COMPLETED_WORK_STATUSES,
     TRAINING_TYPES,
@@ -813,6 +815,8 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 "topStrugglingInterventions": struggling,
                 "lastVisitDate": last_visit_date,
                 "lastTrainingDate": last_training_date,
+                "hasCompletedVisit": bool(visit_dates),
+                "hasCompletedTraining": bool(training_dates),
                 "planningStatus": s.planning_readiness,
                 "planningStatusLabel": s.get_planning_readiness_display(),
                 "ssaStatus": s.current_fy_ssa_status,
@@ -1669,70 +1673,70 @@ class ClusterDashboardService:
         }
 
         kpi_strip_items = [
-            {
-                "label": "Total Clusters",
-                "value": str(total_clusters),
-                "raw_value": total_clusters,
-                "helper": "Active",
-                "icon": "school",
-                "variant": "primary",
-            },
-            {
-                "label": "Schools in Clusters",
-                "value": f"{schools_in_clusters:,}",
-                "raw_value": schools_in_clusters,
-                "helper": f"Across {total_clusters} clusters",
-                "icon": "school",
-                "variant": "success",
-            },
-            {
-                "label": "Without Current SSA",
-                "value": str(without_ssa),
-                "raw_value": without_ssa,
-                "helper": f"{round(without_ssa * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
-                "icon": "warning",
-                "variant": "danger",
-            },
-            {
-                "label": "Needing Group Training",
-                "value": str(needing_training),
-                "raw_value": needing_training,
-                "helper": f"{round(needing_training * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
-                "icon": "target",
-                "variant": "warning",
-            },
-            {
-                "label": "Not Met This Quarter",
-                "value": str(not_met_this_quarter),
-                "raw_value": not_met_this_quarter,
-                "helper": f"{round(not_met_this_quarter * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
-                "icon": "calendar",
-                "variant": "warning",
-            },
-            {
-                "label": "Average Cluster SSA",
-                "value": f"{avg_cluster_ssa:.1f}",
-                "raw_value": avg_cluster_ssa,
-                "helper": "Out of 10.0",
-                "icon": "chart",
-                "variant": "blue",
-            },
-            {
-                "label": "Weakest Intervention",
-                "value": weakest_name,
-                "raw_value": 0,
-                "helper": f"Avg {weakest_avg:.1f}",
-                "icon": "warning",
-                "variant": "danger",
-            },
-            {
-                "label": "Pending Activities",
-                "value": str(pending_activities),
-                "raw_value": pending_activities,
-                "helper": "This quarter",
-                "icon": "check",
-                "variant": "info",
-            },
+            render_precomputed_metric_item(
+                "clusters_services_total_clusters",
+                str(total_clusters),
+                raw_value=total_clusters,
+                helper="Active",
+                icon="school",
+                variant="primary",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_schools_in_clusters",
+                f"{schools_in_clusters:,}",
+                raw_value=schools_in_clusters,
+                helper=f"Across {total_clusters} clusters",
+                icon="school",
+                variant="success",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_without_current_ssa",
+                str(without_ssa),
+                raw_value=without_ssa,
+                helper=f"{round(without_ssa * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                icon="warning",
+                variant="danger",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_needing_group_training",
+                str(needing_training),
+                raw_value=needing_training,
+                helper=f"{round(needing_training * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                icon="target",
+                variant="warning",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_not_met_this_quarter",
+                str(not_met_this_quarter),
+                raw_value=not_met_this_quarter,
+                helper=f"{round(not_met_this_quarter * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                icon="calendar",
+                variant="warning",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_average_cluster_ssa",
+                f"{avg_cluster_ssa:.1f}",
+                raw_value=avg_cluster_ssa,
+                helper="Out of 10.0",
+                icon="chart",
+                variant="blue",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_weakest_intervention",
+                weakest_name,
+                raw_value=0,
+                helper=f"Avg {weakest_avg:.1f}",
+                icon="warning",
+                variant="danger",
+            ),
+            render_precomputed_metric_item(
+                "clusters_services_pending_activities",
+                str(pending_activities),
+                raw_value=pending_activities,
+                helper="This quarter",
+                icon="check",
+                variant="info",
+            ),
         ]
 
         critical_count = sum(1 for c in cards if c["risk"] == "critical")

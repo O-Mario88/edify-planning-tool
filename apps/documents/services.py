@@ -9,8 +9,9 @@ The rules that shape this module:
   acknowledgement always points at exactly the bytes the person agreed to.
 * **An empty audience means nobody.** A document with no audience rule reaches
   no one; it is a System Health defect, never an accidental broadcast.
-* **Engagement is engagement.** Reading time is recorded and shown, and is
-  never described as proof that anyone read or understood anything.
+* **Reading completion is duration-based evidence.** Active time is recorded
+  and compared with the uploader's requirement. It is never described as
+  proof that anyone understood the material.
 """
 
 from __future__ import annotations
@@ -212,6 +213,20 @@ class DocumentService:
                 "Help Center and on the agreement page."
             )
 
+        try:
+            required_reading_minutes = int(data.get("required_reading_minutes") or 0)
+        except (TypeError, ValueError):
+            raise BadRequest("Required active reading time must be whole minutes.")
+        if required_reading_minutes < 0:
+            raise BadRequest("Required active reading time cannot be negative.")
+        is_mandatory = bool(
+            data.get("acknowledgement_required") or data.get("agreement_required")
+        )
+        if is_mandatory and required_reading_minutes <= 0:
+            raise BadRequest(
+                "Set the required active reading time for this policy or manual."
+            )
+
         base_slug = slugify(title)[:200] or "document"
         slug, suffix = base_slug, 1
         while DocumentAsset.objects.filter(slug=slug).exists():
@@ -239,6 +254,7 @@ class DocumentService:
                 data.get("require_reacknowledgement_on_new_version", True)
             ),
             acknowledgement_due_days=data.get("acknowledgement_due_days") or None,
+            required_reading_minutes=required_reading_minutes,
             download_allowed=bool(data.get("download_allowed", True)),
             print_allowed=bool(data.get("print_allowed", True)),
             help_visible=bool(data.get("help_visible", True)),
@@ -375,6 +391,15 @@ class DocumentService:
         document = version.document
         if version.published_at is not None:
             raise BadRequest("A published version cannot be reviewed again.")
+        # HR holds create, review AND publish, and nothing compared the
+        # reviewer to the uploader — so one person could author, approve and
+        # publish a policy that withholds the whole application from every
+        # employee, with no second pair of eyes. The platform already refuses
+        # self-approval for leave; policy is not a lesser control.
+        if version.uploaded_by and version.uploaded_by == _user_id(principal):
+            raise BadRequest(
+                "You uploaded this version, so someone else must review it."
+            )
         if document.status not in (
             DocumentStatus.UNDER_REVIEW,
             DocumentStatus.PUBLISHED,
@@ -505,6 +530,8 @@ def _assert_publishable(document: DocumentAsset, version: DocumentVersion) -> No
             missing.append("agreement wording")
         if not document.acknowledgement_reason.strip():
             missing.append("reason acknowledgement is required")
+        if document.required_reading_minutes <= 0:
+            missing.append("required active reading time")
     if missing:
         raise BadRequest("Cannot publish — still missing: " + ", ".join(missing))
 
@@ -546,12 +573,20 @@ class AcknowledgementService:
 
         Publication creates acknowledgements for the users who exist at that
         moment. This lazy reconciliation closes the future-user gap: on first
-        authenticated access, any current blocking document whose audience
+        authenticated access, any current mandatory document whose audience
         matches the user receives a version-specific pending record.
 
         A person with any acknowledgement for a document is not synthesized a
         second one here. Material new versions are handled by ``publish``;
         non-material versions intentionally carry the earlier response.
+
+        This used to reconcile only documents that WITHHOLD the application.
+        A mandatory-but-non-blocking policy — a code of conduct, a finance
+        procedure — was therefore never assigned to anyone hired after it was
+        published, and those people never appeared as non-compliant because
+        no record of the obligation existed to be overdue (2026-08-20 HR
+        audit). Whether a policy blocks the app decides how hard it is
+        enforced, never whether the obligation exists.
         """
         if not getattr(user, "is_authenticated", False):
             return 0
@@ -564,7 +599,6 @@ class AcknowledgementService:
             DocumentAsset.objects.filter(
                 status__in=READABLE_STATUSES,
                 acknowledgement_required=True,
-                blocks_application_access=True,
                 current_version__isnull=False,
             )
             .select_related("current_version")
@@ -819,7 +853,10 @@ class EngagementService:
 
     @staticmethod
     def heartbeat(
-        principal, version_id: str, page: int | None = None
+        principal,
+        version_id: str,
+        page: int | None = None,
+        active_delta_seconds: int | None = None,
     ) -> DocumentEngagementSession:
         user_id = _user_id(principal) or getattr(principal, "id", "")
         now = timezone.now()
@@ -849,10 +886,22 @@ class EngagementService:
                 pages_viewed=[page] if page else [],
                 last_page=page,
             )
+            EngagementService._roll_up_acknowledgement(version, user_id)
             return session
 
         elapsed = int((now - session.last_heartbeat_at).total_seconds())
-        session.active_seconds += max(0, min(elapsed, ENGAGEMENT_IDLE_SECONDS))
+        if active_delta_seconds is None:
+            # Backwards-compatible service callers still receive the original
+            # elapsed-time behaviour. Browser viewers always send an explicit
+            # foreground/focus/idle-aware delta.
+            credited = max(0, min(elapsed, ENGAGEMENT_IDLE_SECONDS))
+        else:
+            # A browser number is evidence, not authority. Never credit more
+            # than one heartbeat interval (plus network tolerance), nor more
+            # than wall-clock time since the prior accepted heartbeat.
+            claimed = max(0, int(active_delta_seconds))
+            credited = min(claimed, 20, max(0, elapsed + 2))
+        session.active_seconds += credited
         session.last_heartbeat_at = now
         if page:
             session.last_page = max(page, session.last_page or 0)
@@ -867,7 +916,16 @@ class EngagementService:
                 "updated_at",
             ]
         )
+        EngagementService._roll_up_acknowledgement(version, user_id)
         return session
+
+    @staticmethod
+    def _roll_up_acknowledgement(version: DocumentVersion, user_id: str) -> None:
+        acknowledgement = DocumentAcknowledgement.objects.filter(
+            version=version, user_id=user_id
+        ).first()
+        if acknowledgement:
+            AcknowledgementService._roll_up_engagement(acknowledgement)
 
 
 # ── Comments ─────────────────────────────────────────────────────────────────

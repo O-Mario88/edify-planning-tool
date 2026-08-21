@@ -220,6 +220,16 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
         original_name=original_name, mime_type=mime_type, head=head, size=size
     )
 
+    # The two governed forms are PDFs by rule (owner, 2026-08-19): a visit
+    # form or attendance form arriving as a photo cannot be filled, checked
+    # or archived as the document it claims to be.
+    if kind in ("visit_form", "attendance_form") and ext.lower() != ".pdf":
+        kind_label = "Visit Form" if kind == "visit_form" else "Training Attendance"
+        raise BadRequest(
+            f"The {kind_label} must be uploaded as a PDF file — photos and "
+            "other formats are not accepted for governed forms."
+        )
+
     # Persist through the private storage backend under a unique filename.
     stored_name = f"{uuid.uuid4().hex}{ext}"
     save_file(EVIDENCE_NAMESPACE, stored_name, file_obj)

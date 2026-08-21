@@ -59,7 +59,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 <div class="font-semibold text-slate-800">{{ item.activity.responsible_staff_id|default:"Unassigned" }}</div>
 </td>
 <!-- Days Blocked -->
-<td class="px-6 py-4 text-center text-slate-500 font-medium" data-label="Days Blocked">
+<td class="px-6 py-4 text-center edify-danger-text font-medium" data-label="Days Blocked">
 {{ item.created_at|timesince }}
 </td>
 <!-- Next Action -->

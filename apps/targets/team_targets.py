@@ -13,6 +13,8 @@ Partner Contribution and never duplicated into CCEO personal credit.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from datetime import date, timedelta
 
 from django.utils import timezone
@@ -634,15 +636,15 @@ class PLTeamTargetsService:
                 "delta_unit": f"of {len(members)} staff",
                 "drill": "staff",
             },
-            {
-                "key": "high_risk",
-                "label": "High-Risk Staff",
-                "value": len(high_risk),
-                "delta": None,
-                "delta_unit": "high risk or critical",
-                "drill": "high_risk",
-                "tone": "danger" if high_risk else "success",
-            },
+            render_precomputed_metric_item(
+                "targets_team_targets_high_risk_staff",
+                len(high_risk),
+                key="high_risk",
+                delta=None,
+                delta_unit="high risk or critical",
+                drill="high_risk",
+                tone="danger" if high_risk else "success",
+            ),
             {
                 "key": "core",
                 "label": "Core Schools On Track",
@@ -653,15 +655,15 @@ class PLTeamTargetsService:
                 else "no core plans",
                 "drill": "core",
             },
-            {
-                "key": "sfid",
-                "label": "Activity SF ID Compliance",
-                "value": f"{sf_compliance}%",
-                "delta": None,
-                "delta_unit": f"{sf_missing_count} missing",
-                "drill": "sfid",
-                "tone": "danger" if sf_compliance < 90 else "success",
-            },
+            render_precomputed_metric_item(
+                "targets_team_targets_activity_sf_id_compliance",
+                f"{sf_compliance}%",
+                key="sfid",
+                delta=None,
+                delta_unit=f"{sf_missing_count} missing",
+                drill="sfid",
+                tone="danger" if sf_compliance < 90 else "success",
+            ),
         ]
 
         # ── What Needs Attention ─────────────────────────────────────────────
@@ -930,32 +932,28 @@ class PLTeamTargetsService:
         # `drawer` is carried explicitly so the template does not have to infer
         # how a tile opens by sniffing its URL for a substring.
         validation_issues = [
-            {
-                "label": "Awaiting IA",
-                "value": awaiting_ia_count,
-                "tone": "warning",
-                "drawer": True,
-                "href": (
-                    "/team-targets/validation-backlog"
-                    f"?status=awaiting_ia_verification&fy={fy}"
-                ),
-            },
-            {
-                "label": "Missing SF IDs",
-                "value": sf_missing_count,
-                "tone": "danger",
-                "drawer": True,
-                "href": f"/team-targets/sfid-backlog?fy={fy}",
-            },
-            {
-                "label": "Returned by IA",
-                "value": returned_count,
-                "tone": "info",
-                "drawer": True,
-                "href": (
-                    f"/team-targets/validation-backlog?status=returned_by_ia&fy={fy}"
-                ),
-            },
+            render_precomputed_metric_item(
+                "targets_team_targets_awaiting_ia",
+                awaiting_ia_count,
+                tone="warning",
+                drawer=True,
+                href="/team-targets/validation-backlog"
+                f"?status=awaiting_ia_verification&fy={fy}",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_missing_sf_ids",
+                sf_missing_count,
+                tone="danger",
+                drawer=True,
+                href=f"/team-targets/sfid-backlog?fy={fy}",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_returned_by_ia",
+                returned_count,
+                tone="info",
+                drawer=True,
+                href=f"/team-targets/validation-backlog?status=returned_by_ia&fy={fy}",
+            ),
         ]
 
         support_staff = []
@@ -1038,52 +1036,50 @@ class PLTeamTargetsService:
 
         on_track_rate = round(len(on_track) / len(members) * 100) if members else 0
         summary_kpis = [
-            {
-                "key": "achievement",
-                "label": "Team achievement",
-                "value": f"{team_w_pct}%",
-                "meta": (
-                    f"{team_w_pct - prev_w_pct:+d} pp vs last month"
-                    if prev_w_pct is not None
-                    else f"{team_m_a} of {team_m_t} weighted units"
-                ),
-                "tone": "primary",
-            },
-            {
-                "key": "on_track",
-                "label": "Monthly on track",
-                "value": f"{on_track_rate}%",
-                "meta": f"{len(on_track)} of {len(members)} team members",
-                "tone": "success",
-            },
-            {
-                "key": "risk",
-                "label": "At-risk staff",
-                "value": len(high_risk),
-                "meta": "High risk or critical",
-                "tone": "danger" if high_risk else "success",
-            },
-            {
-                "key": "quarter",
-                "label": "Current quarter",
-                "value": f"{quarter_pct}%",
-                "meta": f"{cur_quarter} · {q_a} of {q_t} units",
-                "tone": "primary",
-            },
-            {
-                "key": "fy",
-                "label": "FY achievement",
-                "value": f"{fy_w_pct}%",
-                "meta": f"{fy_a} of {fy_t} weighted units",
-                "tone": "primary",
-            },
-            {
-                "key": "recovery",
-                "label": "Recovery plans",
-                "value": active_plan_count,
-                "meta": "Active intervention plans",
-                "tone": "warning" if active_plan_count else "success",
-            },
+            render_precomputed_metric_item(
+                "targets_team_targets_team_achievement",
+                f"{team_w_pct}%",
+                key="achievement",
+                meta=f"{team_w_pct - prev_w_pct:+d} pp vs last month"
+                if prev_w_pct is not None
+                else f"{team_m_a} of {team_m_t} weighted units",
+                tone="primary",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_monthly_on_track",
+                f"{on_track_rate}%",
+                key="on_track",
+                meta=f"{len(on_track)} of {len(members)} team members",
+                tone="success",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_at_risk_staff",
+                len(high_risk),
+                key="risk",
+                meta="High risk or critical",
+                tone="danger" if high_risk else "success",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_current_quarter",
+                f"{quarter_pct}%",
+                key="quarter",
+                meta=f"{cur_quarter} · {q_a} of {q_t} units",
+                tone="primary",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_fy_achievement",
+                f"{fy_w_pct}%",
+                key="fy",
+                meta=f"{fy_a} of {fy_t} weighted units",
+                tone="primary",
+            ),
+            render_precomputed_metric_item(
+                "targets_team_targets_recovery_plans",
+                active_plan_count,
+                key="recovery",
+                meta="Active intervention plans",
+                tone="warning" if active_plan_count else "success",
+            ),
         ]
 
         # ── Field Debrief intelligence (mandate §11) ─────────────────────────

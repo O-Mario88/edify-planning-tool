@@ -27,11 +27,25 @@ class Disbursement(TimeStampedModel):
 
 
 class PartnerPayment(TimeStampedModel):
+    # The partner MOU pays in two instalments: 50% of the planned activity
+    # cost up front, and the balance cleared once the partner finishes the
+    # work and IA verifies it. Historical single payments predate the MOU
+    # split and are clearances (they were terminal).
+    TYPE_ADVANCE = "advance"
+    TYPE_CLEARANCE = "clearance"
+    PAYMENT_TYPE_CHOICES = [
+        (TYPE_ADVANCE, "50% MOU Advance"),
+        (TYPE_CLEARANCE, "Clearance"),
+    ]
+
     id = CuidField()
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE, related_name="partner_payments"
     )
     partner_name = models.CharField(max_length=255)
+    payment_type = models.CharField(
+        max_length=16, choices=PAYMENT_TYPE_CHOICES, default=TYPE_CLEARANCE
+    )
     amount_paid = (
         models.BigIntegerField()
     )  # UGX (plain shillings, not cents -- see apps/budget/models.py CostSetting)
@@ -44,11 +58,12 @@ class PartnerPayment(TimeStampedModel):
     class Meta:
         db_table = "partner_payment"
         constraints = [
-            # One payout per activity — the concurrency backstop for the
-            # pay_partner idempotency guard. A duplicate row here is a
-            # double-counted partner payment.
+            # One payout per activity AND instalment — the concurrency
+            # backstop for the pay_partner idempotency guard. A duplicate row
+            # here is a double-counted partner payment.
             models.UniqueConstraint(
-                fields=["activity"], name="uniq_partner_payment_per_activity"
+                fields=["activity", "payment_type"],
+                name="uniq_partner_payment_per_activity_type",
             ),
         ]
 
@@ -222,3 +237,126 @@ class FinanceAuditLog(TimeStampedModel):
 
     class Meta:
         db_table = "finance_audit_log"
+
+
+class TransportPayment(TimeStampedModel):
+    """§9.1 — the transport company's payment obligation for one mission day.
+
+    Transport is never part of the staff advance: one vendor payment per
+    day-batch, never combined with the CCEO's allowance transfer. The CCEO
+    sees only arrangement/confirmation status — no amount.
+    """
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("failed", "Failed"),
+    ]
+
+    id = CuidField()
+    batch = models.OneToOneField(
+        "daily_visit_batches.DailyVisitBatch",
+        on_delete=models.CASCADE,
+        related_name="transport_payment",
+    )
+    provider_name = models.CharField(max_length=255)
+    amount = models.BigIntegerField()  # UGX — the day's transport component
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="pending")
+    payment_method = models.CharField(max_length=64, blank=True, default="")
+    payment_reference = models.CharField(max_length=128, blank=True, default="")
+    netsuite_expense_id = models.CharField(max_length=128, blank=True, default="")
+    paid_by = models.CharField(max_length=30, null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "transport_payment"
+
+
+class PartnerInvoice(TimeStampedModel):
+    """A partner's PERIOD invoice — one invoice sums all their planned
+    activity costs for a week, month or quarter, grouped by category
+    (School Visits, Training facilitation). The entered amount must equal
+    the system-fetched period total — that equality links the invoice to
+    the plan. Routing: the partner submits to their Program Lead, the PL
+    confirms the invoice against the plan, and only then does the
+    accountant download and pay the instalment (50% first; the balance
+    once IA has cleared the work).
+    """
+
+    TYPE_ADVANCE = "advance"
+    TYPE_CLEARANCE = "clearance"
+    TYPE_CHOICES = [
+        (TYPE_ADVANCE, "50% Advance Invoice"),
+        (TYPE_CLEARANCE, "Clearance Invoice"),
+    ]
+    STATUS_CHOICES = [
+        ("submitted_to_pl", "With Program Lead"),
+        ("confirmed_by_pl", "PL-confirmed — awaiting payment"),
+        ("returned_by_pl", "Returned by Program Lead"),
+        ("paid", "Paid"),
+    ]
+    PERIOD_CHOICES = [
+        ("week", "Week"),
+        ("month", "Month"),
+        ("quarter", "Quarter"),
+    ]
+
+    id = CuidField()
+    partner_id = models.CharField(max_length=30, db_index=True)
+    invoice_type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    period_kind = models.CharField(max_length=12, choices=PERIOD_CHOICES)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    # The system-fetched planned total for the invoiced work.
+    system_total = models.BigIntegerField()
+    entered_total = models.BigIntegerField()  # must equal system_total
+    payable_amount = models.BigIntegerField()  # 50% or the balance
+    stored_name = models.CharField(max_length=255)
+    original_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=128, blank=True, default="")
+    file_size = models.BigIntegerField(default=0)
+    status = models.CharField(
+        max_length=24, choices=STATUS_CHOICES, default="submitted_to_pl"
+    )
+    submitted_by = models.CharField(max_length=30)
+    pl_confirmed_by = models.CharField(max_length=30, null=True, blank=True)
+    pl_confirmed_at = models.DateTimeField(null=True, blank=True)
+    pl_note = models.CharField(max_length=512, blank=True, default="")
+
+    class Meta:
+        db_table = "partner_invoice"
+
+
+class PartnerInvoiceItem(TimeStampedModel):
+    """One activity's share of a period invoice. The per-activity instalment
+    uniqueness lives here: an activity's advance (or clearance) can appear on
+    exactly one invoice, whatever period that invoice covers."""
+
+    id = CuidField()
+    invoice = models.ForeignKey(
+        PartnerInvoice, on_delete=models.CASCADE, related_name="items"
+    )
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="partner_invoice_items"
+    )
+    instalment = models.CharField(max_length=16, choices=PartnerInvoice.TYPE_CHOICES)
+    planned_amount = models.BigIntegerField()
+    payable_amount = models.BigIntegerField()
+    category = models.CharField(max_length=64)
+    payment = models.OneToOneField(
+        PartnerPayment,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="invoice_item",
+    )
+
+    class Meta:
+        db_table = "partner_invoice_item"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "instalment"],
+                name="uniq_partner_invoice_item_activity_instalment",
+            ),
+        ]

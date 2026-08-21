@@ -867,9 +867,13 @@ def activate_window(cycle, window: str, principal, deadline=None):
 
 
 def close_window(cycle, principal):
+    """HR closes the window. The conversation stays readable, not editable."""
     _assert_hr(principal)
     cycle.active_window = "none"
-    cycle.save(update_fields=["active_window", "updated_at"])
+    cycle.window_closed_at = timezone.now()
+    cycle.save(update_fields=["active_window", "window_closed_at", "updated_at"])
+    _audit_cycle(cycle, "hr.performance_window_closed", principal, {})
+    return cycle
 
 
 def take_snapshot(review, window: str, *, known_missing: bool = False):
@@ -960,6 +964,26 @@ def _assert_window_open(review):
         raise Forbidden(
             "The performance form is locked outside an HR-activated window."
         )
+    # Sign-off is a one-way latch on the snapshot, but nothing stopped the
+    # form being edited afterwards — so a manager could downgrade a rating
+    # after the employee had signed, and the conversation document would
+    # reprint the new words because it reads values and development live
+    # (2026-08-20 HR audit).
+    from apps.hr.models import PerformanceSnapshot
+
+    # Per WINDOW, not per review: signing off mid-year must not lock the
+    # year-end conversation that has not happened yet.
+    signed = PerformanceSnapshot.objects.filter(
+        review_id=review.id,
+        window=cycle.active_window,
+        signed_off_at__isnull=False,
+    ).exists()
+    if signed:
+        raise Forbidden(
+            f"The {cycle.active_window.replace('_', ' ')} conversation has been "
+            f"signed off. Changing it now needs a governed amendment, not an "
+            f"edit."
+        )
     return cycle
 
 
@@ -995,15 +1019,15 @@ def save_employee_input(priority, data: dict, principal):
 def save_manager_input(priority, data: dict, principal):
     """The manager's channels — comments, their rating, agreed actions —
     gated on the real reporting line."""
-    from apps.accounts.models import StaffSupervisorAssignment
+    from apps.hr.review_authority import assert_reviewer
 
     review = priority.review
     _assert_window_open(review)
-    is_supervisor = StaffSupervisorAssignment.objects.filter(
-        supervisee=review.staff, supervisor__user_id=principal.user_id
-    ).exists()
-    if not (is_supervisor or getattr(principal, "active_role", "") in _HR_ROLES):
-        raise Forbidden("Only the reporting line writes the manager columns.")
+    # The old check accepted ANY supervisor row — including the oversight rows
+    # the model documents as explicitly not the reporting line — and let HR
+    # write the manager's own assessment. PLs review their CCEOs, the CD
+    # reviews PLs/IA/Accountant, and HR oversees without writing.
+    assert_reviewer(review.staff, principal, action="write the manager columns for")
     if "manager_assessment" in data:
         priority.manager_assessment = data["manager_assessment"]
     if "manager_rating" in data:
@@ -1077,8 +1101,10 @@ def quarterly_readiness(fy: str | None = None) -> dict:
     }
     if days_left == 7:
         try:
-            from apps.accounts.models import User
-            from apps.notifications.services import WorkflowNotificationService
+            from apps.notifications.services import (
+                WorkflowNotificationService,
+                role_recipients,
+            )
 
             WorkflowNotificationService.trigger(
                 event_type="performance_window_due",
@@ -1093,11 +1119,7 @@ def quarterly_readiness(fy: str | None = None) -> dict:
                 ),
                 context_type="PerformanceCycle",
                 context_id=fy,
-                recipients=list(
-                    User.objects.filter(
-                        roles__contains=["HumanResources"], status="active"
-                    )
-                ),
+                recipients=role_recipients("HumanResources"),
             )
         except Exception:  # noqa: BLE001
             pass
@@ -1125,14 +1147,12 @@ def save_value_reflection(commitment, data: dict, principal):
     functional manager write their observations. No column is ever derived
     from an activity count. Same window gate as the rest of the form.
     """
-    from apps.accounts.models import StaffSupervisorAssignment
+    from apps.hr.review_authority import is_reviewer_of
 
     review = commitment.review
     _assert_window_open(review)
     is_employee = review.staff.user_id == getattr(principal, "user_id", None)
-    is_manager = StaffSupervisorAssignment.objects.filter(
-        supervisee=review.staff, supervisor__user_id=principal.user_id
-    ).exists()
+    is_manager = is_reviewer_of(review.staff, principal)
     is_functional = review.functional_manager_id == getattr(principal, "user_id", None)
     is_hr = getattr(principal, "active_role", "") in _HR_ROLES
 
@@ -1340,6 +1360,24 @@ def reopen_conversation(review, window: str, reason: str, principal):
     snap.signed_off_at = None
     snap.signed_off_by = None
     snap.save(update_fields=["signed_off_at", "signed_off_by", "updated_at"])
+    from apps.hr.models import PerformanceCycle
+
+    cycle = (
+        _active_cycle_for(review)
+        or PerformanceCycle.objects.filter(fy=review.fy).first()
+    )
+    if cycle is not None:
+        cycle.reopened_by_id = getattr(principal, "user_id", None)
+        cycle.reopened_at = timezone.now()
+        cycle.reopening_reason = reason.strip()[:2000]
+        cycle.save(
+            update_fields=[
+                "reopened_by",
+                "reopened_at",
+                "reopening_reason",
+                "updated_at",
+            ]
+        )
     _audit_review(
         review,
         "hr.performance_reopened",
@@ -1363,6 +1401,22 @@ def sign_off(review, window: str, principal):
     snap.save(update_fields=["signed_off_at", "signed_off_by", "updated_at"])
     _audit_review(review, "hr.performance_signed_off", principal, {"window": window})
     return snap
+
+
+def _audit_cycle(cycle, action: str, principal, payload: dict) -> None:
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="performance_cycle",
+            subject_id=cycle.id,
+            actor_id=getattr(principal, "user_id", None),
+            actor_role=getattr(principal, "active_role", None),
+            payload={"fy": cycle.fy, **payload},
+        )
+    except Exception:  # noqa: BLE001 — audit failure never blocks the decision
+        pass
 
 
 def _audit_review(review, action: str, principal, payload: dict) -> None:
@@ -1585,12 +1639,19 @@ def pip_outcome(plan, outcome, note, principal):
     if outcome == "escalated":
         from apps.hr.models import EmployeeRelationsCase
 
+        # Cases default to confidential, and `visible_cases` shows a
+        # confidential case only to its OWNER or investigator. Creating one
+        # with neither meant the case vanished the instant it was raised —
+        # invisible to everyone including the HR user who escalated it
+        # (2026-08-20 HR audit). The escalating HR officer owns it until it is
+        # reassigned.
         case = EmployeeRelationsCase.objects.create(
             subject_staff=plan.staff,
             country=plan.staff.country or "Uganda",
             case_type="conduct",
             description=note or "Escalated from a formal PIP.",
             raised_by_id=getattr(principal, "user_id", None),
+            case_owner_id=getattr(principal, "user_id", None),
         )
         plan.escalated_case = case
     plan.save(

@@ -34,6 +34,9 @@ Two distinct measurement concepts, kept separate on purpose:
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -589,17 +592,18 @@ class PLAnalyticsService:
             link="",
             raw=None,
         ):
-            return {
-                "icon": icon,
-                "label": label,
-                "value": value,
-                "variant": variant,
-                "trend": {"direction": direction, "value": trend_val},
-                "helper": helper,
-                "sparkline": _sparkline(spark) if spark else "",
-                "link": link,
-                "raw": raw,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.pl_analytics_service:kpis.card",
+                label,
+                value,
+                icon=icon,
+                variant=variant,
+                trend={"direction": direction, "value": trend_val},
+                helper=helper,
+                sparkline=_sparkline(spark) if spark else "",
+                link=link,
+                raw=raw,
+            )
 
         items = [
             card(
@@ -1903,6 +1907,8 @@ class PLAnalyticsService:
                     "issue_key": issue_keys[0] if issue_keys else "",
                     "last_visit": f"{(today - lv).days} days ago" if lv else "—",
                     "last_training": f"{(today - lt).days} days ago" if lt else "—",
+                    "missed_visit": not_visited,
+                    "missed_training": not_trained,
                     "next_action": recommended["label"],
                     "recommended_activity_label": recommended["label"],
                     "recommended_activity_type": recommended["activity_type"],

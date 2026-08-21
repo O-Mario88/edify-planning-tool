@@ -261,6 +261,24 @@ class CDAnalyticsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Performance by Sub-Region")
 
+    def test_repeated_country_director_tab_visit_reuses_dashboard_snapshot(self):
+        """Returning to the overview must not rebuild the whole national view."""
+        from unittest.mock import patch
+
+        from django.core.cache import cache
+        from django.test import override_settings
+
+        cache.clear()
+        self.client.force_login(self.cd)
+        with override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=60):
+            with patch.object(S, "get_dashboard", wraps=S.get_dashboard) as dashboard:
+                first = self.client.get("/analytics/country-director", {"fy": FY})
+                second = self.client.get("/analytics/country-director", {"fy": FY})
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(dashboard.call_count, 1)
+
     # ── 2. KPIs use country data ─────────────────────────────────────────────
     def test_cd_kpis_use_country_data(self):
         d = self._dash()

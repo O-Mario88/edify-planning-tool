@@ -1,3 +1,5 @@
+import logging
+
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -47,12 +49,140 @@ def _chain_audit(action: str, activity, actor_id: str, payload: dict) -> None:
 # Four surfaces each carried their own version — the Disbursement Dashboard
 # matched only `ia_confirmed`, the partner-payments page matched
 # `none|ia_confirmed`, batch payments matched a third set, and the activities
+logger = logging.getLogger(__name__)
+
+
 # API a fourth. The same queue therefore showed different rows and different
 # totals depending on which page the Accountant happened to open.
-PARTNER_PAYABLE_STATUSES = ("none", "ia_confirmed")
+# "disbursed" = the 50% MOU advance is out and the balance awaits clearance
+# once the partner finishes and IA verifies the work.
+PARTNER_PAYABLE_STATUSES = ("none", "ia_confirmed", "disbursed")
 
 # Statuses meaning money already left for this activity — never payable again.
 PARTNER_PAID_STATUSES = ("disbursed", "paid")
+
+
+def notify_partner_clearance_eligibility(activity):
+    """MOU prompts after IA verifies a partner activity.
+
+    The accountants are prompted that the balance is now clearable, and —
+    once the partner's WHOLE slate of assigned work is verified — the partner
+    is told they are eligible for clearance and should send their invoice for
+    the remaining 50%. Both fire-and-forget: a notification failure must
+    never roll back a verification.
+    """
+    if activity.delivery_type != "partner":
+        return
+    try:
+        from apps.accounts.models import User
+        from apps.notifications.services import WorkflowNotificationService
+
+        cleared = PartnerPayment.objects.filter(
+            activity=activity, payment_type=PartnerPayment.TYPE_CLEARANCE
+        ).exists()
+        if cleared:
+            return
+        has_advance = PartnerPayment.objects.filter(
+            activity=activity, payment_type=PartnerPayment.TYPE_ADVANCE
+        ).exists()
+
+        acct_ids = list(
+            User.objects.filter(active_role="Accountant", is_active=True).values_list(
+                "id", flat=True
+            )
+        )
+        if acct_ids:
+            WorkflowNotificationService.trigger(
+                event_type="partner_clearance_ready",
+                category="finance",
+                priority="high",
+                title="Partner balance ready to clear",
+                body=(
+                    f"IA verified partner work (activity #{activity.id[:8]})."
+                    + (
+                        " The 50% MOU advance is out — the remaining balance "
+                        "can now be cleared."
+                        if has_advance
+                        else " The partner payment can now be processed."
+                    )
+                ),
+                context_type="Activity",
+                context_id=activity.id,
+                recipients=acct_ids,
+            )
+
+        partner_id = activity.assigned_partner_id
+        if not partner_id:
+            return
+        from apps.partners.models import Partner as _Partner
+
+        _p = _Partner.objects.filter(id=partner_id).select_related("user").first()
+        _p_user_id = getattr(getattr(_p, "user", None), "id", None)
+        # §12.5: EVERY verification tells the partner this activity is now
+        # "Completed — Awaiting Payment". The slate-clear invoice prompt
+        # below is a separate, second nudge — gating the only notice on the
+        # whole slate left a partner with ten assignments hearing nothing
+        # for the first nine verifications (2026-08-19 audit F8).
+        if _p_user_id:
+            WorkflowNotificationService.trigger(
+                event_type="partner_activity_verified",
+                category="finance",
+                priority="normal",
+                title="Work verified — awaiting payment",
+                body=(
+                    "IA verified your delivery "
+                    f"(activity #{activity.id[:8]}). It now counts toward "
+                    "your next invoice — track it on Completed & Payments."
+                ),
+                context_type="Activity",
+                context_id=activity.id,
+                recipients=[_p_user_id],
+            )
+        from apps.activities.models import Activity as _Activity
+
+        still_outstanding = (
+            _Activity.objects.filter(
+                assigned_partner_id=partner_id,
+                deleted_at__isnull=True,
+                scheduled_date__isnull=False,
+            )
+            .exclude(
+                status__in=[
+                    "ia_verified",
+                    "closed",
+                    "accountant_confirmed",
+                    "cancelled",
+                    "rejected",
+                    "deferred",
+                ]
+            )
+            .exists()
+        )
+        if still_outstanding:
+            return
+
+        from apps.partners.models import Partner
+
+        partner = Partner.objects.filter(id=partner_id).select_related("user").first()
+        partner_user_id = getattr(getattr(partner, "user", None), "id", None)
+        if partner_user_id:
+            WorkflowNotificationService.trigger(
+                event_type="partner_clearance_eligible",
+                category="finance",
+                priority="high",
+                title="Eligible for clearance — send your invoice",
+                body=(
+                    "IA has verified all your assigned activities. You are "
+                    "eligible for clearance of the remaining balance — please "
+                    "send your invoice for the outstanding 50% to the "
+                    "accountant."
+                ),
+                context_type="Partner",
+                context_id=partner_id,
+                recipients=[partner_user_id],
+            )
+    except Exception:  # noqa: BLE001
+        logger.exception("partner MOU clearance notification failed")
 
 
 class FinanceBlockedReasonService:
@@ -238,7 +368,9 @@ class AdvanceDisbursementService:
 
 
 class PartnerPaymentService:
-    """Manages partner payments after verified execution."""
+    """Manages partner payments under the MOU: 50% of the planned activity
+    cost as an advance up front, and the balance cleared only after the
+    partner finishes the work and IA verifies it."""
 
     @staticmethod
     def pay_partner(
@@ -250,6 +382,8 @@ class PartnerPaymentService:
         user_id: str,
         notes: str = "",
         netsuite_id: str = "",
+        payment_type: str = PartnerPayment.TYPE_CLEARANCE,
+        notify_partner: bool = True,
     ) -> PartnerPayment:
         # Every guard below — including the one-payout-per-activity check —
         # must run against a LOCKED activity row, inside the same transaction
@@ -275,6 +409,8 @@ class PartnerPaymentService:
                 user_id=user_id,
                 notes=notes,
                 netsuite_id=netsuite_id,
+                payment_type=payment_type,
+                notify_partner=notify_partner,
             )
 
     @staticmethod
@@ -287,26 +423,103 @@ class PartnerPaymentService:
         user_id: str,
         notes: str = "",
         netsuite_id: str = "",
+        payment_type: str = PartnerPayment.TYPE_CLEARANCE,
+        notify_partner: bool = True,
     ) -> PartnerPayment:
         """The body of pay_partner, run with the activity row already locked
         and inside the caller's transaction."""
-        # Enforce blockers
-        reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
-        if reasons:
-            raise BadRequest(f"Partner payment is blocked: {', '.join(reasons)}")
+        if payment_type not in (
+            PartnerPayment.TYPE_ADVANCE,
+            PartnerPayment.TYPE_CLEARANCE,
+        ):
+            raise BadRequest(f"Unknown partner payment type '{payment_type}'.")
 
-        # Clamp to the planned budget — the same contract weekly_service.
-        # disburse enforces. The caller-supplied amount used to be written
-        # verbatim, so a typo (or a hostile caller) could pay a partner any
-        # figure with no relation to the activity's costed lines.
+        is_advance = payment_type == PartnerPayment.TYPE_ADVANCE
+        if is_advance:
+            # The MOU advance is paid BEFORE the work happens, so the
+            # execution blockers (IA verification, evidence) do not apply —
+            # but dead work must never be advanced against, and the plan must
+            # actually be costed.
+            from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+
+            if activity.status in NON_FUNDABLE_ACTIVITY_STATUSES:
+                raise BadRequest(
+                    "The MOU advance cannot be paid on cancelled, deferred or "
+                    "rejected work."
+                )
+            if not activity.schedule_cost_lines.exists():
+                raise BadRequest(
+                    "The MOU advance needs the activity's costed budget lines "
+                    "— schedule and cost the activity first."
+                )
+        else:
+            # Clearance settles the balance only after verified execution.
+            reasons = FinanceBlockedReasonService.get_blocked_reasons(activity)
+            if reasons:
+                raise BadRequest(f"Partner payment is blocked: {', '.join(reasons)}")
+
+        # Amounts come from the plan, never the caller's keyboard — the same
+        # contract weekly_service.disburse enforces. The MOU fixes the split:
+        # the advance is exactly 50% of the planned activity cost, and the
+        # clearance settles the remaining balance after verification.
+        # Idempotency: one payout per activity and instalment, checked BEFORE
+        # the amount arithmetic so a racing second payer is told the payment
+        # is already recorded (not a balance message). Runs under the
+        # caller's row lock; the DB unique constraint on
+        # (activity, payment_type) stays as the last line of defence for any
+        # writer that reaches the table without taking the lock.
+        if (
+            activity.payment_status == "paid"
+            or PartnerPayment.objects.filter(
+                activity=activity, payment_type=PartnerPayment.TYPE_CLEARANCE
+            ).exists()
+        ):
+            raise BadRequest(
+                "Partner payment already recorded for this activity — a further "
+                "payout would double-count the money."
+            )
+        if (
+            is_advance
+            and PartnerPayment.objects.filter(
+                activity=activity, payment_type=PartnerPayment.TYPE_ADVANCE
+            ).exists()
+        ):
+            raise BadRequest(
+                "The 50% MOU advance is already recorded for this activity — "
+                "a second advance would double-count the money."
+            )
+
         planned_total = (
             activity.schedule_cost_lines.aggregate(s=Sum("amount"))["s"] or 0
         )
-        if amount <= 0 or amount > planned_total:
-            raise BadRequest(
-                "Partner payment must be positive and within the activity's "
-                f"planned budget of {planned_total} UGX."
-            )
+        paid_so_far = (
+            PartnerPayment.objects.filter(activity=activity).aggregate(
+                s=Sum("amount_paid")
+            )["s"]
+            or 0
+        )
+        if is_advance:
+            expected_advance = planned_total // 2
+            if expected_advance <= 0:
+                raise BadRequest("This activity has no planned budget to advance.")
+            if amount != expected_advance:
+                raise BadRequest(
+                    "The MOU advance is exactly 50% of the planned activity "
+                    f"cost — {expected_advance} UGX for this activity."
+                )
+        else:
+            remaining = planned_total - paid_so_far
+            if remaining <= 0:
+                raise BadRequest(
+                    "Nothing remains to clear on this activity — the planned "
+                    "budget is already fully paid."
+                )
+            if amount <= 0 or amount > remaining:
+                raise BadRequest(
+                    "Partner clearance must be positive and within the "
+                    f"remaining balance of {remaining} UGX (planned "
+                    f"{planned_total}, already paid {paid_so_far})."
+                )
 
         # Cross-channel guard: a partner activity whose staff advance already
         # moved money must not ALSO be partner-paid against the same cost
@@ -320,36 +533,12 @@ class PartnerPaymentService:
                 "partner payment for the same cost lines."
             )
 
-        # Idempotency: one payout per activity. get_blocked_reasons passes for
-        # closed activities too, so without this a double-submit (or a second
-        # call after close) would write a duplicate PartnerPayment ledger row.
-        # This now runs under the caller's row lock, so a concurrent second
-        # payer blocks here and then reads the committed "paid" — it gets this
-        # sentence rather than a database error. The DB unique constraint on
-        # PartnerPayment.activity stays as the last line of defence for any
-        # writer that reaches the table without taking the lock.
-        if (
-            activity.payment_status == "paid"
-            or PartnerPayment.objects.filter(activity=activity).exists()
-        ):
-            raise BadRequest(
-                "Partner payment already recorded for this activity — a second "
-                "payout would double-count the money."
-            )
-
-        # Partner payment is the terminal finance step for partner-delivery
-        # activities in this legacy stack — there is no separate accountant
-        # NetSuite-entry step downstream of it the way staff advances have.
-        # The canonical rule (NetSuite ID required whenever finance_required,
-        # see apps.activities.closure_services.ClosureEligibilityService) was
-        # never enforced here, so a partner activity could close with money
-        # paid out and no NetSuite record at all — enforce it now.
+        # NetSuite IDs are STAFF accountability proof — money a staff member
+        # received and must account for. Partners are paid directly by the
+        # accountant, so no NetSuite entry is asked here (owner, 2026-08-20);
+        # the payment itself, with its reference, is the finance proof, and
+        # the closure gate's check 7 exempts partner deliveries to match.
         netsuite_id = (netsuite_id or "").strip()
-        if not netsuite_id:
-            raise BadRequest(
-                "Partner payment requires a NetSuite Expense ID — proof the "
-                "payment was entered into NetSuite before the activity can close."
-            )
 
         with transaction.atomic():
             # A savepoint around the insert: if the unique constraint fires
@@ -361,6 +550,7 @@ class PartnerPaymentService:
                     pay = PartnerPayment.objects.create(
                         activity=activity,
                         partner_name=partner_name,
+                        payment_type=payment_type,
                         amount_paid=amount,
                         payment_method=method,
                         payment_reference=reference,
@@ -370,24 +560,15 @@ class PartnerPaymentService:
             except IntegrityError as exc:
                 if "uniq_partner_payment_per_activity" in str(exc):
                     raise BadRequest(
-                        "Partner payment already recorded for this activity — a "
-                        "second payout would double-count the money."
+                        "This instalment is already recorded for this activity "
+                        "— a second payout would double-count the money."
                     ) from exc
                 raise
 
-            activity.payment_status = "paid"
+            # 50% advance out → "disbursed" (money moved, accountability
+            # open); clearance → "paid" (the terminal partner state).
+            activity.payment_status = "disbursed" if is_advance else "paid"
             activity.save(update_fields=["payment_status", "updated_at"])
-
-            NetSuiteExpenseRecord.objects.update_or_create(
-                activity=activity,
-                defaults={
-                    "netsuite_expense_id": netsuite_id,
-                    "expense_date": timezone.now().date(),
-                    "amount_entered": amount,
-                    "entered_by": user_id,
-                    "notes": notes,
-                },
-            )
 
             FinanceAuditService.log_finance_event(
                 activity=activity,
@@ -395,8 +576,9 @@ class PartnerPaymentService:
                 actor_id=user_id,
                 actor_role="Accountant",
                 new_value=(
-                    f"Paid partner {partner_name} {amount} UGX via {method} "
-                    f"(Ref: {reference}). NetSuite ID: {netsuite_id}"
+                    f"Paid partner {partner_name} {amount} UGX "
+                    f"({pay.get_payment_type_display()}) via {method} "
+                    f"(Ref: {reference})."
                 ),
             )
             _chain_audit(
@@ -406,7 +588,6 @@ class PartnerPaymentService:
                 {
                     "partner": partner_name,
                     "amount": amount,
-                    "netsuite_id": netsuite_id,
                     "reference": reference,
                 },
             )
@@ -419,6 +600,48 @@ class PartnerPaymentService:
             # write used to skip.
             if ClosureEligibilityService.is_eligible(activity):
                 ActivityClosureService.close(activity, closed_by=user_id)
+
+            # The partner hears about EVERY payment, whichever screen paid it
+            # — the invoice wrapper notified but the direct finance screens
+            # (including the 50% MOU advance) paid silently (audit F9).
+            def _tell_partner(pay_id=pay.id, act=activity, amt=amount):
+                if not notify_partner:
+                    return
+                try:
+                    from apps.partners.models import Partner as _Partner
+                    from apps.notifications.services import (
+                        WorkflowNotificationService,
+                    )
+
+                    p = (
+                        _Partner.objects.filter(id=act.assigned_partner_id)
+                        .select_related("user")
+                        .first()
+                    )
+                    p_user_id = getattr(getattr(p, "user", None), "id", None)
+                    if p_user_id:
+                        WorkflowNotificationService.trigger(
+                            event_type="partner_payment_made",
+                            category="finance",
+                            priority="high",
+                            title="Payment made to your organisation",
+                            body=(
+                                f"UGX {amt:,.0f} paid for activity "
+                                f"#{act.id[:8]}. See Completed & Payments "
+                                "for the reference."
+                            ),
+                            context_type="Activity",
+                            context_id=act.id,
+                            recipients=[p_user_id],
+                        )
+                except Exception:  # noqa: BLE001 — never break a payment
+                    import logging
+
+                    logging.getLogger(__name__).warning(
+                        "partner payment notification failed", exc_info=True
+                    )
+
+            transaction.on_commit(_tell_partner)
 
             return pay
 

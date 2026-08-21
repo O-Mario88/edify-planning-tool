@@ -504,6 +504,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/pages/ia/analytics_dashboard.html",
             "templates/pages/leave/personal_time_off.html",
             "templates/pages/partners/index.html",
+            "templates/pages/projects/index.html",
+            "templates/pages/projects/detail.html",
+            "templates/pages/dashboards/special_projects.html",
             "templates/pages/projects/analytics.html",
             "templates/pages/projects/my_plan.html",
             "templates/pages/projects/planning.html",
@@ -1315,6 +1318,38 @@ class TypeScaleFloorTest(SimpleTestCase):
                     if pixels < 14:
                         offenders.append(f"{path.name}: {value}{unit} ({pixels:g}px)")
         self.assertEqual(offenders, [], f"unnamed compact text: {offenders}")
+
+    #: The canonical ladder, read straight off the tokens in design-system.css:
+    #: micro/floor 12, tile-label 13, label+table 14, body 15, title 16,
+    #: card-heading 18, heading 20, tile-value 22, display 28.
+    CANONICAL_PX = frozenset({12, 13, 14, 15, 16, 18, 20, 22, 28})
+
+    #: Everything still off the ladder is ABOVE the display tier — hero
+    #: numerals at 24, 25, 30, 32, 34, 36, 38, 40, 44 and 48px. The token layer
+    #: stops at 28, so there is no rung for them to land on, and collapsing ten
+    #: sizes into 28 would visibly resize every hero KPI on the platform. That
+    #: is a design decision, not a cleanup, so this holds the line at today's
+    #: count until a display tier is defined.
+    #:
+    #: Lower it when sizes are migrated; never raise it. Was 269 across 94
+    #: files before the 2026-08-21 type-scale migration.
+    OFF_SCALE_CEILING = 60
+
+    def test_template_type_sizes_stay_on_the_canonical_ladder(self):
+        pattern = re.compile(r"text-\[(\d*\.?\d+)px\]")
+        offenders = []
+        for path in (ROOT / "templates").rglob("*.html"):
+            for value in pattern.findall(path.read_text()):
+                if float(value) not in self.CANONICAL_PX:
+                    offenders.append(f"{path.name}: text-[{value}px]")
+        self.assertLessEqual(
+            len(offenders),
+            self.OFF_SCALE_CEILING,
+            f"{len(offenders)} template type sizes sit between the token "
+            f"rungs (ceiling {self.OFF_SCALE_CEILING}). Use a canonical size "
+            f"or add a token — do not invent a half-step: "
+            f"{sorted(set(offenders))[:10]}",
+        )
 
     def test_no_template_uses_a_one_off_tiny_utility(self):
         offenders = []

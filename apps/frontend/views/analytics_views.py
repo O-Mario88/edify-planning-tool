@@ -234,15 +234,34 @@ def pl_analytics_view(request):
         "activity_type": request.GET.get("activity_type"),
         "quarter": request.GET.get("quarter"),
     }
-    fy = (request.GET.get("fy") or "").strip() or None
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     quarter = (request.GET.get("quarter") or "").strip() or None
 
-    data = PLAnalyticsService.get_dashboard(
-        request.user,
-        fy=fy,
-        quarter=quarter,
-        filters=filters,
-        include_regional_map=True,
+    dashboard_fingerprint = hashlib.sha256(
+        json.dumps(
+            {
+                "fy": fy,
+                "quarter": quarter,
+                "filters": filters,
+                "role": request.user.active_role,
+            },
+            sort_keys=True,
+            default=str,
+        ).encode()
+    ).hexdigest()[:20]
+    dashboard_key = (
+        f"program-lead-analytics:v1:{request.user.id}:{dashboard_fingerprint}"
+    )
+    data = stampede_safe_get_or_compute(
+        dashboard_key,
+        lambda: PLAnalyticsService.get_dashboard(
+            request.user,
+            fy=fy,
+            quarter=quarter,
+            filters=filters,
+            include_regional_map=True,
+        ),
+        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
     )
     context = {
         **data,
@@ -728,16 +747,37 @@ def cd_analytics_view(request):
     never emits field-execution actions."""
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
-    fy = (request.GET.get("fy") or "").strip() or None
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    data = CDAnalyticsService.get_dashboard(
-        request.user,
-        fy=fy,
-        quarter=quarter,
-        month=month,
-        filters=_cd_filters(request),
-        include_regional_map=True,
+    filters = _cd_filters(request)
+    dashboard_fingerprint = hashlib.sha256(
+        json.dumps(
+            {
+                "fy": fy,
+                "quarter": quarter,
+                "month": month,
+                "filters": filters,
+                "role": request.user.active_role,
+            },
+            sort_keys=True,
+            default=str,
+        ).encode()
+    ).hexdigest()[:20]
+    dashboard_key = (
+        f"country-director-analytics:v1:{request.user.id}:{dashboard_fingerprint}"
+    )
+    data = stampede_safe_get_or_compute(
+        dashboard_key,
+        lambda: CDAnalyticsService.get_dashboard(
+            request.user,
+            fy=fy,
+            quarter=quarter,
+            month=month,
+            filters=filters,
+            include_regional_map=True,
+        ),
+        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
     )
     # Month-of-FY labels (FY starts in October).
     _fy_months = [

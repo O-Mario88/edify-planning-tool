@@ -512,8 +512,10 @@ class ConcurrentPartnerPaymentTest(TransactionTestCase):
         _race(self._pay)
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.payment_status, "paid")
+        # NetSuite records are staff-accountability artifacts — partner
+        # payments never write one (owner, 2026-08-20).
         self.assertEqual(
             NetSuiteExpenseRecord.objects.filter(activity=self.activity).count(),
-            1,
-            "one payment, one NetSuite expense record",
+            0,
+            "partner payments carry no NetSuite expense record",
         )

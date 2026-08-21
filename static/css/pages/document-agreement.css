@@ -1,0 +1,231 @@
+  :root {
+    --agreement-paper: var(--edify-surface);
+    --agreement-ink: var(--edify-text);
+    --agreement-muted: var(--edify-text-muted);
+    --agreement-navy: var(--edify-primary);
+    --agreement-blue: var(--edify-accent);
+    --agreement-rule: var(--edify-border);
+    --agreement-supporting-ink: var(--edify-text-secondary, var(--edify-text));
+  }
+  /* The accent is a mid-blue tuned for light paper, and the dark
+     themes reuse it unchanged. Applied to TEXT on a near-black agreement
+     surface it measures 3.87:1 — below the 4.5:1 AA floor — and this is the
+     one document every user must read before they can work, including the
+     safeguarding escalation timeframes. Lighten the accent for text on the
+     dark surfaces only; fills and borders keep the brand colour.
+     (2026-08 UI/UX audit.) */
+  :root.theme-dark,
+  :root.theme-blue {
+    --agreement-blue: var(--edify-accent-text);
+    --agreement-navy: var(--edify-accent-text);
+  }
+  body {
+    background: var(--agreement-paper);
+  }
+  .agreement-page {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(23, 105, 170, .055), transparent 28rem),
+      var(--agreement-paper);
+    color: var(--agreement-ink);
+  }
+  .agreement-masthead {
+    background: linear-gradient(115deg, var(--edify-primary) 0%, var(--edify-primary-strong, var(--edify-primary)) 58%, var(--edify-accent) 100%);
+  }
+  .agreement-logo {
+    filter: brightness(0) invert(1);
+  }
+  .agreement-document {
+    color: var(--agreement-ink);
+    font-family: var(--edify-font-sans);
+    font-size: clamp(1rem, .97rem + .12vw, 1.08rem);
+    line-height: 1.76;
+  }
+  .agreement-document > div {
+    display: grid;
+    gap: 1.3rem;
+  }
+  .agreement-document h2 {
+    margin-top: 2.7rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--agreement-rule);
+    color: var(--agreement-navy) !important;
+    font-family: var(--edify-font-sans);
+    font-size: clamp(1.25rem, 1.15rem + .35vw, 1.55rem) !important;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.25;
+  }
+  .agreement-document section:first-child h2 {
+    margin-top: 0;
+    border-top: 0;
+    padding-top: 0;
+  }
+  .agreement-document p,
+  .agreement-document li {
+    color: var(--agreement-ink);
+    overflow-wrap: anywhere;
+  }
+  .agreement-document ol li {
+    border: 0 !important;
+    border-left: 2px solid var(--agreement-blue) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: .35rem 0 .35rem 1.25rem !important;
+  }
+  .agreement-document ol p {
+    font-family: var(--edify-font-sans);
+    font-size: .9rem;
+    line-height: 1.65;
+  }
+  .agreement-creed {
+    font-family: var(--edify-font-sans);
+  }
+  .agreement-creed__text {
+    color: var(--agreement-ink);
+    font-size: clamp(1.22rem, 1.1rem + .55vw, 1.62rem);
+    line-height: 1.82;
+  }
+  .agreement-page .agreement-document .safeguarding-policy {
+    display: block;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section {
+    margin: 3.25rem 0 1.15rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--agreement-rule);
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section > h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--agreement-navy) !important;
+    font-size: clamp(1.25rem, 1.16rem + .3vw, 1.5rem) !important;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.3;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > p {
+    margin: 0 0 1.05rem;
+    color: var(--agreement-supporting-ink);
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:first-child + p {
+    color: var(--agreement-navy);
+    font-size: clamp(1.06rem, 1.01rem + .16vw, 1.16rem);
+    font-weight: 560;
+    line-height: 1.78;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > p.pl-5 {
+    position: relative;
+    margin-bottom: .7rem;
+    padding-left: 1.4rem;
+  }
+  .agreement-page .agreement-document .safeguarding-policy > section:last-child {
+    margin-top: 3.75rem;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol {
+    counter-reset: safeguarding-step;
+    margin-top: 1.75rem;
+    padding-left: 0;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li {
+    counter-increment: safeguarding-step;
+    position: relative;
+    margin-left: .95rem;
+    padding: .25rem 0 1.55rem 2.25rem !important;
+    border-left: 1px solid var(--agreement-rule) !important;
+    background: transparent !important;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li:last-child {
+    padding-bottom: .25rem !important;
+    border-left-color: transparent !important;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li::before {
+    content: counter(safeguarding-step);
+    position: absolute;
+    top: .1rem;
+    left: -.9rem;
+    display: flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--agreement-rule);
+    border-radius: 999px;
+    background: var(--agreement-paper);
+    color: var(--agreement-blue);
+    font-size: .75rem;
+    font-weight: 800;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li p:first-child {
+    margin-top: .1rem;
+    color: var(--agreement-blue) !important;
+    font-size: .75rem;
+    line-height: 1.4;
+  }
+  .agreement-page .agreement-document .safeguarding-policy ol li p:last-child {
+    margin-top: .45rem;
+    color: var(--agreement-supporting-ink);
+    font-size: .94rem;
+    line-height: 1.68;
+  }
+  .agreement-decision {
+    background: linear-gradient(135deg, var(--edify-primary) 0%, var(--edify-accent) 100%);
+  }
+  .agreement-action {
+    min-height: 3.25rem;
+    border-radius: .7rem;
+    font-size: .875rem;
+    font-weight: 800;
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+  .agreement-action:hover {
+    transform: translateY(-1px);
+  }
+  .agreement-action--primary {
+    background: var(--edify-surface);
+    color: var(--edify-primary);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+  }
+  .agreement-action--primary:hover {
+    background: var(--edify-surface-muted);
+  }
+  .agreement-action--danger {
+    border: 1px solid rgba(255,255,255,.35);
+    color: var(--edify-on-accent);
+  }
+  .agreement-progress__step--active {
+    background: var(--edify-surface);
+    color: var(--edify-primary);
+  }
+  .agreement-kicker {
+    color: var(--agreement-blue);
+  }
+  .agreement-rule {
+    background: var(--agreement-rule);
+  }
+  .agreement-rule__diamond {
+    background: var(--agreement-blue);
+  }
+  .agreement-quote {
+    border-color: var(--agreement-blue);
+    color: var(--agreement-supporting-ink);
+  }
+  .agreement-response-control {
+    background: var(--edify-surface);
+    color: var(--agreement-ink);
+  }
+  @media print {
+    .agreement-masthead nav,
+    .agreement-progress,
+    .agreement-decision {
+      display: none !important;
+    }
+    .agreement-page {
+      background: var(--edify-surface);
+    }
+  }

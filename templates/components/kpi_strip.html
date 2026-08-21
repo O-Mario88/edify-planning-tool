@@ -1,6 +1,9 @@
+{% load kpi_metrics %}
 {% if items %}
-<section class="kpi-strip{% if variant %} kpi-strip--{{ variant }}{% endif %}{% if density %} kpi-strip--density-{{ density }}{% endif %}"
+{% professional_kpis items variant density as professional_items %}
+<section class="kpi-strip kpi-strip--executive{% if variant and variant != 'executive' %} kpi-strip--{{ variant }}{% endif %}{% if density %} kpi-strip--density-{{ density }}{% endif %}"
          data-mobile-summary
+         data-edify-summary-kpi
          aria-label="{{ title|default:'Key performance indicators' }}">
   {% if title %}
   <header class="kpi-strip__header">
@@ -10,7 +13,7 @@
   {% endif %}
 
   <div class="kpi-strip__grid" role="list" tabindex="0">
-    {% for item in items %}
+    {% for item in professional_items %}
     {% comment %}
       `metric_key` and friends are present on items built through
       apps.core.metrics.render_metric and absent on the legacy dicts that still
@@ -27,7 +30,13 @@
          {% if item.scope %}data-metric-scope="{{ item.scope }}"{% endif %}
          {% if item.data_state %}data-metric-state="{{ item.data_state }}"{% endif %}
          {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% endif %}>
-      {% if drilldown_mode == "program_lead" and item.link %}
+      {% if item.hx_get %}
+      <button type="button"
+              hx-get="{{ item.hx_get }}"
+              hx-target="#drawer-container"
+              hx-swap="innerHTML"
+              class="kpi-strip__item-body kpi-strip__item-body--link">
+      {% elif drilldown_mode == "program_lead" and item.link %}
       <button type="button"
               hx-get="/analytics/program-lead/drilldown{{ item.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
               hx-target="#drawer-container"
@@ -53,9 +62,23 @@
       <div class="kpi-strip__item-body">
       {% endif %}
 
-        <span class="kpi-strip__icon-container kpi-strip__icon-container--{% if item.variant %}{{ item.variant }}{% elif item.tone %}{{ item.tone }}{% else %}neutral{% endif %}"
-              aria-hidden="true">
-          {% include "partials/analytics/pl/_icon.html" with name=item.icon %}
+        <span class="kpi-strip__topline">
+          <span class="kpi-strip__icon-container kpi-strip__icon-container--{% if item.variant %}{{ item.variant }}{% elif item.tone %}{{ item.tone }}{% else %}neutral{% endif %}"
+                aria-hidden="true">
+            {% include "partials/analytics/pl/_icon.html" with name=item.icon %}
+          </span>
+          {% if item.trend and item.trend.value %}
+          <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
+            {% if item.trend.direction == 'up' %}↗{% elif item.trend.direction == 'down' %}↘{% endif %}
+            {{ item.trend.value }}
+          </span>
+          {% elif item.status %}
+          <span class="kpi-strip__trend kpi-strip__trend--neutral">{{ item.status }}</span>
+          {% elif item.data_state and not item.is_measured %}
+          <span class="kpi-strip__trend kpi-strip__trend--neutral">Pending</span>
+          {% else %}
+          <span class="kpi-strip__trend kpi-strip__trend--neutral">Current</span>
+          {% endif %}
         </span>
 
         <span class="kpi-strip__item-details">
@@ -67,26 +90,22 @@
               the split label/value pair for assistive tech.
             {% endcomment %}
             <span class="sr-only">{{ item.accessible_description }}</span>
-            <span class="kpi-strip__label" aria-hidden="true" title="{{ item.label }}">{{ item.label }}</span>
+            <span class="kpi-strip__label" aria-hidden="true" title="{% firstof item.canonical_label item.label %}">{% firstof item.label item.canonical_label %}</span>
             <span class="kpi-strip__value" aria-hidden="true">{% firstof item.display_value item.value %}</span>
           {% else %}
-            <span class="kpi-strip__label" title="{{ item.label }}">{{ item.label }}</span>
+            <span class="kpi-strip__label" title="{% firstof item.canonical_label item.label %}">{% firstof item.label item.canonical_label %}</span>
             <span class="kpi-strip__value">{% firstof item.display_value item.value %}</span>
           {% endif %}
-          {% if item.trend or item.helper or item.meta %}
+          {% if item.helper or item.meta %}
           <span class="kpi-strip__meta">
-            {% if item.trend and item.trend.value %}
-            <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
-              {% if item.trend.direction == 'up' %}↗{% elif item.trend.direction == 'down' %}↘{% endif %}
-              {{ item.trend.value }}
-            </span>
-            {% endif %}
             {% if item.helper %}<span class="kpi-strip__helper">{{ item.helper }}</span>{% elif item.meta %}<span class="kpi-strip__helper">{{ item.meta }}</span>{% endif %}
           </span>
           {% endif %}
         </span>
 
-      {% if drilldown_mode == "program_lead" and item.link %}
+      {% if item.hx_get %}
+      </button>
+      {% elif drilldown_mode == "program_lead" and item.link %}
       </button>
       {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
       </a>

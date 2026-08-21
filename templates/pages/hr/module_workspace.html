@@ -41,7 +41,7 @@ every authenticated page.
   {% include "components/analytics_decision_frame.html" with question="Where are workforce capacity, review workload or compliance gaps most likely to constrain delivery?" evidence="Live workforce, review and compliance records" freshness="Current operational scope" confidence="No unsupported demographic inference" %}
   {% endif %}
 
-  {% include "components/kpi_strip.html" with items=metrics title=title|add:" summary" %}
+  {% include "components/kpi_strip.html" with items=metrics variant="executive" title=title|add:" context" %}
 
   <section class="hcos-register" aria-labelledby="hcos-register-title">
     <header class="hcos-register__header">

@@ -47,11 +47,15 @@ is a percentage of.
 
 from apps.core.metrics.money import format_ugx_compact
 from apps.core.metrics.payload import (
+    PresentationKpi,
     RenderedMetric,
     accessible_description,
+    consolidate_kpi_items,
     format_value,
     render_kpi_item,
     render_metric,
+    render_precomputed_metric_for_source,
+    render_precomputed_metric_item,
     render_strip,
 )
 from apps.core.metrics.ratio import percentage, percentage_or_zero
@@ -90,11 +94,13 @@ __all__ = [
     "MetricSpec",
     "MetricValue",
     "Period",
+    "PresentationKpi",
     "RenderedMetric",
     "Unit",
     "accessible_description",
     "all_metrics",
     "check",
+    "consolidate_kpi_items",
     "format_ugx_compact",
     "format_value",
     "get_metric",
@@ -103,5 +109,7 @@ __all__ = [
     "percentage_or_zero",
     "render_metric",
     "render_kpi_item",
+    "render_precomputed_metric_for_source",
+    "render_precomputed_metric_item",
     "render_strip",
 ]

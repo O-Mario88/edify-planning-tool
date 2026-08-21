@@ -249,7 +249,9 @@ class NextActionOwnerTest(PartnerOversightFixture):
         activity.evidence_status = "uploaded"
         activity.save()
         item = svc.build_items(self.pl_user, fy=self.fy)[0]
-        self.assertEqual(item.next_action_owner, "James")
+        # §10 direct IA handoff: evidence captured but unsubmitted is the
+        # PARTNER's move (submit to IA) — no CCEO review stage exists.
+        self.assertEqual(item.next_action_owner, "Partner X")
         self.assertIn("evidence", item.next_action.lower())
 
         activity.status = "salesforce_id_required"
@@ -304,3 +306,62 @@ class QueryBudgetTest(PartnerOversightFixture):
             baseline,
             "query count grew with the number of handovers",
         )
+
+
+class PartnerWorkReachesItsSupervisorsTest(PartnerOversightFixture):
+    """Owning the school or cluster is what makes partner work visible.
+
+    A partner-delivered activity carries no responsible staff member by
+    construction, and `monitored_by_staff_id` records whoever happened to be
+    resolved at handoff. Scoping planning oversight on those two columns alone
+    meant a school's own CCEO saw 6 of the 233 partner activities running in
+    their portfolio, and a Program Lead — who supervises rather than owns —
+    saw none at all. Both were reading a page whose whole purpose is watching
+    partner delivery.
+    """
+
+    def _partner_activity_monitored_by_someone_else(self):
+        """The realistic shape: handed off by a colleague, not by the owner."""
+        assignment = self.assign()
+        activity = self.schedule(assignment)
+        # Both legacy columns empty, which is the case the ownership arms
+        # exist for: `monitoring_staff_id` is nullable and every row written
+        # before it existed has none, so nothing but ownership can reach this.
+        Activity.objects.filter(id=activity.id).update(
+            responsible_staff_id=None,
+            monitored_by_staff_id=None,
+        )
+        School.objects.filter(id=self.school.id).update(
+            account_owner_id=self.cceo.id
+        )
+        return activity
+
+    def _partner_items(self, user):
+        from apps.planning import oversight_service
+
+        return [
+            item
+            for item in oversight_service.build_items(user, fy=self.fy)
+            if item.is_partner_work and item.activity_id
+        ]
+
+    def test_the_school_owner_sees_partner_work_they_did_not_hand_off(self):
+        activity = self._partner_activity_monitored_by_someone_else()
+
+        found = self._partner_items(self.cceo_user)
+
+        self.assertEqual([i.activity_id for i in found], [activity.id])
+
+    def test_the_supervising_program_lead_sees_it_too(self):
+        activity = self._partner_activity_monitored_by_someone_else()
+
+        found = self._partner_items(self.pl_user)
+
+        self.assertEqual([i.activity_id for i in found], [activity.id])
+
+    def test_an_unrelated_program_lead_still_sees_nothing(self):
+        self._partner_activity_monitored_by_someone_else()
+
+        found = self._partner_items(self.rival_pl_user)
+
+        self.assertEqual([i.activity_id for i in found], [])

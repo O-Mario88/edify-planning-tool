@@ -9,6 +9,8 @@ omitted when there's no prior-period data to compare against honestly.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from collections import Counter
 from datetime import date, timedelta
 
@@ -171,70 +173,70 @@ class FieldDebriefDashboardService:
         prev_peer_solutions = sum(r.peer_solutions.count() for r in prev_rows)
 
         return [
-            {
-                "key": "submitted",
-                "icon": "report",
-                "variant": "primary",
-                "label": "Debriefs Submitted",
-                "value": str(submitted),
-                "trend": _pct_delta(submitted, prev_submitted),
-            },
-            {
-                "key": "completed",
-                "icon": "signoff",
-                "variant": "success",
-                "label": "Activities Completed",
-                "value": str(completed),
-                "trend": _pct_delta(completed, prev_completed),
-            },
-            {
-                "key": "partial",
-                "icon": "clock",
-                "variant": "warning",
-                "label": "Partially Completed",
-                "value": str(partial),
-                "trend": _pct_delta(partial, prev_partial),
-            },
-            {
-                "key": "unsuccessful",
-                "icon": "warning",
-                "variant": "danger",
-                "label": "Unsuccessful / Cancelled",
-                "value": str(unsuccessful),
-                "trend": _pct_delta(unsuccessful, prev_unsuccessful),
-            },
-            {
-                "key": "action_required",
-                "icon": "target",
-                "variant": "warning",
-                "label": "Action Required",
-                "value": str(action_required),
-                "trend": _pct_delta(action_required, prev_action_required),
-            },
-            {
-                "key": "critical",
-                "icon": "warning",
-                "variant": "danger",
-                "label": "Critical Escalations",
-                "value": str(critical),
-                "trend": _pct_delta(critical, prev_critical),
-            },
-            {
-                "key": "open_commitments",
-                "icon": "handshake",
-                "variant": "default",
-                "label": "Open Commitments",
-                "value": str(open_commitments),
-                "trend": _pct_delta(open_commitments, prev_open_commitments),
-            },
-            {
-                "key": "peer_solutions",
-                "icon": "users",
-                "variant": "primary",
-                "label": "Peer Solutions",
-                "value": str(peer_solutions),
-                "trend": _pct_delta(peer_solutions, prev_peer_solutions),
-            },
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_debriefs_submitted",
+                str(submitted),
+                key="submitted",
+                icon="report",
+                variant="primary",
+                trend=_pct_delta(submitted, prev_submitted),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_activities_completed",
+                str(completed),
+                key="completed",
+                icon="signoff",
+                variant="success",
+                trend=_pct_delta(completed, prev_completed),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_partially_completed",
+                str(partial),
+                key="partial",
+                icon="clock",
+                variant="warning",
+                trend=_pct_delta(partial, prev_partial),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_unsuccessful_cancelled",
+                str(unsuccessful),
+                key="unsuccessful",
+                icon="warning",
+                variant="danger",
+                trend=_pct_delta(unsuccessful, prev_unsuccessful),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_action_required",
+                str(action_required),
+                key="action_required",
+                icon="target",
+                variant="warning",
+                trend=_pct_delta(action_required, prev_action_required),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_critical_escalations",
+                str(critical),
+                key="critical",
+                icon="warning",
+                variant="danger",
+                trend=_pct_delta(critical, prev_critical),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_open_commitments",
+                str(open_commitments),
+                key="open_commitments",
+                icon="handshake",
+                variant="default",
+                trend=_pct_delta(open_commitments, prev_open_commitments),
+            ),
+            render_precomputed_metric_item(
+                "debriefs_dashboard_service_peer_solutions",
+                str(peer_solutions),
+                key="peer_solutions",
+                icon="users",
+                variant="primary",
+                trend=_pct_delta(peer_solutions, prev_peer_solutions),
+            ),
         ]
 
     @staticmethod

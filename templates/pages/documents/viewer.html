@@ -1,10 +1,15 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}{{ document.title }} — Edify{% endblock %}
 
+{% block feature_head_js %}
+<script src="{% static 'js/document-reading-tracker.js' %}?v=20260817reading1"></script>
+{% endblock %}
+
 {% block shell_content %}
 <div class="p-4 sm:p-6 max-w-6xl mx-auto space-y-4" data-mobile-family="knowledge"
-     x-data="documentViewer({ versionId: '{{ version.id|default:"" }}', pageCount: {{ version.page_count|default:0 }} })">
+     x-data="documentReadingTracker({ versionId: '{{ version.id|default:"" }}', pageCount: {{ version.page_count|default:0 }}, initialSeconds: {{ acknowledgement.active_reading_seconds|default:0 }}, requiredSeconds: {{ document.required_reading_seconds }} })">
 
   <header class="edify-page-header">
     <div class="min-w-0 edify-page-header__lead">
@@ -21,7 +26,7 @@
     {% if version.page_count %}<span class="tabular-nums">{{ version.page_count }} pages</span>{% endif %}
     <span class="ml-auto flex items-center gap-2">
       {% if can_download %}<a href="/documents/{{ document.slug }}/download" class="h-8 px-3 rounded-control border border-slate-200 font-bold text-slate-600 inline-flex items-center">Download</a>{% endif %}
-      {% if can_print %}<button type="button" @click="recordPrint()" class="h-8 px-3 rounded-control border border-slate-200 font-bold text-slate-600">Print</button>{% endif %}
+      {% if can_print %}<button type="button" @click="recordPrint('/documents/{{ document.slug }}/print')" class="h-8 px-3 rounded-control border border-slate-200 font-bold text-slate-600">Print</button>{% endif %}
       {% if acknowledgement %}<a href="/policy-agreement" class="h-8 px-3 rounded-control edify-primary-solid text-white font-bold inline-flex items-center">Return to Agreement</a>{% endif %}
     </span>
   </div>
@@ -34,8 +39,14 @@
       {% if acknowledgement.due_date %} Due {{ acknowledgement.due_date|date:"d M Y" }}.{% endif %}
     </p>
     <p class="edify-text-caption font-semibold text-slate-400 mt-1">
-      Active reading time <span class="tabular-nums" x-text="readingLabel"></span> · this measures time the document was open and visible, not whether it was read or understood.
+      Active reading time <strong class="tabular-nums text-slate-600" x-text="readingLabel"></strong>
+      of <span class="tabular-nums" x-text="requiredReadingLabel"></span> required ·
+      <span class="font-bold" :class="readingStatus === 'Completed reading' ? 'text-emerald-600' : (readingStatus === 'Did not read' ? 'text-rose-600' : 'text-amber-600')" x-text="readingStatus"></span>
     </p>
+    <div class="mt-2 h-1.5 overflow-hidden rounded-pill bg-slate-100" role="progressbar" :aria-valuenow="readingProgress" aria-valuemin="0" aria-valuemax="100" aria-label="Required active reading time">
+      <div class="h-full rounded-pill edify-primary-solid transition-[width] duration-500" :style="`width: ${readingProgress}%`"></div>
+    </div>
+    <p class="edify-text-caption font-medium text-slate-400 mt-1">Only foreground, focused time is counted. Agreement and reading completion are recorded separately.</p>
   </div>
   {% endif %}
 
@@ -54,55 +65,4 @@
   </div>
   {% endif %}
 </div>
-
-<script>
-  document.addEventListener('alpine:init', () => {
-    Alpine.data('documentViewer', ({ versionId, pageCount }) => ({
-      activeSeconds: 0,
-      timer: null,
-      get readingLabel() {
-        const m = Math.floor(this.activeSeconds / 60), s = this.activeSeconds % 60;
-        return m ? `${m}m ${s}s` : `${s}s`;
-      },
-      init() {
-        if (!versionId) return;
-        /* Time accrues only while this tab is visible. A document left open on
-           a locked laptop is not being read, and counting it would turn the
-           engagement figure into a number nobody should trust. */
-        this.timer = setInterval(() => {
-          if (document.visibilityState !== 'visible') return;
-          this.beat();
-        }, 15000);
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') this.beat();
-        });
-        this.beat();
-      },
-      destroy() { if (this.timer) clearInterval(this.timer); },
-      async beat() {
-        try {
-          const body = new URLSearchParams({ page: String(pageCount || 1) });
-          const res = await fetch(`/api/documents/engagement/${versionId}`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': this.csrf(), 'Content-Type': 'application/x-www-form-urlencoded' },
-            body,
-          });
-          if (res.ok) { const data = await res.json(); this.activeSeconds = data.active_seconds; }
-        } catch (e) { /* engagement tracking must never break the reader */ }
-      },
-      async recordPrint() {
-        try {
-          await fetch(`/documents/{{ document.slug }}/print`, {
-            method: 'POST', headers: { 'X-CSRFToken': this.csrf() },
-          });
-        } catch (e) { /* ignore */ }
-        window.print();
-      },
-      csrf() {
-        const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
-        return m ? m[1] : '';
-      },
-    }));
-  });
-</script>
 {% endblock %}

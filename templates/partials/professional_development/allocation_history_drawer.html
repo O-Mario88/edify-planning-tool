@@ -10,7 +10,7 @@
   {% for h in history %}
   <div class="rounded-surface border border-slate-100 p-3.5">
     <div class="flex items-center justify-between">
-      <p class="text-[12.5px] font-bold text-slate-800">FY {{ h.fy }}</p>
+      <p class="text-[13px] font-bold text-slate-800">FY {{ h.fy }}</p>
       <span class="edify-text-caption font-bold text-slate-400">{{ h.request_count }} request{{ h.request_count|pluralize }} · {{ h.completed_count }} completed</span>
     </div>
     <div class="grid grid-cols-4 gap-2 mt-2 edify-text-caption">

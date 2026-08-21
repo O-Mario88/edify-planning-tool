@@ -37,9 +37,9 @@ def _split_todos(principal) -> tuple[list, list]:
     critical/high/medium/low and status_key, with action_url/description) —
     the seam that silently breaks if either side invents keys."""
 
-    from apps.command_center.todo_service import get_todos
+    from apps.command_center.todo_service import get_cached_todos
 
-    payload = get_todos(principal)
+    payload = get_cached_todos(principal)
     todos = payload.get("todos", [])
     exceptions = [
         todo

@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 
 {% block title %}To-Do — Edify{% endblock %}
 
@@ -31,15 +32,12 @@
     </div>
   </div>
 
-  <!-- KPI strip -->
-  <div class="edify-kpi-strip grid grid-cols-3 sm:grid-cols-6 gap-3" aria-label="To-do summary">
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ counts.total }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Critical</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.critical }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-amber-600">Due Today</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ counts.due_today }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-rose-500">Overdue</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.overdue }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider edify-primary-text">Waiting on Me</p><p class="text-[22px] font-bold edify-primary-text tabular-nums leading-none mt-1">{{ counts.waiting_me }}</p></div>
-    <div class="card p-3.5"><p class="edify-text-caption font-bold uppercase tracking-wider text-slate-500">Blocked</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ counts.blocked }}</p></div>
-  </div>
+  {% legacy_kpi_item "Critical" counts.critical helper="Highest-priority work" tone="danger" icon="warning" as critical_kpi %}
+  {% legacy_kpi_item "Due today" counts.due_today helper="Complete before day end" tone="warning" icon="clock" as due_kpi %}
+  {% legacy_kpi_item "Overdue" counts.overdue helper="Past the required date" tone="danger" icon="calendar" as overdue_kpi %}
+  {% legacy_kpi_item "Waiting on me" counts.waiting_me helper="Your decision is next" tone="primary" icon="target" as waiting_kpi %}
+  {% collect_kpi_items critical_kpi due_kpi overdue_kpi waiting_kpi as todo_kpis %}
+  {% include "components/kpi_strip.html" with items=todo_kpis variant="executive" title="Work requiring attention" %}
 
   {% if total %}
   <!-- Filters -->

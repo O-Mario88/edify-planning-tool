@@ -110,7 +110,16 @@ class PartnerPaymentGuardTests(TestCase):
         self._pay()
         with self.assertRaises(BadRequest) as ctx:
             self._pay()
-        self.assertIn("already recorded", str(ctx.exception).lower())
+        message = str(ctx.exception).lower()
+        # Either refusal is safe: the balance clamp ("already fully paid")
+        # fires before the per-instalment idempotency guard since the MOU
+        # split (2026-08-18).
+        self.assertTrue(
+            "already recorded" in message
+            or "already fully paid" in message
+            or "already cleared" in message,
+            message,
+        )
 
     def test_advance_funded_work_cannot_also_be_partner_paid(self):
         """The cross-channel guard the inline implementation lacked entirely."""
@@ -149,7 +158,9 @@ class PartnerFilterUnificationTests(TestCase):
     """Four surfaces, four different definitions of the same queue."""
 
     def test_one_shared_payable_definition(self):
-        self.assertEqual(PARTNER_PAYABLE_STATUSES, ("none", "ia_confirmed"))
+        self.assertEqual(
+            PARTNER_PAYABLE_STATUSES, ("none", "ia_confirmed", "disbursed")
+        )
         self.assertEqual(PARTNER_PAID_STATUSES, ("disbursed", "paid"))
 
     def test_surfaces_import_the_constant_rather_than_inlining(self):

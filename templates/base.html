@@ -71,20 +71,20 @@ inset themselves — see components/mobile-shell.css.
      downloaded and parsed. -->
 <link rel="preload" href="{% static 'fonts/Geist-Variable.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-<link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260809geist1">
+<link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260811geist2">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260818nav2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260811geist2">
-    <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260817roundcontrols1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260821foundation1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260821uiaudit1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260817compactsearch1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260812tables1">
-  <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260812tables2">
+<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260819homeonly1">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260821uiaudit1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,144 +98,21 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260821uiaudit1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260812tables1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260818type7">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260816filter2">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260820kpi2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260812checkbox1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260816resilience1">
 <!-- How controls answer a pointer — hover inversion and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260809press1">
+<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260818tabs5">
 
-<style>
-/* All design tokens live in design-system.css. This block only consumes them.
-   Card elevation, topbar glass, and component styling live in components.css. */
-
-/* Alpine: hide x-cloak elements until Alpine initializes. */
-[x-cloak] { display: none !important; }
-
-/* Body — token-driven, adapts to light/dark automatically. */
-body {
-  font-family: var(--edify-font-sans);
-  font-size-adjust: from-font;
-  background-color: var(--edify-bg);
-  background-image: var(--edify-canvas-treatment);
-  background-position: center 28%;
-  background-size: cover;
-  background-attachment: fixed;
-  color: var(--edify-text);
-  font-size: var(--edify-text-body-size);
-  line-height: var(--edify-text-body-leading);
-  letter-spacing: var(--edify-text-body-tracking);
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Custom scrollbars — token-driven */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--edify-scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--edify-scrollbar-thumb); border-radius: var(--edify-radius-pill); }
-::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
-
-/* Hover-revealed row actions stay reachable on touch + keyboard. */
-@media (hover: none) {
-  .group .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
-}
-.opacity-0.group-hover\:opacity-100:focus-visible,
-.group:focus-within .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
-
-/* Primary buttons map to the accent blue. */
-button.edify-primary-solid, a.edify-primary-solid,
-button.edify-primary-solid, a.edify-primary-solid,
-button.edify-primary-solid, a.edify-primary-solid {
-  background-color: var(--edify-accent);
-  color: var(--edify-on-accent);
-  font-weight: var(--edify-text-title-weight);
-  border-radius: var(--edify-radius-md);
-  transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
-}
-button.edify-primary-solid:hover, a.edify-primary-solid:hover,
-button.edify-primary-solid:hover, a.edify-primary-solid:hover,
-button.edify-primary-solid:hover, a.edify-primary-solid:hover {
-  background-color: var(--edify-accent-hover);
-  transform: translateY(-1px);
-}
-
-/* Secondary/outline buttons. */
-button.border-slate-200, a.border-slate-200,
-button.border-slate-300, a.border-slate-300 {
-  background-color: var(--edify-surface);
-  border: 1px solid var(--edify-border-strong);
-  color: var(--edify-accent);
-  border-radius: var(--edify-radius-md);
-}
-button.border-slate-200:hover, a.border-slate-200:hover,
-button.border-slate-300:hover, a.border-slate-300:hover {
-  background-color: var(--edify-accent-light);
-}
-
-/* Table headers. */
-table th {
-  color: var(--edify-text-muted);
-  font-weight: var(--edify-text-label-weight);
-  text-transform: uppercase;
-  letter-spacing: var(--edify-text-micro-tracking);
-  font-size: var(--edify-text-micro-size);
-}
-table tbody tr:hover { background-color: var(--edify-accent-light); }
-
-/* Form fields — :where() keeps specificity zero so Tailwind utilities win. */
-:where(input[type="text"], input[type="search"], input[type="number"],
-input[type="email"], input[type="password"], input[type="tel"],
-input[type="date"], input[type="datetime-local"], select, textarea) {
-  border: 1px solid var(--edify-border);
-  background-color: var(--edify-surface);
-  border-radius: var(--edify-radius-sm);
-  color: var(--edify-text);
-  font-size: var(--edify-text-body-size);
-  font-family: var(--edify-font-sans);
-  padding: 8px 12px;
-  outline: none;
-  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
-}
-:where(input[type="text"], input[type="search"], input[type="number"],
-input[type="email"], input[type="password"], input[type="tel"],
-input[type="date"], input[type="datetime-local"], select, textarea):focus-visible {
-  border-color: var(--edify-accent);
-  box-shadow: var(--edify-focus-ring);
-}
-
-@media (max-width: 48rem), (pointer: coarse) {
-  /* Only text-entry fields need a 48px control box. Applying this to native
-     checkboxes/radios enlarged their focus geometry into a blue square on
-     touch devices; their associated labels own the 48px tap target instead. */
-  :where(input[type="text"], input[type="search"], input[type="number"],
-  input[type="email"], input[type="password"], input[type="tel"],
-  input[type="url"], input[type="date"], input[type="datetime-local"],
-  input[type="time"], select, textarea) {
-    min-height: 48px;
-    font-size: 1rem;
-  }
-}
-
-/* Transitions on interactive elements live in components.css (INTERACTION
-   LAYER), which owns hover, press and reduced-motion together.
-
-   What was here did nothing, and was the larger half of why controls felt
-   stiff. `--edify-transition-fast` is a full shorthand — "150ms cubic-bezier(
-   0.4, 0, 0.2, 1)" — so feeding it to `transition-duration` produced an
-   invalid declaration that the parser drops, leaving the initial 0s. Every
-   button and link on the platform changed state instantaneously, with no
-   transition at all, while looking in the stylesheet as though it had one.
-   Element-level specificity meant it also silently outranked any zero
-   specificity rule that tried to supply one. */
-</style>
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
 
@@ -289,6 +166,36 @@ input[type="date"], input[type="datetime-local"], select, textarea):focus-visibl
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
+{% comment %}
+Workspace switches are real document navigations, not in-page tabs. Ask the
+browser to fetch the small set of sibling views before a likely click so the
+next document is ready without turning the application into a fragile global
+HTMX shell. The active analytics group's menu is intentionally eager (normally
+two or three destinations); wider workspace rails, sidebar destinations and
+the mobile navigation wait for pointer/keyboard intent, which avoids firing
+every expensive report in the background. Unsupported browsers ignore this
+progressive enhancement.
+{% endcomment %}
+<script type="speculationrules">
+{
+  "prefetch": [
+    {
+      "source": "document",
+      "where": {
+        "selector_matches": ".edify-section-nav__view-link[href]:not([aria-current])"
+      },
+      "eagerness": "eager"
+    },
+    {
+      "source": "document",
+      "where": {
+        "selector_matches": ".edify-section-nav__link[href]:not([aria-current]), .edify-section-nav__cluster[href]:not([aria-current]), .app-sidebar__item[href]:not([aria-current]), .edify-bottom-nav__item[href]:not([aria-current])"
+      },
+      "eagerness": "moderate"
+    }
+  ]
+}
+</script>
 {% comment %}
 Owns the background state while a drawer is open (inert + scroll lock), so no
 drawer has to remember to undo it. Each drawer used to snapshot and restore

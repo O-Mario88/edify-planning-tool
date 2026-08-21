@@ -14,8 +14,31 @@ from .models import (
 
 
 @transaction.atomic
+def _assert_priority_not_published(milestone) -> None:
+    """2026-08-20 priorities audit G4: publication locks the master. A
+    published priority's milestones must not be redefined, re-activated or
+    re-weighted through the definition surfaces — later changes go through
+    the amendment workflow, which records old value, new value, reason and
+    actor."""
+    from apps.core.exceptions import BadRequest as _BadRequest
+
+    from .models import StrategicPriorityStatus
+
+    priority = getattr(milestone, "priority", None)
+    if priority is not None and priority.status == StrategicPriorityStatus.PUBLISHED:
+        raise _BadRequest(
+            "This priority is published and locked — changes to its "
+            "milestones require an amendment, not a redefinition."
+        )
+
+
 def define_milestone(milestone, *, data: dict, principal):
-    milestone = PriorityMilestone.objects.select_for_update().get(pk=milestone.pk)
+    milestone = (
+        PriorityMilestone.objects.select_for_update(of=("self",))
+        .select_related("priority")
+        .get(pk=milestone.pk)
+    )
+    _assert_priority_not_published(milestone)
     required = {
         "canonicalTitle": "Canonical title",
         "metricKey": "Metric key",
@@ -90,7 +113,12 @@ def define_milestone(milestone, *, data: dict, principal):
 
 @transaction.atomic
 def approve_milestone(milestone, *, principal):
-    milestone = PriorityMilestone.objects.select_for_update().get(pk=milestone.pk)
+    milestone = (
+        PriorityMilestone.objects.select_for_update(of=("self",))
+        .select_related("priority")
+        .get(pk=milestone.pk)
+    )
+    _assert_priority_not_published(milestone)
     if (
         milestone.requires_definition
         or milestone.definition_status != MilestoneDefinitionStatus.DEFINED

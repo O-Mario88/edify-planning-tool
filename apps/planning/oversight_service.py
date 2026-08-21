@@ -424,8 +424,26 @@ def _activities_in_scope(
 
     if not scope.is_country:
         ids = scope.team_ids
+        # Ownership of the school and of the cluster are the third and fourth
+        # arms, and they are what make partner work visible.
+        #
+        # A partner-delivered activity carries NO responsible staff member by
+        # construction (_partner_schedule_from_assignment sets it to None), and
+        # `monitored_by_staff_id` records whoever happened to be resolved at
+        # handoff. So on the first two arms alone a school's own CCEO saw 6 of
+        # the 233 partner activities running in their portfolio, and a Program
+        # Lead — who supervises rather than owns — saw none of them at all.
+        #
+        # partner_oversight_service.build_items already reached this
+        # conclusion for handovers: owning the school is the durable claim
+        # because it does not depend on who clicked Handoff. The same holds
+        # for the activity that handover became, and the cluster arm carries
+        # the trainings, which have no school at all.
         qs = qs.filter(
-            Q(responsible_staff_id__in=ids) | Q(monitored_by_staff_id__in=ids)
+            Q(responsible_staff_id__in=ids)
+            | Q(monitored_by_staff_id__in=ids)
+            | Q(school__account_owner_id__in=ids)
+            | Q(cluster__responsible_staff_id__in=ids)
         )
     return list(qs)
 
@@ -610,9 +628,13 @@ def _activity_item(
 
     # The internal owner. For partner work the partner executes but a member of
     # staff remains answerable for it, and that person is the monitor — not the
-    # partner, and not whoever happened to hand it over.
+    # partner, and not whoever happened to hand it over. Rows that predate the
+    # partner-handoff fix never had a monitor stamped; for those the school's
+    # responsible CCEO is that person, so their partner-delivered plan items
+    # stay on their oversight tab (and in their fund plan) instead of falling
+    # off every member's tab.
     owner_id = (
-        activity.monitored_by_staff_id
+        (activity.monitored_by_staff_id or activity.responsible_staff_id)
         if is_partner
         else (activity.responsible_staff_id or activity.monitored_by_staff_id)
     )

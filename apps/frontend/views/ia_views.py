@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.contrib import messages
@@ -69,11 +70,12 @@ IA_VERIFICATION_SLA_HOURS = 24
 def ia_verification_queue_view(request):
     """Central queue of activities waiting for verification.
 
-    Defense-in-depth (2026-07-15 preventive-verification mandate §11): even
-    though the only paths into "awaiting_ia_verification" already require a
-    Salesforce ID (apps.activities.services.complete()), this queue's own
-    query excludes any activity without one — no future code path that sets
-    this status can silently skip the requirement."""
+    Defense-in-depth (2026-07-15 preventive-verification mandate §11): the
+    no-SF-ID exclusion below keeps STAFF submissions honest — their path
+    into "awaiting_ia_verification" requires a Salesforce ID at complete().
+    PARTNER submissions deliberately arrive WITHOUT one (IA enters it at
+    Confirm Salesforce Entry, §12) — they are therefore invisible here by
+    design and live in their own queue at /ia/partner-evidence/."""
     overdue_before = timezone.now() - timedelta(hours=IA_VERIFICATION_SLA_HOURS)
     activities = (
         Activity.objects.filter(
@@ -327,63 +329,59 @@ def ia_verification_queue_view(request):
         serialized_queue.append(data)
 
     kpi_items = [
-        {
-            "label": "Awaiting Verification",
-            "value": str(waiting_count),
-            "helper": "Active certification queue",
-            "icon": "clock",
-            "variant": "info",
-        },
-        {
-            "label": "Verified Today",
-            "value": f"+{verified_today}",
-            "helper": (
-                f"{sla_compliance:g}% within 24h"
-                if sla_compliance is not None
-                else "SLA tracking ready"
-            ),
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Returned Today",
-            "value": str(returned_today),
-            "helper": "Returned to field",
-            "icon": "warning",
-            "variant": "danger",
-        },
-        {
-            "label": "Avg Process SLA",
-            "value": f"{avg_hours:g}h" if avg_hours is not None else "—",
-            "helper": (
-                "30-day measured turnaround"
-                if avg_hours is not None
-                else "No measured cycle yet"
-            ),
-            "icon": "clock",
-            "variant": "info",
-        },
-        {
-            "label": "SSA Pending",
-            "value": str(ssa_pending),
-            "helper": "Needs collection",
-            "icon": "warning",
-            "variant": "warning",
-        },
-        {
-            "label": "Duplicate Risks",
-            "value": str(duplicate_risks),
-            "helper": "Potential duplicates",
-            "icon": "danger",
-            "variant": "danger",
-        },
-        {
-            "label": "High Priority",
-            "value": str(high_priority),
-            "helper": "Core visits/trainings",
-            "icon": "warning",
-            "variant": "warning",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_awaiting_verification",
+            str(waiting_count),
+            helper="Active certification queue",
+            icon="clock",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_verified_today",
+            f"+{verified_today}",
+            helper=f"{sla_compliance:g}% within 24h"
+            if sla_compliance is not None
+            else "SLA tracking ready",
+            icon="check",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_returned_today",
+            str(returned_today),
+            helper="Returned to field",
+            icon="warning",
+            variant="danger",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_avg_process_sla",
+            f"{avg_hours:g}h" if avg_hours is not None else "—",
+            helper="30-day measured turnaround"
+            if avg_hours is not None
+            else "No measured cycle yet",
+            icon="clock",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_ssa_pending",
+            str(ssa_pending),
+            helper="Needs collection",
+            icon="warning",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_duplicate_risks",
+            str(duplicate_risks),
+            helper="Potential duplicates",
+            icon="danger",
+            variant="danger",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_ia_views_high_priority",
+            str(high_priority),
+            helper="Core visits/trainings",
+            icon="warning",
+            variant="warning",
+        ),
     ]
 
     context = {
@@ -1627,3 +1625,214 @@ def activity_timeline_view(request, activity_id):
 
     context = {"act": a, "timeline": timeline}
     return render(request, "pages/ia/activity_timeline.html", context)
+
+
+# ── §10–12 Partner Evidence & Salesforce Confirmation ────────────────────────
+# Partner evidence comes DIRECTLY to IA. This is the dedicated queue: review
+# each submission against its plan, then Return (correction) or Complete
+# (Confirm Salesforce Entry). Completing records the Salesforce ID and opens
+# payment eligibility — it never marks the partner paid.
+
+
+def _partner_queue_row(a, partner_names, partner_users, today):
+    from apps.evidence.requirements import required_kinds_for_activity
+
+    needed = required_kinds_for_activity(a)
+    have = {e.kind for e in a.evidence.all() if not e.quarantined}
+    if needed:
+        met = sum(1 for k in needed if k in have)
+        evidence_label = f"{met}/{len(needed)} required"
+        evidence_complete = met == len(needed)
+    else:
+        evidence_label = f"{len(have)} file(s)"
+        evidence_complete = bool(have)
+    submitted = a.submitted_to_ia_at.date() if a.submitted_to_ia_at else None
+    age_days = (today - submitted).days if submitted else None
+    return {
+        "a": a,
+        "where": a.school.name
+        if a.school_id
+        else (a.cluster.name if a.cluster_id else "Field work"),
+        "partner_name": partner_names.get(a.assigned_partner_id, "—"),
+        "partner_officer": partner_users.get(a.assigned_partner_id, ""),
+        "evidence_label": evidence_label,
+        "evidence_complete": evidence_complete,
+        "submitted": submitted,
+        "age_days": age_days,
+    }
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_evidence_queue_view(request):
+    """§10.1 the queue: partner work awaiting IA verification."""
+    from apps.partners.models import Partner
+
+    qs = (
+        Activity.objects.filter(
+            delivery_type="partner",
+            status="awaiting_ia_verification",
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "school__district", "cluster")
+        .prefetch_related("evidence")
+        .order_by("submitted_to_ia_at")
+    )
+    total = qs.count()
+    activities = list(qs[:QUEUE_PAGE_SIZE])
+    partner_ids = {a.assigned_partner_id for a in activities if a.assigned_partner_id}
+    partners = Partner.objects.filter(id__in=partner_ids).select_related("user")
+    partner_names = {p.id: p.name for p in partners}
+    partner_users = {p.id: (p.user.name if p.user_id else "") for p in partners}
+    today = timezone.localdate()
+    rows = [
+        _partner_queue_row(a, partner_names, partner_users, today) for a in activities
+    ]
+    return render(
+        request,
+        "pages/ia/partner_evidence_queue.html",
+        {"rows": rows, "total": total, "shown": len(rows)},
+    )
+
+
+def _own_ia_partner_activity(activity_id):
+    return get_object_or_404(
+        Activity.objects.select_related("school", "school__district", "cluster"),
+        id=activity_id,
+        delivery_type="partner",
+        deleted_at__isnull=True,
+    )
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_review_view(request, activity_id):
+    """§10.2 the review page: plan vs actual, evidence, history — and the two
+    workflow decisions, Return and Complete."""
+    from apps.partners.models import Partner, PartnerAssignment
+    from apps.evidence.models import EvidenceRecord
+    from apps.evidence.requirements import checklist
+
+    a = _own_ia_partner_activity(activity_id)
+    partner = (
+        Partner.objects.filter(id=a.assigned_partner_id).select_related("user").first()
+    )
+    assignment = (
+        PartnerAssignment.objects.filter(scheduled_activity_id=a.id)
+        .select_related("source_ssa", "catalogue_item")
+        .first()
+    )
+    evidence = list(
+        EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).order_by(
+            "-created_at"
+        )
+    )
+    history = list(
+        VerificationHistory.objects.filter(activity_id=a.id).order_by("-created_at")[
+            :20
+        ]
+    )
+    can_decide = a.status == "awaiting_ia_verification"
+    return render(
+        request,
+        "pages/ia/partner_review.html",
+        {
+            "a": a,
+            "partner": partner,
+            "assignment": assignment,
+            "evidence": evidence,
+            "evidence_checklist": checklist(a),
+            "history": history,
+            "can_decide": can_decide,
+            "back_url": "/ia/partner-evidence/",
+        },
+    )
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_return_drawer(request, activity_id):
+    a = _own_ia_partner_activity(activity_id)
+    return render(
+        request,
+        "partials/ia/partner_return_drawer.html",
+        {"a": a, "drawer_size": "md"},
+    )
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_return_action(request, activity_id):
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required")
+    a = _own_ia_partner_activity(activity_id)
+    try:
+        from apps.activities.services import ia_return
+
+        ia_return(
+            a.id,
+            {
+                "reason": request.POST.get("reason", ""),
+                "correctionFields": request.POST.get("correction_fields", ""),
+                "instruction": request.POST.get("instruction", ""),
+                "deadline": request.POST.get("deadline", ""),
+            },
+            request.user,
+        )
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
+    from django.http import HttpResponse
+
+    response = HttpResponse(
+        '<script>window.location.href="/ia/partner-evidence/";</script>'
+    )
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_complete_drawer(request, activity_id):
+    """§12 Confirm Salesforce Entry — read-only summary + the required ID."""
+    from apps.evidence.models import EvidenceRecord
+
+    a = _own_ia_partner_activity(activity_id)
+    evidence_count = EvidenceRecord.objects.filter(
+        activity_id=a.id, quarantined=False
+    ).count()
+    return render(
+        request,
+        "partials/ia/partner_complete_drawer.html",
+        {
+            "a": a,
+            "evidence_count": evidence_count,
+            "today": timezone.localdate(),
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("ia_partner_evidence")
+def ia_partner_complete_action(request, activity_id):
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required")
+    a = _own_ia_partner_activity(activity_id)
+    try:
+        from apps.activities.services import ia_confirm
+
+        ia_confirm(
+            a.id,
+            {
+                "salesforceId": request.POST.get("salesforce_id", ""),
+                "verificationNote": request.POST.get("verification_note", ""),
+            },
+            request.user,
+        )
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
+    from django.http import HttpResponse
+
+    response = HttpResponse(
+        '<script>window.location.href="/ia/partner-evidence/";</script>'
+    )
+    response["HX-Trigger"] = "close-drawer"
+    return response

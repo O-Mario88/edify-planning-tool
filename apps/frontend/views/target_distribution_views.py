@@ -387,6 +387,32 @@ def _save_allocation_rows(request, milestone, *, scope, parent=None):
     reason = (request.POST.get("reason") or "").strip() or (
         "Uganda master annual distribution."
     )
+    # 2026-08-20 audit R2: RATE milestones carry each holder's eligible-
+    # portfolio DENOMINATOR, or coverage math falls into the units÷rate
+    # fallback. For a team scope the denominator is the supervised members'
+    # combined portfolio; for an employee scope, their own portfolio.
+    denominators: dict[str, int] = {}
+    if milestone.measurement_type == "percentage":
+        from apps.accounts.models import StaffSupervisorAssignment
+        from apps.hr.target_distribution import _portfolio_counts
+
+        holder_ids = [
+            key[len(prefix) :] for key in request.POST if key.startswith(prefix)
+        ]
+        if scope == "team":
+            for hid in holder_ids:
+                members = list(
+                    StaffSupervisorAssignment.objects.filter(
+                        supervisor_id=hid
+                    ).values_list("supervisee_id", flat=True)
+                ) + [hid]
+                counts = _portfolio_counts(members)
+                denominators[hid] = sum(row.get("total", 0) for row in counts.values())
+        else:
+            counts = _portfolio_counts(holder_ids)
+            denominators = {
+                hid: counts.get(hid, {}).get("total", 0) for hid in holder_ids
+            }
     saved, removed, locked = 0, 0, []
     for key in request.POST:
         if not key.startswith(prefix):
@@ -418,13 +444,33 @@ def _save_allocation_rows(request, milestone, *, scope, parent=None):
                 locked.append(existing)
             continue
         if existing is not None:
+            # 2026-08-20 audit G9: the bulk editor previously bypassed every
+            # create_allocation validation — enforce the same arithmetic
+            # rules on the update branch.
+            if value <= 0:
+                raise BadRequest("Allocated target must be greater than zero.")
+            try:
+                core_v = Decimal(raw_core) if raw_core else None
+                client_v = Decimal(raw_client) if raw_client else None
+            except InvalidOperation as exc:
+                raise BadRequest("Core/Client splits must be numeric.") from exc
+            if (core_v or 0) + (client_v or 0) > value:
+                raise BadRequest("Core plus Client cannot exceed the allocated target.")
+            if (
+                milestone.measurement_type == "count"
+                and value != value.to_integral_value()
+            ):
+                raise BadRequest("Count targets must be whole numbers.")
             existing.allocated_target = value
-            existing.core_target = Decimal(raw_core) if raw_core else None
-            existing.client_target = Decimal(raw_client) if raw_client else None
+            existing.core_target = core_v
+            existing.client_target = client_v
             existing.allocation_reason = reason
+            if holder_id in denominators:
+                existing.denominator = Decimal(denominators[holder_id])
             existing.save(
                 update_fields=[
                     "allocated_target",
+                    "denominator",
                     "core_target",
                     "client_target",
                     "allocation_reason",
@@ -438,6 +484,7 @@ def _save_allocation_rows(request, milestone, *, scope, parent=None):
             "allocatedTarget": raw,
             "coreTarget": raw_core or None,
             "clientTarget": raw_client or None,
+            "denominator": denominators.get(holder_id),
             "effectiveDate": timezone.localdate().isoformat(),
             "allocationReason": reason,
         }
@@ -647,3 +694,174 @@ def _assert_own_team(request, team_allocation) -> None:
         team_allocation.team_id
     ) != str(getattr(request.user, "staff_profile_id", "")):
         raise BadRequest("Program Leads distribute only their own team target.")
+
+
+@require_page_permission("priorities_master")
+def priority_dashboard_redirect(request):
+    """Send the retired Priority Dashboard path to the canonical Priorities page.
+
+    Query parameters ride along so a bookmarked financial year or filter still
+    lands where it meant to. The compatibility route declares the same page
+    permission as its destination so authorization scanners and direct route
+    access agree.
+    """
+    from django.shortcuts import redirect
+
+    query = request.META.get("QUERY_STRING", "")
+    return redirect(f"/priorities?{query}" if query else "/priorities")
+
+
+@require_page_permission("priorities_master")
+def priorities_master_page(request):
+    """The Uganda Master Priority Plan, in the source's own four columns:
+    Priorities · Milestones · Activities · Targets (§9 canonical content).
+
+    Every role sees the same canonical rows. The TARGET column is
+    role-scoped: CD, IA, RVP, HR and Admin read the country figure; a
+    Program Lead or CCEO reads THEIR OWN approved allocation — a CCEO
+    allocated 20 new schools sees 20 here, never the country's 1,000.
+    """
+
+    from decimal import Decimal
+
+    from django.contrib.humanize.templatetags.humanize import intcomma
+
+    from django.db import models
+
+    from apps.core.fy import fy_options
+    from apps.hr.models import (
+        MilestoneActivityRule,
+        MilestoneAllocation,
+        MilestoneTargetComponent,
+        StrategicPriority,
+        StrategicPriorityCycle,
+    )
+
+    raw_fy = (request.GET.get("fy") or "").strip()
+    if raw_fy:
+        fy = _requested_fy(request)
+    else:
+        fy = StrategicPriorityCycle.objects.exclude(status="archived").order_by(
+            "-financial_year"
+        ).values_list("financial_year", flat=True).first() or _requested_fy(request)
+
+    priorities = list(
+        StrategicPriority.objects.filter(
+            fy=fy, level="country", country_id="Uganda", cycle__isnull=False
+        )
+        .order_by("sequence")
+        .prefetch_related("milestones")
+    )
+    milestone_ids = [m.id for p in priorities for m in p.milestones.all()]
+
+    rules_by_milestone: dict[str, list[str]] = {}
+    for rule in MilestoneActivityRule.objects.filter(
+        milestone_id__in=milestone_ids, active=True
+    ).select_related("catalogue_item"):
+        label = rule.catalogue_item.display_name if rule.catalogue_item_id else ""
+        if label:
+            rules_by_milestone.setdefault(str(rule.milestone_id), []).append(label)
+
+    components_by_milestone: dict[str, list] = {}
+    for comp in MilestoneTargetComponent.objects.filter(
+        milestone_id__in=milestone_ids
+    ).order_by("sequence"):
+        components_by_milestone.setdefault(str(comp.milestone_id), []).append(comp)
+
+    # Role scoping: PL and CCEO read their own approved allocation.
+    role = getattr(request.user, "active_role", "")
+    scoped_roles = {"Program Lead", "CCEO", "ProjectCoordinator"}
+    is_scoped_viewer = role in scoped_roles
+    my_values: dict[str, Decimal] = {}
+    my_status: dict[str, str] = {}
+    if is_scoped_viewer:
+        staff_id = getattr(request.user, "staff_profile_id", None)
+        holder = (
+            MilestoneAllocation.objects.filter(
+                milestone_id__in=milestone_ids,
+                status__in=("draft", "approved"),
+            )
+            .filter(
+                models.Q(employee_id=staff_id)
+                | models.Q(team_id=staff_id, allocated_to_type="team")
+            )
+            .select_related("milestone")
+        )
+        for allocation in holder:
+            key = str(allocation.milestone_id)
+            # An employee allocation outranks the team row for the same
+            # milestone (a PL holds both once they self-allocate).
+            if key in my_values and allocation.allocated_to_type == "team":
+                continue
+            my_values[key] = allocation.allocated_target
+            my_status[key] = allocation.status
+
+    def _fmt_number(value, unit=""):
+        if value is None:
+            return ""
+        value = Decimal(value)
+        text = (
+            intcomma(int(value))
+            if value == value.to_integral_value()
+            else intcomma(value)
+        )
+        return f"{text} {unit}".strip() if unit not in ("", "percent") else text
+
+    def _target_display(m):
+        if m.recurrence_per_month:
+            per = _fmt_number(m.recurrence_per_month)
+            return f"{per} {m.target_unit or 'times'} per month"
+        if m.measurement_type == "percentage" and m.target_value is not None:
+            return f"{_fmt_number(m.target_value)}%"
+        if m.measurement_type == "date":
+            if m.due_date:
+                return f"by {m.due_date.strftime('%-d %b %Y')}"
+            return m.target_source_text or "—"
+        if m.target_value is not None:
+            return _fmt_number(m.target_value, m.target_unit or "")
+        source_tail = (m.target_source_text or "").rsplit("—", 1)
+        tail = source_tail[-1].strip() if len(source_tail) > 1 else ""
+        if tail.upper() == "NA" or (m.source_text or "").rstrip().endswith("NA"):
+            return "NA"
+        if m.measurement_type in ("manual_assessment", "qualitative") and tail:
+            return tail
+        return "—"
+
+    groups = []
+    total_rows = 0
+    for priority in priorities:
+        rows = []
+        for m in sorted(priority.milestones.all(), key=lambda x: x.source_order):
+            key = str(m.id)
+            mine = my_values.get(key)
+            rows.append(
+                {
+                    "milestone": m,
+                    "activities": rules_by_milestone.get(key, []),
+                    "components": components_by_milestone.get(key, []),
+                    "target_display": _target_display(m),
+                    "my_value": (
+                        _fmt_number(mine, m.target_unit or "")
+                        if mine is not None
+                        else None
+                    ),
+                    "my_is_draft": my_status.get(key) == "draft",
+                    "is_percent": m.measurement_type == "percentage",
+                }
+            )
+        total_rows += len(rows)
+        groups.append({"priority": priority, "rows": rows})
+
+    return render(
+        request,
+        "pages/hr/priorities_master.html",
+        {
+            "fy": fy,
+            "groups": groups,
+            "total_rows": total_rows,
+            "is_scoped_viewer": is_scoped_viewer,
+            "viewer_role": role,
+            "fy_options": fy_options(),
+            "use_dark_sidebar": True,
+        },
+    )

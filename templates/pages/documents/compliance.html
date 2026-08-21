@@ -13,7 +13,7 @@
     </div>
   </header>
 
-  {% include "components/kpi_strip.html" with items=kpis title="Policy compliance" %}
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Policy compliance" %}
 
   <div class="flex flex-wrap items-center gap-4 text-[12px] font-semibold text-slate-500">
     <span>Required <strong class="tabular-nums text-slate-700">{{ counts.required }}</strong></span>
@@ -55,9 +55,6 @@
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Active Reading Time</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Viewer Completion</th>
           <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Acknowledgement</th>
-          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Comment</th>
-          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Due</th>
-          <th scope="col" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 px-3 py-2.5">Next Action</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-50">
@@ -68,15 +65,17 @@
           <td class="px-3 py-2.5">{{ row.policy }}</td>
           <td class="px-3 py-2.5 tabular-nums">{{ row.version }}</td>
           <td class="px-3 py-2.5 tabular-nums">{{ row.first_opened|date:"d M" }}</td>
-          <td class="px-3 py-2.5 tabular-nums">{{ row.active_reading_time }}</td>
-          <td class="px-3 py-2.5">{{ row.viewer_completion }}</td>
+          <td class="px-3 py-2.5 tabular-nums">
+            <span class="font-bold text-slate-700">{{ row.active_reading_time }}</span>
+            <span class="block edify-text-caption text-slate-400">of {{ row.required_reading_time }} required</span>
+          </td>
+          <td class="px-3 py-2.5">
+            <span class="inline-flex rounded-pill px-2 py-1 edify-text-caption font-bold {% if row.viewer_completion_key == 'completed' or row.viewer_completion_key == 'completed_offline' %}bg-emerald-100 text-emerald-700{% elif row.viewer_completion_key == 'partial' %}bg-amber-100 text-amber-700{% elif row.viewer_completion_key == 'not_read' %}bg-rose-100 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">{{ row.viewer_completion }}</span>
+          </td>
           <td class="px-3 py-2.5">{{ row.state }}</td>
-          <td class="px-3 py-2.5">{{ row.comment_status }}</td>
-          <td class="px-3 py-2.5 tabular-nums">{% if row.due_date %}{{ row.due_date|date:"d M" }}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2.5">{{ row.next_action }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="11" class="p-12 text-center text-[12px] font-medium text-slate-400">No acknowledgement records in your scope yet.</td></tr>
+        <tr><td colspan="8" class="p-12 text-center text-[12px] font-medium text-slate-400">No acknowledgement records in your scope yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

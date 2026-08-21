@@ -71,6 +71,26 @@ def ugx(value):
 
 
 @register.filter
+def ugx_amount(value):
+    """The formatted amount without the UGX prefix, for tables whose column
+    header already carries the currency — e.g. "Total (UGX)"."""
+    if value is None or value == "":
+        return "0"
+    try:
+        return f"{float(value):,.0f}"
+    except (ValueError, TypeError):
+        return f"{value}"
+
+
+@register.filter
+def sub(value, arg):
+    try:
+        return int(value or 0) - int(arg or 0)
+    except (ValueError, TypeError):
+        return 0
+
+
+@register.filter
 def multiply(value, arg):
     try:
         return float(value) * float(arg)

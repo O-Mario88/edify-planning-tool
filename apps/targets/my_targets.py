@@ -1091,6 +1091,29 @@ class MyTargetQueryService:
             user=user, fy=fy, strategic_milestones=strategic_milestones
         )
 
+        from apps.core.metrics import PresentationKpi
+
+        area_kpi_items = []
+        for area in area_cards:
+            helper = area["status"]
+            if area["pct"] is not None:
+                helper = f"{area['pct']}% · {helper}"
+            value = f"{area['achieved']:,} / {area['target']:,}"
+            area_kpi_items.append(
+                PresentationKpi(
+                    label=area["label"],
+                    value=value,
+                    display_value=value,
+                    helper=helper,
+                    tone=area["tone"],
+                    icon="target",
+                    hx_get=(
+                        f"/my-targets/area-drawer?area={area['key']}"
+                        f"&fy={fy}&month={month_of_fy}"
+                    ),
+                )
+            )
+
         return {
             "fy": fy,
             "month_of_fy": month_of_fy,
@@ -1099,6 +1122,7 @@ class MyTargetQueryService:
             "is_current_fy": is_current_fy,
             "period_cards": cards,
             "area_cards": area_cards,
+            "area_kpi_items": area_kpi_items,
             "matrix_rows": matrix_rows,
             "overall_cells": overall_cells,
             "matrix_heads": [

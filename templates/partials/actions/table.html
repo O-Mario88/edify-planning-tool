@@ -28,7 +28,7 @@ the transition took.
        class="h-8 px-3 rounded-control edify-text-caption font-bold transition-all inline-flex items-center gap-1.5 no-underline {% if tab == key %}edify-primary-soft edify-primary-text ring-1 edify-primary-ring{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
       {{ label }}
       {% if key == "open" %}<span class="px-1.5 rounded-pill edify-text-caption bg-slate-100 text-slate-500">{{ counts.open }}</span>
-      {% elif key == "overdue" %}<span class="px-1.5 rounded-pill edify-text-caption bg-slate-100 text-slate-500">{{ counts.overdue }}</span>
+      {% elif key == "overdue" %}<span class="px-1.5 rounded-pill edify-text-caption {% if counts.overdue %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ counts.overdue }}</span>
       {% elif key == "resolved" %}<span class="px-1.5 rounded-pill edify-text-caption bg-slate-100 text-slate-500">{{ counts.resolved }}</span>
       {% else %}<span class="px-1.5 rounded-pill edify-text-caption bg-slate-100 text-slate-500">{{ counts.total }}</span>{% endif %}
     </a>

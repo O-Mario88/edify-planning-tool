@@ -8,6 +8,9 @@ no fabricated figures.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+from apps.hr.employee_relations_service import visible_cases
+
 from datetime import date, timedelta
 from django.db.models import Count, Q
 
@@ -29,7 +32,6 @@ from apps.hr.models import (
     EmployeeComplianceRecord,
     ComplianceRequirement,
     PayrollReadinessRecord,
-    EmployeeRelationsCase,
 )
 
 ROLE_LABELS = {
@@ -76,13 +78,52 @@ RECRUITMENT_FUNNEL_STAGES = [
 
 class HRDashboardService:
     @staticmethod
+    def _visible_profiles(user, country=None, department=None):
+        """The staff this viewer may see, honouring the page's own filters.
+
+        Every figure on this page used to be organisation-wide. HR is a
+        COUNTRY function (apps/hr/services.py says so in as many words), yet
+        the leave panel named employees and their leave TYPE — sick,
+        maternity — for every country in the org, and the CSV export stamped
+        the requested country into a Context column while exporting all of
+        them (2026-08-20 HR audit, Critical). The four filter arguments were
+        accepted and never applied, so changing them changed nothing.
+        """
+        profiles = StaffProfile.objects.select_related("user").filter(
+            user__deleted_at__isnull=True
+        )
+        role = getattr(user, "active_role", "")
+        viewer = getattr(user, "staff_profile", None)
+        if role != "Admin":
+            if role in {"Program Lead", "ProgramLead"} and viewer:
+                profiles = profiles.filter(
+                    Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
+                ).distinct()
+            elif viewer and viewer.country:
+                profiles = profiles.filter(country=viewer.country)
+            else:
+                profiles = profiles.none()
+        # A filter may narrow the scope; it may never widen it.
+        if country and country not in ("", "all", "All"):
+            profiles = profiles.filter(country=country)
+        if department and department not in ("", "all", "All"):
+            profiles = profiles.filter(department=department)
+        return profiles
+
+    @staticmethod
     def get_dashboard(user, fy=None, month=None, country=None, department=None) -> dict:
         today = date.today()
         today_iso = today.isoformat()
         wk_end_iso = (today + timedelta(days=7)).isoformat()
 
-        # Base user filter
-        staff_query = Q(is_active=True, deleted_at__isnull=True)
+        visible = HRDashboardService._visible_profiles(user, country, department)
+        profile_ids = list(visible.values_list("id", flat=True))
+        scope_label, scope_warning = HRDashboardService._scope_label(
+            user, country, department, len(profile_ids)
+        )
+        user_ids = [uid for uid in visible.values_list("user_id", flat=True) if uid]
+
+        staff_query = Q(is_active=True, deleted_at__isnull=True, id__in=user_ids)
 
         staff = User.objects.filter(staff_query)
         headcount = staff.count()
@@ -96,18 +137,21 @@ class HRDashboardService:
 
         # KPI 3: New Hires Onboarding
         new_hires_onboarding = OnboardingPlan.objects.filter(
+            staff_id__in=profile_ids,
             status__in=[
                 "Initiated",
                 "Documents Pending",
                 "Orientation Pending",
                 "Role Training Pending",
-            ]
+            ],
         ).count()
 
         # KPI 4: Staff On Track — derived from completed PerformanceReview
         # ratings (the real Strong/Fair/At Risk classification HR already
         # runs), not a target-pacing engine — see report for the judgment call.
-        completed_reviews = PerformanceReview.objects.filter(status="Completed")
+        completed_reviews = PerformanceReview.objects.filter(
+            status="Completed", staff_id__in=profile_ids
+        )
         completed_reviews_total = completed_reviews.count()
         staff_on_track_pct = (
             round(
@@ -123,51 +167,76 @@ class HRDashboardService:
 
         # KPI 5: High-Risk Staff
         high_risk_staff = PerformanceImprovementPlan.objects.filter(
-            status="Active"
+            status="Active", staff_id__in=profile_ids
         ).count()
 
         # KPI 6: On Leave Today
         on_leave_today_qs = Leave.objects.filter(
-            status="approved", start_date__lte=today_iso, end_date__gte=today_iso
+            status="approved",
+            start_date__lte=today_iso,
+            end_date__gte=today_iso,
+            staff_id__in=profile_ids,
         )
         employees_on_leave = on_leave_today_qs.count()
 
         # KPI 7: Coverage Clashes (7d)
-        coverage_conflicts = HRDashboardService._coverage_clashes(today, wk_end_iso)
+        coverage_conflicts = HRDashboardService._coverage_clashes(
+            today, wk_end_iso, profile_ids
+        )
 
         # KPI 8: Pending Leave Approvals
-        pending_leave_approvals = Leave.objects.filter(status="pending").count()
+        pending_leave_approvals = Leave.objects.filter(
+            status="pending", staff_id__in=profile_ids
+        ).count()
 
         # KPI 9: Performance Reviews Due
-        reviews_due = PerformanceReview.objects.exclude(status="Completed").count()
+        reviews_due = (
+            PerformanceReview.objects.filter(staff_id__in=profile_ids)
+            .exclude(status="Completed")
+            .count()
+        )
 
         # KPI 10: Compliance Completion
-        compliance_total = EmployeeComplianceRecord.objects.count()
+        # A percentage over an empty table is not 0% — it is "we have not
+        # recorded any of this yet". Rendering it as 0% told HR they were
+        # failing a check nothing in the platform can currently populate
+        # (2026-08-20 HR audit).
+        compliance_records = EmployeeComplianceRecord.objects.filter(
+            staff_id__in=profile_ids
+        )
+        compliance_total = compliance_records.count()
         if compliance_total > 0:
-            compliant_count = EmployeeComplianceRecord.objects.filter(
-                status="Compliant"
-            ).count()
+            compliant_count = compliance_records.filter(status="Compliant").count()
             compliance_completion_pct = round(
                 (compliant_count / compliance_total) * 100
             )
+            compliance_display = f"{compliance_completion_pct}%"
+            compliance_helper = "documents verified"
         else:
             compliance_completion_pct = 0
+            compliance_display = "—"
+            compliance_helper = "no records yet"
 
         # KPI 11: CPD Completion
-        cpd_total = CPDAssignment.objects.count()
+        cpd_assignments = CPDAssignment.objects.filter(staff_id__in=profile_ids)
+        cpd_total = cpd_assignments.count()
         if cpd_total > 0:
-            cpd_done = CPDAssignment.objects.filter(
+            cpd_done = cpd_assignments.filter(
                 status__in=["Completed", "Verified"]
             ).count()
             cpd_completion_pct = round((cpd_done / cpd_total) * 100)
+            cpd_display = f"{cpd_completion_pct}%"
+            cpd_helper = "assignments complete"
         else:
             cpd_completion_pct = 0
+            cpd_display = "—"
+            cpd_helper = "nothing assigned yet"
 
         # KPI 12: Payroll Readiness — real PayrollReadinessRecord rows for the
         # current payroll period (period keys are "YYYY-MM", see model).
         current_payroll_period = today.strftime("%Y-%m")
         payroll_qs = PayrollReadinessRecord.objects.filter(
-            payroll_period=current_payroll_period
+            payroll_period=current_payroll_period, staff_id__in=profile_ids
         )
         payroll_total = payroll_qs.count()
         payroll_ready_pct = (
@@ -177,92 +246,96 @@ class HRDashboardService:
             if payroll_total
             else 0
         )
+        payroll_display = f"{payroll_ready_pct}%" if payroll_total else "—"
+        payroll_helper = (
+            "ready for this period" if payroll_total else "no checks recorded"
+        )
 
         kpi_strip_items = [
-            {
-                "label": "Active Employees",
-                "value": str(active_employees),
-                "icon": "users",
-                "variant": "primary",
-                "helper": "across East Africa",
-            },
-            {
-                "label": "Open Positions",
-                "value": str(open_positions),
-                "icon": "briefcase",
-                "variant": "warning",
-                "helper": "approved vacancies",
-            },
-            {
-                "label": "New Hires Onboarding",
-                "value": str(new_hires_onboarding),
-                "icon": "clock",
-                "variant": "info",
-                "helper": "documents pending",
-            },
-            {
-                "label": "Staff On Track",
-                "value": f"{staff_on_track_pct}%",
-                "icon": "report",
-                "variant": "success",
-                "helper": "achieving targets",
-            },
-            {
-                "label": "High-Risk Staff",
-                "value": str(high_risk_staff),
-                "icon": "warning",
-                "variant": "danger",
-                "helper": "overdue visits > 3",
-            },
-            {
-                "label": "On Leave Today",
-                "value": str(employees_on_leave),
-                "icon": "calendar",
-                "variant": "info",
-                "helper": "out today",
-            },
-            {
-                "label": "Coverage Clashes (7d)",
-                "value": str(coverage_conflicts),
-                "icon": "shield",
-                "variant": "danger",
-                "helper": "leave vs scheduled",
-            },
-            {
-                "label": "Pending Leave Approvals",
-                "value": str(pending_leave_approvals),
-                "icon": "check",
-                "variant": "warning",
-                "helper": "awaiting HR action",
-            },
-            {
-                "label": "Performance Reviews Due",
-                "value": str(reviews_due),
-                "icon": "document",
-                "variant": "warning",
-                "helper": "due this period",
-            },
-            {
-                "label": "Compliance Completion",
-                "value": f"{compliance_completion_pct}%",
-                "icon": "shield",
-                "variant": "success",
-                "helper": "documents verified",
-            },
-            {
-                "label": "CPD Completion",
-                "value": f"{cpd_completion_pct}%",
-                "icon": "book",
-                "variant": "primary",
-                "helper": "courses completed",
-            },
-            {
-                "label": "Payroll Readiness",
-                "value": f"{payroll_ready_pct}%",
-                "icon": "report",
-                "variant": "success",
-                "helper": "verified payout records",
-            },
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_active_employees",
+                str(active_employees),
+                icon="users",
+                variant="primary",
+                helper="in scope",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_open_positions",
+                str(open_positions),
+                icon="briefcase",
+                variant="warning",
+                helper="open vacancies",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_new_hires_onboarding",
+                str(new_hires_onboarding),
+                icon="clock",
+                variant="info",
+                helper="documents pending",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_staff_on_track",
+                f"{staff_on_track_pct}%",
+                icon="report",
+                variant="success",
+                helper="achieving targets",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_high_risk_staff",
+                str(high_risk_staff),
+                icon="warning",
+                variant="danger",
+                helper="on an improvement plan",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_on_leave_today",
+                str(employees_on_leave),
+                icon="calendar",
+                variant="info",
+                helper="out today",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_coverage_clashes_7d",
+                str(coverage_conflicts),
+                icon="shield",
+                variant="danger",
+                helper="leave vs scheduled",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_pending_leave_approvals",
+                str(pending_leave_approvals),
+                icon="check",
+                variant="warning",
+                helper="awaiting a manager",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_performance_reviews_due",
+                str(reviews_due),
+                icon="document",
+                variant="warning",
+                helper="not yet complete",
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_compliance_completion",
+                compliance_display,
+                icon="shield",
+                variant="success",
+                helper=compliance_helper,
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_cpd_completion",
+                cpd_display,
+                icon="book",
+                variant="primary",
+                helper=cpd_helper,
+            ),
+            render_precomputed_metric_item(
+                "accounts_hr_dashboard_service_payroll_readiness",
+                payroll_display,
+                icon="report",
+                variant="success",
+                helper=payroll_helper,
+            ),
         ]
 
         # Workforce Overview — real trailing-6-month headcount/hires/exits,
@@ -272,11 +345,13 @@ class HRDashboardService:
         workforce_overview = HRDashboardService._workforce_overview_6mo(today)
 
         # Workforce by Country — real StaffProfile.country breakdown.
-        workforce_by_country = HRDashboardService._workforce_by_country(today_iso)
+        workforce_by_country = HRDashboardService._workforce_by_country(
+            today_iso, profile_ids
+        )
 
         # Headcount by Department — real StaffProfile.department breakdown.
         headcount_by_department, department_names = (
-            HRDashboardService._headcount_by_department()
+            HRDashboardService._headcount_by_department(profile_ids)
         )
 
         # Job Level Distribution — StaffProfile has no job-level field, so
@@ -296,10 +371,10 @@ class HRDashboardService:
         )
 
         # Upcoming Reviews & Probations — real PerformanceReview rows.
-        upcoming_reviews = HRDashboardService._upcoming_reviews(today)
+        upcoming_reviews = HRDashboardService._upcoming_reviews(today, profile_ids)
 
         # Compliance Status Table — real EmployeeComplianceRecord counts.
-        compliance_status = HRDashboardService._compliance_status()
+        compliance_status = HRDashboardService._compliance_status(profile_ids)
 
         # Recruitment Funnel — real Application.stage counts.
         recruitment_funnel = HRDashboardService._recruitment_funnel(today)
@@ -307,13 +382,13 @@ class HRDashboardService:
         # Pending HR Actions — real counts; reuses the same KPI values above
         # for "Performance Reviews" / "Leave Coverage Conflicts" so the two
         # widgets never disagree about the same underlying number.
-        documents_expiring = EmployeeComplianceRecord.objects.filter(
-            status="Due Soon"
-        ).count()
+        documents_expiring = compliance_records.filter(status="Due Soon").count()
         pending_actions = [
             {
                 "label": "Onboarding Tasks",
-                "count": OnboardingTask.objects.filter(is_completed=False).count(),
+                "count": OnboardingTask.objects.filter(
+                    is_completed=False, plan__staff_id__in=profile_ids
+                ).count(),
                 "url": "/onboarding",
             },
             {
@@ -323,13 +398,13 @@ class HRDashboardService:
             },
             {
                 "label": "CPD Verifications",
-                "count": CPDAssignment.objects.filter(status="Completed").count(),
+                "count": cpd_assignments.filter(status="Completed").count(),
                 "url": "/cpd-learning",
             },
             {
                 "label": "Compliance Expiries",
                 "count": documents_expiring
-                + EmployeeComplianceRecord.objects.filter(status="Expired").count(),
+                + compliance_records.filter(status="Expired").count(),
                 "url": "/compliance-register",
             },
             {
@@ -339,9 +414,13 @@ class HRDashboardService:
             },
             {
                 "label": "Employee Relations Cases",
-                "count": EmployeeRelationsCase.objects.exclude(
-                    status__in=["Resolved", "Closed"]
-                ).count(),
+                # Case COUNTS leaked across countries too: a viewer could
+                # watch the number move and infer a case had just opened
+                # somewhere they hold no role. visible_cases() is the one rule
+                # for who may know a case exists — reuse it, never restate it.
+                "count": visible_cases(user)
+                .exclude(status__in=["Resolved", "Closed"])
+                .count(),
                 "url": "/employee-relations",
             },
         ]
@@ -366,7 +445,11 @@ class HRDashboardService:
                 "icon": "document",
             },
             {"label": "Assign CPD", "url": "/cpd-learning", "icon": "book"},
-            {"label": "Generate HR Report", "url": "/reports", "icon": "report"},
+            # "Generate HR Report" pointed at /reports, which HR does not hold
+            # (navigation.py grants it to CD/PL/IA/RVP/PC/Admin) — an
+            # access-denied from a button on HR's own home page. HR Today is
+            # the surface HR actually starts from.
+            {"label": "Open HR Today", "url": "/hr-today", "icon": "report"},
         ]
 
         # Leadership Attention banner — real counts driving the previously
@@ -388,13 +471,16 @@ class HRDashboardService:
 
         # Approved leave lists
         pending = (
-            Leave.objects.filter(status="pending")
+            Leave.objects.filter(status="pending", staff_id__in=profile_ids)
             .select_related("staff__user")
             .order_by("start_date")
         )
         upcoming_leave = (
             Leave.objects.filter(
-                status="approved", start_date__gt=today_iso, start_date__lte=wk_end_iso
+                status="approved",
+                start_date__gt=today_iso,
+                start_date__lte=wk_end_iso,
+                staff_id__in=profile_ids,
             )
             .select_related("staff__user")
             .order_by("start_date")
@@ -481,10 +567,42 @@ class HRDashboardService:
             "documents_expiring": documents_expiring,
             "high_risk_countries": high_risk_countries,
             "high_risk_countries_label": high_risk_countries_label,
+            # Every number above is bounded by this. A page that shows zeros
+            # without saying whose zeros they are is not an honest empty state.
+            "scope_label": scope_label,
+            "scope_warning": scope_warning,
         }
 
     @staticmethod
-    def _coverage_clashes(today, wk_end_iso) -> int:
+    def _scope_label(user, country, department, visible_count):
+        """Say plainly whose figures these are, and why there are none."""
+        role = getattr(user, "active_role", "")
+        viewer = getattr(user, "staff_profile", None)
+        if role == "Admin":
+            where = "All countries"
+        elif role in {"Program Lead", "ProgramLead"} and viewer:
+            where = "Your team"
+        elif viewer and viewer.country:
+            where = viewer.country
+        else:
+            return (
+                "No scope",
+                "Your account has no People record, so there is no country or "
+                "team to report on. Ask an administrator to create your staff "
+                "profile.",
+            )
+        parts = [where]
+        if country and country not in ("", "all", "All"):
+            parts.append(country)
+        if department and department not in ("", "all", "All"):
+            parts.append(department)
+        label = " · ".join(dict.fromkeys(parts))
+        if not visible_count:
+            return label, f"No staff records match {label}."
+        return label, ""
+
+    @staticmethod
+    def _coverage_clashes(today, wk_end_iso, profile_ids=None) -> int:
         """Approved leave in the next 7 days overlapping the staff member's own
         scheduled activities — the real coverage risk HR must resolve."""
         from apps.activities.models import Activity
@@ -495,6 +613,8 @@ class HRDashboardService:
             start_date__lte=wk_end_iso,
             end_date__gte=today.isoformat(),
         ).select_related("staff")
+        if profile_ids is not None:
+            leaves = leaves.filter(staff_id__in=profile_ids)
         for lv in leaves:
             ids = {lv.staff_id}
             if lv.staff and lv.staff.user_id:
@@ -563,9 +683,12 @@ class HRDashboardService:
         }
 
     @staticmethod
-    def _workforce_by_country(today_iso: str) -> list[dict]:
+    def _workforce_by_country(today_iso: str, profile_ids=None) -> list[dict]:
+        in_scope = StaffProfile.objects.all()
+        if profile_ids is not None:
+            in_scope = in_scope.filter(id__in=profile_ids)
         countries = (
-            StaffProfile.objects.exclude(country="")
+            in_scope.exclude(country="")
             .exclude(country__isnull=True)
             .values_list("country", flat=True)
             .distinct()
@@ -573,9 +696,7 @@ class HRDashboardService:
         rows = []
         for country in sorted(countries):
             staff_ids = list(
-                StaffProfile.objects.filter(country=country).values_list(
-                    "id", flat=True
-                )
+                in_scope.filter(country=country).values_list("id", flat=True)
             )
             reviews = PerformanceReview.objects.filter(
                 staff_id__in=staff_ids, status="Completed"
@@ -615,11 +736,12 @@ class HRDashboardService:
         return rows
 
     @staticmethod
-    def _headcount_by_department() -> tuple[dict, list[str]]:
+    def _headcount_by_department(profile_ids=None) -> tuple[dict, list[str]]:
+        in_scope = StaffProfile.objects.all()
+        if profile_ids is not None:
+            in_scope = in_scope.filter(id__in=profile_ids)
         rows = list(
-            StaffProfile.objects.values("department")
-            .annotate(count=Count("id"))
-            .order_by("-count")
+            in_scope.values("department").annotate(count=Count("id")).order_by("-count")
         )
         labels = [r["department"] or "Unspecified" for r in rows]
         counts = [r["count"] for r in rows]
@@ -669,9 +791,12 @@ class HRDashboardService:
         }
 
     @staticmethod
-    def _upcoming_reviews(today: date) -> list[dict]:
+    def _upcoming_reviews(today: date, profile_ids=None) -> list[dict]:
+        base = PerformanceReview.objects.all()
+        if profile_ids is not None:
+            base = base.filter(staff_id__in=profile_ids)
         rows = (
-            PerformanceReview.objects.exclude(status__in=["Completed", "Closed"])
+            base.exclude(status__in=["Completed", "Closed"])
             .select_related("staff__user")
             .order_by("due_date")[:6]
         )
@@ -714,10 +839,12 @@ class HRDashboardService:
         return out
 
     @staticmethod
-    def _compliance_status() -> list[dict]:
+    def _compliance_status(profile_ids=None) -> list[dict]:
         out = []
         for req in ComplianceRequirement.objects.all().order_by("name"):
             records = EmployeeComplianceRecord.objects.filter(requirement=req)
+            if profile_ids is not None:
+                records = records.filter(staff_id__in=profile_ids)
             out.append(
                 {
                     "requirement": req.name,

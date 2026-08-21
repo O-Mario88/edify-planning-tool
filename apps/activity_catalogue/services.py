@@ -57,6 +57,35 @@ def effective_items(on_date=None):
     )
 
 
+def resolve_assignment_item(*, purpose_of_visit=None, expected_activity_type=None):
+    """The approved Catalogue Activity is the ASSIGNER's decision, recorded on
+    the assignment — the partner never chooses one at scheduling. When an
+    assignment flow hands work over without an explicit pick, the
+    standard-support item matching the recorded purpose (or activity type) IS
+    that decision, because purpose→type→standard item is one-to-one. Returns
+    None when nothing matches, which the caller must surface as a repair."""
+    from apps.partners.purposes import purpose_activity_type
+
+    kinds = []
+    if purpose_of_visit:
+        kinds.append(purpose_activity_type(purpose_of_visit, fallback=""))
+    if expected_activity_type:
+        kinds.append(expected_activity_type)
+    for kind in [k for k in kinds if k]:
+        item = (
+            effective_items()
+            .filter(
+                partner_delivery_allowed=True,
+                standard_support=True,
+                workflow_kind=kind,
+            )
+            .first()
+        )
+        if item:
+            return item
+    return None
+
+
 def get_selectable_item(item_id_or_code: str, *, on_date=None) -> ActivityCatalogueItem:
     item = (
         effective_items(on_date)

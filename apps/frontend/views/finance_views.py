@@ -783,8 +783,13 @@ def fund_allocation_view(request):
             "period": request.GET.get("period"),
             "budget_scope": "country",
             "q": request.GET.get("q", ""),
+            "district": request.GET.get("district", ""),
         },
     )
+    from apps.geography.models import District
+
+    context["districts"] = District.objects.all().order_by("name")
+    context["selected_district"] = request.GET.get("district", "").strip()
     context["use_dark_sidebar"] = True
     context["timestamp"] = timezone.now().strftime("%B %d, %Y %I:%M %p")
     # The admin-budget drilldown and CSV export are keyed by a calendar month;
@@ -1070,9 +1075,14 @@ def country_budget_view(request):
             "period": request.GET.get("period") or "month",
             "budget_scope": "country",
             "q": request.GET.get("q", ""),
+            "district": request.GET.get("district", ""),
         },
     )
     workspace_title = _country_budget_title(request.user)
+    from apps.geography.models import District
+
+    ctx["districts"] = District.objects.all().order_by("name")
+    ctx["selected_district"] = request.GET.get("district", "").strip()
     ctx.update(
         {
             "workspace_title": workspace_title,

@@ -310,6 +310,11 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/special_projects.html")
+        self.assertEqual(
+            response.content.decode().count('data-component="kpi-card"'),
+            3,
+            "three distinct portfolio measures should remain visible",
+        )
 
     def test_partner_roles_redirect_to_partner_scoped_dashboard(self):
         """PartnerAdmin/PartnerFieldOfficer logins previously fell through to
@@ -368,17 +373,15 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotContains(response, "Confirm this week")
 
         html = response.content.decode()
-        # Admin's dashboard now leads with the Platform Operations command
-        # centre (7 metrics), has a compact 7-metric mobile Platform pulse,
-        # and keeps the 7-metric country strip below it as observability. The
-        # three are counted separately so responsive markup cannot silently
-        # lose a metric family.
-        self.assertEqual(html.count('aria-label="Platform pulse"'), 1)
+        # Admin's dashboard has one six-card headline across mobile and desktop.
+        # Country business metrics remain in their owning workspaces instead of
+        # creating a second scorecard below the platform-operations scorecard.
+        self.assertEqual(html.count('aria-label="Platform pulse"'), 0)
         self.assertEqual(html.count('aria-label="Platform operations summary"'), 1)
-        self.assertEqual(html.count('aria-label="Country operational summary"'), 1)
-        # Both strips now use the canonical independent KPI card rather than
-        # the retired page-specific ``admin-kpi`` tile.
-        self.assertEqual(html.count('data-component="kpi-card"'), 21)
+        self.assertEqual(html.count('aria-label="Country operational summary"'), 0)
+        # The retired page-specific ``admin-kpi`` tile does not bypass the
+        # six-headline information hierarchy.
+        self.assertEqual(html.count('data-component="kpi-card"'), 6)
         # Renamed with the read-only labels (97770f39): Admin does business
         # work here, so the strip below the command centre is the platform's
         # business overview rather than something merely "observed".
@@ -1221,9 +1224,10 @@ class FrontendViewsTestCase(TestCase):
         response = self.client.get("/work-plan/add")
 
         self.assertEqual(response.status_code, 200)
-        # 28 general programme titles + the Monthly MFI Review, the one
-        # Business Transformation meeting plannable at a venue.
-        self.assertEqual(len(response.context["items"]), 29)
+        # 28 general programme titles + the Monthly MFI Review (the one
+        # Business Transformation meeting plannable at a venue) + the four
+        # field events (district meeting, boot camp, workshop, conference).
+        self.assertEqual(len(response.context["items"]), 33)
         self.assertContains(response, "EdTech Foundations")
         self.assertContains(response, "Partner Meetings Admin budget")
         self.assertContains(response, 'data-requires-intervention="true"')
@@ -1246,11 +1250,12 @@ class FrontendViewsTestCase(TestCase):
         page = self.client.get("/cost-settings")
         self.assertEqual(page.status_code, 200)
         # 28 governed curriculum titles + 12 standard field support items +
-        # sixteen Uganda Business Transformation workflows.
-        # Standard support is costed from the same CD catalogue as everything
-        # else — that is what makes a school visit fundable at all.
-        self.assertEqual(page.context["governed_activity_count"], 56)
-        self.assertEqual(len(page.context["activity_cost_coverage"]), 56)
+        # 4 field events (MOU travel per-diems) + sixteen Uganda Business
+        # Transformation workflows. Standard support is costed from the same
+        # CD catalogue as everything else — that is what makes a school visit
+        # fundable at all.
+        self.assertEqual(page.context["governed_activity_count"], 60)
+        self.assertEqual(len(page.context["activity_cost_coverage"]), 60)
         self.assertContains(page, "All approved budget activities")
 
         # 1. Initialize default catalogue
@@ -1423,7 +1428,8 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_partner_portal_pages_scope_to_own_partner_activities(self):
-        """The four Partner Portal pages (today/schools/activities/evidence)
+        """The Partner Portal pages (schools/activities/evidence; today is a
+        redirect to the Assigned Schools intake)
         must scope Activity by assigned_partner_id via resolve_partner_ids(),
         not by responsible_staff_id=user.id. A Partner login has no
         StaffProfile, so responsible_staff_id (a StaffProfile id) can never
@@ -1520,14 +1526,11 @@ class FrontendViewsTestCase(TestCase):
 
         self.client.force_login(partner_user)
 
-        # /partner/today — own today + upcoming visible, other partner's not.
+        # /partner/today is retired — old bookmarks land on the Assigned
+        # Schools intake, never a broken page.
         response = self.client.get("/partner/today")
-        self.assertEqual(response.status_code, 200)
-        today_ids = {a.id for a in response.context["today_activities"]}
-        upcoming_ids = {a.id for a in response.context["upcoming"]}
-        self.assertEqual(today_ids, {own_today.id})
-        self.assertEqual(upcoming_ids, {own_upcoming.id})
-        self.assertNotIn(other_today.id, today_ids)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/partner/assigned-schools")
 
         # /partner/schools — own school listed, other partner's school is not.
         response = self.client.get("/partner/schools")
@@ -2689,6 +2692,14 @@ class LeaveTrackerQueryCountTest(TestCase):
         )
         self.hr_user.set_password("pass123")
         self.hr_user.save()
+        # HR is country-scoped. The tracker deliberately fails closed when a
+        # reviewer has no governed staff/country profile, so this query-budget
+        # fixture must represent a real Uganda HR account.
+        StaffProfile.objects.create(
+            id="hr-perf-profile",
+            user=self.hr_user,
+            country="Uganda",
+        )
 
         self._make_staff(count=6, prefix="lt")
 
@@ -2708,7 +2719,9 @@ class LeaveTrackerQueryCountTest(TestCase):
             )
             u.set_password("pass123")
             u.save()
-            sp = StaffProfile.objects.create(id=f"{prefix}-profile-{i}", user=u)
+            sp = StaffProfile.objects.create(
+                id=f"{prefix}-profile-{i}", user=u, country="Uganda"
+            )
             Leave.objects.create(
                 staff=sp,
                 type="personal_time_off",

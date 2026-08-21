@@ -51,6 +51,15 @@ class NotificationLinkResolver:
         if event_type == "outbox.dead_letter":
             return "/system-health", "Open System Health"
 
+        # Professional Development: every stage notice opens the request
+        # itself. These used to be raw inserts that carried their own route
+        # and bypassed dedupe and resolution entirely.
+        if context_type == "pd_request" and context_id:
+            return (
+                f"/my-professional-development/request?id={context_id}",
+                "Open Request",
+            )
+
         # Uganda Master Priority Plan cascade: each recipient lands on the
         # surface where the allocated target is now theirs to act on.
         if event_type.startswith("target_allocation."):
@@ -481,6 +490,34 @@ class WorkflowNotificationService:
             transaction.on_commit(_publish_notifications)
 
         return created_notifications
+
+
+def role_recipients(
+    role: str, *, exclude_user_id: str | None = None, country: str | None = None
+):
+    """Everyone currently holding a role, resolved ONE way.
+
+    Four different definitions of "the HR team" were in use across the leave,
+    performance and Professional Development notifiers — `roles__contains` vs
+    `active_role`, `status="active"` vs `deleted_at__isnull=True` vs no
+    liveness filter at all. An HR user whose active_role was temporarily
+    switched, or a departed HR account, therefore received an arbitrary
+    subset of HR notifications, and departed accounts kept accruing them
+    (2026-08-20 HR audit).
+
+    `roles__contains` is the right test: it asks what the person is
+    responsible for, not which hat they happen to be wearing right now.
+    """
+    from apps.accounts.models import User
+
+    query = User.objects.filter(
+        roles__contains=[role], is_active=True, deleted_at__isnull=True
+    )
+    if exclude_user_id:
+        query = query.exclude(id=exclude_user_id)
+    if country:
+        query = query.filter(staff_profile__country=country)
+    return list(query)
 
 
 def resolve_condition(

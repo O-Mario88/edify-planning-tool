@@ -20,6 +20,11 @@ RVP reviews exactly what was submitted.
 
 from __future__ import annotations
 
+from apps.core.metrics import (
+    render_precomputed_metric_item,
+    render_precomputed_metric_for_source,
+)
+
 from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 from django.utils import timezone
 
@@ -528,15 +533,16 @@ def get_country_monthly_budget(principal, filters=None):
 
     def _kpi(label, value_int, trend_key, variant, helper):
         t = _trend(series, trend_key)
-        return {
-            "label": label,
-            "value": _ugx(value_int),
-            "variant": variant,
-            "helper": helper,
-            "trend_pct": t["pct"],
-            "trend_up": t["up"],
-            "sparkline": t["sparkline"],
-        }
+        return render_precomputed_metric_for_source(
+            "apps.monthly_work_plan.country_budget_service:get_country_monthly_budget._kpi",
+            label,
+            _ugx(value_int),
+            variant=variant,
+            helper=helper,
+            trend_pct=t["pct"],
+            trend_up=t["up"],
+            sparkline=t["sparkline"],
+        )
 
     kpis = [
         _kpi(
@@ -546,24 +552,24 @@ def get_country_monthly_budget(principal, filters=None):
             "primary",
             source["label"],
         ),
-        {
-            "label": "Staff Included",
-            "value": str(staff_included),
-            "variant": "info",
-            "helper": "All staff members",
-            "trend_pct": None,
-            "trend_up": None,
-            "sparkline": "",
-        },
-        {
-            "label": "Total Planned Activities",
-            "value": str(total_activities),
-            "variant": "analytics",
-            "helper": "Across all categories",
-            "trend_pct": None,
-            "trend_up": None,
-            "sparkline": "",
-        },
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_staff_included",
+            str(staff_included),
+            variant="info",
+            helper="All staff members",
+            trend_pct=None,
+            trend_up=None,
+            sparkline="",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_total_planned_activities",
+            str(total_activities),
+            variant="analytics",
+            helper="Across all categories",
+            trend_pct=None,
+            trend_up=None,
+            sparkline="",
+        ),
         _kpi(
             "Staff Visits Cost",
             cat_totals["staff_visits"],
@@ -656,25 +662,41 @@ def get_country_monthly_budget(principal, filters=None):
     )
     special_project_acts = len({li.activity_id for li in lines if _is_project_line(li)})
     plan_source_summary = [
-        {"icon": "school", "label": "Planned Schools", "value": planned_schools},
-        {
-            "icon": "handshake",
-            "label": "Partner-Planned Schools",
-            "value": partner_schools,
-        },
-        {
-            "icon": "calendar",
-            "label": "Cluster Meetings / Sessions",
-            "value": cluster_sessions,
-        },
-        {"icon": "training", "label": "Trainings Planned", "value": trainings_planned},
-        {"icon": "clipboard", "label": "SSA Collection Visits", "value": ssa_visits},
-        {
-            "icon": "project",
-            "label": "Special Project Activities",
-            "value": special_project_acts,
-        },
-        {"icon": "admin", "label": "Admin Plan Items", "value": len(admin_lines)},
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_planned_schools",
+            planned_schools,
+            icon="school",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_partner_planned_schools",
+            partner_schools,
+            icon="handshake",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_cluster_meetings_sessions",
+            cluster_sessions,
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_trainings_planned",
+            trainings_planned,
+            icon="training",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_ssa_collection_visits",
+            ssa_visits,
+            icon="clipboard",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_special_project_activities",
+            special_project_acts,
+            icon="project",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_admin_plan_items",
+            len(admin_lines),
+            icon="admin",
+        ),
     ]
 
     # ── Bottom stat cards ─────────────────────────────────────────────────
@@ -1105,52 +1127,52 @@ def _bottom_stats(staff_rows, cat_totals, admin_total, total_monthly, staff_incl
     avg_per_staff = round(total_monthly / staff_included) if staff_included else 0
 
     return [
-        {
-            "icon": "trophy",
-            "label": "Highest Planned Cost Staff",
-            "value": highest["name"] if highest else "—",
-            "sub": f"{highest['total_fmt']}" if highest else "—",
-            "helper": f"{round(highest['total'] / total_monthly * 100, 1)}% of total plan-backed"
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_highest_planned_cost_staff",
+            highest["name"] if highest else "—",
+            icon="trophy",
+            sub=f"{highest['total_fmt']}" if highest else "—",
+            helper=f"{round(highest['total'] / total_monthly * 100, 1)}% of total plan-backed"
             if highest
             else "",
-        },
-        {
-            "icon": "school",
-            "label": "Largest Cluster Training Budget",
-            "value": _ugx(cat_totals["cluster_training"]),
-            "sub": "Cluster Training",
-            "helper": f"{round(cat_totals['cluster_training'] / total_monthly * 100, 1)}% of total budget",
-        },
-        {
-            "icon": "handshake",
-            "label": "Partner Cost Share",
-            "value": f"{partner_share}%",
-            "sub": _ugx(cat_totals["partner_visits"]),
-            "helper": "Partner visits share of total",
-        },
-        {
-            "icon": "chart",
-            "label": "Top Cost Category",
-            "value": top_cat_label,
-            "sub": _ugx(cat_totals.get(top_cat_key, 0)) if top_cat_key else "—",
-            "helper": f"{round(cat_totals.get(top_cat_key, 0) / total_monthly * 100, 1)}% of total budget"
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_largest_cluster_training_budget",
+            _ugx(cat_totals["cluster_training"]),
+            icon="school",
+            sub="Cluster Training",
+            helper=f"{round(cat_totals['cluster_training'] / total_monthly * 100, 1)}% of total budget",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_partner_cost_share",
+            f"{partner_share}%",
+            icon="handshake",
+            sub=_ugx(cat_totals["partner_visits"]),
+            helper="Partner visits share of total",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_top_cost_category",
+            top_cat_label,
+            icon="chart",
+            sub=_ugx(cat_totals.get(top_cat_key, 0)) if top_cat_key else "—",
+            helper=f"{round(cat_totals.get(top_cat_key, 0) / total_monthly * 100, 1)}% of total budget"
             if top_cat_key
             else "",
-        },
-        {
-            "icon": "bank",
-            "label": "Admin Budget Share",
-            "value": f"{admin_share}%",
-            "sub": _ugx(admin_total),
-            "helper": "Of total monthly budget",
-        },
-        {
-            "icon": "average",
-            "label": "Average Allocation per Staff",
-            "value": _ugx(avg_per_staff),
-            "sub": "Across all staff",
-            "helper": f"{staff_included} staff members",
-        },
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_admin_budget_share",
+            f"{admin_share}%",
+            icon="bank",
+            sub=_ugx(admin_total),
+            helper="Of total monthly budget",
+        ),
+        render_precomputed_metric_item(
+            "monthly_work_plan_country_budget_service_average_allocation_per_staff",
+            _ugx(avg_per_staff),
+            icon="average",
+            sub="Across all staff",
+            helper=f"{staff_included} staff members",
+        ),
     ]
 
 

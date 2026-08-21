@@ -19,6 +19,7 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
         "templates/pages/ia/analytics_dashboard.html",
         "templates/pages/accounts/dashboard.html",
         "templates/pages/partner/today.html",
+        "templates/pages/dashboards/main.html",
     )
 
     def test_each_operational_role_uses_shared_mobile_role_home(self):
@@ -35,21 +36,19 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
         partner = _read("templates/pages/partner/today.html")
 
         self.assertLess(
-            cceo.index("cceo-mobile-next-title"), cceo.index('density="compact"')
+            cceo.index("cceo-mobile-next-title"),
+            cceo.index('title="Week at a glance"'),
         )
         self.assertLess(
-            ia.index("ia-mobile-queue-title"), ia.index('density="compact"')
+            ia.index("ia-mobile-queue-title"),
+            ia.index('title="Verification workload"'),
         )
         self.assertLess(
             accounts.index("accounts-mobile-queue-title"),
-            accounts.index("mobile-home-metrics"),
-        )
-        self.assertLess(
-            partner.index("partner-mobile-agenda-title"),
-            partner.index("mobile-home-metrics"),
+            accounts.index('title="Finance headline"'),
         )
 
-    def test_desktop_headers_and_duplicate_kpis_are_suppressed_only_on_mobile(self):
+    def test_desktop_headers_are_suppressed_only_on_mobile(self):
         styles = _read("static/css/components/mobile-patterns.css")
         self.assertIn("@media (max-width: 63.999rem)", styles)
         self.assertIn(".mobile-home-hide", styles)
@@ -58,6 +57,22 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
         for path in self.ROLE_TEMPLATES:
             with self.subTest(path=path):
                 self.assertIn("mobile-home-hide", _read(path))
+
+    def test_admin_platform_pulse_precedes_critical_now_on_mobile(self):
+        admin = _read("templates/pages/dashboards/main.html")
+        self.assertLess(
+            admin.index("dashboard_kpi_title"),
+            admin.index("admin-mobile-critical-title"),
+        )
+
+    def test_responsive_role_pages_do_not_duplicate_the_kpi_dom(self):
+        for path in (
+            "templates/pages/dashboards/cceo.html",
+            "templates/pages/ia/analytics_dashboard.html",
+            "templates/pages/dashboards/main.html",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(_read(path).count("components/kpi_strip.html"), 1)
 
     def test_role_views_select_real_permission_scoped_primary_actions(self):
         dashboard = _read("apps/frontend/views/dashboard_views.py")
@@ -68,7 +83,10 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
         self.assertIn('"mobile_primary_action": mobile_primary_action', dashboard)
         self.assertIn('queue_items[0]["review_url"]', ia)
         self.assertIn('"url": "/disbursements" if all_funds', accounts)
-        self.assertIn("user.active_role == EdifyRole.PARTNER_ADMIN.value", partner)
+        # The partner home is Assigned Activities (2026-08-20); its primary
+        # action is permission-scoped scheduling work.
+        self.assertIn("def partner_assignments_view", partner)
+        self.assertIn('"label": "Schedule assigned work"', partner)
 
     def test_mobile_agenda_reuses_existing_queue_shapes(self):
         agenda = _read("templates/components/mobile_agenda_card.html")

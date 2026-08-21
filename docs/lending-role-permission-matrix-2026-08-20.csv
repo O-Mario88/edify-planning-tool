@@ -1,0 +1,11 @@
+role,record_scope,financial_projection,permitted_actions,explicit_denials,audit_result
+MFI Partner Admin,Own lending partner,Full own-partner operational detail,"Manage members; submit and certify returns; create loans; post disbursements and repayments; reverse repayments; request purposes","Other MFI records; Salesforce confirmation; facility approval; purpose approval",Pass
+MFI Loan Officer,Own registered or explicitly assigned loans,Full assigned-record operational detail,"Create and update assigned loans; post disbursements and repayments; request purposes","Unassigned own-MFI loans; other MFI records; member administration; return certification; reversals; approvals",Pass
+Business Transformation Officer,Uganda operational portfolio,Full loan and facility detail,"Review cases and purposes; confirm Salesforce; manage facilities and allocations; export","IA verification; facility approval; cash-transfer confirmation; repayment reversal",Pass
+Country Director,Uganda country portfolio,Full loan and facility oversight,"Triage and refer; manage/approve facilities; approve allocations amendments and purposes; export","Salesforce confirmation; IA verification; MFI transaction entry",Pass
+Impact Assessment,Uganda verification portfolio,Full verification-required detail,"Validate or return loan data; verify loan use and impact; define measurement profiles; export","Facility and disbursement posting; Salesforce confirmation; commercial approval",Pass
+Regional Vice President,Regional/country oversight,Read-only full portfolio and facility detail,"Review and export","All lending mutations",Pass
+Program Lead / CCEO,Assigned school scope,Impact-only beneficiary and verified-impact projection,"Plan and deliver assigned follow-up work","Loan amounts; references; repayment; facility data; lending exports and APIs",Pass
+Program Accountant,Facility transfer scope,Facility-transfer evidence only,"Confirm transfer evidence / tranche receipt","School-loan financial records; repayment; impact; Salesforce",Pass
+Admin,Platform operations only,None,"Technical support through non-lending administration","Loan and facility record-level financial access",Pass
+Human Resources / Project / ordinary Partner roles,None,None,None,"All lending financial and operational records",Pass

@@ -5,7 +5,7 @@
 {% block title %}Special Projects Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-4 text-[color:var(--edify-text)]">
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
 
 {% include "components/mobile_role_home.html" with eyebrow="Project delivery" headline="Portfolio delivery desk" description="Open the next project, check school and partner coverage, then move into delivery analytics." status_label=total_projects primary_action=mobile_primary_action %}
 
@@ -20,11 +20,6 @@
       </article>
       {% empty %}<div class="edify-empty-state"><strong>No projects in your portfolio</strong><span>Projects assigned to you will appear here.</span></div>{% endfor %}
     </div>
-  </section>
-  <section class="mobile-home-metrics" aria-label="Project delivery summary">
-    <div class="mobile-home-metric"><span>Active projects</span><strong>{{ total_projects }}</strong></div>
-    <div class="mobile-home-metric"><span>Schools enrolled</span><strong>{{ schools_in_projects }}</strong></div>
-    <div class="mobile-home-metric"><span>Partners assigned</span><strong>{{ partners_assigned }}</strong></div>
   </section>
 </div>
 
@@ -46,16 +41,14 @@
 <!-- SVG background shape decoration -->
 <div class="absolute -right-20 -top-20 w-64 h-64 bg-slate-800/10 rounded-pill blur-3xl pointer-events-none"></div>
 <div class="relative z-10">
-<h2 class="text-[21px] font-extrabold tracking-tight leading-snug">Build transformational programs. Scale impact beyond the core model.</h2>
+<h2 class="text-[22px] font-extrabold tracking-tight leading-snug">Build transformational programs. Scale impact beyond the core model.</h2>
 <p class="text-[12px] text-slate-300 font-bold mt-1 max-w-[800px]">Special projects expand opportunity, strengthen schools, and equip teachers for lasting change.</p>
 </div>
 </div>
 
 
-<div class="edify-kpi-strip mobile-home-hide grid grid-cols-1 md:grid-cols-3 gap-3.5" aria-label="Special projects summary">
-  {% include "components/kpi_card.html" with label="Total Special Projects" value=total_projects %}
-  {% include "components/kpi_card.html" with label="Schools in Projects" value=schools_in_projects %}
-  {% include "components/kpi_card.html" with label="Partners Assigned" value=partners_assigned %}
+<div>
+  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Portfolio headline" subtitle="The one scale measure that frames the project workload." %}
 </div>
 
 

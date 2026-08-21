@@ -15,11 +15,11 @@
 </div>
 <div class="edify-page-header__controls">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] px-4 py-2.5 text-center">
-<p class="text-[19px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.open_count }}</p>
+<p class="text-[20px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.open_count }}</p>
 <p class="edify-text-caption text-slate-500 font-bold mt-1">Open</p>
 </div>
 <div class="edify-surface rounded-surface border {% if board.overdue_count %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} px-4 py-2.5 text-center">
-<p class="text-[19px] font-extrabold {% if board.overdue_count %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ board.overdue_count }}</p>
+<p class="text-[20px] font-extrabold {% if board.overdue_count %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ board.overdue_count }}</p>
 <p class="edify-text-caption {% if board.overdue_count %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1">Overdue</p>
 </div>
 </div>
@@ -27,7 +27,7 @@
 
 {% if messages %}
 {% for message in messages %}
-<div class="rounded-surface border px-4 py-3 text-[12.5px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>
+<div class="rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>
 {% endfor %}
 {% endif %}
 

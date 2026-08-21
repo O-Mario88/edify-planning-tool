@@ -188,8 +188,16 @@ Showing: {{ flag_label }}
 </div>
 {% endif %}
 
+{% comment %}
+§18: the Work Plan is the schedule, aggregated — Activity, Target, Cost, by
+month. There is no way to type a row here, because a Work Plan anyone can edit
+by hand is a second plan, and a second plan disagrees with the schedule the
+moment either one moves.
+{% endcomment %}
+{% include "partials/work_plan/monthly_plan.html" %}
+
 <!-- KPI strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Work plan context" %}
 
 <!-- Period summary bands -->
 <section aria-label="Period summary by month" class="space-y-3">

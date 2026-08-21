@@ -45,8 +45,8 @@
                 <div><dt>Phone:</dt><dd>{{ s.phone }}</dd></div>
                 <div><dt>Staff Name:</dt><dd>{{ s.assignedStaff }}</dd></div>
                 <div class="school-record-row__ssa {% if s.ssaAverageTone %}is-{{ s.ssaAverageTone }}{% endif %}"><dt>SSA:</dt><dd>{% if s.currentSsaAverage is not None %}{{ s.currentSsaAverage|floatformat:"-1" }}/10{% else %}Not assessed{% endif %}</dd></div>
-                <div><dt>Last Visit:</dt><dd>{{ s.lastVisitDate }}</dd></div>
-                <div><dt>Last Training:</dt><dd>{{ s.lastTrainingDate }}</dd></div>
+                <div><dt>Last Visit:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedVisit %}neutral{% else %}danger{% endif %}">{{ s.lastVisitDate }}</dd></div>
+                <div><dt>Last Training:</dt><dd class="edify-status-text" data-edify-tone="{% if s.hasCompletedTraining %}neutral{% else %}danger{% endif %}">{{ s.lastTrainingDate }}</dd></div>
               </dl>
             </div>
           </div>

@@ -1,0 +1,58 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Completed Work &amp; Payments · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1300px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Field Work</p>
+      <h1 class="edify-page-title edify-page-header__title">Completed Work &amp; Payments</h1>
+      <p class="edify-page-header__description">Where every submitted school or activity stands — IA review, Salesforce confirmation, and payment.</p>
+    </div>
+  </div>
+
+  <nav data-edify-tablist aria-label="Completed work">
+    <a href="?tab=schools" data-edify-tab {% if tab == "schools" %}aria-current="page"{% endif %}>Schools</a>
+    <a href="?tab=activities" data-edify-tab {% if tab == "activities" %}aria-current="page"{% endif %}>Activities</a>
+  </nav>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+          <tr>
+            <th class="px-5 py-3">{% if tab == "schools" %}School{% else %}Activity{% endif %}</th>
+            <th class="px-5 py-3">Activity Type</th>
+            <th class="px-5 py-3">Date</th>
+            <th class="px-5 py-3">IA Status</th>
+            <th class="px-5 py-3">Salesforce</th>
+            <th class="px-5 py-3">Payment</th>
+            <th class="px-5 py-3 text-right">Paid (UGX)</th>
+            <th class="px-5 py-3">Reference</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 max-xl:block">
+          {% for row in rows|slice:":200" %}
+          <tr class="max-xl:block max-xl:p-4">
+            <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% firstof row.activity.school.name row.activity.cluster.name "Field work" %}</td>
+            <td class="px-5 py-3.5 text-slate-600 max-xl:px-0">{{ row.activity.get_activity_type_display }}</td>
+            <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0">{{ row.activity.scheduled_date|date:"d M Y" }}</td>
+            <td class="px-5 py-3.5 max-xl:px-0"><span class="edify-status-text" data-edify-tone="{{ row.ia_tone }}">{{ row.ia_label }}</span></td>
+            <td class="px-5 py-3.5 max-xl:px-0"><span class="edify-status-text" data-edify-tone="{% if row.sf_label == 'Confirmed' %}success{% else %}neutral{% endif %}">{{ row.sf_label }}</span></td>
+            <td class="px-5 py-3.5 max-xl:px-0"><span class="edify-status-text" data-edify-tone="{{ row.pay_tone }}">{{ row.pay_label }}</span></td>
+            <td class="px-5 py-3.5 text-right tabular-nums text-slate-800 max-xl:px-0">{% if row.paid_total %}{{ row.paid_total|ugx_amount }}{% else %}&mdash;{% endif %}</td>
+            <td class="px-5 py-3.5 text-slate-500 max-xl:px-0">{% if row.payment_reference %}{{ row.payment_reference }}{% if row.payment_date %} · {{ row.payment_date|date:"d M Y" }}{% endif %}{% else %}&mdash;{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr class="max-xl:block"><td colspan="8" class="px-5 py-12 text-center text-[13px] font-semibold text-slate-400 max-xl:block">Nothing submitted yet — completed work appears here after you submit evidence.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

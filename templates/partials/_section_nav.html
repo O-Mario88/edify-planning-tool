@@ -19,38 +19,57 @@ because they are tabs.
 {% endcomment %}
 {% if workspace %}
 <nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
-{% if workspace.key == "analytics" and workspace.groups|length > 1 %}
-<div class="edify-section-nav__workspace"
-     x-data="{ group: '{{ workspace.active_group|escapejs }}' }">
-  <div class="edify-section-nav__clusters" aria-label="Analytics areas">
+{% if workspace.key == "analytics" %}
+<div class="edify-section-nav__workspace">
+  {% if workspace.groups|length > 1 %}
+  <div class="edify-section-nav__clusters">
     <span class="edify-section-nav__eyebrow">{{ workspace.label }}</span>
     <span class="edify-section-nav__rule" aria-hidden="true"></span>
     {% for group in workspace.groups %}
-    <button type="button"
-            class="edify-section-nav__cluster"
-            :class="group === '{{ group.key|escapejs }}' && 'is-active'"
-            :aria-pressed="(group === '{{ group.key|escapejs }}').toString()"
-            @click="group = '{{ group.key|escapejs }}'">
-      {{ group.label }}
-      <span class="edify-section-nav__cluster-count" aria-hidden="true">{{ group.sections|length }}</span>
-    </button>
+    <a href="{{ group.url }}"
+       class="edify-section-nav__cluster{% if group.active %} is-active{% endif %}"
+       title="Open {{ group.label }}"
+       {% if group.active %}aria-current="location"{% endif %}>{{ group.label }}</a>
     {% endfor %}
   </div>
+  {% endif %}
 
-  {% for group in workspace.groups %}
-  <div class="edify-section-nav__inner edify-section-nav__inner--group"
-       data-section-group="{{ group.key }}"
-       x-show="group === '{{ group.key|escapejs }}'"
-       x-cloak x-data
-       x-init="$nextTick(() => { const active = $el.querySelector('.is-active'); if (!active) return; const activeEnd = active.offsetLeft + active.offsetWidth; if (activeEnd > $el.clientWidth) $el.scrollLeft = Math.max(0, activeEnd - $el.clientWidth + 16) })">
-    {% for section in group.sections %}
-    <a href="{{ section.url }}"
-       class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
-       title="{{ section.description }}"
-       {% if section.active %}aria-current="page"{% endif %}>{{ section.label }}</a>
-    {% endfor %}
+  {% if workspace.active_group_detail.sections|length > 1 %}
+  <div class="edify-section-nav__view-switcher">
+    <span class="edify-section-nav__view-label">View</span>
+    <div class="edify-section-nav__view-menu"
+         x-data="{ open: false }"
+         @click.outside="open = false"
+         @keydown.escape.window="open = false">
+      <button type="button"
+              class="edify-section-nav__view-button"
+              :class="open && 'is-open'"
+              @click="open = !open"
+              :aria-expanded="open.toString()"
+              aria-controls="analytics-view-options-{{ workspace.active_group_detail.key }}">
+        <span>{{ workspace.active_group_detail.active_section.label }}</span>
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+          <path d="m6 8 4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div id="analytics-view-options-{{ workspace.active_group_detail.key }}"
+           class="edify-section-nav__view-options"
+           x-show="open"
+           x-cloak
+           x-transition.opacity.duration.120ms>
+        {% for section in workspace.active_group_detail.sections %}
+        <a href="{{ section.url }}"
+           class="edify-section-nav__view-link{% if section.active %} is-active{% endif %}"
+           title="{{ section.description }}"
+           {% if section.active %}aria-current="page"{% endif %}>
+          <span>{{ section.label }}</span>
+          {% if section.active %}<span class="sr-only">Current view</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
   </div>
-  {% endfor %}
+  {% endif %}
 </div>
 {% else %}
 {% comment %}

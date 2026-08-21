@@ -61,7 +61,7 @@
         </div>
 
         <!-- Location Subtitle (District + subcounty/shipping address) -->
-        <p class="school-list-card__location text-[12.5px] text-slate-500 font-medium flex items-center gap-1.5">
+        <p class="school-list-card__location text-[13px] text-slate-500 font-medium flex items-center gap-1.5">
           <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -432,7 +432,7 @@
         {% elif context_page == 'core_schools' %}
           <!-- Core matrix action dropdown list -->
           {% if school.blocked_reason %}
-            <span class="inline-flex items-center text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-pill edify-text-caption font-bold gap-1" title="{{ school.blocked_reason }}">
+            <span class="inline-flex items-center text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-pill edify-text-caption font-bold gap-1" title="{{ school.blocked_reason }}">
               <svg class="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               {{ school.blocked_reason }}
             </span>

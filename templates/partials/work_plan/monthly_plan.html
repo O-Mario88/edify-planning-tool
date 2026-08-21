@@ -1,0 +1,70 @@
+{% load frontend_filters %}
+
+<section aria-label="Monthly work plan" class="space-y-4">
+  <div class="edify-section">
+    <h2 class="edify-section__heading">Scheduled work by month</h2>
+    <p class="edify-section__description">
+      Derived from the schedule — {{ monthly_plan.scheduledCount }} scheduled
+      {{ monthly_plan.scheduledCount|pluralize:"activity,activities" }} in FY{{ monthly_plan.fy }}.
+      Reschedule, cancel or reassign an activity and this moves with it.
+    </p>
+  </div>
+
+  {% for section in monthly_plan.sections %}
+    {% if not section.isEmpty %}
+    <div class="edify-surface rounded-surface border border-[var(--border-card)] shadow-sm overflow-hidden">
+      <div class="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 border-b border-[var(--border-card)]">
+        <h3 class="text-[13px] font-extrabold edify-text">{{ section.label }}</h3>
+        <p class="edify-text-caption font-semibold text-slate-500">
+          {% for unit in section.unitTotals %}{{ unit.count }} {{ unit.unit }}{% if not forloop.last %} · {% endif %}{% endfor %}
+          · UGX {{ section.totalCost|currency }}
+        </p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-[13px] font-semibold min-w-[560px]">
+          <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
+            <tr>
+              <th class="px-4 py-2.5">Activity</th>
+              <th class="px-4 py-2.5 text-right whitespace-nowrap">Target</th>
+              <th class="px-4 py-2.5 text-right whitespace-nowrap">Cost</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for row in section.rows|slice:":40" %}
+            <tr class="align-top">
+              <td class="px-4 py-3">
+                <details>
+                  <summary class="cursor-pointer font-bold text-slate-800 marker:text-slate-400">
+                    {{ row.label }}
+                    <span class="edify-text-caption font-semibold text-slate-400">({{ row.count }} scheduled)</span>
+                  </summary>
+                  <ul class="mt-2 space-y-1">
+                    {% for record in row.records|slice:":25" %}
+                    <li class="edify-text-caption font-semibold text-slate-500">
+                      {{ record.date }} · {{ record.where }} · {{ record.status }} · UGX {{ record.cost|currency }}
+                    </li>
+                    {% endfor %}
+                    {% if row.count > 25 %}
+                    <li class="edify-text-caption font-semibold text-slate-400">…and {{ row.count|add:"-25" }} more.</li>
+                    {% endif %}
+                  </ul>
+                </details>
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap text-slate-700">
+                {{ row.target }} {{ row.unit }}
+              </td>
+              <td class="px-4 py-3 text-right tabular-nums whitespace-nowrap text-slate-700">
+                UGX {{ row.cost|currency }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  {% empty %}
+  <p class="edify-text-caption font-semibold text-slate-400">Nothing scheduled in this financial year yet.</p>
+  {% endfor %}
+</section>

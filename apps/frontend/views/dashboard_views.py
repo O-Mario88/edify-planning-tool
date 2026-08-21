@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 import csv
 from urllib.parse import urlencode
@@ -43,13 +44,15 @@ def _export_hr_dashboard_csv(data, *, fy, month, country, department):
     response["Content-Disposition"] = 'attachment; filename="hr_dashboard_report.csv"'
     writer = csv.writer(response)
     writer.writerow(["Section", "Metric", "Value", "Context"])
+    # The Context column used to echo back whatever filters were REQUESTED,
+    # while the figures behind them were organisation-wide — the file
+    # misrepresented its own scope. It now reports the scope actually applied.
     filters = ", ".join(
         value
         for value in (
+            data.get("scope_label", ""),
             f"FY {fy}" if fy else "",
             f"month {month}" if month else "",
-            country or "",
-            department or "",
         )
         if value
     )
@@ -780,41 +783,41 @@ def dashboard_view(request):
         ).count()
 
         cceo_kpi_items = [
-            {
-                "label": "Completed Tasks",
-                "value": str(completed_cnt),
-                "helper": "Activities done",
-                "icon": "check",
-                "variant": "success",
-            },
-            {
-                "label": "In Progress",
-                "value": str(in_progress_cnt),
-                "helper": "Being executed",
-                "icon": "clock",
-                "variant": "info",
-            },
-            {
-                "label": "Planned Tasks",
-                "value": str(planned_cnt),
-                "helper": "Scheduled ahead",
-                "icon": "calendar",
-                "variant": "warning",
-            },
-            {
-                "label": "Overdue Tasks",
-                "value": str(overdue_cnt),
-                "helper": "Past due date",
-                "icon": "warning",
-                "variant": "danger",
-            },
+            render_precomputed_metric_item(
+                "frontend_views_dashboard_views_completed_tasks",
+                str(completed_cnt),
+                helper="Activities done",
+                icon="check",
+                variant="success",
+            ),
+            render_precomputed_metric_item(
+                "frontend_views_dashboard_views_in_progress",
+                str(in_progress_cnt),
+                helper="Being executed",
+                icon="clock",
+                variant="info",
+            ),
+            render_precomputed_metric_item(
+                "frontend_views_dashboard_views_planned_tasks",
+                str(planned_cnt),
+                helper="Scheduled ahead",
+                icon="calendar",
+                variant="warning",
+            ),
+            render_precomputed_metric_item(
+                "frontend_views_dashboard_views_overdue_tasks",
+                str(overdue_cnt),
+                helper="Past due date",
+                icon="warning",
+                variant="danger",
+            ),
         ]
 
         # System-generated To-Do operating queue (derived from live workflow
         # state — auto-closes when the underlying action completes).
-        from apps.command_center.todo_service import get_todos
+        from apps.command_center.todo_service import get_cached_todos
 
-        todo_data = get_todos(user)
+        todo_data = get_cached_todos(user)
 
         if overdue_last_week:
             mobile_primary_action = {
@@ -997,6 +1000,33 @@ def dashboard_view(request):
             "total_projects": len(portfolio),
             "schools_in_projects": schools_in_projects,
             "partners_assigned": partners_assigned,
+            # The registry-backed shared component consolidates these three
+            # related scale counts to the single clearest portfolio headline.
+            # The school and partner counts remain where they add detail: the
+            # tables immediately below, rather than as repeated headline KPIs.
+            "kpi_strip_items": [
+                render_precomputed_metric_item(
+                    "projects_dashboard_service_total_projects",
+                    str(len(portfolio)),
+                    icon="briefcase",
+                    variant="primary",
+                    helper="In your portfolio",
+                ),
+                render_precomputed_metric_item(
+                    "projects_dashboard_service_project_schools",
+                    str(schools_in_projects),
+                    icon="school",
+                    variant="info",
+                    helper="See project portfolio",
+                ),
+                render_precomputed_metric_item(
+                    "projects_dashboard_service_assigned_partners",
+                    str(partners_assigned),
+                    icon="users",
+                    variant="success",
+                    helper="See partner assignment",
+                ),
+            ],
             "project_schools": project_schools,
             "project_partners": project_partners,
             "mobile_primary_action": {
@@ -1071,6 +1101,8 @@ def dashboard_view(request):
             drilldown_url="/system-health",
         ),
     ]
+    context["dashboard_kpi_items"] = context["country_kpi_items"]
+    context["dashboard_kpi_title"] = "Country operational summary"
 
     # Registry identities for this page's cards. The bodies below stay as they
     # are; each section takes on its `data-card-key` and its canonical title
@@ -1158,7 +1190,7 @@ def dashboard_view(request):
                 "admin_overdue_work",
                 MetricValue.measured(admin_ops["overdue_admin_work"]),
                 helper=f"{admin_ops['unscheduled_work']} still unscheduled",
-                tone="warning" if admin_ops["overdue_admin_work"] else "neutral",
+                tone="danger" if admin_ops["overdue_admin_work"] else "neutral",
                 drilldown_url="/admin-ops/my-plan",
             ),
             render_kpi_item(
@@ -1190,6 +1222,8 @@ def dashboard_view(request):
                 drilldown_url="/admin-ops/maintenance",
             ),
         ]
+        context["dashboard_kpi_items"] = context["admin_ops_kpi_items"]
+        context["dashboard_kpi_title"] = "Platform operations summary"
         context["mobile_primary_action"] = {
             "label": "Resolve critical platform work"
             if admin_ops["critical_now"]

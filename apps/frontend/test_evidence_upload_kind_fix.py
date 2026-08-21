@@ -67,13 +67,21 @@ class AttendanceAndSsaUploadKindTest(TestCase):
             name, b"\xff\xd8\xff" + b"0" * 32, content_type="image/jpeg"
         )
 
+    def _pdf(self, name):
+        return SimpleUploadedFile(
+            name, b"%PDF-1.4 " + b"0" * 32, content_type="application/pdf"
+        )
+
     def test_attendance_upload_succeeds_and_records_attendance_form_kind(self):
+        """The governed Training Attendance form is PDF-only (owner,
+        2026-08-19). A PDF records as the form; a photographed sheet is kept
+        as a supplementary PHOTO and does not satisfy the requirement."""
         response = self.client.post(
             f"/activities/{self.activity.id}/attendance/action",
             {
                 "teachers_attended": "5",
                 "leaders_attended": "1",
-                "attendance_file": self._jpeg("attendance.jpg"),
+                "attendance_file": self._pdf("attendance.pdf"),
             },
         )
         self.assertIn(response.status_code, (200, 302))
@@ -83,6 +91,21 @@ class AttendanceAndSsaUploadKindTest(TestCase):
             "created_at"
         )
         self.assertEqual(record.kind, "attendance_form")
+
+    def test_photographed_attendance_sheet_is_kept_as_a_photo(self):
+        response = self.client.post(
+            f"/activities/{self.activity.id}/attendance/action",
+            {
+                "teachers_attended": "5",
+                "leaders_attended": "1",
+                "attendance_file": self._jpeg("attendance.jpg"),
+            },
+        )
+        self.assertIn(response.status_code, (200, 302))
+        record = EvidenceRecord.objects.filter(activity_id=self.activity.id).latest(
+            "created_at"
+        )
+        self.assertEqual(record.kind, "photo")
 
     def test_ssa_upload_succeeds_and_records_assessment_form_kind(self):
         response = self.client.post(

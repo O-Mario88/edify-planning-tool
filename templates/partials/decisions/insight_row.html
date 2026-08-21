@@ -9,7 +9,7 @@ read identically — a decision-maker shouldn't have to learn two layouts.
 <div class="flex items-center gap-2 flex-wrap">
 <span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill {% if i.riskLevel == 'critical' %}bg-rose-50 text-rose-700{% elif i.riskLevel == 'high' %}bg-amber-50 text-amber-700{% elif i.riskLevel == 'medium' %}bg-slate-100 text-slate-600{% else %}bg-emerald-50 text-emerald-700{% endif %}">{{ i.riskLevel|upper }}</span>
 {% if i.scopeName %}<span class="edify-text-caption font-bold text-slate-500">{{ i.scopeName }}</span>{% endif %}
-{% if not i.isUndecided %}<span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill {% if i.status == 'accepted' %}bg-emerald-50 text-emerald-700{% elif i.status == 'rejected' %}bg-slate-100 text-slate-500{% else %}edify-primary-soft edify-primary-text{% endif %}">{{ i.status|capfirst }}</span>{% endif %}
+{% if not i.isUndecided %}<span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill {% if i.status == 'accepted' %}bg-emerald-50 text-emerald-700{% elif i.status == 'rejected' %}bg-rose-50 text-rose-700{% else %}edify-primary-soft edify-primary-text{% endif %}">{{ i.status|capfirst }}</span>{% endif %}
 {% if i.impactYield %}<span class="edify-text-caption font-bold text-slate-400">yield: {{ i.impactYield }}</span>{% endif %}
 </div>
 

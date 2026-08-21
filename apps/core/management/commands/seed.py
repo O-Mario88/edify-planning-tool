@@ -841,6 +841,14 @@ class Command(BaseCommand):
                 # every board that reads it reports a defect that only the
                 # seeder can cause.
                 if partner is not None:
+                    from apps.activity_catalogue.services import (
+                        resolve_assignment_item,
+                    )
+
+                    seeded_item = resolve_assignment_item(
+                        purpose_of_visit="ssa_support",
+                        expected_activity_type=act_type,
+                    )
                     PartnerAssignment.objects.create(
                         school=school,
                         cluster=cluster,
@@ -848,6 +856,10 @@ class Command(BaseCommand):
                         assigning_staff_id=cceo.user.user_id,
                         monitoring_staff_id=cceo.user.user_id,
                         assignment_mode="specific_activity",
+                        catalogue_item=seeded_item,
+                        catalogue_snapshot=seeded_item.snapshot()
+                        if seeded_item
+                        else {},
                         purpose=f"Seeded {act_type.replace('_', ' ')}",
                         purpose_of_visit="ssa_support",
                         expected_activity_type=act_type,

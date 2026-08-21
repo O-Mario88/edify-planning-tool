@@ -267,21 +267,9 @@ class FinanceOperatingSystemTest(TestCase):
             uploaded_by="partner_abc",
         )
 
-        # Even with the other 4 checks satisfied, a missing NetSuite Expense
-        # ID must still block payment — the HIGH-severity gap this fix closes.
-        with self.assertRaises(BadRequest):
-            PartnerPaymentService.pay_partner(
-                activity=self.partner_activity,
-                partner_name="Partner ABC",
-                amount=600000,
-                method="Bank Transfer",
-                reference="TXN-PART-123",
-                user_id="accountant_jane",
-            )
-        self.partner_activity.refresh_from_db()
-        self.assertNotEqual(self.partner_activity.status, "closed")
-
-        # Now pay partner (with NetSuite ID) should pass
+        # NetSuite IDs are STAFF accountability proof (owner, 2026-08-20):
+        # the accountant pays the partner directly, so payment proceeds with
+        # just the reference — no NetSuite entry is asked or written.
         pay = PartnerPaymentService.pay_partner(
             activity=self.partner_activity,
             partner_name="Partner ABC",
@@ -289,7 +277,6 @@ class FinanceOperatingSystemTest(TestCase):
             method="Bank Transfer",
             reference="TXN-PART-123",
             user_id="accountant_jane",
-            netsuite_id="NS-EXP-PARTNER-1",
         )
         self.assertEqual(pay.amount_paid, 600000)
 
@@ -300,13 +287,12 @@ class FinanceOperatingSystemTest(TestCase):
         self.assertEqual(self.partner_activity.payment_status, "paid")
         self.assertEqual(self.partner_activity.status, "closed")
 
-        self.assertTrue(
+        self.assertFalse(
             NetSuiteExpenseRecord.objects.filter(
-                activity=self.partner_activity, netsuite_expense_id="NS-EXP-PARTNER-1"
+                activity=self.partner_activity
             ).exists()
         )
         snapshot = CompletedActivitySnapshot.objects.get(activity=self.partner_activity)
-        self.assertEqual(snapshot.netsuite_expense_id, "NS-EXP-PARTNER-1")
         self.assertTrue(
             ActivityClosure.objects.filter(
                 activity=self.partner_activity, status="closed"
@@ -385,12 +371,11 @@ class FinanceOperatingSystemTest(TestCase):
         client.force_login(accountant)
         return client
 
-    def test_clear_partner_payment_view_requires_netsuite_id(self):
-        """Regression guard: the view used to accept an empty netsuite_id,
-        write status="closed" directly, and only stash netsuite_id in an
-        audit-log metadata blob — never creating a NetSuiteExpenseRecord.
-        It must now enforce the same NetSuite-ID requirement
-        PartnerPaymentService.pay_partner() enforces."""
+    def test_clear_partner_payment_view_accepts_missing_netsuite_id(self):
+        """NetSuite IDs are staff-accountability proof only (owner,
+        2026-08-20). The accountant pays the partner directly, so the clear
+        action succeeds with just the reference and never writes a
+        NetSuiteExpenseRecord."""
         self._make_partner_activity_verification_eligible()
         client = self._accountant_client()
 
@@ -400,23 +385,20 @@ class FinanceOperatingSystemTest(TestCase):
                 "activity_id": self.partner_activity.id,
                 "netsuite_id": "",
                 "amount": "600000",
-                "reference": "TXN-NO-NETSUITE",
+                "reference": "TXN-NO-NS-1",
             },
         )
-        self.assertEqual(resp.status_code, 400)
-        self.assertIn(b"NetSuite", resp.content)
-
+        self.assertEqual(resp.status_code, 200)
         self.partner_activity.refresh_from_db()
-        self.assertNotEqual(self.partner_activity.status, "closed")
+        self.assertEqual(self.partner_activity.payment_status, "paid")
+        self.assertEqual(self.partner_activity.status, "closed")
         self.assertFalse(
             NetSuiteExpenseRecord.objects.filter(
                 activity=self.partner_activity
             ).exists()
         )
 
-    def test_clear_partner_payment_view_success_creates_netsuite_record_and_snapshot(
-        self,
-    ):
+    def test_clear_partner_payment_view_success_creates_snapshot(self):
         self._make_partner_activity_verification_eligible()
         client = self._accountant_client()
 
@@ -434,9 +416,11 @@ class FinanceOperatingSystemTest(TestCase):
         self.partner_activity.refresh_from_db()
         self.assertEqual(self.partner_activity.payment_status, "paid")
         self.assertEqual(self.partner_activity.status, "closed")
-        self.assertTrue(
+        # A posted NetSuite value is ignored for partner payments — the
+        # record is a staff-accountability artifact and is never written here.
+        self.assertFalse(
             NetSuiteExpenseRecord.objects.filter(
-                activity=self.partner_activity, netsuite_expense_id="NS-EXP-CLEAR-1"
+                activity=self.partner_activity
             ).exists()
         )
         self.assertTrue(

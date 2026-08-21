@@ -1,24 +1,142 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load frontend_filters %}
 
-{% block title %}Partner My Plan — Edify{% endblock %}
+{% block title %}My Plan · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 py-5 max-w-[1300px] mx-auto space-y-5">
 
-<!-- Header -->
-<div class="edify-page-header">
-<div class="edify-page-header__lead">
-<p class="edify-page-eyebrow">Partner Portal</p>
-<h1 class="edify-page-title edify-page-header__title">Partner My Plan</h1>
-<p class="edify-page-header__description">Manage and execute all partner-owned scheduled activities.</p>
-</div>
-</div>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">My Work</p>
+      <h1 class="edify-page-title edify-page-header__title">My Plan</h1>
+      <p class="edify-page-header__description">Your accepted implementation schedule — {{ plan_total }} activit{{ plan_total|pluralize:"y,ies" }} on the plan.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <button type="button"
+              hx-get="/partner/invoices/new" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="inline-flex h-9 items-center gap-1.5 rounded-control edify-primary-solid edify-primary-hover px-3.5 text-[12px] font-semibold text-white transition-colors shadow-sm">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Send Invoice
+      </button>
+    </div>
+  </div>
 
-<!-- Dynamic workspace feed -->
-<div id="my-plan-workspace" class="space-y-6">
-{% include "partials/my_plan/workspace.html" %}
-</div>
+  {% for title, blurb, rows, tone in plan_sections %}
+  {% if rows or tone == "danger" %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
+    <div class="px-5 pt-4 pb-3 border-b border-slate-100 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-[14px] font-bold tracking-tight {% if tone == 'danger' and rows %}text-rose-700{% else %}text-slate-800{% endif %}">{{ title }}{% if rows %} <span class="edify-text-caption font-bold text-slate-400">({{ rows|length }})</span>{% endif %}</h2>
+        <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ blurb }}</p>
+      </div>
+    </div>
+    {% if rows %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full text-left text-[12px] font-semibold max-xl:block">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+          <tr>
+            <th class="px-5 py-2.5">School / Activity</th>
+            <th class="px-5 py-2.5">Type</th>
+            <th class="px-5 py-2.5">Location</th>
+            <th class="px-5 py-2.5">Planned</th>
+            <th class="px-5 py-2.5">Status</th>
+            <th class="px-5 py-2.5">Evidence</th>
+            <th class="px-5 py-2.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 max-xl:block">
+          {% for row in rows|slice:":100" %}
+          <tr class="hover:bg-slate-50/60 transition-colors max-xl:block max-xl:p-4">
+            <td class="px-5 py-3 max-xl:px-0" data-record-title>
+              <a href="/partner/activities/{{ row.a.id }}/evidence" class="font-bold text-slate-800 hover:edify-primary-text">{{ row.where }}</a>
+              {% if row.return_reason %}<p class="edify-text-caption text-rose-600 mt-0.5">{{ row.return_reason }}</p>{% endif %}
+            </td>
+            <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Type">{{ row.a.get_activity_type_display }}</td>
+            <td class="px-5 py-3 text-slate-600 max-xl:px-0" data-label="Location">{% firstof row.location "—" %}</td>
+            <td class="px-5 py-3 text-slate-600 tabular-nums max-xl:px-0" data-label="Planned">{{ row.a.planned_date|date:"d M Y"|default:"—" }}</td>
+            <td class="px-5 py-3 max-xl:px-0" data-label="Status"><span class="edify-status-text" data-edify-tone="{% if row.return_reason %}danger{% elif row.a.status == 'partner_scheduled' or row.a.status == 'scheduled' %}neutral{% else %}info{% endif %}">{{ row.a.status|status_label }}</span></td>
+            <td class="px-5 py-3 text-slate-500 max-xl:px-0" data-label="Evidence">{{ row.evidence_summary }}</td>
+            <td class="px-5 py-3 text-right max-xl:px-0 max-xl:border-t max-xl:border-slate-100 max-xl:py-3" data-record-action>
+              {% comment %} The menu positions FIXED from the trigger's rect:
+              an absolute menu inside the table's overflow-x-auto scroller is
+              clipped invisible the moment it opens. {% endcomment %}
+              <div x-data="{ open: false, menuPos: '' }" class="relative inline-block text-left">
+                <button type="button"
+                        @click="if (open) { open = false } else { const r = $event.currentTarget.getBoundingClientRect(); menuPos = `top:${r.bottom + 4}px;left:${Math.max(8, r.right - 176)}px`; open = true }"
+                        @click.outside="open = false"
+                        class="inline-flex h-8 items-center gap-1 rounded-control border border-[var(--border-strong)] edify-surface px-3 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]"
+                        :aria-expanded="open" aria-haspopup="menu">
+                  Actions
+                  <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="open" x-cloak role="menu" :style="menuPos"
+                     @scroll.window="open = false" @resize.window="open = false" @keydown.escape.window="open = false"
+                     class="fixed z-50 w-44 rounded-control border border-slate-100 edify-surface p-1 shadow-lg">
+                  {% if "start" in row.actions %}
+                  <form method="post" action="/partner/activities/{{ row.a.id }}/start-action" role="none">
+                    {% csrf_token %}
+                    <button type="submit" role="menuitem" class="block w-full rounded-control px-3 py-2 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Start Activity</button>
+                  </form>
+                  {% endif %}
+                  {% if "continue" in row.actions %}
+                  <button type="button" role="menuitem"
+                          hx-get="/activities/{{ row.a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
+                          @click="open = false"
+                          class="block w-full rounded-control px-3 py-2 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Continue Evidence</button>
+                  {% endif %}
+                  {% if "correct" in row.actions %}
+                  <a href="/partner/activities/{{ row.a.id }}/evidence" role="menuitem" class="block rounded-control px-3 py-2 text-[12px] font-semibold text-rose-600 hover:bg-rose-50">Correct Returned Evidence</a>
+                  {% endif %}
+                  {% if "reschedule" in row.actions %}
+                  {% comment %} The platform's one reschedule drawer — the
+                  same control every role uses from My Plan. {% endcomment %}
+                  <button type="button" role="menuitem"
+                          hx-get="/my-plan/{{ row.a.id }}/reschedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+                          @click="open = false"
+                          class="block w-full rounded-control px-3 py-2 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Reschedule</button>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="px-5 py-6 text-center text-[13px] font-semibold text-slate-400">Nothing here — all clear.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endfor %}
 
+  {% if plan_total == 0 %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center">
+    <p class="text-[13px] font-semibold text-slate-500">Nothing on your plan yet — schedule assigned work from <a href="/partner/assigned-schools" class="font-bold edify-primary-text">Assigned Schools</a> or <a href="/partner/assigned-activities" class="font-bold edify-primary-text">Assigned Activities</a>.</p>
+  </div>
+  {% endif %}
+
+  {% if partner_invoice_tracker %}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+    <div>
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Invoices &amp; Payments</h2>
+      <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">50% advance on your invoice · balance after IA clears the work.</p>
+    </div>
+    <div class="divide-y divide-slate-50">
+      {% for row in partner_invoice_tracker %}
+      <div class="py-2.5 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[12px] font-semibold truncate">{{ row.invoice.get_invoice_type_display }} · {{ row.label }}</p>
+          <p class="edify-text-caption font-medium {% if row.tone == 'danger' %}edify-danger-text{% elif row.tone == 'success' %}text-emerald-600{% else %}text-slate-400{% endif %}" data-edify-tone="{{ row.tone }}">{{ row.stage }}</p>
+        </div>
+        <p class="text-[12px] font-semibold tabular-nums text-slate-700 shrink-0">{{ row.invoice.payable_amount|ugx_amount }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div id="drawer-container"></div>
 </div>
 {% endblock %}

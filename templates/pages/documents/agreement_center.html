@@ -45,8 +45,10 @@
     </div>
 
     <p class="edify-text-caption font-semibold text-slate-400">
-      Active reading time <span class="tabular-nums">{{ ack.active_reading_seconds }}s</span> across {{ ack.session_count }} session{{ ack.session_count|pluralize }}.
-      This records time the document was open and visible — it is not a measure of whether you read or understood it.
+      Active reading time <span class="tabular-nums">{{ ack.active_reading_seconds }}s</span> across {{ ack.session_count }} session{{ ack.session_count|pluralize }} ·
+      {{ ack.document.required_reading_minutes }} minute{{ ack.document.required_reading_minutes|pluralize }} required ·
+      <strong>{{ ack.reading_completion_label }}</strong>.
+      Only foreground, focused viewer time counts; agreement is recorded separately.
     </p>
 
     <form method="post" action="/api/documents/acknowledge/{{ ack.id }}" class="space-y-3 pt-3 border-t border-slate-50">
@@ -108,6 +110,7 @@
       <div class="min-w-0">
         <p class="text-[12px] font-bold text-slate-700">{{ ack.document.title }}</p>
         <p class="edify-text-caption font-semibold text-slate-400">v{{ ack.version.version_number }} · {{ ack.responded_at|date:"d M Y" }}</p>
+        <p class="edify-text-caption font-bold {% if ack.reading_completion_key == 'completed' or ack.reading_completion_key == 'completed_offline' %}text-emerald-600{% elif ack.reading_completion_key == 'partial' %}text-amber-600{% else %}text-rose-600{% endif %}">{{ ack.reading_completion_label }} · {{ ack.active_reading_seconds }}s active</p>
       </div>
       <span class="px-1.5 rounded-pill edify-text-caption font-bold {% if ack.state == 'agreed' %}bg-emerald-100 text-emerald-700{% else %}bg-rose-100 text-rose-700{% endif %} shrink-0">{{ ack.get_state_display }}</span>
     </div>

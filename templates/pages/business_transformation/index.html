@@ -33,7 +33,7 @@
     {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
   </form>
 
-  {% include "components/kpi_strip.html" with items=kpi_strip_items title="Business Transformation scorecard" %}
+  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Business Transformation scorecard" %}
 
   {% if not summary_only and not mfi_user %}
   <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="bt-case-queue-title">

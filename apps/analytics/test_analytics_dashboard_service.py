@@ -17,6 +17,7 @@ from django.utils import timezone
 from apps.accounts.models import StaffProfile, StaffTargetProfile
 from apps.activities.models import Activity
 from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
+from apps.analytics.views import _get_cache_key
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -87,6 +88,11 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
         }
         base.update(overrides)
         return base
+
+    def test_cache_key_is_backend_safe_for_human_readable_roles(self):
+        key = _get_cache_key("dashboard", self.user, self._filters())
+        self.assertNotIn(" ", key)
+        self.assertNotIn(self.user.active_role, key)
 
     def test_no_target_configured_shows_honest_empty_state(self):
         # Plenty of real activity, several already achieved this quarter —

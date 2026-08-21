@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 from django.db.models import Q
@@ -77,10 +77,10 @@ PLANNED_OUTPUT_STATUSES = (
     "rescheduled",
 )
 
-DISTRIBUTION_APPROVER_ROLES = (
-    EdifyRole.IMPACT_ASSESSMENT.value,
-    EdifyRole.ADMIN.value,
-)
+# §4.4 (2026-08-20 audit R5): Admin supports the platform but holds NO
+# business authority in this chain — distribution approval is IA's alone,
+# exactly as payment is the Accountant's and verification is IA's.
+DISTRIBUTION_APPROVER_ROLES = (EdifyRole.IMPACT_ASSESSMENT.value,)
 
 _CENT = Decimal("0.01")
 
@@ -120,35 +120,102 @@ def is_summable(milestone: PriorityMilestone) -> bool:
 # ─── Achievement classification (§11) ────────────────────────────────────────
 
 
-def classify_achievement(pct, *, cap_at_100: bool = False) -> dict:
-    """Classify an achievement percentage into the five official bands.
+# The five approved achievement bands. One table, so a page cannot invent a
+# sixth label or move a boundary — and so the boundary values themselves are
+# readable rather than buried in a chain of comparisons.
+#
+# Superseded the earlier Behind / Near / Achieved wording, whose bottom
+# boundary was 80%: a person at 85% was told they were "behind" while someone
+# at 89% was told the same thing, and neither label distinguished "missed it"
+# from "very nearly made it".
+ACHIEVEMENT_BANDS = (
+    # (upper bound, inclusive?, key, label, tone)
+    (Decimal("90"), False, "not_met", "Not Met the Target", "danger"),
+    (Decimal("100"), False, "met_some", "Met Some of the Target", "warning"),
+    (Decimal("100"), True, "met", "Met the Target", "success"),
+    (Decimal("150"), False, "exceeded", "Exceeded", "success"),
+)
+FAR_EXCEEDED = ("far_exceeded", "Far Exceeded", "info")
 
-    Percentage metrics that logically cannot exceed 100% (coverage) are capped
-    at 100 and classified Achieved — 104% SSA coverage is a data problem, not
-    an over-delivery.
+#: States that are not an achievement percentage at all, and must never be
+#: averaged into anyone's performance (§10.4).
+NON_SCORING_STATES = {
+    "not_started": ("Not started", "neutral"),
+    "not_applicable": ("Not Applicable", "neutral"),
+    "configuration_required": ("Configuration Required", "warning"),
+    "non_scoreable": ("Non-scoreable", "neutral"),
+}
+
+
+def classify_achievement(
+    pct,
+    *,
+    cap_at_100: bool = False,
+    target=None,
+    scoreable: bool = True,
+) -> dict:
+    """Classify an achievement percentage into the five approved bands.
+
+    Percentages are quantised to two decimal places before the comparison, so
+    the boundaries behave exactly as written: 89.99 is Not Met, 90.00 is Met
+    Some, 99.99 is Met Some, 100.00 is Met, 100.01 is Exceeded.
+
+    Coverage-style metrics that logically cannot exceed 100% are capped there
+    and can reach Met the Target at most — 104% SSA coverage is a data problem,
+    not over-delivery.
+
+    `is_scoring` is what callers must filter on before averaging: a target of
+    zero, an unconfigured milestone and a non-scoreable one each produce an
+    honest state rather than a division by zero or a fabricated 0%.
     """
 
-    if pct is None:
+    def _state(key):
+        label, tone = NON_SCORING_STATES[key]
         return {
-            "key": "not_started",
-            "label": "Not started",
-            "tone": "neutral",
+            "key": key,
+            "label": label,
+            "tone": tone,
             "pct": None,
+            "is_scoring": False,
+            "capped": False,
         }
-    value = float(pct)
-    if cap_at_100:
-        value = min(value, 100.0)
-    if value < 80:
-        key, label, tone = "behind", "Behind target", "danger"
-    elif value < 100:
-        key, label, tone = "near", "Near target", "warning"
-    elif value == 100:
-        key, label, tone = "achieved", "Achieved target", "success"
-    elif value < 150:
-        key, label, tone = "exceeded", "Exceeded target", "success"
-    else:
-        key, label, tone = "far_exceeded", "Far exceeded target", "info"
-    return {"key": key, "label": label, "tone": tone, "pct": round(value, 1)}
+
+    if not scoreable:
+        return _state("non_scoreable")
+    if target is not None:
+        try:
+            if Decimal(str(target)) == 0:
+                # Dividing by it would raise; reporting 0% would be a lie.
+                return _state("not_applicable")
+        except (TypeError, ValueError, InvalidOperation):
+            return _state("configuration_required")
+    if pct is None:
+        return _state("not_started")
+
+    try:
+        value = Decimal(str(pct)).quantize(Decimal("0.01"))
+    except (TypeError, ValueError, InvalidOperation):
+        return _state("configuration_required")
+
+    capped = False
+    if cap_at_100 and value > 100:
+        value = Decimal("100")
+        capped = True
+
+    key, label, tone = FAR_EXCEEDED
+    for bound, inclusive, band_key, band_label, band_tone in ACHIEVEMENT_BANDS:
+        if value < bound or (inclusive and value == bound):
+            key, label, tone = band_key, band_label, band_tone
+            break
+
+    return {
+        "key": key,
+        "label": label,
+        "tone": tone,
+        "pct": float(value),
+        "is_scoring": True,
+        "capped": capped,
+    }
 
 
 # ─── Splitting primitives ────────────────────────────────────────────────────
@@ -708,6 +775,27 @@ def _reconcile_rows(
                 )
         unallocated_core = column_remaining.get("Core")
         unallocated_client = column_remaining.get("Client")
+        # §12.4: every defined COMPONENT reconciles independently, exactly
+        # like the Core/Client columns — a zero parent balance never masks
+        # an unbalanced component. Checked only when holders carry splits;
+        # a lone single-holder allocation inherits the components whole.
+        components = list(milestone.components.all())
+        if components and (
+            len(rows) > 1 or any((row.component_split or {}) for row in rows)
+        ):
+            for component in components:
+                split_total = sum(
+                    (
+                        _q2((row.component_split or {}).get(component.code, 0))
+                        for row in rows
+                    ),
+                    Decimal("0"),
+                )
+                if split_total != _q2(component.target_value):
+                    errors.append(
+                        f"Component “{component.label}” allocations total "
+                        f"{split_total}, expected {component.target_value}."
+                    )
     else:
         allocated = None
         unallocated = None
@@ -898,6 +986,20 @@ def phase_allocation_periods(
             },
         )
 
+    # §14.4 recurring targets ("2 posts per month"): every applicable month
+    # carries the per-month figure — never capacity-weighted, and the annual
+    # expectation is derived (12 × per-month), not typed.
+    recurrence = getattr(milestone, "recurrence_per_month", None)
+    if recurrence:
+        per_month = _q2(recurrence)
+        for quarter in QUARTERS:
+            q_start, q_end = Cal.quarter_range(fy, quarter)
+            _write("quarter", q_start, q_end, per_month * 3)
+            for month in Cal.months_of_quarter(quarter):
+                start, end = Cal.month_range(fy, month)
+                _write("month", start, end, per_month)
+        return warnings
+
     for quarter in QUARTERS:
         quarter_target = _q2(quarters.get(quarter, 0))
         q_start, q_end = Cal.quarter_range(fy, quarter)
@@ -964,6 +1066,17 @@ def approve_quarters(
         raise BadRequest("Approve the annual allocation before its quarterly spread.")
     _assert_may_approve_spread(allocation, principal)
     parsed = validate_quarters(allocation, quarters)
+    # 2026-08-20 priorities audit G6: an approved spread is locked — moving
+    # figures afterwards is a reforecast amendment, never a re-approval
+    # (models.py states this law; this enforces it). And whatever the path,
+    # an elapsed quarter's figure may never silently change.
+    if allocation.quarter_status == "approved":
+        prior = {q: _q2(v) for q, v in (allocation.quarter_distribution or {}).items()}
+        if prior and prior != parsed:
+            raise BadRequest(
+                "The quarterly spread is already approved — changing it is "
+                "a reforecast amendment, not a re-approval."
+            )
     allocation.quarter_distribution = {
         quarter: str(value) for quarter, value in parsed.items()
     }
@@ -1011,8 +1124,7 @@ def _assert_may_approve_spread(allocation: MilestoneAllocation, principal) -> No
     if allocation.allocated_to_type == "team":
         if role not in DISTRIBUTION_APPROVER_ROLES:
             raise BadRequest(
-                "The Program Lead quarterly spread is approved by Impact "
-                "Assessment or the Country Director."
+                "The Program Lead quarterly spread is approved by Impact " "Assessment."
             )
         return
     if allocation.allocated_to_type == "employee":
@@ -1121,6 +1233,14 @@ def approve_amendment(
         pk=amendment.allocation_id
     )
     _assert_may_approve_spread(allocation, principal)
+    # 2026-08-20 priorities audit G2: the requester may not approve their own
+    # amendment — the sibling service (performance_engine.approve_amendment)
+    # always had this bar; this one did not.
+    if amendment.requested_by and amendment.requested_by == _actor_id(principal):
+        raise BadRequest(
+            "You requested this amendment — a different authorized "
+            "approver must decide it."
+        )
     if amendment.kind == MilestoneAllocationAmendment.KIND_AMENDMENT:
         allocation.allocated_target = amendment.new_target
         allocation.version += 1
@@ -1150,6 +1270,22 @@ def approve_amendment(
     from .milestone_progress import refresh_period_targets
 
     refresh_period_targets(allocation.milestone_id)
+    # G2 (2026-08-20 audit): an approved amendment changes a figure a
+    # previously balanced distribution reconciled against. Rebalancing
+    # legitimately passes through a transient imbalance (two amendments),
+    # so this does not deadlock — but the imbalance is measured HERE and
+    # carried on the warnings and the audit event, never discovered later.
+    if amendment.kind == MilestoneAllocationAmendment.KIND_AMENDMENT and is_summable(
+        allocation.milestone
+    ):
+        if allocation.allocated_to_type == "team":
+            recon = reconcile_team_level(allocation.milestone)
+        elif allocation.parent_id:
+            recon = reconcile_employee_level(allocation.parent)
+        else:
+            recon = {"errors": []}
+        for err in recon.get("errors") or []:
+            warnings.append(f"Distribution now out of balance: {err}")
     _audit(
         "hr.milestone_allocation_amended",
         allocation,
@@ -1245,12 +1381,17 @@ def planned_output(
 
 
 def _scope_activities(activities, allocation: MilestoneAllocation):
+    # 2026-08-20 audit: PERSONAL and TEAM planned output excludes partner
+    # deliveries — the verified side (milestone_progress) always excluded
+    # them, so counting them here inflated planned output with work whose
+    # credit the holder can never receive, understating the planning gap.
+    # Country/project scopes keep partner work: programme delivery owns it.
     if allocation.allocated_to_type == "employee" and allocation.employee_id:
         owner_ids = {
             str(allocation.employee_id),
             str(getattr(allocation.employee, "user_id", "") or ""),
         } - {""}
-        return activities.filter(
+        return activities.exclude(delivery_type="partner").filter(
             Q(responsible_staff_id__in=owner_ids)
             | Q(monitored_by_staff_id__in=owner_ids)
         )
@@ -1262,7 +1403,7 @@ def _scope_activities(activities, allocation: MilestoneAllocation):
                 supervisor_id=allocation.team_id
             ).values_list("supervisee_id", flat=True)
         )
-        return activities.filter(
+        return activities.exclude(delivery_type="partner").filter(
             Q(responsible_staff_id__in=member_ids)
             | Q(monitored_by_staff_id__in=member_ids)
         )
@@ -1409,6 +1550,24 @@ def publish_uganda_master(fy: str, *, principal, country_id: str = "Uganda"):
             + "; ".join(sorted(unconfirmed)[:8])
             + ("…" if len(unconfirmed) > 8 else "")
         )
+    # §12.4 composite integrity: every defined component set must sum to its
+    # parent target — a master must not publish with 200+100 ≠ 300.
+    component_errors = []
+    for milestone in milestones:
+        components = list(milestone.components.all())
+        if not components or milestone.target_value is None:
+            continue
+        total = sum((c.target_value for c in components), Decimal("0"))
+        if _q2(total) != _q2(milestone.target_value):
+            component_errors.append(
+                f"{milestone.title}: components sum to {total}, "
+                f"target is {milestone.target_value}"
+            )
+    if component_errors:
+        raise BadRequest(
+            "Component totals must equal their parent target before "
+            "publishing: " + "; ".join(component_errors[:5])
+        )
     now = timezone.now()
     activated = 0
     for milestone in milestones:
@@ -1449,11 +1608,11 @@ def publish_uganda_master(fy: str, *, principal, country_id: str = "Uganda"):
 
 
 def _assert_master_author(principal) -> None:
+    # §4.4 (audit R5): publication and source confirmation are the COUNTRY
+    # DIRECTOR'S authority alone — Admin supports, but must not publish on
+    # the CD's behalf.
     role = getattr(principal, "active_role", "")
-    if role not in (
-        EdifyRole.COUNTRY_DIRECTOR.value,
-        EdifyRole.ADMIN.value,
-    ):
+    if role != EdifyRole.COUNTRY_DIRECTOR.value:
         raise BadRequest(
             "The Uganda master is owned and confirmed by the Country Director."
         )
@@ -1622,6 +1781,16 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
     teams = program_lead_teams()
     member_ids = [m for team in teams for m in team["member_staff_ids"]]
     portfolio = _portfolio_counts(member_ids) if member_ids else {}
+    # Capacity, availability and current workload belong to the staff/FY, not
+    # to one milestone. Building this inside `_team_recommendation_rows`
+    # repeated the same database reads once per field-cascade milestone (23
+    # times on the measured Uganda master). Build it once and let every
+    # milestone apply its own weights to the shared facts in memory.
+    recommendation_context = (
+        _staff_recommendation_context(member_ids, fy, portfolio=portfolio)
+        if member_ids
+        else None
+    )
     milestone_ids = [
         milestone.id
         for priority in priorities
@@ -1701,7 +1870,11 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
                     level_label="Program Lead",
                 )
                 recommendations = _team_recommendation_rows(
-                    milestone, teams, portfolio, team_rows
+                    milestone,
+                    teams,
+                    portfolio,
+                    team_rows,
+                    context=recommendation_context,
                 )
             catalogue_names = []
             for rule in milestone.activity_rules.all():
@@ -1954,13 +2127,21 @@ def _proposal_balance(state: dict, recommendations: list[dict]) -> dict:
     }
 
 
-def _team_recommendation_rows(milestone, teams, portfolio, existing_rows) -> list[dict]:
+def _team_recommendation_rows(
+    milestone,
+    teams,
+    portfolio,
+    existing_rows,
+    *,
+    context=None,
+) -> list[dict]:
     existing_by_team = {str(row.team_id): row for row in existing_rows}
     rows = []
     member_ids = [member for team in teams for member in team["member_staff_ids"]]
-    context = _staff_recommendation_context(
-        member_ids, milestone.priority.fy, portfolio=portfolio
-    )
+    if context is None:
+        context = _staff_recommendation_context(
+            member_ids, milestone.priority.fy, portfolio=portfolio
+        )
     team_rows = _build_team_recommendation_rows(milestone, teams, context)
     if not team_rows:
         return []

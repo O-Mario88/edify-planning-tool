@@ -5,7 +5,7 @@
 {% block title %}{{ district.name }} District — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/districts" back_label="Districts" %}
 
 <div class="edify-page-header">
@@ -18,8 +18,8 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm flex flex-col justify-between">
 <div>
-<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Region</p>
-<p class="text-[21px] font-extrabold tracking-tight mt-1">{{ district.region.name|default:"—" }}</p>
+<p class="edify-profile-field__label">Region</p>
+<p class="edify-profile-field__value mt-1">{{ district.region.name|default:"—" }}</p>
 </div>
 <p class="text-[12px] text-slate-400 mt-4">{{ total_schools }} schools in this district</p>
 </div>

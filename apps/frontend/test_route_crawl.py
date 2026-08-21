@@ -14,8 +14,10 @@ surface a role has no data behind. A 500 never is.
 
 from __future__ import annotations
 
+from html.parser import HTMLParser
+
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.urls import get_resolver
 
 from apps.core.rbac import EdifyRole
@@ -38,6 +40,210 @@ SKIP_URL_PARTS = (
     "healthz",
     "readyz",
 )
+
+LEGACY_KPI_CLASSES = frozenset(
+    {
+        "admin-kpi",
+        "admin-kpi-strip",
+        "card-kpi",
+        "edify-kpi-card",
+        "edify-kpi-strip",
+        "hcos-metrics",
+        "ia-metric",
+        "mobile-home-metric",
+        "partner-kpi-card",
+        "partner-kpi-grid",
+        "sp-kpi",
+        "sp-kpi-grid",
+        "sp-kpis",
+        "spa-kpi",
+        "spa-kpi-grid",
+        "spp-kpi",
+        "spp-kpi-grid",
+        "tt-kpi",
+        "tt-kpi-strip",
+    }
+)
+REQUIRED_KPI_CARD_PARTS = frozenset(
+    {
+        "kpi-strip__topline",
+        "kpi-strip__icon-container",
+        "kpi-strip__item-details",
+        "kpi-strip__label",
+        "kpi-strip__value",
+    }
+)
+
+
+class _KpiVisualAuditParser(HTMLParser):
+    """Validate the rendered KPI DOM without depending on browser selectors."""
+
+    _void_tags = frozenset(
+        {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "source",
+            "track",
+            "wbr",
+        }
+    )
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.stack: list[dict] = []
+        self.issues: list[str] = []
+        self.total_card_count = 0
+
+    def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        classes = set(attributes.get("class", "").split())
+        legacy = sorted(classes & LEGACY_KPI_CLASSES)
+        if legacy:
+            self.issues.append(f"legacy KPI class rendered: {', '.join(legacy)}")
+
+        is_summary = "data-edify-summary-kpi" in attributes
+        if "kpi-strip" in classes and "kpi-strip--executive" not in classes:
+            self.issues.append("KPI strip rendered without kpi-strip--executive")
+        if is_summary and not {"kpi-strip", "kpi-strip--executive"} <= classes:
+            self.issues.append("approved KPI summary is missing executive tray classes")
+
+        current_card = next(
+            (node for node in reversed(self.stack) if node["is_card"]), None
+        )
+        if current_card is not None:
+            current_card["parts"].update(classes & REQUIRED_KPI_CARD_PARTS)
+
+        is_card = attributes.get("data-component") == "kpi-card"
+        if is_card:
+            self.total_card_count += 1
+            summary = next(
+                (node for node in reversed(self.stack) if node["is_summary"]), None
+            )
+            if summary is None:
+                self.issues.append("KPI card rendered outside the approved tray")
+            else:
+                summary["card_count"] += 1
+
+        node = {
+            "tag": tag,
+            "is_summary": is_summary,
+            "card_count": 0,
+            "is_card": is_card,
+            "parts": set(),
+        }
+        self.stack.append(node)
+        if tag in self._void_tags:
+            self._finish_node(self.stack.pop())
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if self.stack and self.stack[-1]["tag"] == tag:
+            self._finish_node(self.stack.pop())
+
+    def handle_endtag(self, tag):
+        match = next(
+            (
+                index
+                for index in range(len(self.stack) - 1, -1, -1)
+                if self.stack[index]["tag"] == tag
+            ),
+            None,
+        )
+        if match is None:
+            return
+        while len(self.stack) > match:
+            self._finish_node(self.stack.pop())
+
+    def finish(self):
+        self.close()
+        while self.stack:
+            self._finish_node(self.stack.pop())
+        if self.total_card_count > 6:
+            self.issues.append(
+                f"page rendered {self.total_card_count} KPI cards; maximum is 6"
+            )
+
+    def _finish_node(self, node):
+        if node["is_summary"] and node["card_count"] > 6:
+            self.issues.append(
+                f"executive tray rendered {node['card_count']} cards; maximum is 6"
+            )
+        if node["is_card"]:
+            missing = sorted(REQUIRED_KPI_CARD_PARTS - node["parts"])
+            if missing:
+                self.issues.append(
+                    "KPI card is missing approved visual parts: " + ", ".join(missing)
+                )
+
+
+class KpiVisualAuditParserTests(SimpleTestCase):
+    def _issues(self, html: str) -> list[str]:
+        parser = _KpiVisualAuditParser()
+        parser.feed(html)
+        parser.finish()
+        return parser.issues
+
+    def test_approved_executive_tile_passes(self):
+        html = """
+        <section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>
+          <div class="kpi-strip__grid">
+            <div class="kpi-strip__item" data-component="kpi-card">
+              <span class="kpi-strip__topline">
+                <span class="kpi-strip__icon-container"></span>
+              </span>
+              <span class="kpi-strip__item-details">
+                <span class="kpi-strip__label">Orders</span>
+                <span class="kpi-strip__value">892</span>
+              </span>
+            </div>
+          </div>
+        </section>
+        """
+        self.assertEqual(self._issues(html), [])
+
+    def test_legacy_or_uncontained_tiles_fail(self):
+        issues = self._issues(
+            '<div class="admin-kpi-strip"><div data-component="kpi-card"></div></div>'
+        )
+        self.assertTrue(any("legacy KPI class" in issue for issue in issues))
+        self.assertTrue(any("outside the approved tray" in issue for issue in issues))
+
+    def test_more_than_six_tiles_fails(self):
+        card = """
+        <div data-component="kpi-card">
+          <span class="kpi-strip__topline"><span class="kpi-strip__icon-container"></span></span>
+          <span class="kpi-strip__item-details"><span class="kpi-strip__label"></span><span class="kpi-strip__value"></span></span>
+        </div>
+        """
+        issues = self._issues(
+            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
+            + card * 7
+            + "</section>"
+        )
+        self.assertTrue(any("maximum is 6" in issue for issue in issues))
+
+    def test_multiple_valid_trays_cannot_bypass_the_page_maximum(self):
+        card = """
+        <div data-component="kpi-card">
+          <span class="kpi-strip__topline"><span class="kpi-strip__icon-container"></span></span>
+          <span class="kpi-strip__item-details"><span class="kpi-strip__label"></span><span class="kpi-strip__value"></span></span>
+        </div>
+        """
+        tray = (
+            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
+            + card * 4
+            + "</section>"
+        )
+        issues = self._issues(tray + tray)
+        self.assertIn("page rendered 8 KPI cards; maximum is 6", issues)
 
 
 def _zero_argument_routes() -> list[str]:
@@ -124,6 +330,16 @@ class RouteCrawlTest(TestCase):
                 continue
             if response.status_code >= 500:
                 failures.append(f"{url} → {response.status_code}")
+                continue
+            content_type = response.get("Content-Type", "").lower()
+            if "text/html" not in content_type or not response.content:
+                continue
+            parser = _KpiVisualAuditParser()
+            parser.feed(
+                response.content.decode(response.charset or "utf-8", errors="replace")
+            )
+            parser.finish()
+            failures.extend(f"{url} → {issue}" for issue in parser.issues)
         return failures
 
     def test_the_route_table_is_worth_crawling(self):

@@ -214,12 +214,16 @@ class CoreSchoolWorkflowTest(TestCase):
         ia_return(activity.id, {"reason": "Evidence photo is blurred"}, self.ia)
 
         activity.refresh_from_db()
-        self.assertEqual(activity.status, "returned")
+        # §15.1: partner-delivered work returns on its own status so partner
+        # surfaces can say "Returned by IA" plainly; staff work keeps
+        # "returned". This is a partner activity.
+        self.assertEqual(activity.status, "returned_by_ia")
         self.assertEqual(activity.ia_verification_status, "returned")
         self.assertEqual(activity.pl_review_note, "Evidence photo is blurred")
 
         slot.refresh_from_db()
-        self.assertEqual(slot.status, "returned")
+        # The slot mirrors the activity, which returns on the partner status.
+        self.assertEqual(slot.status, "returned_by_ia")
 
     def test_partner_schedule_sets_planned_date_and_no_staff_owner(self):
         """partner_schedule() must populate planned_date — the Partner

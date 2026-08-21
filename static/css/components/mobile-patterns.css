@@ -97,9 +97,17 @@
 }
 
 /* Page-level responsive composition. Desktop markup remains untouched while
-   role homes can place the next decision ahead of analytical context. */
-.mobile-home-only {
-  display: none;
+   role homes can place the next decision ahead of analytical context.
+
+   The desktop hide lives in a min-width block with !important because these
+   sections also carry their own display classes (.mobile-home-section is a
+   grid): a plain single-class `display:none` here lost the cascade to any
+   display rule declared later, which is exactly how "Do next" leaked above
+   the page header on desktop. */
+@media (min-width: 64rem) {
+  .mobile-home-only {
+    display: none !important;
+  }
 }
 
 .mobile-home-section {
@@ -561,9 +569,9 @@
 }
 
 @media (max-width: 63.999rem) {
-  .mobile-home-only {
-    display: block;
-  }
+  /* .mobile-home-only needs no show rule here: below 64rem the element's own
+     display classes apply (block by default, grid for .mobile-home-section —
+     the old `display:block` was flattening those grids). */
 
   .mobile-home-hide {
     display: none !important;

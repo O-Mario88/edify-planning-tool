@@ -130,11 +130,22 @@ table[data-mobile-table="fit"] {
 
   /* Text links are still touch controls. Keeping this rule workspace-scoped
      gives compact dashboard actions the same target as buttons without
-     changing links in the desktop navigation or public pages. */
-  .edify-workspace a[href] {
+     changing links in the desktop navigation or public pages.
+
+     The :has() split matters. This rule used to force `inline-flex` onto
+     EVERY link in the workspace, including links that wrap a whole card — so
+     below 1024px a card-shaped link laid its stacked label, value and helper
+     out in a single horizontal run ("Waiting on HR0HR is the actor"). A link
+     containing block content is a card, not a text link: it keeps the 44px
+     touch target and keeps its own layout. */
+  .edify-workspace a[href]:not(:has(p, div, h1, h2, h3, h4, table, ul, ol)) {
     display: inline-flex;
     min-block-size: 2.75rem;
     align-items: center;
+  }
+
+  .edify-workspace a[href]:has(p, div, h1, h2, h3, h4, table, ul, ol) {
+    min-block-size: 2.75rem;
   }
 
   #main-content.edify-workspace :where(

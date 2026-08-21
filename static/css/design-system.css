@@ -305,9 +305,9 @@
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
   --edify-text-title-weight:   600;
-  --edify-text-body-weight:    400;
-  --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   600;
+  --edify-text-body-weight:    350;
+  --edify-text-label-weight:   400;
+  --edify-text-micro-weight:   400;
 
   --edify-text-display-leading: 1.15;
   --edify-text-heading-leading: 1.3;
@@ -316,12 +316,25 @@
   --edify-text-label-leading:   1.4;
   --edify-text-micro-leading:   1.3;
 
-  --edify-text-display-tracking: -0.02em;
-  --edify-text-heading-tracking: -0.005em;
-  --edify-text-title-tracking: 0;
-  --edify-text-body-tracking: 0;
-  --edify-text-label-tracking: 0;
-  --edify-text-micro-tracking: 0.06em;
+  --edify-text-display-tracking: normal;
+  --edify-text-heading-tracking: normal;
+  --edify-text-title-tracking: normal;
+  --edify-text-body-tracking: normal;
+  --edify-text-label-tracking: normal;
+  --edify-text-micro-tracking: normal;
+
+  /* Profile records use the same semantic accent in every theme.  This is a
+     text token (rather than the button-fill accent) so values remain readable
+     on the blue and dark card surfaces as well as in the light workspace. */
+  --edify-profile-value: var(--edify-accent-text);
+
+  /* Content hierarchy is deliberately flatter than the legacy tile system.
+     A page/card owns the surface; sections inside it use spacing and dividers.
+     These tokens keep that hierarchy consistent across every feature. */
+  --edify-content-divider: var(--edify-divider);
+  --edify-content-section-gap: var(--edify-space-5);
+  --edify-content-row-gap: var(--edify-space-3);
+  --edify-content-row-padding: var(--edify-space-3);
 
   /* KPI names are read as labels, not machine metadata. The lower tracking
      keeps title case calm and fast to scan in compact operational tiles. */
@@ -887,5 +900,155 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 @media (pointer: coarse) {
   .edify-bar-row {
     min-height: 44px;
+  }
+}
+/* ── Global document foundation ──────────────────────────────────────────
+   Kept in the shared design-system layer so the base template contains no
+   private style island and HTMX/full-page renders consume the same rules. */
+[x-cloak] {
+  display: none !important;
+}
+
+body {
+  font-family: var(--edify-font-sans);
+  font-size-adjust: from-font;
+  background-color: var(--edify-bg);
+  background-image: var(--edify-canvas-treatment);
+  background-position: center 28%;
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  line-height: var(--edify-text-body-leading);
+  letter-spacing: var(--edify-text-body-tracking);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--edify-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: var(--edify-radius-pill);
+  background: var(--edify-scrollbar-thumb);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--edify-text-subtle);
+}
+
+@media (hover: none) {
+  .group .opacity-0.group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+}
+
+.opacity-0.group-hover\:opacity-100:focus-visible,
+.group:focus-within .opacity-0.group-hover\:opacity-100 {
+  opacity: 1 !important;
+}
+
+:is(button, a).edify-primary-solid {
+  border-radius: var(--edify-radius-md);
+  background-color: var(--edify-accent);
+  color: var(--edify-on-accent);
+  font-weight: var(--edify-text-title-weight);
+  transition:
+    background-color var(--edify-transition-fast),
+    transform var(--edify-transition-fast);
+}
+
+:is(button, a).edify-primary-solid:hover {
+  background-color: var(--edify-accent-hover);
+  transform: translateY(-1px);
+}
+
+:is(button, a):is(.border-slate-200, .border-slate-300) {
+  border: 1px solid var(--edify-border-strong);
+  border-radius: var(--edify-radius-md);
+  background-color: var(--edify-surface);
+  color: var(--edify-accent);
+}
+
+:is(button, a):is(.border-slate-200, .border-slate-300):hover {
+  background-color: var(--edify-accent-light);
+}
+
+table th {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  letter-spacing: var(--edify-text-micro-tracking);
+  text-transform: uppercase;
+}
+
+table tbody tr:hover {
+  background-color: var(--edify-accent-light);
+}
+
+:where(
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="datetime-local"],
+  select,
+  textarea
+) {
+  padding: 8px 12px;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  outline: none;
+  background-color: var(--edify-surface);
+  color: var(--edify-text);
+  font-family: var(--edify-font-sans);
+  font-size: var(--edify-text-body-size);
+  transition:
+    border-color var(--edify-transition-fast),
+    box-shadow var(--edify-transition-fast);
+}
+
+:where(
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="datetime-local"],
+  select,
+  textarea
+):focus-visible {
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring);
+}
+
+@media (max-width: 48rem), (pointer: coarse) {
+  :where(
+    input[type="text"],
+    input[type="search"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    select,
+    textarea
+  ) {
+    min-height: 48px;
+    font-size: 1rem;
   }
 }

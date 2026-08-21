@@ -74,7 +74,13 @@
           {% if published and next_distribution %}
           <button type="button" class="ia-button" data-open-distribution data-milestone="{{ next_distribution.milestone.id }}" data-priority="{{ next_distribution.priority.code }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-            Continue distribution
+            {% comment %}
+            §7.1 names this action "Distribute to Program Leads". The label
+            only says "Continue" once a balance is genuinely part-allocated —
+            a button that says Continue before anything has started tells the
+            reader they have already begun.
+            {% endcomment %}
+            {% if next_distribution.displayStatus == "Balance open" %}Continue distribution{% else %}Distribute to Program Leads{% endif %}
           </button>
           <small>Next: {{ next_distribution.milestone.title|truncatechars:54 }}</small>
           {% elif published %}

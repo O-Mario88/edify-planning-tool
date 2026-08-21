@@ -1,0 +1,46 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Confirm Salesforce Entry{% endblock %}
+{% block drawer_subtitle %}Completing verifies the evidence and confirms Salesforce — it does not mark the partner paid.{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/ia/partner-evidence/{{ a.id }}/complete-action"
+      hx-post="/ia/partner-evidence/{{ a.id }}/complete-action"
+      hx-target="#ia-complete-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="ia-complete-errors" aria-live="polite"></div>
+
+  <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Read-only summary</p>
+    <div class="mt-2 edify-data-list">
+      <div class="edify-data-row"><span class="edify-data-row__label">Work</span><span class="edify-data-row__value">{% firstof a.school.name a.cluster.name "Field work" %} · {{ a.get_activity_type_display }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Delivered</span><span class="edify-data-row__value">{{ a.actual_delivery_date|date:"d M Y"|default:"Not recorded" }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Evidence</span><span class="edify-data-row__value">{{ evidence_count }} file(s)</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Attendance</span><span class="edify-data-row__value">{% if a.teachers_attended or a.leaders_attended %}{{ a.teachers_attended|default:0 }} teachers · {{ a.leaders_attended|default:0 }} leaders{% else %}—{% endif %}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Salesforce</span><span class="edify-data-row__value">{% firstof a.salesforce_activity_id "Pending" %}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Payment</span><span class="edify-data-row__value">Becomes eligible on completion</span></div>
+    </div>
+  </div>
+
+  <div>
+    <label for="iac-sf-id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce ID <span class="text-rose-500">*</span></label>
+    <input id="iac-sf-id" name="salesforce_id" type="text" required maxlength="30" {% if a.salesforce_activity_id %}value="{{ a.salesforce_activity_id }}"{% endif %}
+           placeholder="The activity's Salesforce entry ID"
+           class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    <p class="mt-1 edify-text-caption font-medium text-slate-400">Format and uniqueness are enforced — a duplicate ID is rejected. Entry date {{ today|date:"d M Y" }} and your name are recorded automatically.</p>
+  </div>
+  <div>
+    <label for="iac-note" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Verification note <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+    <textarea id="iac-note" name="verification_note" rows="2"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Confirm SF ID &amp; Complete</button>
+  </div>
+</form>
+{% endblock %}

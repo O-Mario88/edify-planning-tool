@@ -17,12 +17,15 @@ single source of truth for "what's the next action on this activity".
 
 from __future__ import annotations
 
+import hashlib
 from datetime import date
 
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.core.cache_utils import stampede_safe_get_or_compute
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
@@ -38,11 +41,11 @@ ACTIONABLE = {
     # Disbursed → the responsible user submits accountability (spend, receipts,
     # NetSuite Code). The Accountant then reviews it (_accountant_todos).
     "accountability",
-    # Money owed back to the employee, and the partner-evidence acceptance that
-    # unblocks the whole partner chain. Both were computed by
-    # compute_next_action but absent here, so neither ever became a task.
+    # Money owed back to the employee.
     "reimbursement_receipt",
-    "review_partner_evidence",
+    # §10 direct IA handoff: staff no longer accept partner evidence — the
+    # partner's own next step is submitting it to IA.
+    "submit_evidence",
     # A booked partner activity ahead of its date. Real, dated, budgeted work
     # the agency has to get ready for — not a status to watch.
     "prepare",
@@ -60,7 +63,7 @@ ACTION_META = {
     "ssa": ("SSA", "Upload SSA"),
     "accountability": ("Finance", "Submit Accountability"),
     "reimbursement_receipt": ("Finance", "Confirm Receipt"),
-    "review_partner_evidence": ("Partner", "Review Evidence"),
+    "submit_evidence": ("Evidence", "Submit to IA"),
     "prepare": ("Execution", "Prepare"),
     "view_status": ("Execution", "View"),
 }
@@ -99,8 +102,8 @@ def _act_priority(a, action, today):
     # High: due today, overdue, returned work, evidence/SF-ID/complete/fix.
     if action in ("accountability", "reimbursement_receipt"):
         return "critical"  # money is out — accountability is the top loop to close
-    if action == "review_partner_evidence":
-        return "high"  # the partner cannot proceed until this is accepted
+    if action == "submit_evidence":
+        return "high"  # captured but unsubmitted — IA cannot see it yet
     if action in ("fix", "evidence", "sf_id", "complete"):
         return "high"
     if action == "start":
@@ -118,7 +121,7 @@ def _act_status(a, action, today):
     ):
         return ("returned", "Returned", "danger")
     if action in WAITING:
-        return ("blocked", "Waiting on Review", "neutral")
+        return ("blocked", "Waiting on Review", "danger")
     if a.planned_date and a.planned_date < today:
         return ("overdue", "Overdue", "danger")
     if a.planned_date == today:
@@ -553,7 +556,7 @@ def _school_action_todos(principal):
         elif a.due_date == today:
             status_key, status_label, status_tone = "due_today", "Due Today", "warning"
         elif a.state == "blocked":
-            status_key, status_label, status_tone = "blocked", "Blocked", "neutral"
+            status_key, status_label, status_tone = "blocked", "Blocked", "danger"
         else:
             status_key, status_label, status_tone = (
                 "waiting_me",
@@ -599,14 +602,23 @@ def _ia_todos(principal, role):
             deleted_at__isnull=True,
             status="awaiting_ia_verification",
         )
-        .select_related("school")
+        .select_related("school", "cluster")
         .order_by("-updated_at")[:20]
     ):
-        where = a.school.name if a.school_id else "—"
+        where = (
+            a.school.name if a.school_id else (a.cluster.name if a.cluster_id else "—")
+        )
+        # §16 partner submissions get their own queue and wording — the IA
+        # confirms the Salesforce entry there, not just the evidence.
+        is_partner = a.delivery_type == "partner"
         todos.append(
             {
                 "id": f"ia-{a.id}",
-                "title": "Verify Activity",
+                "title": (
+                    "Review Partner Evidence and Confirm Salesforce"
+                    if is_partner
+                    else "Verify Activity"
+                ),
                 "description": f"{a.get_activity_type_display()} at {where} is awaiting verification",
                 "category": "IA Verification",
                 "priority": "high",
@@ -616,10 +628,137 @@ def _ia_todos(principal, role):
                 "due_label": "—",
                 "due_tone": "neutral",
                 "linked": f"{where} · {a.get_activity_type_display()}",
-                "action_label": "Verify",
-                "action_url": "/ia/dashboard/",
+                "action_label": "Review" if is_partner else "Verify",
+                "action_url": (
+                    f"/ia/partner-evidence/{a.id}/" if is_partner else "/ia/dashboard/"
+                ),
                 "actionable": True,
                 "source": "IA workflow",
+                "_due_sort": date.max,
+            }
+        )
+    return todos
+
+
+def _partner_assignment_todos(principal, scope, today):
+    """§16 the partner's intake obligations: every assignment awaiting the
+    Schedule-or-Return decision is a task, closed by making the decision."""
+    partner_ids = list(getattr(scope, "partner_ids", None) or [])
+    if not partner_ids:
+        return []
+    from apps.partners.models import PartnerAssignment
+
+    todos = []
+    for pa in (
+        PartnerAssignment.objects.filter(
+            partner_id__in=partner_ids,
+            status__in=["assigned", "pending_scheduling"],
+            scheduled_activity__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("created_at")[:40]
+    ):
+        school_scoped = bool(pa.school_id) and not pa.cluster_id
+        where = (
+            pa.school.name
+            if pa.school_id
+            else (pa.cluster.name if pa.cluster_id else "Field work")
+        )
+        age = (today - pa.created_at.date()).days if pa.created_at else 0
+        todos.append(
+            {
+                "id": f"pa-{pa.id}",
+                "title": (
+                    "Schedule or Return Assigned School"
+                    if school_scoped
+                    else "Schedule or Return Assigned Activity"
+                ),
+                "description": f"{where} — assigned {age} day(s) ago and awaiting your decision",
+                "category": "Assignments",
+                "priority": "high" if age > 5 else "medium",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "—",
+                "due_tone": "neutral",
+                "linked": where,
+                "action_label": "Decide",
+                "action_url": f"/partner/assignments/{pa.id}",
+                "actionable": True,
+                "source": "Partner intake",
+                "_due_sort": date.max,
+            }
+        )
+    return todos
+
+
+def _partner_invoice_todos(principal, role):
+    """§16 the invoice chain's two desks: the PL confirms a submitted period
+    invoice against the plan; the Accountant pays a confirmed one. Both tasks
+    derive from invoice status and close when it moves."""
+    if role not in ("Program Lead", "Accountant", "Admin"):
+        return []
+    from apps.fund_requests.finance_models import PartnerInvoice
+
+    if role in ("Program Lead",):
+        wanted_status, title, action_label, url = (
+            "submitted_to_pl",
+            "Confirm Partner Invoice Against the Plan",
+            "Confirm",
+            "/fund-approvals",
+        )
+    else:
+        wanted_status, title, action_label, url = (
+            "confirmed_by_pl",
+            "Process Partner Payment",
+            "Pay",
+            "/accounts/partner-payments",
+        )
+    invoices = list(
+        PartnerInvoice.objects.filter(status=wanted_status).order_by("created_at")[:20]
+    )
+    # A Program Lead's desk holds only THEIR team's invoices — the confirm
+    # action itself is scoped the same way (_pl_may_act), so an unscoped
+    # To-Do here was both leadership spam and an unactionable row
+    # (2026-08-19 audit F5).
+    if role == "Program Lead":
+        from apps.fund_requests.partner_invoices import _supervising_pl_user_ids
+
+        invoices = [
+            inv
+            for inv in invoices
+            if principal.user_id in _supervising_pl_user_ids(inv)
+        ]
+    from apps.partners.models import Partner
+
+    names = dict(
+        Partner.objects.filter(id__in={inv.partner_id for inv in invoices}).values_list(
+            "id", "name"
+        )
+    )
+    todos = []
+    for inv in invoices:
+        partner_name = names.get(inv.partner_id, "Partner")
+        period = f"{inv.period_start:%d %b} – {inv.period_end:%d %b %Y}"
+        todos.append(
+            {
+                "id": f"pinv-{inv.id}",
+                "title": title,
+                "description": (
+                    f"{partner_name} · {inv.get_invoice_type_display()} · {period}"
+                ),
+                "category": "Finance",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "—",
+                "due_tone": "neutral",
+                "linked": partner_name,
+                "action_label": action_label,
+                "action_url": url,
+                "actionable": True,
+                "source": "Partner invoices",
                 "_due_sort": date.max,
             }
         )
@@ -664,6 +803,50 @@ def _pl_review_todos(principal, role):
     return todos
 
 
+def _hr_exception_todos(principal, role, today):
+    """HR's own inbound queue (§6.1), derived from workflow state.
+
+    Only the "waiting on HR" group becomes a To-Do. The other three HR Today
+    groups are things OTHER people must do, or conditions with no single
+    owner — putting them in HR's personal queue would turn a governance
+    surface into a task list HR can never empty, which is exactly what the
+    exception model is meant to replace.
+    """
+    if role not in ("HumanResources", "Human Resources", "Admin"):
+        return []
+    from apps.hr.hr_exceptions import WAITING_ON_HR, build_hr_exceptions
+
+    todos = []
+    for item in build_hr_exceptions(principal, today):
+        if item.group != WAITING_ON_HR:
+            continue
+        todos.append(
+            {
+                "id": f"hrx-{item.kind}-{abs(hash(item.url)) % 10**8}",
+                "title": item.title,
+                "description": item.detail,
+                "category": "People",
+                "priority": "high"
+                if item.severity in ("critical", "high")
+                else "medium",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on HR",
+                "status_tone": "warning",
+                "due_label": item.due_label or "—",
+                "due_tone": "danger" if item.severity == "critical" else "neutral",
+                "linked": item.person or item.detail,
+                "action_label": "Open",
+                "action_url": item.url,
+                "actionable": True,
+                "source": "HR Today",
+                "_due_sort": date.max,
+            }
+        )
+        if len(todos) >= 20:
+            break
+    return todos
+
+
 def _returned_assignment_todos(principal, scope, today):
     """Partner work handed back to me, still undecided.
 
@@ -698,7 +881,7 @@ def _returned_assignment_todos(principal, scope, today):
         todos.append(
             {
                 "id": f"pret-{a.id}",
-                "title": "Reassign Returned Partner Work",
+                "title": "Resolve Returned Partner Assignment",
                 "description": (
                     f"{a.partner.name} returned {where} — {label}. "
                     f"{(a.return_reason or '')[:120]}"
@@ -721,6 +904,103 @@ def _returned_assignment_todos(principal, scope, today):
                 "source": "Partner workflow",
                 "_due_sort": a.returned_at.date() if a.returned_at else date.max,
             }
+        )
+    return todos
+
+
+def _extra_work_todos(principal, role, today):
+    """§18 To-Dos, derived live: the assignee's open/overdue/returned tasks,
+    the reviewer's submissions, the assigner's overdue chase. Auto-close by
+    construction — resolved states simply stop matching."""
+    from apps.hr.models import ExtraAssignment
+
+    # Runtime requests pass a User (`id`); analytics and service callers pass
+    # a lightweight principal (`user_id`). To-Dos are shared by both entry
+    # points, so resolve the canonical account identifier without assuming the
+    # concrete request-user shape.
+    uid = getattr(principal, "id", None) or getattr(principal, "user_id", None)
+    if not uid:
+        return []
+    uid = str(uid)
+    todos = []
+
+    def row(a, *, title, action_label, priority, status_label, tone):
+        due_label, due_tone, due_sort = _due(a.due_date, today)
+        todos.append(
+            {
+                "id": f"xw-{a.id}",
+                "title": title,
+                "description": a.title,
+                "category": "Extra Work",
+                "priority": priority,
+                "status_key": a.status,
+                "status_label": status_label,
+                "status_tone": tone,
+                "due_label": due_label,
+                "due_tone": due_tone,
+                "linked": a.title,
+                "action_label": action_label,
+                "action_url": "/extra-work",
+                "actionable": True,
+                "source": "Extra assigned work",
+                "_due_sort": due_sort,
+            }
+        )
+
+    for a in ExtraAssignment.objects.filter(
+        assignee_id=uid, status__in=ExtraAssignment.OPEN_STATUSES
+    ).order_by("due_date")[:20]:
+        overdue = a.due_date < today
+        if a.status == "returned":
+            row(
+                a,
+                title="Correct Returned Extra Work",
+                action_label="Correct",
+                priority="high",
+                status_label="Returned",
+                tone="danger",
+            )
+        elif overdue:
+            row(
+                a,
+                title="Resolve Overdue Extra Work",
+                action_label="Complete",
+                priority="high",
+                status_label="Overdue",
+                tone="danger",
+            )
+        else:
+            row(
+                a,
+                title="Complete Extra Assignment",
+                action_label="Open",
+                priority="medium" if a.urgency == "normal" else "high",
+                status_label=a.get_status_display(),
+                tone="neutral",
+            )
+    for a in ExtraAssignment.objects.filter(
+        reviewer_id=uid, status="submitted"
+    ).order_by("submitted_at")[:20]:
+        row(
+            a,
+            title="Review Extra Work",
+            action_label="Review",
+            priority="high",
+            status_label="Submitted",
+            tone="info",
+        )
+    for a in ExtraAssignment.objects.filter(
+        assigner_id=uid,
+        status__in=ExtraAssignment.OPEN_STATUSES,
+        due_date__lt=today,
+    ).order_by("due_date")[:10]:
+        row(
+            a,
+            title="Chase Overdue Extra Work",
+            action_label="Follow up",
+            priority="medium",
+            status_label="Overdue",
+            tone="warning",
         )
     return todos
 
@@ -919,6 +1199,46 @@ def _accountant_todos(principal, role):
                 "_due_sort": date.today(),
             }
         )
+    # Partner MOU balances: IA verified the work and the 50% advance is out —
+    # the remaining balance awaits clearance on the Partner Payments queue.
+    # Derived: paying the clearance removes the row, which closes the To-Do.
+    from apps.activities.models import Activity as _Activity
+
+    partner_clearances = list(
+        _Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            status="ia_verified",
+            partner_payments__payment_type="advance",
+        )
+        .exclude(partner_payments__payment_type="clearance")
+        .distinct()[:10]
+    )
+    for act in partner_clearances:
+        todos.append(
+            {
+                "id": f"partner-clear-{act.id}",
+                "title": "Clear Partner Balance",
+                "description": (
+                    "IA verified the partner's work — the 50% MOU advance is "
+                    "out and the remaining balance is ready to clear"
+                ),
+                "category": "Finance",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "—",
+                "due_tone": "neutral",
+                "linked": f"Partner Activity · #{act.id[:8]}",
+                "action_label": "Clear Balance",
+                "action_url": "/accounts/partner-payments/",
+                "actionable": True,
+                "source": "Partner MOU",
+                "_due_sort": date.today(),
+            }
+        )
+
     for w in WeeklyFundRequest.objects.filter(status="confirmed_for_advance").order_by(
         "-week_start_date"
     )[:10]:
@@ -2115,10 +2435,23 @@ def _business_transformation_todos(principal, role, today):
     from datetime import timedelta
 
     from apps.business_transformation import services as bt_services
+    from apps.business_transformation import lending_impact
     from apps.business_transformation.models import (
         DISBURSED_LOAN_STATUSES,
+        EnrolmentSnapshot,
+        ImpactEvidenceStatus,
         IAValidationStatus,
+        LoanImpactAssessment,
+        LoanPurposeProposal,
+        LoanPurposeProposalStatus,
+        LoanUseFinding,
+        LoanUseResult,
         LoanVerificationRequirement,
+        PortfolioDataException,
+        PortfolioSubmission,
+        PortfolioSubmissionStatus,
+        RepaymentSnapshot,
+        RepaymentStatus,
         SalesforceStatus,
         VerificationRequirementStatus,
     )
@@ -2174,6 +2507,7 @@ def _business_transformation_todos(principal, role, today):
             )
 
     if role == EdifyRole.IMPACT_ASSESSMENT.value:
+        visible_loan_ids = bt_services.scoped_loans(principal).values("id")
         for loan in (
             bt_services.scoped_loans(principal)
             .filter(
@@ -2200,9 +2534,110 @@ def _business_transformation_todos(principal, role, today):
                     "action_url": f"/loans?open={loan.id}#loan-register-title",
                     "actionable": True,
                     "source": "Salesforce confirmation",
-                    "_due_sort": loan.salesforce_confirmed_at.date()
-                    if loan.salesforce_confirmed_at
-                    else today,
+                    "_due_sort": (
+                        loan.salesforce_confirmed_at.date()
+                        if loan.salesforce_confirmed_at
+                        else today
+                    ),
+                }
+            )
+
+        # Submitted evidence remains an IA action until IA records the result.
+        for requirement in (
+            LoanVerificationRequirement.objects.filter(
+                loan_id__in=visible_loan_ids,
+                status=VerificationRequirementStatus.AWAITING_VERIFICATION,
+            )
+            .select_related("loan__school", "loan__mfi")
+            .order_by("due_date")[:30]
+        ):
+            out.append(
+                {
+                    "id": f"bt-use-evidence-{requirement.id}",
+                    "title": "Review Loan-Use Evidence",
+                    "description": f"{requirement.loan.school.name} · evidence is ready for IA review.",
+                    "category": "Business Transformation",
+                    "priority": "critical" if requirement.due_date < today else "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "Overdue"
+                    if requirement.due_date < today
+                    else requirement.due_date.strftime("%b %-d"),
+                    "due_tone": "danger" if requirement.due_date < today else "warning",
+                    "linked": f"{requirement.loan.school.name} · {requirement.loan.mfi.name}",
+                    "action_label": "Review",
+                    "action_url": f"/loans?open={requirement.loan_id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Loan-use evidence",
+                    "_due_sort": requirement.due_date,
+                }
+            )
+
+        for assessment in (
+            LoanImpactAssessment.objects.filter(
+                loan_id__in=visible_loan_ids,
+                due_date__lte=today,
+                ia_status=IAValidationStatus.PENDING,
+            )
+            .select_related("loan__school", "loan__mfi")
+            .order_by("due_date")[:30]
+        ):
+            out.append(
+                {
+                    "id": f"bt-impact-{assessment.id}",
+                    "title": "Complete Impact Assessment",
+                    "description": f"{assessment.loan.school.name} · purpose-specific follow-up is due.",
+                    "category": "Business Transformation",
+                    "priority": "critical" if assessment.due_date < today else "high",
+                    "status_key": "overdue"
+                    if assessment.due_date < today
+                    else "waiting_me",
+                    "status_label": "Overdue"
+                    if assessment.due_date < today
+                    else "Waiting on Me",
+                    "status_tone": "danger" if assessment.due_date < today else "info",
+                    "due_label": "Overdue" if assessment.due_date < today else "Today",
+                    "due_tone": "danger" if assessment.due_date < today else "warning",
+                    "linked": f"{assessment.loan.school.name} · {assessment.loan.mfi.name}",
+                    "action_label": "Assess",
+                    "action_url": f"/loans?open={assessment.loan_id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Loan impact schedule",
+                    "_due_sort": assessment.due_date,
+                }
+            )
+
+        for snapshot in (
+            EnrolmentSnapshot.objects.filter(
+                loan_id__in=visible_loan_ids,
+                status=ImpactEvidenceStatus.REPORTED,
+            )
+            .select_related("loan__school", "loan__mfi")
+            .order_by("as_of_date")[:30]
+        ):
+            governed = snapshot.loan.school.enrollment or 0
+            variance = abs(snapshot.learner_count - governed)
+            if governed and variance <= max(10, int(governed * 0.1)):
+                continue
+            out.append(
+                {
+                    "id": f"bt-enrolment-{snapshot.id}",
+                    "title": "Resolve Enrolment Data Issue",
+                    "description": f"{snapshot.loan.school.name} · reported enrolment needs IA reconciliation.",
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "Today",
+                    "due_tone": "warning",
+                    "linked": f"{snapshot.loan.school.name} · {snapshot.as_of_date:%b %-d}",
+                    "action_label": "Reconcile",
+                    "action_url": f"/loans?open={snapshot.loan_id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Enrolment evidence",
+                    "_due_sort": snapshot.as_of_date,
                 }
             )
 
@@ -2239,9 +2674,11 @@ def _business_transformation_todos(principal, role, today):
                     "status_key": "overdue" if overdue else "waiting_me",
                     "status_label": "Overdue" if overdue else "Waiting on Me",
                     "status_tone": "danger" if overdue else "info",
-                    "due_label": "Overdue"
-                    if overdue
-                    else requirement.due_date.strftime("%b %-d"),
+                    "due_label": (
+                        "Overdue"
+                        if overdue
+                        else requirement.due_date.strftime("%b %-d")
+                    ),
                     "due_tone": "danger" if overdue else "info",
                     "linked": f"{requirement.loan.school.name} · {requirement.loan.mfi.name}",
                     "action_label": "Plan Visit",
@@ -2255,6 +2692,192 @@ def _business_transformation_todos(principal, role, today):
                 }
             )
 
+    if role in {
+        EdifyRole.CCEO.value,
+        EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    }:
+        for requirement in (
+            LoanVerificationRequirement.objects.filter(
+                loan_id__in=lending_impact.scoped_impact_loans(principal).values("id"),
+                activity__isnull=True,
+                status__in=[
+                    VerificationRequirementStatus.NEEDS_SCHEDULING,
+                    VerificationRequirementStatus.OVERDUE,
+                ],
+            )
+            .select_related("loan__school")
+            .order_by("due_date")[:30]
+        ):
+            overdue = requirement.due_date < today
+            out.append(
+                {
+                    "id": f"bt-field-verification-{requirement.id}",
+                    "title": "Complete Loan-Use Verification",
+                    "description": f"{requirement.loan.school.name} needs a verification visit.",
+                    "category": "Business Transformation",
+                    "priority": "critical" if overdue else "high",
+                    "status_key": "overdue" if overdue else "waiting_me",
+                    "status_label": "Overdue" if overdue else "Waiting on Me",
+                    "status_tone": "danger" if overdue else "info",
+                    "due_label": "Overdue"
+                    if overdue
+                    else requirement.due_date.strftime("%b %-d"),
+                    "due_tone": "danger" if overdue else "warning",
+                    "linked": requirement.loan.school.name,
+                    "action_label": "Plan Visit",
+                    "action_url": f"/schools/{requirement.loan.school.school_id}#school-bt-title",
+                    "actionable": True,
+                    "source": "Loan-use schedule",
+                    "_due_sort": requirement.due_date,
+                }
+            )
+    if role in {
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+    }:
+        visible_ids = bt_services.scoped_loans(principal).values("id")
+        risky_snapshots = (
+            RepaymentSnapshot.objects.filter(
+                loan_id__in=visible_ids,
+                status__in=[
+                    RepaymentStatus.OVERDUE_31_90,
+                    RepaymentStatus.OVERDUE_90_PLUS,
+                ],
+            )
+            .select_related("loan__school", "loan__mfi")
+            .order_by("loan_id", "-as_of_date")
+        )
+        seen_loans = set()
+        for snapshot in risky_snapshots:
+            if snapshot.loan_id in seen_loans or len(seen_loans) >= 30:
+                continue
+            seen_loans.add(snapshot.loan_id)
+            out.append(
+                {
+                    "id": f"bt-arrears-{snapshot.loan_id}",
+                    "title": "Review Repayment Risk",
+                    "description": f"{snapshot.loan.school.name} · {snapshot.days_in_arrears} days in arrears.",
+                    "category": "Business Transformation",
+                    "priority": "critical" if snapshot.days_in_arrears > 90 else "high",
+                    "status_key": "overdue",
+                    "status_label": "Overdue",
+                    "status_tone": "danger",
+                    "due_label": "Now",
+                    "due_tone": "danger",
+                    "linked": f"{snapshot.loan.mfi.name} · repayment risk",
+                    "action_label": "Review",
+                    "action_url": f"/loans?open={snapshot.loan_id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Repayment monitoring",
+                    "_due_sort": snapshot.as_of_date,
+                }
+            )
+
+        concern_findings = [
+            value
+            for value in LoanUseFinding.values
+            if value != LoanUseFinding.FULLY_APPROVED
+        ]
+        for result in (
+            LoanUseResult.objects.filter(
+                requirement__loan_id__in=visible_ids,
+                finding__in=concern_findings,
+                concern_reviewed_at__isnull=True,
+            )
+            .select_related("requirement__loan__school", "requirement__loan__mfi")
+            .order_by("-created_at")[:30]
+        ):
+            loan = result.requirement.loan
+            out.append(
+                {
+                    "id": f"bt-use-concern-{result.id}",
+                    "title": "Review Loan-Use Concern",
+                    "description": f"{loan.school.name} · {result.get_finding_display()}.",
+                    "category": "Business Transformation",
+                    "priority": "critical"
+                    if result.finding == LoanUseFinding.POSSIBLE_DIVERSION
+                    else "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "danger",
+                    "due_label": "Now",
+                    "due_tone": "danger",
+                    "linked": f"{loan.mfi.name} · loan-use assurance",
+                    "action_label": "Review",
+                    "action_url": f"/loans?open={loan.id}#loan-register-title",
+                    "actionable": True,
+                    "source": "Loan-use verification",
+                    "_due_sort": result.created_at.date(),
+                }
+            )
+
+        from apps.geography.models import District
+
+        for district in (
+            District.objects.annotate(
+                eligible_count=models.Count(
+                    "schools",
+                    filter=Q(schools__deleted_at__isnull=True),
+                    distinct=True,
+                ),
+                financed_count=models.Count(
+                    "schools__mfi_loans",
+                    filter=Q(
+                        schools__deleted_at__isnull=True,
+                        schools__mfi_loans__status__in=DISBURSED_LOAN_STATUSES,
+                    ),
+                    distinct=True,
+                ),
+            )
+            .filter(eligible_count__gt=0, financed_count=0)
+            .select_related("region")
+            .order_by("region__name", "name")[:20]
+        ):
+            out.append(
+                {
+                    "id": f"bt-geography-gap-{district.id}",
+                    "title": "Review Geographic Financing Gap",
+                    "description": f"{district.name} has eligible schools but no confirmed school financing.",
+                    "category": "Business Transformation",
+                    "priority": "medium",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "This month",
+                    "due_tone": "neutral",
+                    "linked": f"{district.region.name} · {district.eligible_count} schools",
+                    "action_label": "Review",
+                    "action_url": "/business-transformation",
+                    "actionable": True,
+                    "source": "Geographic equity",
+                    "_due_sort": today,
+                }
+            )
+
+    if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value:
+        for proposal in LoanPurposeProposal.objects.filter(
+            status=LoanPurposeProposalStatus.REQUESTED
+        ).order_by("created_at")[:30]:
+            out.append(
+                {
+                    "id": f"bt-purpose-{proposal.id}",
+                    "title": "Review New Loan Purpose",
+                    "description": proposal.proposed_label,
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": "Today",
+                    "due_tone": "warning",
+                    "linked": proposal.proposed_code,
+                    "action_label": "Review",
+                    "action_url": "/business-transformation",
+                    "actionable": True,
+                    "source": "MFI purpose request",
+                    "_due_sort": proposal.created_at.date(),
+                }
+            )
     if role in {
         EdifyRole.MFI_PARTNER_ADMIN.value,
         EdifyRole.MFI_LOAN_OFFICER.value,
@@ -2319,6 +2942,71 @@ def _business_transformation_todos(principal, role, today):
                     or date.min,
                 }
             )
+        mfi_ids = bt_services._mfi_ids_for(principal)
+        errored_submissions = PortfolioSubmission.objects.filter(
+            mfi_id__in=mfi_ids,
+            status=PortfolioSubmissionStatus.NEEDS_CORRECTION,
+        ).order_by("reporting_month")[:30]
+        for submission in errored_submissions:
+            error_count = PortfolioDataException.objects.filter(
+                submission=submission, status="open"
+            ).count()
+            out.append(
+                {
+                    "id": f"bt-portfolio-errors-{submission.id}",
+                    "title": "Resolve Portfolio Errors",
+                    "description": f"{error_count} row-level issue(s) block certification.",
+                    "category": "Business Transformation",
+                    "priority": "high",
+                    "status_key": "returned",
+                    "status_label": "Needs Correction",
+                    "status_tone": "danger",
+                    "due_label": "Today",
+                    "due_tone": "warning",
+                    "linked": submission.reporting_month.strftime("%B %Y"),
+                    "action_label": "Correct",
+                    "action_url": "/business-transformation",
+                    "actionable": True,
+                    "source": "Portfolio import validation",
+                    "_due_sort": submission.reporting_month,
+                }
+            )
+        if role == EdifyRole.MFI_PARTNER_ADMIN.value:
+            month_start = today.replace(day=1)
+            reporting_month = (month_start - timedelta(days=1)).replace(day=1)
+            due = month_start + timedelta(days=9)
+            for mfi_id in mfi_ids:
+                if PortfolioSubmission.objects.filter(
+                    mfi_id=mfi_id,
+                    reporting_month=reporting_month,
+                    status=PortfolioSubmissionStatus.CERTIFIED,
+                ).exists():
+                    continue
+                overdue = today > due
+                out.append(
+                    {
+                        "id": f"bt-monthly-return-{mfi_id}-{reporting_month:%Y%m}",
+                        "title": (
+                            "Complete Overdue Return"
+                            if overdue
+                            else "Submit Monthly Portfolio Return"
+                        ),
+                        "description": f"The {reporting_month:%B %Y} lending return is not certified.",
+                        "category": "Business Transformation",
+                        "priority": "critical" if overdue else "high",
+                        "status_key": "overdue" if overdue else "waiting_me",
+                        "status_label": "Overdue" if overdue else "Waiting on Me",
+                        "status_tone": "danger" if overdue else "info",
+                        "due_label": "Overdue" if overdue else due.strftime("%b %-d"),
+                        "due_tone": "danger" if overdue else "warning",
+                        "linked": reporting_month.strftime("%B %Y"),
+                        "action_label": "Submit",
+                        "action_url": "/business-transformation",
+                        "actionable": True,
+                        "source": "Monthly lending return",
+                        "_due_sort": due,
+                    }
+                )
     return out
 
 
@@ -2336,6 +3024,10 @@ def get_todos(principal) -> dict:
     todos += _school_action_todos(principal)
     todos += _pl_review_todos(principal, role)
     todos += _partner_delay_todos(principal, scope, today)
+    todos += _partner_assignment_todos(principal, scope, today)
+    todos += _partner_invoice_todos(principal, role)
+    todos += _extra_work_todos(principal, role, today)
+    todos += _hr_exception_todos(principal, role, today)
     todos += _returned_assignment_todos(principal, scope, today)
     todos += _fund_request_todos(principal, role)
     todos += _school_quality_todos(scope)
@@ -2380,3 +3072,26 @@ def get_todos(principal) -> dict:
         "categories": sorted(category_counts.items()),
         "total": len(todos),
     }
+
+
+def get_cached_todos(principal) -> dict:
+    """Short-lived shared snapshot for the three read-only queue surfaces.
+
+    Domain services keep calling ``get_todos`` directly when they require
+    immediate post-mutation truth. Page navigation uses this wrapper so
+    Dashboard → Today → To-Do does not derive the same queue three times in a
+    few seconds.
+    """
+
+    role_key = hashlib.sha256(
+        str(getattr(principal, "active_role", "")).encode()
+    ).hexdigest()[:12]
+    key = (
+        f"todo-snapshot:v1:{principal.id}:{role_key}:"
+        f"{timezone.localdate().isoformat()}"
+    )
+    return stampede_safe_get_or_compute(
+        key,
+        lambda: get_todos(principal),
+        timeout=settings.TODO_SNAPSHOT_CACHE_SECONDS,
+    )

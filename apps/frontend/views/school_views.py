@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 import json
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -453,70 +454,70 @@ def school_directory_view(request):
 
     # Construct unified KPI strip items
     kpi_strip_items = [
-        {
-            "label": "Total Schools",
-            "value": str(total_schools),
-            "raw_value": total_schools,
-            "helper": f"Across {district_count} district{'' if district_count == 1 else 's'}",
-            "icon": "school",
-            "variant": "primary",
-        },
-        {
-            "label": "Client Schools",
-            "value": str(client_schools),
-            "raw_value": client_schools,
-            "helper": f"{round(client_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "school",
-            "variant": "success",
-        },
-        {
-            "label": "Core Schools",
-            "value": str(core_schools),
-            "raw_value": core_schools,
-            "helper": f"{round(core_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "school",
-            "variant": "purple",
-        },
-        {
-            "label": "Unclustered",
-            "value": str(unclustered_schools),
-            "raw_value": unclustered_schools,
-            "helper": f"{round(unclustered_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "school",
-            "variant": "warning",
-        },
-        {
-            "label": "No SSA",
-            "value": str(no_ssa_schools),
-            "raw_value": no_ssa_schools,
-            "helper": f"{round(no_ssa_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "warning",
-            "variant": "danger",
-        },
-        {
-            "label": "Staff Required",
-            "value": str(staff_setup_schools),
-            "raw_value": staff_setup_schools,
-            "helper": f"{round(staff_setup_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "users",
-            "variant": "warning",
-        },
-        {
-            "label": "Planning Ready",
-            "value": str(planning_ready_schools),
-            "raw_value": planning_ready_schools,
-            "helper": f"{round(planning_ready_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Duplicates",
-            "value": str(duplicate_schools),
-            "raw_value": duplicate_schools,
-            "helper": f"{round(duplicate_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "warning",
-            "variant": "neutral",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_school_views_total_schools",
+            str(total_schools),
+            raw_value=total_schools,
+            helper=f"Across {district_count} district{'' if district_count == 1 else 's'}",
+            icon="school",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_client_schools",
+            str(client_schools),
+            raw_value=client_schools,
+            helper=f"{round(client_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="school",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_core_schools",
+            str(core_schools),
+            raw_value=core_schools,
+            helper=f"{round(core_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="school",
+            variant="purple",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_unclustered",
+            str(unclustered_schools),
+            raw_value=unclustered_schools,
+            helper=f"{round(unclustered_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="school",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_no_ssa",
+            str(no_ssa_schools),
+            raw_value=no_ssa_schools,
+            helper=f"{round(no_ssa_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="warning",
+            variant="danger",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_staff_required",
+            str(staff_setup_schools),
+            raw_value=staff_setup_schools,
+            helper=f"{round(staff_setup_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="users",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_planning_ready",
+            str(planning_ready_schools),
+            raw_value=planning_ready_schools,
+            helper=f"{round(planning_ready_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="check",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_school_views_duplicates",
+            str(duplicate_schools),
+            raw_value=duplicate_schools,
+            helper=f"{round(duplicate_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
+            icon="warning",
+            variant="neutral",
+        ),
     ]
 
     # Paginate list

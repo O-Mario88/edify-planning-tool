@@ -761,10 +761,6 @@ def planner_drawer_view(request):
         .order_by("user__name")
     )
 
-    from apps.partners.models import Partner
-
-    partners = Partner.objects.filter(deleted_at__isnull=True)
-
     from apps.core.enums import SsaIntervention
 
     interventions = [
@@ -846,7 +842,6 @@ def planner_drawer_view(request):
         "recommendation": rec,
         "weakest_interventions": weakest_interventions,
         "staff_profiles": staff_profiles,
-        "partners": partners,
         "interventions": interventions,
         "expected_participants": participants,
         "cost_preview": cost_preview,

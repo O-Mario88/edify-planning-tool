@@ -1,0 +1,63 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Grant Extra Partner Allowance{% endblock %}
+{% block drawer_subtitle %}Default is one partner activity per school per financial year — every extra one is granted here, with a reason on record.{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/partner-oversight/allowance-grant"
+      hx-post="/partner-oversight/allowance-grant"
+      hx-target="#allowance-grant-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="allowance-grant-errors" aria-live="polite"></div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div>
+      <label for="ag-partner" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner organisation <span class="text-rose-500">*</span></label>
+      <select id="ag-partner" name="partner_id" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Choose a partner…</option>
+        {% for p in partners %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="ag-school" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">School <span class="text-rose-500">*</span></label>
+      <select id="ag-school" name="school_id" required class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        <option value="">Choose a school…</option>
+        {% for s in schools %}<option value="{{ s.id }}">{{ s.name }} ({{ s.school_id }})</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-3">
+    <div>
+      <label for="ag-fy" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</label>
+      <select id="ag-fy" name="fy" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        {% for fy in fy_options %}<option value="{{ fy }}" {% if fy == current_fy %}selected{% endif %}>FY{{ fy }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="ag-count" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Extra activities</label>
+      <input id="ag-count" name="additional_activities" type="number" min="1" max="12" value="1" inputmode="numeric"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+    <div>
+      <label for="ag-expires" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expires <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+      <input id="ag-expires" name="expires_at" type="date"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+    </div>
+  </div>
+
+  <div>
+    <label for="ag-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-500">*</span></label>
+    <textarea id="ag-reason" name="reason" rows="3" required placeholder="Why this school needs more partner support this year"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Grant Allowance</button>
+  </div>
+</form>
+{% endblock %}

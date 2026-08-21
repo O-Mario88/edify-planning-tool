@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
 {% comment %}
 Without this the page inherited the shell's default, so /my-performance was the
 one route in the sidebar whose browser tab, history entry and bookmark all read
@@ -81,87 +82,19 @@ the heading on screen would be the worse of the two.
   </div>
   {% else %}
 
-  {# ── KPI strip ─────────────────────────────────────────────────────── #}
-  {% comment %} Each card carries an icon badge; the tints use /10 opacity so
-  they read correctly in both light and the blue dark theme. {% endcomment %}
-  <section class="edify-kpi-strip grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Performance cycle summary">
-    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
-      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Agreement Status</p>
-        {% if review.stage == "approved" or review.stage == "signed_off" %}
-        <p class="mt-0.5 text-[15px] font-bold text-emerald-600">Approved</p>
-        {% elif review.stage == "returned" %}
-        <p class="mt-0.5 text-[15px] font-bold text-amber-600">Returned</p>
-        {% else %}
-        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ stage_label }}</p>
-        {% endif %}
-        <p class="edify-text-caption text-slate-400">{{ review.updated_at|date:"j M Y" }}</p>
-      </div>
-    </article>
-
-    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
-      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2m-2 0h-3m-1 0h-2M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Direct Schools Allocated</p>
-        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ allocation.total }}</p>
-        <p class="edify-text-caption text-slate-400">{{ allocation.core }} Core · {{ allocation.client }} Client{% if allocation.champion %} · {{ allocation.champion }} Champion{% endif %}</p>
-      </div>
-    </article>
-
-    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
-      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Key Priorities</p>
-        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ priorities|length }}</p>
-        <p class="edify-text-caption text-slate-400">{{ layers.organizational }} Org · {{ layers.role }} Role{% if layers.personal %} · {{ layers.personal }} Personal{% endif %}</p>
-      </div>
-    </article>
-
-    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-center gap-3">
-      {% if overall_pct is not None %}
-      <span class="shrink-0" style="--edify-donut-gauge-size: 2.75rem; --edify-donut-gauge-headline: 0.6875rem">
-        {% include "partials/components/donut_rings.html" with donut=overall_gauge donut_class="edify-donut--gauge" donut_label="Overall weighted progress" headline=overall_pct %}
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
-        <p class="mt-0.5 text-[15px] font-bold {% if overall_pct >= 70 %}text-emerald-600{% elif overall_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ overall_pct }}% weighted</p>
-        <p class="edify-text-caption text-slate-400">{% if overall_pct >= 70 %}On track{% elif overall_pct >= 40 %}Watch{% else %}Behind{% endif %}</p>
-      </div>
-      {% else %}
-      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-400">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Overall Progress</p>
-        <p class="mt-0.5 text-[15px] font-bold text-slate-400">—</p>
-        <p class="edify-text-caption text-slate-400">No verified work yet</p>
-      </div>
-      {% endif %}
-    </article>
-
-    <article class="edify-surface rounded-surface border border-slate-100 p-4 flex items-start gap-3">
-      <span class="shrink-0 flex h-10 w-10 items-center justify-center rounded-xl" style="background: color-mix(in srgb, var(--brand-primary) 12%, transparent); color: var(--brand-primary);">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="edify-text-caption uppercase text-slate-400">Conversation Window</p>
-        {% if active_window_label %}
-        <p class="mt-0.5 text-[15px] font-bold text-slate-800">{{ active_window_label }}</p>
-        <p class="edify-text-caption text-slate-400">{% if cycle.window_deadline %}until {{ cycle.window_deadline|date:"j M Y" }}{% else %}open now{% endif %}</p>
-        {% else %}
-        <p class="mt-0.5 text-[15px] font-bold text-slate-400">None open</p>
-        <p class="edify-text-caption text-slate-400">HR schedules the next window</p>
-        {% endif %}
-      </div>
-    </article>
-  </section>
+  {% legacy_kpi_item "Agreement status" stage_label helper=review.updated_at|date:"j M Y" tone="success" icon="check" as agreement_kpi %}
+  {% if overall_pct is not None %}
+    {% legacy_kpi_item "Overall progress" overall_pct|stringformat:"s"|add:"%" helper="Weighted verified progress" tone="primary" icon="chart" as progress_kpi %}
+  {% else %}
+    {% legacy_kpi_item "Overall progress" "—" helper="No verified work yet" tone="neutral" icon="chart" as progress_kpi %}
+  {% endif %}
+  {% if active_window_label %}
+    {% legacy_kpi_item "Conversation window" active_window_label helper="Open performance conversation" tone="warning" icon="calendar" as window_kpi %}
+  {% else %}
+    {% legacy_kpi_item "Conversation window" "None open" helper="HR schedules the next window" tone="neutral" icon="calendar" as window_kpi %}
+  {% endif %}
+  {% collect_kpi_items agreement_kpi progress_kpi window_kpi as performance_kpis %}
+  {% include "components/kpi_strip.html" with items=performance_kpis variant="executive" title="Performance headline" %}
 
   {# ── Tabs ──────────────────────────────────────────────────────────── #}
   <nav data-edify-tablist class="flex flex-wrap" aria-label="Performance sections">

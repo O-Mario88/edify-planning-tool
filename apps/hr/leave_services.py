@@ -28,6 +28,12 @@ from apps.core.calendar_policy import (
 
 logger = logging.getLogger("edify.hr.leave")
 
+# The two states a leave request can still be decided from. `hr_review` belongs
+# here: escalating to HR used to move a request into a status no approval path
+# accepted, so HR could open the request, click Approve, and be told it was
+# "already hr_review" — the escalation was a one-way trap (2026-08-20 audit C1).
+DECIDABLE_LEAVE_STATUSES = ("pending", "hr_review")
+
 
 def check_staff_availability(staff_id: str, check_date) -> bool:
     """Check if the staff member is on approved leave on the given date (accepts user_id or staff_profile_id)."""
@@ -389,11 +395,21 @@ class LeaveRequestService:
         handover_notes = data.get("handover_notes")
         urgent_activities = data.get("urgent_activities")
 
-        # 1. Fetch policy
-        policy, _ = LeaveTypePolicy.objects.get_or_create(
-            leave_type=leave_type,
-            defaults={"label": leave_type.replace("_", " ").title()},
-        )
+        # 1. Fetch policy. This used to get_or_create, so posting an
+        # unrecognised `type` minted a brand-new policy with a full default
+        # entitlement and no attachment requirement — self-service leave
+        # invention (2026-08-20 HR audit). Policies are HR's to define.
+        policy = LeaveTypePolicy.objects.filter(leave_type=leave_type).first()
+        if policy is None:
+            known = ", ".join(
+                LeaveTypePolicy.objects.order_by("label").values_list(
+                    "label", flat=True
+                )
+            )
+            raise BadRequest(
+                f"'{leave_type}' is not a leave type HR has defined."
+                + (f" Available: {known}." if known else "")
+            )
 
         # 1b. Enforce requires_attachment server-side. Previously only the
         # request-drawer JS enforced this, so the check could be bypassed
@@ -401,6 +417,24 @@ class LeaveRequestService:
         if policy.requires_attachment and not attachment_file:
             raise BadRequest(
                 f"{policy.label} requires a supporting attachment to be submitted."
+            )
+        # This was the one upload in the platform that skipped validation
+        # entirely — no extension allowlist, no MIME check, no magic-byte
+        # sniff, no size cap. Every other upload path calls this.
+        if attachment_file:
+            import os as _os
+
+            from apps.evidence.validation import assert_safe_upload
+
+            head = attachment_file.read(512)
+            attachment_file.seek(0, _os.SEEK_END)
+            size = attachment_file.tell()
+            attachment_file.seek(0)
+            assert_safe_upload(
+                original_name=getattr(attachment_file, "name", "upload"),
+                mime_type=getattr(attachment_file, "content_type", "") or "",
+                head=head,
+                size=size,
             )
 
         # 2. Calculate working days
@@ -427,6 +461,22 @@ class LeaveRequestService:
         if bal.remaining < days_charged:
             raise BadRequest(
                 f"Insufficient balance for {policy.label}. Required: {days_charged} working days, Remaining: {bal.remaining} days."
+            )
+
+        # 3b. Overlapping leave. Nothing checked this, so three overlapping
+        # requests for the same week were all approvable and all charged —
+        # 15 days deducted for 5 days of absence.
+        clash = (
+            Leave.objects.filter(staff=staff)
+            .exclude(status__in=("rejected", "returned", "cancelled"))
+            .filter(start_date__lte=end_date_str, end_date__gte=start_date_str)
+            .first()
+        )
+        if clash:
+            raise BadRequest(
+                f"You already have {clash.status} leave from {clash.start_date} "
+                f"to {clash.end_date}. Cancel or amend it before requesting "
+                f"these dates."
             )
 
         # 4. Resolve covering staff
@@ -467,6 +517,27 @@ class LeaveRequestService:
         LeaveBalanceService.recalculate_balances(staff, year)
 
         return leave
+
+
+# Seniority ladder used to test a leave type's approval floor. Roles absent
+# from the ladder (HR, IA, Accountant, Project Coordinator) are not part of the
+# line-management chain and are judged by the hierarchy branches alone.
+_APPROVER_SENIORITY = {"cceo": 1, "pl": 2, "cd": 3, "rvp": 4}
+
+
+def _policy_floor_met(leave, rev_role: str, normalize) -> bool:
+    """Does this reviewer clear the approval floor the leave type declares?
+
+    An escalated request is HR's to decide whatever the floor says — that is
+    what escalation is for.
+    """
+    if getattr(leave, "status", "") == "hr_review":
+        return True
+    policy = LeaveTypePolicy.objects.filter(leave_type=leave.type).first()
+    required = _APPROVER_SENIORITY.get(normalize(getattr(policy, "approver_role", "")))
+    if not required:
+        return True
+    return _APPROVER_SENIORITY.get(rev_role, 0) >= required
 
 
 def _audit_leave(action: str, leave, reviewer_user, reason: str | None = None) -> None:
@@ -606,9 +677,18 @@ class LeaveApprovalService:
 
         rev_role = normalize_role(reviewer_user.active_role)
 
-        # Admin bypass
+        # Admin holds no business authority here. Approving someone's leave is
+        # a manager's act, not a support act — the same rule that keeps Admin
+        # out of publishing priorities and approving distributions (§4.4).
         if rev_role == "admin":
-            return True
+            return False
+
+        # The leave type's own approval floor. `approver_role` was written by
+        # the policy page and read by nothing, so setting maternity leave to
+        # "Country Director" had no runtime effect at all and a Program Lead
+        # could approve it unchallenged (2026-08-20 HR audit).
+        if not _policy_floor_met(leave, rev_role, normalize_role):
+            return False
 
         reviewer_profile = getattr(reviewer_user, "staff_profile", None)
         if not reviewer_profile:
@@ -692,17 +772,26 @@ class LeaveApprovalService:
         and a second caller could set `hr_review` while notifying nobody —
         recreating the original defect one call site over.
         """
-        if leave.status != "hr_review":
-            leave.status = "hr_review"
-            leave.save(update_fields=["status", "updated_at"])
+        # 2026-08-20 HR audit C3: escalation used to accept ANY status, so an
+        # already-approved leave could be pushed back to hr_review — which
+        # dropped its days out of the approved balance while the person was
+        # actually away. Escalation is a pending-only move.
+        if leave.status == "hr_review":
+            return
+        if leave.status != "pending":
+            raise BadRequest(
+                f"Only a pending request can be escalated to HR — "
+                f"this one is already {leave.status}."
+            )
+        leave.status = "hr_review"
+        leave.save(update_fields=["status", "updated_at"])
         try:
-            from apps.accounts.models import User
             from apps.notifications.services import WorkflowNotificationService
 
-            hr_users = list(
-                User.objects.filter(
-                    roles__contains=["HumanResources"], status="active"
-                ).exclude(id=leave.staff.user_id)
+            from apps.notifications.services import role_recipients
+
+            hr_users = role_recipients(
+                "HumanResources", exclude_user_id=leave.staff.user_id
             )
             who = getattr(getattr(leave.staff, "user", None), "name", "A staff member")
             if hr_users:
@@ -746,6 +835,62 @@ class LeaveApprovalService:
             return False
 
     @staticmethod
+    def reassign_coverage(leave, new_cover, actor) -> None:
+        """Move the delegation when the named cover changes.
+
+        Reassigning used to rewrite `leave.covering_staff` and stop there. On
+        an APPROVED leave the TemporaryCoverageAssignment is what actually
+        carries the access, and nothing touched it — so the replaced cover
+        kept full delegated access for the whole window and the new one got
+        none. `approve_request` refuses to re-run on an approved leave, so
+        there was no second chance to put it right (2026-08-20 HR audit).
+        """
+        with transaction.atomic():
+            # Re-read the status: the caller may hold an instance from before
+            # approval, and whether a delegation should exist depends on the
+            # leave's state right now, not when the object was loaded.
+            leave = Leave.objects.select_for_update().get(id=leave.id)
+            live = TemporaryCoverageAssignment.objects.select_for_update().filter(
+                leave_request_id=leave.id, status="active"
+            )
+            for assignment in live:
+                assignment.status = "revoked"
+                assignment.revoked_at = timezone.now()
+                assignment.revoked_by_user_id = getattr(actor, "id", None)
+                assignment.save(
+                    update_fields=[
+                        "status",
+                        "revoked_at",
+                        "revoked_by_user_id",
+                        "updated_at",
+                    ]
+                )
+            if not (new_cover and leave.status == "approved"):
+                return
+            start_dt = timezone.make_aware(
+                datetime.combine(
+                    date.fromisoformat(leave.start_date),
+                    datetime.min.time().replace(hour=8),
+                )
+            )
+            end_dt = timezone.make_aware(
+                datetime.combine(
+                    date.fromisoformat(leave.end_date),
+                    datetime.min.time().replace(hour=17),
+                )
+            )
+            TemporaryCoverageAssignment.objects.create(
+                leave_request=leave,
+                original_staff=leave.staff,
+                covering_staff=new_cover,
+                start_datetime=start_dt,
+                end_datetime=end_dt,
+                scope="operational_work",
+                status="active",
+                created_by_user_id=getattr(actor, "id", None),
+            )
+
+    @staticmethod
     def approve_request(leave_id: str, reviewer_user: User) -> Leave:
         leave = Leave.objects.filter(id=leave_id).first()
         if not leave:
@@ -763,7 +908,7 @@ class LeaveApprovalService:
             # access plus two coverage-granted audit rows. The guard also
             # stops an already-rejected request being flipped to approved.
             leave = type(leave).objects.select_for_update().get(id=leave.id)
-            if leave.status != "pending":
+            if leave.status not in DECIDABLE_LEAVE_STATUSES:
                 raise BadRequest(f"This leave request is already {leave.status}.")
             leave.status = "approved"
             leave.reviewed_by_user_id = reviewer_user.id
@@ -887,6 +1032,13 @@ class LeaveApprovalService:
             raise BadRequest("You are not authorized to reject this leave request.")
 
         with transaction.atomic():
+            # 2026-08-20 HR audit C2: this was a bare status write. An already
+            # APPROVED leave could be flipped to rejected hours later while its
+            # TemporaryCoverageAssignment stayed active — the cover kept
+            # delegated data access over a leave that no longer existed.
+            leave = type(leave).objects.select_for_update().get(id=leave.id)
+            if leave.status not in DECIDABLE_LEAVE_STATUSES:
+                raise BadRequest(f"This leave request is already {leave.status}.")
             leave.status = "rejected"
             leave.coverage_status = "Cancelled"
             leave.reviewed_by_user_id = reviewer_user.id
@@ -924,6 +1076,9 @@ class LeaveApprovalService:
             raise BadRequest("You are not authorized to return this leave request.")
 
         with transaction.atomic():
+            leave = type(leave).objects.select_for_update().get(id=leave.id)
+            if leave.status not in DECIDABLE_LEAVE_STATUSES:
+                raise BadRequest(f"This leave request is already {leave.status}.")
             leave.status = "returned"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
@@ -944,6 +1099,9 @@ class LeaveApprovalService:
             year = int(leave.start_date[:4])
             LeaveBalanceService.recalculate_balances(leave.staff, year)
 
+        # Returning for correction is a decision like any other: approve and
+        # reject were audited, this was not, so repeated returns left no trace.
+        _audit_leave("leave.returned", leave, reviewer_user, reason=reason)
         return leave
 
     @staticmethod
@@ -964,6 +1122,7 @@ class LeaveApprovalService:
 
         leave.coverage_status = "Accepted"
         leave.save(update_fields=["coverage_status", "updated_at"])
+        _audit_leave("leave.coverage_accepted", leave, covering_user)
         return leave
 
     @staticmethod
@@ -982,8 +1141,36 @@ class LeaveApprovalService:
                 "You are not the designated covering employee for this leave request."
             )
 
-        leave.coverage_status = "Declined"
-        leave.save(update_fields=["coverage_status", "updated_at"])
+        # 2026-08-20 HR audit: declining set a label and nothing else. If the
+        # leave was already approved the assignment stayed active, so the
+        # person who refused the cover kept the delegated access — and their
+        # actions kept being attributed to the absent staff member.
+        with transaction.atomic():
+            leave.coverage_status = "Declined"
+            leave.save(update_fields=["coverage_status", "updated_at"])
+            live = (
+                TemporaryCoverageAssignment.objects.select_for_update()
+                .filter(leave_request_id=leave.id, status="active")
+                .first()
+            )
+            if live:
+                live.status = "revoked"
+                live.revoked_at = timezone.now()
+                live.revoked_by_user_id = getattr(covering_user, "id", None)
+                live.save(
+                    update_fields=[
+                        "status",
+                        "revoked_at",
+                        "revoked_by_user_id",
+                        "updated_at",
+                    ]
+                )
+        _audit_leave(
+            "leave.coverage_declined",
+            leave,
+            covering_user,
+            reason="Declined by the designated cover",
+        )
         return leave
 
     @staticmethod
@@ -1710,10 +1897,9 @@ class LeaveNotificationService:
         if supervisor and supervisor.user_id:
             recipients.append(supervisor.user_id)
         # Always notify HR so they can track
-        for hr in User.objects.filter(
-            active_role="HumanResources", deleted_at__isnull=True
-        ):
-            recipients.append(hr.id)
+        from apps.notifications.services import role_recipients
+
+        recipients.extend(hr.id for hr in role_recipients("HumanResources"))
         # CD can also see if the staff member is a PL
         if staff.user and staff.user.active_role == "Program Lead":
             for cd in User.objects.filter(
@@ -1776,11 +1962,11 @@ class LeaveNotificationService:
         if supervisor:
             recipients.append(supervisor.user.id)
 
-        from apps.accounts.models import User
+        from apps.notifications.services import role_recipients
 
-        hr_users = User.objects.filter(active_role="HumanResources")
-        for hr in hr_users:
-            recipients.append(hr.id)
+        # This one had no liveness filter at all, so departed HR accounts
+        # accrued coverage notifications indefinitely.
+        recipients.extend(hr.id for hr in role_recipients("HumanResources"))
 
         from apps.notifications.services import WorkflowNotificationService
 

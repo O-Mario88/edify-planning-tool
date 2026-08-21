@@ -41,9 +41,11 @@ class WithdrawnWorkLeavesThePartnersDayTest(WithdrawalFixture):
         cls.partner.save(update_fields=["user"])
 
     def _today_page(self):
+        # /partner/today retired 2026-08-20 — the partner's day lives on the
+        # unified My Plan.
         client = Client()
         client.force_login(self.partner_user)
-        return client.get("/partner/today")
+        return client.get("/my-plan")
 
     def test_todays_work_is_listed_before_it_is_withdrawn(self):
         a = self.assign()

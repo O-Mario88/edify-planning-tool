@@ -14,6 +14,9 @@ accountability proof. The CD approves — the accountant disburses.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from datetime import date, timedelta
 
 from django.db.models import Avg, Count, Q, Sum
@@ -153,14 +156,15 @@ class CDDashboardService:
         )
 
         def card(icon, label, value, variant, helper, link=""):
-            return {
-                "icon": icon,
-                "label": label,
-                "value": value,
-                "variant": variant,
-                "helper": helper,
-                "link": link,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.cd_dashboard_service:kpis.card",
+                label,
+                value,
+                icon=icon,
+                variant=variant,
+                helper=helper,
+                link=link,
+            )
 
         return [
             card(

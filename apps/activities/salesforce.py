@@ -47,6 +47,7 @@ ENTRY_AUTHORIZED_ROLES = ("CCEO", "Program Lead", "ImpactAssessment", "Admin")
 
 ENTRY_SOURCE_STAFF_SELF = "staff_self_entry"
 ENTRY_SOURCE_MANAGING_STAFF = "managing_staff_for_partner"
+ENTRY_SOURCE_IA_CONFIRMATION = "ia_confirmation"
 ENTRY_SOURCE_LEGACY_IMPORT = "legacy_import"
 ENTRY_SOURCE_ADMIN_EXCEPTION = "admin_exception"
 
@@ -242,6 +243,7 @@ __all__ = [
     "ENTRY_AUTHORIZED_ROLES",
     "ENTRY_SOURCE_STAFF_SELF",
     "ENTRY_SOURCE_MANAGING_STAFF",
+    "ENTRY_SOURCE_IA_CONFIRMATION",
     "ENTRY_SOURCE_LEGACY_IMPORT",
     "ENTRY_SOURCE_ADMIN_EXCEPTION",
 ]

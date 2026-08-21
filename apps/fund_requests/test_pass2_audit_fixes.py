@@ -98,22 +98,47 @@ class PlApprovalIdempotencyTest(TestCase):
             catalogue_version=1,
         )
 
-    def test_reapproving_a_disbursed_plan_is_blocked(self):
+    def test_reapproving_a_disbursed_request_is_blocked(self):
+        """Audit C-1, carried onto the weekly chain (the PL gate since
+        2026-08-18): once a request has left submitted_to_pl — approved,
+        disbursed — a stale re-click of Approve must be refused, never
+        silently re-decide it."""
+        from datetime import timedelta
+
+        from apps.fund_requests import weekly_service
         from apps.fund_requests.pl_approval_service import approve
 
-        principal = self.pl
-        fr = approve(principal, self.cceo.id, "2026", 4)
-        self.assertEqual(fr.status, "sent_to_accountant")
+        line = ActivityScheduleCostLine.objects.get(responsible_user=self.cceo.id)
+        planned = timezone.localtime(line.activity.scheduled_date).date()
+        week_start = planned - timedelta(days=planned.weekday())
+        line.planned_date = planned
+        line.week_start_date = week_start
+        line.week_end_date = week_start + timedelta(days=6)
+        line.save(update_fields=["planned_date", "week_start_date", "week_end_date"])
+
+        wfr = weekly_service.generate_weekly_fund_request(
+            self.cceo.id, week_start.isoformat()
+        )
+
+        class _CceoPrincipal:
+            user_id = self.cceo.id
+            active_role = "CCEO"
+            country_scope = False
+
+        weekly_service.request_advance(wfr.id, _CceoPrincipal())
+        approve(self.pl, self.cceo.id, week_start.isoformat())
+        wfr.refresh_from_db()
+        self.assertEqual(wfr.status, "confirmed_for_advance")
 
         # The accountant disburses it — out of band from PL approval.
-        fr.status = "disbursed"
-        fr.save(update_fields=["status"])
+        wfr.status = "disbursed"
+        wfr.save(update_fields=["status"])
 
         with self.assertRaises(BadRequest):
-            approve(principal, self.cceo.id, "2026", 4)
+            approve(self.pl, self.cceo.id, week_start.isoformat())
 
-        fr.refresh_from_db()
-        self.assertEqual(fr.status, "disbursed")
+        wfr.refresh_from_db()
+        self.assertEqual(wfr.status, "disbursed")
 
 
 class WeeklyDisburseBoundsAndScalingTest(TestCase):

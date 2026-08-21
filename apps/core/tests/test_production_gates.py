@@ -54,7 +54,7 @@ def _line(activity, amount, owner="", planned=None):
         school=activity.school,
         cost_setting_key="transport",
         label="Transport",
-        line_item_type="transport",
+        line_item_type="lunch",
         unit_cost=amount,
         quantity=1,
         amount=amount,
@@ -313,7 +313,7 @@ class DisbursementRoundingTest(TestCase):
             WeeklyFundRequestLine.objects.create(
                 weekly_fund_request=wfr,
                 activity_budget_line=line,
-                line_item_type="transport",
+                line_item_type="lunch",
                 description="Transport",
                 quantity=1,
                 unit_cost=line.amount,

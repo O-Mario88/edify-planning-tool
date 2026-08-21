@@ -97,7 +97,15 @@ class ClosureEligibilityService:
             # that must never by itself demand the System B accountability
             # step System A's own flow was never designed to produce.
             netsuite_id_entered = True
-            if finance_required:
+            if finance_required and activity.delivery_type == "partner":
+                # NetSuite IDs exist for STAFF accountability — proof that
+                # money a staff member RECEIVED was accounted for. Partners
+                # are paid directly by the accountant (owner, 2026-08-20):
+                # the accountant's own payment (check 6: payment_status ==
+                # "paid") IS the finance proof, and no NetSuite entry is
+                # asked of anyone for partner-delivered work.
+                pass
+            elif finance_required:
                 from django.db.models import Q as _Q
 
                 has_netsuite_expense_record = NetSuiteExpenseRecord.objects.filter(

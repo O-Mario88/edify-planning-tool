@@ -362,6 +362,47 @@ pre,
   font-size-adjust: from-font;
 }
 
+/* ── Profile field contract ───────────────────────────────────────────────────────────────────────
+ * A profile label describes the datum and stays neutral; the value is the
+ * actionable record and uses the accessible theme-aware blue.  Templates opt
+ * into this contract explicitly so activity history, statuses and warnings
+ * retain their own semantic colours. */
+main .edify-profile-field__label {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: var(--edify-text-label-weight) !important;
+  line-height: var(--edify-text-label-leading) !important;
+  letter-spacing: var(--edify-text-label-tracking) !important;
+  text-transform: none !important;
+}
+
+main .edify-profile-field__value,
+main :is(input, select, textarea).edify-profile-field__value {
+  color: var(--edify-profile-value) !important;
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-body-size) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  line-height: var(--edify-text-body-leading) !important;
+  letter-spacing: var(--edify-text-body-tracking) !important;
+}
+
+main .edify-profile-field__value::placeholder {
+  color: var(--edify-text-subtle) !important;
+  opacity: 1;
+}
+
+main .edify-profile-section-title {
+  color: var(--edify-text) !important;
+  font: var(--edify-font-title) !important;
+  letter-spacing: var(--edify-text-title-tracking) !important;
+  text-transform: none !important;
+}
+
+main .edify-profile-body {
+  color: var(--edify-text-muted) !important;
+  font: var(--edify-font-body) !important;
+}
+
 /* Custom navy/blue surfaces cannot rely on a text-white utility alone because
  * the platform heading contract below also uses !important. Marking the
  * surface makes inverse typography explicit and keeps headings white in every
@@ -1461,7 +1502,7 @@ main .edify-kpi-strip > * :is(
 ) {
   max-inline-size: 100%;
   color: var(--edify-kpi-strip-label) !important;
-  font-weight: 700 !important;
+  font-weight: var(--edify-text-label-weight) !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
   overflow: hidden;
   overflow-wrap: normal;
@@ -1529,7 +1570,7 @@ main :is(
   min-block-size: 0 !important;
   color: var(--edify-kpi-strip-label) !important;
   font-size: var(--edify-text-tile-label-size) !important;
-  font-weight: 700 !important;
+  font-weight: var(--edify-text-label-weight) !important;
   letter-spacing: var(--edify-kpi-label-tracking) !important;
   line-height: 1.2 !important;
   max-inline-size: 100%;
@@ -1553,9 +1594,9 @@ main :is(
 ) strong {
   color: var(--edify-kpi-strip-value) !important;
   font-size: var(--edify-text-tile-value-size) !important;
-  font-weight: 600 !important;
+  font-weight: var(--edify-text-label-weight) !important;
   line-height: 1 !important;
-  letter-spacing: -0.035em !important;
+  letter-spacing: normal !important;
   font-variant-numeric: tabular-nums;
   max-inline-size: 100%;
   white-space: nowrap;
@@ -1574,7 +1615,7 @@ main :is(
   margin-block-start: 0.4rem !important;
   color: var(--edify-kpi-strip-helper) !important;
   font-size: var(--edify-text-tile-helper-size) !important;
-  font-weight: 500 !important;
+  font-weight: var(--edify-text-label-weight) !important;
   line-height: 1.25 !important;
   overflow-wrap: normal;
   text-wrap: pretty;
@@ -1626,7 +1667,7 @@ main :is(
 .edify-kpi-strip__label {
   color: var(--edify-kpi-strip-label) !important;
   font-size: var(--edify-text-tile-label-size);
-  font-weight: 700;
+  font-weight: var(--edify-text-label-weight);
   letter-spacing: var(--edify-kpi-label-tracking);
   line-height: 1.2;
   max-inline-size: 100%;
@@ -1643,9 +1684,9 @@ main :is(
   margin-block-start: 0.2rem;
   color: var(--edify-kpi-strip-value) !important;
   font-size: var(--edify-text-tile-value-size) !important;
-  font-weight: 600;
+  font-weight: var(--edify-text-label-weight);
   line-height: 1;
-  letter-spacing: -0.035em;
+  letter-spacing: normal;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -1654,7 +1695,7 @@ main :is(
   margin-block-start: 0.4rem;
   color: var(--edify-kpi-strip-helper) !important;
   font-size: var(--edify-text-tile-helper-size);
-  font-weight: 500;
+  font-weight: var(--edify-text-label-weight);
   line-height: 1.25;
   overflow-wrap: normal;
   text-wrap: pretty;
@@ -1822,7 +1863,6 @@ main :is(.card, .panel, [class*="-card"], [class*="-panel"]):is(.p-12, .p-16) {
 }
 
 main :is(
-  .kpi-strip__item,
   .settings-detail-tile,
   .edify-kpi-strip.edify-kpi-strip > *,
   .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
@@ -2321,4 +2361,652 @@ main .edify-page-hero :is(a, button):not(
 ) {
   color: var(--edify-text) !important;
   border-color: var(--edify-border) !important;
+}
+
+/* ═══ FLAT CONTENT HIERARCHY ═══════════════════════════════════════════════
+ * Product surfaces are now intentional, never inferred from a class fragment.
+ * Only the page's parent card and a header summary marked
+ * `data-edify-summary-kpi` receive a card plane. Content inside a parent card
+ * is structured with sections, rows, tables and form fields—not nested cards.
+ *
+ * Functional boundaries are deliberately outside this rule: inputs, tables,
+ * alerts, dialogs/popovers, badges, focus rings and selectable controls retain
+ * their borders and state treatments. */
+main :is(
+  .card,
+  .panel,
+  .premium-card,
+  .premium-card-elevated,
+  .edify-content-card,
+  [data-edify-surface="card"],
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  aside.edify-surface[class*="rounded"]
+) :is(
+  .card,
+  .panel,
+  .mini,
+  .summary-card,
+  .rail-card,
+  .admin-mini,
+  .edify-tile,
+  .edify-kpi-card,
+  .card-kpi,
+  .pto-balance-tile,
+  .pto-recommendation,
+  .pto-signal,
+  .pto-constraint,
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
+  [class*="-panel"]:not([class*="-panel-"]):not([class*="-panel__"]),
+  [class*="-tile"]:not([class*="-tile-"]):not([class*="-tile__"]),
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  aside.edify-surface[class*="rounded"],
+  div.bg-white[class*="rounded"],
+  section.bg-white[class*="rounded"],
+  article.bg-white[class*="rounded"],
+  aside.bg-white[class*="rounded"],
+  div[class*="rounded"][class*="border"],
+  section[class*="rounded"][class*="border"],
+  article[class*="rounded"][class*="border"],
+  aside[class*="rounded"][class*="border"]
+):not([data-edify-summary-kpi]):not(.card-alert):not(.edify-risk-card):not(
+  [role="alert"], [role="dialog"], [role="menu"], [role="listbox"],
+  [popover], .drawer-surface, .edify-popup-dialog__surface,
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* A nested content block keeps useful breathing room after its decorative
+   box is removed. Explicit section classes are preferred for new work; the
+   legacy selector makes the migration platform-wide immediately. */
+main :where(
+  .card,
+  .panel,
+  .premium-card,
+  .premium-card-elevated,
+  .edify-content-card,
+  [data-edify-surface="card"],
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  aside.edify-surface[class*="rounded"]
+) > :where(.edify-section, .edify-section-list) {
+  padding-block: var(--edify-content-section-gap);
+}
+
+main .edify-section + .edify-section,
+main .edify-section-list + .edify-section-list {
+  border-block-start: 1px solid var(--edify-content-divider);
+}
+
+main .edify-section__heading {
+  color: var(--edify-text) !important;
+  font: var(--edify-font-title);
+  letter-spacing: var(--edify-text-title-tracking);
+  text-wrap: balance;
+}
+
+main .edify-section__description {
+  margin-block-start: var(--edify-space-1);
+  color: var(--edify-text-muted) !important;
+  font: var(--edify-font-body);
+  text-wrap: pretty;
+}
+
+main .edify-data-list,
+main .edify-inline-metrics {
+  display: grid;
+  min-inline-size: 0;
+}
+
+main .edify-data-row {
+  display: grid;
+  /* Label sizes to its own content (never collapses); the value takes the
+     rest and WRAPS. The old `minmax(0, 1fr) auto` let a long free-text value
+     (an activity outcome, an address) grow its `auto` track until the 1fr
+     label column collapsed to zero width and the two overlapped. */
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--edify-content-row-gap);
+  min-inline-size: 0;
+  padding-block: var(--edify-content-row-padding);
+}
+
+main .edify-data-row:not(:last-child) {
+  border-block-end: 1px solid var(--edify-content-divider);
+}
+
+main .edify-data-row__label {
+  color: var(--edify-text) !important;
+  font: var(--edify-font-label);
+}
+
+main .edify-data-row__meta {
+  margin-block-start: var(--edify-space-1);
+  color: var(--edify-text-muted) !important;
+  font: var(--edify-font-micro);
+  letter-spacing: normal;
+}
+
+main .edify-data-row__value {
+  color: var(--edify-accent-text) !important;
+  font: var(--edify-font-title);
+  font-variant-numeric: tabular-nums lining-nums;
+  /* Right-aligned like before, but now able to wrap within its own column
+     instead of pushing into the label. */
+  text-align: end;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+/* KPI tiles are reserved for a summary immediately associated with the page
+   header. Unmarked strips become a professional divided metric band. */
+main .edify-kpi-strip:not([data-edify-summary-kpi]),
+main .kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__grid {
+  gap: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* The class is repeated to (0,6,1) because band cells still carry legacy
+   surface utilities (edify-surface, rounded-surface, border), so the generic
+   card normalizer above claims them at (0,5,1) via its
+   `[class*="-kpi"]:not(...)x4` branch. Anything weaker leaves unmarked strips
+   as shadowed tiles jammed edge-to-edge once the wrapper's gap collapses. */
+main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *,
+main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item {
+  min-block-size: auto !important;
+  padding: var(--edify-content-row-padding) var(--edify-space-4) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *:not(:last-child),
+main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item:not(:last-child) {
+  border-inline-end: 1px solid var(--edify-content-divider) !important;
+}
+
+/* Semantic state text. Colour supplements an explicit label; it never replaces
+   one. `neutral` covers absence/unknown states that are not adverse facts. */
+main :where(.edify-status-text, [data-edify-tone]) {
+  font-weight: var(--edify-text-label-weight);
+}
+
+main :where(.edify-status-text, [data-edify-tone="danger"])[data-edify-tone="danger"] {
+  color: var(--edify-danger-text) !important;
+}
+
+main :where(.edify-status-text, [data-edify-tone="warning"])[data-edify-tone="warning"] {
+  color: var(--edify-warning-text) !important;
+}
+
+main :where(.edify-status-text, [data-edify-tone="success"])[data-edify-tone="success"] {
+  color: var(--edify-success-text) !important;
+}
+
+main :where(.edify-status-text, [data-edify-tone="info"])[data-edify-tone="info"] {
+  color: var(--edify-info-text) !important;
+}
+
+main :where(.edify-status-text, [data-edify-tone="neutral"])[data-edify-tone="neutral"] {
+  color: var(--edify-text-muted) !important;
+}
+
+@media (max-width: 47.999rem) {
+  main .edify-data-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main .edify-data-row__value {
+    justify-self: start;
+    text-align: start;
+  }
+
+  main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *:not(:last-child),
+  main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item:not(:last-child) {
+    border-inline-end: 0 !important;
+    border-block-end: 1px solid var(--edify-content-divider) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  main .edify-data-row:not(:last-child),
+  main .edify-section + .edify-section,
+  main .edify-section-list + .edify-section-list {
+    border-color: CanvasText;
+  }
+}
+
+/* Legacy pages often rendered a bare grid whose direct children were all
+   independent tiles. Treat that collection as the parent card, then flatten
+   its content children. Header KPI grids opt out through the explicit marker. */
+main :where(div, section, article)[class*="grid"]:has(
+  > :is(
+    .card,
+    .panel,
+    .mini,
+    .edify-tile,
+    .edify-surface[class*="rounded"],
+    [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
+    div[class*="rounded"][class*="border"],
+    section[class*="rounded"][class*="border"],
+    article[class*="rounded"][class*="border"]
+  )
+):not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi]):not(
+  .platform-major-grid, .platform-support-grid, .platform-page-grid,
+  [class*="filter"], [role="listbox"], [role="radiogroup"]
+) {
+  padding: var(--edify-surface-padding) !important;
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-card-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+}
+
+main :where(div, section, article)[class*="grid"]:has(
+  > :is(
+    .card,
+    .panel,
+    .mini,
+    .edify-tile,
+    .edify-surface[class*="rounded"],
+    [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
+    div[class*="rounded"][class*="border"],
+    section[class*="rounded"][class*="border"],
+    article[class*="rounded"][class*="border"]
+  )
+):not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi])
+> :is(
+  .card,
+  .panel,
+  .mini,
+  .edify-tile,
+  .edify-surface[class*="rounded"],
+  [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
+  div[class*="rounded"][class*="border"],
+  section[class*="rounded"][class*="border"],
+  article[class*="rounded"][class*="border"]
+) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Drawers and modal forms are mounted beside <main>, so they need the same
+   no-nested-card rule without relying on page ancestry. Field controls,
+   alerts and option selectors remain bounded and interactive. */
+:is(
+  .drawer-surface,
+  .edify-popup-dialog__surface,
+  .tt-modal__panel,
+  [role="dialog"]
+) :is(
+  .card,
+  .panel,
+  .mini,
+  .summary-card,
+  .edify-tile,
+  .edify-kpi-card,
+  .card-kpi,
+  div.edify-surface[class*="rounded"],
+  section.edify-surface[class*="rounded"],
+  article.edify-surface[class*="rounded"],
+  div.bg-white[class*="rounded"],
+  section.bg-white[class*="rounded"],
+  article.bg-white[class*="rounded"],
+  div[class*="rounded"][class*="border"],
+  section[class*="rounded"][class*="border"],
+  article[class*="rounded"][class*="border"]
+):not([role="alert"]):not([role="listbox"]):not([role="radiogroup"]):not(
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Form pages frequently place explanatory/help groups beside the field column.
+   Once the form itself is the parent surface, padded groups become sections;
+   composite controls with only inline padding keep their functional border. */
+main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:is(
+  [class~="p-3"], [class~="p-4"], [class~="p-5"], [class~="p-6"],
+  [class~="p-8"], [class~="p-10"], [class~="p-12"]
+):not([data-edify-summary-kpi]):not([role="alert"]):not([role="listbox"]):not(
+  [role="radiogroup"]
+) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* ═══ ONE PLATFORM TYPE SCALE ══════════════════════════════════════════════
+ * Feature styles may own layout, never an alternate hierarchy. This final
+ * semantic pass removes the remaining 9–11px cockpit text and normalises the
+ * same HTML role across dashboards, profiles, tables, forms and dialogs.
+ * Decorative SVG map labels are intentionally excluded: they scale with the
+ * map geometry and carry accessible district names elsewhere. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(h1, .edify-page-title) {
+  font-family: var(--edify-font-display-family) !important;
+  font-size: var(--edify-text-display-size) !important;
+  font-weight: var(--edify-text-display-weight) !important;
+  line-height: var(--edify-text-display-leading) !important;
+  letter-spacing: var(--edify-text-display-tracking) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  h2:not(.edify-page-title) {
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-heading-size) !important;
+  font-weight: var(--edify-text-heading-weight) !important;
+  line-height: var(--edify-text-heading-leading) !important;
+  letter-spacing: var(--edify-text-heading-tracking) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    h3,
+    h4,
+    h5,
+    h6,
+    legend,
+    .card-title,
+    .panel-title,
+    .edify-section__heading,
+    [class*="__title"]:not(:is(h1, h2)),
+    [class*="__heading"]:not(:is(h1, h2))
+  ) {
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-title-size) !important;
+  font-weight: var(--edify-text-title-weight) !important;
+  line-height: var(--edify-text-title-leading) !important;
+  letter-spacing: var(--edify-text-title-tracking) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(p, li, dd, .edify-profile-body, .edify-section__description) {
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-body-size) !important;
+  font-weight: var(--edify-text-body-weight);
+  line-height: var(--edify-text-body-leading);
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(label, input, select, textarea, button, summary, td, th, .edify-data-row__label) {
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-label-size) !important;
+  line-height: var(--edify-text-label-leading);
+}
+
+/* Caption/micro roles come last so a caption rendered as a paragraph or table
+   label stays at the intentional 12px floor rather than inheriting body size. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    small,
+    dt,
+    .edify-text-caption,
+    .edify-text-micro,
+    [class*="eyebrow"],
+    [class*="overline"],
+    [class*="badge"],
+    [class*="status"],
+    [class*="__meta"]
+  ):not(:is(h1, h2, h3, h4, input, select, textarea, button)) {
+  font-family: var(--edify-font-sans) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: var(--edify-text-micro-leading);
+}
+
+/* ═══ RESTRAINED WEIGHT HIERARCHY ═══════════════════════════════════════
+ * Weight now communicates structure instead of compensating for small type.
+ * Body copy is optically light, labels and controls are regular, and only
+ * genuine headings/subheadings/card titles retain semibold or bold weight. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"]) {
+  font-weight: var(--edify-text-body-weight);
+}
+
+/* Raw copy is common in legacy div/span compositions. Give those nodes the
+   same light default so a feature stylesheet cannot turn an entire workspace
+   into a wall of semibold text. More specific roles are restored below. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(div, span, a) {
+  font-weight: var(--edify-text-body-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(p, li, dd, td, .edify-profile-body, .edify-section__description) {
+  font-weight: var(--edify-text-body-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    label,
+    dt,
+    th,
+    input,
+    select,
+    textarea,
+    button,
+    summary,
+    small,
+    nav a,
+    .edify-profile-label,
+    .edify-data-row__label,
+    .edify-text-caption,
+    .edify-text-micro,
+    [class*="eyebrow"],
+    [class*="overline"],
+    [class*="badge"],
+    [class*="status"],
+    [class*="__meta"]
+  ):not(:is(h1, h2, h3, h4, .card-title, .panel-title, .edify-section__heading)) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    label,
+    button,
+    summary,
+    .edify-profile-label,
+    .edify-data-row__label,
+    [class*="__label"],
+    [class*="__value"],
+    [class*="__meta"],
+    [class*="__status"],
+    [class*="__badge"]
+  ) * {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+/* Retire legacy emphasis utilities in content roles. Values, actions and
+   status text use colour, size and position; they do not impersonate titles. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    strong,
+    b,
+    .font-medium,
+    .font-semibold,
+    .font-bold,
+    .font-extrabold,
+    .font-black,
+    .edify-profile-value,
+    .edify-data-row__value,
+    .edify-kpi-strip__label,
+    .edify-kpi-strip__value,
+    .edify-kpi-strip__helper
+  ):not(:is(h1, h2, h3, h4, .card-title, .panel-title, .edify-section__heading)) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+/* Titles come last so a legacy utility on a real heading cannot demote it. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(h1, .edify-page-title),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(h1, .edify-page-title) * {
+  font-weight: var(--edify-text-display-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  h2:not(.edify-page-title),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  h2:not(.edify-page-title) * {
+  font-weight: var(--edify-text-heading-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    h3,
+    h4,
+    h5,
+    h6,
+    legend,
+    .card-title,
+    .panel-title,
+    .edify-section__heading,
+    [class*="__title"]:not(:is(h1, h2)),
+    [class*="__heading"]:not(:is(h1, h2))
+  ),
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    h3,
+    h4,
+    h5,
+    h6,
+    legend,
+    .card-title,
+    .panel-title,
+    .edify-section__heading,
+    [class*="__title"]:not(:is(h1, h2)),
+    [class*="__heading"]:not(:is(h1, h2))
+  ) * {
+  font-weight: var(--edify-text-title-weight) !important;
+}
+
+/* Application chrome sits beside <main>, so keep navigation and account
+   controls on the same regular-weight plane as labels and buttons. */
+:is(.app-sidebar, .edify-topbar, .edify-bottom-nav),
+:is(.app-sidebar, .edify-topbar, .edify-bottom-nav) * {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+/* Links styled as controls are actions, not headings. This deliberately has
+   enough specificity to retire legacy button-family !important rules. */
+main :is(a, button, input):is(
+  .btn,
+  [class*="btn-"],
+  [class*="button"],
+  .edify-primary-solid,
+  .edify-card-action,
+  [role="button"]
+) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+main a[class]:not([class*="__title"]):not([class*="__heading"]) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+/* Summary KPI values may be large, but their weight stays regular; the page
+   heading remains the only bold anchor. */
+main :is(
+  .edify-kpi-strip,
+  .kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) :is(p, span, small, strong, b):not(:is(h1, h2, h3, h4, h5, h6)) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+main :is(
+  .edify-kpi-strip,
+  .kpi-strip,
+  .admin-kpi-strip,
+  .partner-kpi-grid,
+  .tt-kpi-strip,
+  .sp-kpis,
+  .sp-kpi-grid,
+  .spp-kpi-grid,
+  .spa-kpi-grid
+) :is(
+  .uppercase,
+  .edify-kpi-label,
+  .font-medium,
+  .font-semibold,
+  .font-bold,
+  .font-extrabold,
+  .font-black,
+  [class*="__label"],
+  [class*="__value"],
+  [class*="__helper"]
+) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+main :is(.apexcharts-text, .apexcharts-legend-text, .apexcharts-datalabel, text, tspan) {
+  font-weight: var(--edify-text-label-weight) !important;
+}
+
+/* ═══ NORMAL CHARACTER SPACING ══════════════════════════════════════════
+ * Geist's native spacing is the platform spacing. Legacy dashboards used
+ * everything from tightly compressed headings to 0.36em tracked labels;
+ * normal tracking keeps the same word shape and reading rhythm everywhere. */
+:is(
+  main,
+  .drawer-surface,
+  .edify-popup-dialog__surface,
+  [role="dialog"],
+  .app-sidebar,
+  .edify-topbar,
+  .edify-bottom-nav
+),
+:is(
+  main,
+  .drawer-surface,
+  .edify-popup-dialog__surface,
+  [role="dialog"],
+  .app-sidebar,
+  .edify-topbar,
+  .edify-bottom-nav
+) * {
+  letter-spacing: normal !important;
+}
+
+/* Class-based feature selectors carried more specificity than the universal
+   reset above. Match that specificity so their old tracking cannot leak. */
+:is(
+  main,
+  .drawer-surface,
+  .edify-popup-dialog__surface,
+  [role="dialog"],
+  .app-sidebar,
+  .edify-topbar,
+  .edify-bottom-nav
+) [class] {
+  letter-spacing: normal !important;
 }

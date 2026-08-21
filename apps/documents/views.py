@@ -110,6 +110,7 @@ def new_document_view(request):
     data["blocks_application_access"] = "blocks_application_access" in request.POST
     data["download_allowed"] = "download_allowed" in request.POST
     data["print_allowed"] = "print_allowed" in request.POST
+    data["required_reading_minutes"] = request.POST.get("required_reading_minutes", "")
     data["help_keywords"] = [
         k.strip()
         for k in (request.POST.get("help_keywords") or "").split(",")
@@ -173,9 +174,60 @@ def manage_document_view(request, slug):
 
 @require_POST
 @require_page_permission("uploads")
+def new_version_view(request, slug):
+    """Upload a revision of an existing document.
+
+    `DocumentService.add_version` existed and was correct, but its only caller
+    was new-document creation — so there was no way to publish v2 of anything.
+    Correcting a live safeguarding policy meant creating a whole new asset
+    under a new slug, orphaning its audience rules, its Help article and its
+    entire acknowledgement history (2026-08-20 HR audit, Critical).
+    """
+    document = get_object_or_404(DocumentAsset, slug=slug)
+    if not administers(request.user, document):
+        raise Http404
+    data = {
+        "effective_date": request.POST.get("effective_date") or None,
+        "review_date": request.POST.get("review_date") or None,
+        "expiry_date": request.POST.get("expiry_date") or None,
+        "change_summary": request.POST.get("change_summary", ""),
+        # A material change re-asks everyone; a typo fix should not. The
+        # uploader states which this is, because only they know.
+        "material_change": "material_change" in request.POST,
+    }
+    try:
+        version = DocumentService.add_version(
+            request.user, document, request.FILES.get("file"), data
+        )
+    except (BadRequest, Forbidden) as exc:
+        messages.error(request, str(exc))
+        return redirect(f"/documents/{slug}/manage")
+    messages.success(
+        request,
+        f"Version {version.version_number} uploaded. Submit it for review when "
+        f"it is ready — the published version stays live until this one is "
+        f"published.",
+    )
+    return redirect(f"/documents/{slug}/manage")
+
+
+@require_POST
+@require_page_permission("uploads")
 def document_action_view(request, slug, action):
     document = get_object_or_404(DocumentAsset, slug=slug)
-    version = document.versions.first()
+    if not administers(request.user, document):
+        raise Http404
+    # Act on the version the reviewer actually read. `versions.first()` is the
+    # highest-numbered row, so once revisions exist, approving the v2 on
+    # screen would have approved whatever v3 was uploaded in the meantime.
+    version_id = request.POST.get("version_id")
+    if version_id:
+        version = document.versions.filter(id=version_id).first()
+    else:
+        version = document.versions.filter(published_at__isnull=True).first()
+    if version is None and action in ("approve", "return", "publish"):
+        messages.error(request, "That version no longer exists.")
+        return redirect(f"/documents/{slug}/manage")
     try:
         if action == "submit":
             DocumentService.submit_for_review(request.user, document)
@@ -354,17 +406,44 @@ def _mark_delivery(document, version, request, kind: str) -> None:
 
 @require_POST
 def engagement_heartbeat_view(request, version_id):
-    """Called by the viewer while it is visible. Idle gaps are discarded."""
+    """Record a bounded foreground/focused reading delta for this reader."""
+    if not getattr(request.user, "is_authenticated", False):
+        raise Http404
     try:
         page = int(request.POST.get("page") or 0) or None
     except ValueError:
         page = None
     try:
-        session = EngagementService.heartbeat(request.user, version_id, page)
+        active_delta = int(request.POST.get("active_delta_seconds") or 0)
+    except ValueError:
+        active_delta = 0
+    try:
+        version = DocumentVersion.objects.select_related("document").get(id=version_id)
     except DocumentVersion.DoesNotExist:
         raise Http404 from None
+    if not administers(request.user, version.document) and (
+        version.document.status not in READABLE_STATUSES
+        or not audience_matches(version.document, request.user)
+    ):
+        raise Http404
+    session = EngagementService.heartbeat(
+        request.user, version_id, page, active_delta_seconds=active_delta
+    )
+    acknowledgement = version.document.acknowledgements.filter(
+        version=version, user_id=_user_id(request)
+    ).first()
     return JsonResponse(
-        {"active_seconds": session.active_seconds, "last_page": session.last_page}
+        {
+            "active_seconds": (
+                acknowledgement.active_reading_seconds
+                if acknowledgement
+                else session.active_seconds
+            ),
+            "reading_completion": (
+                acknowledgement.reading_completion_key if acknowledgement else ""
+            ),
+            "last_page": session.last_page,
+        }
     )
 
 

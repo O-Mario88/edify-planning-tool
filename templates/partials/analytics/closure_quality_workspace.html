@@ -16,12 +16,12 @@ loses focus mid-interaction.
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closures recorded</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.recorded|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.recorded|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Schools that stopped operating</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Stranded duplicates</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.stranded_duplicates|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.stranded_duplicates|intcomma }}</p>
         {% comment %}
         Not a closure reason — the service refuses to record one of those. This
         is a school closed while its own duplicate flag was still open, which
@@ -31,14 +31,14 @@ loses focus mid-interaction.
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">
           {% if summary.reopening_rate is not None %}{{ summary.reopening_rate }}% of recorded closures{% else %}No closures to compare{% endif %}
         </p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recording lag</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">
           {% if summary.average_recording_lag is not None %}{{ summary.average_recording_lag }}<span class="text-sm font-semibold edify-text-muted"> days</span>{% else %}—{% endif %}
         </p>
         <p class="edify-text-caption edify-text-muted">Average between closing and being recorded</p>
@@ -52,22 +52,22 @@ loses focus mid-interaction.
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">No enrolment recorded</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.missing_enrollment|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.missing_enrollment|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Cannot say what the programme lost</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closed unconfirmed</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.weak_ground|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.weak_ground|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Absence of evidence, not evidence of closure</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recorded late</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.stale_recordings|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.stale_recordings|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">More than {{ stale_days }} days after closing</p>
       </div>
       <div class="card p-4">
         <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Enrolment removed</p>
-        <p class="text-[21px] font-extrabold tracking-tight tabular-nums">{{ summary.enrollment_removed|intcomma }}</p>
+        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.enrollment_removed|intcomma }}</p>
         <p class="edify-text-caption edify-text-muted">Learners, at the moment each school closed</p>
       </div>
     </div>

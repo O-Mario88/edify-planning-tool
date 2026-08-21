@@ -386,20 +386,107 @@ def mark_disbursed_action(request, activity_id):
 
 @require_page_permission("disbursements")
 def partner_payments_view(request):
-    """Partner Payment Queue."""
+    """Partner Payment Queue — the MOU's two instalments.
+
+    The MOU pays 50% of the planned partner activity cost up front, and
+    clears the balance once the partner finishes the work and IA verifies
+    it. So this page runs two queues: costed partner work awaiting its 50%
+    advance, and verified work awaiting clearance of the balance.
+    """
+    from django.db.models import Sum as _Sum
+
+    from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
+    from apps.fund_requests.finance_models import PartnerPayment
+
+    base = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+        )
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related("school", "cluster")
+    )
+
     # "none" covers activities verified through the live IA path before it
     # started stamping ia_confirmed (an ia_verified partner activity is by
-    # definition awaiting payment); "pending" was never a real
-    # PaymentStatus value and matched nothing.
-    payments = Activity.objects.filter(
-        deleted_at__isnull=True,
-        delivery_type="partner",
-        status="ia_verified",
-        payment_status__in=PARTNER_PAYABLE_STATUSES,
-    ).select_related("school", "cluster")
+    # definition awaiting payment); "disbursed" is the 50% advance already
+    # out, balance pending.
+    payments = list(
+        base.filter(
+            status="ia_verified",
+            payment_status__in=PARTNER_PAYABLE_STATUSES,
+        )
+    )
+
+    # Awaiting the MOU advance: costed, not yet verified (a verified activity
+    # that never took its advance simply clears in full), no instalment yet.
+    advance_queue = list(
+        base.filter(payment_status="none", schedule_cost_lines__isnull=False)
+        .exclude(status__in=["ia_verified", "closed", "accountant_confirmed"])
+        .exclude(partner_payments__isnull=False)
+        .distinct()
+    )
+
+    for act in advance_queue:
+        planned = act.schedule_cost_lines.aggregate(s=_Sum("amount"))["s"] or 0
+        act.planned_total = planned
+        act.mou_advance = planned // 2
+    for act in payments:
+        planned = act.schedule_cost_lines.aggregate(s=_Sum("amount"))["s"] or 0
+        paid = (
+            PartnerPayment.objects.filter(activity=act).aggregate(
+                s=_Sum("amount_paid")
+            )["s"]
+            or 0
+        )
+        act.planned_total = planned
+        act.advance_paid = paid
+        act.balance_due = max(planned - paid, 0)
+
+    # §9.1 — the transport company's pending obligations, one per mission
+    # day. Settled here, never combined with a staff allowance transfer.
+    from apps.fund_requests.finance_models import TransportPayment
+
+    transport_queue = list(
+        TransportPayment.objects.filter(status="pending")
+        .select_related("batch")
+        .order_by("batch__visit_date")
+    )
+    staff_names = {}
+    if transport_queue:
+        from apps.accounts.models import User as _User
+
+        staff_names = dict(
+            _User.objects.filter(
+                id__in={t.batch.responsible_user for t in transport_queue}
+            ).values_list("id", "name")
+        )
+    for t_pay in transport_queue:
+        t_pay.staff_name = staff_names.get(t_pay.batch.responsible_user, "Staff")
+
+    # Partner-submitted invoices drive the MOU instalments now: the
+    # accountant downloads each invoice and pays the system-derived payable.
+    from apps.fund_requests.finance_models import PartnerInvoice
+    from apps.partners.models import Partner as _Partner
+
+    invoice_queue = list(
+        PartnerInvoice.objects.filter(status="confirmed_by_pl")
+        .prefetch_related("items__activity__school")
+        .order_by("created_at")
+    )
+    partner_names = dict(
+        _Partner.objects.filter(
+            id__in={i.partner_id for i in invoice_queue}
+        ).values_list("id", "name")
+    )
+    for inv in invoice_queue:
+        inv.partner_name = partner_names.get(inv.partner_id, inv.partner_id)
 
     context = {
         "payments": payments,
+        "advance_queue": advance_queue,
+        "invoice_queue": invoice_queue,
+        "transport_queue": transport_queue,
         "methods": ["Mobile Money", "Bank Transfer", "Cheque"],
     }
     return render(request, "pages/accounts/partner_payments.html", context)
@@ -419,6 +506,7 @@ def pay_partner_action(request, activity_id):
 
         try:
             amount = int(request.POST.get("amount_paid", 0))
+            payment_type = request.POST.get("payment_type", "clearance").strip()
             PartnerPaymentService.pay_partner(
                 activity,
                 partner_name,
@@ -428,6 +516,7 @@ def pay_partner_action(request, activity_id):
                 request.user.user_id,
                 notes,
                 netsuite_id=netsuite_id,
+                payment_type=payment_type,
             )
             messages.success(
                 request, f"Partner payment of {amount} UGX processed successfully."
@@ -435,6 +524,33 @@ def pay_partner_action(request, activity_id):
         except Exception as e:
             messages.error(request, f"Partner payment failed: {e}")
 
+    return redirect("/accounts/partner-payments/")
+
+
+@require_page_permission("disbursements")
+def pay_transport_action(request, payment_id):
+    """POST — settle one mission day's transport with the provider."""
+    from apps.fund_requests.vendor_channel import pay_transport_provider
+
+    if request.method == "POST":
+        try:
+            result = pay_transport_provider(
+                payment_id,
+                {
+                    "provider_name": request.POST.get("provider_name"),
+                    "payment_method": request.POST.get("payment_method"),
+                    "payment_reference": request.POST.get("payment_reference"),
+                    "netsuite_expense_id": request.POST.get("netsuite_expense_id"),
+                    "notes": request.POST.get("notes"),
+                },
+                request.user,
+            )
+            messages.success(
+                request,
+                f"Transport payment of {result['amount']} UGX recorded.",
+            )
+        except Exception as e:  # noqa: BLE001 — page-level error surface
+            messages.error(request, f"Transport payment failed: {e}")
     return redirect("/accounts/partner-payments/")
 
 
@@ -839,3 +955,38 @@ def weekly_requests_view(request):
 
     context = {"requests": requests}
     return render(request, "pages/accounts/weekly_requests.html", context)
+
+
+@require_page_permission("disbursements")
+def partner_invoice_download(request, invoice_id):
+    """Finance downloads the partner's uploaded invoice document."""
+    from django.http import FileResponse
+
+    from apps.fund_requests.partner_invoices import invoice_file
+
+    invoice, handle = invoice_file(invoice_id, request.user)
+    return FileResponse(handle, as_attachment=True, filename=invoice.original_name)
+
+
+@require_page_permission("disbursements")
+def partner_invoice_pay_action(request, invoice_id):
+    """POST — pay the invoice's instalment (delegates to pay_partner)."""
+    from apps.fund_requests.partner_invoices import pay_invoice
+
+    if request.method == "POST":
+        try:
+            result = pay_invoice(
+                invoice_id,
+                {
+                    "payment_method": request.POST.get("payment_method"),
+                    "payment_reference": request.POST.get("payment_reference"),
+                    "netsuite_expense_id": request.POST.get("netsuite_expense_id"),
+                },
+                request.user,
+            )
+            messages.success(
+                request, f"Invoice paid — {result['paid']} UGX to the partner."
+            )
+        except Exception as e:  # noqa: BLE001 — page-level error surface
+            messages.error(request, f"Invoice payment failed: {e}")
+    return redirect("/accounts/partner-payments/")

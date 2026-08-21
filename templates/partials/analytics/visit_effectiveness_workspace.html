@@ -4,6 +4,7 @@
   nothing here computes independently. Associations only, never causation;
   sample sizes always visible; school rows redacted for summary-only scopes.
 {% endcomment %}
+{% load kpi_metrics %}
 <div id="vfx-workspace" class="space-y-5">
 
 {{ chart_payload|json_script:"vfx-chart-payload" }}
@@ -22,44 +23,31 @@
 
 {% else %}
 
-<!-- ── KPI strip: role-appropriate emphasis, one data source ─────────────── -->
-<section class="edify-kpi-strip grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" aria-label="Visit effectiveness summary">
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Comparable schools</p>
-    <p class="text-[20px] font-bold edify-text">{{ d.cohort.comparable_schools }}</p>
-    <p class="edify-text-caption edify-text-muted">{{ d.cohort.core }} core · {{ d.cohort.client }} client</p>
-  </div>
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Avg SSA change</p>
-    <p class="text-[20px] font-bold {% if d.ssa_change.avg_overall_delta >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">
-      {{ d.ssa_change.avg_overall_delta|floatformat:2 }}</p>
-    <p class="edify-text-caption edify-text-muted">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</p>
-  </div>
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Schools visited</p>
-    <p class="text-[20px] font-bold edify-text">{{ d.coverage.schools_visited }}</p>
-    <p class="edify-text-caption edify-text-muted">{{ d.coverage.schools_not_visited }} not visited</p>
-  </div>
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Delivered visits</p>
-    <p class="text-[20px] font-bold edify-text">{{ d.coverage.delivered_visits }}</p>
-    <p class="edify-text-caption edify-text-muted">{{ d.coverage.scheduled_only_visits }} scheduled-only excluded</p>
-  </div>
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Alignment rate</p>
-    <p class="text-[20px] font-bold edify-text">{% if d.quality.recommendation_alignment_rate is not None %}{% widthratio d.quality.recommendation_alignment_rate 1 100 %}%{% else %}—{% endif %}</p>
-    <p class="edify-text-caption edify-text-muted">of focused visits hit a weakest intervention</p>
-  </div>
-  <div class="edify-surface rounded-surface border border-slate-200 p-3">
-    <p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">
-      {% if is_strategic %}Partner data-collection{% else %}IA clearance{% endif %}</p>
-    <p class="text-[20px] font-bold edify-text">
-      {% if is_strategic %}{% if d.coverage.partner_data_collection_share is not None %}{% widthratio d.coverage.partner_data_collection_share 1 100 %}%{% else %}—{% endif %}
-      {% else %}{% widthratio d.quality.ia_clearance_rate 1 100 %}%{% endif %}</p>
-    <p class="edify-text-caption edify-text-muted">
-      {% if is_strategic %}share of partner visits{% else %}of delivered visits{% endif %}</p>
-  </div>
-</section>
+{% legacy_kpi_item "Comparable schools" d.cohort.comparable_schools helper="Verified comparison cohort" tone="info" icon="school" as comparable_kpi %}
+{% if d.ssa_change.avg_overall_delta >= 0 %}
+  {% legacy_kpi_item "Average SSA change" d.ssa_change.avg_overall_delta|floatformat:2 helper="Verified baseline to follow-up" tone="success" icon="chart" as change_kpi %}
+{% else %}
+  {% legacy_kpi_item "Average SSA change" d.ssa_change.avg_overall_delta|floatformat:2 helper="Verified baseline to follow-up" tone="danger" icon="chart" as change_kpi %}
+{% endif %}
+{% if d.quality.recommendation_alignment_rate is not None %}
+  {% widthratio d.quality.recommendation_alignment_rate 1 100 as alignment_pct %}
+  {% legacy_kpi_item "Alignment rate" alignment_pct|add:"%" helper="Focused visits aligned to the weakest intervention" tone="success" icon="target" as alignment_kpi %}
+{% else %}
+  {% legacy_kpi_item "Alignment rate" "—" helper="No measurable focused visits" tone="neutral" icon="target" as alignment_kpi %}
+{% endif %}
+{% if is_strategic %}
+  {% if d.coverage.partner_data_collection_share is not None %}
+    {% widthratio d.coverage.partner_data_collection_share 1 100 as clearance_pct %}
+    {% legacy_kpi_item "Partner data-collection" clearance_pct|add:"%" helper="Share of partner visits" tone="info" icon="check" as clearance_kpi %}
+  {% else %}
+    {% legacy_kpi_item "Partner data-collection" "—" helper="No partner visits in scope" tone="neutral" icon="check" as clearance_kpi %}
+  {% endif %}
+{% else %}
+  {% widthratio d.quality.ia_clearance_rate 1 100 as clearance_pct %}
+  {% legacy_kpi_item "IA clearance" clearance_pct|add:"%" helper="Share of delivered visits" tone="info" icon="check" as clearance_kpi %}
+{% endif %}
+{% collect_kpi_items comparable_kpi change_kpi alignment_kpi clearance_kpi as effectiveness_kpis %}
+{% include "components/kpi_strip.html" with items=effectiveness_kpis variant="executive" title="Visit effectiveness headline" %}
 
 {% if d.cohort.sample_quality == 'very limited' or d.cohort.sample_quality == 'limited' %}
 <p class="p-3 rounded-surface border text-[12px] font-semibold edify-warning-soft edify-warning-border" style="color: var(--edify-warning-text)">

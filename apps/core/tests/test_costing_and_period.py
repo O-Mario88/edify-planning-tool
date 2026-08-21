@@ -204,12 +204,14 @@ class CostingBudgetPeriodTest(APITestCase):
         second = self._client_school("COST-SCH-2", "Cost Primary Two")
         a1 = self._make_visit(month=7, week=1)
         a2 = self._make_visit(month=7, week=2, school_id=second.school_id)
+        # The fund REQUEST carries the staff-payable subset only: school-visit
+        # transport is vendor-direct (paid to the transport company) and never
+        # enters the owner's advance (fund_requests.fundable).
         expected = sum(
             l.amount
-            for l in ActivityScheduleCostLine.objects.filter(activity_id=a1["id"])
-        ) + sum(
-            l.amount
-            for l in ActivityScheduleCostLine.objects.filter(activity_id=a2["id"])
+            for l in ActivityScheduleCostLine.objects.filter(
+                activity_id__in=[a1["id"], a2["id"]]
+            ).exclude(line_item_type="transport")
         )
         self.assertGreater(expected, 0)
 

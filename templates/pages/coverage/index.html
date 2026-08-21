@@ -22,22 +22,22 @@
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Schools</p>
-      <p class="text-[19px] font-bold text-slate-800 tabular-nums mt-0.5">{{ total_schools|intcomma }}</p>
+      <p class="text-[20px] font-bold text-slate-800 tabular-nums mt-0.5">{{ total_schools|intcomma }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">active in program</p>
     </div>
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Visited</p>
-      <p class="text-[19px] font-bold text-emerald-600 tabular-nums mt-0.5">{{ visited|intcomma }}</p>
+      <p class="text-[20px] font-bold text-emerald-600 tabular-nums mt-0.5">{{ visited|intcomma }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">≥1 completed visit</p>
     </div>
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Not Yet Visited</p>
-      <p class="text-[19px] font-bold text-rose-600 tabular-nums mt-0.5">{{ unvisited|intcomma }}</p>
+      <p class="text-[20px] font-bold text-rose-600 tabular-nums mt-0.5">{{ unvisited|intcomma }}</p>
       <p class="edify-text-caption font-semibold text-slate-400">awaiting first visit</p>
     </div>
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Coverage Rate</p>
-      <p class="text-[19px] font-bold tabular-nums mt-0.5 {% if coverage_pct >= 70 %}text-emerald-600{% elif coverage_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ coverage_pct }}%</p>
+      <p class="text-[20px] font-bold tabular-nums mt-0.5 {% if coverage_pct >= 70 %}text-emerald-600{% elif coverage_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ coverage_pct }}%</p>
       <div class="h-[6px] bg-slate-100 rounded-pill overflow-hidden mt-1.5">
         <div class="h-full rounded-pill {% if coverage_pct >= 70 %}bg-emerald-500{% elif coverage_pct >= 40 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ coverage_pct }}%"></div>
       </div>

@@ -14,9 +14,8 @@ anyone wrote beside their answer: a private comment routed to HR stops being
 private the moment a line manager can read it.
 
 Engagement figures travel with each row, under their own names — Active Reading
-Time, Viewer Completion. Never "proof of reading": the platform can observe that
-a document was open and visible, and nothing at all about whether it was
-understood.
+Time and Viewer Completion. Completion means the uploader's active-time target
+was met; it is evidence of reading duration, never proof of comprehension.
 """
 
 from __future__ import annotations
@@ -114,20 +113,13 @@ class PolicyComplianceService:
                     # Named for what it is. The platform can see that a viewer
                     # was open and visible; it cannot see comprehension.
                     "active_reading_time": _humanise(ack.active_reading_seconds),
-                    "viewer_completion": (
-                        "Completed"
-                        if ack.viewer_completed
-                        else (
-                            "Attested outside the viewer"
-                            if ack.offline_attestation
-                            else "Partial"
-                        )
+                    "required_reading_time": _humanise(
+                        ack.document.required_reading_seconds
                     ),
+                    "viewer_completion": ack.reading_completion_label,
+                    "viewer_completion_key": ack.reading_completion_key,
                     "first_opened": ack.created_at,
-                    "comment_status": _comment_status(ack),
-                    "due_date": ack.due_date,
                     "overdue": overdue,
-                    "next_action": _next_action(ack, overdue),
                 }
             )
 
@@ -203,24 +195,9 @@ def _names(user_ids: set[str]) -> dict[str, str]:
     }
 
 
-def _comment_status(ack) -> str:
-    comment = ack.comment_records.first()
-    if comment is None:
-        return "—" if not ack.comment else "Recorded"
-    return comment.get_status_display()
-
-
-def _next_action(ack, overdue: bool) -> str:
-    if ack.state == AcknowledgementState.DISAGREED:
-        return "HR review"
-    if ack.state == AcknowledgementState.PENDING:
-        return "Send reminder" if overdue else "Awaiting the user"
-    return "—"
-
-
 def _humanise(seconds: int) -> str:
     if not seconds:
-        return "—"
+        return "0s"
     minutes, remainder = divmod(int(seconds), 60)
     if minutes < 60:
         return f"{minutes}m {remainder}s" if minutes else f"{remainder}s"

@@ -8,6 +8,8 @@ cannot accidentally advance another project's planning state.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from collections import defaultdict
 from datetime import timedelta
 from urllib.parse import urlencode
@@ -520,75 +522,75 @@ def get_planning(principal, filters=None) -> dict:
     )
 
     kpis = [
-        {
-            "label": "Total Project Schools",
-            "value": len(assignments),
-            "helper": "school–project assignments",
-            "tone": "blue",
-            "icon": "school",
-        },
-        {
-            "label": "SSA Score Required",
-            "value": baseline_count,
-            "helper": f"FY {selected_fy}",
-            "tone": "orange",
-            "icon": "warning",
-        },
-        {
-            "label": "Scheduled This Week",
-            "value": scheduled_week,
-            "helper": "project activities",
-            "tone": "green",
-            "icon": "calendar",
-        },
-        {
-            "label": "Planning Completion",
-            "value": f"{completion}%",
-            "helper": "project pairs with an activity",
-            "tone": "blue",
-            "icon": "chart",
-        },
-        {
-            "label": "High-Risk Project Schools",
-            "value": high_risk,
-            "helper": "SSA average below 5.0",
-            "tone": "red",
-            "icon": "risk",
-        },
-        {
-            "label": "Schools Requiring Follow-up",
-            "value": followup,
-            "helper": "returned, overdue or rescheduled",
-            "tone": "orange",
-            "icon": "clock",
-        },
+        render_precomputed_metric_item(
+            "projects_planning_service_total_project_schools",
+            len(assignments),
+            helper="school–project assignments",
+            tone="blue",
+            icon="school",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_ssa_score_required",
+            baseline_count,
+            helper=f"FY {selected_fy}",
+            tone="orange",
+            icon="warning",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_scheduled_this_week",
+            scheduled_week,
+            helper="project activities",
+            tone="green",
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_planning_completion",
+            f"{completion}%",
+            helper="project pairs with an activity",
+            tone="blue",
+            icon="chart",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_high_risk_project_schools",
+            high_risk,
+            helper="SSA average below 5.0",
+            tone="red",
+            icon="risk",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_schools_requiring_follow_up",
+            followup,
+            helper="returned, overdue or rescheduled",
+            tone="orange",
+            icon="clock",
+        ),
     ]
 
     band_cards = [
-        {
-            "label": "SSA Required",
-            "value": tab_counts["baseline"],
-            "pct": round(tab_counts["baseline"] / max(tab_counts["all"], 1) * 100),
-            "tone": "red",
-            "icon": "document",
-            "trend": "Complete SSA before support planning",
-        },
-        {
-            "label": "Ready for Scheduling",
-            "value": tab_counts["ready"],
-            "pct": round(tab_counts["ready"] / max(tab_counts["all"], 1) * 100),
-            "tone": "orange",
-            "icon": "calendar",
-            "trend": "Use SSA recommendations",
-        },
-        {
-            "label": "Ready for Partner Assignment",
-            "value": tab_counts["partner"],
-            "pct": round(tab_counts["partner"] / max(tab_counts["all"], 1) * 100),
-            "tone": "green",
-            "icon": "partner",
-            "trend": "Monitor delivery confirmation",
-        },
+        render_precomputed_metric_item(
+            "projects_planning_service_ssa_required",
+            tab_counts["baseline"],
+            pct=round(tab_counts["baseline"] / max(tab_counts["all"], 1) * 100),
+            tone="red",
+            icon="document",
+            trend="Complete SSA before support planning",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_ready_for_scheduling",
+            tab_counts["ready"],
+            pct=round(tab_counts["ready"] / max(tab_counts["all"], 1) * 100),
+            tone="orange",
+            icon="calendar",
+            trend="Use SSA recommendations",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_ready_for_partner_assignment",
+            tab_counts["partner"],
+            pct=round(tab_counts["partner"] / max(tab_counts["all"], 1) * 100),
+            tone="green",
+            icon="partner",
+            trend="Monitor delivery confirmation",
+        ),
     ]
 
     summary = []
@@ -641,36 +643,36 @@ def get_planning(principal, filters=None) -> dict:
         and activity.status in ACTIVE_ACTIVITY_STATES
     )
     delivery = [
-        {
-            "label": "SSA Required",
-            "value": baseline_count,
-            "tone": "red",
-            "helper": "SSA needed",
-        },
-        {
-            "label": "Visit Pending",
-            "value": visit_pending,
-            "tone": "orange",
-            "helper": "active workflow",
-        },
-        {
-            "label": "Training Pending",
-            "value": training_pending,
-            "tone": "blue",
-            "helper": "active workflow",
-        },
-        {
-            "label": "Partner Assignment Pending",
-            "value": partner_count,
-            "tone": "purple",
-            "helper": "partner-led",
-        },
-        {
-            "label": "High-Risk Schools",
-            "value": high_risk,
-            "tone": "red",
-            "helper": "SSA below 5.0",
-        },
+        render_precomputed_metric_item(
+            "projects_planning_service_ssa_required",
+            baseline_count,
+            tone="red",
+            helper="SSA needed",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_visit_pending",
+            visit_pending,
+            tone="orange",
+            helper="active workflow",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_training_pending",
+            training_pending,
+            tone="blue",
+            helper="active workflow",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_partner_assignment_pending",
+            partner_count,
+            tone="purple",
+            helper="partner-led",
+        ),
+        render_precomputed_metric_item(
+            "projects_planning_service_high_risk_schools",
+            high_risk,
+            tone="red",
+            helper="SSA below 5.0",
+        ),
     ]
 
     region_ids = {assignment.school.region_id for assignment in assignments_qs}

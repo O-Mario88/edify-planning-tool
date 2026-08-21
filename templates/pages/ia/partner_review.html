@@ -1,0 +1,99 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Review · {% firstof a.school.name a.cluster.name "Partner Work" %} · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 max-w-[1100px] mx-auto space-y-5">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      {% include "partials/_back_link.html" with back_href=back_url back_label="Partner Evidence" %}
+      <h1 class="edify-page-title edify-page-header__title">{% firstof a.school.name a.cluster.name "Partner Work" %}</h1>
+      <p class="edify-page-header__description">{{ a.get_activity_type_display }} · {% if partner %}{{ partner.name }}{% if partner.user %} · {{ partner.user.name }}{% endif %}{% endif %}</p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if can_decide %}
+      <button type="button"
+              hx-get="/ia/partner-evidence/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="inline-flex h-9 items-center rounded-control border border-rose-200 edify-surface px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">Return</button>
+      <button type="button"
+              hx-get="/ia/partner-evidence/{{ a.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="inline-flex h-9 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold text-white transition-colors">Complete</button>
+      {% else %}
+      <span class="edify-status-text" data-edify-tone="{% if a.status == 'ia_verified' %}success{% else %}neutral{% endif %}">{{ a.status|status_label }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid gap-5 lg:grid-cols-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <h2 class="edify-section__heading">Planned vs actual</h2>
+      <div class="edify-data-list">
+        <div class="edify-data-row"><span class="edify-data-row__label">Planned date</span><span class="edify-data-row__value">{{ a.planned_date|date:"d M Y"|default:"—" }}</span></div>
+        <div class="edify-data-row"><span class="edify-data-row__label">Actual delivery</span><span class="edify-data-row__value">{{ a.actual_delivery_date|date:"d M Y"|default:"Not recorded" }}</span></div>
+        {% if a.expected_participants %}<div class="edify-data-row"><span class="edify-data-row__label">Planned participants</span><span class="edify-data-row__value">{{ a.expected_participants }}</span></div>{% endif %}
+        <div class="edify-data-row"><span class="edify-data-row__label">Actual attendance</span><span class="edify-data-row__value">{% if a.teachers_attended or a.leaders_attended or a.other_participants %}{{ a.teachers_attended|default:0 }} teachers · {{ a.leaders_attended|default:0 }} leaders · {{ a.other_participants|default:0 }} others{% else %}Not recorded{% endif %}</span></div>
+        {% if a.expected_outcome %}<div class="edify-data-row"><span class="edify-data-row__label">Planned outcome</span><span class="edify-data-row__value">{{ a.expected_outcome }}</span></div>{% endif %}
+        <div class="edify-data-row"><span class="edify-data-row__label">Actual outcome</span><span class="edify-data-row__value">{% firstof a.actual_outcome "Not recorded" %}</span></div>
+        {% if a.actual_observations %}<div class="edify-data-row"><span class="edify-data-row__label">Observations</span><span class="edify-data-row__value">{{ a.actual_observations }}</span></div>{% endif %}
+        {% if a.follow_up_note %}<div class="edify-data-row"><span class="edify-data-row__label">Follow-up required</span><span class="edify-data-row__value">{{ a.follow_up_note }}</span></div>{% endif %}
+        {% if a.execution_started_at %}<div class="edify-data-row"><span class="edify-data-row__label">Started</span><span class="edify-data-row__value">{{ a.execution_started_at|date:"d M Y H:i" }}</span></div>{% endif %}
+        <div class="edify-data-row"><span class="edify-data-row__label">Salesforce</span><span class="edify-data-row__value">{% firstof a.salesforce_activity_id "Pending — entered at Complete" %}</span></div>
+        <div class="edify-data-row"><span class="edify-data-row__label">Payment</span><span class="edify-data-row__value">{% if a.status == "ia_verified" %}Eligible — with the Accountant{% else %}Not yet eligible{% endif %}</span></div>
+      </div>
+      {% if assignment %}
+      <div class="pt-2 border-t border-slate-100 edify-text-caption font-semibold text-slate-500 space-y-1">
+        {% if assignment.recommendation_reason %}<p>Why this work: {{ assignment.recommendation_reason }}</p>{% endif %}
+        {% if assignment.source_ssa %}<p>SSA: {{ assignment.source_ssa.date_of_ssa }} · {{ assignment.source_ssa.verification_status|title }}</p>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="space-y-5">
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+        <h2 class="edify-section__heading">Evidence</h2>
+        {% if evidence_checklist %}
+        <ul class="space-y-1.5">
+          {% for item in evidence_checklist %}
+          <li class="flex items-center gap-2 text-[13px] font-semibold {% if item.uploaded %}text-emerald-700{% else %}text-rose-600{% endif %}">
+            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full {% if item.uploaded %}bg-emerald-100{% else %}bg-rose-100{% endif %} edify-text-caption font-bold">{% if item.uploaded %}<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<span class="edify-text-caption font-bold">i</span>{% endif %}</span>
+            {{ item.label }}{% if not item.uploaded %} — missing{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if evidence %}
+        <ul class="divide-y divide-slate-100 rounded-control border border-slate-100">
+          {% for e in evidence %}
+          <li class="flex items-center justify-between gap-3 px-3 py-2 text-[12px] font-semibold text-slate-600">
+            {% comment %} Open renders the PDF in a new tab; Download saves it. {% endcomment %}
+            <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="truncate font-bold hover:edify-primary-text">{{ e.original_name }}</a>
+            <span class="flex items-center gap-2.5 shrink-0">
+              <span class="edify-text-caption text-slate-400">{{ e.kind|status_label }} · {{ e.created_at|date:"d M H:i" }}</span>
+              <a href="/api/evidence/{{ e.id }}/file" target="_blank" rel="noopener" class="edify-text-caption font-bold edify-primary-text hover:underline">Open</a>
+              <a href="/api/evidence/{{ e.id }}/file?download=1" class="edify-text-caption font-bold edify-primary-text hover:underline">Download</a>
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-[13px] font-semibold text-rose-600">No evidence files on this submission.</p>
+        {% endif %}
+      </div>
+
+      {% if a.pl_review_note or history %}
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+        <h2 class="edify-section__heading">Return history</h2>
+        {% if a.pl_review_note %}<p class="text-[12px] font-semibold text-slate-600">{{ a.pl_review_note }}</p>{% endif %}
+        {% for h in history %}
+        <p class="edify-text-caption font-semibold text-slate-400">{{ h.verified_at|date:"d M Y" }} — verified by {{ h.verified_by }}{% if h.notes %} · {{ h.notes }}{% endif %}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="drawer-container"></div>
+</div>
+{% endblock %}

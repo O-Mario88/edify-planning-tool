@@ -32,11 +32,16 @@ def _get_cache_key(prefix: str, user, params: dict) -> str:
 
     param_str = json.dumps(params, sort_keys=True)
     param_hash = hashlib.sha256(param_str.encode("utf-8")).hexdigest()[:32]
+    # Cache backends such as Memcached reject whitespace and control
+    # characters in keys. Role labels are human-readable (for example
+    # ``Program Lead``), so keep the isolation property without embedding the
+    # label itself.
+    role_hash = hashlib.sha256(str(user.active_role).encode("utf-8")).hexdigest()[:12]
     # The portfolio fingerprint, not just the user and role. Reassign a school
     # or change a reporting line and the key changes, so the previous answer
     # is never served again — see `scope_cache_fingerprint`.
     portfolio = scope_cache_fingerprint(resolve_user_scope(user))
-    return f"analytics:{prefix}:{user.id}:{user.active_role}:{portfolio}:{param_hash}"
+    return f"analytics:{prefix}:{user.id}:{role_hash}:{portfolio}:{param_hash}"
 
 
 class AnalyticsDashboardView(APIView):

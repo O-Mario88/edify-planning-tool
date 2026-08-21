@@ -4,7 +4,7 @@
 {% block title %}Projects — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" data-mobile-family="directory">
+<div class="edify-page-canvas space-y-5" data-mobile-family="directory">
 
 {% comment %}
   CCEO / Program Lead Projects page — a role-scoped operational view of the
@@ -106,7 +106,7 @@
 {% else %}
 
 <!-- ============================ KPI STRIP ============================ -->
-{% include "components/kpi_strip.html" with items=kpis %}
+{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Project portfolio context" %}
 
 <!-- ============================ MAIN GRID ============================ -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -255,8 +255,8 @@
         <span class="text-[12px] font-bold {% if selected.attention.partner_pending %}text-purple-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.partner_pending }}</span>
       </li>
       <li class="flex items-center justify-between gap-3 py-2 border-b border-slate-100">
-        <span class="text-[12px] font-semibold text-slate-600">Evidence overdue</span>
-        <span class="text-[12px] font-bold {% if selected.attention.evidence_overdue %}text-amber-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.evidence_overdue }}</span>
+        <span class="text-[12px] font-semibold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-600{% endif %}">Evidence overdue</span>
+        <span class="text-[12px] font-bold {% if selected.attention.evidence_overdue %}text-rose-600{% else %}text-slate-300{% endif %} tabular-nums">{{ selected.attention.evidence_overdue }}</span>
       </li>
       <li class="flex items-center justify-between gap-3 py-2">
         <span class="text-[12px] font-semibold text-slate-600">IA returns</span>

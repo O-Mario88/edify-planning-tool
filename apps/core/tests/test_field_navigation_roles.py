@@ -34,9 +34,27 @@ class FieldNavigationRoleTest(SimpleTestCase):
                 self.assertNotIn("SCHOOLS & FIELD", self._groups(role))
 
     def test_field_roles_retain_schools_and_field(self):
-        for role in (CCEO, PL, PARTNER, PROJECT_COORDINATOR):
+        for role in (CCEO, PL, PROJECT_COORDINATOR):
             with self.subTest(role=role):
                 self.assertIn("SCHOOLS & FIELD", self._groups(role))
+
+    def test_partner_gets_my_field_work_instead(self):
+        """Partners left SCHOOLS & FIELD (2026-08-20): their surface is the
+        MY FIELD WORK intake — Assigned Schools/Activities, Evidence and
+        Completed & Payments — never the staff school directory."""
+        groups = self._groups(PARTNER)
+        self.assertNotIn("SCHOOLS & FIELD", groups)
+        self.assertIn("MY FIELD WORK", groups)
+        labels = {i["label"] for i in groups["MY FIELD WORK"]["items"]}
+        self.assertEqual(
+            labels,
+            {
+                "Assigned Schools",
+                "Assigned Activities",
+                "Evidence",
+                "Completed & Payments",
+            },
+        )
 
     def test_admin_carries_both_the_platform_and_field_workspaces(self):
         """Admin was narrowed to Platform Operations, then widened again.
