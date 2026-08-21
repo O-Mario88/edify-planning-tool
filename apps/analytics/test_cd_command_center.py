@@ -526,3 +526,148 @@ class PrimedSeriesChangesCostNotNumbersTest(TestCase):
 
         source = inspect.getsource(CDAnalyticsService.cd_todos)
         self.assertIn("_prime_target_series", source)
+
+
+
+class PrioritySchoolsRankBySeverityTest(TestCase):
+    """Priority Schools ranks by what a gap means, not by how many there are.
+
+    The table used to score a school by counting unticked boxes. Two
+    consequences followed. A school missing a Salesforce ID and a training
+    scored two, while a school measured Critical on its assessment scored one
+    — so the paperwork outranked the crisis. And because listing required two
+    issues, a school whose only problem was a Critical assessment never
+    appeared at all.
+
+    Standalone rather than a subclass of the fixture above: inheriting it
+    would re-run its assertions against this class's extra schools and
+    activities, which change the counts they pin.
+    """
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Central Region")
+        self.district = District.objects.create(
+            name="Dist A", region=self.region, district_type="primary"
+        )
+        self.cd, _ = self._staff("cd-sev@t.org", "CD", EdifyRole.COUNTRY_DIRECTOR.value)
+        self.cceo, self.cceo_sp = self._staff(
+            "cceo-sev@t.org", "CCEO", EdifyRole.CCEO.value
+        )
+
+        # Measured Critical, but otherwise in perfect order: visited, trained,
+        # every Salesforce ID present. One issue under the old counter.
+        self.sch_critical = self._school("Critical", ssa_done=True)
+        self._ssa(self.sch_critical, 3.0)
+        self._act(self.sch_critical, "school_visit", sf="SV-C")
+        self._act(self.sch_critical, "training", sf="TR-C")
+
+        # Strong assessment, but no training and a missing Salesforce ID.
+        # Two issues under the old counter, and therefore ranked higher.
+        self.sch_paperwork = self._school("Paperwork", ssa_done=True)
+        self._ssa(self.sch_paperwork, 9.0)
+        self._act(self.sch_paperwork, "school_visit", sf="")
+
+    def _staff(self, email, name, role):
+        user = User.objects.create_user(
+            email=email,
+            name=name,
+            roles=[role],
+            active_role=role,
+            password="x",
+            is_active=True,
+        )
+        return user, StaffProfile.objects.create(user=user, title=role)
+
+    def _school(self, sid, *, ssa_done):
+        school = School.objects.create(
+            school_id=f"S-{sid}",
+            name=f"School {sid}",
+            region=self.region,
+            district=self.district,
+            enrollment=100,
+            current_fy_ssa_status="done" if ssa_done else "not_done",
+        )
+        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=school.id)
+        return school
+
+    def _ssa(self, school, average):
+        record = SsaRecord.objects.create(
+            school=school,
+            fy=FY,
+            quarter="Q1",
+            average_score=average,
+            verification_status="confirmed",
+            date_of_ssa=date(2025, 11, 1),
+            uploaded_by="t",
+        )
+        SsaScore.objects.create(
+            ssa_record=record, intervention="leadership", score=average
+        )
+
+    def _act(self, school, atype, *, sf=""):
+        return Activity.objects.create(
+            school=school,
+            activity_type=atype,
+            delivery_type="staff",
+            status="ia_verified",
+            responsible_staff_id=self.cceo_sp.id,
+            fy=FY,
+            quarter="Q3",
+            planned_date=date(2026, 4, 10),
+            scheduled_date=timezone.make_aware(timezone.datetime(2026, 4, 10, 9, 0)),
+            salesforce_activity_id=sf,
+        )
+
+    def _rows(self):
+        return S.get_dashboard(self.cd, fy=FY)["priority_schools"]
+
+    def test_a_critical_assessment_outranks_missing_paperwork(self):
+        names = [r["school"] for r in self._rows()]
+
+        self.assertIn("School Critical", names)
+        self.assertIn("School Paperwork", names)
+        self.assertLess(
+            names.index("School Critical"),
+            names.index("School Paperwork"),
+            "a measured Critical assessment must outrank a missing SF ID",
+        )
+
+    def test_a_lone_critical_assessment_is_listed_at_all(self):
+        rows = {r["school"]: r for r in self._rows()}
+
+        self.assertIn("School Critical", rows)
+        self.assertEqual(rows["School Critical"]["issues"], ["SSA Critical"])
+
+    def test_a_warning_band_is_named_rather_than_discarded(self):
+        # `average_score__lt=5.0` is exactly the Critical band, so every
+        # Warning school used to be dropped before ranking began.
+        warned = self._school("Warned", ssa_done=True)
+        self._ssa(warned, 6.0)
+        self._act(warned, "training", sf="TR-W")
+
+        rows = {r["school"]: r for r in self._rows()}
+
+        self.assertIn("School Warned", rows)
+        self.assertIn("SSA Warning", rows["School Warned"]["issues"])
+
+    def test_missing_paperwork_alone_never_lists_a_school(self):
+        tidy = self._school("Tidy", ssa_done=True)
+        self._ssa(tidy, 9.0)
+        self._act(tidy, "school_visit", sf="")
+        self._act(tidy, "training", sf="TR-T")
+
+        self.assertNotIn("School Tidy", [r["school"] for r in self._rows()])
+
+    def test_every_factor_that_moved_the_rank_stays_visible(self):
+        # The old list truncated to three, so a factor that changed the
+        # ordering could be invisible in the reason shown next to it.
+        bad = self._school("Neglected", ssa_done=False)
+        self._act(bad, "school_visit", sf="")
+
+        rows = {r["school"]: r for r in self._rows()}
+
+        self.assertIn("School Neglected", rows)
+        self.assertEqual(
+            sorted(rows["School Neglected"]["issues"]),
+            ["No SSA", "No Training", "SF ID Missing"],
+        )
