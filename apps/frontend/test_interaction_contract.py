@@ -155,6 +155,11 @@ class SegmentedTabsTest(SimpleTestCase):
 
     def test_segments_are_square_and_only_the_rail_ends_curve(self):
         self.assertIn("border-radius: 0 !important;", self.css)
+        self.assertIn("padding: 0 !important;", self.css)
+        self.assertIn("align-self: stretch !important;", self.css)
+        self.assertIn("block-size: auto !important;", self.css)
+        self.assertIn("height: auto !important;", self.css)
+        self.assertIn("min-block-size: 0 !important;", self.css)
         self.assertIn(
             "border-start-start-radius: var(--edify-radius-sm) !important;", self.css
         )
@@ -162,11 +167,46 @@ class SegmentedTabsTest(SimpleTestCase):
             "border-end-end-radius: var(--edify-radius-sm) !important;", self.css
         )
 
+    def test_the_rail_wraps_its_segments_without_reserved_space_below(self):
+        rail_contract = self.css.split(
+            "Tabs: a segmented rail, not a row of buttons", 1
+        )[1].split('main :is(\n  [role="tab"]', 1)[0]
+        self.assertIn("padding: 0 !important;", rail_contract)
+        self.assertIn("min-block-size: 0 !important;", rail_contract)
+        self.assertIn("block-size: auto !important;", rail_contract)
+        self.assertIn("height: auto !important;", rail_contract)
+
     def test_the_end_radius_is_the_button_radius_not_a_pill(self):
         """A rail and a button should read as the same family of control."""
         self.assertNotIn("var(--edify-radius-pill)", self.css)
         tokens = _read("static/css/design-system.css")
         self.assertIn("--edify-radius-sm: var(--radius-control);", tokens)
+
+    def test_decorative_children_do_not_change_end_segment_geometry(self):
+        """Grouped navigation has hidden labels before its first real tab."""
+        for selector in (
+            ".edify-section-nav__cluster:first-of-type",
+            ".edify-section-nav__cluster:last-of-type",
+            ".edify-section-nav__link:first-of-type",
+            ".edify-section-nav__link:last-of-type",
+        ):
+            self.assertIn(selector, self.css)
+
+        first_cluster = self.css.split(
+            "main .edify-section-nav__clusters > "
+            ".edify-section-nav__cluster:first-of-type,",
+            1,
+        )[1]
+        self.assertIn(
+            "border-start-start-radius: var(--edify-radius-sm) !important;",
+            first_cluster,
+        )
+
+        # The first real segment also owns the rail edge without a stray
+        # divider, exactly like a simple tablist whose tab is :first-child.
+        no_rule_block = self.css.split("No rule before the first segment", 1)[1]
+        self.assertIn(".edify-section-nav__cluster:first-of-type", no_rule_block)
+        self.assertIn("--edify-segment-rule: transparent;", no_rule_block)
 
     def test_segments_are_divided_by_a_rule(self):
         self.assertIn("--edify-segment-rule", self.css)
@@ -216,3 +256,13 @@ class SegmentedTabsTest(SimpleTestCase):
         leaving dark blue on blue at about 1.5:1."""
         self.assertNotIn("main :where(", self.css)
         self.assertIn("main :is(", self.css)
+
+    def test_inline_data_never_becomes_a_badge_inside_a_tab(self):
+        content_contract = self.css.split(
+            "Dynamic counts and labels are content inside one segment", 1
+        )[1]
+        self.assertIn("[data-edify-tab-count]", content_contract)
+        self.assertIn("background: transparent !important;", content_contract)
+        self.assertIn("color: inherit !important;", content_contract)
+        self.assertIn("font: inherit !important;", content_contract)
+        self.assertIn("opacity: 1 !important;", content_contract)

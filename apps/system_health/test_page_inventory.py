@@ -12,10 +12,12 @@ from django.urls import get_resolver
 from apps.core.rbac import EdifyRole
 from apps.realtime.registry import JOB_REGISTRY
 from apps.system_health.page_inventory import (
+    APPROVED_PAGE_TYPES,
     TEMPLATE_ROOT,
     _iter_patterns,
     _template_findings,
     build_page_inventory,
+    component_catalogue_as_markdown,
     inventory_as_markdown,
 )
 
@@ -31,6 +33,9 @@ class PageInventoryTest(SimpleTestCase):
         checked_in_markdown = (docs / "platform-page-inventory.md").read_text(
             encoding="utf-8"
         )
+        checked_in_components = (docs / "platform-component-catalogue.md").read_text(
+            encoding="utf-8"
+        )
         self.assertEqual(
             checked_in_json,
             inventory,
@@ -40,6 +45,11 @@ class PageInventoryTest(SimpleTestCase):
             checked_in_markdown,
             inventory_as_markdown(inventory),
             "platform-page-inventory.md is stale; run build_page_inventory",
+        )
+        self.assertEqual(
+            checked_in_components,
+            component_catalogue_as_markdown(inventory),
+            "platform-component-catalogue.md is stale; run build_page_inventory",
         )
 
     def test_route_manifest_is_complete(self):
@@ -100,6 +110,55 @@ class PageInventoryTest(SimpleTestCase):
             if page["permission_key"] and not page["role_access"]
         ]
         self.assertEqual(missing, [])
+
+    def test_every_surface_has_the_complete_ui_audit_contract(self):
+        inventory = build_page_inventory()
+        required = {
+            "page_id",
+            "module",
+            "page_type",
+            "shared_layout",
+            "header_variant",
+            "kpi_count",
+            "card_count",
+            "tabs",
+            "table_pattern",
+            "filters",
+            "search",
+            "typography_exceptions",
+            "per_page_css",
+            "mobile_status",
+            "tablet_status",
+            "accessibility_status",
+            "theme_status",
+            "remediation",
+            "fix_status",
+            "evidence",
+        }
+        failures = []
+        page_ids = []
+        for page in inventory["pages"]:
+            page_ids.append(page["page_id"])
+            missing = sorted(required - page.keys())
+            if missing:
+                failures.append((page["route"], missing))
+            self.assertIn(page["page_type"], APPROVED_PAGE_TYPES, page["route"])
+        self.assertEqual(failures, [])
+        self.assertEqual(len(page_ids), len(set(page_ids)), "page audit IDs must be stable and unique")
+
+    def test_every_visual_surface_has_responsive_theme_and_accessibility_contracts(self):
+        inventory = build_page_inventory()
+        visual = [
+            page
+            for page in inventory["pages"]
+            if page["surface_kind"] != "action" and page["templates"]
+        ]
+        self.assertTrue(visual)
+        for page in visual:
+            self.assertEqual(page["mobile_status"], "pass-automated-contract", page["route"])
+            self.assertEqual(page["tablet_status"], "pass-automated-contract", page["route"])
+            self.assertEqual(page["theme_status"], "pass-automated-contract", page["route"])
+            self.assertEqual(page["accessibility_status"], "pass-automated-contract", page["route"])
 
     def test_template_audit_distinguishes_state_bindings_and_ids_from_style_debt(self):
         findings = _template_findings(

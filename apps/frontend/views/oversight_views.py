@@ -257,7 +257,14 @@ def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list
                 "items": member_items,
             }
         )
-    active = next((entry for entry in tabs if entry["key"] == selected), tabs[0])
+    active = next((entry for entry in tabs if entry["key"] == selected), None)
+    if active is None:
+        # Deep links (e.g. the fund-approval "View Full Plan" button) carry
+        # the member's User id, while the tab key is the StaffProfile id.
+        # Resolve across both identity spaces instead of silently falling
+        # back to "My Work" with the wrong person's plan.
+        resolved = next((m["id"] for m in members if selected in m["owner_ids"]), None)
+        active = next((entry for entry in tabs if entry["key"] == resolved), tabs[0])
     for entry in tabs:
         entry["is_active"] = entry is active
     return tabs, active["key"], active["items"]
@@ -935,6 +942,8 @@ def partner_oversight_view(request):
         "withdrawal_requests": partner_oversight.withdrawal_requests(request.user),
         "partners": partner_pairs,
         "fy_options": fy_options(),
+        "can_grant_allowance": request.user.active_role
+        in ("CountryDirector", "Program Lead", "Admin"),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -1321,3 +1330,77 @@ def partner_withdrawal_review_view(request):
         f"Request {result.get_state_display().lower()}.",
         fallback=PARTNER_OVERSIGHT_PATH,
     )
+
+
+@require_page_permission("partner_oversight")
+def partner_allowance_drawer(request):
+    """§F grant drawer — more partner work at one school, with a reason."""
+    from django.http import HttpResponseForbidden
+
+    from apps.partners.models import Partner
+    from apps.partners.services import ALLOWANCE_GRANT_ROLES
+    from apps.schools.models import School
+
+    if request.user.active_role not in ALLOWANCE_GRANT_ROLES:
+        return HttpResponseForbidden("Granting is a CD / PL / Admin decision.")
+    partners = list(
+        Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by(
+            "name"
+        )[:200]
+    )
+    schools = list(
+        School.objects.filter(deleted_at__isnull=True).order_by("name")[:1000]
+    )
+    from apps.core.fy import fy_options, get_operational_fy
+
+    return render(
+        request,
+        "partials/oversight/allowance_grant_drawer.html",
+        {
+            "partners": partners,
+            "schools": schools,
+            "fy_options": fy_options(),
+            "current_fy": get_operational_fy(),
+            "drawer_size": "md",
+        },
+    )
+
+
+@require_page_permission("partner_oversight")
+def partner_allowance_grant_action(request):
+    from django.http import HttpResponse, HttpResponseForbidden
+
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required")
+    try:
+        from apps.partners.services import grant_partner_activity_allowance
+
+        grant_partner_activity_allowance(
+            request.user,
+            {
+                "partner_id": request.POST.get("partner_id"),
+                "school_id": request.POST.get("school_id"),
+                "fy": request.POST.get("fy"),
+                "additional_activities": request.POST.get("additional_activities"),
+                "reason": request.POST.get("reason"),
+                "expires_at": request.POST.get("expires_at") or None,
+            },
+        )
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
+    from apps.audit.services import log as _audit_log
+
+    _audit_log(
+        action="grant_partner_allowance",
+        subject_kind="Partner",
+        subject_id=str(request.POST.get("partner_id")),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=True,
+        reason=f"School {request.POST.get('school_id')}: {request.POST.get('reason', '')[:150]}",
+    )
+    response = HttpResponse("<script>window.location.reload();</script>")
+    response["HX-Trigger"] = "close-drawer"
+    return response

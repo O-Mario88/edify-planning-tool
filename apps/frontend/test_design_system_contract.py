@@ -42,6 +42,43 @@ class DesignSystemContractTest(SimpleTestCase):
             base.index("{% block feature_css %}{% endblock %}"),
         )
 
+    def test_full_page_navigation_is_instant_across_the_platform(self):
+        """Route changes must not cross-fade the outgoing and incoming pages.
+
+        Cross-document View Transitions briefly expose the browser canvas
+        between pages with different structures, which reads as a black close
+        then reopen effect. Tabs and sidebar items are ordinary route links,
+        so opting the root document into that transition affects the entire
+        authenticated platform at once.
+        """
+        source = (ROOT / "static/css/custom.css").read_text()
+        compiled = (ROOT / "static/css/main.css").read_text()
+        base = (ROOT / "templates/base.html").read_text()
+
+        for stylesheet in (source, compiled):
+            self.assertNotIn("@view-transition", stylesheet)
+            self.assertNotIn("::view-transition-old(root)", stylesheet)
+            self.assertNotIn("::view-transition-new(root)", stylesheet)
+        self.assertIn("css/main.css' %}?v=20260818nav2", base)
+
+    def test_workspace_route_links_prefetch_without_global_page_swaps(self):
+        """Likely sibling views warm up natively, while navigation stays real.
+
+        A global HTMX body swap would omit destination-specific head assets;
+        prerendering would execute a second live page in the background. Native
+        same-origin prefetch avoids both failure modes.
+        """
+        base = (ROOT / "templates/base.html").read_text()
+
+        self.assertIn('type="speculationrules"', base)
+        self.assertIn(".edify-section-nav__view-link[href]:not([aria-current])", base)
+        self.assertIn(".edify-section-nav__link[href]:not([aria-current])", base)
+        self.assertIn(".app-sidebar__item[href]:not([aria-current])", base)
+        self.assertIn(".edify-bottom-nav__item[href]:not([aria-current])", base)
+        self.assertIn('"eagerness": "eager"', base)
+        self.assertIn('"eagerness": "moderate"', base)
+        self.assertNotIn('"prerender"', base)
+
     def test_consistency_layer_owns_legacy_primary_utilities_and_dark_headers(self):
         bridge = (ROOT / "static/css/consistency.css").read_text()
 
@@ -50,6 +87,39 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".edify-selected-surface", bridge)
         self.assertIn("accent-color: var(--brand-primary);", bridge)
         self.assertIn(".btn-premium-primary", bridge)
+
+    def test_profile_routes_share_one_label_value_typography_contract(self):
+        tokens = (ROOT / "static/css/design-system.css").read_text()
+        bridge = (ROOT / "static/css/consistency.css").read_text()
+
+        self.assertIn("--edify-profile-value: var(--edify-accent-text);", tokens)
+        self.assertIn("main .edify-profile-field__label", bridge)
+        self.assertIn("main .edify-profile-field__value", bridge)
+        self.assertIn("color: var(--edify-text) !important;", bridge)
+        self.assertIn("color: var(--edify-profile-value) !important;", bridge)
+        self.assertIn("font-family: var(--edify-font-sans) !important;", bridge)
+
+        profile_templates = (
+            "templates/pages/schools/detail.html",
+            "templates/pages/clusters/detail.html",
+            "templates/pages/districts/detail.html",
+            "templates/pages/projects/detail.html",
+            "templates/pages/partners/detail.html",
+            "templates/pages/staff/detail.html",
+            "templates/pages/profile/index.html",
+            "templates/pages/admin/user_detail.html",
+        )
+        missing = [
+            path
+            for path in profile_templates
+            if "edify-profile-page" not in (ROOT / path).read_text()
+        ]
+        self.assertEqual(missing, [], f"profile pages outside the contract: {missing}")
+
+        school = (ROOT / "templates/pages/schools/detail.html").read_text()
+        enrollment = school.split("Pupil Enrolment", 1)[1].split("</div>", 1)[0]
+        self.assertIn("edify-profile-field__value", enrollment)
+        self.assertNotIn("text-slate-800", enrollment)
 
     def test_light_mode_button_contract_has_only_primary_secondary_and_disabled_states(
         self,
@@ -425,6 +495,125 @@ class DesignSystemContractTest(SimpleTestCase):
                 page.split("{% block shell_content %}", 1)[1],
                 source,
             )
+
+    def test_platform_uses_parent_cards_with_flat_internal_content(self):
+        """Nested cards are flattened in pages, drawers, and legacy tile grids."""
+
+        tokens = (ROOT / "static/css/design-system.css").read_text()
+        bridge = (ROOT / "static/css/consistency.css").read_text()
+        contract = bridge.split("FLAT CONTENT HIERARCHY", 1)[1]
+
+        for token in (
+            "--edify-content-divider:",
+            "--edify-content-section-gap:",
+            "--edify-content-row-padding:",
+        ):
+            self.assertIn(token, tokens)
+
+        for selector in (
+            ".edify-content-card",
+            '[data-edify-surface="card"]',
+            ".edify-section__heading",
+            ".edify-data-row",
+            ".drawer-surface",
+            "ONE PLATFORM TYPE SCALE",
+            ":not([data-edify-summary-kpi])",
+        ):
+            self.assertIn(selector, contract)
+
+        for declaration in (
+            "background-color: transparent !important;",
+            "border-radius: 0 !important;",
+            "box-shadow: none !important;",
+            "border-block-end: 1px solid var(--edify-content-divider);",
+            "font-size: var(--edify-text-body-size) !important;",
+            "font-size: var(--edify-text-label-size) !important;",
+            "font-size: var(--edify-text-micro-size) !important;",
+        ):
+            self.assertIn(declaration, contract)
+
+    def test_every_retained_headline_uses_the_shared_kpi_tray(self):
+        """Summary surfaces share one bounded renderer, never local card grids."""
+
+        component = (ROOT / "templates/components/kpi_strip.html").read_text()
+        self.assertIn("data-edify-summary-kpi", component)
+
+        headline_summaries = (
+            "templates/pages/dashboards/special_projects.html",
+            "templates/pages/reports/index.html",
+            "templates/pages/notifications/index.html",
+            "templates/pages/todos/index.html",
+            "templates/pages/admin_ops/team_plans.html",
+            "templates/pages/hr/my_performance.html",
+            "templates/pages/admin_ops/incident_detail.html",
+            "templates/pages/admin_ops/planning.html",
+            "templates/pages/admin_ops/support_queue.html",
+            "templates/pages/staff/detail.html",
+            "templates/pages/staff/index.html",
+            "templates/pages/accounts/dashboard.html",
+            "templates/partials/analytics/visit_effectiveness_workspace.html",
+            "templates/partials/targets/my_body.html",
+            "templates/partials/finance/country_budget/root.html",
+            "templates/partials/fund_requests/kpis.html",
+        )
+        for source in headline_summaries:
+            template = (ROOT / source).read_text()
+            self.assertIn("components/kpi_strip.html", template, source)
+            self.assertIn('variant="executive"', template, source)
+
+        period_selector = (
+            ROOT / "templates/pages/finance/fund_allocation.html"
+        ).read_text()
+        self.assertIn("budget-period-rail", period_selector)
+        self.assertNotIn("edify-kpi-strip", period_selector)
+
+    def test_adverse_states_use_the_danger_tone_and_absence_can_stay_neutral(self):
+        bridge = (ROOT / "static/css/consistency.css").read_text()
+        actions = (ROOT / "apps/planning/action_workspace.py").read_text()
+        analytics = (ROOT / "apps/analytics/analytics_dashboard_service.py").read_text()
+        school_bt = (
+            ROOT / "templates/partials/schools/business_transformation.html"
+        ).read_text()
+
+        self.assertIn('[data-edify-tone="danger"]', bridge)
+        self.assertIn('ActionState.BLOCKED: ("Blocked", "danger")', actions)
+        self.assertIn('"key": "not_visited"', analytics)
+        self.assertIn('"key": "not_trained"', analytics)
+        self.assertGreaterEqual(analytics.count('"tone": "danger"'), 2)
+        self.assertIn('data-edify-tone="{{ score.band_tone }}"', school_bt)
+        self.assertIn("No negative compliance conclusion is inferred.", school_bt)
+
+    def test_weight_hierarchy_reserves_bold_for_titles(self):
+        tokens = (ROOT / "static/css/design-system.css").read_text()
+        contract = (ROOT / "static/css/consistency.css").read_text()
+
+        self.assertIn("--edify-text-body-weight:    350", tokens)
+        self.assertIn("--edify-text-label-weight:   400", tokens)
+        self.assertIn("--edify-text-micro-weight:   400", tokens)
+        for tracking_token in (
+            "--edify-text-display-tracking: normal",
+            "--edify-text-heading-tracking: normal",
+            "--edify-text-title-tracking: normal",
+            "--edify-text-body-tracking: normal",
+            "--edify-text-label-tracking: normal",
+            "--edify-text-micro-tracking: normal",
+        ):
+            self.assertIn(tracking_token, tokens)
+        self.assertIn("RESTRAINED WEIGHT HIERARCHY", contract)
+        self.assertIn("NORMAL CHARACTER SPACING", contract)
+        self.assertIn("letter-spacing: normal !important", contract)
+        self.assertIn("font-weight: var(--edify-text-body-weight) !important", contract)
+        self.assertIn(
+            "font-weight: var(--edify-text-label-weight) !important", contract
+        )
+        for title_role in (
+            ".card-title",
+            ".panel-title",
+            ".edify-section__heading",
+            '[class*="__title"]',
+            '[class*="__heading"]',
+        ):
+            self.assertIn(title_role, contract)
 
     def test_authenticated_pages_use_the_shells_single_main_region(self):
         """Nested page mains cause competing landmarks and inconsistent spacing."""

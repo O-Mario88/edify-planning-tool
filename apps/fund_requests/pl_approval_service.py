@@ -1,27 +1,29 @@
-"""PL Fund Approval — a team-scoped finance gate.
+"""PL Fund Approval — the weekly, team-scoped finance gate.
 
 A Program Lead approves funding only for scheduled, costed, valid CCEO activities
 under their supervision. The PL does NOT create budgets: every figure here is
 derived from the CCEO's persisted `ActivityScheduleCostLine` budget lines (which
-were generated from scheduled activities + the CD Cost Catalogue). The PL only
-approves or returns.
+were generated automatically when activities were scheduled, priced from the CD
+Cost Catalogue). The queue reads the auto-generated `WeeklyFundRequest` for each
+supervised CCEO and week: the CCEO sends it (`submitted_to_pl`), the PL approves
+or returns, and an approval routes it to the Accountant's disbursement queue.
 
-Scope rule: a PL sees only the fund plans of the CCEOs they supervise
-(`StaffSupervisorAssignment`), never other PLs' portfolios or country-wide queues.
-Approval state is persisted on a monthly `FundRequest` per (CCEO, month); approve
-→ `approved_by_pl`, return → `returned_by_pl` (which the CCEO's To-Do picks up).
+One state machine: every mutation delegates to apps.fund_requests.weekly_service
+(the same approve/return the weekly page uses), so this page can never disagree
+with the request's own lifecycle. Scope rule: a PL sees only the CCEOs they
+supervise (`StaffSupervisorAssignment`), never other PLs' portfolios.
 """
 
 from __future__ import annotations
 
-from django.db import transaction
+from apps.core.metrics import render_precomputed_metric_item
+
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 from apps.core.activity_types import (
-    NON_FUNDABLE_ACTIVITY_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
 )
@@ -53,10 +55,12 @@ CATEGORY_ORDER = [
     "Cluster Trainings",
     "In-School Trainings",
     "SSA Support Visits",
+    "Field Events",
     "Other",
 ]
 # Budget-mix segment colours (Tailwind bg classes).
 MIX_COLORS = {
+    "Field Events": "bg-cyan-500",
     "Admin Budget": "bg-sky-500",
     "Staff School Visits": "bg-emerald-500",
     "Partner School Visits": "bg-violet-500",
@@ -107,6 +111,8 @@ def _category(activity_type, delivery_type, programme_activity_type=None):
         return "Cluster Trainings"
     if activity_type in TRAINING_TYPES:
         return "In-School Trainings"
+    if activity_type == "field_event":
+        return "Field Events"
     return "Other"
 
 
@@ -156,40 +162,40 @@ def _require_pl_action(principal):
         raise Forbidden("Only a Program Lead can act on team fund plans.")
 
 
-def _period_key(fy, month):
-    return f"{fy}-M{int(month)}"
+WEEKLY_STATUS_LABELS = {
+    None: ("Awaiting CCEO Send", "info"),
+    "pending_responsible_confirmation": ("Awaiting CCEO Send", "info"),
+    "not_requested": ("Not Requested", "info"),
+    "submitted_to_pl": ("Awaiting Approval", "warning"),
+    "submitted_to_cd": ("Awaiting CD", "info"),
+    "confirmed_for_advance": ("At Accountant", "success"),
+    "disbursed": ("Disbursed", "success"),
+    "self_funded": ("Self-funded", "info"),
+    "returned_by_pl": ("Returned", "danger"),
+    "returned_by_cd": ("Returned", "danger"),
+    "returned_by_accountant": ("Returned", "danger"),
+}
 
 
-def _fund_request_for(cceo_user_id, fy, month):
-    from .models import FundRequest
+def _week_floor(d):
+    from datetime import timedelta
 
-    return FundRequest.objects.filter(
-        submitted_by_user_id=cceo_user_id,
-        period="monthly",
-        period_key=_period_key(fy, month),
-        scope="own",
+    return d - timedelta(days=d.weekday())
+
+
+def _week_label(week_start):
+    from datetime import timedelta
+
+    week_end = week_start + timedelta(days=6)
+    return f"{week_start:%b %d} – {week_end:%b %d}, {week_end:%Y}"
+
+
+def _weekly_request_for(cceo_user_id, week_start):
+    from .models import WeeklyFundRequest
+
+    return WeeklyFundRequest.objects.filter(
+        responsible_user=cceo_user_id, week_start_date=week_start
     ).first()
-
-
-def _status_label(fr, valid):
-    """Queue status from the persisted FundRequest + validation."""
-    if fr:
-        s = fr.status
-        if s in (
-            "approved_by_pl",
-            "approved",
-            "disbursed",
-            "closed",
-            "sent_to_accountant",
-            "submitted_to_cd",
-            "approved_by_cd",
-        ):
-            return ("Approved", "success")
-        if s in ("returned_by_pl", "returned", "rejected"):
-            return ("Returned", "danger")
-    if not valid:
-        return ("Needs Review", "info")
-    return ("Awaiting Approval", "warning")
 
 
 def _validate(cceo, lines, month):
@@ -234,13 +240,48 @@ def _validate(cceo, lines, month):
     return out[:6]
 
 
-def _build_cceo_plan(cceo, lines, fy, month):
-    """Aggregate one CCEO's month of budget lines into a queue/detail record."""
-    total = sum(li.amount for li in lines)
+def _build_cceo_plan(cceo, lines, wfr):
+    """Aggregate one CCEO's week of budget lines + their weekly fund request
+    into a queue/detail record. The request (and the money the PL approves) is
+    the staff advance on the WeeklyFundRequest; partner-delivered lines are
+    plan context, paid through the partner-payment channel, never here."""
+
+    # Partner-delivered lines never enter the staff funds: partners are paid
+    # directly through the MOU partner-payment channel. They stay visible
+    # only as context — the partner chip and the "paid via partner payments"
+    # note — never as rows, totals or validation blockers of this request.
+    def _is_vendor(li):
+        # Mirrors fund_requests.fundable.vendor_direct_filter: school-visit
+        # transport is paid to the transport company; accommodation joins the
+        # vendor channel when Finance booked the hotel.
+        return (li.line_item_type == "transport" and li.activity.school_id) or (
+            li.line_item_type == "accommodation" and li.vendor_paid
+        )
+
+    def _is_partner(li):
+        return li.activity.delivery_type == "partner" or li.partner_id is not None
+
+    staff_lines = [li for li in lines if not _is_partner(li) and not _is_vendor(li)]
+    partner_total = sum(li.amount for li in lines if _is_partner(li))
+    vendor_transport_total = sum(
+        li.amount
+        for li in lines
+        if not _is_partner(li)
+        and li.line_item_type == "transport"
+        and li.activity.school_id
+    )
+    vendor_accommodation_total = sum(
+        li.amount
+        for li in lines
+        if not _is_partner(li)
+        and li.line_item_type == "accommodation"
+        and li.vendor_paid
+    )
+    total = sum(li.amount for li in staff_lines)
     acts = {}
     schools = set()
     cat_totals: dict[str, dict] = {}
-    for li in lines:
+    for li in staff_lines:
         a = li.activity
         acts[a.id] = a
         if a.school_id:
@@ -251,12 +292,14 @@ def _build_cceo_plan(cceo, lines, fy, month):
         d["acts"].add(a.id)
 
     act_list = list(acts.values())
-    n_visits = sum(
-        1
-        for a in act_list
-        if a.activity_type in VISIT_TYPES and a.delivery_type != "partner"
+    n_visits = sum(1 for a in act_list if a.activity_type in VISIT_TYPES)
+    n_partner = len(
+        {
+            li.activity_id
+            for li in lines
+            if li.activity.delivery_type == "partner" or li.partner_id is not None
+        }
     )
-    n_partner = sum(1 for a in act_list if a.delivery_type == "partner")
     n_clusters = sum(
         1 for a in act_list if a.activity_type in CLUSTER_MEETING + CLUSTER_TRAINING
     )
@@ -272,10 +315,15 @@ def _build_cceo_plan(cceo, lines, fy, month):
     district = max(set(districts), key=districts.count) if districts else "—"
     region = max(set(regions), key=regions.count) if regions else "—"
 
-    fr = _fund_request_for(cceo["user_id"], fy, month)
-    issues = _validate(cceo, lines, month)
+    issues = _validate(cceo, staff_lines, None)
     valid = not issues
-    status_label, status_tone = _status_label(fr, valid)
+    wfr_status = wfr.status if wfr else None
+    status_label, status_tone = WEEKLY_STATUS_LABELS.get(
+        wfr_status, ("Awaiting CCEO Send", "info")
+    )
+    if wfr_status == "submitted_to_pl" and not valid:
+        status_label, status_tone = "Needs Review", "info"
+    request_total = int(wfr.total_amount) if wfr else 0
 
     return {
         "cceo": cceo,
@@ -283,7 +331,15 @@ def _build_cceo_plan(cceo, lines, fy, month):
         "district": district,
         "region": region,
         "total": total,
-        "total_fmt": _ugx(total),
+        # The number on the queue card is the money this approval moves: the
+        # request's staff advance (falling back to the staff share of the
+        # week's lines while the request row has not materialised yet).
+        "request_total": request_total,
+        "partner_total": partner_total,
+        "vendor_transport_total": vendor_transport_total,
+        "vendor_accommodation_total": vendor_accommodation_total,
+        "mission_total": total + vendor_transport_total + vendor_accommodation_total,
+        "total_fmt": _ugx(request_total if wfr else total),
         "status": status_label,
         "status_tone": status_tone,
         "valid": valid,
@@ -297,8 +353,10 @@ def _build_cceo_plan(cceo, lines, fy, month):
         "schools": schools,
         "activities": act_list,
         "cat_totals": cat_totals,
-        "fr_status": fr.status if fr else None,
-        "fund_request_id": fr.id if fr else None,
+        "wfr_id": wfr.id if wfr else None,
+        "wfr_status": wfr_status,
+        "can_approve": bool(wfr and wfr_status == "submitted_to_pl" and valid),
+        "can_return": bool(wfr and wfr_status == "submitted_to_pl"),
     }
 
 
@@ -312,21 +370,34 @@ def get_pl_fund_approvals(principal, filters=None):
     status_filter = filters.get("status")
     search = (filters.get("q") or "").strip().lower()
 
+    from datetime import date as _date, timedelta
+
+    from django.db.models import Count
+
     from apps.activities.models import ActivityScheduleCostLine
 
     cceos = _scoped_cceos(scope)
     all_ids = [i for c in cceos for i in c["ids"]]
 
-    # Default to the team's busiest funded month (so the page opens populated).
-    if not filters.get("month") and all_ids:
-        from django.db.models import Count
+    week_base = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__responsible_staff_id__in=all_ids,
+            activity__fy=fy,
+            activity__deleted_at__isnull=True,
+            week_start_date__isnull=False,
+        )
+        # Cancelled/rejected/deferred work must never reach a fund request.
+        .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
+        if all_ids
+        else ActivityScheduleCostLine.objects.none()
+    )
 
+    # Default to the team's busiest funded month (so the page opens populated),
+    # then to that month's busiest week. Money moves weekly: the month filter
+    # only narrows the week picker.
+    if not filters.get("month") and all_ids:
         busiest = (
-            ActivityScheduleCostLine.objects.filter(
-                activity__responsible_staff_id__in=all_ids,
-                activity__fy=fy,
-                month__isnull=False,
-            )
+            week_base.filter(month__isnull=False)
             .values("month")
             .annotate(n=Count("id"))
             .order_by("-n")
@@ -335,26 +406,48 @@ def get_pl_fund_approvals(principal, filters=None):
         if busiest:
             month = int(busiest["month"])
 
-    lines = (
-        list(
-            ActivityScheduleCostLine.objects.filter(
-                activity__responsible_staff_id__in=all_ids,
-                activity__fy=fy,
-                month=month,
-                activity__deleted_at__isnull=True,
-            )
-            # Cancelled/rejected/deferred work must never reach a fund plan.
-            .exclude(activity__status__in=["cancelled", "rejected", "deferred"])
-            .select_related(
-                "activity",
-                "activity__school",
-                "activity__school__district",
-                "activity__school__region",
-                "activity__cluster",
-            )
+    month_weeks = list(
+        week_base.filter(month=month)
+        .values("week_start_date")
+        .annotate(n=Count("id"))
+        .order_by("week_start_date")
+    )
+
+    week_start = None
+    if filters.get("week"):
+        try:
+            week_start = _week_floor(_date.fromisoformat(str(filters["week"])[:10]))
+        except ValueError:
+            week_start = None
+    if week_start is None:
+        if month_weeks:
+            week_start = max(month_weeks, key=lambda w: w["n"])["week_start_date"]
+        else:
+            week_start = _week_floor(timezone.localdate())
+
+    weeks = [
+        {
+            "val": w["week_start_date"].isoformat(),
+            "label": f"{w['week_start_date']:%b %d} – {w['week_start_date'] + timedelta(days=6):%b %d}",
+        }
+        for w in month_weeks
+    ]
+    if week_start.isoformat() not in {w["val"] for w in weeks}:
+        weeks.append(
+            {
+                "val": week_start.isoformat(),
+                "label": f"{week_start:%b %d} – {week_start + timedelta(days=6):%b %d}",
+            }
         )
-        if all_ids
-        else []
+
+    lines = list(
+        week_base.filter(week_start_date=week_start).select_related(
+            "activity",
+            "activity__school",
+            "activity__school__district",
+            "activity__school__region",
+            "activity__cluster",
+        )
     )
 
     # bucket lines by CCEO (match either id space)
@@ -365,12 +458,24 @@ def get_pl_fund_approvals(principal, filters=None):
         if cceo:
             lines_by_cceo.setdefault(cceo["user_id"], []).append(li)
 
+    # EVERYTHING AUTOMATIC: the weekly request row is generated when work is
+    # scheduled. If a reschedule beat that signal here, heal it now — the
+    # queue must never depend on a manual generation step. (Idempotent; only
+    # runs for a CCEO whose row is missing.)
+    from .weekly_service import generate_weekly_fund_request
+
     plans = []
     for c in cceos:
         c_lines = lines_by_cceo.get(c["user_id"], [])
         if not c_lines:
             continue
-        plans.append(_build_cceo_plan(c, c_lines, fy, month))
+        wfr = _weekly_request_for(c["user_id"], week_start)
+        if wfr is None:
+            try:
+                wfr = generate_weekly_fund_request(c["user_id"], week_start.isoformat())
+            except Exception:
+                wfr = None
+        plans.append(_build_cceo_plan(c, c_lines, wfr))
     plans.sort(key=lambda p: -p["total"])
 
     # filters
@@ -384,174 +489,90 @@ def get_pl_fund_approvals(principal, filters=None):
             if search in p["name"].lower() or search in p["district"].lower()
         ]
 
-    # ── KPIs (team-scoped, this month) ────────────────────────────────────────
-    total_requested = sum(p["total"] for p in plans)
-    awaiting = [
+    # ── KPIs (team-scoped, this week) ─────────────────────────────────────────
+    total_requested = sum(p["request_total"] for p in plans)
+    awaiting = [p for p in plans if p["wfr_status"] == "submitted_to_pl"]
+    pending_send = [
         p
         for p in plans
-        if p["status"] in ("Awaiting Approval", "Needs Review", "Ready")
+        if p["wfr_status"] in (None, "pending_responsible_confirmation")
     ]
-    returned = [p for p in plans if p["status"] == "Returned"]
-    unique_schools = len({s for p in plans for s in p["schools"]})
-    from .models import FundRequest
+    approved = [
+        p for p in plans if p["wfr_status"] in ("confirmed_for_advance", "disbursed")
+    ]
+    returned = [p for p in plans if (p["wfr_status"] or "").startswith("returned")]
 
-    today = timezone.now().date()
-    approved_today = FundRequest.objects.filter(
-        reviewed_by_user_id=principal.user_id,
-        status__in=PL_APPROVED_STATUSES,
-        reviewed_at__date=today,
-    )
-    approved_today_total = sum(f.total_amount for f in approved_today)
+    def _n(items):
+        return f"{len(items)} request{'' if len(items) == 1 else 's'}"
 
     kpis = [
-        {
-            "label": "Total Requested This Month",
-            "value": _ugx(total_requested),
-            "icon": "finance",
-            "variant": "primary",
-            "helper": f"{len(plans)} plan{'' if len(plans) == 1 else 's'}",
-        },
-        {
-            "label": "Awaiting Approval",
-            "value": _ugx(sum(p["total"] for p in awaiting)),
-            "icon": "clock",
-            "variant": "warning",
-            "helper": f"{len(awaiting)} request{'' if len(awaiting) == 1 else 's'}",
-        },
-        {
-            "label": "Approved Today",
-            "value": _ugx(approved_today_total),
-            "icon": "check",
-            "variant": "success",
-            "helper": f"{approved_today.count()} request{'' if approved_today.count() == 1 else 's'}",
-        },
-        {
-            "label": "Returned for Review",
-            "value": _ugx(sum(p["total"] for p in returned)),
-            "icon": "warning",
-            "variant": "danger",
-            "helper": f"{len(returned)} request{'' if len(returned) == 1 else 's'}",
-        },
-        # "Planned Activities Funding" was removed here. It rendered
-        # `_ugx(total_requested)` -- the identical expression to "Total
-        # Requested This Month" four tiles above it -- so the strip showed one
-        # number twice under two names, and a reader comparing them learned
-        # nothing. The remaining five tiles each answer a different question:
-        # scale, pending action, progress today, quality/returns, and unit cost.
-        {
-            "label": "Average Cost per School",
-            "value": _ugx(round(total_requested / unique_schools))
-            if unique_schools
-            else "—",
-            "icon": "school",
-            "variant": "info",
-            "helper": f"{unique_schools} schools",
-        },
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_requested_this_week",
+            _ugx(total_requested),
+            icon="finance",
+            variant="primary",
+            helper=_n(plans),
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_awaiting_your_approval",
+            _ugx(sum(p["request_total"] for p in awaiting)),
+            icon="clock",
+            variant="warning",
+            helper=_n(awaiting),
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_awaiting_cceo_send",
+            _ugx(sum(p["request_total"] or p["total"] for p in pending_send)),
+            icon="briefcase",
+            variant="info",
+            helper=_n(pending_send),
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_approved_this_week",
+            _ugx(sum(p["request_total"] for p in approved)),
+            icon="check",
+            variant="success",
+            helper=_n(approved),
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_returned_for_review",
+            _ugx(sum(p["request_total"] for p in returned)),
+            icon="warning",
+            variant="danger",
+            helper=_n(returned),
+        ),
     ]
 
-    # ── Budget mix (aggregate categories across the team) ──────────────────────
-    mix_tot: dict[str, int] = {}
-    for p in plans:
-        for cat, d in p["cat_totals"].items():
-            mix_tot[cat] = mix_tot.get(cat, 0) + d["total"]
-    mix_grand = sum(mix_tot.values()) or 1
-    budget_mix = [
-        {
-            "label": cat,
-            "amount": _ugx(mix_tot[cat]),
-            "pct": round(mix_tot[cat] / mix_grand * 100),
-            "color": MIX_COLORS.get(cat, "bg-slate-400"),
-        }
-        for cat in CATEGORY_ORDER
-        if mix_tot.get(cat)
-    ]
-
-    # ── Recent approval activity (this PL's reviews) ──────────────────────────
-    name_by_uid = {c["user_id"]: c["name"] for c in cceos}
-    recent = []
-    for fr in (
-        FundRequest.objects.filter(reviewed_by_user_id=principal.user_id)
-        .exclude(reviewed_at__isnull=True)
-        .order_by("-reviewed_at")[:6]
-    ):
-        approved = fr.status in PL_APPROVED_STATUSES
-        recent.append(
-            {
-                "name": name_by_uid.get(fr.submitted_by_user_id, "CCEO"),
-                "action": "approved" if approved else "returned for review",
-                "tone": "success" if approved else "danger",
-                "amount": _ugx(fr.total_amount),
-                "when": fr.reviewed_at.strftime("%b %-d, %-I:%M %p"),
-            }
-        )
-
-    # ── Selected plan detail ──────────────────────────────────────────────────
+    # ── Selected request detail ───────────────────────────────────────────────
     selected = None
     sel = next((p for p in queue if p["cceo"]["user_id"] == selected_id), None) or (
         queue[0] if queue else None
     )
     if sel:
-        selected = _selected_detail(sel, fy, month)
+        selected = _selected_detail(sel, week_start)
 
-    # right panel
-    right = {
-        "this_month": {
-            "waiting": _ugx(sum(p["total"] for p in awaiting)),
-            "returned": _ugx(sum(p["total"] for p in returned)),
-            "approved_today": _ugx(approved_today_total),
-        },
-        "monthly": {
-            "total": _ugx(total_requested),
-            "approved": _ugx(
-                sum(
-                    f.total_amount
-                    for f in FundRequest.objects.filter(
-                        reviewed_by_user_id=principal.user_id,
-                        status__in=PL_APPROVED_STATUSES,
-                        fy=fy,
-                    )
-                )
-            ),
-            "pct": 0,
-        },
-        "rate": _approval_rate(plans),
-        "rules": [
-            "Funds must come from approved plans.",
-            "Partner visits must map to planned schools.",
-            "Cluster training budget scales by participants.",
-            "Returned requests need correction before re-submission.",
-        ],
-    }
-    approved_amt = sum(
-        f.total_amount
-        for f in FundRequest.objects.filter(
-            reviewed_by_user_id=principal.user_id,
-            status__in=PL_APPROVED_STATUSES,
-            fy=fy,
-        )
-    )
-    right["monthly"]["pct"] = (
-        round(approved_amt / total_requested * 100) if total_requested else 0
-    )
+    from .partner_invoices import pl_invoice_queue
 
     return {
+        "partner_invoices": pl_invoice_queue(principal),
         "fy": fy,
         "month": month,
         "month_label": MONTHS[month] if 1 <= month <= 12 else str(month),
         "fy_options": [fy, str(int(fy) - 1)],
+        "week": week_start.isoformat(),
+        "week_label": _week_label(week_start),
+        "weeks": weeks,
         "queue": [_queue_card(p, sel) for p in queue],
         "queue_count": len(queue),
         "kpis": kpis,
         "selected": selected,
-        "budget_mix": budget_mix,
-        "recent": recent,
-        "right": right,
         "status_options": [
+            "Awaiting CCEO Send",
             "Awaiting Approval",
-            "Ready",
             "Needs Review",
+            "At Accountant",
+            "Disbursed",
             "Returned",
-            "Approved",
         ],
         "has_team": bool(cceos),
         "principal_user_id": principal.user_id,
@@ -573,7 +594,7 @@ def _queue_card(p, sel):
     }
 
 
-def _selected_detail(p, fy, month):
+def _selected_detail(p, week_start):
     # funding breakdown rows (real, from budget lines grouped by activity category)
     breakdown = []
     for cat in CATEGORY_ORDER:
@@ -589,148 +610,99 @@ def _selected_detail(p, fy, month):
                 "total": _ugx(d["total"]),
             }
         )
-    # plan snapshot
-    acts = p["activities"]
-    staff_school_ids = {
-        a.school_id for a in acts if a.school_id and a.delivery_type != "partner"
+
+    hints = {
+        None: "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+        "pending_responsible_confirmation": "Auto-generated from the schedule — waiting for the CCEO to send it for approval.",
+        "not_requested": "The CCEO marked this week as not requested.",
+        "submitted_to_cd": "Escalated — awaiting the Country Director.",
+        "confirmed_for_advance": "Approved — at the Accountant for processing and disbursement.",
+        "disbursed": "Disbursed — awaiting the CCEO's receipt confirmation and accountability.",
+        "self_funded": "Marked self-funded — reimbursement follows accountability.",
+        "returned_by_pl": "Returned for correction — waiting for a corrected re-submission.",
+        "returned_by_cd": "Returned for correction — waiting for a corrected re-submission.",
+        "returned_by_accountant": "Returned by the Accountant — waiting for a corrected re-submission.",
     }
-    partner_visits = sum(1 for a in acts if a.delivery_type == "partner")
-    snapshot = {
-        "staff_schools": len(staff_school_ids),
-        "partner_visits": partner_visits,
-        "cluster_meetings": sum(1 for a in acts if a.activity_type in CLUSTER_MEETING),
-        "trainings": sum(1 for a in acts if a.activity_type in TRAINING_TYPES),
-        "total_schools": len(p["schools"]),
-    }
+
+    # §4/§5 Daily Field Cost (School Visit): the weighted School Visit Cost
+    # Allocation and planned per-school figure come from the week's day
+    # batches (workload weights, so a cluster meeting on a visit day never
+    # inflates the per-school number). Falls back to the simple all-inclusive
+    # division when the week predates batch analytics.
+    visit_schools = len(
+        {
+            a.school_id
+            for a in p["activities"]
+            if a.activity_type in VISIT_TYPES and a.school_id
+        }
+    )
+    from datetime import timedelta as _td
+
+    from apps.daily_visit_batches.models import DailyVisitBatch
+
+    week_batches = list(
+        DailyVisitBatch.objects.filter(
+            responsible_user=p["cceo"]["user_id"],
+            visit_date__gte=week_start,
+            visit_date__lte=week_start + _td(days=6),
+            school_visit_allocation__isnull=False,
+        )
+    )
+    visit_allocation = sum(b.school_visit_allocation for b in week_batches)
+    batch_visit_count = sum(
+        (b.workload_snapshot or {}).get("visit_count", 0) for b in week_batches
+    )
+    visit_unit_cost = None
+    school_visit_allocation_fmt = None
+    if visit_allocation and batch_visit_count:
+        school_visit_allocation_fmt = _ugx(visit_allocation)
+        visit_unit_cost = _ugx(round(visit_allocation / batch_visit_count))
+    else:
+        visit_cat = p["cat_totals"].get("Staff School Visits")
+        if visit_cat and visit_schools:
+            visit_unit_cost = _ugx(
+                round(
+                    (visit_cat["total"] + p["vendor_transport_total"]) / visit_schools
+                )
+            )
+
     return {
         "cceo_user_id": p["cceo"]["user_id"],
         "name": p["name"],
         "district": p["district"],
         "region": p["region"],
-        "period": f"{MONTHS[month]} 1 – {MONTHS[month]} {_month_end(fy, month)}, {fy}",
+        "period": f"Week of {_week_label(week_start)}",
         "status": p["status"],
         "status_tone": p["status_tone"],
         "total_fmt": p["total_fmt"],
+        "partner_total_fmt": _ugx(p["partner_total"]) if p["partner_total"] else None,
+        "vendor_transport_fmt": (
+            _ugx(p["vendor_transport_total"]) if p["vendor_transport_total"] else None
+        ),
+        "vendor_accommodation_fmt": (
+            _ugx(p["vendor_accommodation_total"])
+            if p["vendor_accommodation_total"]
+            else None
+        ),
+        "mission_total_fmt": _ugx(p["mission_total"]),
+        "visit_schools": visit_schools,
+        "visit_unit_cost": visit_unit_cost,
+        "school_visit_allocation_fmt": school_visit_allocation_fmt,
         "breakdown": breakdown,
-        "snapshot": snapshot,
         "valid": p["valid"],
         "issues": p["issues"],
-    }
-
-
-def _month_end(fy, month):
-    import calendar
-
-    # FY month → calendar year: Oct–Dec belong to fy-1, Jan–Sep to fy.
-    year = int(fy) - 1 if month >= 10 else int(fy)
-    return calendar.monthrange(year, month)[1]
-
-
-def _approval_rate(plans):
-    approved = sum(1 for p in plans if p["status"] == "Approved")
-    returned = sum(1 for p in plans if p["status"] == "Returned")
-    pending = sum(
-        1
-        for p in plans
-        if p["status"] in ("Awaiting Approval", "Needs Review", "Ready")
-    )
-    tot = approved + returned + pending or 1
-    return {
-        "approved": round(approved / tot * 100),
-        "returned": round(returned / tot * 100),
-        "pending": round(pending / tot * 100),
+        "wfr_id": p["wfr_id"],
+        "wfr_status": p["wfr_status"],
+        "can_approve": p["can_approve"],
+        "can_return": p["can_return"],
+        "waiting_hint": hints.get(p["wfr_status"], ""),
     }
 
 
 # ── Actions ───────────────────────────────────────────────────────────────────
-def _ensure_fund_request(principal, cceo, fy, month):
-    """Get or build the monthly FundRequest that carries the approval state,
-    rebuilt from the CCEO's live budget lines (the PL never edits amounts)."""
-    from apps.activities.models import ActivityScheduleCostLine
-
-    from .models import FundRequest, FundRequestItem
-
-    # PLAN lines — everything the PL is reviewing this month, including
-    # partner-delivered work, so _validate still flags plan-level problems
-    # (a partner visit with no planned school, a cost-missing activity).
-    plan_lines = list(
-        ActivityScheduleCostLine.objects.filter(
-            activity__responsible_staff_id__in=cceo["ids"],
-            activity__fy=fy,
-            month=month,
-            activity__deleted_at__isnull=True,
-        )
-        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-        .select_related("activity")
-    )
-    if not plan_lines:
-        raise BadRequest("This plan has no scheduled, costed activities to approve.")
-
-    # REQUEST items — only the staff-fundable subset (shared predicate): no
-    # partner lines (paid via PartnerPayment), no cost-missing activities, no
-    # lines already paid through the weekly channel. The approval total is
-    # therefore exactly what the Accountant can release; the old query sent
-    # partner/paid lines into the request, where the funding guard blocked
-    # the whole plan with a "reconcile the request" refusal.
-    from .fundable import fundable_lines
-
-    lines = list(
-        fundable_lines(
-            ActivityScheduleCostLine.objects.filter(
-                activity__responsible_staff_id__in=cceo["ids"],
-                activity__fy=fy,
-                month=month,
-            )
-        ).select_related("activity")
-    )
-    if not lines:
-        raise BadRequest(
-            "Nothing on this plan is staff-payable — partner work pays through "
-            "Partner Payments, and already-funded or opted-out lines are "
-            "settled elsewhere. There is no advance for the Accountant to "
-            "disburse."
-        )
-    total = sum(li.amount for li in lines)
-    act_ids = {li.activity_id for li in lines}
-    # update_or_create + the delete/recreate of items must be atomic — a crash
-    # between the delete and the bulk_create would otherwise leave the
-    # FundRequest with a stale total_amount/activity_count but zero items.
-    with transaction.atomic():
-        # `scope` belongs in the LOOKUP, not the defaults: (submitted_by,
-        # period, period_key, scope) is the model's uniqueness key, and this
-        # service manages the CCEO's own-scope monthly request (every read in
-        # this file filters scope="own"). Without it, a user holding both an
-        # "own" and a "team" row for the period raised MultipleObjectsReturned.
-        fr, _ = FundRequest.objects.update_or_create(
-            submitted_by_user_id=cceo["user_id"],
-            period="monthly",
-            period_key=_period_key(fy, month),
-            scope="own",
-            defaults={
-                "fy": fy,
-                "submitted_by_role": "CCEO",
-                "total_amount": total,
-                "activity_count": len(act_ids),
-            },
-        )
-        # keep items in sync with live budget lines
-        fr.items.all().delete()
-        FundRequestItem.objects.bulk_create(
-            [
-                FundRequestItem(
-                    fund_request=fr,
-                    activity_id=li.activity_id,
-                    activity_schedule_cost_line_id=li.id,
-                    amount=li.amount,
-                    period="monthly",
-                    period_key=_period_key(fy, month),
-                )
-                for li in lines
-            ]
-        )
-    # Callers validate the PLAN (partner rows included), not the payable
-    # subset — _validate's partner/school checks must keep firing.
-    return fr, plan_lines
+# All mutations delegate to weekly_service — the one state machine for weekly
+# fund requests. Approval routing, separation of duties (never your own
+# request), audit and notifications all live there.
 
 
 def _resolve_cceo(principal, cceo_user_id):
@@ -741,207 +713,100 @@ def _resolve_cceo(principal, cceo_user_id):
     return cceo
 
 
-# Once the Accountant queue has taken any action on a plan, PL "Approve" is no
-# longer a fresh decision — re-clicking it (stale tab, double-click) must not
-# silently flip a disbursed/held plan back to "sent_to_accountant" and reopen
-# it for a second payout.
-_LOCKED_AFTER_ACCOUNTANT_ACTION = {"sent_to_accountant", "disbursed", "held"}
+def _weekly_for_action(principal, cceo_user_id, week):
+    from datetime import date as _date
 
-
-def approve(principal, cceo_user_id, fy, month):
-    """PL approves a valid fund plan and routes it straight to the Accountant's
-    disbursement queue → status ``sent_to_accountant`` (+ audit + notify the CCEO
-    and the accountants who will disburse)."""
-    from .models import FundRequest
-
-    _require_pl_action(principal)
     cceo = _resolve_cceo(principal, cceo_user_id)
-
-    existing = FundRequest.objects.filter(
-        submitted_by_user_id=cceo["user_id"],
-        period="monthly",
-        period_key=_period_key(fy, month),
-        scope="own",
-    ).first()
-    if existing and existing.status in _LOCKED_AFTER_ACCOUNTANT_ACTION:
-        raise BadRequest(
-            f"This plan is already {existing.get_status_display()} — it cannot "
-            "be approved again."
-        )
-
-    fr, lines = _ensure_fund_request(principal, cceo, fy, month)
-    issues = _validate(cceo, lines, month)
-    if issues:
-        raise BadRequest("Cannot approve — plan needs review: " + issues[0])
-
-    fr.status = "sent_to_accountant"
-    fr.reviewed_by_user_id = principal.user_id
-    fr.reviewed_at = timezone.now()
-    fr.save(
-        update_fields=["status", "reviewed_by_user_id", "reviewed_at", "updated_at"]
-    )
-    # PL approval clears these lines for release — move their pending advances
-    # to SUBMITTED_TO_ACCOUNTANT so the disbursement guard (which refuses
-    # pending rows) recognises the decision. Owner choices (self-funded /
-    # not-requested) and money already moved are never overwritten.
-    from .advance_service import sync_advances_for_period_request
-
-    sync_advances_for_period_request(fr, to_accountant=True)
-
-    _audit(
-        principal,
-        "fund_request.approve_pl",
-        fr,
-        cceo,
-        {"total": fr.total_amount, "routed_to": "accountant"},
-    )
-    _notify(
-        principal,
-        cceo,
-        "fund_request_approved",
-        "Fund plan approved & sent to Accountant",
-        f"Your {MONTHS[month]} fund plan ({_ugx(fr.total_amount)}) was approved by your "
-        "Program Lead and sent to the Accountant for disbursement.",
-    )
-    _notify_accountants(fr, cceo, month)
-    return fr
+    try:
+        week_start = _week_floor(_date.fromisoformat(str(week)[:10]))
+    except (TypeError, ValueError):
+        raise BadRequest("A valid week is required.")
+    wfr = _weekly_request_for(cceo["user_id"], week_start)
+    if not wfr:
+        raise BadRequest("No weekly fund request exists for that week.")
+    return cceo, week_start, wfr
 
 
-# Accountant-side actions (disburse / hold / return / confirm receipt) live in
-# apps.fund_requests.disbursement_dashboard_service — the accountant's queue.
+def approve(principal, cceo_user_id, week):
+    """PL approves the CCEO's submitted weekly request → weekly_service routes
+    it to the Accountant's disbursement queue (confirmed_for_advance)."""
+    from . import weekly_service
 
-
-def return_request(principal, cceo_user_id, fy, month, data):
-    """PL returns a plan for correction → returned_by_pl (+ audit + notify + CCEO To-Do)."""
     _require_pl_action(principal)
+    cceo, week_start, wfr = _weekly_for_action(principal, cceo_user_id, week)
+    if wfr.status != "submitted_to_pl":
+        label, _tone = WEEKLY_STATUS_LABELS.get(wfr.status, (wfr.status, ""))
+        raise BadRequest(f"This request is not awaiting your approval ({label}).")
+
+    from apps.activities.models import ActivityScheduleCostLine
+
+    lines = list(
+        ActivityScheduleCostLine.objects.filter(
+            activity__responsible_staff_id__in=cceo["ids"],
+            week_start_date=week_start,
+            activity__deleted_at__isnull=True,
+            partner_id__isnull=True,
+        )
+        .exclude(activity__delivery_type="partner")
+        .select_related("activity")
+    )
+    issues = _validate(cceo, lines, None)
+    if issues:
+        raise BadRequest("Cannot approve — request needs review: " + issues[0])
+
+    return weekly_service.approve_weekly_request(wfr.id, principal)
+
+
+def return_request(principal, cceo_user_id, week, data):
+    """PL returns the weekly request for correction → returned_by_pl; the CCEO
+    is notified and can correct and re-send."""
+    from . import weekly_service
+
+    _require_pl_action(principal)
+    _cceo, _week_start, wfr = _weekly_for_action(principal, cceo_user_id, week)
     reason = (data.get("reason") or "").strip()
+    comment = (data.get("comment") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
-    cceo = _resolve_cceo(principal, cceo_user_id)
-    # Same lock as approve(): once the Accountant queue has acted on this plan
-    # (sent_to_accountant is their queue; disbursed/held are their decisions),
-    # a PL "Return" must not rebuild its items/total from live lines and flip a
-    # paid request back to a resubmittable status — that rewrites the financial
-    # record of money that already moved.
-    existing = _fund_request_for(cceo["user_id"], fy, month)
-    if existing and existing.status in _LOCKED_AFTER_ACCOUNTANT_ACTION:
-        raise BadRequest(
-            f"This plan is already {existing.get_status_display()} — it can no "
-            "longer be returned. Ask the Accountant to return it from the "
-            "disbursement queue instead."
-        )
-    fr, _ = _ensure_fund_request(principal, cceo, fy, month)
-
-    fr.status = "returned_by_pl"
-    fr.reviewed_by_user_id = principal.user_id
-    fr.reviewed_at = timezone.now()
-    fr.review_note = (
-        reason + (" — " + data["comment"] if data.get("comment") else "")
-    )[:512]
-    fr.save(
-        update_fields=[
-            "status",
-            "reviewed_by_user_id",
-            "reviewed_at",
-            "review_note",
-            "updated_at",
-        ]
-    )
-
-    _audit(principal, "fund_request.return_pl", fr, cceo, {"reason": reason})
-    _notify(
-        principal,
-        cceo,
-        "fund_request_returned",
-        "Fund plan returned for review",
-        f"Your {MONTHS[month]} fund plan was returned by your Program Lead. Reason: {reason}",
-    )
-    # The CCEO's "Fix Fund Request" To-Do is derived automatically from the
-    # returned_by_pl status (todo_service._fund_request_todos).
-    return fr
+    merged = f"{reason} — {comment}" if comment else reason
+    return weekly_service.return_weekly_request(wfr.id, {"reason": merged}, principal)
 
 
-def approve_all_valid(principal, fy, month):
-    """Approve every valid, awaiting plan on the PL's team in one pass.
+def approve_all_valid(principal, week):
+    """Approve every supervised request that is submitted and passes
+    validation; invalid or unsubmitted ones are left untouched."""
+    from datetime import date as _date
 
-    Invalid ("Needs Review") plans are skipped, never force-approved. Returns
-    (approved_count, skipped_count) so the caller can surface the outcome.
-    """
+    from . import weekly_service
+    from apps.activities.models import ActivityScheduleCostLine
+
     _require_pl_action(principal)
-    data = get_pl_fund_approvals(principal, {"fy": fy, "month": month})
-    approved = skipped = 0
-    for q in data["queue"]:
-        status = q["status"]
-        if status in ("Awaiting Approval", "Ready"):
-            try:
-                approve(principal, q["cceo_user_id"], fy, month)
-                approved += 1
-            except (BadRequest, Forbidden):
-                skipped += 1  # became invalid between render and approve
-        elif status == "Needs Review":
-            skipped += 1  # invalid plan — never force-approved
-        # Already Approved/Returned plans are left untouched.
-    return approved, skipped
-
-
-def _audit(principal, action, fr, cceo, payload):
+    scope = resolve_user_scope(principal)
     try:
-        from apps.audit.services import log as audit_log
+        week_start = _week_floor(_date.fromisoformat(str(week)[:10]))
+    except (TypeError, ValueError):
+        raise BadRequest("A valid week is required.")
 
-        audit_log(
-            action=action,
-            subject_kind="FundRequest",
-            subject_id=fr.id,
-            actor_id=principal.user_id,
-            actor_role=principal.active_role,
-            success=True,
-            payload={"cceo": cceo["name"], "period_key": fr.period_key, **payload},
-        )
-    except Exception:  # noqa: BLE001 - audit must never block the action
-        pass
-
-
-def _notify(principal, cceo, event, title, body):
-    try:
-        from apps.notifications.services import WorkflowNotificationService
-
-        WorkflowNotificationService.trigger(
-            event_type=event,
-            category="finance",
-            priority="high",
-            title=title,
-            body=body,
-            context_type="FundRequest",
-            context_id=cceo["user_id"],
-            recipients=[cceo["user_id"]],
-        )
-    except Exception:  # noqa: BLE001
-        pass
-
-
-def _notify_accountants(fr, cceo, month):
-    """Alert the accountants that a PL-approved fund plan is ready to disburse."""
-    try:
-        from apps.accounts.models import User
-        from apps.notifications.services import WorkflowNotificationService
-
-        ids = list(
-            User.objects.filter(active_role="Accountant", is_active=True).values_list(
-                "id", flat=True
+    approved = 0
+    for cceo in _scoped_cceos(scope):
+        wfr = _weekly_request_for(cceo["user_id"], week_start)
+        if not wfr or wfr.status != "submitted_to_pl":
+            continue
+        lines = list(
+            ActivityScheduleCostLine.objects.filter(
+                activity__responsible_staff_id__in=cceo["ids"],
+                week_start_date=week_start,
+                activity__deleted_at__isnull=True,
+                partner_id__isnull=True,
             )
+            .exclude(activity__delivery_type="partner")
+            .select_related("activity")
         )
-        if not ids:
-            return
-        WorkflowNotificationService.trigger(
-            event_type="fund_request_sent_to_accountant",
-            category="finance",
-            priority="high",
-            title="Fund plan ready to disburse",
-            body=f"{cceo['name']}'s {MONTHS[month]} fund plan ({_ugx(fr.total_amount)}) "
-            "was approved by the Program Lead and is ready for disbursement.",
-            context_type="FundRequest",
-            context_id=fr.id,
-            recipients=ids,
-        )
-    except Exception:  # noqa: BLE001
-        pass
+        if _validate(cceo, lines, None):
+            continue
+        try:
+            weekly_service.approve_weekly_request(wfr.id, principal)
+            approved += 1
+        except (BadRequest, Forbidden):
+            continue
+    return approved

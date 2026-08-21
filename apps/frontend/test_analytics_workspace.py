@@ -71,6 +71,32 @@ class AnalyticsWorkspaceStructureTest(TestCase):
         self.assertEqual(len(keys), len(set(keys)))
         self.assertEqual(len(urls), len(set(urls)))
 
+    def test_sections_are_consolidated_into_five_product_areas(self):
+        clusters = {
+            section["key"]: section["cluster"] for section in ANALYTICS_SECTIONS
+        }
+
+        self.assertEqual(
+            clusters,
+            {
+                "overview": "overview",
+                "ssa": "school_performance",
+                "visit_effectiveness": "school_performance",
+                "impact": "impact_decisions",
+                "declining_schools": "school_performance",
+                "core_school_health": "school_performance",
+                "decision_intelligence": "impact_decisions",
+                "decision_log": "impact_decisions",
+                "people": "delivery",
+                "verification_quality": "delivery",
+                "closure_quality": "delivery",
+                "closure_impact": "school_performance",
+                "completed_work": "delivery",
+                "reports": "reporting",
+                "publishing": "reporting",
+            },
+        )
+
     def test_merged_pages_no_longer_hold_their_own_sidebar_links(self):
         labels = {
             item["label"] for section in SIDEBAR_ITEMS for item in section["items"]
@@ -249,14 +275,25 @@ class AnalyticsWorkspaceRenderTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "edify-section-nav")
         self.assertContains(response, 'aria-label="Analytics sections"')
-        # Sibling sections are offered as real links.
-        self.assertContains(response, 'href="/declining-schools"')
+        # The five product areas are primary route links; sibling analyses in
+        # the active area remain real links inside one compact view menu.
+        self.assertContains(response, 'href="/ssa"')
+        self.assertContains(response, 'href="/decisions"')
+        self.assertContains(response, 'href="/decision-log"')
+        self.assertContains(response, "edify-section-nav__view-menu")
+        self.assertNotContains(response, "edify-section-nav__inner--group")
         self.assertContains(response, 'aria-current="page"')
+
+        school_response = self.client.get("/ssa")
+        self.assertContains(school_response, 'href="/analytics/visit-effectiveness"')
+        self.assertContains(school_response, 'href="/declining-schools"')
 
     def test_the_sub_navigation_stays_off_pages_outside_the_workspace(self):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "edify-section-nav")
+        # The shared head may name this component in native prefetch rules;
+        # what must stay absent is the workspace navigation element itself.
+        self.assertNotContains(response, '<nav class="edify-section-nav"')
 
 
 class IAWorkspaceContractTest(TestCase):
@@ -266,9 +303,11 @@ class IAWorkspaceContractTest(TestCase):
         self.client.force_login(self.user)
 
     def test_sections_are_distinct_authorized_backend_routes(self):
-        self.assertEqual(len(IA_SECTIONS), 10)
-        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 10)
-        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 10)
+        # 11 as of 2026-08-19: the Partner Evidence & Salesforce Confirmation
+        # queue joined the verification cluster (§10 direct IA handoff).
+        self.assertEqual(len(IA_SECTIONS), 11)
+        self.assertEqual(len({s["key"] for s in IA_SECTIONS}), 11)
+        self.assertEqual(len({s["url"] for s in IA_SECTIONS}), 11)
         for section in IA_SECTIONS:
             with self.subTest(section=section["key"]):
                 self.assertIn(section["page_key"], PAGE_PERMISSIONS)
@@ -348,7 +387,15 @@ class LeaveWorkspaceTest(TestCase):
     def test_a_role_without_coverage_access_is_not_offered_it(self):
         from apps.core.navigation import build_workspace
 
-        partner = _user("leave3@workspace.test", EdifyRole.PARTNER_FIELD_OFFICER.value)
-        workspace = build_workspace(partner, "/personal-time-off/")
+        coordinator = _user(
+            "leave3@workspace.test", EdifyRole.PROJECT_COORDINATOR.value
+        )
+        workspace = build_workspace(coordinator, "/personal-time-off/")
         self.assertIsNotNone(workspace)
         self.assertNotIn("coverage", [s["key"] for s in workspace["sections"]])
+
+    def test_partners_have_no_leave_workspace_at_all(self):
+        from apps.core.navigation import build_workspace
+
+        partner = _user("leave4@workspace.test", EdifyRole.PARTNER_FIELD_OFFICER.value)
+        self.assertIsNone(build_workspace(partner, "/personal-time-off/"))

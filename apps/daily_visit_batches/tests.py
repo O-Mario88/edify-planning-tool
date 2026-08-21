@@ -351,7 +351,9 @@ class DailyVisitBatchTestCase(TestCase):
 
         from apps.fund_requests.weekly_service import request_advance
 
-        wfr = act.schedule_cost_lines.first()
+        # A staff-payable line: school-visit transport is vendor-direct
+        # (paid to the transport company) and never joins the weekly request.
+        wfr = act.schedule_cost_lines.exclude(line_item_type="transport").first()
         from apps.fund_requests.models import WeeklyFundRequestLine
 
         wfr_line = WeeklyFundRequestLine.objects.filter(
@@ -479,3 +481,64 @@ class DailyVisitBatchSystemHealthTestCase(TestCase):
         CostSetting.objects.filter(key__in=[k for k, _ in PRIMARY_RATES]).delete()
         health = _workflow_issues()
         self.assertGreater(health["catalogueMissingDailyBatchKeys"], 0)
+
+
+class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
+    """Transport and personal per-diems accrue once per DAY, irrespective of
+    how many activities fill it (owner rule, 2026-08-19): a training on a
+    visit day joins the same pool instead of billing its own transport."""
+
+    def test_training_shares_the_visit_days_single_pool(self):
+        from apps.activities.services import create as create_activity
+        from apps.activities.models import Activity
+
+        day = date(2026, 8, 5)
+        self._schedule(["BATCH-P-1"], day, reason="visit first")
+
+        result = create_activity(
+            {
+                "activityType": "in_school_training",
+                "deliveryType": "staff",
+                "schoolId": "BATCH-P-1",
+                "scheduledDate": f"{day.isoformat()}T11:00:00+03:00",
+                "activityPurposeText": "Same-day training",
+                "focusIntervention": "leadership",
+                "expectedParticipants": 10,
+            },
+            self.principal,
+        )
+        training = Activity.objects.get(id=result["id"])
+        self.assertIsNotNone(
+            training.daily_visit_batch_id, "training must join the day pool"
+        )
+
+        day_activities = Activity.objects.filter(
+            daily_visit_batch_id=training.daily_visit_batch_id,
+            deleted_at__isnull=True,
+        )
+        self.assertEqual(day_activities.count(), 2)
+
+        # ONE day of transport across the whole day, split between members.
+        transport_total = sum(
+            line.amount
+            for a in day_activities
+            for line in a.schedule_cost_lines.filter(line_item_type="transport")
+        )
+        self.assertEqual(transport_total, 280000)
+        # ONE lunch for the person, likewise split.
+        lunch_total = sum(
+            line.amount
+            for a in day_activities
+            for line in a.schedule_cost_lines.filter(
+                cost_setting_key="primary_lunch_per_day"
+            )
+        )
+        self.assertEqual(lunch_total, 30000)
+
+        # The training still carries its own session components on top.
+        training_keys = set(
+            training.schedule_cost_lines.values_list("cost_setting_key", flat=True)
+        )
+        self.assertIn("group_training_participant_meal_cost_per_head", training_keys)
+        self.assertIn("group_training_facilitation_fee", training_keys)
+        self.assertIn("group_training_venue_cost", training_keys)

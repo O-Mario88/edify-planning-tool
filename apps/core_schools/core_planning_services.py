@@ -1,7 +1,7 @@
 import logging
 from datetime import date
 
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from apps.core.logging_filters import escape_control_characters
 from apps.core.exceptions import BadRequest
@@ -1162,92 +1162,142 @@ class CoreInterventionImpactService:
         """Prepares rows for bottom table Intervention Support & Impact."""
         school_ids = list(core_schools_qs.values_list("school_id", flat=True))
 
-        # Group by intervention and aggregate
-        interventions_data = []
-        for code, label in SsaIntervention.choices:
-            # Count schools supported by training or visit focusing on this intervention
-            supported_count = (
-                Activity.objects.filter(
-                    school__in=core_schools_qs,
-                    focus_intervention=code,
-                    fy=fy,
-                    deleted_at__isnull=True,
-                    status__in=[
-                        "planned",
-                        "scheduled",
-                        "partner_scheduled",
-                        "in_progress",
-                        "completed",
-                        "accountant_confirmed",
-                    ],
-                )
-                .values("school")
-                .distinct()
-                .count()
-            )
+        active_statuses = [
+            "planned",
+            "scheduled",
+            "partner_scheduled",
+            "in_progress",
+            "completed",
+            "accountant_confirmed",
+        ]
+        completed_statuses = [
+            "Completed",
+            "Accountant Confirmed",
+            "accountant_confirmed",
+            "ia_verified",
+            "IA Verified",
+            "iaVerify",
+        ]
 
-            # Real improvement delta: average (follow_up_average - baseline_average) for
-            # schools whose slot for this intervention has actually been completed. Both
-            # baseline_average and follow_up_average come from real SSA records; this is
-            # 0 rather than fabricated when no follow-up SSA has been collected yet.
-            completed_school_ids = list(
-                CoreActivitySlot.objects.filter(
-                    school_id__in=school_ids,
-                    core_plan__fy=fy,
-                    intervention=code,
-                    status__in=[
-                        "Completed",
-                        "Accountant Confirmed",
-                        "accountant_confirmed",
-                        "ia_verified",
-                        "IA Verified",
-                        "iaVerify",
-                    ],
-                )
-                .values_list("school_id", flat=True)
-                .distinct()
+        # Every metric below is batched across all intervention codes. The old
+        # implementation repeated the same 8–10 queries once per row.
+        activity_base = Activity.objects.filter(
+            school__in=core_schools_qs,
+            fy=fy,
+            deleted_at__isnull=True,
+        )
+        supported_by_code = {
+            row["focus_intervention"]: row["count"]
+            for row in activity_base.filter(status__in=active_statuses)
+            .values("focus_intervention")
+            .annotate(count=Count("school", distinct=True))
+        }
+        owner_counts = list(
+            activity_base.values("focus_intervention", "responsible_staff_id").annotate(
+                count=Count("id")
             )
-            plans_for_intervention = CorePlan.objects.filter(
-                school_id__in=completed_school_ids,
+        )
+        top_owner_id: dict[str, str | None] = {}
+        top_owner_count: dict[str, int] = {}
+        for row in owner_counts:
+            code = row["focus_intervention"]
+            if row["count"] > top_owner_count.get(code, -1):
+                top_owner_count[code] = row["count"]
+                top_owner_id[code] = row["responsible_staff_id"]
+        owner_names = {
+            str(row["user_id"]): row["user__name"]
+            for row in StaffProfile.objects.filter(
+                user_id__in=[value for value in top_owner_id.values() if value]
+            ).values("user_id", "user__name")
+        }
+
+        slot_rows = list(
+            CoreActivitySlot.objects.filter(
+                school_id__in=school_ids,
+                core_plan__fy=fy,
+            ).values("intervention", "school_id", "owner", "status")
+        )
+        completed_by_code: dict[str, set[str]] = {}
+        staff_by_code: dict[str, set[str]] = {}
+        partner_by_code: dict[str, set[str]] = {}
+        for row in slot_rows:
+            code = row["intervention"]
+            school_id = row["school_id"]
+            if row["status"] in completed_statuses:
+                completed_by_code.setdefault(code, set()).add(school_id)
+            owner_bucket = (
+                partner_by_code if row["owner"] == "partner" else staff_by_code
+            )
+            owner_bucket.setdefault(code, set()).add(school_id)
+
+        plan_deltas = {
+            row["school_id"]: row["follow_up_average"] - row["baseline_average"]
+            for row in CorePlan.objects.filter(
+                school_id__in=school_ids,
                 fy=fy,
                 baseline_average__isnull=False,
                 follow_up_average__isnull=False,
+            ).values("school_id", "baseline_average", "follow_up_average")
+        }
+
+        score_totals = {
+            (row["intervention"], row["ssa_record__school__school_id"]): (
+                row["total"],
+                row["count"],
             )
+            for row in SsaScore.objects.filter(
+                ssa_record__school__school_id__in=school_ids,
+                ssa_record__deleted_at__isnull=True,
+            )
+            .values("intervention", "ssa_record__school__school_id")
+            .annotate(total=Sum("score"), count=Count("id"))
+        }
+
+        trends_by_code: dict[str, list[float]] = {}
+        monthly_rows = (
+            SsaScore.objects.filter(
+                ssa_record__school__school_id__in=school_ids,
+                ssa_record__deleted_at__isnull=True,
+            )
+            .annotate(month=TruncMonth("ssa_record__date_of_ssa"))
+            .values("intervention", "month")
+            .annotate(avg=Avg("score"))
+            .order_by("intervention", "month")
+        )
+        for row in monthly_rows:
+            if row["avg"] is not None:
+                trends_by_code.setdefault(row["intervention"], []).append(
+                    round(row["avg"], 2)
+                )
+
+        interventions_data = []
+        for code, label in SsaIntervention.choices:
             deltas = [
-                p.follow_up_average - p.baseline_average for p in plans_for_intervention
+                plan_deltas[school_id]
+                for school_id in completed_by_code.get(code, set())
+                if school_id in plan_deltas
             ]
             has_improvement_data = bool(deltas)
             avg_improvement = round(sum(deltas) / len(deltas), 1) if deltas else 0
 
-            # Top supporting owner
-            top_owner = "Unassigned"
-            top_act = (
-                Activity.objects.filter(
-                    school__in=core_schools_qs,
-                    focus_intervention=code,
-                    fy=fy,
-                    deleted_at__isnull=True,
+            def group_average(group: set[str]) -> float | None:
+                totals = [
+                    score_totals[(code, school_id)]
+                    for school_id in group
+                    if (code, school_id) in score_totals
+                ]
+                count = sum(item[1] for item in totals)
+                return (
+                    round(sum(item[0] for item in totals) / count, 1) if count else None
                 )
-                .values("responsible_staff_id")
-                .annotate(cnt=Count("id"))
-                .order_by("-cnt")
-                .first()
-            )
 
-            if top_act and top_act["responsible_staff_id"]:
-                staff = (
-                    StaffProfile.objects.filter(user_id=top_act["responsible_staff_id"])
-                    .select_related("user")
-                    .first()
-                )
-                if staff:
-                    top_owner = staff.user.name
-
-            staff_pct, partner_pct = (
-                CoreInterventionImpactService._staff_partner_split_for_intervention(
-                    core_schools_qs, fy, code, school_ids
-                )
-            )
+            staff_schools = staff_by_code.get(code, set())
+            partner_schools = partner_by_code.get(code, set())
+            if staff_schools and partner_schools:
+                staff_pct = group_average(staff_schools)
+                partner_pct = group_average(partner_schools)
+            else:
+                staff_pct = partner_pct = None
             if staff_pct is not None and partner_pct is not None:
                 diff = staff_pct - partner_pct
                 comparison = (
@@ -1256,15 +1306,16 @@ class CoreInterventionImpactService:
             else:
                 comparison = "Insufficient data"
 
-            trend = CoreInterventionImpactService._monthly_trend_for_intervention(
-                core_schools_qs, code
-            )
+            trend_values = trends_by_code.get(code, [])
+            trend = trend_values if len(trend_values) >= 2 else []
+            owner_id = top_owner_id.get(code)
+            top_owner = owner_names.get(str(owner_id), "Unassigned")
 
             interventions_data.append(
                 {
                     "code": code,
                     "label": label,
-                    "supported_count": supported_count,
+                    "supported_count": supported_by_code.get(code, 0),
                     "avg_improvement": f"+{avg_improvement} pp"
                     if has_improvement_data
                     else "No data yet",

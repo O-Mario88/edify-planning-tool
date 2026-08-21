@@ -14,6 +14,9 @@ work remains available through the separately scoped approvals workflow.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from datetime import date, timedelta
 
 from django.db.models import Avg, Count, Q, Sum
@@ -303,15 +306,16 @@ class ProgramLeadDashboardService:
         high_risk = ProgramLeadDashboardService._high_risk_count(pls, fy, acts)
 
         def card(icon, label, value, variant, helper, link=""):
-            return {
-                "icon": icon,
-                "label": label,
-                "value": value,
-                "variant": variant,
-                "helper": helper,
-                "trend": {"direction": "neutral", "value": ""},
-                "link": link,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.pl_dashboard_service:kpis.card",
+                label,
+                value,
+                icon=icon,
+                variant=variant,
+                helper=helper,
+                trend={"direction": "neutral", "value": ""},
+                link=link,
+            )
 
         return [
             card(
@@ -984,13 +988,14 @@ class ProgramLeadDashboardService:
         neither = len(all_ids - visited - trained)
 
         def card(label, value, icon, tone, link):
-            return {
-                "label": label,
-                "value": value,
-                "icon": icon,
-                "tone": tone,
-                "link": link,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.pl_dashboard_service:backlog_snapshot.card",
+                label,
+                value,
+                icon=icon,
+                tone=tone,
+                link=link,
+            )
 
         return [
             card(

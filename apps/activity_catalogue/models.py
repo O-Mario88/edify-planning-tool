@@ -27,6 +27,7 @@ class CatalogueActivityType(models.TextChoices):
     YOUTH_CAMP = "youth_camp", "Youth Camp"
     ADMIN = "admin", "Admin"
     PROGRAMME_EVENT = "programme_event", "Programme Event"
+    FIELD_EVENT = "field_event", "Field Event"
 
 
 class DeliveryMethod(models.TextChoices):

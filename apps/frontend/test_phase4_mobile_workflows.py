@@ -36,7 +36,8 @@ class PhaseFourMobileWorkflowContractTest(SimpleTestCase):
             my_plan.index("priority_queue.html"), my_plan.index("kpi_cards.html")
         )
         self.assertLess(
-            todos.index("todos-mobile-next-title"), todos.index("To-do summary")
+            todos.index("todos-mobile-next-title"),
+            todos.index("Work requiring attention"),
         )
 
     def test_directories_share_search_filter_and_record_family_rules(self):

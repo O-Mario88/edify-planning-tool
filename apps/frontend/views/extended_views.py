@@ -2,6 +2,8 @@
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from apps.core.donut import build_gauge
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -55,7 +57,6 @@ from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.targets.models import TargetSetting, TargetType
 from apps.core.rbac import EdifyRole
-from apps.accounts.staff_matching import on_staff
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -124,9 +125,11 @@ _CALENDAR_ROLE_AUDIENCES = {
 def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     """Return activity-owner and leave staff ids visible in Calendar.
 
-    Activity ownership is a legacy dual-id field, so each visible staff member
-    contributes both their StaffProfile id and User id. Leave always uses the
-    canonical StaffProfile id. ``None`` means unrestricted (Admin only).
+    The Calendar is PERSONAL: every role sees only the work they themselves
+    planned (owner rule, 2026-08-20). Team and country views live on Team
+    Oversight and the analytics surfaces, not here. Admin stays unrestricted
+    (operational maintenance). Activity ownership is a legacy dual-id field,
+    so the owner contributes both their StaffProfile id and User id.
     """
 
     if user.active_role == EdifyRole.ADMIN.value:
@@ -135,88 +138,7 @@ def _calendar_staff_audience(user) -> tuple[list[str] | None, list[str] | None]:
     own_staff_id = user.staff_profile_id
     activity_owner_ids = {value for value in (user.id, own_staff_id) if value}
     leave_staff_ids = {own_staff_id} if own_staff_id else set()
-
-    visible_staff = StaffProfile.objects.none()
-    if user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and own_staff_id:
-        # A PL sees only the CCEOs explicitly assigned to them, never another
-        # PL's field team.
-        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-        visible_staff = on_staff(StaffProfile.objects).filter(
-            user__active_role=EdifyRole.CCEO.value,
-            supervisor_links__supervisor_id=own_staff_id,
-        )
-    elif target_roles := _CALENDAR_ROLE_AUDIENCES.get(user.active_role):
-        # CD and RVP schedule views are role-specific and country-bounded.
-        # Do not borrow the broader country analytics scope here.
-        # on_staff, not is_active: a pending-invite CCEO created by a school upload already holds their portfolio.
-        visible_staff = on_staff(StaffProfile.objects).filter(
-            user__active_role__in=target_roles,
-        )
-        if own_staff_id:
-            viewer_country = (
-                StaffProfile.objects.filter(id=own_staff_id)
-                .values_list("country", flat=True)
-                .first()
-            )
-            if viewer_country:
-                visible_staff = visible_staff.filter(country=viewer_country)
-
-    for staff_id, staff_user_id in visible_staff.values_list("id", "user_id"):
-        leave_staff_ids.add(staff_id)
-        activity_owner_ids.update(value for value in (staff_id, staff_user_id) if value)
-
     return sorted(activity_owner_ids), sorted(leave_staff_ids)
-
-
-# Status filter families for the Calendar: a compact, workflow-honest grouping
-# of the 21-state lifecycle (ActivityStatus). "completed" reuses the canonical
-# COMPLETED_WORK_STATUSES so the calendar never re-answers "is this finished?".
-_CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
-    "scheduled": (
-        "not_planned",
-        "planned",
-        "scheduled",
-        "assigned_to_partner",
-        "partner_scheduled",
-        "rescheduled",
-        "deferred",
-    ),
-    "in_progress": (
-        "in_progress",
-        "completion_started",
-        "evidence_uploaded",
-        "evidence_accepted",
-        "salesforce_id_required",
-        "submitted_to_pl",
-        "returned_by_pl",
-        "awaiting_ia_verification",
-        "returned",
-        "returned_by_ia",
-    ),
-    "completed": tuple(COMPLETED_WORK_STATUSES),
-    "cancelled": ("cancelled", "rejected"),
-}
-
-_CALENDAR_STATUS_OPTIONS = (
-    ("scheduled", "Scheduled"),
-    ("in_progress", "In progress"),
-    ("completed", "Completed"),
-    ("cancelled", "Cancelled / rejected"),
-)
-
-# Presentation families for calendar colouring. This is a display grouping,
-# not a metric (apps/core/activity_types.py stays the canonical vocabulary):
-# core and cluster work are pulled out of the canonical visit/training groups
-# so each programme family reads as one colour on the grid and legend.
-_CALENDAR_CORE_TYPES = (
-    ActivityType.CORE_VISIT,
-    ActivityType.CORE_TRAINING,
-    ActivityType.CORE_ASSESSMENT_VISIT,
-)
-_CALENDAR_CLUSTER_TYPES = CLUSTER_MEETING_TYPES + (
-    ActivityType.CLUSTER_TRAINING,
-    ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
-)
 
 
 def _calendar_event_family(activity_type: str) -> str:
@@ -363,6 +285,56 @@ def fy_overview_view(request):
     return render(request, "pages/fy/index.html", context)
 
 
+# Removed audiences kept for reference are no longer needed — the
+# Calendar is personal now.
+_CALENDAR_STATUS_FAMILIES: dict[str, tuple[str, ...]] = {
+    "scheduled": (
+        "not_planned",
+        "planned",
+        "scheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "rescheduled",
+        "deferred",
+    ),
+    "in_progress": (
+        "in_progress",
+        "completion_started",
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+        "submitted_to_pl",
+        "returned_by_pl",
+        "awaiting_ia_verification",
+        "returned",
+        "returned_by_ia",
+    ),
+    "completed": tuple(COMPLETED_WORK_STATUSES),
+    "cancelled": ("cancelled", "rejected"),
+}
+
+_CALENDAR_STATUS_OPTIONS = (
+    ("scheduled", "Scheduled"),
+    ("in_progress", "In progress"),
+    ("completed", "Completed"),
+    ("cancelled", "Cancelled / rejected"),
+)
+
+# Presentation families for calendar colouring. This is a display grouping,
+# not a metric (apps/core/activity_types.py stays the canonical vocabulary):
+# core and cluster work are pulled out of the canonical visit/training groups
+# so each programme family reads as one colour on the grid and legend.
+_CALENDAR_CORE_TYPES = (
+    ActivityType.CORE_VISIT,
+    ActivityType.CORE_TRAINING,
+    ActivityType.CORE_ASSESSMENT_VISIT,
+)
+_CALENDAR_CLUSTER_TYPES = CLUSTER_MEETING_TYPES + (
+    ActivityType.CLUSTER_TRAINING,
+    ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
+)
+
+
 @require_page_permission("calendar")
 def calendar_view(request):
     """Role-scoped operations calendar for activities, leave, and holidays."""
@@ -458,13 +430,21 @@ def calendar_view(request):
         # responsible staff and is only reachable through monitored_by_staff_id.
         activity_owner_ids = None
     if activity_owner_ids is not None:
-        activities = activities.filter(
-            Q(responsible_staff_id__in=activity_owner_ids)
-            | Q(
-                monitored_by_staff_id__in=activity_owner_ids,
-                delivery_type="partner",
+        from apps.core.scoping import resolve_partner_ids
+
+        partner_ids = resolve_partner_ids(user)
+        if partner_ids:
+            # A partner's plan is the work they scheduled for their own
+            # organisation — ownership hangs off assigned_partner_id.
+            activities = activities.filter(assigned_partner_id__in=partner_ids)
+        else:
+            activities = activities.filter(
+                Q(responsible_staff_id__in=activity_owner_ids)
+                | Q(
+                    monitored_by_staff_id__in=activity_owner_ids,
+                    delivery_type="partner",
+                )
             )
-        )
 
     # One evaluation for the event loop and the name batch; the queryset
     # itself stays in context (scoping tests inspect it as a queryset).
@@ -1203,6 +1183,34 @@ def reports_view(request):
                 "color": card_colors[i % len(card_colors)],
             }
         )
+    core_kpi_items = []
+    from apps.core.metrics import PresentationKpi
+
+    for card in core_cards:
+        if card["has_target"]:
+            display_value = f"{card['achieved']} / {card['target']:.0f}"
+            helper = f"{card['pct']}% of FY{fy} target"
+            tone = (
+                "success"
+                if card["pct"] >= 70
+                else "warning"
+                if card["pct"] >= 50
+                else "danger"
+            )
+        else:
+            display_value = str(card["achieved"])
+            helper = f"No FY{fy} target configured"
+            tone = "neutral"
+        core_kpi_items.append(
+            PresentationKpi(
+                label=card["label"],
+                value=display_value,
+                display_value=display_value,
+                helper=helper,
+                tone=tone,
+                icon="target",
+            )
+        )
 
     # ── Achievement vs target donut — only areas with a real FY target can
     # honestly be classified as on/at-risk/off-track. ─────────────────────
@@ -1272,6 +1280,7 @@ def reports_view(request):
         else 0,
         "periods": periods,
         "core_cards": core_cards,
+        "core_kpi_items": core_kpi_items,
         "matrix_rows": matrix_rows,
         "donut_total": donut_total,
         "donut_on_track": donut_on_track,
@@ -2396,9 +2405,9 @@ def special_projects_my_plan_view(request):
 def todos_view(request):
     """The dedicated To-Do operating queue — system-generated, role-scoped,
     auto-closing action items derived live from workflow state."""
-    from apps.command_center.todo_service import get_todos
+    from apps.command_center.todo_service import get_cached_todos
 
-    return render(request, "pages/todos/index.html", get_todos(request.user))
+    return render(request, "pages/todos/index.html", get_cached_todos(request.user))
 
 
 @require_page_permission("fund_approvals")
@@ -2409,7 +2418,7 @@ def pl_fund_approvals_view(request):
 
     filters = {
         k: request.GET.get(k)
-        for k in ("fy", "month", "cceo", "status", "q")
+        for k in ("fy", "month", "week", "cceo", "status", "q")
         if request.GET.get(k)
     }
     ctx = get_pl_fund_approvals(request.user, filters)
@@ -2433,7 +2442,9 @@ def pl_fund_detail_view(request):
     from apps.fund_requests.pl_approval_service import get_pl_fund_approvals
 
     filters = {
-        k: request.GET.get(k) for k in ("fy", "month", "cceo") if request.GET.get(k)
+        k: request.GET.get(k)
+        for k in ("fy", "month", "week", "cceo")
+        if request.GET.get(k)
     }
     ctx = get_pl_fund_approvals(request.user, filters)
     return render(request, "partials/fund_approvals/detail.html", ctx)
@@ -2450,6 +2461,7 @@ def pl_fund_return_modal_view(request):
             "name": request.GET.get("name", "this CCEO"),
             "fy": request.GET.get("fy", ""),
             "month": request.GET.get("month", ""),
+            "week": request.GET.get("week", ""),
             "reasons": [
                 "Cost mismatch",
                 "Unplanned activity included",
@@ -2483,34 +2495,81 @@ def pl_fund_action_view(request):
         month = int(request.POST.get("month"))
     except (TypeError, ValueError):
         month = None
+    week = request.POST.get("week")
     error = None
     try:
         if action == "approve":
-            svc.approve(request.user, request.POST.get("cceo"), fy, month)
+            svc.approve(request.user, request.POST.get("cceo"), week)
         elif action == "return":
             svc.return_request(
                 request.user,
                 request.POST.get("cceo"),
-                fy,
-                month,
+                week,
                 {
                     "reason": request.POST.get("reason"),
                     "comment": request.POST.get("comment"),
                 },
             )
         elif action == "approve_all":
-            svc.approve_all_valid(request.user, fy, month)
+            svc.approve_all_valid(request.user, week)
     except (BadRequest, Forbidden) as e:
         error = str(e)
 
     ctx = svc.get_pl_fund_approvals(
         request.user,
-        {"fy": fy, "month": month, "cceo": request.POST.get("cceo")},
+        {
+            "fy": fy,
+            "month": month,
+            "week": week,
+            "cceo": request.POST.get("cceo"),
+        },
     )
     ctx["action_error"] = error
     resp = render(request, "partials/fund_approvals/root.html", ctx)
     resp["HX-Trigger"] = "close-drawer"
     return resp
+
+
+@require_page_permission("fund_approvals")
+def pl_partner_invoice_action(request, invoice_id):
+    """PL confirms or returns a partner invoice; the root re-renders."""
+    from django.http import HttpResponse
+
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests import pl_approval_service as svc
+    from apps.fund_requests.partner_invoices import confirm_invoice, return_invoice
+
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    error = None
+    try:
+        if request.POST.get("action") == "confirm":
+            confirm_invoice(invoice_id, request.user)
+        else:
+            return_invoice(invoice_id, request.POST.get("reason"), request.user)
+    except (BadRequest, Forbidden) as exc:
+        error = str(exc)
+    ctx = svc.get_pl_fund_approvals(
+        request.user,
+        {
+            k: request.POST.get(k)
+            for k in ("fy", "month", "week", "cceo")
+            if request.POST.get(k)
+        },
+    )
+    ctx["action_error"] = error
+    return render(request, "partials/fund_approvals/root.html", ctx)
+
+
+@require_page_permission("fund_approvals")
+def pl_partner_invoice_download(request, invoice_id):
+    """PL downloads the partner's invoice to confirm it against the plan."""
+    from django.http import FileResponse
+
+    from apps.fund_requests.partner_invoices import invoice_file
+
+    invoice, handle = invoice_file(invoice_id, request.user)
+    return FileResponse(handle, as_attachment=True, filename=invoice.original_name)
 
 
 @require_page_permission("projects")
@@ -2536,22 +2595,22 @@ def project_detail_view(request, project_id):
     # were hardcoded for every project and have been removed rather than show
     # a status that isn't real.
     kpi_strip_items = [
-        {
-            "label": "Assigned Schools",
-            "value": str(assigned_count),
-            "raw_value": assigned_count,
-            "helper": "Cohort schools",
-            "icon": "school",
-            "variant": "primary",
-        },
-        {
-            "label": "Assigned Staff",
-            "value": str(staff_assignments.count()),
-            "raw_value": staff_assignments.count(),
-            "helper": "Project priorities",
-            "icon": "users",
-            "variant": "primary",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_assigned_schools",
+            str(assigned_count),
+            raw_value=assigned_count,
+            helper="Cohort schools",
+            icon="school",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_assigned_staff",
+            str(staff_assignments.count()),
+            raw_value=staff_assignments.count(),
+            helper="Project priorities",
+            icon="users",
+            variant="primary",
+        ),
     ]
     can_assign_staff = _can_configure_project_priorities(request.user)
     staff_options = []
@@ -2973,41 +3032,41 @@ def admin_data_quality_center_view(request):
     ).count()
 
     kpi_items = [
-        {
-            "label": "Clean Schools",
-            "value": str(clean_count),
-            "helper": "Fully complete verified roster",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Needs Review",
-            "value": str(needs_review_count),
-            "helper": "Minor operational gaps",
-            "icon": "chat",
-            "variant": "info",
-        },
-        {
-            "label": "Needs Cleanup",
-            "value": str(needs_cleanup_count),
-            "helper": "Moderate gaps present",
-            "icon": "warning",
-            "variant": "warning",
-        },
-        {
-            "label": "Duplicate Risk",
-            "value": str(duplicate_risk_count),
-            "helper": "Potential duplicate entries",
-            "icon": "danger",
-            "variant": "danger",
-        },
-        {
-            "label": "Missing Critical Data",
-            "value": str(missing_critical_count),
-            "helper": "Missing owner/cluster info",
-            "icon": "danger",
-            "variant": "red",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_clean_schools",
+            str(clean_count),
+            helper="Fully complete verified roster",
+            icon="check",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_needs_review",
+            str(needs_review_count),
+            helper="Minor operational gaps",
+            icon="chat",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_needs_cleanup",
+            str(needs_cleanup_count),
+            helper="Moderate gaps present",
+            icon="warning",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_duplicate_risk",
+            str(duplicate_risk_count),
+            helper="Potential duplicate entries",
+            icon="danger",
+            variant="danger",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_extended_views_missing_critical_data",
+            str(missing_critical_count),
+            helper="Missing owner/cluster info",
+            icon="danger",
+            variant="red",
+        ),
     ]
 
     context = {

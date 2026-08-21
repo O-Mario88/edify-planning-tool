@@ -741,7 +741,108 @@ STANDARD_SUPPORT_ITEMS = [
 ]
 
 
-CATALOGUE_ITEMS = [*SOURCE_CATALOGUE_ITEMS, *STANDARD_SUPPORT_ITEMS]
+# ── Field events — attendee-side field operations ───────────────────────────
+# District meetings, boot camps, workshops, conferences: the planner attends
+# and the MOU travel per-diems price the trip (FIELD_TRAVEL profile derives
+# day-trip vs overnight from home district vs destination + the date range).
+# Governed vocabulary: the CD manages these like any other catalogue item.
+FIELD_EVENT_ITEMS = [
+    _item(
+        "FIELD_DISTRICT_MEETING",
+        "District Meeting",
+        Type.FIELD_EVENT,
+        Delivery.GROUP,
+        ActivityType.FIELD_EVENT,
+        mapping_mode=MappingMode.ADMINISTRATIVE,
+        intervention=None,
+        target_audience="Staff",
+        evidence_profile="ADMIN_NONE",
+        salesforce_record_type="NONE",
+        salesforce_expected_prefix="",
+        costing_profile="FIELD_TRAVEL",
+        partner=False,
+        school=False,
+        cluster=False,
+        project=False,
+        requires_ssa=False,
+        support_objective="ADMIN_OPERATION",
+        non_school=True,
+        multi_day=True,
+        programme_category="Field Operations",
+    ),
+    _item(
+        "FIELD_BOOT_CAMP",
+        "Boot Camp",
+        Type.FIELD_EVENT,
+        Delivery.GROUP,
+        ActivityType.FIELD_EVENT,
+        mapping_mode=MappingMode.ADMINISTRATIVE,
+        intervention=None,
+        target_audience="Staff",
+        evidence_profile="ADMIN_NONE",
+        salesforce_record_type="NONE",
+        salesforce_expected_prefix="",
+        costing_profile="FIELD_TRAVEL",
+        partner=False,
+        school=False,
+        cluster=False,
+        project=False,
+        requires_ssa=False,
+        support_objective="ADMIN_OPERATION",
+        non_school=True,
+        multi_day=True,
+        programme_category="Field Operations",
+    ),
+    _item(
+        "FIELD_WORKSHOP",
+        "Workshop",
+        Type.FIELD_EVENT,
+        Delivery.GROUP,
+        ActivityType.FIELD_EVENT,
+        mapping_mode=MappingMode.ADMINISTRATIVE,
+        intervention=None,
+        target_audience="Staff",
+        evidence_profile="ADMIN_NONE",
+        salesforce_record_type="NONE",
+        salesforce_expected_prefix="",
+        costing_profile="FIELD_TRAVEL",
+        partner=False,
+        school=False,
+        cluster=False,
+        project=False,
+        requires_ssa=False,
+        support_objective="ADMIN_OPERATION",
+        non_school=True,
+        multi_day=True,
+        programme_category="Field Operations",
+    ),
+    _item(
+        "FIELD_CONFERENCE",
+        "Conference",
+        Type.FIELD_EVENT,
+        Delivery.GROUP,
+        ActivityType.FIELD_EVENT,
+        mapping_mode=MappingMode.ADMINISTRATIVE,
+        intervention=None,
+        target_audience="Staff",
+        evidence_profile="ADMIN_NONE",
+        salesforce_record_type="NONE",
+        salesforce_expected_prefix="",
+        costing_profile="FIELD_TRAVEL",
+        partner=False,
+        school=False,
+        cluster=False,
+        project=False,
+        requires_ssa=False,
+        support_objective="ADMIN_OPERATION",
+        non_school=True,
+        multi_day=True,
+        programme_category="Field Operations",
+    ),
+]
+
+
+CATALOGUE_ITEMS = [*SOURCE_CATALOGUE_ITEMS, *STANDARD_SUPPORT_ITEMS, *FIELD_EVENT_ITEMS]
 
 
 ALTERNATE_STABLE_CODES = {
@@ -760,8 +861,9 @@ ALTERNATE_STABLE_CODES = {
 # separately so the two can never be confused for one another.
 assert len(SOURCE_CATALOGUE_ITEMS) == 28
 assert len(STANDARD_SUPPORT_ITEMS) == 12
-assert len(CATALOGUE_ITEMS) == 40
-assert len({row["stable_code"] for row in CATALOGUE_ITEMS}) == 40
+assert len(FIELD_EVENT_ITEMS) == 4
+assert len(CATALOGUE_ITEMS) == 44
+assert len({row["stable_code"] for row in CATALOGUE_ITEMS}) == 44
 
 # One standard-support item per workflow kind (mirrored by a database
 # constraint). Without this the purpose → costing derivation has no single

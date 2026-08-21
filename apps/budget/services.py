@@ -919,6 +919,20 @@ def budget_workspace(principal, query: dict) -> dict:
         )
         include_admin = False
 
+    # A manager reviewing one member at a time: `staff` narrows the ledger to
+    # that owner. Validated here, never trusted from the URL — outside country
+    # scope only the viewer themselves or someone they supervise is honoured,
+    # so a query parameter cannot widen a personal budget.
+    requested_staff = str(query.get("staff") or "").strip()
+    if requested_staff and budget_scope != "admin":
+        if country_allowed:
+            staff_ok = True
+        else:
+            team_ids = _workspace_owner_ids(principal, scope, include_team=True) or []
+            staff_ok = requested_staff in team_ids
+        if staff_ok:
+            owner_ids = [requested_staff]
+
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
             fiscal_year=fy,
@@ -930,6 +944,34 @@ def budget_workspace(principal, query: dict) -> dict:
     )
     if owner_ids is not None:
         base_lines = base_lines.filter(responsible_user__in=owner_ids)
+
+    # Staff-funds surfaces (the Fund Requests workspace) exclude partner-
+    # delivered work entirely: partners are paid directly through the MOU
+    # partner-payment channel (50% advance + verified clearance), never
+    # through a staff advance. Budget ROLL-UPS (country/monthly views) keep
+    # partner costs — they are real money the organisation pays.
+    if query.get("exclude_partner"):
+        base_lines = base_lines.exclude(activity__delivery_type="partner").filter(
+            partner_id__isnull=True
+        )
+
+    # CCEO viewers see only the money they personally receive: vendor-direct
+    # mission costs (school-visit transport, Finance-booked accommodation)
+    # are hidden — they see arrangement status instead of vendor rates.
+    if query.get("staff_channel_only"):
+        from apps.fund_requests.fundable import vendor_direct_filter
+
+        base_lines = base_lines.exclude(vendor_direct_filter())
+
+    # Budgets are submitted to districts, so every horizon of this ledger can
+    # be narrowed to one district. Cost lines carry the school directly; an
+    # unknown district id simply yields an empty (honest) ledger. The country
+    # admin plan has no district, so a district submission excludes it rather
+    # than inventing an allocation.
+    requested_district = str(query.get("district") or "").strip()
+    if requested_district:
+        base_lines = base_lines.filter(school__district_id=requested_district)
+        include_admin = False
 
     admin_lines = []
     if include_admin:
@@ -1092,6 +1134,13 @@ def budget_workspace(principal, query: dict) -> dict:
             },
         )
         item_label = line.label or line.cost_setting_key.replace("_", " ").title()
+        # A partner-delivered training's lump sum IS the facilitation fee for
+        # that session (owner, 2026-08-18): one table row for both delivery
+        # channels, with the partner share carried by vendor_total rather than
+        # a second look-alike line item. The ledger keys stay distinct — only
+        # the display row merges.
+        if line.cost_setting_key == "partner_training_lump_sum":
+            item_label = "Facilitation fee"
         row = group["rows"].setdefault(
             item_label,
             {

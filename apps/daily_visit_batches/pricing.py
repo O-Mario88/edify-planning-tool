@@ -25,6 +25,29 @@ DAILY_BATCH_ELIGIBLE_TYPES = {
     "in_school_coaching_visit",
 }
 
+# The staff member's day carries ONE mission cost — transport and personal
+# per-diems accrue per DAY, never per activity (owner rule, 2026-08-19). So
+# trainings, cluster sessions and single-day field events join the same day
+# pool as visits; their own activity-specific components (venue,
+# facilitation, participant meals/snacks) are priced on top of the pool
+# share. Multi-day field events stay on their standalone per-day recipe —
+# they own their whole away-days by definition.
+DAY_POOL_EXTRA_TYPES = {
+    "training",
+    "in_school_training",
+    "school_improvement_training",
+    "cluster_training",
+    "cluster_training_ssa_collection",
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "field_event",
+}
+
+# Members whose activity-specific recipe is written ON TOP of the pool share
+# (a field event has no activity-specific components — its whole cost is the
+# per-diem pool share).
+POOL_PLUS_RECIPE_TYPES = DAY_POOL_EXTRA_TYPES - {"field_event"}
+
 REQUIRED_KEYS = {
     "primary": ["primary_transport_per_day", "primary_lunch_per_day"],
     "secondary": [

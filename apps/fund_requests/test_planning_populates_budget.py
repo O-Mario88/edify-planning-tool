@@ -34,6 +34,10 @@ from apps.schools.models import School
 TRANSPORT = 30_000
 LUNCH = 15_000
 DAY_POOL = TRANSPORT + LUNCH
+# The staff ADVANCE for a primary-district visit day is the owner's personal
+# entitlement only — transport is paid direct to the transport company
+# (fund_requests.fundable.vendor_direct_filter), so requests carry LUNCH.
+ADVANCE_POOL = LUNCH
 
 
 def _schedulable_date():
@@ -145,14 +149,16 @@ class PlanningPopulatesTheBudgetTest(TestCase):
         )
         self.assertEqual(sum(advances.values_list("amount", flat=True)), DAY_POOL)
 
-        # 3. The weekly fund request auto-generated from the same lines.
+        # 3. The weekly fund request auto-generated from the STAFF-PAYABLE
+        #    lines: lunch only — transport is vendor-direct to the provider.
         week_start = self.day - datetime.timedelta(days=self.day.weekday())
         wfr = WeeklyFundRequest.objects.get(
             responsible_user=self.user.id, week_start_date=week_start
         )
         self.assertEqual(wfr.status, "pending_responsible_confirmation")
-        self.assertEqual(wfr.total_amount, DAY_POOL)
-        self.assertEqual(wfr.lines.count(), len(lines))
+        self.assertEqual(wfr.total_amount, ADVANCE_POOL)
+        staff_lines = [l for l in lines if l.line_item_type != "transport"]
+        self.assertEqual(wfr.lines.count(), len(staff_lines))
 
         # 4. The monthly draft fund request auto-generated too.
         monthly = FundRequest.objects.get(
@@ -162,10 +168,10 @@ class PlanningPopulatesTheBudgetTest(TestCase):
             scope="own",
         )
         self.assertEqual(monthly.status, "draft")
-        self.assertEqual(monthly.total_amount, DAY_POOL)
+        self.assertEqual(monthly.total_amount, ADVANCE_POOL)
         self.assertEqual(
             set(monthly.items.values_list("activity_schedule_cost_line_id", flat=True)),
-            {line.id for line in lines},
+            {line.id for line in staff_lines},
         )
 
         # 5. And the budget rollup reports it as planned spend.
@@ -267,7 +273,9 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         self.assertEqual(requests.count(), 1)
         wfr = requests.get()
         self.assertEqual(wfr.week_start_date, week_start)
-        self.assertEqual(wfr.total_amount, 2 * DAY_POOL)  # two visit days
+        self.assertEqual(
+            wfr.total_amount, 2 * ADVANCE_POOL
+        )  # two visit days, lunch only
 
         # 2. The owner sends it; a CCEO's request routes to their PL.
         request_advance(wfr.id, self.cceo)

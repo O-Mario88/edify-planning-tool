@@ -75,7 +75,7 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         self.cost_line = ActivityScheduleCostLine.objects.create(
             activity=self.activity,
             responsible_user=self.cceo_user.user_id,
-            line_item_type="transport",
+            line_item_type="lunch",
             label="Transport",
             quantity=1,
             unit_cost=50000,
@@ -98,7 +98,7 @@ class AccountantAndAutomatedHandoffsTest(TestCase):
         self.wfr_line = WeeklyFundRequestLine.objects.create(
             weekly_fund_request=self.wfr,
             activity_budget_line=self.cost_line,
-            line_item_type="transport",
+            line_item_type="lunch",
             description="Transport",
             quantity=1,
             unit_cost=50000,

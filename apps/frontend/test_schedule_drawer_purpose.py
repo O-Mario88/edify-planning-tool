@@ -64,9 +64,9 @@ class DrawerAsksForPurposeTest(TestCase):
 
     def test_recommendation_scores_are_plain_red_text_not_border_pills(self):
         source = _drawer_source()
-        recommendation_list = source.split(
-            "{% if recommendations|length > 1 %}", 1
-        )[1].split("{% endif %}", 1)[0]
+        recommendation_list = source.split("{% if recommendations|length > 1 %}", 1)[
+            1
+        ].split("{% endif %}", 1)[0]
 
         self.assertIn("{{ r.band }} · {{ r.score }}/10", recommendation_list)
         self.assertIn("edify-danger-text", recommendation_list)

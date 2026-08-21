@@ -225,7 +225,7 @@ class CalendarEventAuthoringTest(TestCase):
 
 
 class CalendarRoleScheduleAudienceTest(TestCase):
-    """Leadership calendars expose only the staff schedules they oversee."""
+    """The calendar is personal: every role sees only the work they planned."""
 
     calendar_date = date(2026, 7, 16)
 
@@ -258,7 +258,7 @@ class CalendarRoleScheduleAudienceTest(TestCase):
             )
         )
 
-    def test_program_lead_sees_their_own_and_supervised_cceo_schedules(self):
+    def test_program_lead_calendar_is_personal_even_with_supervisees(self):
         pl, pl_staff = self._staff(EdifyRole.COUNTRY_PROGRAM_LEAD.value, "PL One")
         _, cceo_staff = self._staff(EdifyRole.CCEO.value, "CCEO One")
         _, other_cceo_staff = self._staff(EdifyRole.CCEO.value, "CCEO Two")
@@ -269,12 +269,9 @@ class CalendarRoleScheduleAudienceTest(TestCase):
         self._schedule(cceo_staff)
         self._schedule(other_cceo_staff)
 
-        self.assertEqual(
-            self._visible_owner_ids(pl),
-            {pl_staff.id, cceo_staff.id},
-        )
+        self.assertEqual(self._visible_owner_ids(pl), {pl_staff.id})
 
-    def test_country_director_sees_pl_accountant_and_ia_schedules_only(self):
+    def test_country_director_calendar_shows_only_their_own_schedule(self):
         cd, cd_staff = self._staff(EdifyRole.COUNTRY_DIRECTOR.value, "CD One")
         _, pl_staff = self._staff(EdifyRole.COUNTRY_PROGRAM_LEAD.value, "PL One")
         _, accountant_staff = self._staff(
@@ -285,12 +282,9 @@ class CalendarRoleScheduleAudienceTest(TestCase):
         for staff in (cd_staff, pl_staff, accountant_staff, ia_staff, cceo_staff):
             self._schedule(staff)
 
-        self.assertEqual(
-            self._visible_owner_ids(cd),
-            {cd_staff.id, pl_staff.id, accountant_staff.id, ia_staff.id},
-        )
+        self.assertEqual(self._visible_owner_ids(cd), {cd_staff.id})
 
-    def test_rvp_sees_country_director_and_hr_schedules_only(self):
+    def test_rvp_calendar_shows_only_their_own_schedule(self):
         rvp, rvp_staff = self._staff(EdifyRole.REGIONAL_VICE_PRESIDENT.value, "RVP One")
         _, cd_staff = self._staff(EdifyRole.COUNTRY_DIRECTOR.value, "CD One")
         _, hr_staff = self._staff(EdifyRole.HUMAN_RESOURCES.value, "HR One")
@@ -298,7 +292,4 @@ class CalendarRoleScheduleAudienceTest(TestCase):
         for staff in (rvp_staff, cd_staff, hr_staff, pl_staff):
             self._schedule(staff)
 
-        self.assertEqual(
-            self._visible_owner_ids(rvp),
-            {rvp_staff.id, cd_staff.id, hr_staff.id},
-        )
+        self.assertEqual(self._visible_owner_ids(rvp), {rvp_staff.id})

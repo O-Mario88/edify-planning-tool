@@ -19,6 +19,8 @@ Queue sources (all real, no fabrication):
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from django.db import transaction
 from django.db.models import F, Q, Sum
 from django.utils import timezone
@@ -1150,48 +1152,48 @@ def get_disbursement_dashboard(principal, filters=None):
     )
 
     kpis = [
-        {
-            "label": "Total Funds This Month",
-            "value": _ugx(total_month),
-            "icon": "finance",
-            "variant": "primary",
-            "helper": f"{len(queue)} item{'' if len(queue) == 1 else 's'}",
-        },
-        {
-            "label": "Pending Disbursement",
-            "value": _ugx(pending_disb),
-            "icon": "clock",
-            "variant": "warning",
-            "helper": f"{_count('Pending Disbursement')} request{'' if _count('Pending Disbursement') == 1 else 's'}",
-        },
-        {
-            "label": "Disbursed Today",
-            "value": _ugx(disb_today),
-            "icon": "check",
-            "variant": "success",
-            "helper": "Released today",
-        },
-        {
-            "label": "Awaiting Approval Completion",
-            "value": _ugx(awaiting_appr),
-            "icon": "briefcase",
-            "variant": "analytics",
-            "helper": f"{_count('Pending Approval')} in approval chain",
-        },
-        {
-            "label": "Held",
-            "value": _ugx(held_amt),
-            "icon": "warning",
-            "variant": "danger",
-            "helper": f"{_count('Held')} paused",
-        },
-        {
-            "label": "Special Projects Funds",
-            "value": _ugx(sp_month),
-            "icon": "school",
-            "variant": "info",
-            "helper": "This month",
-        },
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_total_funds_this_month",
+            _ugx(total_month),
+            icon="finance",
+            variant="primary",
+            helper=f"{len(queue)} item{'' if len(queue) == 1 else 's'}",
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_pending_disbursement",
+            _ugx(pending_disb),
+            icon="clock",
+            variant="warning",
+            helper=f"{_count('Pending Disbursement')} request{'' if _count('Pending Disbursement') == 1 else 's'}",
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_disbursed_today",
+            _ugx(disb_today),
+            icon="check",
+            variant="success",
+            helper="Released today",
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_awaiting_approval_completion",
+            _ugx(awaiting_appr),
+            icon="briefcase",
+            variant="analytics",
+            helper=f"{_count('Pending Approval')} in approval chain",
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_held",
+            _ugx(held_amt),
+            icon="warning",
+            variant="danger",
+            helper=f"{_count('Held')} paused",
+        ),
+        render_precomputed_metric_item(
+            "fund_requests_disbursement_dashboard_service_special_projects_funds",
+            _ugx(sp_month),
+            icon="school",
+            variant="info",
+            helper="This month",
+        ),
     ]
 
     # ── Month overview + status donut ─────────────────────────────────────────

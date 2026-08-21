@@ -161,9 +161,11 @@ class Permission(str, Enum):
     BUDGET_INTELLIGENCE_VIEW = "budgetIntelligence.view"
     BUDGET_DECISION_REVIEW = "budgetDecision.review"
     # Business Transformation is a separate portfolio authority inside the
-    # Edify platform. Every role may read the Uganda loan register; lender
-    # facts and repayment execution belong only to MFI Admin and MFI Loan
-    # Officer.
+    # Edify platform. Record-level lender and loan facts are never a universal
+    # transparency surface: they require an explicit portfolio permission and
+    # server-side scope. Impact-only and executive aggregate projections live
+    # on their own reporting surfaces and must not reuse the financial loan
+    # serializer.
     BUSINESS_TRANSFORMATION_VIEW = "businessTransformation.view"
     BUSINESS_TRANSFORMATION_CASE_MANAGE = "businessTransformation.case.manage"
     # Manage school-level BAFF / Financial Health and Government Requirements
@@ -189,6 +191,28 @@ class Permission(str, Enum):
     BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE = (
         "businessTransformation.mfiMember.manage"
     )
+    BUSINESS_TRANSFORMATION_FACILITY_VIEW = "businessTransformation.facility.view"
+    BUSINESS_TRANSFORMATION_FACILITY_MANAGE = "businessTransformation.facility.manage"
+    BUSINESS_TRANSFORMATION_FACILITY_APPROVE = "businessTransformation.facility.approve"
+    BUSINESS_TRANSFORMATION_FACILITY_TRANSFER = (
+        "businessTransformation.facility.transfer"
+    )
+    BUSINESS_TRANSFORMATION_ALLOCATION_MANAGE = (
+        "businessTransformation.allocation.manage"
+    )
+    BUSINESS_TRANSFORMATION_DISBURSEMENT_WRITE = (
+        "businessTransformation.disbursement.write"
+    )
+    BUSINESS_TRANSFORMATION_REPAYMENT_REVERSE = (
+        "businessTransformation.repayment.reverse"
+    )
+    BUSINESS_TRANSFORMATION_PURPOSE_REQUEST = "businessTransformation.purpose.request"
+    BUSINESS_TRANSFORMATION_PURPOSE_REVIEW = "businessTransformation.purpose.review"
+    BUSINESS_TRANSFORMATION_PURPOSE_DEFINE = "businessTransformation.purpose.define"
+    BUSINESS_TRANSFORMATION_PURPOSE_APPROVE = "businessTransformation.purpose.approve"
+    BUSINESS_TRANSFORMATION_AMENDMENT_APPROVE = (
+        "businessTransformation.amendment.approve"
+    )
     BUSINESS_TRANSFORMATION_EXPORT = "businessTransformation.export"
 
 
@@ -213,8 +237,10 @@ P = Permission
 # work as the CCEO. What it stops is the Admin role itself being a way around
 # the separation — which is exactly what a super-role must not be.
 #
-# Admin keeps every viewing permission over all of it, because observing a
-# control is not the same as exercising it.
+# Admin keeps broad platform-support visibility, but explicitly governed
+# financial domains are excluded as a whole. A technical super-role is not an
+# implicit finance or lending role; an operator must switch to a separately
+# assigned governed role for that work.
 ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
     {
         # Activity/SSA verification is Impact Assessment's alone.
@@ -231,12 +257,33 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.COUNTRY_BUDGET_SUBMIT,
         Permission.COUNTRY_BUDGET_APPROVE,
         Permission.FUND_REQUEST_APPROVE_ESCALATED,
-        # A technical super-role remains read-only on the governed loan book.
+        # A technical super-role has no implicit governed lending authority,
+        # including record-level reads.
+        Permission.BUSINESS_TRANSFORMATION_VIEW,
+        Permission.BUSINESS_TRANSFORMATION_CASE_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        Permission.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        Permission.BUSINESS_TRANSFORMATION_MFI_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_REFERRAL_MANAGE,
         Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
         Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
         Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
         Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM,
         Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+        Permission.BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        Permission.BUSINESS_TRANSFORMATION_FACILITY_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_FACILITY_APPROVE,
+        Permission.BUSINESS_TRANSFORMATION_FACILITY_TRANSFER,
+        Permission.BUSINESS_TRANSFORMATION_ALLOCATION_MANAGE,
+        Permission.BUSINESS_TRANSFORMATION_DISBURSEMENT_WRITE,
+        Permission.BUSINESS_TRANSFORMATION_REPAYMENT_REVERSE,
+        Permission.BUSINESS_TRANSFORMATION_PURPOSE_REQUEST,
+        Permission.BUSINESS_TRANSFORMATION_PURPOSE_REVIEW,
+        Permission.BUSINESS_TRANSFORMATION_PURPOSE_DEFINE,
+        Permission.BUSINESS_TRANSFORMATION_PURPOSE_APPROVE,
+        Permission.BUSINESS_TRANSFORMATION_AMENDMENT_APPROVE,
         Permission.BUSINESS_TRANSFORMATION_EXPORT,
     }
 )
@@ -322,6 +369,12 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_MFI_MANAGE,
         P.BUSINESS_TRANSFORMATION_REFERRAL_MANAGE,
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        P.BUSINESS_TRANSFORMATION_FACILITY_MANAGE,
+        P.BUSINESS_TRANSFORMATION_FACILITY_APPROVE,
+        P.BUSINESS_TRANSFORMATION_ALLOCATION_MANAGE,
+        P.BUSINESS_TRANSFORMATION_PURPOSE_APPROVE,
+        P.BUSINESS_TRANSFORMATION_AMENDMENT_APPROVE,
         P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
@@ -360,6 +413,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
         P.BUSINESS_TRANSFORMATION_VIEW,
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
+        P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
         P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
@@ -482,6 +537,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_EXPORT,
         P.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+        P.BUSINESS_TRANSFORMATION_PURPOSE_DEFINE,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
@@ -501,6 +557,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_DECISION_REVIEW,
         P.STRATEGIC_PRIORITIES_VIEW,
         P.MILESTONES_VIEW_PROGRESS,
+        # Lending-facility cash confirmation is the only lending projection
+        # available to the Accountant. It never grants school-loan detail.
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        P.BUSINESS_TRANSFORMATION_FACILITY_TRANSFER,
     ],
     EdifyRole.HUMAN_RESOURCES: [
         # §5 — authorized non-school programme activities.
@@ -580,38 +640,36 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM,
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        P.BUSINESS_TRANSFORMATION_FACILITY_MANAGE,
+        P.BUSINESS_TRANSFORMATION_ALLOCATION_MANAGE,
         P.BUSINESS_TRANSFORMATION_EXPORT,
+        P.BUSINESS_TRANSFORMATION_PURPOSE_REVIEW,
     ],
     EdifyRole.MFI_PARTNER_ADMIN: [
         P.BUSINESS_TRANSFORMATION_VIEW,
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        P.BUSINESS_TRANSFORMATION_DISBURSEMENT_WRITE,
         P.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
+        P.BUSINESS_TRANSFORMATION_REPAYMENT_REVERSE,
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
         P.BUSINESS_TRANSFORMATION_MFI_MEMBER_MANAGE,
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        P.BUSINESS_TRANSFORMATION_PURPOSE_REQUEST,
     ],
     EdifyRole.MFI_LOAN_OFFICER: [
         P.BUSINESS_TRANSFORMATION_VIEW,
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_LOAN_WRITE,
+        P.BUSINESS_TRANSFORMATION_DISBURSEMENT_WRITE,
         P.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
-        P.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,
+        P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
+        P.BUSINESS_TRANSFORMATION_PURPOSE_REQUEST,
     ],
 }
-
-# The Loans page is a universal transparency surface. Keep this grant here so
-# adding a future role cannot accidentally produce a role with navigation but
-# no read permission. Loan-entry and repayment permissions remain explicit in
-# the two MFI role lists above.
-for _role_permissions in ROLE_PERMISSIONS.values():
-    for _loan_read_permission in (
-        P.BUSINESS_TRANSFORMATION_VIEW,
-        P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
-    ):
-        if _loan_read_permission not in _role_permissions:
-            _role_permissions.append(_loan_read_permission)
 
 
 def permissions_for_role(role: EdifyRole | str) -> list[str]:

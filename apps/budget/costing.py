@@ -144,7 +144,30 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     # is included only when the CD has configured its rate, except the two
     # core components (venue + participant meals) which are always demanded so
     # a missing rate blocks funded scheduling rather than under-costing.
-    if activity_type == "programme_event":
+    # Attendee-side field events (district meetings, boot camps, workshops)
+    # price from the MOU travel per-diems. The profile derives from the
+    # owner's PRIMARY (home) district vs the destination: same district — or
+    # a same-day return — draws transport + lunch; a different district with
+    # an overnight adds accommodation, dinner and breakfast per night.
+    if activity_type == "field_event":
+        days = _days_of(a)
+        # Transport accrues PER DAY for every day away — moving between the
+        # venue, lodging and home leg happens daily, not once per trip — in
+        # both the primary and secondary profiles (owner rule, 2026-08-19).
+        if is_secondary:
+            add("Transport (secondary)", "secondary_transport_per_day", days)
+            add("Lunch", "secondary_lunch_per_day", days)
+            # Every secondary away-day carries the full per-diem set —
+            # breakfast, dinner and a night's accommodation PER DAY (owner
+            # rule, 2026-08-19) — matching the secondary visit-day policy.
+            add("Accommodation", "secondary_accommodation_per_night", days)
+            add("Dinner", "secondary_overnight_dinner_per_day", days)
+            add("Breakfast", "secondary_breakfast_per_day", days)
+        else:
+            add("Transport (primary)", "primary_transport_per_day", days)
+            add("Lunch", "primary_lunch_per_day", days)
+
+    elif activity_type == "programme_event":
         days = _days_of(a)
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
         add("Venue", "programme_venue_per_day", days)
@@ -175,6 +198,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
         add("Facilitation fee", "group_training_facilitation_fee", days)
         add("Venue fee", "group_training_venue_cost", days)
+        # Staff transport and personal per-diems are NOT priced here: they
+        # accrue once per DAY on the owner's day-mission pool
+        # (apps.daily_visit_batches), which this session joins — one
+        # transport per day irrespective of how many activities fill it.
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
@@ -237,6 +264,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
         add("Facilitation fee", "group_training_facilitation_fee", days)
         add("Venue fee", "group_training_venue_cost", days)
+        # Staff transport and personal per-diems are NOT priced here: they
+        # accrue once per DAY on the owner's day-mission pool
+        # (apps.daily_visit_batches), which this session joins — one
+        # transport per day irrespective of how many activities fill it.
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
         key = project_key or "partner_visit_lump_sum"

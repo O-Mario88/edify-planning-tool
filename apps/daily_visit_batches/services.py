@@ -267,6 +267,37 @@ def schedule_visits(
         return {"batchId": batch.id, "activities": new_activities}
 
 
+def member_district(activity):
+    """The district a member activity happens in: school first, then the
+    cluster's district, then the event's own district. None means home —
+    the activity runs in the owner's primary station and prices primary."""
+    school = getattr(activity, "school", None)
+    if school is not None and school.district_id:
+        return school.district
+    cluster = getattr(activity, "cluster", None)
+    if cluster is not None and getattr(cluster, "district_id", None):
+        return cluster.district
+    if getattr(activity, "event_district_id", None):
+        return activity.event_district
+    return None
+
+
+def batch_poolable(activity) -> bool:
+    """Whether this activity's personal per-diems belong to the day pool.
+    Multi-day field events keep their standalone per-day recipe — they own
+    whole away-days by definition."""
+    from .pricing import DAILY_BATCH_ELIGIBLE_TYPES, DAY_POOL_EXTRA_TYPES
+
+    if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES:
+        return bool(activity.school_id)
+    if activity.activity_type not in DAY_POOL_EXTRA_TYPES:
+        return False
+    end = getattr(activity, "end_date", None)
+    if end and activity.planned_date and end > activity.planned_date:
+        return False
+    return True
+
+
 def attach_activity_to_batch(
     activity, *, responsible_user_id: str, reason: str | None = None
 ) -> bool:
@@ -286,10 +317,13 @@ def attach_activity_to_batch(
     district mix, a locked (post-draft) day, or missing pool rates.
     Must be called inside the caller's transaction.
     """
-    school = activity.school
-    if not school or not school.district_id:
-        return False
-    district_type = school.district.district_type
+    district = member_district(activity)
+    if district is None:
+        # Home work (a cluster session or field event in the owner's own
+        # station) prices on the primary profile.
+        district_type = "primary"
+    else:
+        district_type = district.district_type
     if district_type not in ("primary", "secondary"):
         return False
 
@@ -316,10 +350,10 @@ def attach_activity_to_batch(
         else []
     )
     all_district_ids = {
-        a.school.district_id
-        for a in existing_activities
-        if a.school_id and a.school.district_id
-    } | {school.district_id}
+        d.id for d in (member_district(a) for a in existing_activities) if d is not None
+    }
+    if district is not None:
+        all_district_ids.add(district.id)
     if district_type == "secondary" and len(all_district_ids) > 1:
         if _resolve_group(all_district_ids) is None:
             return False
@@ -517,7 +551,28 @@ def _recalculate_and_write_lines(
     batch.required_target_snapshot = (
         catalogue.required_school_visits_per_day if catalogue else 5
     )
+    # §4/§5 Daily Field Cost analytics — the weighted School Visit Cost
+    # Allocation and planned per-school figure. Never funding: the money is
+    # the pool; this is the management lens over it.
+    from .workload import actual_field_cost_per_school, allocate_mission_cost
+
+    allocation = allocate_mission_cost(activities, batch.daily_pool_amount)
+    batch.school_visit_allocation = allocation["school_visit_allocation"]
+    batch.planned_field_cost_per_school = allocation["planned_field_cost_per_school"]
+    batch.workload_snapshot = {
+        "total_units": allocation["total_units"],
+        "visit_units": allocation["visit_units"],
+        "visit_count": allocation["visit_count"],
+        "weights_used": allocation["weights_used"],
+    }
     batch.save()
+    batch.actual_field_cost_per_school = actual_field_cost_per_school(batch)
+    batch.save(update_fields=["actual_field_cost_per_school", "updated_at"])
+
+    # §9.1 — keep the transport company's obligation in step with the day.
+    from apps.fund_requests.vendor_channel import ensure_transport_obligation
+
+    ensure_transport_obligation(batch)
 
     if n == 0:
         _sync_route_batch(batch)  # day emptied → route twin cleans itself up
@@ -536,11 +591,34 @@ def _recalculate_and_write_lines(
             )
             for key, amount in alloc.items()
         ]
+        # Trainings and cluster sessions carry their activity-specific
+        # components (venue, facilitation, participant meals/snacks) ON TOP
+        # of their per-diem pool share — those belong to the session, not to
+        # the person's day. Visits and field events are pure pool shares.
+        from .pricing import POOL_PLUS_RECIPE_TYPES
+
+        recipe_missing: list[str] = []
+        if activity.activity_type in POOL_PLUS_RECIPE_TYPES:
+            from apps.budget.costing import cost_for_activity
+
+            own = cost_for_activity(
+                {
+                    "activityType": activity.activity_type,
+                    "deliveryType": "staff",
+                    "districtType": batch.district_type,
+                    "expectedParticipants": activity.expected_participants,
+                    "days": 1,
+                    "fy": activity.fy,
+                },
+                rates,
+            )
+            lines.extend(own.lines)
+            recipe_missing = own.missing_items
         cost = ActivityCost(
-            amount=sum(alloc.values()),
+            amount=sum(line.amount for line in lines),
             lines=lines,
-            cost_missing=False,
-            missing_items=[],
+            cost_missing=bool(recipe_missing),
+            missing_items=recipe_missing,
         )
         apply_to_activity(
             activity,

@@ -86,12 +86,12 @@ class RoleGatingPermissionTest(APITestCase):
         response = self.client.get("/schools")
         self.assertEqual(response.status_code, 200)
 
-    def test_cd_page_denied_planning_dashboard(self):
-        """Strategic Country Director should be denied access to the Planning Dashboard route."""
+    def test_cd_page_allowed_planning_dashboard(self):
+        """The CD plans non-school field work (district trips, boot camps) —
+        the planning surface is theirs too since 2026-08-19."""
         self.client.force_login(self.cd_user)
         response = self.client.get("/planning")
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith("/dashboard"))
+        self.assertEqual(response.status_code, 200)
 
     def test_cceo_access_own_school_drawer_succeeds(self):
         """A CCEO should successfully retrieve their own assigned school details."""

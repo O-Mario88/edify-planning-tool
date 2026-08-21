@@ -29,27 +29,28 @@ class PhaseThreeMobileRoleHomeContractTest(SimpleTestCase):
                 self.assertIn("mobile_primary_action", source)
                 self.assertIn("mobile-home-hide", source)
 
-    def test_executive_and_people_metrics_follow_attention(self):
+    def test_executive_and_people_metrics_precede_attention(self):
         cd = _read("templates/partials/dashboards/cd/body.html")
         hr = _read("templates/partials/dashboards/hr/body.html")
         rvp = _read("templates/pages/dashboards/rvp.html")
 
-        self.assertLess(cd.index("Leadership Attention"), cd.index("Country pulse"))
+        self.assertLess(cd.index("Country pulse"), cd.index("Leadership Attention"))
         self.assertLess(
-            hr.index("Leadership Attention Required"), hr.index("People pulse")
+            hr.index("People pulse"), hr.index("Leadership Attention Required")
         )
-        self.assertLess(rvp.index("Leadership Attention"), rvp.index("Regional pulse"))
+        self.assertLess(rvp.index("Regional pulse"), rvp.index("Leadership Attention"))
 
-    def test_admin_and_project_mobile_queues_precede_metrics(self):
+    def test_admin_metrics_precede_critical_and_project_queue_precedes_metrics(self):
         admin = _read("templates/pages/dashboards/main.html")
         projects = _read("templates/pages/dashboards/special_projects.html")
 
         self.assertLess(
-            admin.index("admin-mobile-critical-title"), admin.index("Platform pulse")
+            admin.index("dashboard_kpi_title"),
+            admin.index("admin-mobile-critical-title"),
         )
         self.assertLess(
             projects.index("projects-mobile-portfolio-title"),
-            projects.index("mobile-home-metrics"),
+            projects.index('title="Portfolio headline"'),
         )
 
     def test_role_actions_are_selected_from_scoped_view_data(self):

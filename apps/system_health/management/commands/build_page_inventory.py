@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 
 from apps.system_health.page_inventory import (
     build_page_inventory,
+    component_catalogue_as_markdown,
     inventory_as_json,
     inventory_as_markdown,
 )
@@ -29,12 +30,16 @@ class Command(BaseCommand):
 
         json_path = output_dir / "platform-page-inventory.json"
         markdown_path = output_dir / "platform-page-inventory.md"
+        component_path = output_dir / "platform-component-catalogue.md"
         json_path.write_text(inventory_as_json(inventory), encoding="utf-8")
         markdown_path.write_text(inventory_as_markdown(inventory), encoding="utf-8")
+        component_path.write_text(
+            component_catalogue_as_markdown(inventory), encoding="utf-8"
+        )
 
         self.stdout.write(
             self.style.SUCCESS(
                 f"Inventoried {inventory['summary']['routed_surfaces']} routed surfaces: "
-                f"{json_path} and {markdown_path}"
+                f"{json_path}, {markdown_path}, and {component_path}"
             )
         )

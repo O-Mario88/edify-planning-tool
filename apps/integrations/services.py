@@ -60,6 +60,17 @@ def push_to_external(system: str, resource: str, payload: dict) -> str:
     )
 
 
+def validate_external_reference(
+    system: str, resource: str, external_id: str, payload: dict
+) -> None:
+    """Validate a manually supplied reference through the configured adapter."""
+
+    raise IntegrationNotConfigured(
+        f"{system} reference validation is not configured for {resource} "
+        f"({external_id})."
+    )
+
+
 def _record(system, context_type, context_id, *, status, external_id="", error=""):
     IntegrationSync.objects.update_or_create(
         system=system,
@@ -112,6 +123,30 @@ def enqueue_advance_netsuite_sync(advance_id: str) -> None:
     )
 
 
+def enqueue_loan_salesforce_reconciliation(loan_id: str) -> None:
+    """Validate BT's confirmed Salesforce loan reference when sync is enabled."""
+
+    if not sync_enabled(IntegrationSystem.SALESFORCE):
+        return
+    enqueue(
+        "integrations.salesforce.school_loan",
+        {"loanId": str(loan_id)},
+        idempotency_key=f"sf:school-loan:{loan_id}",
+    )
+
+
+def enqueue_facility_tranche_netsuite_sync(tranche_id: str) -> None:
+    """Sync a confirmed lending-facility receipt to NetSuite when enabled."""
+
+    if not sync_enabled(IntegrationSystem.NETSUITE):
+        return
+    enqueue(
+        "integrations.netsuite.facility_tranche",
+        {"trancheId": str(tranche_id)},
+        idempotency_key=f"ns:facility-tranche:{tranche_id}",
+    )
+
+
 # ── Outbox handlers ──────────────────────────────────────────────────────────
 
 
@@ -161,6 +196,93 @@ def _sync_activity_to_salesforce(payload: dict) -> None:
         IntegrationSystem.SALESFORCE,
         "activity",
         activity.id,
+        status=IntegrationSyncStatus.SUCCEEDED,
+        external_id=external_id,
+    )
+
+
+@register(
+    "integrations.salesforce.school_loan",
+    idempotency_note=(
+        "The handler validates the current immutable Salesforce confirmation "
+        "and converges one IntegrationSync row per school loan."
+    ),
+)
+def _reconcile_school_loan_salesforce(payload: dict) -> None:
+    from apps.business_transformation.models import MfiLoan, SalesforceStatus
+
+    loan = MfiLoan.objects.filter(id=payload.get("loanId")).first()
+    if loan is None:
+        return
+    if (
+        loan.salesforce_status != SalesforceStatus.CONFIRMED
+        or not loan.salesforce_loan_id
+    ):
+        raise ValueError("School loan has no confirmed Salesforce reference.")
+    validate_external_reference(
+        IntegrationSystem.SALESFORCE,
+        "school_loan",
+        loan.salesforce_loan_id,
+        {
+            "loanId": loan.id,
+            "schoolId": loan.school_id,
+            "mfiId": loan.mfi_id,
+        },
+    )
+    _record(
+        IntegrationSystem.SALESFORCE,
+        "school_loan",
+        loan.id,
+        status=IntegrationSyncStatus.RECONCILED_MANUAL,
+        external_id=loan.salesforce_loan_id,
+    )
+
+
+@register(
+    "integrations.netsuite.facility_tranche",
+    idempotency_note=(
+        "Converges on one IntegrationSync row and external transfer per immutable "
+        "facility tranche; NetSuite must upsert by tranche id."
+    ),
+)
+def _sync_facility_tranche_to_netsuite(payload: dict) -> None:
+    from apps.business_transformation.models import FundingFacilityTranche
+
+    tranche = (
+        FundingFacilityTranche.objects.select_related("facility")
+        .filter(id=payload.get("trancheId"), reversal__isnull=True)
+        .first()
+    )
+    if tranche is None:
+        return
+    existing = IntegrationSync.objects.filter(
+        system=IntegrationSystem.NETSUITE,
+        context_type="facility_tranche",
+        context_id=tranche.id,
+        status__in=(
+            IntegrationSyncStatus.SUCCEEDED,
+            IntegrationSyncStatus.RECONCILED_MANUAL,
+        ),
+    ).first()
+    if existing:
+        return
+    external_id = push_to_external(
+        IntegrationSystem.NETSUITE,
+        "facility_tranche",
+        {
+            "trancheId": tranche.id,
+            "facilityId": tranche.facility_id,
+            "mfiId": tranche.facility.mfi_id,
+            "amount": str(tranche.amount),
+            "currency": tranche.currency,
+            "valueDate": tranche.value_date.isoformat(),
+            "paymentReference": tranche.payment_reference,
+        },
+    )
+    _record(
+        IntegrationSystem.NETSUITE,
+        "facility_tranche",
+        tranche.id,
         status=IntegrationSyncStatus.SUCCEEDED,
         external_id=external_id,
     )

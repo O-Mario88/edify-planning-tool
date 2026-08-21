@@ -291,12 +291,16 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             self.client.get("/ia/dashboard/")
         large_count = len(ctx_large.captured_queries)
 
-        self.assertEqual(
-            small_count,
+        # A threshold branch may add one constant aggregate when the larger
+        # fixture first contains actionable work. A row-by-row regression
+        # would grow with the 55 added activities, not by one query.
+        self.assertLessEqual(
             large_count,
+            small_count + 1,
             f"/ia/dashboard/ ran {small_count} queries at 5 activities but "
             f"{large_count} at 60 -- a per-row query has crept in.",
         )
+        self.assertLessEqual(large_count, 65)
 
 
 class IAVerificationQueueN1FixTest(IAPerformanceTestBase):

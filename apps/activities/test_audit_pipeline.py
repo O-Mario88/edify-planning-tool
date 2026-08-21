@@ -77,11 +77,13 @@ class OneActivityOneCostOneChannelTest(_PipelineFixture):
             self.assertTrue(line.cost_setting_key)
             self.assertIsNotNone(line.catalogue_id)
             self.assertEqual(line.unit_cost * line.quantity, line.total_cost)
-        # exactly one weekly draft carries the lines; advances mirror 1:1
+        # exactly one weekly draft carries the STAFF-PAYABLE lines (school-
+        # visit transport is vendor-direct and never enters the advance)
+        staff_lines = [l for l in lines if l.line_item_type != "transport"]
         wfr_lines = WeeklyFundRequestLine.objects.filter(
             activity_budget_line__activity=activity
         )
-        self.assertEqual(wfr_lines.count(), len(lines))
+        self.assertEqual(wfr_lines.count(), len(staff_lines))
         self.assertEqual(
             AdvanceRequest.objects.filter(activity=activity).count(), len(lines)
         )

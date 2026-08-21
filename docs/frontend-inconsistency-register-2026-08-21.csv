@@ -1,0 +1,13 @@
+finding_id,component,current_variants,pages_affected,correct_standard,severity,migration_status
+UI-20260821-001,Global document foundation,"base template style island; shared CSS",All authenticated full pages,Shared design-system stylesheet and semantic tokens,High,Fixed
+UI-20260821-002,Cluster drawers,"two template overrides; forced-white cluster assignment; base drawer",Cluster create/edit/planner/assignment drawers,Base drawer geometry theme focus and responsive contract,High,Fixed
+UI-20260821-003,Canonical agreement,"template-owned document CSS; raw print rules",Canonical agreement view,Scoped token-driven document stylesheet,Medium,Fixed
+UI-20260821-004,Upload Center,"native dialog with private template CSS",Documents upload center,Shared dialog/drawer component styles,Medium,Fixed
+UI-20260821-005,Help print exports,"article print CSS; manual print CSS",Help article print and manual export,One shared token-driven print document pattern,Medium,Fixed
+UI-20260821-006,Priority configuration,"template grid/style island",HR priority configuration,Shared responsive page grid and content visibility,Medium,Fixed
+UI-20260821-007,Calendar event state,"template FullCalendar CSS",Planning/calendar workspace,Scoped third-party semantic event-state bridge,Medium,Fixed
+UI-20260821-008,Regional performance,"CSS reinjected through HTMX partial",Analytics dashboards and project analytics,Shared component style with reduced-motion/focus/theme rules,High,Fixed
+UI-20260821-009,Drawer elevation,"undefined --edify-shadow-xl",Filter drawer consumers,Defined governed elevation scale,Medium,Fixed
+UI-20260821-010,Table typography,"micro-size global table headings",All rendered tables,Readable label-tier table headings,High,Fixed
+UI-20260821-011,Page audit evidence,"route list without stable IDs/page-family fields",565 product surfaces,Generated stable page matrix and component consumers,High,Fixed
+

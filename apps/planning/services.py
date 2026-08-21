@@ -648,7 +648,7 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
     )
     from apps.activity_catalogue.models import MappingMode
     from apps.core.scoping import resolve_user_scope, scoped_school_queryset
-    from apps.partners.models import Partner, PartnerAssignment
+    from apps.partners.models import Partner
     from apps.ssa.services import latest_applicable_record
 
     item_id = data.get("catalogueItemId")
@@ -763,7 +763,9 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
         source_activity=source_activity,
     )
     with transaction.atomic():
-        assignment = PartnerAssignment.objects.create(
+        from apps.partners.services import create_assignment
+
+        assignment = create_assignment(
             school=school,
             partner=partner,
             assigning_staff_id=(principal.staff_profile_id or principal.user_id),
@@ -778,7 +780,6 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
             focus_intervention=intervention,
             expected_activity_type=item.workflow_kind,
             scheduled_date=None,
-            status="pending_scheduling",
         )
     return {
         "id": assignment.id,

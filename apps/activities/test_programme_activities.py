@@ -408,19 +408,30 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         response = client.get("/work-plan/add")
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
+        # Simplified 2026-08-19: the drawer asks only what the planner alone
+        # knows — what, when, where, how many. Rationale, purpose, project,
+        # school count and responsibility are defaulted server-side; the
+        # follow-up intervention stays as a conditional for the items that
+        # require one.
         for field_name in (
             "catalogue_item_id",
-            "support_rationale",
-            "purpose",
             "focus_intervention",
             "scheduled_date",
             "end_date",
-            "planned_school_count",
-            "expected_participants",
-            "responsibility_type",
+            "district_id",
             "venue",
+            "expected_participants",
         ):
             self.assertIn(f'name="{field_name}"', html)
+        for removed in (
+            "support_rationale",
+            "purpose",
+            "planned_school_count",
+            "responsibility_type",
+            "expected_outcome",
+            "project_id",
+        ):
+            self.assertNotIn(f'name="{removed}"', html)
 
         # Activity type and delivery mode are DERIVED from the chosen
         # catalogue item, not entered beside it. They used to be their own
@@ -428,8 +439,11 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         # catalogue entry the cost was then drawn from. The catalogue is the
         # governed source, so the drawer publishes them as data attributes on
         # each option and displays them read-only.
-        for derived in ('data-activity-type="', 'data-delivery="'):
-            self.assertIn(derived, html)
+        # Type and delivery mode are derived from the governed catalogue item
+        # server-side; since the 2026-08-19 simplification the drawer no
+        # longer displays them either — only the requires-intervention flag
+        # is published, for the conditional follow-up select.
+        self.assertIn('data-requires-intervention="', html)
         for retired in ("programme_activity_type", "programme_delivery_mode"):
             self.assertNotIn(f'name="{retired}"', html)
 

@@ -181,7 +181,7 @@ class CostReferenceTest(TestCase):
         # Standard support draws from the same CD rate card as everything
         # else — a school visit that nothing in the catalogue can price is
         # exactly the state that made ordinary support unschedulable.
-        self.assertEqual(len(coverage), 56)
+        self.assertEqual(len(coverage), 60)
         self.assertEqual(
             {row["stable_code"] for row in coverage},
             {item.stable_code for item in items},

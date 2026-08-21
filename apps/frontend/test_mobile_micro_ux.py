@@ -41,12 +41,12 @@ class MobileMicroUXContractTest(SimpleTestCase):
                 self.assertIn(marker, styles)
 
     def test_touch_checkboxes_are_not_enlarged_or_given_a_field_focus_square(self):
-        base = _read("templates/base.html")
+        foundation = _read("static/css/design-system.css")
         bridge = _read("static/css/consistency.css")
 
-        coarse_rule = base.split("@media (max-width: 48rem), (pointer: coarse)", 1)[
+        coarse_rule = foundation.rsplit("@media (max-width: 48rem), (pointer: coarse)", 1)[
             1
-        ].split("</style>", 1)[0]
+        ].split("}", 2)[0]
         self.assertNotIn(":where(input, select, textarea)", coarse_rule)
         self.assertIn('input[type="text"]', coarse_rule)
         self.assertIn('input[type="time"]', coarse_rule)
@@ -158,8 +158,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260812tables1", base)
-        self.assertIn("pages.css' %}?v=20260812tables2", base)
+        self.assertIn("platform.css' %}?v=20260818type7", base)
+        self.assertIn("pages.css' %}?v=20260821uiaudit1", base)
         self.assertIn("mobile-micro-ux.css' %}?v=20260812checkbox1", base)
         self.assertIn("micro-ux.js' %}?v=20260812checkbox1", base)
 

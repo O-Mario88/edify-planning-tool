@@ -21,8 +21,11 @@ ceiling here exists so neither of those quietly stops being true.
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
+from django.core.cache import cache
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 
 from apps.accounts.models import StaffProfile, User
@@ -74,6 +77,22 @@ class TodoQueryBudgetTests(TestCase):
     def test_a_cceo_pays_none_of_the_country_oversight_cost(self):
         """The expensive path is Country Director only; everyone else is cheap."""
         self.assertLess(self._todo_queries(self.cceo), self.CEILING)
+
+    @override_settings(TODO_SNAPSHOT_CACHE_SECONDS=60)
+    def test_shared_pages_reuse_one_short_lived_todo_snapshot(self):
+        from apps.command_center import todo_service
+
+        cache.clear()
+        with patch.object(
+            todo_service,
+            "get_todos",
+            wraps=todo_service.get_todos,
+        ) as derive:
+            first = todo_service.get_cached_todos(self.cceo)
+            second = todo_service.get_cached_todos(self.cceo)
+
+        self.assertEqual(first, second)
+        self.assertEqual(derive.call_count, 1)
 
     def test_the_cost_does_not_grow_with_the_number_of_program_leads(self):
         """The regression that matters, stated as a shape rather than a number.

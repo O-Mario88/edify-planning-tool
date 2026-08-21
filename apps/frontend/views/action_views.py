@@ -74,8 +74,15 @@ def my_actions_view(request):
 # Who may perform each transition, checked against the row rather than the
 # role: an action is a two-party record, and the only people with standing are
 # the two parties (plus Admin, who can unstick anything).
+#
+# "resolve" is SENDER-only (2026-08-20 priorities audit): it sat in neither
+# set, and with the unscoped row lookup below ANY authenticated user could
+# POST /actions/<id>/resolve on any manually-resolvable action — including
+# the recipient closing their own assignment, the exact self-verification
+# the governance rules forbid. The person who asked for the work is the one
+# who confirms it happened.
 _RECIPIENT_ONLY = {"acknowledge", "start", "block", "return"}
-_SENDER_ONLY = {"cancel", "escalate"}
+_SENDER_ONLY = {"cancel", "escalate", "resolve"}
 
 
 @require_page_permission("my_actions")

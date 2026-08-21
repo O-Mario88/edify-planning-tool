@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest
@@ -76,6 +77,55 @@ def monthly_budget_view(request):
     return redirect("/fund-requests/weekly")
 
 
+def _mission_status_for_cceo(user, week_start):
+    """What a CCEO is told about vendor-paid mission costs for the week:
+    arrangement/booking STATUS, never rates or vendor amounts. Approver
+    roles see the full mission economics elsewhere, so this is None for
+    them and the chips do not render."""
+    if getattr(user, "active_role", "") != "CCEO" or not week_start:
+        return None
+    from apps.fund_requests.fundable import vendor_direct_filter
+
+    vendor_lines = list(
+        ActivityScheduleCostLine.objects.filter(
+            responsible_user=user.user_id,
+            week_start_date=week_start,
+            activity__deleted_at__isnull=True,
+        )
+        .filter(vendor_direct_filter())
+        .only("line_item_type", "planned_date", "quantity")
+    )
+    if not vendor_lines:
+        return None
+    transport_days = {
+        line.planned_date for line in vendor_lines if line.line_item_type == "transport"
+    }
+    vendor_nights = sum(
+        line.quantity for line in vendor_lines if line.line_item_type == "accommodation"
+    )
+    # §6.1/§13 — status only, never an amount: "Confirmed" once every mission
+    # day's provider is actually paid, "Arranged" until then.
+    from apps.fund_requests.finance_models import TransportPayment
+
+    day_payments = list(
+        TransportPayment.objects.filter(
+            batch__responsible_user=user.user_id,
+            batch__visit_date__gte=week_start,
+            batch__visit_date__lte=week_start + timedelta(days=6),
+        ).values_list("status", flat=True)
+    )
+    transport_status = (
+        "confirmed"
+        if day_payments and all(s == "paid" for s in day_payments)
+        else "arranged"
+    )
+    return {
+        "transport_days": len(transport_days),
+        "vendor_accommodation_nights": vendor_nights,
+        "transport_status": transport_status,
+    }
+
+
 def _scoped_base_querysets(request, fy):
     """Shared role-scoped base querysets for the fund-requests page and its
     actions. Country roles (CD/IA/Accountant/Admin) see everything; a PL sees
@@ -133,6 +183,13 @@ def _scoped_base_querysets(request, fy):
         if scope.supervised_staff_ids:
             q_act_scope |= Q(responsible_staff_id__in=scope.supervised_staff_ids)
         activities_qs = activities_qs.filter(q_act_scope)
+
+    # A supervising manager reviews one member at a time — the team tabs make
+    # each member an explicit selection, with the manager's own requests as
+    # the opening tab. An unselected page therefore pins to the viewer rather
+    # than blending the whole team behind one arbitrary `.first()` pick.
+    if not staff_id and supervised_user_ids:
+        staff_id = user.user_id or ""
 
     # Apply dropdown filters. NOTE: StaffProfile has no `district_id` field —
     # only `primary_district_id` — so this must NOT be `district_id=`.
@@ -210,11 +267,11 @@ def _monthly_summary_band(totals: dict) -> list[dict]:
     from apps.core.metrics import MetricValue, render_metric, render_strip
 
     pairs = (
+        ("fund_request_monthly_total", totals["total"]),
         ("fund_request_monthly_visits_budget", totals["visits"]),
         ("fund_request_monthly_trainings_budget", totals["trainings"]),
         ("fund_request_monthly_meetings_budget", totals["meetings"]),
         ("fund_request_monthly_admin_budget", totals["admin"]),
-        ("fund_request_monthly_total", totals["total"]),
     )
     return render_strip(
         [render_metric(key, MetricValue.measured(value)) for key, value in pairs]
@@ -250,7 +307,9 @@ def _build_fund_requests_context(request):
     fy = request.GET.get("fy", "2026").strip()
     quarter = request.GET.get("quarter", "").strip()
     month_name = request.GET.get("month", "").strip()
-    active_tab = request.GET.get("tab", "weekly").strip()
+    # (2026-08-20 tab audit: the page's old `tab` state was vestigial — no
+    # control ever set it and nothing filtered on it; the real rails are
+    # ?staff= and ?period_tab=.)
     # Which budget horizon the period card is showing. The week is the default
     # because it is the one that moves money.
     _role = getattr(request.user, "active_role", "")
@@ -476,49 +535,49 @@ def _build_fund_requests_context(request):
     # and PL approval pages.
     # Construct unified KPI strip items
     kpi_strip_items = [
-        {
-            "label": "Total Requested This Month",
-            "value": format_ugx_compact(requested_this_month),
-            "trend": trend,
-            "helper": trend_helper,
-            "icon": "currency",
-            "variant": "info",
-        },
-        {
-            "label": "Awaiting Approval",
-            "value": format_ugx_compact(awaiting_amount),
-            "helper": f"{awaiting_count} request{'s' if awaiting_count != 1 else ''}",
-            "icon": "clock",
-            "variant": "warning",
-        },
-        {
-            "label": "Approved",
-            "value": format_ugx_compact(approved_amount),
-            "helper": f"{approved_count} request{'s' if approved_count != 1 else ''}",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Ready for Disbursement",
-            "value": format_ugx_compact(ready_amount),
-            "helper": f"{ready_count} request{'s' if ready_count != 1 else ''}",
-            "icon": "briefcase",
-            "variant": "info",
-        },
-        {
-            "label": "Returned for Review",
-            "value": format_ugx_compact(returned_amount),
-            "helper": f"{returned_count} request{'s' if returned_count != 1 else ''}",
-            "icon": "warning",
-            "variant": "danger",
-        },
-        {
-            "label": "Accountability Pending",
-            "value": format_ugx_compact(pending_acct_amount),
-            "helper": f"{pending_acct_count} request{'s' if pending_acct_count != 1 else ''}",
-            "icon": "report",
-            "variant": "warning",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_total_requested_this_month",
+            format_ugx_compact(requested_this_month),
+            trend=trend,
+            helper=trend_helper,
+            icon="currency",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_awaiting_approval",
+            format_ugx_compact(awaiting_amount),
+            helper=f"{awaiting_count} request{'s' if awaiting_count != 1 else ''}",
+            icon="clock",
+            variant="warning",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_approved",
+            format_ugx_compact(approved_amount),
+            helper=f"{approved_count} request{'s' if approved_count != 1 else ''}",
+            icon="check",
+            variant="success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_ready_for_disbursement",
+            format_ugx_compact(ready_amount),
+            helper=f"{ready_count} request{'s' if ready_count != 1 else ''}",
+            icon="briefcase",
+            variant="info",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_returned_for_review",
+            format_ugx_compact(returned_amount),
+            helper=f"{returned_count} request{'s' if returned_count != 1 else ''}",
+            icon="warning",
+            variant="danger",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_budget_views_accountability_pending",
+            format_ugx_compact(pending_acct_amount),
+            helper=f"{pending_acct_count} request{'s' if pending_acct_count != 1 else ''}",
+            icon="report",
+            variant="warning",
+        ),
     ]
 
     # 4. Weekly Fund Request details
@@ -783,6 +842,8 @@ def _build_fund_requests_context(request):
             "fy": fy,
             "date": date(year_num, month_num, 1).isoformat(),
             **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
+            **({"staff": staff_id} if staff_id else {}),
+            **({"district": district_id} if district_id else {}),
         },
     )
     _band_kind_totals = {"training": 0, "meeting": 0, "admin": 0, "standard": 0}
@@ -835,7 +896,21 @@ def _build_fund_requests_context(request):
             "period": period_tab,
             "fy": fy,
             "date": _budget_anchor.isoformat(),
+            # This is the STAFF funds workspace: partner-delivered work is
+            # paid directly to the partner (MOU 50% advance + clearance) and
+            # never appears in a staff fund request on any horizon here.
+            "exclude_partner": True,
+            # A CCEO sees only what is disbursed to them personally — never
+            # the transport rate or a vendor-booked hotel amount. Approver
+            # roles keep the full mission view.
+            **(
+                {"staff_channel_only": True}
+                if getattr(user, "active_role", "") == "CCEO"
+                else {}
+            ),
             **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
+            **({"staff": staff_id} if staff_id else {}),
+            **({"district": district_id} if district_id else {}),
         },
     )
 
@@ -1099,6 +1174,49 @@ def _build_fund_requests_context(request):
             }
         )
 
+    # Manager team tabs. A supervising manager (a PL over their CCEOs) works
+    # one member at a time: their own requests on the first tab, then each
+    # supervised member, so approval is a click away instead of a dropdown
+    # hunt. The tab is the same `staff` filter the rest of the page already
+    # honours; the per-member status for the selected week feeds the "awaiting
+    # you" marker.
+    team_tabs = []
+    if supervised_user_ids:
+        _member_profiles = list(
+            StaffProfile.objects.filter(user_id__in=supervised_user_ids)
+            .select_related("user")
+            .order_by("user__name")
+        )
+        _week_statuses = dict(
+            WeeklyFundRequest.objects.filter(
+                week_start_date=selected_week_start,
+                responsible_user__in=[user.user_id, *supervised_user_ids],
+            ).values_list("responsible_user", "status")
+        )
+
+        def _team_tab(uid, label):
+            return {
+                "user_id": uid,
+                "label": label,
+                "active": uid == staff_id,
+                "awaiting_review": _week_statuses.get(uid) == "submitted_to_pl",
+            }
+
+        team_tabs.append(_team_tab(user.user_id, "My Requests"))
+        for _profile in _member_profiles:
+            team_tabs.append(
+                _team_tab(
+                    _profile.user_id,
+                    (_profile.user.name if _profile.user else _profile.user_id),
+                )
+            )
+
+    _team_tab_query = urlencode(
+        {key: value for key, value in request.GET.items() if value and key != "staff"}
+    )
+    if _team_tab_query:
+        _team_tab_query += "&"
+
     # Disbursed monthly fund plans awaiting THIS user's receipt confirmation —
     # surfaces the "Funds disbursed → Confirm Receipt" step (auto-clears the
     # matching To-Do once confirmed).
@@ -1145,6 +1263,12 @@ def _build_fund_requests_context(request):
         # describe a request differently from the pages that act on it.
         "active_wfr_status_label": _weekly_status_label(active_wfr),
         "period_tab_query": _period_tab_query,
+        # Manager team tabs: the viewer's own requests first, then one tab per
+        # supervised member. Each tab drives the same `staff` filter the
+        # dropdown uses; the amber dot marks a request sitting at the
+        # manager's approval stage for the selected week.
+        "team_tabs": team_tabs,
+        "team_tab_query": _team_tab_query,
         # The CD's two hats: their own admin plan, and monitoring the country's
         # field budget. Rendered as a switch on the card only when the role
         # actually holds both scopes.
@@ -1157,6 +1281,7 @@ def _build_fund_requests_context(request):
             else []
         ),
         "card_budget_scope": period_workspace["budget_scope"],
+        "mission_status": _mission_status_for_cceo(user, selected_week_start),
         "monthly_stepper": monthly_stepper,
         "insights": insights,
         "breakdown": breakdown,
@@ -1175,7 +1300,6 @@ def _build_fund_requests_context(request):
         "selected_staff": staff_id,
         "selected_status": status_filter,
         "selected_request_type": request_type,
-        "active_tab": active_tab,
     }
 
 

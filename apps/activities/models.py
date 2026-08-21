@@ -194,6 +194,16 @@ class Activity(SoftDeleteModel):
     )
     expected_outcome = models.TextField(null=True, blank=True)
 
+    # Actuals, captured at delivery — planned fields above are never copied
+    # into these; planned, actual and verified information stay separate.
+    actual_delivery_date = models.DateField(null=True, blank=True)
+    actual_outcome = models.TextField(null=True, blank=True)
+    actual_observations = models.TextField(null=True, blank=True)
+    follow_up_note = models.TextField(null=True, blank=True)
+    # When the executor pressed Start (partner field officers today) — the
+    # in-progress moment, distinct from created_at and scheduled_date.
+    execution_started_at = models.DateTimeField(null=True, blank=True)
+
     status = models.CharField(
         max_length=32,
         choices=ActivityStatus.choices,
@@ -413,6 +423,12 @@ class ActivityScheduleCostLine(TimeStampedModel):
     # Itemized line type (transport / breakfast / lunch / dinner / accommodation
     # / venue / facilitation / participant_meals / mobilisation / lump_sum ...).
     line_item_type = models.CharField(max_length=64, null=True, blank=True)
+    # Finance pays this line's provider directly (hotel booked by Finance) —
+    # it leaves the owner's staff advance and the owner sees a booking status
+    # instead of the vendor amount. School-visit transport is ALWAYS vendor-
+    # direct by rule (fund_requests.fundable.vendor_direct_filter); this flag
+    # extends the channel to accommodation on Finance's decision.
+    vendor_paid = models.BooleanField(default=False)
     currency = models.CharField(max_length=8, default="UGX")
     description = models.CharField(max_length=255, null=True, blank=True)
     total_cost = models.BigIntegerField(null=True, blank=True)

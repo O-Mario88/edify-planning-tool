@@ -108,7 +108,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
 
     def test_report_tile_titles_do_not_wrap_at_intermediate_widths(self):
         self.assertIn("container-name: kpi-strip ia-report-kpis", self.css)
-        self.assertIn("@container ia-report-kpis (max-width: 64rem)", self.css)
+        self.assertNotIn("@container ia-report-kpis (max-width: 64rem)", self.css)
         self.assertIn("@container ia-report-kpis (max-width: 34rem)", self.css)
         self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", self.css)
         self.assertIn(".ia-dashboard .kpi-strip__label", self.css)

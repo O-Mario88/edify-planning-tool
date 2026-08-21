@@ -1,3 +1,4 @@
+from apps.core.metrics import render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
@@ -793,70 +794,70 @@ class PlanningDashboardService:
         }
 
         kpi_strip_items = [
-            {
-                "label": "Ready for Support",
-                "value": str(ready_for_support_count),
-                "raw_value": ready_for_support_count,
-                "helper": "Clustered & SSA active",
-                "icon": "school",
-                "variant": "success",
-            },
-            {
-                "label": "SSA Required",
-                "value": str(baseline_required_count),
-                "raw_value": baseline_required_count,
-                "helper": "No current SSA",
-                "icon": "warning",
-                "variant": "danger",
-            },
-            {
-                "label": "Clusters Needing Action",
-                "value": str(clusters_needing_action_count),
-                "raw_value": clusters_needing_action_count,
-                "helper": "Missing cluster action",
-                "icon": "users",
-                "variant": "warning",
-            },
-            {
-                "label": "Core Package Gaps",
-                "value": str(core_package_gaps_count),
-                "raw_value": core_package_gaps_count,
-                "helper": "Core schools gaps",
-                "icon": "target",
-                "variant": "danger",
-            },
-            {
-                "label": "Partner Pending Schedule",
-                "value": str(partner_pending_schedule_count),
-                "raw_value": partner_pending_schedule_count,
-                "helper": "Partner awaiting schedule",
-                "icon": "briefcase",
-                "variant": "info",
-            },
-            {
-                "label": "In My Plan",
-                "value": str(in_my_plan_count),
-                "raw_value": in_my_plan_count,
-                "helper": "Scheduled activities",
-                "icon": "calendar",
-                "variant": "blue",
-            },
-            {
-                "label": "Cost Blocked",
-                "value": str(cost_blocked_count),
-                "raw_value": cost_blocked_count,
-                "helper": "Missing Cost Catalogue",
-                "icon": "warning",
-                "variant": "danger",
-            },
-            {
-                "label": "Data Cleanup Required",
-                "value": str(data_cleanup_count),
-                "raw_value": data_cleanup_count,
-                "helper": "Missing operational fields",
-                "icon": "school",
-                "variant": "purple",
-            },
+            render_precomputed_metric_item(
+                "planning_planning_service_ready_for_support",
+                str(ready_for_support_count),
+                raw_value=ready_for_support_count,
+                helper="Clustered & SSA active",
+                icon="school",
+                variant="success",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_ssa_required",
+                str(baseline_required_count),
+                raw_value=baseline_required_count,
+                helper="No current SSA",
+                icon="warning",
+                variant="danger",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_clusters_needing_action",
+                str(clusters_needing_action_count),
+                raw_value=clusters_needing_action_count,
+                helper="Missing cluster action",
+                icon="users",
+                variant="warning",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_core_package_gaps",
+                str(core_package_gaps_count),
+                raw_value=core_package_gaps_count,
+                helper="Core schools gaps",
+                icon="target",
+                variant="danger",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_partner_pending_schedule",
+                str(partner_pending_schedule_count),
+                raw_value=partner_pending_schedule_count,
+                helper="Partner awaiting schedule",
+                icon="briefcase",
+                variant="info",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_in_my_plan",
+                str(in_my_plan_count),
+                raw_value=in_my_plan_count,
+                helper="Scheduled activities",
+                icon="calendar",
+                variant="blue",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_cost_blocked",
+                str(cost_blocked_count),
+                raw_value=cost_blocked_count,
+                helper="Missing Cost Catalogue",
+                icon="warning",
+                variant="danger",
+            ),
+            render_precomputed_metric_item(
+                "planning_planning_service_data_cleanup_required",
+                str(data_cleanup_count),
+                raw_value=data_cleanup_count,
+                helper="Missing operational fields",
+                icon="school",
+                variant="purple",
+            ),
         ]
 
         # 6. Cluster Planning List

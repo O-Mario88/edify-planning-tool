@@ -184,6 +184,9 @@ class ActivityType(models.TextChoices):
     # plan: conferences, student camps, exhibitions, launches, stakeholder
     # events, staff workshops. Still a full canonical Activity.
     PROGRAMME_EVENT = "programme_event", "Programme Event"
+    # Attendee-side field work: district meetings, boot camps, workshops —
+    # priced from the MOU travel per-diems, not a venue recipe.
+    FIELD_EVENT = "field_event", "Field Event"
 
 
 class PlanningSource(models.TextChoices):
@@ -307,6 +310,7 @@ class ProgrammeActivityType(models.TextChoices):
     ALUMNI = "alumni", "Alumni"
     TRAINING = "training", "Training"
     SCHOOL_VISIT = "school_visit", "School Visit"
+    FIELD_EVENT = "field_event", "Field Event"
     YOUTH_CAMP = "youth_camp", "Youth Camp"
     ADMIN = "admin", "Admin"
     PROGRAMME_EVENT = "programme_event", "Programme Event"

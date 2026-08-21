@@ -641,54 +641,11 @@ def partner_detail_view(request, partner_id):
 
 @require_page_permission("partner_today")
 def partner_today_view(request):
-    """Partner dashboard — today's work."""
-    user = request.user
-    today = date.today()
-    # Partner-role logins have no StaffProfile, so responsible_staff_id (a
-    # StaffProfile id) never matches user.id — scope by the partner-activity
-    # link instead (same resolver used everywhere else a partner identity is
-    # checked, e.g. apps/debriefs/field_debrief_service.py).
-    partner_ids = resolve_partner_ids(user)
-    # Withdrawn work must leave the partner's day. Without the status
-    # exclusion a recalled activity dated today still appeared here, so a
-    # partner who had been told to stop was still being told to go — and any
-    # visit they made off the back of it would have had no assignment behind
-    # it, no evidence route and no way to pay them.
-    today_activities = (
-        Activity.objects.filter(
-            assigned_partner_id__in=partner_ids,
-            planned_date=today,
-            deleted_at__isnull=True,
-        )
-        .exclude(status__in=STOPPED_ACTIVITY_STATUSES)
-        .select_related("school", "cluster")
-        .order_by("activity_type")
-    )
+    """Retired 2026-08-20: the partner's home is Assigned Activities; their
+    plan lives on My Plan. Old bookmarks land safely."""
+    from django.shortcuts import redirect as _redirect
 
-    upcoming = (
-        Activity.objects.filter(
-            assigned_partner_id__in=partner_ids,
-            planned_date__gt=today,
-            status="scheduled",
-            deleted_at__isnull=True,
-        )
-        .select_related("school")
-        .order_by("planned_date")[:5]
-    )
-
-    context = {
-        "today_activities": today_activities,
-        "upcoming": upcoming,
-        "today": today,
-        "is_partner_admin": user.active_role == EdifyRole.PARTNER_ADMIN.value,
-        "mobile_primary_action": {
-            "label": "Open today's plan"
-            if today_activities
-            else "View assigned schools",
-            "url": "/my-plan" if today_activities else "/partner/schools",
-        },
-    }
-    return render(request, "pages/partner/today.html", context)
+    return _redirect("/partner/assigned-schools")
 
 
 @require_page_permission("partner_schools")
@@ -763,17 +720,13 @@ def partner_schedule_assignment_drawer(request, assignment_id):
         partner_id__in=partner_ids,
         status__in=["assigned", "pending_scheduling"],
     )
-    choices = (
-        [assignment.catalogue_item]
-        if assignment.catalogue_item_id
-        else list(assignment.allowed_catalogue_items.all())
-    )
+    _ensure_assignment_item(assignment)
     return render(
         request,
         "partials/partners/schedule_assignment_drawer.html",
         {
             "assignment": assignment,
-            "catalogue_choices": choices,
+            "approved_item": assignment.catalogue_item,
             "drawer_size": "md",
         },
     )
@@ -804,9 +757,8 @@ def partner_schedule_assignment_action(request, assignment_id):
             },
             request.user,
         )
-        response = HttpResponse(
-            '<script>window.location.href="/partner/activities";</script>'
-        )
+        # Scheduled work lives on My Plan (§6) — land the partner there.
+        response = HttpResponse('<script>window.location.href="/my-plan";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as exc:
@@ -864,8 +816,9 @@ def partner_return_assignment_action(request, assignment_id):
             },
             request.user,
         )
+        # A returned assignment leaves the intake — show the updated list.
         response = HttpResponse(
-            '<script>window.location.href="/partner/activities";</script>'
+            '<script>window.location.href="/partner/assigned-schools";</script>'
         )
         response["HX-Trigger"] = "close-drawer"
         return response
@@ -909,3 +862,647 @@ def partner_my_plan_view(request):
     from django.shortcuts import redirect
 
     return redirect("/my-plan")
+
+
+@require_page_permission("partner_my_plan")
+def partner_invoice_drawer(request):
+    """The partner's PERIOD invoice drawer. One invoice sums all their
+    planned activity costs for the chosen week/month/quarter, grouped by
+    category; the entered amount must equal the fetched period total."""
+    from datetime import date as _date
+
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests.partner_invoices import invoice_basis
+
+    kind = (request.GET.get("period_kind") or "month").strip()
+    instalment = (request.GET.get("instalment") or "advance").strip()
+    anchor_raw = (request.GET.get("anchor") or "").strip()
+    try:
+        anchor = _date.fromisoformat(anchor_raw[:10]) if anchor_raw else _date.today()
+    except ValueError:
+        anchor = _date.today()
+    try:
+        basis = invoice_basis(request.user, kind, anchor, instalment)
+        basis_error = None
+    except (BadRequest, Forbidden) as exc:
+        basis, basis_error = None, str(exc)
+    return render(
+        request,
+        "partials/partner/invoice_drawer.html",
+        {
+            "basis": basis,
+            "basis_error": basis_error,
+            "kind": kind,
+            "instalment": instalment,
+            "anchor": anchor.isoformat(),
+        },
+    )
+
+
+@require_page_permission("partner_my_plan")
+def partner_invoice_submit(request):
+    """POST multipart — create the period invoice and route it to the PL."""
+    from datetime import date as _date
+
+    from django.http import HttpResponse
+
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.fund_requests.partner_invoices import submit_invoice
+
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    try:
+        anchor = _date.fromisoformat((request.POST.get("anchor") or "")[:10])
+        result = submit_invoice(
+            request.user,
+            (request.POST.get("period_kind") or "month").strip(),
+            anchor,
+            (request.POST.get("instalment") or "advance").strip(),
+            request.POST.get("entered_total"),
+            request.FILES.get("invoice_file"),
+        )
+    except (BadRequest, Forbidden, ValueError) as exc:
+        return HttpResponse(
+            f'<div class="p-3 rounded-surface bg-rose-50 text-rose-700 '
+            f'text-[12px] font-bold" role="alert">{exc}</div>',
+            status=400,
+        )
+    label = "50% advance" if result["invoiceType"] == "advance" else "clearance"
+    response = HttpResponse(
+        '<div class="p-3 rounded-surface bg-emerald-50 text-emerald-800 '
+        f'text-[13px] font-bold" role="status">Invoice for {result["label"]} '
+        f"submitted — the {label} of UGX {result['payable']:,} is with your "
+        "Program Lead for confirmation.</div>"
+        "<script>window.setTimeout(function () {"
+        'window.location.href = "/my-plan";'
+        "}, 1100);</script>"
+    )
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
+@require_page_permission("partner_assignments")
+def partner_assignments_view(request):
+    """Assigned Activities — the partner's home. Everything assigned to
+    their organisation: what still needs scheduling (with the schedule
+    drawer), and what is already scheduled (which lives on in My Plan)."""
+    partner_ids = resolve_partner_ids(request.user)
+    assignments = list(
+        PartnerAssignment.objects.filter(partner_id__in=partner_ids)
+        .select_related("school", "cluster", "catalogue_item")
+        .order_by("-created_at")[:200]
+    )
+    pending = [a for a in assignments if a.status in ("assigned", "pending_scheduling")]
+    scheduled = [a for a in assignments if a.status == "partner_scheduled"]
+    return render(
+        request,
+        "pages/partner/assignments.html",
+        {
+            "pending": pending,
+            "scheduled": scheduled,
+            "mobile_primary_action": {
+                "label": "Schedule assigned work" if pending else "Open My Plan",
+                "url": "/partner/assignments" if pending else "/partner/my-plan",
+            },
+        },
+    )
+
+
+# ── §2 classification: scope, not venue, decides the category ────────────────
+_CLUSTER_SCOPE_TYPES = {
+    "cluster_training",
+    "cluster_meeting",
+    "cluster_meeting_ssa_review",
+    "cluster_training_ssa_collection",
+    "training",
+}
+
+
+def _ensure_assignment_item(assignment):
+    """The approved Catalogue Activity is the ASSIGNER's decision — the
+    partner never chooses one. Rows written before the pin became mandatory
+    self-heal from their recorded purpose (one active standard-support item
+    per workflow kind, by DB constraint)."""
+    if assignment.catalogue_item_id:
+        return assignment
+    from apps.activity_catalogue.services import resolve_assignment_item
+
+    resolved = resolve_assignment_item(
+        purpose_of_visit=assignment.purpose_of_visit or None,
+        expected_activity_type=assignment.expected_activity_type or None,
+    )
+    if resolved is not None:
+        assignment.catalogue_item = resolved
+        assignment.catalogue_snapshot = resolved.snapshot()
+        assignment.save(
+            update_fields=["catalogue_item", "catalogue_snapshot", "updated_at"]
+        )
+    return assignment
+
+
+def _assignment_is_school_scoped(assignment) -> bool:
+    """One specific school = a School Visit, whatever the intervention.
+    Cluster/group scope = an Assigned Activity, wherever it is held."""
+    if assignment.cluster_id:
+        return False
+    if (assignment.expected_activity_type or "") in _CLUSTER_SCOPE_TYPES:
+        return False
+    return bool(assignment.school_id)
+
+
+def _assigned_intake(request, *, school_scoped: bool):
+    partner_ids = resolve_partner_ids(request.user)
+    assignments = [
+        a
+        for a in PartnerAssignment.objects.filter(
+            partner_id__in=partner_ids,
+            status__in=["assigned", "pending_scheduling", "returned"],
+        )
+        .select_related("school", "school__district", "cluster", "catalogue_item")
+        .order_by("-created_at")[:300]
+        if _assignment_is_school_scoped(a) is school_scoped
+    ]
+    from apps.accounts.models import User as _User
+
+    names = dict(
+        _User.objects.filter(
+            id__in={a.assigning_staff_id for a in assignments if a.assigning_staff_id}
+        ).values_list("id", "name")
+    )
+    from apps.accounts.models import StaffProfile as _SP
+
+    sp_names = dict(
+        _SP.objects.filter(
+            id__in={a.assigning_staff_id for a in assignments if a.assigning_staff_id}
+        ).values_list("id", "user__name")
+    )
+    for a in assignments:
+        a.assigned_by_name = (
+            names.get(a.assigning_staff_id) or sp_names.get(a.assigning_staff_id) or "—"
+        )
+        # §2.3 — the partner sees the simple category; the governed subtype
+        # stays authoritative underneath for evidence/costing/Salesforce.
+        a.facing_category = "School Visit" if school_scoped else "Cluster Activity"
+        _ensure_assignment_item(a)
+        a.subtype_label = (
+            a.catalogue_item.display_name
+            if a.catalogue_item_id
+            else (a.expected_activity_type or "").replace("_", " ").title()
+        )
+        # Coded purpose first ("SSA Support", never the ssa_support token);
+        # the staff member's free-text reason only when nothing coded exists.
+        a.purpose_label = (
+            visit_purpose_label(a.purpose_of_visit, "") or a.purpose or "—"
+        )
+    return assignments
+
+
+@require_page_permission("partner_schools")
+def partner_assigned_schools_view(request):
+    """§3 Assigned Schools — school-based work awaiting the partner's
+    Schedule-or-Return decision. One click opens the assignment detail."""
+    return render(
+        request,
+        "pages/partner/assigned_list.html",
+        {
+            "rows": _assigned_intake(request, school_scoped=True),
+            "page_title": "Assigned Schools",
+            "page_blurb": (
+                "Schools Edify has assigned to your organisation. Open one to "
+                "review the brief, then Schedule it or Return it."
+            ),
+            "school_scoped": True,
+        },
+    )
+
+
+@require_page_permission("partner_assignments")
+def partner_assigned_activities_view(request):
+    """§4 Assigned Activities — cluster/group work awaiting the decision."""
+    return render(
+        request,
+        "pages/partner/assigned_list.html",
+        {
+            "rows": _assigned_intake(request, school_scoped=False),
+            "page_title": "Assigned Activities",
+            "page_blurb": (
+                "Trainings, cluster meetings and other group work assigned to "
+                "your organisation."
+            ),
+            "school_scoped": False,
+        },
+    )
+
+
+@require_page_permission("partner_assignments")
+def partner_assignment_detail_view(request, assignment_id):
+    """§5 the assignment-acceptance surface: read-only brief with exactly two
+    decisions — Schedule (primary) and Return (secondary)."""
+    partner_ids = resolve_partner_ids(request.user)
+    assignment = get_object_or_404(
+        PartnerAssignment.objects.select_related(
+            "school", "school__district", "cluster", "catalogue_item", "source_ssa"
+        ),
+        id=assignment_id,
+        partner_id__in=partner_ids,
+    )
+    school_scoped = _assignment_is_school_scoped(assignment)
+    assignment.facing_category = "School Visit" if school_scoped else "Cluster Activity"
+    _ensure_assignment_item(assignment)
+    assignment.subtype_label = (
+        assignment.catalogue_item.display_name
+        if assignment.catalogue_item_id
+        else (assignment.expected_activity_type or "").replace("_", " ").title()
+    )
+    assignment.purpose_label = (
+        visit_purpose_label(assignment.purpose_of_visit, "")
+        or assignment.purpose
+        or "—"
+    )
+    can_decide = assignment.status in ("assigned", "pending_scheduling")
+    return render(
+        request,
+        "pages/partner/assignment_detail.html",
+        {
+            "a": assignment,
+            "can_decide": can_decide,
+            "back_url": "/partner/assigned-schools"
+            if school_scoped
+            else "/partner/assigned-activities",
+        },
+    )
+
+
+@require_page_permission("partner_activities")
+def partner_completed_payments_view(request):
+    """§14 Completed & Payments — where every submitted school or activity
+    stands: IA review, Salesforce, and payment, in partner-facing language."""
+    partner_ids = resolve_partner_ids(request.user)
+    tab = "activities" if request.GET.get("tab") == "activities" else "schools"
+    activities = list(
+        Activity.objects.filter(
+            assigned_partner_id__in=partner_ids,
+            deleted_at__isnull=True,
+            status__in=[
+                "completed",
+                "submitted_to_ia",
+                "awaiting_ia_verification",
+                "returned",
+                "returned_by_ia",
+                "ia_verified",
+                "accountant_confirmed",
+                "closed",
+            ],
+        )
+        .select_related("school", "cluster")
+        .order_by("-scheduled_date")[:200]
+    )
+    from apps.fund_requests.finance_models import PartnerInvoiceItem, PartnerPayment
+
+    payments: dict[str, list] = {}
+    for payment in PartnerPayment.objects.filter(
+        activity_id__in=[a.id for a in activities]
+    ):
+        payments.setdefault(payment.activity_id, []).append(payment)
+
+    # §13.3 the in-flight invoice dimension: an activity sitting on a live
+    # period invoice is "processing" (with the PL) or "awaiting the
+    # accountant" (confirmed) — distinct from eligible-but-uninvoiced.
+    invoice_stage: dict[str, str] = {}
+    for item in PartnerInvoiceItem.objects.filter(
+        activity_id__in=[a.id for a in activities],
+        invoice__status__in=("submitted_to_pl", "confirmed_by_pl"),
+    ).select_related("invoice"):
+        stage = (
+            "awaiting_accountant"
+            if item.invoice.status == "confirmed_by_pl"
+            else "processing"
+        )
+        # Awaiting-accountant outranks processing if both somehow exist.
+        if invoice_stage.get(item.activity_id) != "awaiting_accountant":
+            invoice_stage[item.activity_id] = stage
+
+    rows = []
+    for a in activities:
+        school_scoped = bool(a.school_id) and a.activity_type not in (
+            _CLUSTER_SCOPE_TYPES
+        )
+        if (tab == "schools") is not school_scoped:
+            continue
+        paid_rows = payments.get(a.id, [])
+        paid_total = sum(p.amount_paid for p in paid_rows)
+        cleared = any(p.payment_type == "clearance" for p in paid_rows)
+        # §14.4 partner-facing language, three dimensions honest underneath.
+        if a.status in ("awaiting_ia_verification", "submitted_to_ia", "completed"):
+            ia_label, ia_tone = "Under IA Review", "info"
+        elif a.status in ("returned", "returned_by_ia"):
+            ia_label, ia_tone = "Returned for Correction", "danger"
+        else:
+            ia_label, ia_tone = "Verified", "success"
+        sf_label = "Confirmed" if a.salesforce_activity_id else "Pending"
+        stage = invoice_stage.get(a.id)
+        if cleared:
+            pay_label, pay_tone = "Paid", "success"
+        elif stage == "awaiting_accountant":
+            pay_label, pay_tone = "Awaiting Accountant", "warning"
+        elif stage == "processing":
+            pay_label, pay_tone = "Payment Processing", "info"
+        elif paid_rows:
+            pay_label, pay_tone = "Advance Paid — Balance Pending", "info"
+        elif ia_label == "Verified":
+            pay_label, pay_tone = "Awaiting Payment", "warning"
+        else:
+            pay_label, pay_tone = "Not Yet Eligible", "neutral"
+        last_payment = paid_rows[-1] if paid_rows else None
+        rows.append(
+            {
+                "activity": a,
+                "ia_label": ia_label,
+                "ia_tone": ia_tone,
+                "sf_label": sf_label,
+                "pay_label": pay_label,
+                "pay_tone": pay_tone,
+                "paid_total": paid_total,
+                "payment_date": last_payment.payment_date if last_payment else None,
+                "payment_reference": (
+                    last_payment.payment_reference if last_payment else ""
+                ),
+            }
+        )
+    return render(
+        request,
+        "pages/partner/completed_payments.html",
+        {"rows": rows, "tab": tab},
+    )
+
+
+# ── §9 The partner activity workroom ─────────────────────────────────────────
+# One page per activity: Start → actuals + evidence → Submit Evidence to IA.
+# The page adapts to the activity's state instead of scattering the flow
+# across drawers, and it is the target of every partner To-Do link.
+
+_WORKROOM_STARTABLE = (
+    "scheduled",
+    "partner_scheduled",
+    "assigned_to_partner",
+    "rescheduled",
+)
+_WORKROOM_OPEN = (
+    "completion_started",
+    "in_progress",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+    "returned",
+    "returned_by_pl",
+    "returned_by_ia",
+)
+_WORKROOM_SUBMITTED = ("awaiting_ia_verification",)
+_WORKROOM_DONE = ("ia_verified", "accountant_confirmed", "completed", "closed")
+
+
+def _own_partner_activity(request, activity_id):
+    partner_ids = resolve_partner_ids(request.user)
+    return get_object_or_404(
+        Activity.objects.select_related("school", "school__district", "cluster"),
+        id=activity_id,
+        assigned_partner_id__in=partner_ids,
+        delivery_type="partner",
+        deleted_at__isnull=True,
+    )
+
+
+@require_page_permission("partner_evidence")
+def partner_activity_workroom_view(request, activity_id):
+    from apps.evidence.requirements import checklist, evidence_optional
+    from apps.activities.services import sf_kind_for_activity
+
+    a = _own_partner_activity(request, activity_id)
+    assignment = (
+        PartnerAssignment.objects.select_related("source_ssa", "catalogue_item")
+        .filter(scheduled_activity_id=a.id)
+        .first()
+    )
+    evidence = list(
+        EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).order_by(
+            "-created_at"
+        )
+    )
+    state = (
+        "startable"
+        if a.status in _WORKROOM_STARTABLE
+        else "submitted"
+        if a.status in _WORKROOM_SUBMITTED
+        else "done"
+        if a.status in _WORKROOM_DONE
+        else "returned"
+        if a.status in ("returned", "returned_by_pl", "returned_by_ia")
+        else "open"
+    )
+    member_schools = []
+    if a.cluster_id:
+        member_schools = list(
+            School.objects.filter(
+                cluster_id=a.cluster_id, deleted_at__isnull=True
+            ).order_by("name")
+        )
+    context = {
+        "a": a,
+        "assignment": assignment,
+        "partner_org": Partner.objects.filter(id=a.assigned_partner_id).first(),
+        "evidence": evidence,
+        "evidence_checklist": checklist(a),
+        "evidence_is_optional": evidence_optional(a),
+        "state": state,
+        "is_training_kind": sf_kind_for_activity(a) == "training",
+        "member_schools": member_schools,
+        "attended_ids": set(a.attended_school_ids or []),
+        "back_url": "/my-plan",
+    }
+    return render(request, "pages/partner/activity_workroom.html", context)
+
+
+@require_page_permission("partner_evidence")
+def partner_activity_start_action(request, activity_id):
+    """§9 Start Activity: in progress + start moment recorded, then straight
+    to the evidence workroom. Starting never completes anything."""
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    a = _own_partner_activity(request, activity_id)
+    try:
+        from apps.activities.services import start_completion
+
+        start_completion(a.id, principal=request.user)
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner_start_activity",
+        subject_kind="Activity",
+        subject_id=str(a.id),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=True,
+        reason=f"Started from {request.META.get('HTTP_USER_AGENT', 'unknown device')[:120]}",
+    )
+    return redirect(f"/partner/activities/{a.id}/evidence")
+
+
+@require_page_permission("partner_evidence")
+def partner_activity_submit_action(request, activity_id):
+    """§9.4 Submit Evidence to IA — the one authoritative gate (`complete`),
+    with actuals and no Salesforce ID (IA enters that at confirmation)."""
+    if request.method != "POST":
+        return HttpResponse("Method not allowed", status=405)
+    a = _own_partner_activity(request, activity_id)
+    try:
+        from apps.activities.services import complete
+
+        def _num(name):
+            raw = (request.POST.get(name) or "").strip()
+            return int(raw) if raw.isdigit() else None
+
+        complete(
+            a.id,
+            {
+                "actualDeliveryDate": request.POST.get("actual_delivery_date") or None,
+                "teachersAttended": _num("teachers_attended"),
+                "leadersAttended": _num("leaders_attended"),
+                "otherParticipants": _num("other_participants"),
+                "attendedSchoolIds": request.POST.getlist("attended_school_ids")
+                or None,
+                "actualOutcome": request.POST.get("actual_outcome") or "",
+                "actualObservations": request.POST.get("actual_observations") or "",
+                "followUpNote": request.POST.get("follow_up_note") or "",
+            },
+            request.user,
+        )
+    except Exception as exc:
+        from apps.core.htmx_errors import error_fragment
+
+        return error_fragment(exc, status=400)
+    response = HttpResponse(
+        '<script>try{localStorage.removeItem("partner-evidence-draft-"+%s)}catch(e){};window.location.href="/partner/completed";</script>'
+        % repr(str(a.id))
+    )
+    response["HX-Trigger"] = "close-drawer"
+    return response
+
+
+# ── §8 The partner's My Plan: accepted implementation schedule ───────────────
+# Five sections, one Actions menu per row. Submitted work leaves this page
+# (it lives on Completed & Payments); stopped work never appears.
+
+_PLAN_SCHEDULED = (
+    "partner_scheduled",
+    "scheduled",
+    "rescheduled",
+    "assigned_to_partner",
+)
+_PLAN_IN_PROGRESS = (
+    "completion_started",
+    "in_progress",
+    "evidence_uploaded",
+    "evidence_accepted",
+    "salesforce_id_required",
+)
+_PLAN_RETURNED = ("returned", "returned_by_pl", "returned_by_ia")
+
+
+def partner_plan_context(user):
+    """The §8.1 sections. Every row carries what the table shows and the one
+    Actions menu the far column renders."""
+    from datetime import timedelta
+    from apps.evidence.requirements import required_kinds_for_activity
+
+    today = timezone.localdate()
+    week_end = today + timedelta(days=6 - today.weekday())
+    partner_ids = resolve_partner_ids(user)
+    acts = list(
+        Activity.objects.filter(
+            assigned_partner_id__in=partner_ids,
+            delivery_type="partner",
+            deleted_at__isnull=True,
+            status__in=_PLAN_SCHEDULED + _PLAN_IN_PROGRESS + _PLAN_RETURNED,
+        )
+        .select_related("school", "school__district", "cluster")
+        .order_by("planned_date", "created_at")[:200]
+    )
+    present = defaultdict(set)
+    for activity_id, kind in EvidenceRecord.objects.filter(
+        activity_id__in=[a.id for a in acts], quarantined=False
+    ).values_list("activity_id", "kind"):
+        present[activity_id].add(kind)
+
+    sections = {
+        "needs_attention": [],
+        "in_progress": [],
+        "due_today": [],
+        "this_week": [],
+        "later": [],
+    }
+    for a in acts:
+        needed = required_kinds_for_activity(a)
+        have = present[a.id]
+        if needed:
+            met = sum(1 for k in needed if k in have)
+            evidence_summary = f"{met}/{len(needed)} evidence items"
+        else:
+            evidence_summary = f"{len(have)} file(s)" if have else "No evidence yet"
+
+        if a.status in _PLAN_RETURNED:
+            bucket, actions = "needs_attention", ["correct"]
+        elif a.status in _PLAN_IN_PROGRESS:
+            bucket, actions = "in_progress", ["continue", "reschedule"]
+        elif a.planned_date == today:
+            bucket, actions = "due_today", ["start", "reschedule"]
+        elif a.planned_date and a.planned_date < today:
+            # Scheduled but the date passed unstarted — that IS attention.
+            bucket, actions = "needs_attention", ["start", "reschedule"]
+        elif a.planned_date and a.planned_date <= week_end:
+            bucket, actions = "this_week", ["start", "reschedule"]
+        else:
+            bucket, actions = "later", ["start", "reschedule"]
+
+        sections[bucket].append(
+            {
+                "a": a,
+                "where": (
+                    a.school.name
+                    if a.school_id
+                    else (a.cluster.name if a.cluster_id else "Field work")
+                ),
+                "location": (
+                    a.school.district.name
+                    if a.school_id and a.school.district_id
+                    else ""
+                ),
+                "evidence_summary": evidence_summary,
+                "return_reason": a.pl_review_note if a.status in _PLAN_RETURNED else "",
+                "actions": actions,
+            }
+        )
+    section_list = [
+        (
+            "Needs Attention",
+            "Returned evidence and overdue work — fix these first.",
+            sections["needs_attention"],
+            "danger",
+        ),
+        (
+            "In Progress",
+            "Started — finish the evidence and submit to IA.",
+            sections["in_progress"],
+            "info",
+        ),
+        ("Due Today", "On today's schedule.", sections["due_today"], "warning"),
+        ("Planned This Week", "Coming up this week.", sections["this_week"], "neutral"),
+        ("Planned Later", "Scheduled beyond this week.", sections["later"], "neutral"),
+    ]
+    return {
+        "plan_sections": section_list,
+        "plan_total": len(acts),
+    }

@@ -195,8 +195,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             "/api/fund-requests", {"fy": "2026", "period": "monthly", "month": 7}, 201
         )
         self.assertEqual(fund_request["periodKey"], "2026-M7")
-        self.assertEqual(fund_request["totalAmount"], 15000)
-        self.assertEqual(FundRequestItem.objects.count(), 2)
+        # Staff advance = lunch only; visit transport is vendor-direct.
+        self.assertEqual(fund_request["totalAmount"], 5000)
+        self.assertEqual(FundRequestItem.objects.count(), 1)  # lunch line only
 
         self._as(self.pl)
         pl_requests = self._get("/api/fund-requests?fy=2026", 200)
@@ -211,7 +212,7 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self._as(self.accountant)
         disbursed = self._post(
             f"/api/fund-requests/{fund_request['id']}/disburse",
-            {"amount": 15000, "method": "mobile_money", "reference": "MM-JUL10"},
+            {"amount": 5000, "method": "mobile_money", "reference": "MM-JUL10"},
             200,
         )
         self.assertEqual(disbursed["status"], "disbursed")
@@ -219,7 +220,7 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self._as(self.cceo)
         accounted = self._post(
             f"/api/fund-requests/{fund_request['id']}/account",
-            {"amountSpent": 14000, "amountReturned": 1000, "netsuiteId": "EXP-1001"},
+            {"amountSpent": 4000, "amountReturned": 1000, "netsuiteId": "EXP-1001"},
             200,
         )
         self.assertEqual(accounted["accountabilityStatus"], "submitted")

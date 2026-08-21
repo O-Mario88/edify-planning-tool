@@ -3,6 +3,8 @@ GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from apps.core.htmx_errors import error_message
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.utils.html import escape
@@ -877,30 +879,30 @@ def my_team_view(request):
     all_caught_up = total_cceos - with_overdue
 
     kpi_strip_items = [
-        {
-            "label": "Total CCEOs",
-            "value": str(total_cceos),
-            "raw_value": total_cceos,
-            "helper": "On your team",
-            "icon": "users",
-            "variant": "primary",
-        },
-        {
-            "label": "With Overdue",
-            "value": str(with_overdue),
-            "raw_value": with_overdue,
-            "helper": "CCEOs",
-            "icon": "warning",
-            "variant": "danger" if with_overdue > 0 else "success",
-        },
-        {
-            "label": "All Caught Up",
-            "value": str(all_caught_up),
-            "raw_value": all_caught_up,
-            "helper": "CCEOs",
-            "icon": "check",
-            "variant": "success",
-        },
+        render_precomputed_metric_item(
+            "frontend_views_staff_views_total_cceos",
+            str(total_cceos),
+            raw_value=total_cceos,
+            helper="On your team",
+            icon="users",
+            variant="primary",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_staff_views_with_overdue",
+            str(with_overdue),
+            raw_value=with_overdue,
+            helper="CCEOs",
+            icon="warning",
+            variant="danger" if with_overdue > 0 else "success",
+        ),
+        render_precomputed_metric_item(
+            "frontend_views_staff_views_all_caught_up",
+            str(all_caught_up),
+            raw_value=all_caught_up,
+            helper="CCEOs",
+            icon="check",
+            variant="success",
+        ),
     ]
 
     context = {

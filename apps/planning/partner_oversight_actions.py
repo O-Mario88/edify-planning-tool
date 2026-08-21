@@ -46,7 +46,7 @@ PARTNER_ADDRESSED_RISKS = frozenset(
 # sharing one issue_type would let one sweep close the other's actions.
 CCEO_ADDRESSED_RISKS = {
     "assignment_returned": "assignment_returned",
-    "cceo_review_overdue": "cceo_review_overdue",
+    "evidence_submission_stalled": "evidence_submission_stalled",
     "salesforce_overdue": "partner_salesforce_overdue",
 }
 

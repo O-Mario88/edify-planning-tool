@@ -265,11 +265,14 @@ class PlanningToMyPlanFlowTest(TestCase):
             ),
             {user.id},
         )
+        # The PLAN carries the full mission cost (60k); the owner's weekly
+        # advance carries only their personal entitlement — transport is paid
+        # direct to the transport company (fundable.vendor_direct_filter).
         self.assertTrue(
             WeeklyFundRequest.objects.filter(
                 responsible_user=user.id,
                 week_start_date=activity.week_start_date,
-                total_amount=60_000,
+                total_amount=10_000,
             ).exists()
         )
         self.assertTrue(
@@ -277,7 +280,7 @@ class PlanningToMyPlanFlowTest(TestCase):
                 submitted_by_user_id=user.id,
                 period="monthly",
                 period_key=f"{activity.fy}-M{activity.month}",
-                total_amount=60_000,
+                total_amount=10_000,
                 status="draft",
             ).exists()
         )

@@ -82,20 +82,22 @@ class NextActionBranchTests(TestCase):
         defaults.update(kw)
         return AdvanceRequest.objects.create(**defaults)
 
-    def test_partner_evidence_awaiting_review_is_the_next_action(self):
+    def test_uploaded_partner_evidence_prompts_the_partner_to_submit(self):
+        """§10 direct IA handoff: no staff acceptance step exists — evidence
+        uploaded but unsubmitted means the PARTNER submits it to IA."""
         act = self._act(
             delivery_type="partner",
             evidence_status="uploaded",
             status="completion_started",
         )
         action = compute_next_action(act, date.today())
-        self.assertEqual(action["action"], "review_partner_evidence")
-        self.assertIn("/evidence", action["url"])
+        self.assertEqual(action["action"], "submit_evidence")
+        self.assertIn(f"/partner/activities/{act.id}/evidence", action["url"])
 
     def test_accepted_partner_evidence_moves_on(self):
         act = self._act(delivery_type="partner", evidence_status="accepted")
         action = compute_next_action(act, date.today())
-        self.assertNotEqual(action["action"], "review_partner_evidence")
+        self.assertNotEqual(action["action"], "submit_evidence")
 
     def test_reimbursement_receipt_is_offered(self):
         """The drawer and route existed; nothing ever pointed at them."""
@@ -158,7 +160,7 @@ class NewActionsBecomeTodosTests(TestCase):
     def test_new_actions_are_actionable(self):
         from apps.command_center.todo_service import ACTION_META, ACTIONABLE
 
-        for action in ("reimbursement_receipt", "review_partner_evidence"):
+        for action in ("reimbursement_receipt", "submit_evidence"):
             self.assertIn(action, ACTIONABLE, f"{action} would be silently dropped")
             self.assertIn(action, ACTION_META)
 

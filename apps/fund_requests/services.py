@@ -509,9 +509,19 @@ def _submit_accountability_locked(request_id: str, data: dict, principal) -> dic
             f"Accountability can only be submitted for a disbursed request "
             f"(current status: '{fr.status}')."
         )
+    # The NetSuite Code is the accountability proof — the same rule
+    # advance_service.submit_accountability enforces. Without it this path
+    # accepted an accountability submission with no evidence the expense was
+    # ever entered into NetSuite.
+    netsuite_id = (data.get("netsuiteId") or "").strip()
+    if not netsuite_id:
+        raise BadRequest(
+            "NetSuite Code is required — accountability is incomplete without "
+            "proof the expense was entered into NetSuite."
+        )
     fr.accounted_amount = data.get("amountSpent")
     fr.returned_amount = data.get("amountReturned")
-    fr.accountability_netsuite_id = data.get("netsuiteId")
+    fr.accountability_netsuite_id = netsuite_id
     fr.accountability_status = "submitted"
     fr.accountability_submitted_at = timezone.now()
     fr.save(

@@ -23,7 +23,6 @@ from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.test_seed_utils import ReferenceDataTransactionTestCase
 from apps.fund_requests import disbursement_dashboard_service as svc
-from apps.fund_requests import pl_approval_service as pl_svc
 from apps.fund_requests.models import AdvanceRequest, FundRequest, WeeklyFundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -37,6 +36,66 @@ class _Principal:
         self.user_id = user.id
         self.active_role = user.active_role
         self.staff_profile_id = profile.id if profile else None
+
+
+def _stage_monthly_plan_at_accountant(cceo, cceo_sp, pl, fy, month):
+    """Build the monthly FundRequest the accountant dashboard reads, at the
+    model level. The PL gate moved to the weekly chain (2026-08-18), so these
+    accountant-side tests stage their fixture directly: fundable lines →
+    FundRequest + items → sent_to_accountant → advances submitted."""
+    from django.utils import timezone as _tz
+
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.advance_service import sync_advances_for_period_request
+    from apps.fund_requests.fundable import fundable_lines
+    from apps.fund_requests.models import FundRequest, FundRequestItem
+
+    lines = list(
+        fundable_lines(
+            ActivityScheduleCostLine.objects.filter(
+                activity__responsible_staff_id__in=[cceo_sp.id, cceo.id],
+                activity__fy=fy,
+                month=month,
+            )
+        ).select_related("activity")
+    )
+    assert lines, "fixture expects staff-fundable lines"
+    total = sum(li.amount for li in lines)
+    period_key = f"{fy}-M{int(month)}"
+    fr, _ = FundRequest.objects.update_or_create(
+        submitted_by_user_id=cceo.id,
+        period="monthly",
+        period_key=period_key,
+        scope="own",
+        defaults={
+            "fy": fy,
+            "submitted_by_role": "CCEO",
+            "total_amount": total,
+            "activity_count": len({li.activity_id for li in lines}),
+        },
+    )
+    fr.items.all().delete()
+    FundRequestItem.objects.bulk_create(
+        [
+            FundRequestItem(
+                fund_request=fr,
+                activity_id=li.activity_id,
+                activity_schedule_cost_line_id=li.id,
+                amount=li.amount,
+                period="monthly",
+                period_key=period_key,
+            )
+            for li in lines
+        ]
+    )
+    fr.status = "sent_to_accountant"
+    fr.reviewed_by_user_id = pl.id
+    fr.reviewed_at = _tz.now()
+    fr.save(
+        update_fields=["status", "reviewed_by_user_id", "reviewed_at", "updated_at"]
+    )
+    sync_advances_for_period_request(fr, to_accountant=True)
+    return fr
 
 
 class DisbursementDashboardTest(TestCase):
@@ -119,8 +178,11 @@ class DisbursementDashboardTest(TestCase):
         )
 
     def _approved_plan(self):
-        """PL approves → the plan lands in the accountant queue."""
-        return pl_svc.approve(self.pl_p, self.cceo.id, FY, MONTH)
+        """A PL-approved plan sits in the accountant queue (staged directly —
+        the PL gate itself is weekly now and covered in test_pl_approval)."""
+        return _stage_monthly_plan_at_accountant(
+            self.cceo, self.cceo_sp, self.pl, FY, MONTH
+        )
 
     # ── access + queue composition ────────────────────────────────────────────
     def test_only_accountant_can_open_dashboard(self):
@@ -490,7 +552,9 @@ class DisbursementDoubleClickRaceTest(ReferenceDataTransactionTestCase):
     def test_concurrent_disburse_calls_write_exactly_one_set_of_records(self):
         from apps.fund_requests.finance_models import Disbursement
 
-        fr = pl_svc.approve(_Principal(self.pl, self.pl_sp), self.cceo.id, FY, MONTH)
+        fr = _stage_monthly_plan_at_accountant(
+            self.cceo, self.cceo_sp, self.pl, FY, MONTH
+        )
 
         barrier = threading.Barrier(2)
         outcomes = []

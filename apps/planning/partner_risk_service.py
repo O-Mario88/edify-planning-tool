@@ -213,7 +213,11 @@ def _evidence_overdue(item, today: date) -> PartnerRisk | None:
 
 
 def _review_overdue(item, today: date) -> PartnerRisk | None:
-    """Evidence is in and the managing CCEO has not looked at it."""
+    """Evidence is uploaded but never SUBMITTED — the chain is stalled.
+
+    §10 direct IA handoff: no CCEO review stage exists. The stall this
+    watches is the partner capturing evidence and not pressing Submit, so
+    the recommended action belongs to the partner (chased by the monitor)."""
     if item.evidence_status != "uploaded":
         return None
     if not item.scheduled_date:
@@ -221,12 +225,12 @@ def _review_overdue(item, today: date) -> PartnerRisk | None:
     if item.scheduled_date + timedelta(days=REVIEW_GRACE_DAYS) >= today:
         return None
     return PartnerRisk(
-        key="cceo_review_overdue",
+        key="evidence_submission_stalled",
         severity=HIGH,
-        reason="The partner's evidence is waiting on the managing CCEO's review.",
-        responsible=item.responsible_cceo_name or "CCEO",
-        recommended_action="Review the partner's evidence",
-        route="/my-plan",
+        reason="Evidence was captured but never submitted to IA.",
+        responsible=item.partner_name or "Partner",
+        recommended_action="Chase the partner to submit the evidence to IA",
+        route="/partner-oversight/",
         due_date=item.scheduled_date + timedelta(days=REVIEW_GRACE_DAYS),
     )
 

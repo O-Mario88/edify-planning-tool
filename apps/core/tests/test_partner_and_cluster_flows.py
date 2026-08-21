@@ -183,21 +183,20 @@ class PartnerAndClusterFlowTest(APITestCase):
         )
         self.assertEqual(reviewed["status"], "accepted")
 
-        # Staff (CCEO) enters the SVE- Activity Code and submits completion. A CCEO
-        # completion routes to PL (CCEO→PL→IA), so the next status is submitted_to_pl.
+        # Staff (CCEO) enters the SVE- Activity Code and submits completion.
+        # §10 direct IA handoff (2026-08-19): PARTNER-delivered work routes
+        # straight to IA even when the monitoring CCEO presses submit — the
+        # CCEO→PL detour applies to the CCEO's OWN deliveries only. This
+        # test previously pinned the detour for partner work; that was the
+        # hidden PL approval gate the partner-workflow audit flagged.
         completed = self._post(
             f"/api/activities/{activity_id}/complete",
             {"salesforceId": "SVE-FLOW4"},
             200,
         )
-        self.assertEqual(completed["status"], "submitted_to_pl")
+        self.assertEqual(completed["status"], "awaiting_ia_verification")
         # Evidence had to be accepted before the partner submission was allowed.
         self.assertEqual(completed["evidenceStatus"], "accepted")
-
-        # PL confirms → IA handoff.
-        self._as(self.pl)
-        confirmed = self._post(f"/api/pl/review-queue/{activity_id}/confirm", {}, 200)
-        self.assertEqual(confirmed["status"], "awaiting_ia_verification")
 
         # Activity no longer in the partner queue (handed off past the partner).
         self._as(partner_user)
@@ -259,18 +258,16 @@ class PartnerAndClusterFlowTest(APITestCase):
         my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
         self.assertTrue(any(item["id"] == activity_id for item in my_plan["items"]))
 
-        # Completion unlocks; upload a DOCX evidence file.
+        # Completion unlocks; upload the attendance form (PDF-only law).
         self._post(f"/api/activities/{activity_id}/start-completion", {}, 200)
         docx = self._upload_docx(activity_id)
         record = EvidenceRecord.objects.get(id=docx["id"])
-        self.assertEqual(record.file_extension, ".docx")
+        self.assertEqual(record.file_extension, ".pdf")
 
-        # DOCX inline-view contract: ready if LibreOffice converts, else an honest
-        # pending/failed — never a 500 or a silent 404.
+        # PDF renders natively — the inline-view contract answers ready with
+        # the file itself, or an honest pending/failed; never a 500.
         preview = self._post(f"/api/evidence/{docx['id']}/prepare-view", {}, 200)
         self.assertIn(preview["previewStatus"], ("ready", "pending", "failed"))
-        if preview["previewStatus"] == "ready":
-            self.assertEqual(preview["viewKind"], "pdf_rendition")
 
         # Completion requires attendance + a TS- code (training prefix).
         no_attendance = self.client.post(
@@ -369,28 +366,17 @@ class PartnerAndClusterFlowTest(APITestCase):
     def _upload_docx(self, activity_id: str) -> dict:
         # A minimal valid .docx is a ZIP (PK signature); the upload validator
         # sniffs the magic bytes. We hand-craft a tiny ZIP container.
-        import io
-        import zipfile
-
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, "w") as zf:
-            zf.writestr(
-                "[Content_Types].xml",
-                '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>',
-            )
-            zf.writestr(
-                "_rels/.rels",
-                '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>',
-            )
+        # Governed forms are PDF-only (owner, 2026-08-19) — the attendance
+        # form ships as a PDF; a .docx here is now correctly rejected.
         response = self.client.post(
             "/api/evidence/upload",
             {
                 "activityId": activity_id,
                 "kind": "attendance_form",
                 "file": SimpleUploadedFile(
-                    "training-attendance.docx",
-                    buf.getvalue(),
-                    content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "training-attendance.pdf",
+                    b"%PDF-1.4 training attendance body " + b"a" * 128,
+                    content_type="application/pdf",
                 ),
             },
             format="multipart",

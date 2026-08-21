@@ -8,6 +8,8 @@ partner-delivered work remains read-only to staff monitors.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 import calendar
 from datetime import date, timedelta
 from urllib.parse import urlencode
@@ -371,62 +373,62 @@ def get_my_plan(principal, filters=None) -> dict:
     completed_period = sum(1 for a in activities if a.status in DELIVERED_STATUSES)
     completion = round(completed_period / total_period * 100) if total_period else 0
     kpis = [
-        {
-            "label": "Planned This Week",
-            "value": breakdown["week"],
-            "helper": "activities",
-            "tone": "blue",
-            "icon": "calendar",
-        },
-        {
-            "label": "Planned This Month",
-            "value": breakdown["month"],
-            "helper": "activities",
-            "tone": "green",
-            "icon": "calendar",
-        },
-        {
-            "label": "Planned This Quarter",
-            "value": breakdown["quarter"],
-            "helper": "activities",
-            "tone": "purple",
-            "icon": "calendar",
-        },
-        {
-            "label": "Planned This FY",
-            "value": breakdown["fy"],
-            "helper": "activities",
-            "tone": "orange",
-            "icon": "calendar",
-        },
-        {
-            "label": "School Visits Scheduled",
-            "value": len(visits),
-            "helper": "visits in period",
-            "tone": "blue",
-            "icon": "school",
-        },
-        {
-            "label": "Partner Activities",
-            "value": len(partner_activities),
-            "helper": "monitoring only",
-            "tone": "purple",
-            "icon": "partner",
-        },
-        {
-            "label": "Project Trainings",
-            "value": len(trainings),
-            "helper": "trainings in period",
-            "tone": "teal",
-            "icon": "training",
-        },
-        {
-            "label": "Completion Readiness",
-            "value": f"{completion}%",
-            "helper": "workflow complete",
-            "tone": "green",
-            "icon": "check",
-        },
+        render_precomputed_metric_item(
+            "projects_my_plan_service_planned_this_week",
+            breakdown["week"],
+            helper="activities",
+            tone="blue",
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_planned_this_month",
+            breakdown["month"],
+            helper="activities",
+            tone="green",
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_planned_this_quarter",
+            breakdown["quarter"],
+            helper="activities",
+            tone="purple",
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_planned_this_fy",
+            breakdown["fy"],
+            helper="activities",
+            tone="orange",
+            icon="calendar",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_school_visits_scheduled",
+            len(visits),
+            helper="visits in period",
+            tone="blue",
+            icon="school",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_partner_activities",
+            len(partner_activities),
+            helper="monitoring only",
+            tone="purple",
+            icon="partner",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_project_trainings",
+            len(trainings),
+            helper="trainings in period",
+            tone="teal",
+            icon="training",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_completion_readiness",
+            f"{completion}%",
+            helper="workflow complete",
+            tone="green",
+            icon="check",
+        ),
     ]
 
     period_ids = [a.id for a in activities]
@@ -448,28 +450,28 @@ def get_my_plan(principal, filters=None) -> dict:
     )
     ia_pending = sum(1 for a in activities if a.status == "awaiting_ia_verification")
     workflow = [
-        {
-            "label": "Budget Created",
-            "value": f"{len(budget_activity_ids)} / {total_period}",
-            "tone": "success",
-        },
-        {
-            "label": "Fund Request Synced",
-            "value": f"{len(advance_activity_ids)} / {total_period}",
-            "tone": "success"
+        render_precomputed_metric_item(
+            "projects_my_plan_service_budget_created",
+            f"{len(budget_activity_ids)} / {total_period}",
+            tone="success",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_fund_request_synced",
+            f"{len(advance_activity_ids)} / {total_period}",
+            tone="success"
             if len(advance_activity_ids) == total_period and total_period
             else "warning",
-        },
-        {
-            "label": "Evidence Pending",
-            "value": f"{evidence_pending} / {total_period}",
-            "tone": "warning" if evidence_pending else "success",
-        },
-        {
-            "label": "IA Review Pending",
-            "value": f"{ia_pending} / {total_period}",
-            "tone": "danger" if ia_pending else "success",
-        },
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_evidence_pending",
+            f"{evidence_pending} / {total_period}",
+            tone="warning" if evidence_pending else "success",
+        ),
+        render_precomputed_metric_item(
+            "projects_my_plan_service_ia_review_pending",
+            f"{ia_pending} / {total_period}",
+            tone="danger" if ia_pending else "success",
+        ),
     ]
 
     attention = []

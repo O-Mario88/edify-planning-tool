@@ -9,6 +9,8 @@ cached, so there is no manual or drifting remaining-fund number.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from datetime import date
 
 from django.utils import timezone
@@ -350,72 +352,72 @@ class StaffPDService:
         completed = sum(1 for r in rows if r.status == PDStatus.COMPLETED_CLOSED)
 
         kpis = [
-            {
-                "key": "allocation",
-                "label": "Annual PD Allocation",
-                "icon": "currency",
-                "variant": "primary",
-                "value": f"{bal['currency']} {bal['annual_allocation']/100:,.0f}",
-                "helper": f"FY {fy}",
-            },
-            {
-                "key": "committed",
-                "label": "Committed Amount",
-                "icon": "chart",
-                "variant": "default",
-                "value": f"{bal['currency']} {bal['committed']/100:,.0f}",
-                "helper": f"{round(bal['committed']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
-            },
-            {
-                "key": "used",
-                "label": "Funds Used (Accounted)",
-                "icon": "accountability",
-                "variant": "default",
-                "value": f"{bal['currency']} {bal['accounted']/100:,.0f}",
-                "helper": f"{round(bal['accounted']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
-            },
-            {
-                "key": "remaining",
-                "label": "Remaining Fund",
-                "icon": "shield",
-                "variant": "danger" if bal["remaining"] <= 0 else "success",
-                "value": f"{bal['currency']} {bal['remaining']/100:,.0f}",
-                "helper": f"{round(bal['remaining']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
-            },
-            {
-                "key": "active",
-                "label": "Active Courses",
-                "icon": "graduation",
-                "variant": "primary",
-                "value": str(len(active)),
-                "helper": "In progress",
-            },
-            {
-                "key": "cert_pending",
-                "label": "Certificates Pending",
-                "icon": "certificate",
-                "variant": "warning" if certs_pending else "success",
-                "value": str(certs_pending),
-                "helper": "All up to date" if not certs_pending else "Action required",
-            },
-            {
-                "key": "accountability_pending",
-                "label": "Accountability Pending",
-                "icon": "expense",
-                "variant": "warning" if accountability_pending else "success",
-                "value": str(accountability_pending),
-                "helper": "All up to date"
+            render_precomputed_metric_item(
+                "professional_development_services_annual_pd_allocation",
+                f"{bal['currency']} {bal['annual_allocation']/100:,.0f}",
+                key="allocation",
+                icon="currency",
+                variant="primary",
+                helper=f"FY {fy}",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_committed_amount",
+                f"{bal['currency']} {bal['committed']/100:,.0f}",
+                key="committed",
+                icon="chart",
+                variant="default",
+                helper=f"{round(bal['committed']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_funds_used_accounted",
+                f"{bal['currency']} {bal['accounted']/100:,.0f}",
+                key="used",
+                icon="accountability",
+                variant="default",
+                helper=f"{round(bal['accounted']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_remaining_fund",
+                f"{bal['currency']} {bal['remaining']/100:,.0f}",
+                key="remaining",
+                icon="shield",
+                variant="danger" if bal["remaining"] <= 0 else "success",
+                helper=f"{round(bal['remaining']/bal['annual_allocation']*100) if bal['annual_allocation'] else 0}% of allocation",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_active_courses",
+                str(len(active)),
+                key="active",
+                icon="graduation",
+                variant="primary",
+                helper="In progress",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_certificates_pending",
+                str(certs_pending),
+                key="cert_pending",
+                icon="certificate",
+                variant="warning" if certs_pending else "success",
+                helper="All up to date" if not certs_pending else "Action required",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_accountability_pending",
+                str(accountability_pending),
+                key="accountability_pending",
+                icon="expense",
+                variant="warning" if accountability_pending else "success",
+                helper="All up to date"
                 if not accountability_pending
                 else "Action required",
-            },
-            {
-                "key": "completed",
-                "label": "Completed Courses",
-                "icon": "signoff",
-                "variant": "success",
-                "value": str(completed),
-                "helper": "This FY",
-            },
+            ),
+            render_precomputed_metric_item(
+                "professional_development_services_completed_courses",
+                str(completed),
+                key="completed",
+                icon="signoff",
+                variant="success",
+                helper="This FY",
+            ),
         ]
 
         return {

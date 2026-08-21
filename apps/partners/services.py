@@ -41,11 +41,21 @@ def _assert_partner_directory_manager(principal) -> None:
 
 
 def assert_partner_activity_allowance(
-    partner_id: str, school_id: str, activity_type: str, fy: str
+    partner_id: str,
+    school_id: str,
+    activity_type: str,
+    fy: str,
+    *,
+    exclude_activity_id: str | None = None,
 ) -> None:
     """Enforce the default partner activity allowance (§F): one non-core
     activity per partner per school per FY; more requires an auditable
-    PartnerActivityAllowance grant."""
+    PartnerActivityAllowance grant.
+
+    ``exclude_activity_id``: the activity already linked to the assignment
+    being (re)scheduled. An assignment must never be blocked by ITS OWN
+    activity — counting it made every re-schedule read as a second activity
+    and dead-ended the partner on work the school was already allowed."""
     if not partner_id or not school_id or activity_type in _CORE_EXEMPT_TYPES:
         return
     from django.utils import timezone
@@ -54,7 +64,7 @@ def assert_partner_activity_allowance(
 
     from .models import PartnerActivityAllowance
 
-    used = (
+    used_qs = (
         Activity.objects.filter(
             assigned_partner_id=partner_id,
             school_id=school_id,
@@ -64,8 +74,10 @@ def assert_partner_activity_allowance(
         )
         .exclude(status__in=["cancelled", "rejected"])
         .exclude(activity_type__in=_CORE_EXEMPT_TYPES)
-        .count()
     )
+    if exclude_activity_id:
+        used_qs = used_qs.exclude(id=exclude_activity_id)
+    used = used_qs.count()
     grants = PartnerActivityAllowance.objects.filter(
         partner_id=partner_id, school_id=school_id, fy=fy
     )
@@ -500,7 +512,17 @@ def _notify_assignment_returned(assignment, principal, category, reason) -> None
 
     logger = logging.getLogger(__name__)
     try:
-        from apps.notifications.services import WorkflowNotificationService
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            resolve_condition,
+        )
+
+        # The partner's own "new assignment from Edify staff" notification is
+        # answered by the return exactly as it is by scheduling — leaving it
+        # open forever was audit finding F9b.
+        resolve_condition(
+            "partner_scheduled_activity", "partner_assignment", assignment.id
+        )
 
         staff_id = assignment.assigning_staff_id
         if not staff_id:
@@ -591,3 +613,72 @@ def bookable_certified_agencies(*, activity_type: str = "", district_name: str =
     if activity_type:
         qs = qs.filter(Q(trains_on__len=0) | Q(trains_on__contains=[activity_type]))
     return qs
+
+
+ALLOWANCE_GRANT_ROLES = ("CountryDirector", "Program Lead", "Admin")
+
+
+def grant_partner_activity_allowance(principal, data: dict):
+    """§F the auditable grant: more partner work at one school, with who
+    allowed it, why, and (optionally) until when. The allowance gate reads
+    these rows — this is the ONLY writer."""
+    from apps.core.exceptions import BadRequest, Forbidden
+
+    if getattr(principal, "active_role", None) not in ALLOWANCE_GRANT_ROLES:
+        raise Forbidden(
+            "Only a Country Director, Program Lead or Admin can grant "
+            "additional partner activity allowances."
+        )
+    from apps.schools.models import School
+
+    from .models import Partner, PartnerActivityAllowance
+
+    partner = Partner.objects.filter(
+        id=data.get("partner_id"), deleted_at__isnull=True
+    ).first()
+    school = School.objects.filter(
+        id=data.get("school_id"), deleted_at__isnull=True
+    ).first()
+    reason = str(data.get("reason") or "").strip()
+    if partner is None:
+        raise BadRequest("Choose the partner organisation.")
+    if school is None:
+        raise BadRequest("Choose the school.")
+    if not reason:
+        raise BadRequest("A reason for the additional allowance is required.")
+    try:
+        additional = max(1, int(data.get("additional_activities") or 1))
+    except (TypeError, ValueError):
+        additional = 1
+    from apps.core.fy import get_operational_fy
+
+    return PartnerActivityAllowance.objects.create(
+        partner=partner,
+        school=school,
+        fy=str(data.get("fy") or get_operational_fy()),
+        additional_activities=additional,
+        activity_type=str(data.get("activity_type") or "").strip() or None,
+        granted_by=getattr(principal, "user_id", None) or str(principal.id),
+        reason=reason,
+        expires_at=data.get("expires_at") or None,
+    )
+
+
+def create_assignment(**fields):
+    """THE creation door for partner handovers (§30, audit F10).
+
+    Seven creation sites used to hand-pick the opening workflow status as a
+    create() kwarg, and four spellings of "unscheduled" reached the database
+    before UNSCHEDULED_STATUSES was invented to contain them. Callers never
+    choose the opening status here — a new handover always starts
+    pending_scheduling, and the partner's Schedule/Return decision is the
+    only thing that moves it. Audit + partner notification ride on the
+    post_save signal (apps/partners/signals.py), which covers every creation
+    path by construction.
+    """
+    from .models import PartnerAssignment
+
+    fields.pop("status", None)
+    return PartnerAssignment.objects.create(
+        status=PartnerAssignment.STATUS_PENDING_SCHEDULING, **fields
+    )

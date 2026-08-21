@@ -15,6 +15,9 @@ invented country rows.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_for_source
+
+
 from datetime import date
 
 from django.db.models import Count, Q, Sum
@@ -133,14 +136,15 @@ class RVPDashboardService:
         )
 
         def card(icon, label, value, variant, helper, link=""):
-            return {
-                "icon": icon,
-                "label": label,
-                "value": value,
-                "variant": variant,
-                "helper": helper,
-                "link": link,
-            }
+            return render_precomputed_metric_for_source(
+                "apps.analytics.rvp_dashboard_service:get_dashboard.card",
+                label,
+                value,
+                icon=icon,
+                variant=variant,
+                helper=helper,
+                link=link,
+            )
 
         kpis = [
             card(

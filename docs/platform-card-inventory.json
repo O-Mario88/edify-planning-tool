@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 590,
-  "templates": 212,
-  "distinct_titles": 564,
+  "titled_cards": 608,
+  "templates": 218,
+  "distinct_titles": 580,
   "with_card_key": 13,
-  "untitled_surfaces": 1062,
-  "untitled_chrome": 234,
-  "untitled_nested": 402,
-  "untitled_headless": 426,
+  "untitled_surfaces": 1014,
+  "untitled_chrome": 237,
+  "untitled_nested": 389,
+  "untitled_headless": 388,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 20,
+  "titles_in_several_templates": 22,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -22,6 +22,10 @@
    "templates/pages/districts/detail.html",
    "templates/pages/schools/detail.html"
   ],
+  "assignment brief": [
+   "templates/pages/partner/activity_workroom.html",
+   "templates/pages/partner/assignment_detail.html"
+  ],
   "attention needed": [
    "templates/pages/dashboards/main.html",
    "templates/pages/projects/index.html",
@@ -31,6 +35,10 @@
   "danger zone": [
    "templates/pages/admin/user_detail.html",
    "templates/pages/schools/detail.html"
+  ],
+  "evidence": [
+   "templates/pages/ia/partner_review.html",
+   "templates/pages/partner/activity_workroom.html"
   ],
   "finance &amp; disbursement rules": [
    "templates/pages/accounts/dashboard.html",
@@ -246,7 +254,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 200,
+   "line": 127,
    "title": "Weekly Advance Queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -255,7 +263,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 321,
+   "line": 248,
    "title": "Verified Funding Breakdown",
    "heading_level": 4,
    "has_card_key": false,
@@ -264,7 +272,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 372,
+   "line": 299,
    "title": "Region Plan Statistics",
    "heading_level": 4,
    "has_card_key": false,
@@ -273,7 +281,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 462,
+   "line": 389,
    "title": "Disbursement Status This Financial Year",
    "heading_level": 3,
    "has_card_key": false,
@@ -282,7 +290,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 474,
+   "line": 401,
    "title": "Finance &amp; Disbursement Rules",
    "heading_level": 3,
    "has_card_key": false,
@@ -291,7 +299,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 509,
+   "line": 436,
    "title": "Recent Disbursement Activity",
    "heading_level": 3,
    "has_card_key": false,
@@ -300,7 +308,7 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 539,
+   "line": 466,
    "title": "Reconciliation &amp; Proof Tracker",
    "heading_level": 3,
    "has_card_key": false,
@@ -309,11 +317,62 @@
   },
   {
    "template": "templates/pages/accounts/dashboard.html",
-   "line": 586,
+   "line": 513,
    "title": "Cash Position / Budget Balance",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "xl:col-span-3 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/accounts/partner_payments.html",
+   "line": 57,
+   "title": "Transport Provider Payments",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/accounts/partner_payments.html",
+   "line": 113,
+   "title": "Partner Invoices \u2014 Awaiting Payment",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     1,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/accounts/partner_payments.html",
+   "line": 171,
+   "title": "Awaiting 50% MOU Advance",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/accounts/partner_payments.html",
+   "line": 239,
+   "title": "Verified \u2014 Awaiting Clearance",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden relative",
    "branch_path": []
   },
   {
@@ -569,16 +628,16 @@
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 17,
+   "line": 22,
    "title": "Error Context",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "card p-3.5",
+   "classes": "card p-4 space-y-2",
    "branch_path": []
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 34,
+   "line": 33,
    "title": "Response",
    "heading_level": 2,
    "has_card_key": false,
@@ -587,7 +646,7 @@
   },
   {
    "template": "templates/pages/admin_ops/incident_detail.html",
-   "line": 53,
+   "line": 52,
    "title": "Audit History",
    "heading_level": 2,
    "has_card_key": false,
@@ -623,11 +682,11 @@
   },
   {
    "template": "templates/pages/admin_ops/planning.html",
-   "line": 11,
+   "line": 16,
    "title": "Unscheduled Platform Work",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "card p-3.5",
+   "classes": "card p-4 space-y-3",
    "branch_path": []
   },
   {
@@ -769,7 +828,7 @@
   },
   {
    "template": "templates/pages/business_transformation/financial_health.html",
-   "line": 20,
+   "line": 19,
    "title": "What this portfolio measures",
    "heading_level": 2,
    "has_card_key": false,
@@ -778,7 +837,7 @@
   },
   {
    "template": "templates/pages/business_transformation/government_requirements.html",
-   "line": 20,
+   "line": 19,
    "title": "Uganda requirements",
    "heading_level": 2,
    "has_card_key": false,
@@ -879,21 +938,7 @@
   },
   {
    "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 19,
-   "title": "Submission health",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface border border-[var(--edify-border)] rounded-overlay p-5",
-   "branch_path": [
-    [
-     5,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 21,
+   "line": 20,
    "title": "Your MFI loans",
    "heading_level": 2,
    "has_card_key": false,
@@ -907,7 +952,7 @@
   },
   {
    "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 23,
+   "line": 22,
    "title": "Monthly Portfolio Return",
    "heading_level": 2,
    "has_card_key": false,
@@ -921,7 +966,7 @@
   },
   {
    "template": "templates/pages/business_transformation/mfi_portal.html",
-   "line": 25,
+   "line": 24,
    "title": "Data Issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -1151,7 +1196,7 @@
   },
   {
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 48,
+   "line": 47,
    "title": "Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -1160,7 +1205,7 @@
   },
   {
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 76,
+   "line": 75,
    "title": "Overdue From Last Week",
    "heading_level": 3,
    "has_card_key": false,
@@ -1169,7 +1214,7 @@
   },
   {
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 135,
+   "line": 134,
    "title": "School Visits",
    "heading_level": 3,
    "has_card_key": false,
@@ -1178,7 +1223,7 @@
   },
   {
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 166,
+   "line": 165,
    "title": "Cluster Activities This Week",
    "heading_level": 3,
    "has_card_key": false,
@@ -1304,7 +1349,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 102,
+   "line": 98,
    "title": "2. Region Performance Ranking",
    "heading_level": 2,
    "has_card_key": false,
@@ -1313,7 +1358,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 128,
+   "line": 124,
    "title": "3. Country Directors Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -1322,7 +1367,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 169,
+   "line": 165,
    "title": "4. General Budget &amp; Approval Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -1331,7 +1376,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 207,
+   "line": 203,
    "title": "5. Special Projects Performance \u2014 impact is measured on verified annual SSA only",
    "heading_level": 2,
    "has_card_key": false,
@@ -1340,7 +1385,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 262,
+   "line": 258,
    "title": "6. Special Project Impact",
    "heading_level": 2,
    "has_card_key": false,
@@ -1349,7 +1394,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 275,
+   "line": 271,
    "title": "7. Partner &amp; Stakeholder Growth",
    "heading_level": 2,
    "has_card_key": false,
@@ -1358,7 +1403,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 312,
+   "line": 308,
    "title": "8. Resource Allocation &amp; Scaling",
    "heading_level": 2,
    "has_card_key": false,
@@ -1367,7 +1412,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 337,
+   "line": 333,
    "title": "9. Operational Risk / Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -1376,7 +1421,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 353,
+   "line": 349,
    "title": "10. Quick Executive Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1385,7 +1430,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 368,
+   "line": 364,
    "title": "Pending RVP Approvals",
    "heading_level": 2,
    "has_card_key": false,
@@ -1394,7 +1439,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 426,
+   "line": 422,
    "title": "Recommended Next Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1403,7 +1448,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 456,
+   "line": 452,
    "title": "Strategy Notes",
    "heading_level": 2,
    "has_card_key": false,
@@ -1412,7 +1457,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 483,
+   "line": 479,
    "title": "New Strategy Note",
    "heading_level": 3,
    "has_card_key": false,
@@ -1421,7 +1466,7 @@
   },
   {
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 45,
+   "line": 40,
    "title": "Build transformational programs. Scale impact beyond the core model.",
    "heading_level": 2,
    "has_card_key": false,
@@ -1430,7 +1475,7 @@
   },
   {
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 77,
+   "line": 70,
    "title": "Project Portfolio",
    "heading_level": 3,
    "has_card_key": false,
@@ -1439,7 +1484,7 @@
   },
   {
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 118,
+   "line": 111,
    "title": "Schools in Projects",
    "heading_level": 3,
    "has_card_key": false,
@@ -1448,7 +1493,7 @@
   },
   {
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 140,
+   "line": 133,
    "title": "Partner Assignment",
    "heading_level": 3,
    "has_card_key": false,
@@ -1661,7 +1706,7 @@
   },
   {
    "template": "templates/pages/documents/agreement_center.html",
-   "line": 96,
+   "line": 98,
    "title": "Your completed responses",
    "heading_level": 2,
    "has_card_key": false,
@@ -1675,7 +1720,7 @@
   },
   {
    "template": "templates/pages/documents/compliance.html",
-   "line": 87,
+   "line": 86,
    "title": "Policy Comments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1707,7 +1752,21 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 45,
+   "line": 46,
+   "title": "Reading completion",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-4",
+   "branch_path": [
+    [
+     3,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/documents/manage_document.html",
+   "line": 54,
    "title": "Versions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1716,14 +1775,14 @@
   },
   {
    "template": "templates/pages/documents/manage_document.html",
-   "line": 61,
+   "line": 110,
    "title": "Acknowledgements",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-4",
    "branch_path": [
     [
-     6,
+     9,
      0
     ]
    ]
@@ -1734,7 +1793,7 @@
    "title": "Escalate to the Regional Vice President",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "rounded-surface border px-4 py-3 text-[12.5px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-",
+   "classes": "rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-em",
    "branch_path": [
     [
      6,
@@ -1809,7 +1868,7 @@
   },
   {
    "template": "templates/pages/finance/fund_allocation.html",
-   "line": 60,
+   "line": 59,
    "title": "Activity cost plan \u2014 whole country",
    "heading_level": 2,
    "has_card_key": false,
@@ -1867,8 +1926,64 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/hr/extra_work.html",
+   "line": 27,
+   "title": "Assigned to me",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-800",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/hr/extra_work.html",
+   "line": 83,
+   "title": "Awaiting my review",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/hr/extra_work.html",
+   "line": 115,
+   "title": "Assigned by me",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     14,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/hr/extra_work.html",
+   "line": 143,
+   "title": "On my team (assigned by the CD)",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     18,
+     0
+    ]
+   ]
+  },
+  {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 179,
+   "line": 112,
    "title": "Agreed Priorities ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -1882,7 +1997,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 272,
+   "line": 205,
    "title": "Targets &amp; Progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -1896,7 +2011,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 300,
+   "line": 233,
    "title": "Development Plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -1910,7 +2025,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 323,
+   "line": 256,
    "title": "Values &amp; Commitments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1924,7 +2039,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 343,
+   "line": 276,
    "title": "Amendments",
    "heading_level": 2,
    "has_card_key": false,
@@ -1938,7 +2053,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 371,
+   "line": 304,
    "title": "Performance Conversations",
    "heading_level": 2,
    "has_card_key": false,
@@ -1979,7 +2094,7 @@
   },
   {
    "template": "templates/pages/hr/priority_configuration.html",
-   "line": 105,
+   "line": 49,
    "title": "From source direction to accountable targets",
    "heading_level": 2,
    "has_card_key": false,
@@ -1993,7 +2108,7 @@
   },
   {
    "template": "templates/pages/hr/priority_configuration.html",
-   "line": 129,
+   "line": 73,
    "title": "milestones need an RVP definition",
    "heading_level": 2,
    "has_card_key": false,
@@ -2011,7 +2126,7 @@
   },
   {
    "template": "templates/pages/hr/priority_configuration.html",
-   "line": 268,
+   "line": 212,
    "title": "No governed priority cycle for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -2062,7 +2177,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 78,
+   "line": 75,
    "title": "Verification queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -2071,7 +2186,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 156,
+   "line": 153,
    "title": "Open queues",
    "heading_level": 2,
    "has_card_key": false,
@@ -2080,7 +2195,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 187,
+   "line": 184,
    "title": "Needs attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -2089,7 +2204,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 234,
+   "line": 231,
    "title": "Eight-week activity flow",
    "heading_level": 3,
    "has_card_key": false,
@@ -2098,7 +2213,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 268,
+   "line": 265,
    "title": "Regional performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -2107,7 +2222,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 279,
+   "line": 276,
    "title": "District monitoring",
    "heading_level": 3,
    "has_card_key": false,
@@ -2116,7 +2231,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 287,
+   "line": 284,
    "title": "CCEO and Program Lead performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -2125,7 +2240,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 315,
+   "line": 312,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -2134,7 +2249,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 351,
+   "line": 348,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -2143,7 +2258,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 382,
+   "line": 379,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -2152,7 +2267,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 426,
+   "line": 423,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -2161,7 +2276,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 461,
+   "line": 458,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,
@@ -2285,6 +2400,38 @@
    "branch_path": [
     [
      0,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/ia/partner_review.html",
+   "line": 30,
+   "title": "Planned vs actual",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/partner_review.html",
+   "line": 54,
+   "title": "Evidence",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/partner_review.html",
+   "line": 86,
+   "title": "Return history",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": [
+    [
+     20,
      0
     ]
    ]
@@ -2702,13 +2849,77 @@
    ]
   },
   {
+   "template": "templates/pages/partner/activity_workroom.html",
+   "line": 37,
+   "title": "Assignment brief",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-rose-200 bg-rose-50 p-4 text-[13px] font-semibold text-rose-800",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/partner/activity_workroom.html",
+   "line": 74,
+   "title": "Evidence",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4",
+   "branch_path": [
+    [
+     11,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/partner/assignment_detail.html",
+   "line": 29,
+   "title": "Assignment brief",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/partner/assignments.html",
+   "line": 20,
+   "title": "Awaiting Scheduling",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/partner/assignments.html",
+   "line": 43,
+   "title": "Scheduled",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
    "template": "templates/pages/partner/evidence.html",
-   "line": 31,
+   "line": 33,
    "title": "Recent Uploads",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
+  },
+  {
+   "template": "templates/pages/partner/my_plan.html",
+   "line": 115,
+   "title": "Invoices &amp; Payments",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm px-5 py-12 text-center",
+   "branch_path": [
+    [
+     11,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/partner/today.html",
@@ -2721,7 +2932,7 @@
   },
   {
    "template": "templates/pages/partner/today.html",
-   "line": 69,
+   "line": 47,
    "title": "Today's Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2730,7 +2941,7 @@
   },
   {
    "template": "templates/pages/partner/today.html",
-   "line": 89,
+   "line": 67,
    "title": "Coming Up",
    "heading_level": 2,
    "has_card_key": false,
@@ -2738,8 +2949,22 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/partner/today.html",
+   "line": 84,
+   "title": "MOU Payments",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface mobile-home-deferred rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     9,
+     0
+    ]
+   ]
+  },
+  {
    "template": "templates/pages/partners/detail.html",
-   "line": 32,
+   "line": 41,
    "title": "Annual SSA Progress (Assigned Partner Schools)",
    "heading_level": 2,
    "has_card_key": false,
@@ -2789,7 +3014,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 316,
+   "line": 244,
    "title": "Schedule Recommended Activities",
    "heading_level": 4,
    "has_card_key": false,
@@ -2798,7 +3023,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 359,
+   "line": 287,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -2988,7 +3213,7 @@
      1
     ],
     [
-     16,
+     17,
      0
     ]
    ]
@@ -3023,7 +3248,7 @@
   },
   {
    "template": "templates/pages/reports/index.html",
-   "line": 126,
+   "line": 101,
    "title": "Cumulative progress by time period",
    "heading_level": 2,
    "has_card_key": false,
@@ -3032,7 +3257,7 @@
   },
   {
    "template": "templates/pages/reports/index.html",
-   "line": 200,
+   "line": 175,
    "title": "Cumulative Progress Trend",
    "heading_level": 3,
    "has_card_key": false,
@@ -3041,7 +3266,7 @@
   },
   {
    "template": "templates/pages/reports/index.html",
-   "line": 231,
+   "line": 206,
    "title": "Achievement vs Target",
    "heading_level": 3,
    "has_card_key": false,
@@ -3050,7 +3275,7 @@
   },
   {
    "template": "templates/pages/reports/index.html",
-   "line": 273,
+   "line": 248,
    "title": "Top Priorities",
    "heading_level": 3,
    "has_card_key": false,
@@ -3397,11 +3622,11 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 41,
+   "line": 39,
    "title": "Annual SSA Progress (Assigned Schools)",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4",
    "branch_path": [
     [
      0,
@@ -3411,7 +3636,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 69,
+   "line": 59,
    "title": "Upcoming Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -3425,7 +3650,7 @@
   },
   {
    "template": "templates/pages/staff/detail.html",
-   "line": 89,
+   "line": 79,
    "title": "Schools Covered",
    "heading_level": 2,
    "has_card_key": false,
@@ -3628,7 +3853,7 @@
   },
   {
    "template": "templates/pages/todos/index.html",
-   "line": 19,
+   "line": 20,
    "title": "To-Do",
    "heading_level": 1,
    "has_card_key": false,
@@ -3646,7 +3871,7 @@
   },
   {
    "template": "templates/partials/analytics/cd/budget_finance.html",
-   "line": 2,
+   "line": 7,
    "title": "13. Budget and Finance Health",
    "heading_level": 3,
    "has_card_key": false,
@@ -4147,7 +4372,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 73,
+   "line": 61,
    "title": "SSA change by intervention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4161,7 +4386,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 78,
+   "line": 66,
    "title": "Delivered visits vs SSA change",
    "heading_level": 2,
    "has_card_key": false,
@@ -4175,7 +4400,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 92,
+   "line": 80,
    "title": "Visit purpose mix",
    "heading_level": 2,
    "has_card_key": false,
@@ -4189,7 +4414,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 97,
+   "line": 85,
    "title": "School outcomes",
    "heading_level": 2,
    "has_card_key": false,
@@ -4203,7 +4428,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 102,
+   "line": 90,
    "title": "Visit alignment funnel",
    "heading_level": 2,
    "has_card_key": false,
@@ -4217,7 +4442,7 @@
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 111,
+   "line": 99,
    "title": "Quality vs volume",
    "heading_level": 2,
    "has_card_key": false,
@@ -4228,14 +4453,14 @@
      1
     ],
     [
-     11,
+     9,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 148,
+   "line": 136,
    "title": "Regional variation",
    "heading_level": 2,
    "has_card_key": false,
@@ -4246,14 +4471,14 @@
      1
     ],
     [
-     11,
+     9,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 177,
+   "line": 165,
    "title": "Cohort &amp; data quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4264,14 +4489,14 @@
      1
     ],
     [
-     16,
+     14,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
-   "line": 194,
+   "line": 182,
    "title": "What the data does not explain",
    "heading_level": 2,
    "has_card_key": false,
@@ -4282,7 +4507,7 @@
      1
     ],
     [
-     17,
+     15,
      0
     ]
    ]
@@ -4316,7 +4541,7 @@
   },
   {
    "template": "templates/partials/clusters/edit_cluster_drawer.html",
-   "line": 167,
+   "line": 125,
    "title": "Cluster leader",
    "heading_level": 4,
    "has_card_key": false,
@@ -4478,7 +4703,7 @@
   },
   {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
-   "line": 12,
+   "line": 10,
    "title": "Critical Now",
    "heading_level": 2,
    "has_card_key": false,
@@ -4487,7 +4712,7 @@
   },
   {
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
-   "line": 25,
+   "line": 23,
    "title": "Recent Incidents",
    "heading_level": 2,
    "has_card_key": false,
@@ -4496,7 +4721,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 83,
+   "line": 79,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4505,25 +4730,25 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 117,
+   "line": 118,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 175,
+   "line": 179,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 220,
+   "line": 224,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4532,34 +4757,34 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 250,
+   "line": 254,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-2 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 274,
+   "line": 278,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-5 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 323,
+   "line": 327,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 397,
+   "line": 401,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4568,7 +4793,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 8,
+   "line": 22,
    "title": "Leadership Attention Required",
    "heading_level": 2,
    "has_card_key": false,
@@ -4577,7 +4802,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 76,
+   "line": 86,
    "title": "1. Workforce Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4586,7 +4811,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 85,
+   "line": 95,
    "title": "2. Workforce by Country",
    "heading_level": 2,
    "has_card_key": false,
@@ -4595,7 +4820,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 125,
+   "line": 135,
    "title": "3. Headcount by Department",
    "heading_level": 2,
    "has_card_key": false,
@@ -4604,7 +4829,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 131,
+   "line": 141,
    "title": "4. Job Level Distribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -4613,7 +4838,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 147,
+   "line": 157,
    "title": "5. Leave Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4622,7 +4847,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 153,
+   "line": 163,
    "title": "6. Performance Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4631,7 +4856,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 162,
+   "line": 172,
    "title": "7. Upcoming Reviews &amp; Probations",
    "heading_level": 2,
    "has_card_key": false,
@@ -4640,7 +4865,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 197,
+   "line": 207,
    "title": "8. Compliance Status",
    "heading_level": 2,
    "has_card_key": false,
@@ -4649,7 +4874,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 229,
+   "line": 239,
    "title": "9. Recruitment Funnel",
    "heading_level": 2,
    "has_card_key": false,
@@ -4658,7 +4883,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 241,
+   "line": 251,
    "title": "Pending HR Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4667,7 +4892,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 254,
+   "line": 264,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4676,7 +4901,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 57,
+   "line": 51,
    "title": "Team Performance Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4685,7 +4910,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 64,
+   "line": 58,
    "title": "My Personal Targets",
    "heading_level": 2,
    "has_card_key": false,
@@ -4694,7 +4919,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 102,
+   "line": 96,
    "title": "CCEO Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4703,7 +4928,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 117,
+   "line": 111,
    "title": "Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4712,7 +4937,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 138,
+   "line": 132,
    "title": "SSA Intelligence",
    "heading_level": 2,
    "has_card_key": false,
@@ -4721,7 +4946,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 146,
+   "line": 140,
    "title": "Team Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4730,7 +4955,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 150,
+   "line": 144,
    "title": "Smart Route &amp; Capacity",
    "heading_level": 2,
    "has_card_key": false,
@@ -4739,7 +4964,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 157,
+   "line": 151,
    "title": "Funding &amp; Execution",
    "heading_level": 2,
    "has_card_key": false,
@@ -5044,7 +5269,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 258,
+   "line": 224,
    "title": "Approval Status",
    "heading_level": 3,
    "has_card_key": false,
@@ -5053,7 +5278,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 265,
+   "line": 231,
    "title": "Monthly Approval Progress",
    "heading_level": 3,
    "has_card_key": false,
@@ -5062,7 +5287,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 281,
+   "line": 247,
    "title": "Budget Integrity Checks",
    "heading_level": 3,
    "has_card_key": false,
@@ -5071,7 +5296,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 294,
+   "line": 260,
    "title": "Month Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -5080,7 +5305,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 304,
+   "line": 270,
    "title": "Plan Source Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -5120,20 +5345,6 @@
    ]
   },
   {
-   "template": "templates/partials/fund_approvals/detail.html",
-   "line": 19,
-   "title": "Funding Breakdown from Planned Activities",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface bg-amber-50 border border-amber-200 p-3",
-   "branch_path": [
-    [
-     0,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/fund_approvals/return_drawer.html",
    "line": 8,
    "title": "Return 's Fund Plan",
@@ -5144,7 +5355,7 @@
   },
   {
    "template": "templates/partials/fund_approvals/root.html",
-   "line": 5,
+   "line": 6,
    "title": "Fund Approvals",
    "heading_level": 1,
    "has_card_key": false,
@@ -5153,14 +5364,28 @@
   },
   {
    "template": "templates/partials/fund_approvals/root.html",
-   "line": 81,
+   "line": 76,
+   "title": "Partner Invoices \u2014 Confirm Against the Plan",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": [
+    [
+     15,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/fund_approvals/root.html",
+   "line": 129,
    "title": "CCEO Fund Approval Queue",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     14,
+     17,
      1
     ]
    ]
@@ -5275,7 +5500,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 246,
+   "line": 262,
    "title": "Holiday & Blackout Dates",
    "heading_level": 4,
    "has_card_key": false,
@@ -5284,7 +5509,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 268,
+   "line": 284,
    "title": "Auto-Blocked Conflicts",
    "heading_level": 4,
    "has_card_key": false,
@@ -5293,7 +5518,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 287,
+   "line": 303,
    "title": "Team Availability",
    "heading_level": 4,
    "has_card_key": false,
@@ -5302,7 +5527,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 337,
+   "line": 353,
    "title": "Approval Rules Check",
    "heading_level": 4,
    "has_card_key": false,
@@ -5311,7 +5536,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 350,
+   "line": 366,
    "title": "Audit Trail",
    "heading_level": 4,
    "has_card_key": false,
@@ -5320,21 +5545,21 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 388,
+   "line": 404,
    "title": "Reassign Coverage Assignee",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
    "branch_path": [
     [
-     12,
+     13,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 426,
+   "line": 442,
    "title": "Return Leave for Clarification",
    "heading_level": 3,
    "has_card_key": false,
@@ -5343,7 +5568,7 @@
   },
   {
    "template": "templates/partials/leave/impact_panel.html",
-   "line": 457,
+   "line": 473,
    "title": "Reject Leave Request",
    "heading_level": 3,
    "has_card_key": false,
@@ -6212,7 +6437,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 114,
+   "line": 92,
    "title": "No measurable performance priorities agreed for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6226,21 +6451,21 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 123,
+   "line": 101,
    "title": "Performance Priorities by Time Period",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": [
     [
-     14,
+     10,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 207,
+   "line": 185,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -6249,7 +6474,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 224,
+   "line": 202,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -6258,7 +6483,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 253,
+   "line": 231,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,

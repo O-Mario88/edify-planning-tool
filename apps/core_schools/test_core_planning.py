@@ -675,6 +675,24 @@ class CoreSchoolsPlanningTest(TestCase):
             # apostrophes.
             self.assertIn(escape(str(label)), html)
 
+    def test_intervention_impact_is_batched_across_all_eight_rows(self):
+        from apps.core_schools.core_planning_services import (
+            CoreInterventionImpactService,
+        )
+
+        core_schools = School.objects.filter(school_id=self.school.school_id)
+        with CaptureQueriesContext(connection) as queries:
+            rows = CoreInterventionImpactService.get_intervention_impact(
+                core_schools, FY
+            )
+
+        self.assertEqual(len(rows), 8)
+        self.assertLessEqual(
+            len(queries),
+            9,
+            "Intervention impact must aggregate by intervention, not query per row",
+        )
+
     def test_four_weakest_interventions_are_recommended(self):
         from apps.core_schools.core_planning_services import (
             CoreInterventionRecommendationService,

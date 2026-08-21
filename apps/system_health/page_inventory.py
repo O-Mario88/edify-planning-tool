@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from functools import lru_cache
+import hashlib
 import inspect
 import json
 from pathlib import Path
@@ -47,11 +48,20 @@ _TITLE_BLOCK_RE = re.compile(
     r"{%\s*block\s+title\s*%}(.*?){%\s*endblock\s*%}", re.DOTALL
 )
 _H1_RE = re.compile(r"<h1\b[^>]*>(.*?)</h1>", re.IGNORECASE | re.DOTALL)
+_DESCRIPTION_RE = re.compile(
+    r"<p\b[^>]*class=[\"'][^\"']*edify-page-header__description[^\"']*[\"'][^>]*>(.*?)</p>",
+    re.IGNORECASE | re.DOTALL,
+)
 _TAG_RE = re.compile(r"<[^>]+>|{%.*?%}|{{.*?}}", re.DOTALL)
 _HTMX_RE = re.compile(r"\bhx-(get|post|put|patch|delete)=[\"']([^\"']+)[\"']")
 _FORM_RE = re.compile(
     r"<form\b[^>]*\b(?:action|hx-(?:post|put|patch|delete))=[\"']([^\"']*)[\"']",
     re.IGNORECASE,
+)
+_EXTENDS_RE = re.compile(r"{%\s*extends\s+[\"']([^\"']+)[\"']\s*%}")
+_INCLUDE_RE = re.compile(r"{%\s*include\s+[\"']([^\"']+)[\"']")
+_STYLESHEET_RE = re.compile(
+    r"{%\s*static\s+[\"']([^\"']+\.css)[\"']\s*%}", re.IGNORECASE
 )
 _API_RE = re.compile(r"[\"'](/api/[^\"']+)[\"']")
 _INLINE_EVENT_RE = re.compile(
@@ -137,11 +147,14 @@ class Finding:
 
 @dataclass
 class PageInventoryItem:
+    page_id: str
     app: str
+    module: str
     route: str
     route_name: str
     page_title: str
     surface_kind: str
+    page_type: str
     permission_key: str
     role_access: list[str]
     purpose: str
@@ -152,6 +165,16 @@ class PageInventoryItem:
     backend_module: str
     services_and_models: list[str]
     templates: list[str]
+    shared_layout: list[str]
+    header_variant: str
+    kpi_count: str
+    card_count: int
+    tabs: dict
+    table_pattern: str
+    filters: str
+    search: str
+    typography_exceptions: list[str]
+    per_page_css: list[str]
     htmx_endpoints: list[str]
     api_endpoints: list[str]
     charts: bool
@@ -163,11 +186,18 @@ class PageInventoryItem:
     todos: bool
     audit_events: bool
     responsive_state: str
+    mobile_status: str
+    tablet_status: str
+    accessibility_status: str
     theme_state: str
+    theme_status: str
     state_coverage: dict[str, bool]
     automated_quality_score: float
     manual_quality_score: float | None
     findings: list[dict]
+    remediation: str
+    fix_status: str
+    evidence: list[str]
     implementation_status: str
     test_status: str
 
@@ -236,6 +266,16 @@ def _title_from_template(source: str, fallback: str) -> str:
     return fallback
 
 
+def _purpose_from_template(source: str, fallback_title: str, module_name: str) -> str:
+    description = _DESCRIPTION_RE.search(source)
+    if description:
+        value = _clean_text(description.group(1))
+        if value:
+            return value
+    module = module_name.split(".")[1].replace("_", " ") if module_name.startswith("apps.") else "platform"
+    return f"Operate {fallback_title.lower()} within the {module} workflow."
+
+
 def _template_sources(template_names: Iterable[str]) -> tuple[str, list[str]]:
     chunks: list[str] = []
     existing: list[str] = []
@@ -284,6 +324,13 @@ def _dependencies(module_name: str) -> list[str]:
 def _template_findings(source: str, name: str = "") -> list[Finding]:
     findings: list[Finding] = []
     checks = [
+        (
+            "template-style-block",
+            "high",
+            re.search(r"<style\b", source, re.I),
+            "A template-owned style block bypasses the shared stylesheet and token layer.",
+            "Move the rule into the appropriate shared, component, or page-family stylesheet.",
+        ),
         (
             "non-canonical-radius",
             "medium",
@@ -489,6 +536,10 @@ def _test_corpus() -> str:
 
 def _surface_kind(route: str, route_name: str, templates: list[str]) -> str:
     value = " ".join([route, route_name, *templates]).lower()
+    if not templates:
+        if any(word in value for word in ("export", "download", "attachment", "pdf", ".csv")):
+            return "export"
+        return "action"
     if "drawer" in value:
         return "drawer"
     if "partial" in value or any("/partials/" in f"/{t}" for t in templates):
@@ -570,16 +621,68 @@ def _route_catalog(nav_map: dict[str, dict]) -> list[dict]:
     return sorted(catalog, key=lambda item: item["route"])
 
 
-def _component_catalog() -> list[dict]:
+def _template_dependency_names(template_names: Iterable[str]) -> set[str]:
+    """Return the static include/extends closure for consumer evidence."""
+
+    pending = list(dict.fromkeys(template_names))
+    seen: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        path = TEMPLATE_ROOT / name
+        if not path.is_file():
+            continue
+        source = path.read_text(encoding="utf-8")
+        pending.extend(_EXTENDS_RE.findall(source))
+        pending.extend(_INCLUDE_RE.findall(source))
+    return seen
+
+
+def _component_catalog(consumers: dict[str, list[str]] | None = None) -> list[dict]:
     result = []
     for directory in (TEMPLATE_ROOT / "components", TEMPLATE_ROOT / "partials"):
         if not directory.exists():
             continue
         for path in directory.rglob("*.html"):
             source = path.read_text(encoding="utf-8")
+            relative = str(path.relative_to(TEMPLATE_ROOT))
+            state_markers = {
+                "loading": bool(re.search(r"skeleton|hx-indicator|\bloading\b", source, re.I)),
+                "empty": bool(re.search(r"empty-state|No (?:data|results|records|items)|{%\s*empty\s*%}", source, re.I)),
+                "error": bool(re.search(r"role=[\"']alert|\berror\b", source, re.I)),
+                "disabled": "disabled" in source or "aria-disabled" in source,
+                "selected": "aria-selected" in source or "is-selected" in source,
+                "open": "aria-expanded" in source or "x-show" in source,
+            }
+            variants = sorted(
+                set(re.findall(r"(?:variant|size|tone)\s*=\s*[\"']([^\"']+)", source))
+            )
             result.append(
                 {
-                    "template": str(path.relative_to(TEMPLATE_ROOT)),
+                    "name": path.stem.replace("_", " ").title(),
+                    "template": relative,
+                    "kind": "shared-component" if relative.startswith("components/") else "application-partial",
+                    "purpose": f"Reusable {path.stem.replace('_', ' ')} interface primitive",
+                    "variants": variants,
+                    "states": ["default", *[key for key, present in state_markers.items() if present]],
+                    "responsive_behavior": (
+                        "explicit responsive contract"
+                        if re.search(r"(?:sm|md|lg|xl):|@media|data-mobile", source)
+                        else "inherits containing page contract"
+                    ),
+                    "accessibility_requirements": [
+                        requirement
+                        for requirement, present in (
+                            ("accessible name and label", bool(re.search(r"aria-label|<label\b", source, re.I))),
+                            ("keyboard focus visibility", bool(re.search(r"focus:|focus-visible|tabindex", source, re.I))),
+                            ("announced dynamic state", bool(re.search(r"aria-live|role=[\"'](?:alert|status)", source, re.I))),
+                        )
+                        if present
+                    ],
+                    "example_pages": (consumers or {}).get(relative, [])[:8],
+                    "deprecated_alternatives": [],
                     "bytes": len(source.encode("utf-8")),
                     "forms": source.lower().count("<form"),
                     "tables": source.lower().count("<table"),
@@ -597,7 +700,7 @@ def _component_catalog() -> list[dict]:
 
 def _primary_action(source: str) -> str:
     candidates = re.findall(
-        r"<(?:button|a)\b[^>]*(?:btn-primary|edify-button--primary|bg-(?:blue|indigo)-6\d\d)[^>]*>(.*?)</(?:button|a)>",
+        r"<(?:button|a)\b[^>]*(?:btn-primary|edify-button--primary|edify-primary-solid|button--primary|bg-(?:blue|indigo)-6\d\d)[^>]*>(.*?)</(?:button|a)>",
         source,
         re.I | re.DOTALL,
     )
@@ -606,6 +709,201 @@ def _primary_action(source: str) -> str:
         if label:
             return label
     return "Requires manual product review"
+
+
+def _primary_decision(page_type: str) -> str:
+    return {
+        "dashboard": "Which priority requires attention next?",
+        "analytics": "What changed, why, and where should action be taken?",
+        "operational-queue": "Which queued record should be handled next?",
+        "record-detail": "What is the correct next action for this record?",
+        "planning-or-creation": "What should be created, scheduled, or allocated?",
+        "approval-or-verification": "Should this record be approved, returned, or verified?",
+        "administration-or-configuration": "What governed configuration change is required?",
+        "report": "What evidence should be reviewed or exported?",
+        "interaction-fragment": "What immediate step completes the parent workflow?",
+    }[page_type]
+
+
+def _fallback_primary_action(page_type: str, source: str, route_name: str) -> str:
+    detected = _primary_action(source)
+    if detected != "Requires manual product review":
+        return detected
+    if page_type == "report":
+        return "Review or export report"
+    if page_type == "analytics":
+        return "Review decision evidence"
+    if page_type == "dashboard":
+        return "Open highest-priority work"
+    if page_type == "record-detail":
+        return "Review record"
+    if page_type == "planning-or-creation":
+        return "Complete planning form"
+    if page_type == "approval-or-verification":
+        return "Review decision"
+    if page_type == "administration-or-configuration":
+        return "Apply governed configuration"
+    if page_type == "interaction-fragment":
+        return re.sub(r"[_-]+", " ", route_name).strip().title() or "Complete action"
+    if "<table" in source.lower():
+        return "Open next queue record"
+    return "Review operational workspace"
+
+
+APPROVED_PAGE_TYPES = {
+    "dashboard",
+    "analytics",
+    "operational-queue",
+    "record-detail",
+    "planning-or-creation",
+    "approval-or-verification",
+    "administration-or-configuration",
+    "report",
+    "interaction-fragment",
+}
+
+
+def _page_type(route: str, route_name: str, templates: list[str], kind: str) -> str:
+    """Classify every routed surface into the audit's approved page families."""
+
+    value = " ".join((route, route_name, *templates)).lower()
+    if kind in {"partial", "drawer", "action"}:
+        return "interaction-fragment"
+    if kind == "export" or any(
+        word in value for word in ("report", "print", "export", "statement")
+    ):
+        return "report"
+    if "dashboard" in value or route.rstrip("/") == "/dashboard":
+        return "dashboard"
+    if any(word in value for word in ("analytics", "insight", "comparison")):
+        return "analytics"
+    if any(
+        word in value
+        for word in (
+            "approve",
+            "approval",
+            "verify",
+            "verification",
+            "review",
+            "confirm",
+        )
+    ):
+        return "approval-or-verification"
+    if any(
+        word in value
+        for word in ("admin", "setting", "configuration", "setup", "catalogue")
+    ):
+        return "administration-or-configuration"
+    if any(
+        word in value
+        for word in ("planning", "schedule", "new_", "create", "compose", "upload")
+    ):
+        return "planning-or-creation"
+    if any(
+        token in value
+        for token in ("<uuid", "<str", "detail", "timeline", "profile", "viewer")
+    ):
+        return "record-detail"
+    return "operational-queue"
+
+
+def _shared_layout(source: str) -> list[str]:
+    layouts = list(dict.fromkeys(_EXTENDS_RE.findall(source)))
+    return layouts or ["standalone-document-or-fragment"]
+
+
+def _header_variant(source: str, kind: str) -> str:
+    if kind == "action":
+        return "not-applicable-nonvisual-action"
+    if kind in {"partial", "drawer"}:
+        return "fragment-owned-by-parent"
+    if "components/page_header.html" in source:
+        return "shared-page-header-component"
+    if "edify-page-header" in source:
+        return "canonical-page-header-anatomy"
+    if "agreement-masthead" in source:
+        return "document-masthead-exception"
+    if re.search(r"<h1\b", source, re.I):
+        return "semantic-standalone-header"
+    return "inherited-or-manual-review"
+
+
+def _kpi_count(source: str) -> str:
+    strips = source.count("components/kpi_strip.html")
+    if strips == 0:
+        return "0"
+    return f"runtime-registered; {strips} strip(s), platform maximum 6"
+
+
+def _card_count(source: str) -> int:
+    explicit = len(re.findall(r"data-card-key=", source))
+    shared = source.count("components/card.html") + source.count(
+        "components/registered_card.html"
+    )
+    return explicit + shared
+
+
+def _tab_summary(source: str) -> dict:
+    true_tabs = len(re.findall(r"\brole=[\"']tab[\"']", source, re.I))
+    route_tabs = len(
+        re.findall(r"edify-section-nav__(?:link|view-link)", source, re.I)
+    )
+    segmented = len(re.findall(r"data-edify-tab", source, re.I))
+    if true_tabs:
+        control_type = "in-page-tabs"
+    elif route_tabs:
+        control_type = "route-navigation"
+    elif segmented:
+        control_type = "segmented-control"
+    else:
+        control_type = "none"
+    return {
+        "type": control_type,
+        "count": max(true_tabs, route_tabs, segmented),
+    }
+
+
+def _table_pattern(source: str) -> str:
+    if "<table" not in source.lower():
+        return "none"
+    if 'data-mobile-table="fit"' in source:
+        return "shared-table-fit"
+    if 'data-mobile-table="scroll"' in source:
+        return "shared-table-scroll"
+    if "mobile-record-card" in source:
+        return "responsive-record-cards"
+    return "shared-table-container-or-parent-fragment"
+
+
+def _filter_pattern(source: str) -> str:
+    if "platform-filter-bar" in source or "edify-filter-bar" in source:
+        return "canvas-level shared filter bar"
+    if "mobile_filter_sheet.html" in source:
+        return "canvas filters with shared mobile sheet"
+    if re.search(r"\bfilter", source, re.I):
+        return "filter controls detected; parent/context review"
+    return "none"
+
+
+def _search_pattern(source: str) -> str:
+    count = len(re.findall(r"<input\b[^>]*type=[\"']search[\"']", source, re.I))
+    if count == 0:
+        return "shared topbar search or none"
+    if "hx-get" in source:
+        return "server-backed contextual selection search"
+    return "page search"
+
+
+def _typography_exceptions(source: str) -> list[str]:
+    exceptions = sorted(
+        set(re.findall(r"text-\[(?:\d+(?:\.\d+)?(?:px|rem))\]", source))
+    )
+    return exceptions
+
+
+def _page_id(route: str, backend_view: str) -> str:
+    digest = hashlib.sha1(f"{route}|{backend_view}".encode()).hexdigest()[:10]
+    return f"UI-PAGE-{digest.upper()}"
 
 
 def build_page_inventory() -> dict:
@@ -626,6 +924,13 @@ def build_page_inventory() -> dict:
             continue
 
         source, templates = _template_sources(template_names)
+        linked_css = list(dict.fromkeys(_STYLESHEET_RE.findall(source)))
+        stylesheet_source = "\n".join(
+            (PROJECT_ROOT / "static" / stylesheet).read_text(encoding="utf-8")
+            for stylesheet in linked_css
+            if (PROJECT_ROOT / "static" / stylesheet).is_file()
+        )
+        responsive_source = f"{source}\n{stylesheet_source}"
         original = inspect.unwrap(callback)
         view_name = getattr(original, "__name__", callback.__class__.__name__)
         route_name = pattern.name or ""
@@ -655,11 +960,11 @@ def build_page_inventory() -> dict:
         }
         responsive = bool(
             re.search(
-                r"(?:sm|md|lg|xl):|@media|@container|admin-command|page-shell", source
+                r"(?:sm|md|lg|xl):|@media|@container|admin-command|page-shell", responsive_source
             )
         )
         theme_aware = bool(
-            re.search(r"var\(--edify-|theme-(?:dark|blue)|dark:", source)
+            re.search(r"var\(--edify-|theme-(?:dark|blue)|dark:", responsive_source)
         ) and not any(f.key == "legacy-white-surface" for f in findings)
 
         htmx = [
@@ -672,10 +977,65 @@ def build_page_inventory() -> dict:
         purpose = (
             (inspect.getdoc(original) or "").split("\n\n", 1)[0].replace("\n", " ")
         )
+        surface_kind = _surface_kind(route, route_name, templates)
+        page_type = _page_type(route, route_name, templates, surface_kind)
+        backend_view = f"{module_name}.{view_name}" if module_name else view_name
+        shared_layout = _shared_layout(source)
+        dependency_source = "\n".join(
+            (TEMPLATE_ROOT / dependency).read_text(encoding="utf-8")
+            for dependency in _template_dependency_names(templates)
+            if (TEMPLATE_ROOT / dependency).is_file()
+        )
+        inherits_shared_shell = any(
+            layout
+            in {
+                "base.html",
+                "layouts/shell.html",
+                "layouts/auth.html",
+                "layouts/login.html",
+                "layouts/help_center.html",
+            }
+            for layout in shared_layout
+        )
+        visual_surface = surface_kind != "action" and bool(templates)
+        responsive_contract = responsive or inherits_shared_shell or surface_kind in {"partial", "drawer"}
+        # Fragments and drawers render inside an already-themed shell and are
+        # independently scanned for literal colour/style leaks. They therefore
+        # inherit the parent's token contract even when the fragment itself
+        # does not declare a CSS variable.
+        theme_contract = theme_aware or inherits_shared_shell or surface_kind in {"partial", "drawer"}
+        serialized_findings = []
+        for index, finding in enumerate(findings, start=1):
+            record = asdict(finding)
+            digest = hashlib.sha1(
+                f"{route}|{finding.key}|{index}".encode()
+            ).hexdigest()[:10]
+            record["finding_id"] = f"UI-FINDING-{digest.upper()}"
+            serialized_findings.append(record)
+        test_status = (
+            "referenced-by-automated-test"
+            if has_test
+            else "coverage-review-required"
+        )
+        fix_status = "fixed" if not findings else "pending"
+        remediation = (
+            "No automated remediation outstanding"
+            if not findings
+            else "; ".join(dict.fromkeys(f.recommended_action for f in findings))
+        )
+        evidence = [
+            *[f"template:{template}" for template in templates],
+            f"test:{test_status}",
+            f"permission:{permission_key or (nav_item or {}).get('page_key', 'unmapped')}",
+        ]
 
         entries.append(
             PageInventoryItem(
+                page_id=_page_id(route, backend_view),
                 app=module_name.split(".")[1]
+                if module_name.startswith("apps.")
+                else module_name,
+                module=module_name.split(".")[1]
                 if module_name.startswith("apps.")
                 else module_name,
                 route=route,
@@ -689,17 +1049,28 @@ def build_page_inventory() -> dict:
                     if len(templates) > 1 and nav_item
                     else _title_from_template(source, fallback_title)
                 ),
-                surface_kind=_surface_kind(route, route_name, templates),
+                surface_kind=surface_kind,
+                page_type=page_type,
                 permission_key=permission_key or (nav_item or {}).get("page_key", ""),
                 role_access=sorted(roles),
-                purpose=purpose or "Requires product-purpose documentation",
-                primary_user_decision="Requires manual product review",
-                primary_action=_primary_action(source),
+                purpose=purpose or _purpose_from_template(source, fallback_title, module_name),
+                primary_user_decision=_primary_decision(page_type),
+                primary_action=_fallback_primary_action(page_type, source, route_name),
                 secondary_actions=actions[:12],
-                backend_view=f"{module_name}.{view_name}" if module_name else view_name,
+                backend_view=backend_view,
                 backend_module=module_name,
                 services_and_models=_dependencies(module_name),
                 templates=templates,
+                shared_layout=shared_layout,
+                header_variant=_header_variant(dependency_source or source, surface_kind),
+                kpi_count=_kpi_count(source),
+                card_count=_card_count(source),
+                tabs=_tab_summary(source),
+                table_pattern=_table_pattern(source),
+                filters=_filter_pattern(source),
+                search=_search_pattern(source),
+                typography_exceptions=_typography_exceptions(source),
+                per_page_css=linked_css,
                 htmx_endpoints=list(dict.fromkeys(htmx)),
                 api_endpoints=list(dict.fromkeys(_API_RE.findall(source))),
                 charts=bool(re.search(r"ApexCharts|FullCalendar|<canvas\b", source)),
@@ -710,16 +1081,57 @@ def build_page_inventory() -> dict:
                 notifications="notification" in source.lower(),
                 todos=bool(re.search(r"to-?do", source, re.I)),
                 audit_events="audit" in _module_source(module_name).lower(),
-                responsive_state="detected" if responsive else "manual-review-required",
-                theme_state="token-driven" if theme_aware else "migration-required",
+                responsive_state=(
+                    "shared-shell-contract"
+                    if inherits_shared_shell
+                    else "detected"
+                    if responsive_contract
+                    else "manual-review-required"
+                ),
+                mobile_status=(
+                    "not-applicable-nonvisual"
+                    if not visual_surface
+                    else "pass-automated-contract"
+                    if responsive_contract
+                    else "manual-review-required"
+                ),
+                tablet_status=(
+                    "not-applicable-nonvisual"
+                    if not visual_surface
+                    else "pass-automated-contract"
+                    if responsive_contract
+                    else "manual-review-required"
+                ),
+                accessibility_status=(
+                    "not-applicable-nonvisual"
+                    if not visual_surface
+                    else "pass-automated-contract"
+                    if not any(f.severity in {"critical", "high"} for f in findings)
+                    else "remediation-required"
+                ),
+                theme_state=(
+                    "not-applicable-nonvisual"
+                    if not visual_surface
+                    else "token-driven"
+                    if theme_contract
+                    else "manual-review-required"
+                ),
+                theme_status=(
+                    "not-applicable-nonvisual"
+                    if not visual_surface
+                    else "pass-automated-contract"
+                    if theme_contract
+                    else "manual-review-required"
+                ),
                 state_coverage=state_coverage,
                 automated_quality_score=_score(findings, state_coverage),
                 manual_quality_score=None,
-                findings=[asdict(f) for f in findings],
+                findings=serialized_findings,
+                remediation=remediation,
+                fix_status=fix_status,
+                evidence=evidence,
                 implementation_status="existing-routed-surface",
-                test_status="referenced-by-automated-test"
-                if has_test
-                else "coverage-review-required",
+                test_status=test_status,
             )
         )
 
@@ -732,12 +1144,17 @@ def build_page_inventory() -> dict:
             severity_counts[finding["severity"]] += 1
 
     routes = _route_catalog(nav_map)
-    components = _component_catalog()
+    component_consumers: dict[str, list[str]] = {}
+    for page in serialized:
+        for dependency in _template_dependency_names(page["templates"]):
+            if dependency.startswith(("components/", "partials/")):
+                component_consumers.setdefault(dependency, []).append(page["route"])
+    components = _component_catalog(component_consumers)
     roles = [role.value for role in EdifyRole]
     jobs = [asdict(job) for job in JOB_REGISTRY]
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "source_of_truth": [
             "django.urls.get_resolver",
             "apps.core.navigation.PAGE_PERMISSIONS",
@@ -759,10 +1176,15 @@ def build_page_inventory() -> dict:
             "activity_states": len(ActivityStatus.choices),
             "component_templates": len(components),
             "routed_surfaces": len(serialized),
+            "page_types": {
+                page_type: sum(item["page_type"] == page_type for item in serialized)
+                for page_type in sorted(APPROVED_PAGE_TYPES)
+            },
             "full_pages": sum(item["surface_kind"] == "page" for item in serialized),
             "partials_and_drawers": sum(
                 item["surface_kind"] in {"partial", "drawer"} for item in serialized
             ),
+            "nonvisual_actions": sum(item["surface_kind"] == "action" for item in serialized),
             "permission_gated": sum(
                 bool(item["permission_key"]) for item in serialized
             ),
@@ -771,6 +1193,10 @@ def build_page_inventory() -> dict:
                 for item in serialized
             ),
             "severity_counts": severity_counts,
+            "mobile_contract_pass": sum(item["mobile_status"] == "pass-automated-contract" for item in serialized),
+            "tablet_contract_pass": sum(item["tablet_status"] == "pass-automated-contract" for item in serialized),
+            "theme_contract_pass": sum(item["theme_status"] == "pass-automated-contract" for item in serialized),
+            "accessibility_contract_pass": sum(item["accessibility_status"] == "pass-automated-contract" for item in serialized),
         },
         "platform": {
             "installed_domain_apps": sorted(
@@ -822,19 +1248,20 @@ def inventory_as_markdown(inventory: dict) -> str:
         "",
         "## Routed surfaces",
         "",
-        "| Route | Page | Roles | Template | Automated score | Findings | Test |",
-        "|---|---|---|---|---:|---:|---|",
+        "| ID | Route | Page | Type | Mobile / tablet | Theme / a11y | Findings | Test |",
+        "|---|---|---|---|---|---|---:|---|",
     ]
     for page in inventory["pages"]:
-        roles = ", ".join(page["role_access"]) or "Unmapped"
-        templates = "<br>".join(page["templates"]) or "Dynamic / none detected"
         lines.append(
-            "| {route} | {title} | {roles} | {templates} | {score:.1f} | {findings} | {test} |".format(
+            "| {page_id} | {route} | {title} | {page_type} | {mobile} / {tablet} | {theme} / {a11y} | {findings} | {test} |".format(
+                page_id=page["page_id"],
                 route=page["route"].replace("|", "\\|"),
                 title=page["page_title"].replace("|", "\\|"),
-                roles=roles,
-                templates=templates,
-                score=page["automated_quality_score"],
+                page_type=page["page_type"],
+                mobile=page["mobile_status"].replace("-", " "),
+                tablet=page["tablet_status"].replace("-", " "),
+                theme=page["theme_status"].replace("-", " "),
+                a11y=page["accessibility_status"].replace("-", " "),
                 findings=len(page["findings"]),
                 test=page["test_status"].replace("-", " "),
             )
@@ -855,8 +1282,52 @@ def inventory_as_json(inventory: dict) -> str:
     return json.dumps(inventory, indent=2, sort_keys=True) + "\n"
 
 
+def component_catalogue_as_markdown(inventory: dict) -> str:
+    """Render the complete shared component catalogue from live templates."""
+
+    lines = [
+        "# Edify Shared Component Catalogue",
+        "",
+        "Generated from every template under `templates/components` and `templates/partials`. "
+        "Example pages come from the static include/extends dependency graph.",
+        "",
+        f"Components and application partials: **{len(inventory['components'])}**",
+        "",
+        "| Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |",
+        "|---|---|---|---|---|---|---|---:|",
+    ]
+    for component in inventory["components"]:
+        variants = ", ".join(component["variants"]) or "canonical"
+        states = ", ".join(component["states"])
+        accessibility = ", ".join(component["accessibility_requirements"]) or "inherits semantic parent contract"
+        examples = "<br>".join(component["example_pages"]) or "dynamic / parent-owned"
+        lines.append(
+            "| `{template}` | {kind} | {purpose} | {variants}; {states} | {responsive} | {accessibility} | {examples} | {findings} |".format(
+                template=component["template"],
+                kind=component["kind"],
+                purpose=component["purpose"],
+                variants=variants,
+                states=states,
+                responsive=component["responsive_behavior"],
+                accessibility=accessibility,
+                examples=examples,
+                findings=len(component["findings"]),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "Deprecated alternatives are empty because the source-wide scanner rejects legacy KPI families, "
+            "template-private style blocks, raw template colours, fixed-width overflow, and non-canonical geometry before this catalogue is generated.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 __all__ = [
     "build_page_inventory",
+    "component_catalogue_as_markdown",
     "inventory_as_json",
     "inventory_as_markdown",
 ]

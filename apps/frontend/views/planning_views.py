@@ -22,6 +22,7 @@ from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
+from apps.partners import services as partner_services
 from apps.partners.services import assignable_partners
 from apps.partners.purposes import (
     PARTNER_VISIT_PURPOSES,
@@ -348,11 +349,11 @@ def special_projects_bulk_partner_view(request):
                     partner=partner,
                     project_id=assignment.project_id,
                     catalogue_item=catalogue_item,
-                    status="pending_scheduling",
+                    status__in=PartnerAssignment.UNSCHEDULED_STATUSES,
                 ).exists()
                 if duplicate:
                     continue
-                PartnerAssignment.objects.create(
+                partner_services.create_assignment(
                     school=assignment.school,
                     partner=partner,
                     assigning_staff_id=(
@@ -371,7 +372,6 @@ def special_projects_bulk_partner_view(request):
                     focus_intervention=recommendation["targetIntervention"],
                     expected_activity_type=catalogue_item.workflow_kind,
                     scheduled_date=parsed_date,
-                    status="pending_scheduling",
                     notes=f"Project: {assignment.project.name}",
                 )
                 created += 1
@@ -560,9 +560,17 @@ def planning_dashboard_view(request):
         .exists()
     )
 
+    from apps.core.permissions import has_permission as _has_permission
+    from apps.core.rbac import Permission as _Permission
+
     # 4. Construct context
     context = {
         "any_clustered_school": any_clustered_school,
+        # Field events (district meetings, boot camps…) plan from the same
+        # governed drawer the Work Plan uses; the button needs the same gate.
+        "can_add_non_school_activity": _has_permission(
+            request.user, _Permission.MANUAL_ACTIVITY_CREATE.value
+        ),
         "schools": data["schools"],
         "clusters": data.get("clusters", []),
         "kpis": data["kpis"],
@@ -1493,8 +1501,22 @@ def assign_partner_action_view(request):
                 )
                 response["HX-Trigger"] = "close-drawer"
                 return response
+            # §F fail-fast at ASSIGNMENT: if this school's partner allowance
+            # is already used this FY, the assigner finds out here — not the
+            # partner, days later, at scheduling. The scheduling-time check
+            # stays as the authoritative last gate.
+            from apps.partners.services import assert_partner_activity_allowance
+
+            assert_partner_activity_allowance(
+                partner.id,
+                school.id,
+                normalized_type,
+                get_operational_fy(expected_date)
+                if expected_date
+                else get_operational_fy(),
+            )
             with transaction.atomic():
-                PartnerAssignment.objects.create(
+                partner_services.create_assignment(
                     school=school,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
@@ -1513,7 +1535,6 @@ def assign_partner_action_view(request):
                     expected_activity_type=normalized_type,
                     scheduled_date=expected_date,
                     notes=notes,
-                    status="pending_scheduling",
                 )
 
         if cluster_id:
@@ -1527,7 +1548,7 @@ def assign_partner_action_view(request):
                 return response
             with transaction.atomic():
                 # Create PartnerAssignment for cluster
-                PartnerAssignment.objects.create(
+                partner_services.create_assignment(
                     cluster=cluster,
                     partner=partner,
                     assigning_staff_id=monitored_by_staff_id,
@@ -1543,7 +1564,6 @@ def assign_partner_action_view(request):
                     expected_activity_type=act_type,
                     scheduled_date=expected_date,
                     notes=notes,
-                    status="pending_scheduling",
                 )
 
         # Return refresh trigger and close drawer
@@ -1742,7 +1762,7 @@ def bulk_action_view(request):
                     item = ActivityCatalogueItem.objects.get(
                         id=recommendation["catalogueItemId"]
                     )
-                    PartnerAssignment.objects.create(
+                    partner_services.create_assignment(
                         school=s,
                         partner=partner,
                         assigning_staff_id=monitored_by_staff_id,
@@ -1759,7 +1779,6 @@ def bulk_action_view(request):
                         notes=(
                             "Bulk Partner Assignment · final schedule and cost pending"
                         ),
-                        status="pending_scheduling",
                     )
             return HttpResponse("<script>window.location.reload();</script>")
         except Exception as exc:

@@ -9,6 +9,8 @@ reported as not measurable rather than estimated.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from collections import defaultdict
 from urllib.parse import urlencode
 
@@ -757,76 +759,76 @@ def get_analytics(
     )
 
     kpis = [
-        {
-            "label": "Total Projects",
-            "value": len(project_payloads),
-            "helper": f"FY {selected_fy}",
-            "tone": "blue",
-            "icon": "folder",
-        },
-        {
-            "label": "Schools in Projects",
-            "value": len(assigned_school_ids),
-            "helper": f"{len(supported_school_ids)} received verified support",
-            "tone": "teal",
-            "icon": "school",
-        },
-        {
-            "label": "Great Impact",
-            "value": class_counts["Great Impact"],
-            "helper": "ready to scale",
-            "tone": "green",
-            "icon": "chart",
-        },
-        {
-            "label": "Negative Impact",
-            "value": class_counts["Negative Impact"],
-            "helper": "pause and review",
-            "tone": "red",
-            "icon": "warning",
-        },
-        {
-            "label": "Teachers Impacted",
-            "value": teachers,
-            "helper": "verified attendance",
-            "tone": "purple",
-            "icon": "partner",
-        },
-        {
-            "label": "School Leaders Impacted",
-            "value": leaders,
-            "helper": "verified attendance",
-            "tone": "orange",
-            "icon": "partner",
-        },
-        {
-            "label": "Students Reached",
-            "value": students,
-            "helper": "enrolment at supported schools",
-            "tone": "purple",
-            "icon": "school",
-        },
-        {
-            "label": "Avg Annual SSA Delta",
-            "value": f"{average_delta:+.2f}" if average_delta is not None else "—",
-            "helper": "associated interventions",
-            "tone": "green",
-            "icon": "chart",
-        },
-        {
-            "label": "Delivery Adoption",
-            "value": f"{adoption_rate}%",
-            "helper": "assigned schools receiving verified support",
-            "tone": "blue",
-            "icon": "check",
-        },
-        {
-            "label": "Evidence Completion",
-            "value": f"{evidence_completion}%",
-            "helper": "accepted evidence on delivered work",
-            "tone": "teal",
-            "icon": "document",
-        },
+        render_precomputed_metric_item(
+            "projects_impact_service_total_projects",
+            len(project_payloads),
+            helper=f"FY {selected_fy}",
+            tone="blue",
+            icon="folder",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_schools_in_projects",
+            len(assigned_school_ids),
+            helper=f"{len(supported_school_ids)} received verified support",
+            tone="teal",
+            icon="school",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_great_impact",
+            class_counts["Great Impact"],
+            helper="ready to scale",
+            tone="green",
+            icon="chart",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_negative_impact",
+            class_counts["Negative Impact"],
+            helper="pause and review",
+            tone="red",
+            icon="warning",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_teachers_impacted",
+            teachers,
+            helper="verified attendance",
+            tone="purple",
+            icon="partner",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_school_leaders_impacted",
+            leaders,
+            helper="verified attendance",
+            tone="orange",
+            icon="partner",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_students_reached",
+            students,
+            helper="enrolment at supported schools",
+            tone="purple",
+            icon="school",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_avg_annual_ssa_delta",
+            f"{average_delta:+.2f}" if average_delta is not None else "—",
+            helper="associated interventions",
+            tone="green",
+            icon="chart",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_delivery_adoption",
+            f"{adoption_rate}%",
+            helper="assigned schools receiving verified support",
+            tone="blue",
+            icon="check",
+        ),
+        render_precomputed_metric_item(
+            "projects_impact_service_evidence_completion",
+            f"{evidence_completion}%",
+            helper="accepted evidence on delivered work",
+            tone="teal",
+            icon="document",
+        ),
     ]
 
     # Transparent workflow adoption proxy (not a fabricated adoption survey).

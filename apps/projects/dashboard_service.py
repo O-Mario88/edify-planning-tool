@@ -13,6 +13,8 @@ Derived bands (completion %, status, planning-readiness labels) come from real d
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from django.db.models import Q, Sum
 
 from apps.core.scoping import resolve_user_scope
@@ -228,95 +230,93 @@ def get_dashboard(
     closed_activities = acts.filter(status="closed").count()
 
     kpis = [
-        {
-            "label": "Total Projects",
-            "value": str(len(project_ids)),
-            "icon": "briefcase",
-            "variant": "primary",
-            "helper": "In your scope",
-        },
-        {
-            "label": "Active Projects",
-            "value": str(len(active_project_ids)),
-            "icon": "chart",
-            "variant": "primary",
-            "helper": "With in-flight work",
-        },
-        {
-            "label": "Project Schools",
-            "value": str(len(school_ids)),
-            "icon": "school",
-            "variant": "info",
-            "helper": "Assigned cohorts",
-            "link": "/planning",
-        },
-        {
-            "label": "Teachers Trained",
-            "value": f"{teachers_trained:,}",
-            "icon": "users",
-            "variant": "info",
-            "helper": "Verified trainings",
-        },
-        {
-            "label": "Leaders Trained",
-            "value": f"{leaders_trained:,}",
-            "icon": "users",
-            "variant": "info",
-            "helper": "Verified trainings",
-        },
-        {
-            "label": "Learners Reached",
-            "value": f"{learners_reached:,}",
-            "icon": "users",
-            "variant": "success",
-            "helper": "At schools visited",
-        },
-        {
-            "label": "Assigned Partners",
-            "value": str(partner_links.values("partner_id").distinct().count()),
-            "icon": "briefcase",
-            "variant": "analytics",
-            "helper": "Delivery partners",
-        },
-        {
-            "label": "Budget Generated",
-            "value": _fmt_ugx(budget_generated),
-            "icon": "finance",
-            "variant": "success",
-            "helper": "Auto from schedules",
-            # The route is `fund-requests/weekly`; the singular form here
-            # resolved to nothing and the tile 404'd.
-            "link": "/fund-requests/weekly",
-        },
-        {
-            "label": "Activities in My Plan",
-            "value": f"{activities_in_plan:,}",
-            "icon": "calendar",
-            "variant": "primary",
-            "helper": "In the pipeline",
-            "link": "/my-plan",
-        },
-        {
-            "label": "Evidence Pending",
-            "value": f"{evidence_pending:,}",
-            "icon": "document",
-            "variant": "warning",
-            "helper": "Awaiting proof",
-        },
-        {
-            "label": "IA Pending",
-            "value": f"{ia_pending:,}",
-            "icon": "shield",
-            "variant": "warning",
-            "helper": "Awaiting verification",
-        },
-        {
-            "label": "Closed Activities",
-            "value": f"{closed_activities:,}",
-            "icon": "check",
-            "variant": "success",
-            "helper": "Fully cleared",
-        },
+        render_precomputed_metric_item(
+            "projects_dashboard_service_total_projects",
+            str(len(project_ids)),
+            icon="briefcase",
+            variant="primary",
+            helper="In your scope",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_active_projects",
+            str(len(active_project_ids)),
+            icon="chart",
+            variant="primary",
+            helper="With in-flight work",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_project_schools",
+            str(len(school_ids)),
+            icon="school",
+            variant="info",
+            helper="Assigned cohorts",
+            link="/planning",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_teachers_trained",
+            f"{teachers_trained:,}",
+            icon="users",
+            variant="info",
+            helper="Verified trainings",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_leaders_trained",
+            f"{leaders_trained:,}",
+            icon="users",
+            variant="info",
+            helper="Verified trainings",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_learners_reached",
+            f"{learners_reached:,}",
+            icon="users",
+            variant="success",
+            helper="At schools visited",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_assigned_partners",
+            str(partner_links.values("partner_id").distinct().count()),
+            icon="briefcase",
+            variant="analytics",
+            helper="Delivery partners",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_budget_generated",
+            _fmt_ugx(budget_generated),
+            icon="finance",
+            variant="success",
+            helper="Auto from schedules",
+            link="/fund-requests/weekly",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_activities_in_my_plan",
+            f"{activities_in_plan:,}",
+            icon="calendar",
+            variant="primary",
+            helper="In the pipeline",
+            link="/my-plan",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_evidence_pending",
+            f"{evidence_pending:,}",
+            icon="document",
+            variant="warning",
+            helper="Awaiting proof",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_ia_pending",
+            f"{ia_pending:,}",
+            icon="shield",
+            variant="warning",
+            helper="Awaiting verification",
+        ),
+        render_precomputed_metric_item(
+            "projects_dashboard_service_closed_activities",
+            f"{closed_activities:,}",
+            icon="check",
+            variant="success",
+            helper="Fully cleared",
+        ),
     ]
 
     # ── Per-project portfolio + geography map ─────────────────────────────────

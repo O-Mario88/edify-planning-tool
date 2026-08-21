@@ -353,8 +353,18 @@ class PDApprovalRoutingService:
     def _notify_hr_stage(req: ProfessionalDevelopmentRequest) -> None:
         req.status = PDStatus.SUBMITTED_TO_HR
         req.save(update_fields=["status", "updated_at"])
-        approver = _pick_approver(HR_ROLE, req.owner_user_id)
-        if approver:
+        # Notify the whole HR desk, not one person. `_pick_approver` returns
+        # the alphabetically first holder of the role — so every PD request
+        # awaiting HR went to the same individual, and if they were on leave
+        # the request simply stalled with nobody else aware of it
+        # (2026-08-20 HR audit).
+        from apps.notifications.services import role_recipients
+
+        desk = role_recipients(HR_ROLE, exclude_user_id=req.owner_user_id)
+        if not desk:
+            fallback = _pick_approver(HR_ROLE, req.owner_user_id)
+            desk = [fallback] if fallback else []
+        for approver in desk:
             PDApprovalRoutingService._notify(
                 approver.id,
                 "PD request awaiting HR review",
@@ -489,23 +499,32 @@ class PDApprovalRoutingService:
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     @staticmethod
-    def _notify(recipient_user_id, title, body, req) -> None:
+    def _notify(
+        recipient_user_id, title, body, req, event_type="pd_action_required"
+    ) -> None:
+        """Route through the central service, not a raw insert.
+
+        This wrote `Notification.objects.create` directly with no
+        `source_event_type`, so the dedupe index could never match it and
+        `resolve_condition` could never close it. A request that bounced
+        between stages left a permanent stack of unread rows, each promoted to
+        "urgent" by the 48-hour escalation job — which is how HR's urgent
+        count stopped meaning anything (2026-08-20 HR audit).
+        """
         if not recipient_user_id:
             return
         try:
-            from apps.notifications.models import Notification
+            from apps.notifications.services import WorkflowNotificationService
 
-            Notification.objects.create(
-                recipient_id=recipient_user_id,
+            WorkflowNotificationService.trigger(
+                event_type=event_type,
+                category="professional_development",
+                priority="high",
                 title=title,
                 body=body,
-                category="professional_development",
                 context_type="pd_request",
                 context_id=req.id,
-                target_route=f"/my-professional-development/request?id={req.id}",
-                action_label="Open",
-                action_required=True,
-                priority="high",
+                recipients=[recipient_user_id],
             )
         except Exception:  # noqa: BLE001 — notification is supportive, never blocking
             pass

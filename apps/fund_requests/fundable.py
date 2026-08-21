@@ -29,14 +29,38 @@ NON_REQUESTABLE_ADVANCE_STATUSES = (
 )
 
 
+def vendor_direct_filter():
+    """Q() selecting lines paid DIRECTLY to a vendor, never to staff.
+
+    School-visit mission transport is paid to the transport company, so a
+    transport line on any school-anchored activity is vendor money — the
+    CCEO sees its arrangement status, never its rate. Accommodation joins
+    the vendor channel only when Finance books the hotel directly
+    (line.vendor_paid). Field events (no school) keep transport in the
+    owner's own advance — the staff member arranges their own travel.
+    """
+    from django.db.models import Q
+
+    return Q(line_item_type="transport", activity__school_id__isnull=False) | Q(
+        line_item_type="accommodation", vendor_paid=True
+    )
+
+
 def fundable_lines(qs):
     """Narrow an ActivityScheduleCostLine queryset to staff-payable work.
 
     Excludes: soft-deleted or unscheduled activities, cancelled/rejected/
     deferred work, partner-delivered work (paid via PartnerPayment only),
+    vendor-direct mission costs (school-visit transport and vendor-booked
+    accommodation — paid straight to the provider, see vendor_direct_filter),
     cost-missing activities (they carry no advances, so their lines would
     hard-block the whole request at the funding guard), and lines whose
     advance already moved money or was explicitly opted out by its owner.
+
+    The staff advance for a visit day is therefore exactly the owner's
+    personal entitlements: lunch in the primary district; breakfast, lunch,
+    dinner and (unless Finance booked the hotel) accommodation in a
+    secondary district.
     """
     return (
         qs.filter(
@@ -46,12 +70,14 @@ def fundable_lines(qs):
         )
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(activity__delivery_type="partner")
+        .exclude(vendor_direct_filter())
         .exclude(advance_requests__status__in=NON_REQUESTABLE_ADVANCE_STATUSES)
     )
 
 
 __all__ = [
     "NON_FUNDABLE_ACTIVITY_STATUSES",
+    "vendor_direct_filter",
     "NON_REQUESTABLE_ADVANCE_STATUSES",
     "fundable_lines",
 ]

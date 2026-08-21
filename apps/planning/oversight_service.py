@@ -610,9 +610,13 @@ def _activity_item(
 
     # The internal owner. For partner work the partner executes but a member of
     # staff remains answerable for it, and that person is the monitor — not the
-    # partner, and not whoever happened to hand it over.
+    # partner, and not whoever happened to hand it over. Rows that predate the
+    # partner-handoff fix never had a monitor stamped; for those the school's
+    # responsible CCEO is that person, so their partner-delivered plan items
+    # stay on their oversight tab (and in their fund plan) instead of falling
+    # off every member's tab.
     owner_id = (
-        activity.monitored_by_staff_id
+        (activity.monitored_by_staff_id or activity.responsible_staff_id)
         if is_partner
         else (activity.responsible_staff_id or activity.monitored_by_staff_id)
     )

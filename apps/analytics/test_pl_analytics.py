@@ -10,9 +10,11 @@ workflow state.
 from __future__ import annotations
 
 from datetime import date
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import (
@@ -229,6 +231,22 @@ class PLAnalyticsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Performance by Sub-Region")
         self.assertContains(response, "Country-wide system data")
+
+    @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=60)
+    def test_pl_analytics_reuses_the_same_short_lived_snapshot(self):
+        cache.clear()
+        self.client.force_login(self.pl_a)
+        with patch.object(
+            PLAnalyticsService,
+            "get_dashboard",
+            wraps=PLAnalyticsService.get_dashboard,
+        ) as get_dashboard:
+            first = self.client.get("/analytics/program-lead", {"fy": FY})
+            second = self.client.get("/analytics/program-lead", {"fy": FY})
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(get_dashboard.call_count, 1)
 
     # ── 2. cannot see another PL's data ──────────────────────────────────────
     def test_pl_cannot_see_other_pl_data(self):

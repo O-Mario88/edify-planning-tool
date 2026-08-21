@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 import datetime
 from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
@@ -399,16 +401,16 @@ class AnalyticsDashboardService:
 
         # Construct unified KPI strip items
         kpi_strip_items = [
-            {
-                "label": "Overall Target Achievement",
-                "value": kpi_data["target_achievement"]["value"],
-                "raw_value": achievement_pct,
-                "helper": "vs last period"
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_overall_target_achievement",
+                kpi_data["target_achievement"]["value"],
+                raw_value=achievement_pct,
+                helper="vs last period"
                 if achievement_pct is not None
                 else "no target configured",
-                "icon": "target",
-                "variant": "success" if achievement_pct is not None else "neutral",
-                "trend": {
+                icon="target",
+                variant="success" if achievement_pct is not None else "neutral",
+                trend={
                     "direction": (
                         "up"
                         if "+" in kpi_data["target_achievement"]["trend"]
@@ -420,15 +422,15 @@ class AnalyticsDashboardService:
                     if kpi_data["target_achievement"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Teachers Trained",
-                "value": kpi_data["teachers_trained"]["value"],
-                "raw_value": teachers,
-                "helper": "attended",
-                "icon": "users",
-                "variant": "info",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_teachers_trained",
+                kpi_data["teachers_trained"]["value"],
+                raw_value=teachers,
+                helper="attended",
+                icon="users",
+                variant="info",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["teachers_trained"]["trend"]
                     else "down",
@@ -436,15 +438,15 @@ class AnalyticsDashboardService:
                     if kpi_data["teachers_trained"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "School Leaders Trained",
-                "value": kpi_data["leaders_trained"]["value"],
-                "raw_value": leaders,
-                "helper": "attended",
-                "icon": "target",
-                "variant": "warning",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_school_leaders_trained",
+                kpi_data["leaders_trained"]["value"],
+                raw_value=leaders,
+                helper="attended",
+                icon="target",
+                variant="warning",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["leaders_trained"]["trend"]
                     else "down",
@@ -452,15 +454,15 @@ class AnalyticsDashboardService:
                     if kpi_data["leaders_trained"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Students Impacted",
-                "value": kpi_data["students_impacted"]["value"],
-                "raw_value": students,
-                "helper": "current enrollment",
-                "icon": "users",
-                "variant": "blue",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_students_impacted",
+                kpi_data["students_impacted"]["value"],
+                raw_value=students,
+                helper="current enrollment",
+                icon="users",
+                variant="blue",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["students_impacted"]["trend"]
                     else "down",
@@ -468,15 +470,15 @@ class AnalyticsDashboardService:
                     if kpi_data["students_impacted"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Schools Impacted",
-                "value": kpi_data["schools_impacted"]["value"],
-                "raw_value": schools_imp,
-                "helper": "total reached",
-                "icon": "school",
-                "variant": "primary",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_schools_impacted",
+                kpi_data["schools_impacted"]["value"],
+                raw_value=schools_imp,
+                helper="total reached",
+                icon="school",
+                variant="primary",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["schools_impacted"]["trend"]
                     else "down",
@@ -484,15 +486,15 @@ class AnalyticsDashboardService:
                     if kpi_data["schools_impacted"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Districts Covered",
-                "value": kpi_data["districts_covered"]["value"],
-                "raw_value": districts,
-                "helper": "covered",
-                "icon": "school",
-                "variant": "danger",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_districts_covered",
+                kpi_data["districts_covered"]["value"],
+                raw_value=districts,
+                helper="covered",
+                icon="school",
+                variant="danger",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["districts_covered"]["trend"]
                     else "down",
@@ -500,15 +502,15 @@ class AnalyticsDashboardService:
                     if kpi_data["districts_covered"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Clusters Covered",
-                "value": kpi_data["clusters_covered"]["value"],
-                "raw_value": clusters,
-                "helper": "reached",
-                "icon": "school",
-                "variant": "purple",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_clusters_covered",
+                kpi_data["clusters_covered"]["value"],
+                raw_value=clusters,
+                helper="reached",
+                icon="school",
+                variant="purple",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["clusters_covered"]["trend"]
                     else "down",
@@ -516,15 +518,15 @@ class AnalyticsDashboardService:
                     if kpi_data["clusters_covered"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "Total Activities Completed",
-                "value": kpi_data["activities_completed"]["value"],
-                "raw_value": completed,
-                "helper": "completed work",
-                "icon": "check",
-                "variant": "success",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_total_activities_completed",
+                kpi_data["activities_completed"]["value"],
+                raw_value=completed,
+                helper="completed work",
+                icon="check",
+                variant="success",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["activities_completed"]["trend"]
                     else "down",
@@ -532,15 +534,15 @@ class AnalyticsDashboardService:
                     if kpi_data["activities_completed"]["trend"]
                     else "",
                 },
-            },
-            {
-                "label": "SSA Average",
-                "value": kpi_data["ssa_average"]["value"],
-                "raw_value": float(ssa_avg) if ssa_avg > 0 else None,
-                "helper": "average score",
-                "icon": "chart",
-                "variant": "blue",
-                "trend": {
+            ),
+            render_precomputed_metric_item(
+                "analytics_analytics_dashboard_service_ssa_average",
+                kpi_data["ssa_average"]["value"],
+                raw_value=float(ssa_avg) if ssa_avg > 0 else None,
+                helper="average score",
+                icon="chart",
+                variant="blue",
+                trend={
                     "direction": "up"
                     if "+" in kpi_data["ssa_average"]["trend"]
                     else "down",
@@ -548,7 +550,7 @@ class AnalyticsDashboardService:
                     if kpi_data["ssa_average"]["trend"]
                     else "",
                 },
-            },
+            ),
         ]
 
         # 5. Performance Overview Chart Series (Grouped months)
@@ -1092,7 +1094,8 @@ class AnalyticsDashboardService:
                 "count": not_visited_count,
                 "description": "No visit in the last 60+ days.",
                 "icon": "🏫",
-                "color": "bg-amber-50 border-amber-200 text-amber-700",
+                "color": "bg-rose-50 border-rose-200 text-rose-700",
+                "tone": "danger",
             },
             {
                 "key": "not_trained",
@@ -1100,7 +1103,8 @@ class AnalyticsDashboardService:
                 "count": not_trained_count,
                 "description": "No training this quarter.",
                 "icon": "🎓",
-                "color": "edify-primary-soft edify-primary-border edify-primary-text",
+                "color": "bg-rose-50 border-rose-200 text-rose-700",
+                "tone": "danger",
             },
             {
                 "key": "high_risk_districts",

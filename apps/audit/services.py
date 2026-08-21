@@ -2,7 +2,8 @@
 Audit service — appends a hash-chained AuditLog row under a serialized
 transaction (select_for_update on the tail). Faithful port of audit.service.
 
-Audit must NEVER break the primary action: failures are logged + swallowed.
+Audit is best-effort by default. Tier-1 value-bearing callers pass
+``required=True`` so an audit failure rolls the enclosing transaction back.
 The request provenance (ip/user-agent/correlationId) is read from the request
 context (contextvars), so callers don't thread it through.
 """
@@ -44,8 +45,13 @@ def log(
     ip_address: str | None = None,
     user_agent: str | None = None,
     correlation_id: str | None = None,
+    required: bool = False,
 ) -> None:
-    """Append a hash-chained audit row. Best-effort — never raises."""
+    """Append a hash-chained audit row.
+
+    Existing operational callers remain best-effort. Financial posting paths
+    opt into fail-closed behavior with ``required=True``.
+    """
     try:
         if actor_id:
             try:
@@ -165,7 +171,7 @@ def log(
                     )
 
             transaction.on_commit(_project_committed_audit)
-    except Exception as exc:  # noqa: BLE001 — audit must never break the workflow
+    except Exception as exc:  # noqa: BLE001 — default callers remain best-effort
         # `action` is whatever the caller passed and the exception text is
         # whatever the database said, so both are escaped as they enter the
         # record. The SingleLineFilter would catch them on the way out too —
@@ -176,6 +182,8 @@ def log(
             escape_control_characters(str(action)),
             escape_control_characters(str(exc)),
         )
+        if required:
+            raise
 
 
 def verify_chain(*, full: bool = False) -> dict:

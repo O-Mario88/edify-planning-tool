@@ -14,6 +14,10 @@ from apps.core.enums import EvidenceKind
 
 # activity_type → list of required EvidenceKind values. Every listed kind
 # must be present (non-quarantined) before completion may be submitted.
+# THE two-form law (owner, 2026-08-19): every activity's required evidence is
+# either the VISIT FORM (all school-visit work) or the TRAINING ATTENDANCE
+# form (all trainings and cluster meetings). No third form exists; both are
+# PDFs (enforced at upload).
 REQUIRED_EVIDENCE: dict[str, tuple[str, ...]] = {
     # School visits: the visit form is the proof of presence.
     "school_visit": (EvidenceKind.VISIT_FORM,),
@@ -27,30 +31,25 @@ REQUIRED_EVIDENCE: dict[str, tuple[str, ...]] = {
     "training_follow_up_visit": (EvidenceKind.VISIT_FORM,),
     "in_school_coaching_visit": (EvidenceKind.VISIT_FORM,),
     "core_visit": (EvidenceKind.VISIT_FORM,),
-    # Trainings: attendance is the proof of delivery.
+    "school_visit_ssa_collection": (EvidenceKind.VISIT_FORM,),
+    "core_assessment_visit": (EvidenceKind.VISIT_FORM,),
+    "project_activity": (EvidenceKind.VISIT_FORM,),
+    # Trainings and cluster sessions: attendance is the proof of delivery.
     "training": (EvidenceKind.ATTENDANCE_FORM,),
     "in_school_training": (EvidenceKind.ATTENDANCE_FORM,),
     "school_improvement_training": (EvidenceKind.ATTENDANCE_FORM,),
     "cluster_training": (EvidenceKind.ATTENDANCE_FORM,),
     "core_training": (EvidenceKind.ATTENDANCE_FORM,),
-    # Cluster meetings: minutes.
-    "cluster_meeting": (EvidenceKind.MEETING_MINUTES,),
-    "cluster_meeting_ssa_review": (EvidenceKind.MEETING_MINUTES,),
-    # Core assessment: the assessment form.
-    "core_assessment_visit": (EvidenceKind.ASSESSMENT_FORM,),
-    # Special projects: the project report.
-    "project_activity": (EvidenceKind.PROJECT_REPORT,),
+    "cluster_meeting": (EvidenceKind.ATTENDANCE_FORM,),
+    "cluster_meeting_ssa_review": (EvidenceKind.ATTENDANCE_FORM,),
 }
 
 PROFILE_REQUIRED_EVIDENCE: dict[str, tuple[str, ...]] = {
     "TRAINING_ATTENDANCE": (EvidenceKind.ATTENDANCE_FORM,),
     "SCHOOL_VISIT_FORM": (EvidenceKind.VISIT_FORM,),
-    "FOLLOW_UP_MEETING": (EvidenceKind.MEETING_MINUTES,),
-    "YOUTH_CAMP_SAFEGUARDING": (
-        EvidenceKind.ATTENDANCE_FORM,
-        EvidenceKind.PROJECT_REPORT,
-    ),
-    "SSA_DATA_GATHERING": (EvidenceKind.ASSESSMENT_FORM,),
+    "FOLLOW_UP_MEETING": (EvidenceKind.ATTENDANCE_FORM,),
+    "YOUTH_CAMP_SAFEGUARDING": (EvidenceKind.ATTENDANCE_FORM,),
+    "SSA_DATA_GATHERING": (EvidenceKind.VISIT_FORM,),
     "ADMIN_NONE": (),
 }
 

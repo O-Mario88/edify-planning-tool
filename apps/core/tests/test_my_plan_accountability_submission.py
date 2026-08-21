@@ -55,7 +55,7 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
         self.cost_line = ActivityScheduleCostLine.objects.create(
             activity=self.activity,
             responsible_user=self.cceo.user_id,
-            line_item_type="transport",
+            line_item_type="lunch",
             label="Transport",
             quantity=1,
             unit_cost=50_000,

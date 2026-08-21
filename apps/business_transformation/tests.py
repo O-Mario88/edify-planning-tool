@@ -1,7 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -14,14 +15,19 @@ from apps.core.navigation import PAGE_PERMISSIONS, build_sidebar_for_user
 from apps.core.rbac import EdifyRole, Permission, permissions_for_role
 from apps.outbox.models import OutboxEvent
 from apps.outbox.services import drain
+from apps.integrations.models import IntegrationSync, IntegrationSyncStatus
+from apps.notifications.models import Notification
 from apps.partners.models import Partner, PartnerAssignment
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
-from . import services
+from . import lending_impact, lending_ledger, services
 from .models import (
     CaseRecommendation,
     FinanceReferral,
+    FundingFacility,
+    FundingFacilityStatus,
+    FundingFacilityTranche,
     IAValidationStatus,
     LoanPurpose,
     LoanStatus,
@@ -35,6 +41,7 @@ from .models import (
     ReferralStatus,
     RepaymentSnapshot,
     SalesforceStatus,
+    SalesforceConfirmation,
     TransformationCase,
     VerificationRequirementStatus,
 )
@@ -167,12 +174,22 @@ class UgandaBusinessTransformationFrontendTests(UgandaBusinessTransformationTest
         # One search per page: the shell's top-bar input joins the filter
         # form via form= instead of a body search living in the bar itself.
         self.assertContains(workspace, 'form="bt-workspace-filters"')
-        self.assertContains(workspace, 'data-component="kpi-card"', count=11)
+        # The platform headline policy deliberately removes the former
+        # eleven-card inventory and keeps one professional four-metric tray.
+        self.assertContains(workspace, 'data-component="kpi-card"', count=4)
         self.assertNotContains(workspace, "text-[11px]")
         self.assertEqual(portfolio.status_code, 200)
         self.assertContains(portfolio, "MFI referral pipeline")
         self.assertEqual(school_profile.status_code, 200)
         self.assertContains(school_profile, "Business Transformation")
+
+    def test_operational_loan_register_uses_only_two_position_kpis(self):
+        self.client.force_login(self.bt_user)
+
+        response = self.client.get("/loans")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-component="kpi-card"', count=2)
 
 
 class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
@@ -319,6 +336,14 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
 
 
 class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
+    record_level_roles = {
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER,
+        EdifyRole.COUNTRY_DIRECTOR,
+        EdifyRole.IMPACT_ASSESSMENT,
+        EdifyRole.REGIONAL_VICE_PRESIDENT,
+        EdifyRole.MFI_PARTNER_ADMIN,
+        EdifyRole.MFI_LOAN_OFFICER,
+    }
     full_access_roles = {
         EdifyRole.MFI_PARTNER_ADMIN,
         EdifyRole.MFI_LOAN_OFFICER,
@@ -326,8 +351,8 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
     export_roles = {
         EdifyRole.COUNTRY_DIRECTOR,
         EdifyRole.IMPACT_ASSESSMENT,
-        EdifyRole.REGIONAL_VICE_PRESIDENT,
         EdifyRole.BUSINESS_TRANSFORMATION_OFFICER,
+        EdifyRole.REGIONAL_VICE_PRESIDENT,
     }
 
     def test_loan_dashboard_exposes_only_the_primary_filters(self):
@@ -375,7 +400,7 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
         self.assertNotIn("custom_from", response.context["filters"])
         self.assertEqual(response.context["filter_query"], "fy=2026")
 
-    def test_every_role_has_the_loans_page_in_navigation(self):
+    def test_only_record_level_lending_roles_have_the_loans_page(self):
         for index, role in enumerate(EdifyRole):
             user = User.objects.create_user(
                 email=f"loan-nav-{index}@example.org",
@@ -393,6 +418,10 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
             }
 
             with self.subTest(role=role.value):
+                if role not in self.record_level_roles:
+                    self.assertEqual(response.status_code, 302)
+                    self.assertNotIn("/loans", sidebar_urls)
+                    continue
                 self.assertEqual(response.status_code, 200)
                 expected_url = (
                     "/mfi-portal/loans"
@@ -404,6 +433,36 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                     else "/loans"
                 )
                 self.assertIn(expected_url, sidebar_urls)
+
+    def test_restricted_roles_cannot_read_the_record_level_loan_api(self):
+        restricted = set(EdifyRole) - self.record_level_roles
+        for index, role in enumerate(sorted(restricted, key=lambda item: item.value)):
+            user = User.objects.create_user(
+                email=f"loan-api-denied-{index}@example.org",
+                name=f"{role.name} Loan API Denied",
+                roles=[role.value],
+                active_role=role.value,
+            )
+            self.client.force_login(user)
+
+            response = self.client.get("/api/business-transformation/loans")
+
+            with self.subTest(role=role.value):
+                self.assertEqual(response.status_code, 403)
+
+    def test_rvp_record_level_loan_api_is_empty(self):
+        user = User.objects.create_user(
+            email="loan-api-rvp@example.org",
+            name="RVP Aggregate Loan API",
+            roles=[EdifyRole.REGIONAL_VICE_PRESIDENT.value],
+            active_role=EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/api/business-transformation/loans")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
 
     def test_only_bt_role_sees_the_extended_workspace_tabs_on_the_loan_page(self):
         protected_links = (
@@ -423,6 +482,18 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
             )
             self.client.force_login(user)
             response = self.client.get("/loans")
+            if role not in self.record_level_roles:
+                with self.subTest(role=role.value):
+                    self.assertEqual(response.status_code, 302)
+                    self.assertNotIn(
+                        "/loans",
+                        {
+                            item["url"]
+                            for section in build_sidebar_for_user(user, "/loans")
+                            for item in section["items"]
+                        },
+                    )
+                continue
             html = response.content.decode()
             nav_start = html.index(
                 '<nav aria-label="Business Transformation workspace"'
@@ -445,6 +516,13 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                 }
                 if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
                     self.assertTrue(set(protected_links).issubset(sidebar_bt_urls))
+                elif role in {
+                    EdifyRole.PARTNER_ADMIN,
+                    EdifyRole.PARTNER_FIELD_OFFICER,
+                }:
+                    # Delivery partners carry no BUSINESS TRANSFORMATION
+                    # group at all (owner, 2026-08-19).
+                    self.assertEqual(sidebar_bt_urls, set())
                 else:
                     self.assertEqual(sidebar_bt_urls, {"/loans"})
 
@@ -505,11 +583,11 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
                 self.assertRedirects(response, expected, fetch_redirect_response=False)
 
     def test_only_mfi_roles_receive_write_and_execute_controls(self):
-        governed_permissions = {
+        write_permissions = {
             Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE.value,
             Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE.value,
-            Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY.value,
         }
+        certify_permission = Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY.value
         for index, role in enumerate(EdifyRole):
             user = User.objects.create_user(
                 email=f"loan-access-{index}@example.org",
@@ -522,12 +600,22 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
             permissions = set(permissions_for_role(role))
 
             with self.subTest(role=role.value):
+                if role not in self.record_level_roles:
+                    self.assertEqual(response.status_code, 302)
+                    self.assertTrue(write_permissions.isdisjoint(permissions))
+                    self.assertNotIn(certify_permission, permissions)
+                    continue
                 if role in self.full_access_roles:
-                    self.assertTrue(governed_permissions.issubset(permissions))
+                    self.assertTrue(write_permissions.issubset(permissions))
+                    if role == EdifyRole.MFI_PARTNER_ADMIN:
+                        self.assertIn(certify_permission, permissions)
+                    else:
+                        self.assertNotIn(certify_permission, permissions)
                     self.assertContains(response, "Save loan record")
                     self.assertContains(response, "Record repayment snapshot")
                 else:
-                    self.assertTrue(governed_permissions.isdisjoint(permissions))
+                    self.assertTrue(write_permissions.isdisjoint(permissions))
+                    self.assertNotIn(certify_permission, permissions)
                     if role == EdifyRole.BUSINESS_TRANSFORMATION_OFFICER:
                         self.assertContains(response, "Salesforce confirmation")
                     else:
@@ -548,6 +636,16 @@ class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
             permissions = set(permissions_for_role(role))
 
             with self.subTest(role=role.value):
+                if role not in self.record_level_roles:
+                    self.assertEqual(response.status_code, 302)
+                    self.assertNotIn(
+                        Permission.BUSINESS_TRANSFORMATION_EXPORT.value, permissions
+                    )
+                    self.assertNotIn(
+                        Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM.value,
+                        permissions,
+                    )
+                    continue
                 if role in self.export_roles:
                     self.assertIn(
                         Permission.BUSINESS_TRANSFORMATION_EXPORT.value, permissions
@@ -608,6 +706,36 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             user=cls.officer,
             role=MfiMembershipRole.LOAN_OFFICER,
         )
+        cls.ia_user = User.objects.create_user(
+            email="loan-ia@example.org",
+            name="Loan IA Verifier",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+        )
+        cls.facility = FundingFacility.objects.create(
+            mfi=cls.mfi,
+            external_reference="TEST-FACILITY",
+            name="Test school lending facility",
+            country_code="UG",
+            currency="UGX",
+            commitment_amount=Decimal("1000000000.00"),
+            starts_on=timezone.localdate() - timedelta(days=30),
+            status=FundingFacilityStatus.ACTIVE,
+            created_by=cls.bt_user.id,
+            approved_by="test-country-director",
+            approved_at=timezone.now(),
+        )
+        FundingFacilityTranche.objects.create(
+            facility=cls.facility,
+            external_reference="TEST-FACILITY-RECEIPT",
+            idempotency_key="test-facility-receipt",
+            amount=Decimal("1000000000.00"),
+            received_on=timezone.localdate() - timedelta(days=29),
+            value_date=timezone.localdate() - timedelta(days=29),
+            evidence_reference="TEST-BANK-EVIDENCE",
+            confirmed_by="test-accountant",
+            confirmed_at=timezone.now(),
+        )
 
     def _loan_payload(self, reference="LN-001"):
         return {
@@ -616,16 +744,66 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             "referralId": self.referral.id,
             "purposeId": self.purpose.id,
             "externalLoanReference": reference,
-            "status": LoanStatus.DISBURSED,
+            "status": LoanStatus.PROCESSING,
             "approvedAmount": "12000000",
-            "disbursedAmount": "12000000",
             "approvedAt": timezone.now().isoformat(),
-            "disbursementDate": timezone.localdate().isoformat(),
             "termMonths": 18,
         }
 
+    def _register_and_disburse(self, reference="LN-001", actor=None):
+        actor = actor or self.officer
+        result = services.register_or_update_loan(self._loan_payload(reference), actor)
+        loan = MfiLoan.objects.get(id=result["id"])
+        lending_impact.set_purpose_allocation_plan(
+            loan.id,
+            [
+                {
+                    "purposeId": self.purpose.id,
+                    "plannedAmount": "12000000.00",
+                    "intendedOutput": "Governed lending test output",
+                }
+            ],
+            actor,
+        )
+        learner_count = self.school.enrollment or 100
+        baseline = lending_impact.capture_enrolment_snapshot(
+            loan.id,
+            {
+                "kind": "baseline",
+                "asOfDate": timezone.localdate().isoformat(),
+                "learnerCount": learner_count,
+                "cohortDefinition": "All learners enrolled at first disbursement",
+                "evidenceReference": f"ENROLMENT-{reference}",
+            },
+            actor,
+        )
+        lending_impact.verify_enrolment_snapshot(baseline.id, {}, self.ia_user)
+        lending_ledger.reserve_facility_for_loan(
+            {
+                "facilityId": self.facility.id,
+                "loanId": loan.id,
+                "amount": "12000000.00",
+                "idempotencyKey": f"allocation-{reference}",
+            },
+            self.bt_user,
+        )
+        lending_ledger.post_loan_disbursement(
+            {
+                "loanId": loan.id,
+                "sequence": 1,
+                "externalReference": f"DISBURSEMENT-{reference}",
+                "idempotencyKey": f"disbursement-{reference}",
+                "amount": "12000000.00",
+                "disbursedOn": timezone.localdate().isoformat(),
+                "valueDate": timezone.localdate().isoformat(),
+                "bankReference": f"BANK-{reference}",
+            },
+            actor,
+        )
+        return result
+
     def test_mfi_disbursement_creates_monitoring_requirement(self):
-        result = services.register_or_update_loan(self._loan_payload(), self.officer)
+        result = self._register_and_disburse()
 
         loan = MfiLoan.objects.get(id=result["id"])
         requirement = LoanVerificationRequirement.objects.get(loan=loan)
@@ -637,10 +815,30 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         )
         self.assertEqual(self.case.status, "monitoring")
 
-    def test_bt_confirms_the_salesforce_loan_id_without_editing_lender_facts(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-SALESFORCE"), self.officer
+    def test_loan_officer_cannot_read_another_officers_portfolio(self):
+        loan_data = self._register_and_disburse("LN-OFFICER-SCOPE")
+        other_officer = User.objects.create_user(
+            email="other-officer@example.org",
+            name="Other MFI Loan Officer",
+            roles=[EdifyRole.MFI_LOAN_OFFICER.value],
+            active_role=EdifyRole.MFI_LOAN_OFFICER.value,
         )
+        MfiMembership.objects.create(
+            mfi=self.mfi,
+            user=other_officer,
+            role=MfiMembershipRole.LOAN_OFFICER,
+            officer_reference="OTHER-OFFICER",
+        )
+
+        self.assertFalse(
+            services.scoped_loans(other_officer).filter(id=loan_data["id"]).exists()
+        )
+        self.assertTrue(
+            services.scoped_loans(self.officer).filter(id=loan_data["id"]).exists()
+        )
+
+    def test_bt_confirms_the_salesforce_loan_id_without_editing_lender_facts(self):
+        loan_data = self._register_and_disburse("LN-SALESFORCE")
 
         result = services.confirm_salesforce_loan(
             loan_data["id"],
@@ -656,11 +854,44 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertEqual(loan.salesforce_confirmation_note, "")
         self.assertEqual(loan.external_loan_reference, "LN-SALESFORCE")
         self.assertEqual(loan.disbursed_amount, Decimal("12000000"))
+        self.assertTrue(
+            SalesforceConfirmation.objects.filter(
+                loan=loan,
+                salesforce_loan_id="Loan-19650",
+                status=SalesforceStatus.CONFIRMED,
+            ).exists()
+        )
+
+    @override_settings(SALESFORCE_SYNC_ENABLED=True)
+    def test_salesforce_confirmation_reconciles_through_retry_safe_outbox(self):
+        loan_data = self._register_and_disburse("LN-SALESFORCE-INTEGRATION")
+        payload = {
+            "salesforceLoanId": "Loan-29650",
+            "idempotencyKey": "sf-confirm-integration-1",
+        }
+
+        services.confirm_salesforce_loan(loan_data["id"], payload, self.bt_user)
+        services.confirm_salesforce_loan(loan_data["id"], payload, self.bt_user)
+        self.assertEqual(
+            SalesforceConfirmation.objects.filter(loan_id=loan_data["id"]).count(), 1
+        )
+        with patch(
+            "apps.integrations.services.validate_external_reference", return_value=None
+        ):
+            result = drain(time_budget_seconds=2)
+
+        self.assertEqual(result["failed"], 0)
+        self.assertTrue(
+            IntegrationSync.objects.filter(
+                system="salesforce",
+                context_type="school_loan",
+                context_id=loan_data["id"],
+                status=IntegrationSyncStatus.RECONCILED_MANUAL,
+            ).exists()
+        )
 
     def test_bt_salesforce_drawer_exposes_only_the_id_confirmation(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-SALESFORCE-DRAWER"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-SALESFORCE-DRAWER")
         self.client.force_login(self.bt_user)
 
         response = self.client.get(f"/loans/{loan_data['id']}/drawer")
@@ -674,12 +905,8 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertNotContains(response, "confirmationNote")
 
     def test_only_bt_can_confirm_a_valid_unique_salesforce_loan_id(self):
-        first = services.register_or_update_loan(
-            self._loan_payload("LN-SALESFORCE-FIRST"), self.officer
-        )
-        second = services.register_or_update_loan(
-            self._loan_payload("LN-SALESFORCE-SECOND"), self.officer
-        )
+        first = self._register_and_disburse("LN-SALESFORCE-FIRST")
+        second = self._register_and_disburse("LN-SALESFORCE-SECOND")
 
         with self.assertRaises(Forbidden):
             services.confirm_salesforce_loan(
@@ -698,9 +925,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             )
 
     def test_salesforce_confirmation_locks_core_identity_but_not_repayment(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-LOCKED"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-LOCKED")
         services.confirm_salesforce_loan(
             loan_data["id"], {"salesforceLoanId": "Loan-19652"}, self.bt_user
         )
@@ -723,9 +948,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertEqual(snapshot["status"], "current")
 
     def test_dashboard_rolls_up_every_lending_partner_and_respects_mfi_scope(self):
-        services.register_or_update_loan(
-            self._loan_payload("LN-PARTNER-ONE"), self.officer
-        )
+        self._register_and_disburse("LN-PARTNER-ONE")
         other_mfi = MfiOrganization.objects.create(
             code="DASHBOARD-MFI", name="Dashboard MFI"
         )
@@ -760,9 +983,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertEqual([row["mfi__name"] for row in mfi_rows], ["Test MFI"])
 
     def test_authorized_roles_export_the_governed_loan_register(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-EXPORT"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-EXPORT")
         services.confirm_salesforce_loan(
             loan_data["id"],
             {"salesforceLoanId": "Loan-19650"},
@@ -904,7 +1125,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             services.register_or_update_loan(self._loan_payload(), admin)
 
     def test_loan_officer_reads_their_governed_mfi_portfolio(self):
-        MfiLoan.objects.create(
+        own_loan = MfiLoan.objects.create(
             mfi=self.mfi,
             school=self.school,
             case=self.case,
@@ -927,13 +1148,11 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
 
         self.assertSetEqual(
             set(services.scoped_loans(self.officer).values_list("id", flat=True)),
-            set(MfiLoan.objects.filter(mfi=self.mfi).values_list("id", flat=True)),
+            {own_loan.id},
         )
 
     def test_repayment_snapshot_rejects_negative_financial_values(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-NEGATIVE"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-NEGATIVE")
 
         with self.assertRaises(BadRequest):
             services.add_repayment_snapshot(
@@ -947,9 +1166,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertFalse(RepaymentSnapshot.objects.exists())
 
     def test_activity_ia_state_projects_into_loan_use_verification(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-VERIFY"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-VERIFY")
         cceo = User.objects.create_user(
             email="loan-verification-cceo@example.org",
             name="Loan Verification CCEO",
@@ -1009,7 +1226,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
     def test_portfolio_metrics_preserve_uganda_currency_and_edtech_definition(self):
         self.school.enrollment = 480
         self.school.save(update_fields=["enrollment"])
-        services.register_or_update_loan(self._loan_payload("LN-METRIC"), self.officer)
+        self._register_and_disburse("LN-METRIC")
 
         metrics = services.portfolio_metrics(self.bt_user, fy="2026")
 
@@ -1025,12 +1242,8 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
     def test_student_reach_counts_each_financed_school_once(self):
         self.school.enrollment = 625
         self.school.save(update_fields=["enrollment"])
-        services.register_or_update_loan(
-            self._loan_payload("LN-STUDENT-REACH-1"), self.officer
-        )
-        services.register_or_update_loan(
-            self._loan_payload("LN-STUDENT-REACH-2"), self.officer
-        )
+        self._register_and_disburse("LN-STUDENT-REACH-1")
+        self._register_and_disburse("LN-STUDENT-REACH-2")
 
         metrics = services.portfolio_metrics(self.bt_user, fy="2026")
 
@@ -1039,8 +1252,8 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertEqual(metrics["studentsReached"], 625)
         self.assertEqual(metrics["enrollmentCoveragePct"], 100.0)
 
-    def test_rvp_workspace_is_aggregate_only(self):
-        services.register_or_update_loan(self._loan_payload("LN-RVP"), self.officer)
+    def test_rvp_workspace_has_complete_read_only_regional_detail(self):
+        self._register_and_disburse("LN-RVP")
         rvp = User.objects.create_user(
             email="rvp-bt@example.org",
             name="Regional Vice President",
@@ -1050,14 +1263,12 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
 
         context = services.workspace_context(rvp, {"fy": "2026"})
 
-        self.assertTrue(context["summary_only"])
+        self.assertFalse(context["summary_only"])
         self.assertEqual(context["metrics"]["loansDisbursed"], 1)
-        self.assertFalse(context["loans"].exists())
+        self.assertEqual(context["loans"].count(), 1)
 
     def test_field_staff_school_profile_hides_financial_amounts(self):
-        services.register_or_update_loan(
-            self._loan_payload("LN-FIELD-SUMMARY"), self.officer
-        )
+        self._register_and_disburse("LN-FIELD-SUMMARY")
         cceo = User.objects.create_user(
             email="cceo-bt@example.org",
             name="Assigned CCEO",
@@ -1074,9 +1285,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertNotIn("disbursed_amount", context["loans"][0])
 
     def test_governed_verification_activity_auto_links_oldest_requirement(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-AUTO-LINK"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-AUTO-LINK")
         requirement = LoanVerificationRequirement.objects.get(loan_id=loan_data["id"])
         item = ActivityCatalogueItem.objects.get(
             stable_code="BT_UG_LOAN_USE_VERIFICATION"
@@ -1097,9 +1306,7 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         self.assertEqual(activity.business_transformation_link.loan_id, loan_data["id"])
 
     def test_business_transformation_todos_are_derived_from_open_state(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-TODO"), self.officer
-        )
+        loan_data = self._register_and_disburse("LN-TODO")
         requirement = LoanVerificationRequirement.objects.get(loan_id=loan_data["id"])
 
         bt_todos = _business_transformation_todos(
@@ -1116,10 +1323,27 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
             f"bt-repayment-{loan_data['id']}", {todo["id"] for todo in mfi_todos}
         )
 
-    def test_independent_statuses_drive_salesforce_return_and_ia_todos(self):
-        loan_data = services.register_or_update_loan(
-            self._loan_payload("LN-INDEPENDENT-STATES"), self.officer
+    def test_loan_submission_notification_resolves_when_salesforce_is_confirmed(self):
+        loan_data = self._register_and_disburse("LN-NOTIFICATION-LIFECYCLE")
+        notice = Notification.objects.get(
+            recipient_id=self.bt_user.id,
+            source_event_type="bt.loan.submitted",
+            context_id=loan_data["id"],
         )
+        self.assertIsNone(notice.resolved_at)
+
+        services.confirm_salesforce_loan(
+            loan_data["id"],
+            {"salesforceLoanId": "Loan-31100"},
+            self.bt_user,
+        )
+
+        notice.refresh_from_db()
+        self.assertIsNotNone(notice.resolved_at)
+        self.assertEqual(notice.status, "archived")
+
+    def test_independent_statuses_drive_salesforce_return_and_ia_todos(self):
+        loan_data = self._register_and_disburse("LN-INDEPENDENT-STATES")
         loan = MfiLoan.objects.get(id=loan_data["id"])
         self.assertEqual(loan.status, LoanStatus.DISBURSED)
         self.assertEqual(loan.salesforce_status, SalesforceStatus.PENDING)
@@ -1158,8 +1382,10 @@ class MfiAuthorityAndMonitoringTests(UgandaBusinessTransformationTestCase):
         )
         self.assertIn(f"bt-returned-{loan.id}", {todo["id"] for todo in mfi_todos})
 
-        services.register_or_update_loan(
-            self._loan_payload("LN-INDEPENDENT-STATES"), self.officer
+        services.resubmit_returned_loan(
+            loan.id,
+            {"correctionNote": "Confirmed the approved amount against the agreement."},
+            self.officer,
         )
         services.confirm_salesforce_loan(
             loan.id,

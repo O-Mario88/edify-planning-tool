@@ -249,7 +249,9 @@ class NextActionOwnerTest(PartnerOversightFixture):
         activity.evidence_status = "uploaded"
         activity.save()
         item = svc.build_items(self.pl_user, fy=self.fy)[0]
-        self.assertEqual(item.next_action_owner, "James")
+        # §10 direct IA handoff: evidence captured but unsubmitted is the
+        # PARTNER's move (submit to IA) — no CCEO review stage exists.
+        self.assertEqual(item.next_action_owner, "Partner X")
         self.assertIn("evidence", item.next_action.lower())
 
         activity.status = "salesforce_id_required"

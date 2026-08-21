@@ -132,6 +132,20 @@ def my_plan_view(request):
             )
         return response
 
+    # Partners get their own My Plan — the accepted implementation schedule
+    # (§8): five sections, one Actions menu, the Send Invoice button and the
+    # payment tracker. It is not another planning page.
+    from apps.core.scoping import resolve_partner_ids
+
+    if resolve_partner_ids(request.user):
+        from apps.fund_requests.partner_invoices import partner_payment_tracker
+        from apps.frontend.views.partner_views import partner_plan_context
+
+        context = partner_plan_context(request.user)
+        context["is_partner_viewer"] = True
+        context["partner_invoice_tracker"] = partner_payment_tracker(request.user)
+        return render(request, "pages/partner/my_plan.html", context)
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
     return render(request, "pages/my_plan/index.html", context)
@@ -1051,17 +1065,16 @@ def evidence_upload_drawer_view(request, activity_id):
         "evidence_list": evidence_list,
         "drawer_size": "sm",
     }
-    # The platform already knows what this activity type needs, so the form
-    # says so and pre-selects the outstanding one rather than offering twelve
-    # kinds and letting someone guess wrong.
-    from apps.core.enums import EvidenceKind
+    # The platform already knows what this activity type needs (the two-form
+    # law: Visit Form or Training Attendance) — the drawer renders one slot
+    # per required form instead of offering twelve kinds to guess from.
+    from apps.core.scoping import resolve_partner_ids
     from apps.evidence.requirements import checklist as evidence_checklist
-    from apps.evidence.requirements import required_kinds
 
-    _checklist = evidence_checklist(a)
-    context["evidence_checklist"] = _checklist
-    context["evidence_required_kinds"] = list(required_kinds(a.activity_type))
-    context["evidence_kind_choices"] = EvidenceKind.choices
+    context["evidence_checklist"] = evidence_checklist(a)
+    # Partners are never asked for a Salesforce ID — IA records it for their
+    # work at Confirm Salesforce Entry (§12).
+    context["is_partner_viewer"] = bool(resolve_partner_ids(request.user))
 
     return render(request, "partials/my_plan/evidence_drawer.html", context)
 
@@ -1080,6 +1093,25 @@ def evidence_upload_action(request, activity_id):
         evidence_file = request.FILES.get("evidence_file")
         if evidence_file:
             try:
+                # A STAFF upload of a governed form carries its Salesforce
+                # entry — required (owner, 2026-08-19). Partners are exempt:
+                # IA records theirs at Confirm Salesforce Entry.
+                from apps.core.scoping import resolve_partner_ids as _rpi
+
+                _posted_kind = request.POST.get("evidence_kind") or ""
+                _posted_sf = (request.POST.get("salesforce_id") or "").strip()
+                if (
+                    _posted_kind in ("visit_form", "attendance_form")
+                    and not _posted_sf
+                    and not a.salesforce_activity_id
+                    and not _rpi(request.user)
+                ):
+                    from apps.core.exceptions import BadRequest as _BadRequest
+
+                    raise _BadRequest(
+                        "Enter the Salesforce ID with your form upload — it "
+                        "is required for staff-delivered work."
+                    )
                 record_upload(
                     principal=request.user,
                     activity_id=activity_id,
@@ -1105,6 +1137,34 @@ def evidence_upload_action(request, activity_id):
                     success=True,
                     reason="Evidence file uploaded",
                 )
+
+                # Optional Salesforce ID alongside the upload — staff only
+                # (partners never carry it; IA records theirs at Confirm).
+                # reserve_salesforce_id is the single write path: format,
+                # uniqueness and idempotency all hold here too.
+                sf_id = (request.POST.get("salesforce_id") or "").strip()
+                from apps.core.scoping import resolve_partner_ids
+
+                if (
+                    sf_id
+                    and sf_id != (a.salesforce_activity_id or "")
+                    and not resolve_partner_ids(request.user)
+                ):
+                    from apps.activities.services import sf_kind_for_activity
+                    from apps.activities.salesforce import (
+                        ENTRY_SOURCE_STAFF_SELF,
+                        reserve_salesforce_id,
+                    )
+
+                    kind = sf_kind_for_activity(a)
+                    if kind is not None:
+                        reserve_salesforce_id(
+                            activity=a,
+                            raw_value=sf_id,
+                            kind=kind,
+                            principal=request.user,
+                            entry_source=ENTRY_SOURCE_STAFF_SELF,
+                        )
             except Exception as e:
                 return error_fragment(e, status=400)
 
@@ -1354,10 +1414,14 @@ def attendance_upload_action(request, activity_id):
             return error_fragment(exc, action="Attendance Error", status=400)
 
         if attendance_file:
+            # The governed Training Attendance form is PDF-only; a photographed
+            # sheet is welcome but is recorded as a supplementary PHOTO — it
+            # does not satisfy the form requirement, the PDF does.
+            is_pdf = (attendance_file.name or "").lower().endswith(".pdf")
             record_upload(
                 principal=request.user,
                 activity_id=activity_id,
-                kind="attendance_form",
+                kind="attendance_form" if is_pdf else "photo",
                 file_obj=attendance_file,
             )
 

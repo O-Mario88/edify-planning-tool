@@ -164,11 +164,12 @@ ISSUE_PLAYBOOK: dict[str, dict[str, str]] = {
         "why": "The partner handed this assignment back, so the school still "
         "needs the support arranged another way.",
     },
-    "cceo_review_overdue": {
-        "action": "Review the partner's evidence",
-        "route": "/my-plan",
-        "why": "The partner uploaded evidence and it is waiting on the "
-        "managing CCEO's review.",
+    "evidence_submission_stalled": {
+        "action": "Chase the partner to submit their evidence to IA",
+        "route": "/partner-oversight/",
+        "why": "The partner captured evidence but never submitted it, so "
+        "IA cannot verify and the chain is stalled (§10: evidence goes "
+        "directly to IA — there is no CCEO review stage).",
     },
     "partner_salesforce_overdue": {
         "action": "Enter the Salesforce Activity ID for the partner's work",
@@ -225,7 +226,7 @@ OVERSIGHT_RISK_KEYS = frozenset(
 # PartnerAssignment, and `partner_risk_service` is the only thing that can say
 # whether one still holds.
 PARTNER_OVERSIGHT_RISK_KEYS = frozenset(
-    {"assignment_returned", "cceo_review_overdue", "partner_salesforce_overdue"}
+    {"assignment_returned", "evidence_submission_stalled", "partner_salesforce_overdue"}
 )
 
 # Conditions on a core school's package for the year. The CorePlan and its

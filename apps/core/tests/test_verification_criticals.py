@@ -397,8 +397,13 @@ class VolumeReconciliationTests(Fixture):
                 },
                 self.cceo,
             )
+        # The weekly seam reconciles against the STAFF-PAYABLE share:
+        # school-visit transport is vendor-direct and never enters the
+        # owner's request (fund_requests.fundable.vendor_direct_filter).
         planned = (
-            ActivityScheduleCostLine.objects.aggregate(total=Sum("amount"))["total"]
+            ActivityScheduleCostLine.objects.exclude(
+                line_item_type="transport", activity__school_id__isnull=False
+            ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
         requested = (

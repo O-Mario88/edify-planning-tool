@@ -32,6 +32,15 @@ class ChainVerificationTest(TestCase):
         self.assertTrue(result["ok"])
         self.assertIsNone(result["brokenAt"])
 
+    def test_long_permission_subject_is_not_dropped(self):
+        subject = "permission:" + "country-planning-oversight:" * 3
+        log(
+            action="unauthorized_page_access",
+            subject_kind="Page",
+            subject_id=subject,
+        )
+        self.assertTrue(AuditLog.objects.filter(subject_id=subject).exists())
+
     def test_the_second_pass_only_checks_new_rows(self):
         """The whole point: cost tracks new rows, not table size."""
         self._write(5)

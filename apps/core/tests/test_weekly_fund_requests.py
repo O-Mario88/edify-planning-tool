@@ -252,7 +252,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 672000)
+        self.assertEqual(wfr_data["totalAmount"], 622000)
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail
@@ -261,8 +261,9 @@ class WeeklyFundRequestsTest(APITestCase):
 
         detail_res = self._get(f"/api/fund-requests/weekly/{wfr_data['id']}")
         self.assertEqual(
-            len(detail_res["lines"]), 6
-        )  # 2 visit components, 1 cluster meeting, 3 group-training components
+            len(detail_res["lines"]), 5
+        )  # 1 visit component (lunch — transport is vendor-direct),
+        #    1 cluster meeting, 3 group-training components
         descriptions = {line["description"] for line in detail_res["lines"]}
         self.assertTrue(
             {
@@ -284,7 +285,7 @@ class WeeklyFundRequestsTest(APITestCase):
         self._as(self.accountant)
         self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
-            {"amount": 672000, "method": "Mobile Money", "reference": "TXN-9988"},
+            {"amount": 622000, "method": "Mobile Money", "reference": "TXN-9988"},
             400,
         )
 
@@ -298,7 +299,7 @@ class WeeklyFundRequestsTest(APITestCase):
         disburse_res = self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
             {
-                "amount": 672000,
+                "amount": 622000,
                 "method": "Mobile Money",
                 "reference": "TXN-9988",
             },
@@ -306,4 +307,4 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         self.assertEqual(disburse_res["status"], "disbursed")
-        self.assertEqual(disburse_res["disbursedAmount"], 672000)
+        self.assertEqual(disburse_res["disbursedAmount"], 622000)

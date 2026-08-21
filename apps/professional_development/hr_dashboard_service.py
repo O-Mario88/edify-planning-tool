@@ -17,6 +17,8 @@ role sees PD data outside these bounds.
 
 from __future__ import annotations
 
+from apps.core.metrics import render_precomputed_metric_item
+
 from datetime import date
 
 from django.db.models import Q
@@ -242,70 +244,70 @@ class HRPDDashboardService:
         currency = alloc_qs.first().currency if alloc_qs.exists() else "UGX"
 
         kpis = [
-            {
-                "key": "allocation",
-                "label": "Total Annual PD Allocation",
-                "icon": "currency",
-                "variant": "primary",
-                "value": f"{currency} {total_allocation/100:,.0f}",
-                "helper": f"FY {fy}",
-            },
-            {
-                "key": "committed",
-                "label": "Funds Committed",
-                "icon": "chart",
-                "variant": "default",
-                "value": f"{currency} {committed/100:,.0f}",
-                "helper": f"{round(committed/total_allocation*100) if total_allocation else 0}% of allocation",
-            },
-            {
-                "key": "accounted",
-                "label": "Funds Accounted For",
-                "icon": "accountability",
-                "variant": "default",
-                "value": f"{currency} {accounted/100:,.0f}",
-                "helper": f"{round(accounted/total_allocation*100) if total_allocation else 0}% of allocation",
-            },
-            {
-                "key": "enrolled",
-                "label": "Staff Enrolled",
-                "icon": "users",
-                "variant": "primary",
-                "value": str(staff_enrolled),
-                "helper": f"FY {fy}",
-            },
-            {
-                "key": "in_progress",
-                "label": "Courses In Progress",
-                "icon": "graduation",
-                "variant": "primary",
-                "value": str(courses_in_progress),
-                "helper": "Active now",
-            },
-            {
-                "key": "pending_cert",
-                "label": "Pending Certificate Uploads",
-                "icon": "certificate",
-                "variant": "warning" if pending_certificate else "success",
-                "value": str(pending_certificate),
-                "helper": "Course ended, no certificate yet",
-            },
-            {
-                "key": "pending_acct",
-                "label": "Pending Accountability",
-                "icon": "expense",
-                "variant": "warning" if pending_accountability else "success",
-                "value": str(pending_accountability),
-                "helper": "Funded, not yet cleared",
-            },
-            {
-                "key": "signoff",
-                "label": "HR Sign-Off Pending",
-                "icon": "signoff",
-                "variant": "warning" if signoff_pending else "success",
-                "value": str(signoff_pending),
-                "helper": "Ready for review",
-            },
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_total_annual_pd_allocation",
+                f"{currency} {total_allocation/100:,.0f}",
+                key="allocation",
+                icon="currency",
+                variant="primary",
+                helper=f"FY {fy}",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_funds_committed",
+                f"{currency} {committed/100:,.0f}",
+                key="committed",
+                icon="chart",
+                variant="default",
+                helper=f"{round(committed/total_allocation*100) if total_allocation else 0}% of allocation",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_funds_accounted_for",
+                f"{currency} {accounted/100:,.0f}",
+                key="accounted",
+                icon="accountability",
+                variant="default",
+                helper=f"{round(accounted/total_allocation*100) if total_allocation else 0}% of allocation",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_staff_enrolled",
+                str(staff_enrolled),
+                key="enrolled",
+                icon="users",
+                variant="primary",
+                helper=f"FY {fy}",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_courses_in_progress",
+                str(courses_in_progress),
+                key="in_progress",
+                icon="graduation",
+                variant="primary",
+                helper="Active now",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_pending_certificate_uploads",
+                str(pending_certificate),
+                key="pending_cert",
+                icon="certificate",
+                variant="warning" if pending_certificate else "success",
+                helper="Course ended, no certificate yet",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_pending_accountability",
+                str(pending_accountability),
+                key="pending_acct",
+                icon="expense",
+                variant="warning" if pending_accountability else "success",
+                helper="Funded, not yet cleared",
+            ),
+            render_precomputed_metric_item(
+                "professional_development_hr_dashboard_service_hr_sign_off_pending",
+                str(signoff_pending),
+                key="signoff",
+                icon="signoff",
+                variant="warning" if signoff_pending else "success",
+                helper="Ready for review",
+            ),
         ]
 
         # ── Reminder-status derived tag per row (for filter + display) ──────

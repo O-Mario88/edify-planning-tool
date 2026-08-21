@@ -43,17 +43,18 @@ class CatalogueSeedContractTests(TestCase):
         seed_activity_catalogue(actor_id="test")
         seed_activity_catalogue(actor_id="test")
 
-        self.assertEqual(ActivityCatalogueItem.objects.count(), 56)
+        self.assertEqual(ActivityCatalogueItem.objects.count(), 60)
         self.assertEqual(
             ActivityCatalogueItem.objects.values("stable_code").distinct().count(),
-            56,
+            60,
         )
         # The programme's 28 named interventions plus sixteen Uganda Business
-        # Transformation workflows. Standard field support is counted
-        # separately because it is not a curriculum title.
+        # Transformation workflows plus four field-event titles (district
+        # meeting, boot camp, workshop, conference). Standard field support is
+        # counted separately because it is not a curriculum title.
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=False).count(),
-            44,
+            48,
         )
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=True).count(),
@@ -63,10 +64,10 @@ class CatalogueSeedContractTests(TestCase):
             ActivityCatalogueItem.objects.filter(
                 non_school_allowed=True, standard_support=False
             ).count(),
-            29,
+            33,
             "The general programme titles remain available for dated central "
-            "budgeting — plus the Monthly MFI Review, a venue meeting that "
-            "belongs to no single school.",
+            "budgeting — plus the Monthly MFI Review and the four field-event "
+            "titles, venue work that belongs to no single school.",
         )
         # Standard support is school/cluster work. Planning it as a standalone
         # dated programme line at a venue would let "School Visit" be budgeted
