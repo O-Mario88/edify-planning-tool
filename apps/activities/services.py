@@ -45,6 +45,7 @@ from apps.core.calendar_policy import (
 
 from .models import Activity, ActivityCompletionVerification
 from .salesforce import (
+    ENTRY_SOURCE_IA_CONFIRMATION,
     ENTRY_SOURCE_MANAGING_STAFF,
     ENTRY_SOURCE_STAFF_SELF,
     reserve_salesforce_id,
@@ -550,6 +551,16 @@ def _target_under_oversight(scope, school: School | None, cluster_id) -> bool:
     return False
 
 
+def _partner_evidence_exists(activity) -> bool:
+    """Partner evidence goes DIRECTLY to IA (owner spec §10, 2026-08-20):
+    submission requires evidence to exist, never a staff acceptance step."""
+    from apps.evidence.models import EvidenceRecord
+
+    return EvidenceRecord.objects.filter(
+        activity_id=activity.id, quarantined=False
+    ).exists()
+
+
 def _get_in_scope(activity_id: str, principal) -> Activity:
     a = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not a:
@@ -621,6 +632,40 @@ def _serialize(a: Activity) -> dict:
     }
 
 
+def _field_event_district_type(activity: Activity) -> str:
+    """MOU travel profile for a field event: destination vs home district.
+
+    Same district → primary day rates (transport + lunch). A different
+    district → secondary per-diems (overnights add accommodation, dinner,
+    breakfast). When the owner has no primary district on file, fall back to
+    the destination district's own primary/secondary classification; with no
+    destination at all the event prices as home-district work.
+    """
+    dest = activity.event_district_id
+    if not dest:
+        return "primary"
+    from django.db.models import Q as _Q
+
+    from apps.accounts.models import StaffProfile
+
+    home = (
+        StaffProfile.objects.filter(
+            _Q(id=activity.responsible_staff_id)
+            | _Q(user_id=activity.responsible_staff_id)
+        )
+        .values_list("primary_district_id", flat=True)
+        .first()
+    )
+    if home:
+        return "primary" if home == dest else "secondary"
+    from apps.geography.models import District
+
+    dtype = (
+        District.objects.filter(id=dest).values_list("district_type", flat=True).first()
+    )
+    return dtype or "secondary"
+
+
 def _costing_input(activity: Activity, data: dict) -> dict:
     """Build the canonical CostingService input from an activity + schedule data."""
 
@@ -641,6 +686,11 @@ def _costing_input(activity: Activity, data: dict) -> dict:
     district_type = data.get("districtType")
     if not district_type and activity.school_id and activity.school.district_id:
         district_type = activity.school.district.district_type
+    # Field events derive the travel profile from the owner's PRIMARY (home)
+    # district vs the event's destination district — the MOU per-diem rule.
+    # An explicit districtType in the form is a recorded override and wins.
+    if not district_type and activity.activity_type == "field_event":
+        district_type = _field_event_district_type(activity)
 
     return {
         "activityType": activity.activity_type,
@@ -1431,13 +1481,22 @@ def create(
             planned_school_count = int(data.get("plannedSchoolCount") or 0)
         except (TypeError, ValueError) as exc:
             raise BadRequest("Number of schools must be a whole number.") from exc
-        if planned_school_count < 1 or planned_school_count > 10000:
+        # Field events are internal staff work (district meetings, boot camps,
+        # workshops) — they reach no schools, and demanding a fabricated count
+        # here would poison the reach numbers downstream.
+        if activity_type == "field_event":
+            planned_school_count = 0
+        elif planned_school_count < 1 or planned_school_count > 10000:
             raise BadRequest("Number of schools must be between 1 and 10,000.")
         try:
             participant_count = int(data.get("expectedParticipants") or 0)
         except (TypeError, ValueError) as exc:
             raise BadRequest("Number of participants must be a whole number.") from exc
-        if participant_count < 1 or participant_count > 100000:
+        # A field event prices the OWNER's travel per-diems, not a room of
+        # participants — a headcount is welcome context, never a requirement.
+        if activity_type != "field_event" and (
+            participant_count < 1 or participant_count > 100000
+        ):
             raise BadRequest("Number of participants must be between 1 and 100,000.")
         if not (data.get("venue") or "").strip():
             raise BadRequest("Enter the Activity venue.")
@@ -2089,17 +2148,16 @@ def create(
             # scheduled_visits_missing_batch health check.
             pooled = False
             if activity.scheduled_date and activity.delivery_type == "staff":
-                from apps.daily_visit_batches.pricing import (
-                    DAILY_BATCH_ELIGIBLE_TYPES,
+                from apps.daily_visit_batches.services import (
+                    attach_activity_to_batch,
+                    batch_poolable,
                 )
 
-                if activity.activity_type in DAILY_BATCH_ELIGIBLE_TYPES and (
-                    activity.school_id
-                ):
-                    from apps.daily_visit_batches.services import (
-                        attach_activity_to_batch,
-                    )
-
+                # One mission cost per day: visits, trainings, cluster
+                # sessions and single-day field events all share the owner's
+                # day pool (owner rule, 2026-08-19). Multi-day field events
+                # price their own away-days standalone.
+                if batch_poolable(activity):
                     pooled = attach_activity_to_batch(
                         activity,
                         responsible_user_id=_funding_owner_id(activity, principal),
@@ -2189,6 +2247,24 @@ def _ensure_partner_handover(activity: Activity, data: dict) -> None:
         # enclosing transactions (the cluster planner under its lock, daily
         # visit batches in a loop), so swallowing an IntegrityError here would
         # have taken the whole caller down instead of one handover record.
+        purpose_of_visit = normalise_visit_purpose(
+            data.get("purposeOfVisit") or activity.purpose_type,
+            for_partner=True,
+            fallback_activity_type=activity.activity_type,
+        )
+        catalogue_item_id = activity.catalogue_item_id
+        if not catalogue_item_id:
+            # The approved Activity is the assigner's decision and must exist
+            # on every handover — the partner never picks one at scheduling.
+            # For one-step handoffs of uncatalogued work, the standard-support
+            # item for the recorded purpose IS that decision.
+            from apps.activity_catalogue.services import resolve_assignment_item
+
+            resolved = resolve_assignment_item(
+                purpose_of_visit=purpose_of_visit,
+                expected_activity_type=activity.activity_type,
+            )
+            catalogue_item_id = resolved.id if resolved else None
         with transaction.atomic():
             PartnerAssignment.objects.create(
                 school_id=activity.school_id,
@@ -2199,13 +2275,9 @@ def _ensure_partner_handover(activity: Activity, data: dict) -> None:
                 monitoring_staff_id=activity.monitored_by_staff_id
                 or activity.responsible_staff_id,
                 assignment_mode="specific_activity",
-                catalogue_item_id=activity.catalogue_item_id,
+                catalogue_item_id=catalogue_item_id,
                 purpose=activity.activity_purpose_text or "",
-                purpose_of_visit=normalise_visit_purpose(
-                    data.get("purposeOfVisit") or activity.purpose_type,
-                    for_partner=True,
-                    fallback_activity_type=activity.activity_type,
-                ),
+                purpose_of_visit=purpose_of_visit,
                 focus_intervention=activity.focus_intervention,
                 expected_activity_type=activity.activity_type,
                 scheduled_date=(
@@ -2284,7 +2356,12 @@ def start_completion(
     if a.status not in STARTABLE_STATUSES:
         raise BadRequest("Activity must be scheduled before completion can start.")
     a.status = "completion_started"
-    a.save(update_fields=["status", "updated_at"])
+    # First Start wins — a resumed activity keeps its original start moment.
+    update_fields = ["status", "updated_at"]
+    if a.execution_started_at is None:
+        a.execution_started_at = timezone.now()
+        update_fields.append("execution_started_at")
+    a.save(update_fields=update_fields)
     return _serialize(a)
 
 
@@ -2350,9 +2427,10 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         )
 
     # Partner evidence must be accepted first.
-    if a.delivery_type == "partner" and a.evidence_status != "accepted":
+    if a.delivery_type == "partner" and not _partner_evidence_exists(a):
         raise BadRequest(
-            "Partner evidence must be accepted by staff before submission."
+            "Upload the activity evidence before submitting to IA — partner "
+            "evidence goes directly to IA for review."
         )
 
     # Reserve the Salesforce ID first, as its own atomic operation — reject
@@ -2363,7 +2441,11 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         if a.delivery_type == "partner"
         else ENTRY_SOURCE_STAFF_SELF
     )
-    if kind is not None:
+    # §12 partner workflow: the Salesforce ID for partner-delivered work is
+    # entered by IA in the Confirm Salesforce Entry step, never demanded of
+    # the partner at evidence submission. Staff submissions still reserve
+    # their ID here; a partner submission with no ID defers it to IA.
+    if kind is not None and (sf_id or a.delivery_type != "partner"):
         reserve_salesforce_id(
             activity=a,
             raw_value=sf_id,
@@ -2373,8 +2455,16 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         )
         a.refresh_from_db(fields=["salesforce_activity_id", "salesforce_activity_type"])
 
+    # Partner-delivered work goes DIRECTLY to IA (§10) whoever presses the
+    # button — a monitoring CCEO submitting on the partner's behalf must not
+    # detour it through PL review (2026-08-19 audit: the role-only ternary
+    # was a hidden approval gate reachable through the API).
     is_cceo = principal.active_role == "CCEO"
-    next_status = "submitted_to_pl" if is_cceo else "awaiting_ia_verification"
+    next_status = (
+        "submitted_to_pl"
+        if is_cceo and a.delivery_type != "partner"
+        else "awaiting_ia_verification"
+    )
     with transaction.atomic():
         a.teachers_attended = data.get("teachersAttended")
         a.leaders_attended = data.get("leadersAttended")
@@ -2382,6 +2472,17 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.attended_school_ids = _cluster_member_school_ids(
             a, data.get("attendedSchoolIds")
         )
+        # Actuals — entered by the person who delivered, never copied from
+        # the planned fields (§9.2). Absent keys leave stored values alone so
+        # staged flows that submit in stages don't erase earlier entries.
+        if data.get("actualDeliveryDate"):
+            a.actual_delivery_date = _parse_date(data["actualDeliveryDate"]).date()
+        if data.get("actualOutcome") is not None:
+            a.actual_outcome = str(data.get("actualOutcome") or "").strip()
+        if data.get("actualObservations") is not None:
+            a.actual_observations = str(data.get("actualObservations") or "").strip()
+        if data.get("followUpNote") is not None:
+            a.follow_up_note = str(data.get("followUpNote") or "").strip()
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
@@ -2394,6 +2495,10 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "leaders_attended",
                 "other_participants",
                 "attended_school_ids",
+                "actual_delivery_date",
+                "actual_outcome",
+                "actual_observations",
+                "follow_up_note",
                 "status",
                 "submitted_to_ia_at",
                 "evidence_status",
@@ -2403,7 +2508,9 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
             defaults={
-                "salesforce_id": a.salesforce_activity_id,
+                # Empty when the ID is deferred to IA (§12 partner flow) —
+                # the column is NOT NULL and "" is the honest "not yet".
+                "salesforce_id": a.salesforce_activity_id or "",
                 "entered_by": principal.user_id,
                 "status": "pending",
             },
@@ -2468,9 +2575,10 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         raise BadRequest(
             "Training completion requires attendance (teachers and/or school leaders)"
         )
-    if a.delivery_type == "partner" and a.evidence_status != "accepted":
+    if a.delivery_type == "partner" and not _partner_evidence_exists(a):
         raise BadRequest(
-            "Partner evidence must be accepted by staff before submission."
+            "Upload the activity evidence before submitting to IA — partner "
+            "evidence goes directly to IA for review."
         )
     if a.ssa_collection_expected and not a.ssa_not_collected_reason:
         from apps.ssa.models import SsaRecord
@@ -2485,9 +2593,13 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
                 "before submitting this activity."
             )
 
+    # Same §10 partner-aware routing as complete(): partner-delivered work
+    # goes directly to IA even when the monitoring CCEO presses submit —
+    # the role-only ternary here was the second half of the hidden PL gate
+    # the 2026-08-19 audit flagged.
     next_status = (
         "submitted_to_pl"
-        if principal.active_role == "CCEO"
+        if principal.active_role == "CCEO" and a.delivery_type != "partner"
         else "awaiting_ia_verification"
     )
     with transaction.atomic():
@@ -2498,7 +2610,9 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
             defaults={
-                "salesforce_id": a.salesforce_activity_id,
+                # Empty when the ID is deferred to IA (§12 partner flow) —
+                # the column is NOT NULL and "" is the honest "not yet".
+                "salesforce_id": a.salesforce_activity_id or "",
                 "entered_by": principal.user_id,
                 "status": "pending",
             },
@@ -2558,10 +2672,51 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
 def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> dict:
     """IA confirms the Salesforce entry (manual confirmation)."""
     a = _get_in_scope(activity_id, principal)
+    # Verification authority lives in the CANONICAL service, not only at the
+    # routes (2026-08-19 audit): _get_in_scope is a READ gate, so a partner —
+    # who owns their activity for reading — could verify their own work by
+    # reaching this function through any future unguarded caller.
+    from apps.core.permissions import RolePermissionService
+
+    if not RolePermissionService.can_verify_ia(principal, a):
+        raise Forbidden("Only Impact Assessment may verify this work.")
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
-    if a.delivery_type == "partner" and a.evidence_status != "accepted":
-        raise Forbidden("Cannot confirm — partner evidence not accepted.")
+    # §Direct IA handoff (2026-08-20): partner evidence comes straight to
+    # IA — no CCEO/PL acceptance gate. IA reviews the evidence itself; the
+    # only precondition is that evidence exists.
+    if a.delivery_type == "partner" and not _partner_evidence_exists(a):
+        raise Forbidden("Cannot confirm — no partner evidence uploaded.")
+
+    # §12 Confirm Salesforce Entry: IA records the Salesforce ID for
+    # partner-delivered work at confirmation. reserve_salesforce_id is the
+    # single write path — format, uniqueness and idempotency live there.
+    ia_sf_id = ((data or {}).get("salesforceId") or "").strip()
+    if ia_sf_id:
+        kind = sf_kind_for_activity(a)
+        if kind is not None:
+            reserve_salesforce_id(
+                activity=a,
+                raw_value=ia_sf_id,
+                kind=kind,
+                principal=principal,
+                entry_source=ENTRY_SOURCE_IA_CONFIRMATION,
+            )
+            a.refresh_from_db(
+                fields=["salesforce_activity_id", "salesforce_activity_type"]
+            )
+    if (
+        a.delivery_type == "partner"
+        and sf_kind_for_activity(a) is not None
+        and not a.salesforce_activity_id
+    ):
+        raise BadRequest(
+            "Enter the Salesforce ID to complete — partner work is confirmed "
+            "with its Salesforce entry."
+        )
+    if (data or {}).get("verificationNote"):
+        a.pl_review_note = str(data["verificationNote"]).strip()
+        a.save(update_fields=["pl_review_note", "updated_at"])
 
     # For Core activities, perform strict validation:
     if a.activity_type in ("core_visit", "core_training"):
@@ -2614,7 +2769,11 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         # the payment queue, staff-delivered ones are stamped pending so both
         # IA-confirm entry points route finance identically.
         if a.delivery_type == "partner":
-            a.payment_status = "ia_confirmed"
+            # Keep the MOU advance marker: "disbursed" means the 50% advance
+            # is already out. Verification opens the CLEARANCE of the balance
+            # — it must not reset the record of money that already moved.
+            if a.payment_status != "disbursed":
+                a.payment_status = "ia_confirmed"
         else:
             a.payment_status = "pending_ia"
 
@@ -2656,12 +2815,27 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         from apps.integrations.services import enqueue_activity_salesforce_sync
 
         enqueue_activity_salesforce_sync(a.id)
+
+        # MOU prompts, after the verification commits: the accountant is told
+        # the partner balance is now clearable, and the partner is told to
+        # send their invoice once their whole slate is verified.
+        from apps.fund_requests.finance_services import (
+            notify_partner_clearance_eligibility,
+        )
+
+        transaction.on_commit(lambda: notify_partner_clearance_eligibility(a))
     return _serialize(a)
 
 
 def ia_return(activity_id: str, data: dict, principal) -> dict:
     """IA returns the activity completion to CCEO/partner for correction."""
     a = _get_in_scope(activity_id, principal)
+    # Same canonical-service authority gate as ia_confirm: returning work is
+    # a verification decision, reserved to IA by the permission matrix.
+    from apps.core.permissions import RolePermissionService
+
+    if not RolePermissionService.can_verify_ia(principal, a):
+        raise Forbidden("Only Impact Assessment may return this work.")
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
 
@@ -2669,9 +2843,25 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     if not reason:
         raise BadRequest("Return reason is required.")
 
-    a.status = "returned"
+    # §11 partner return detail: what needs correcting, how, and by when —
+    # folded into the review note the evidence page shows the partner.
+    note = reason
+    correction_fields = str(data.get("correctionFields") or "").strip()
+    instruction = str(data.get("instruction") or "").strip()
+    deadline = str(data.get("deadline") or "").strip()
+    if correction_fields:
+        note += f" · Correct: {correction_fields}"
+    if instruction:
+        note += f" · {instruction}"
+    if deadline:
+        note += f" · Deadline: {deadline}"
+
+    # Partner-delivered work returns on its own status (§15.1 "Returned by
+    # IA") so the partner surfaces can speak plainly; staff work keeps the
+    # historic "returned" value every existing pin expects.
+    a.status = "returned_by_ia" if a.delivery_type == "partner" else "returned"
     a.ia_verification_status = "returned"
-    a.pl_review_note = reason
+    a.pl_review_note = note
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
         a.save(
@@ -2692,8 +2882,59 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
         from apps.hr.milestone_progress import reverse_activity_progress
 
         transaction.on_commit(lambda: reverse_activity_progress(a))
+        # The person who must act is told (2026-08-19 audit F4: this return
+        # previously notified NOBODY — the partner's Needs Attention row and
+        # To-Do existed, but nothing announced them). Partner deliveries
+        # notify the partner login; staff deliveries notify the owner.
+        transaction.on_commit(lambda: _notify_ia_return(a, reason))
 
     return _serialize(a)
+
+
+def _notify_ia_return(a, reason: str) -> None:
+    """Announce an IA return to whoever must correct it — never raising:
+    the return is committed, a notification backend being down must not
+    make IA think the return failed."""
+    import logging
+
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        where = (
+            a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "field work")
+        )
+        recipients: list[str] = []
+        if a.delivery_type == "partner" and a.assigned_partner_id:
+            from apps.partners.models import Partner
+
+            partner = Partner.objects.filter(id=a.assigned_partner_id).first()
+            if partner and partner.user_id:
+                recipients.append(partner.user_id)
+            if a.monitored_by_staff_id:
+                # FYI — the staff member who supervises the handoff.
+                recipients.append(a.monitored_by_staff_id)
+        else:
+            owner = a.responsible_staff_id or a.monitored_by_staff_id
+            if owner:
+                recipients.append(owner)
+        if not recipients:
+            return
+        WorkflowNotificationService.trigger(
+            event_type="evidence_returned",
+            category="verification",
+            priority="high",
+            title="Evidence returned for correction",
+            body=f"{where}: {reason[:200]}",
+            context_type="activity",
+            context_id=str(a.id),
+            recipients=recipients,
+        )
+    except Exception:  # noqa: BLE001 — bookkeeping never breaks the return
+        logging.getLogger(__name__).warning(
+            "ia_return notification failed for %s", a.id, exc_info=True
+        )
 
 
 def reschedule(activity_id: str, data: dict, principal) -> dict:
@@ -2840,17 +3081,44 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # by opening My Plan on the old morning. One Activity, moved; no second
     # record, and the notification names both dates so the change is legible.
     if a.delivery_type == "partner" and a.assigned_partner_id and old_date != new_date:
-        _notify_partner_schedule_change(
-            a,
-            "partner_booking_rescheduled",
-            "A booking you hold has been moved",
-            (
-                f"{a.activity_name_snapshot or a.get_activity_type_display()} for "
-                f"{_where(a)} has moved from "
-                f"{old_date:%-d %b %Y} to {new_date:%-d %b %Y}. "
-                f"{(data.get('reason') or '').strip()}".strip()
-            ),
+        is_partner_actor = bool(
+            getattr(resolve_user_scope(principal), "partner_ids", None)
         )
+        if is_partner_actor:
+            # §8.4 the mirror case: the PARTNER moved their own delivery —
+            # the staff member monitoring the work is told, with both dates
+            # and the recorded reason.
+            monitor = a.monitored_by_staff_id or a.responsible_staff_id
+            if monitor:
+                from apps.notifications.services import WorkflowNotificationService
+
+                WorkflowNotificationService.trigger(
+                    event_type="partner_rescheduled_activity",
+                    category="activities",
+                    priority="normal",
+                    title="A partner rescheduled their delivery",
+                    body=(
+                        f"{a.activity_name_snapshot or a.get_activity_type_display()} "
+                        f"for {_where(a)} moved from {old_date:%-d %b %Y} to "
+                        f"{new_date:%-d %b %Y}. "
+                        f"Reason: {(data.get('reason') or '—').strip()}"
+                    ),
+                    context_type="activity",
+                    context_id=str(a.id),
+                    recipients=[monitor],
+                )
+        else:
+            _notify_partner_schedule_change(
+                a,
+                "partner_booking_rescheduled",
+                "A booking you hold has been moved",
+                (
+                    f"{a.activity_name_snapshot or a.get_activity_type_display()} for "
+                    f"{_where(a)} has moved from "
+                    f"{old_date:%-d %b %Y} to {new_date:%-d %b %Y}. "
+                    f"{(data.get('reason') or '').strip()}".strip()
+                ),
+            )
     return _serialize(a)
 
 
@@ -3000,8 +3268,13 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 )
             if (
                 pa.assignment_mode == "intervention_choice"
+                and pa.allowed_catalogue_items.exists()
                 and not pa.allowed_catalogue_items.filter(id=selected.id).exists()
             ):
+                # An EMPTY choice set means no set was ever recorded, not that
+                # every item is out of bounds — the partner picks from the CD
+                # Cost Catalogue and validate_context below still enforces
+                # partner eligibility.
                 raise Forbidden(
                     "The selected Activity is outside this assignment's approved choice set."
                 )
@@ -3053,7 +3326,13 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             from apps.partners.services import assert_partner_activity_allowance
 
             assert_partner_activity_allowance(
-                pa.partner_id, pa.school_id, _sched_activity_type, fy
+                pa.partner_id,
+                pa.school_id,
+                _sched_activity_type,
+                fy,
+                # This assignment's own activity must not count against it —
+                # otherwise every re-schedule reads as a second activity.
+                exclude_activity_id=pa.scheduled_activity_id,
             )
         # The school's own staff member where the handoff recorded one; the
         # assigner otherwise, which is what every pre-existing row resolves to.
@@ -3081,6 +3360,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             planned_month=planned_month,
             planned_week=planned_week,
             status="partner_scheduled",
+            # The canonical create() path stamps these; this one did not, so
+            # every partner-scheduled activity was born already failing the
+            # platform's own `activity_without_planning_source` health check
+            # (apps/activities/work_plan_health.py:90). A partner assignment
+            # IS the planning decision that produced this work.
+            planning_source="partner_assignment",
+            activity_context_type=(
+                "school" if pa.school_id else "cluster" if pa.cluster_id else ""
+            ),
         )
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
@@ -3137,6 +3425,30 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             from apps.notifications.services import resolve_condition
 
             resolve_condition("partner_scheduled_activity", "partner_assignment", pa.id)
+        except Exception:  # noqa: BLE001 - bookkeeping never blocks scheduling
+            pass
+        # The staff member who handed the work over learns a date now exists
+        # (2026-08-19 audit F7: the return path notified, the accept path
+        # didn't — staff discovered acceptance only by browsing).
+        try:
+            from apps.notifications.services import WorkflowNotificationService
+
+            staff_recipient = pa.assigning_staff_id or monitored_by_staff_id
+            if staff_recipient:
+                WorkflowNotificationService.trigger(
+                    event_type="partner_scheduled_assignment",
+                    category="partner",
+                    priority="normal",
+                    title="A partner scheduled the assigned work",
+                    body=(
+                        f"{activity.activity_name_snapshot or activity.get_activity_type_display()}"
+                        f" at {_where(activity)} is booked for "
+                        f"{scheduled_date:%-d %b %Y}."
+                    ),
+                    context_type="activity",
+                    context_id=str(activity.id),
+                    recipients=[staff_recipient],
+                )
         except Exception:  # noqa: BLE001 - bookkeeping never blocks scheduling
             pass
         return _serialize(activity)

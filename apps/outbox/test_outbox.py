@@ -16,6 +16,7 @@ from .models import OutboxEvent, OutboxStatus
 from .services import (
     _HANDLERS,
     _backoff_seconds,
+    _claim_batch,
     drain,
     enqueue,
     register,
@@ -202,3 +203,49 @@ class SchedulerRegistrationTests(TestCase):
         spec = next(s for s in JOB_REGISTRY if s.name == "outbox_drain")
         self.assertTrue(spec.idempotent)
         self.assertTrue(callable(jobs.outbox_drain_job))
+
+
+class CrashReclaimTests(HandlerHarness):
+    """A worker that dies mid-handler must still exhaust its retries.
+
+    The reclaim path returned a stranded PROCESSING row to the queue without
+    counting the attempt, so an event whose handler hard-kills its worker
+    (OOM, SIGKILL, a deploy restart) was retried every five minutes forever:
+    `max_attempts` was never reached, so it never dead-lettered, never
+    notified an Admin, and never appeared in the dead-letter health check. It
+    was invisible except as a backlog that would not drain.
+    """
+
+    def _stranded(self, *, attempts, max_attempts=8):
+        """An event a dead worker left claimed, with an expired lock."""
+        enqueue("test.ok", {"n": attempts})
+        event = OutboxEvent.objects.latest("created_at")
+        OutboxEvent.objects.filter(id=event.id).update(
+            status=OutboxStatus.PROCESSING,
+            locked_by="dead-worker",
+            locked_until=timezone.now() - timedelta(minutes=10),
+            attempts=attempts,
+        )
+        return event
+
+    def test_a_crash_reclaim_counts_as_an_attempt(self):
+        event = self._stranded(attempts=0)
+        _claim_batch(batch_size=10, worker_id="live-worker")
+        event.refresh_from_db()
+        self.assertEqual(event.attempts, 1)
+
+    def test_a_poison_pill_eventually_dead_letters_instead_of_looping(self):
+        event = self._stranded(attempts=7, max_attempts=8)
+        _claim_batch(batch_size=10, worker_id="live-worker")
+        event.refresh_from_db()
+        self.assertEqual(event.attempts, 8)
+        self.assertEqual(event.status, OutboxStatus.DEAD)
+        self.assertEqual(event.locked_by, "")
+
+    def test_a_healthy_pending_event_is_not_charged_an_attempt(self):
+        enqueue("test.ok", {"n": "fresh"})
+        event = OutboxEvent.objects.latest("created_at")
+        _claim_batch(batch_size=10, worker_id="live-worker")
+        event.refresh_from_db()
+        self.assertEqual(event.attempts, 0)
+        self.assertEqual(event.status, OutboxStatus.PROCESSING)

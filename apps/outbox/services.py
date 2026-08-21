@@ -14,6 +14,7 @@ import time
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from .models import OutboxEvent, OutboxStatus
@@ -140,12 +141,44 @@ def _claim_batch(batch_size: int, worker_id: str) -> list[str]:
             .values_list("id", flat=True)[:batch_size]
         )
         if ids:
+            # A crash-reclaim IS an attempt. Counting it is what lets a
+            # handler that kills its worker every run eventually reach
+            # max_attempts and dead-letter, instead of being retried forever
+            # in silence.
+            reclaimed = list(
+                OutboxEvent.objects.filter(
+                    id__in=ids, status=OutboxStatus.PROCESSING
+                ).values_list("id", flat=True)
+            )
             OutboxEvent.objects.filter(id__in=ids).update(
                 status=OutboxStatus.PROCESSING,
                 locked_by=worker_id,
                 locked_until=now + timedelta(seconds=CLAIM_SECONDS),
             )
+            if reclaimed:
+                OutboxEvent.objects.filter(id__in=reclaimed).update(
+                    attempts=F("attempts") + 1,
+                    last_error="Reclaimed after a worker died mid-handler.",
+                )
+                _dead_letter_exhausted(reclaimed)
     return ids
+
+
+def _dead_letter_exhausted(event_ids) -> None:
+    """Retire reclaimed events that have used up their attempts."""
+
+    exhausted = list(
+        OutboxEvent.objects.filter(
+            id__in=list(event_ids), attempts__gte=F("max_attempts")
+        )
+    )
+    if not exhausted:
+        return
+    OutboxEvent.objects.filter(id__in=[e.id for e in exhausted]).update(
+        status=OutboxStatus.DEAD, locked_by="", locked_until=None
+    )
+    for event in exhausted:
+        transaction.on_commit(lambda e=event: _notify_dead_letter(e))
 
 
 def _finish(event_id: str, *, error: str | None) -> None:
@@ -161,7 +194,7 @@ def _finish(event_id: str, *, error: str | None) -> None:
         elif event.attempts >= event.max_attempts:
             event.status = OutboxStatus.DEAD
             event.last_error = error[:4000]
-            _notify_dead_letter(event)
+            transaction.on_commit(lambda e=event: _notify_dead_letter(e))
         else:
             event.status = OutboxStatus.PENDING
             event.next_attempt_at = timezone.now() + timedelta(
@@ -240,12 +273,22 @@ def _notify_dead_letter(event) -> None:
         from apps.accounts.models import User
         from apps.notifications.services import WorkflowNotificationService
 
+        # `active_role` is the role a person is CURRENTLY VIEWING AS, not what
+        # they are. Filtering on it meant an Admin who had switched to another
+        # role received nothing — and if every Admin had switched, the dead
+        # letter was announced to no one at all and returned silently.
+        # `roles` is what they hold.
         admins = list(
-            User.objects.filter(is_active=True, active_role="Admin").values_list(
-                "id", flat=True
-            )
+            User.objects.filter(
+                is_active=True, deleted_at__isnull=True, roles__contains=["Admin"]
+            ).values_list("id", flat=True)
         )
         if not admins:
+            logger.error(
+                "Outbox event %s dead-lettered but no active Admin exists to "
+                "notify.",
+                getattr(event, "id", "?"),
+            )
             return
         WorkflowNotificationService.trigger(
             event_type="outbox.dead_letter",
