@@ -80,6 +80,10 @@ class DocumentTestBase(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.hr = _user("hr", "HumanResources", country="Uganda")
+        # A policy's reviewer may not be its uploader. HR holds create, review
+        # and publish, so without a second HR person one officer could author,
+        # approve and publish alone (2026-08-20 HR audit).
+        cls.hr_reviewer = _user("hr2", "HumanResources", country="Uganda")
         cls.admin = _user("admin", "Admin")
         cls.ia = _user("ia", "ImpactAssessment")
         cls.cceo = _user("cceo", "CCEO", country="Uganda")
@@ -94,6 +98,7 @@ class DocumentTestBase(TestCase):
             "agreement_required": True,
             "acknowledgement_reason": "Everyone working with schools must accept it.",
             "blocks_application_access": True,
+            "required_reading_minutes": 1,
         }
         data.update(overrides)
         document = DocumentService.create(self.hr, data)
@@ -105,7 +110,7 @@ class DocumentTestBase(TestCase):
 
     def _publish(self, document, version):
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, version, True, "Checked.")
+        DocumentService.review(self.hr_reviewer, version, True, "Checked.")
         return DocumentService.publish(self.hr, version)
 
 
@@ -331,6 +336,39 @@ class LifecycleTests(DocumentTestBase):
                 },
             )
 
+    def test_a_mandatory_policy_requires_an_uploader_reading_target(self):
+        with self.assertRaisesMessage(
+            BadRequest, "Set the required active reading time"
+        ):
+            DocumentService.create(
+                self.hr,
+                {
+                    "title": "Unmonitored Policy",
+                    "description": "A mandatory policy.",
+                    "document_type": DocumentType.POLICY,
+                    "acknowledgement_required": True,
+                },
+            )
+
+    def test_canonical_policies_receive_the_requested_reading_targets(self):
+        from importlib import import_module
+
+        from django.apps import apps
+
+        migration = import_module(
+            "apps.documents.migrations.0003_required_reading_time"
+        )
+
+        safeguarding, _ = self._policy(title="Edify Safeguarding Policy")
+        creed, _ = self._policy(title="Edify Apostles Creed")
+
+        migration.set_canonical_reading_times(apps, None)
+        safeguarding.refresh_from_db()
+        creed.refresh_from_db()
+
+        self.assertEqual(safeguarding.required_reading_minutes, 4)
+        self.assertEqual(creed.required_reading_minutes, 1)
+
     def test_publication_requires_review(self):
         document, version = self._policy()
         with self.assertRaises(BadRequest):
@@ -349,7 +387,7 @@ class LifecycleTests(DocumentTestBase):
             self.hr, document, _pdf(), {"effective_date": timezone.localdate()}
         )
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, version, True)
+        DocumentService.review(self.hr_reviewer, version, True)
         with self.assertRaises(BadRequest) as raised:
             DocumentService.publish(self.hr, version)
         self.assertIn("audience", str(raised.exception))
@@ -357,7 +395,7 @@ class LifecycleTests(DocumentTestBase):
     def test_a_mandatory_policy_needs_its_agreement_wording(self):
         document, version = self._policy(acknowledgement_reason="")
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, version, True)
+        DocumentService.review(self.hr_reviewer, version, True)
         with self.assertRaises(BadRequest):
             DocumentService.publish(self.hr, version)
 
@@ -531,7 +569,7 @@ class AcknowledgementTests(DocumentTestBase):
             {"effective_date": timezone.localdate(), "material_change": True},
         )
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, second, True)
+        DocumentService.review(self.hr_reviewer, second, True)
         DocumentService.publish(self.hr, second)
 
         self.assertTrue(
@@ -553,7 +591,7 @@ class AcknowledgementTests(DocumentTestBase):
             {"effective_date": timezone.localdate(), "material_change": True},
         )
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, second, True)
+        DocumentService.review(self.hr_reviewer, second, True)
         DocumentService.publish(self.hr, second)
 
         first.refresh_from_db()
@@ -573,7 +611,7 @@ class AcknowledgementTests(DocumentTestBase):
             {"effective_date": timezone.localdate(), "material_change": False},
         )
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, second, True)
+        DocumentService.review(self.hr_reviewer, second, True)
         DocumentService.publish(self.hr, second)
         self.assertEqual(
             DocumentAcknowledgement.objects.filter(version=second).count(), 0
@@ -837,6 +875,34 @@ class EngagementTests(DocumentTestBase):
         self.assertEqual(ack.active_reading_seconds, 90)
         self.assertEqual(ack.session_count, 1)
 
+    def test_agreement_does_not_mask_an_incomplete_read(self):
+        ack = DocumentAcknowledgement.objects.get(version=self.version)
+        AcknowledgementService.respond(self.cceo, ack.id, "agree")
+        ack.refresh_from_db()
+
+        self.assertEqual(ack.state, AcknowledgementState.AGREED)
+        self.assertEqual(ack.reading_completion_label, "Did not read")
+
+    def test_reopening_and_reaching_the_target_clears_reading_completion(self):
+        from apps.documents.models import DocumentEngagementSession
+
+        ack = DocumentAcknowledgement.objects.get(version=self.version)
+        AcknowledgementService.respond(self.cceo, ack.id, "agree")
+        session = EngagementService.heartbeat(self.cceo, self.version.id, page=1)
+        DocumentEngagementSession.objects.filter(id=session.id).update(
+            active_seconds=60
+        )
+
+        # A later viewer heartbeat rolls all sessions back onto the existing
+        # acknowledgement, even though the legal response is already agreed.
+        EngagementService.heartbeat(
+            self.cceo, self.version.id, page=1, active_delta_seconds=0
+        )
+        ack.refresh_from_db()
+
+        self.assertEqual(ack.reading_completion_label, "Completed reading")
+        self.assertEqual(ack.active_reading_seconds, 60)
+
     def test_engagement_is_never_labelled_proof_of_reading(self):
         from apps.documents import compliance
 
@@ -941,7 +1007,7 @@ class HelpIntegrationTests(DocumentTestBase):
             self.hr, document, _pdf("v2.pdf"), {"effective_date": timezone.localdate()}
         )
         DocumentService.submit_for_review(self.hr, document)
-        DocumentService.review(self.hr, second, True)
+        DocumentService.review(self.hr_reviewer, second, True)
         DocumentService.publish(self.hr, second)
 
         self.assertEqual(HelpArticle.objects.count(), before)
@@ -964,6 +1030,24 @@ class DocumentPageTests(DocumentTestBase):
         response = client.get("/uploads")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Upload Center", response.content.decode())
+
+    def test_heartbeat_returns_cumulative_reading_completion(self):
+        from apps.documents.models import DocumentEngagementSession
+
+        client = Client()
+        client.force_login(self.cceo)
+        url = f"/api/documents/engagement/{self.version.id}"
+        self.assertEqual(client.post(url, {"active_delta_seconds": 0}).status_code, 200)
+        session = DocumentEngagementSession.objects.get(version=self.version)
+        DocumentEngagementSession.objects.filter(id=session.id).update(
+            last_heartbeat_at=timezone.now() - timedelta(seconds=60)
+        )
+
+        response = client.post(url, {"active_delta_seconds": 20})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["active_seconds"], 20)
+        self.assertEqual(response.json()["reading_completion"], "partial")
 
     def test_the_source_policy_has_its_own_minimal_read_and_accept_page(self):
         document, version = self._policy(
@@ -1124,6 +1208,16 @@ class ComplianceReportTests(DocumentTestBase):
         row = PolicyComplianceService.report(self.hr)["rows"][0]
         self.assertIn("active_reading_time", row)
         self.assertIn("viewer_completion", row)
+        self.assertEqual(row["required_reading_time"], "1m 0s")
+        self.assertEqual(row["viewer_completion"], "Did not read")
+
+    def test_compliance_does_not_expose_removed_workflow_columns(self):
+        from apps.documents.compliance import PolicyComplianceService
+
+        row = PolicyComplianceService.report(self.hr)["rows"][0]
+        self.assertNotIn("comment_status", row)
+        self.assertNotIn("due_date", row)
+        self.assertNotIn("next_action", row)
 
     def test_a_program_lead_sees_only_supervised_staff(self):
         from apps.accounts.models import StaffSupervisorAssignment
@@ -1368,6 +1462,18 @@ class DocumentPageRenderTests(DocumentTestBase):
                 client.force_login(user)
                 self.assertEqual(client.get("/policy-compliance").status_code, 200)
 
+    def test_compliance_table_keeps_only_the_requested_columns(self):
+        client = Client()
+        client.force_login(self.hr)
+
+        body = client.get("/policy-compliance").content.decode()
+
+        self.assertIn("Active Reading Time", body)
+        self.assertIn("Viewer Completion", body)
+        self.assertNotIn(">Comment</th>", body)
+        self.assertNotIn(">Due</th>", body)
+        self.assertNotIn(">Next Action</th>", body)
+
     def test_the_upload_center_renders_for_every_role_that_can_open_it(self):
         roles = [
             self.admin,
@@ -1464,3 +1570,94 @@ class ReminderDedupeAcrossTimezonesTest(DocumentTestBase):
             last_reminded_at=timezone.now() - timedelta(days=1)
         )
         self.assertEqual(send_acknowledgement_reminders(), 1)
+
+
+class PolicyRevisionTests(DocumentTestBase):
+    """A published policy must be revisable, and not by one person alone.
+
+    Both were missing: `add_version` had no HTTP route at all, so correcting a
+    live policy meant creating a new asset under a new slug — abandoning its
+    audience rules and every acknowledgement ever recorded. And nothing
+    compared the reviewer to the uploader, so a single HR officer could
+    author, approve and publish a policy that withholds the application from
+    every employee (2026-08-20 HR audit).
+    """
+
+    def setUp(self):
+        self.client.force_login(self.hr)
+
+    def test_a_revision_can_be_uploaded_over_a_published_policy(self):
+        document, version = self._policy()
+        self._publish(document, version)
+
+        response = self.client.post(
+            f"/documents/{document.slug}/versions/new",
+            {"file": _pdf("policy-v2.pdf"), "change_summary": "Clause 4 reworded."},
+        )
+        self.assertEqual(response.status_code, 302)
+
+        versions = list(document.versions.order_by("version_number"))
+        self.assertEqual([v.version_number for v in versions], [1, 2])
+        # The live version keeps serving until the successor is published.
+        document.refresh_from_db()
+        self.assertIn(document.status, ("published", "effective"))
+        self.assertIsNotNone(versions[0].published_at)
+        self.assertIsNone(versions[1].published_at)
+
+    def test_the_revision_keeps_the_audience_and_the_acknowledgement_history(self):
+        document, version = self._policy()
+        self._publish(document, version)
+        audience_before = document.audience_rules.count()
+        acks_before = document.acknowledgements.count()
+
+        self.client.post(
+            f"/documents/{document.slug}/versions/new",
+            {"file": _pdf("policy-v2.pdf")},
+        )
+
+        self.assertEqual(document.audience_rules.count(), audience_before)
+        self.assertGreaterEqual(document.acknowledgements.count(), acks_before)
+
+    def test_the_uploader_cannot_review_their_own_version(self):
+        document, version = self._policy()
+        DocumentService.submit_for_review(self.hr, document)
+        with self.assertRaises(BadRequest) as caught:
+            DocumentService.review(self.hr, version, True, "Looks fine to me.")
+        self.assertIn("someone else must review", str(caught.exception))
+
+    def test_a_different_reviewer_may_approve_it(self):
+        document, version = self._policy()
+        DocumentService.submit_for_review(self.hr, document)
+        DocumentService.review(self.hr_reviewer, version, True, "Checked.")
+        version.refresh_from_db()
+        self.assertEqual(version.review_decision, "approved")
+
+    def test_an_action_applies_to_the_named_version_not_the_newest(self):
+        """Approving the v2 on screen must not approve a v3 uploaded since."""
+        document, v1 = self._policy()
+        DocumentService.submit_for_review(self.hr, document)
+        v2 = DocumentService.add_version(
+            self.hr, document, _pdf("v2.pdf"), {"effective_date": timezone.localdate()}
+        )
+        self.client.force_login(self.hr_reviewer)
+        self.client.post(
+            f"/documents/{document.slug}/approve",
+            {"version_id": v1.id, "note": "Reviewed v1."},
+        )
+        v1.refresh_from_db()
+        v2.refresh_from_db()
+        self.assertEqual(v1.review_decision, "approved")
+        self.assertEqual(v2.review_decision, "")
+
+    def test_an_expiry_date_posted_on_upload_is_stored(self):
+        """`expiry_date` drove the nightly expiry job and the health check, and
+        no form ever posted it — so nothing could ever expire."""
+        from datetime import date
+
+        document, _ = self._policy()
+        self.client.post(
+            f"/documents/{document.slug}/versions/new",
+            {"file": _pdf("v2.pdf"), "expiry_date": "2027-12-31"},
+        )
+        newest = document.versions.order_by("-version_number").first()
+        self.assertEqual(newest.expiry_date, date(2027, 12, 31))

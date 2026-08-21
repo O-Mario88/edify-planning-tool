@@ -1,6 +1,9 @@
 {% load frontend_filters %}
 <div class="rounded-control border border-[var(--border-card)] p-3" aria-live="polite">
   <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Catalogue cost preview</p>
+  {% if travel_profile %}
+  <p class="mt-1 text-[12px] font-semibold edify-primary-text">{{ travel_profile }}</p>
+  {% endif %}
   {% if preview.lines %}
   <ul class="mt-2 space-y-1 text-[13px]">
     {% for line in preview.lines %}
