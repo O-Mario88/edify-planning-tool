@@ -202,14 +202,31 @@ visit — "scheduled against the intervention it is meant to move" — is what
 places it on the gated side. A test asserts every standard item sits on one
 side or the other, so a new one cannot arrive undecided.
 
+**Partner work reaches the people who supervise it.** Planning oversight
+scoped activities on `responsible_staff_id` and `monitored_by_staff_id` alone.
+A partner-delivered activity has no responsible staff member by construction,
+and the monitor column records whoever was resolved at handoff — so a school's
+own CCEO saw 6 of the 233 partner activities in their portfolio, and a Program
+Lead, who supervises rather than owns, saw **none**. Both were reading the page
+whose purpose is watching partner delivery.
+
+Ownership of the school and of the cluster are now the third and fourth arms,
+so a CCEO sees every school visit and training at their schools and a PL sees
+their whole team's, regardless of who clicked Handoff. Measured after the
+change: CCEO 6 → 232, PL 0 → 233, with other CCEOs unchanged at 5 each, so the
+widening did not become a leak. The cluster arm carries the trainings, which
+have no school to own. Three tests pin it.
+
 ## What remains open
 
 1. Moving the remaining workflow events onto the durable outbox (§33). Two
    more are on it now; the finance, allocation and achievement families are
    not.
-2. A canonical school-priority engine — three surfaces still rank differently,
-   and `command_center` presents alphabetical order as priority with a
-   hardcoded blank "weakest" column.
+2. A canonical school-priority engine. `command_center` no longer presents
+   alphabetical order as priority — it reads the live recommendation queue and
+   names the real weakest intervention, with unassessed schools kept as their
+   own honest category. But three surfaces still rank by three different
+   definitions, and consolidating them onto one is outstanding.
 3. Defining "current" for `requires_current_ssa`. The gate now applies to the
    right activities, but still accepts any confirmed assessment regardless of
    age.
