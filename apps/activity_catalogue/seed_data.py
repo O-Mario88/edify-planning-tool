@@ -516,15 +516,29 @@ def _standard(
     target_audience="School staff",
     support_objective="STANDARD_FIELD_SUPPORT",
     description="",
+    requires_ssa=False,
 ):
     """Ordinary field support — always available, never Project-gated.
 
-    ``requires_ssa=False`` is the point of the whole exercise. Intervention
-    support drawn from the programme's named curriculum still requires an
-    applicable SSA; a school visit does not, and blocking one on a missing
-    assessment is how a field officer ends up unable to visit a school.
-    The target intervention is still recorded whenever the planner names one,
-    so SSA-guided support keeps its analytics lineage either way.
+    Standard support is not Project-gated, but it is not uniformly exempt from
+    SSA either, and the line between the two is what the activity is FOR:
+
+      Exempt — the visit that goes to find out, or that has nothing to do with
+      an intervention at all: collecting the SSA itself, data gathering, a
+      donor visit, content gathering, a school invitation, a social visit.
+      Cluster meetings and cluster training are exempt too, because schools
+      frequently complete their SSA during exactly those gatherings.
+
+      Gated — anything delivering or following up an intervention: in-school
+      training, coaching, in-school support, a training follow-up visit, and
+      the ordinary school visit itself, which this catalogue defines as
+      "scheduled against the intervention it is meant to move". Choosing an
+      intervention for a school nobody has assessed is choosing it blind.
+
+    Blocking a field officer from VISITING a school over a missing assessment
+    is the failure this exemption was written to prevent; that is why the
+    finding-out visits stay open. Deciding what a school needs before anyone
+    has looked is the opposite failure, and that is what the gate now catches.
     """
     return _item(
         stable_code,
@@ -541,7 +555,7 @@ def _standard(
         costing_profile=costing_profile,
         school=school,
         cluster=cluster,
-        requires_ssa=False,
+        requires_ssa=requires_ssa,
         support_objective=support_objective,
         # Standard support is planned against a school or cluster, not as a
         # standalone dated programme line at a venue.
@@ -573,6 +587,8 @@ STANDARD_SUPPORT_ITEMS = [
             "Ordinary support visit to one school. Scheduled against the "
             "intervention it is meant to move; no participant quantity."
         ),
+        # Scheduled against an intervention, by its own definition above.
+        requires_ssa=True,
     ),
     _standard(
         "STANDARD_IN_SCHOOL_TRAINING",
@@ -597,6 +613,8 @@ STANDARD_SUPPORT_ITEMS = [
             "Training delivered at one school against a target intervention, "
             "outside the programme's named curriculum titles."
         ),
+        # In-school training delivers an intervention to a named school.
+        requires_ssa=True,
     ),
     _standard(
         "STANDARD_CLUSTER_MEETING",
@@ -648,6 +666,8 @@ STANDARD_SUPPORT_ITEMS = [
         salesforce_record_type="VISIT",
         salesforce_expected_prefix="VS-",
         description="One-to-one coaching at the school. No participant quantity.",
+        # Coaching is intervention delivery, one teacher at a time.
+        requires_ssa=True,
     ),
     _standard(
         "STANDARD_TRAINING_FOLLOW_UP_VISIT",
@@ -660,6 +680,8 @@ STANDARD_SUPPORT_ITEMS = [
         salesforce_record_type="VISIT",
         salesforce_expected_prefix="VS-",
         description="Follow-up on training already delivered at the school.",
+        # Following up an intervention presumes one was chosen for a reason.
+        requires_ssa=True,
     ),
     _standard(
         "STANDARD_SCHOOL_VISIT_SSA_COLLECTION",
@@ -684,6 +706,8 @@ STANDARD_SUPPORT_ITEMS = [
         salesforce_record_type="VISIT",
         salesforce_expected_prefix="VS-",
         description="General in-school support against a target intervention.",
+        # "Against a target intervention" — the same test as the school visit.
+        requires_ssa=True,
     ),
     _standard(
         "STANDARD_DONOR_VISIT",

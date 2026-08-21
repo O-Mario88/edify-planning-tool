@@ -72,6 +72,46 @@ class Activity(SoftDeleteModel):
     source_classification = models.CharField(max_length=32, null=True, blank=True)
     recommendation_reason = models.TextField(blank=True)
     recommendation_source = models.JSONField(default=dict, blank=True)
+
+    # ── Why this activity exists ────────────────────────────────────────────
+    # Provenance was spread across ten nullable fields and three external link
+    # tables, so "why does this activity exist" had no single answer and every
+    # consumer reimplemented a different guess. These two record the ONE reason
+    # that caused it, chosen at creation from what the caller already knew.
+    #
+    # Deliberately not constrained NOT NULL: making it mandatory would refuse
+    # activities the platform currently accepts, and blocking field work is a
+    # decision for the programme, not a schema default. Unset is reported as a
+    # data-quality exception instead of being prevented.
+    class Driver(models.TextChoices):
+        SSA_RECOMMENDATION = "ssa_recommendation", "SSA recommendation"
+        PRIORITY_ALLOCATION = "priority_allocation", "Priority target allocation"
+        CORE_PACKAGE = "core_package", "Core school package slot"
+        BUSINESS_TRANSFORMATION = "business_transformation", "Business Transformation case"
+        SPECIAL_PROJECT = "special_project", "Special Project"
+        EXTRA_ASSIGNMENT = "extra_assignment", "Extra assigned work"
+        COMPLIANCE = "compliance", "Mandatory verification or compliance"
+        LEADERSHIP_EXCEPTION = "leadership_exception", "Approved leadership exception"
+
+    primary_driver_type = models.CharField(
+        max_length=32, choices=Driver.choices, blank=True, default="", db_index=True
+    )
+    #: The id of the record named by primary_driver_type. Untyped on purpose —
+    #: it points into seven different tables, and seven nullable FKs is the
+    #: scatter this replaces.
+    primary_driver_id = models.CharField(max_length=30, blank=True, default="")
+    driver_reason = models.TextField(blank=True, default="")
+
+    #: The recommendation this answers, now that recommendations are records
+    #: rather than a calculation. SET_NULL: retiring a recommendation must not
+    #: delete the work that was done about it.
+    ssa_recommendation = models.ForeignKey(
+        "ssa.SsaRecommendation",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
     follow_up_of_activity = models.ForeignKey(
         "self",
         on_delete=models.PROTECT,

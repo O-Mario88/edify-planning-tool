@@ -42,6 +42,29 @@ from apps.targets.team_targets import (
     team_status_display,
 )
 
+
+def _confirmed_ssa(school, *, fy=None, score=6.0):
+    """A confirmed assessment, so intervention work can be planned at all."""
+    from django.utils import timezone
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.fy import get_operational_fy
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    record = SsaRecord.objects.create(
+        school=school,
+        fy=fy or get_operational_fy(),
+        date_of_ssa=timezone.now(),
+        average_score=score,
+        verification_status="confirmed",
+    )
+    for intervention, _ in SsaIntervention.choices:
+        SsaScore.objects.create(
+            ssa_record=record, intervention=intervention, score=score
+        )
+    return record
+
+
 User = get_user_model()
 FY = "2026"
 TODAY = date(2026, 7, 15)  # July → month 10, Q4; pace = 11/23 wd ≈ 48%
@@ -96,6 +119,11 @@ class TeamTargetsPageTest(TestCase):
             district=self.district,
             current_fy_ssa_status="done",
         )
+
+        # An ordinary school visit is "scheduled against the intervention it is
+        # meant to move", so the school must be assessed before that work can
+        # be planned. The fixture starts where real work starts.
+        _confirmed_ssa(self.school)
         StaffSchoolAssignment.objects.create(
             staff=self.cceo1_sp, school_id=self.school.id
         )
@@ -859,6 +887,11 @@ class TeamTargetsTodoTest(TestCase):
             district=self.district,
             current_fy_ssa_status="done",
         )
+
+        # An ordinary school visit is "scheduled against the intervention it is
+        # meant to move", so the school must be assessed before that work can
+        # be planned. The fixture starts where real work starts.
+        _confirmed_ssa(school)
         for i in (1, 2, 3, 6, 7):
             Activity.objects.create(
                 school=school,

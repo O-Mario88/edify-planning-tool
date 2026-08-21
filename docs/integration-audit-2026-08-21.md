@@ -154,19 +154,67 @@ zero `MilestoneProgressCredit` rows.
 
 ---
 
+## Closed since the first pass
+
+**SSA recommendations are records now** (`apps/ssa/recommendation_models.py`,
+`recommendation_service.py`). `recommendation_engine` is unchanged — it always
+decided well. What it lacked was a row. `SsaRecommendation` gives each need a
+state, an owner, an expiry, an explanation and a `condition_key`, with a
+partial unique constraint over the live states so only one recommendation per
+need can exist. Generation converges rather than accumulating: a second run
+over 60 schools created 0 and refreshed 138. Deferring or rejecting a measured
+weakness requires a reason, enforced by a database check constraint. A fresher
+assessment supersedes the picture it replaced, and a recurrence links back
+through `supersedes` instead of reopening history.
+
+Generation rides the existing `bt.ssa.confirmed` confirmation as its own
+durable event (`ssa.recommendations.generate`), so a confirmation landing
+during an outage is retried rather than lost, and an import of any size costs
+one enqueue rather than a pass per row. 16 tests cover the lifecycle.
+
+**Activities record why they exist.** `primary_driver_type` /
+`primary_driver_id` / `driver_reason` replace the guesswork, resolved at
+creation most-specific-first: an SSA recommendation outranks a priority
+allocation, because a visit raised from a school need is driven by that need
+even though it also sits under an allocation. `Activity.ssa_recommendation` is
+a real foreign key now that there is a recommendation to point at.
+
+The fields are deliberately **not** NOT NULL. Making a driver mandatory would
+refuse activities the platform currently accepts, and blocking field work is a
+programme decision, not a schema default. Unset is a data-quality exception.
+
+**SSA gating now follows what the activity is FOR.** Standard support was
+uniformly exempt, so in-school training could be scheduled for a school nobody
+had assessed — the intervention chosen blind. The split is now:
+
+| Open — goes to find out, or is not an intervention | Gated — delivers or follows up an intervention |
+|---|---|
+| School Visit + SSA Collection | School Visit |
+| Data Gathering (ASA/SSA) | In-School Training |
+| Content Gathering Visit | In-School Coaching Visit |
+| Donor Visit | In-School Support |
+| School Invitation, Social Visit | Training Follow-up Visit |
+| Cluster Meeting, Cluster Training | |
+
+Cluster gatherings stay open because schools frequently complete their SSA at
+exactly those events. The catalogue's own description of the ordinary school
+visit — "scheduled against the intervention it is meant to move" — is what
+places it on the gated side. A test asserts every standard item sits on one
+side or the other, so a new one cannot arrive undecided.
+
 ## What remains open
 
-Ranked by consequence, all requiring an owner decision rather than a patch:
-
-1. A persisted SSA recommendation entity with status, owner, expiry and
-   supersession (§11.2/§11.3) — the largest single gap.
-2. `primary_driver_type` / `primary_driver_id` on `Activity`, plus a
-   constraint requiring one (§7).
-3. Moving the remaining 24 workflow events onto the durable outbox (§33).
-4. Defining "current" for `requires_current_ssa`, then enforcing it.
-5. A canonical school-priority engine — three surfaces currently rank
-   differently, and one (`command_center`) presents alphabetical order as
-   priority with a hardcoded blank "weakest" column.
-6. Seeding frequency/cooldown eligibility rules: `validate_frequency` returns
-   early when a catalogue item has no rule, and none of the 28 seeded items
-   has one, so repeat-recommendation limits are unenforced out of the box.
+1. Moving the remaining workflow events onto the durable outbox (§33). Two
+   more are on it now; the finance, allocation and achievement families are
+   not.
+2. A canonical school-priority engine — three surfaces still rank differently,
+   and `command_center` presents alphabetical order as priority with a
+   hardcoded blank "weakest" column.
+3. Defining "current" for `requires_current_ssa`. The gate now applies to the
+   right activities, but still accepts any confirmed assessment regardless of
+   age.
+4. Seeding frequency/cooldown eligibility rules: `validate_frequency` returns
+   early when a catalogue item has no rule, and none of the seeded items has
+   one, so repeat limits are unenforced out of the box.
+5. Making `primary_driver` mandatory, once the creation paths that cannot yet
+   supply one have been given a way to.

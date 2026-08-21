@@ -31,6 +31,29 @@ from apps.fund_requests.models import (
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
+
+def _confirmed_ssa(school, *, fy=None, score=6.0):
+    """A confirmed assessment, so intervention work can be planned at all."""
+    from django.utils import timezone
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.fy import get_operational_fy
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    record = SsaRecord.objects.create(
+        school=school,
+        fy=fy or get_operational_fy(),
+        date_of_ssa=timezone.now(),
+        average_score=score,
+        verification_status="confirmed",
+    )
+    for intervention, _ in SsaIntervention.choices:
+        SsaScore.objects.create(
+            ssa_record=record, intervention=intervention, score=score
+        )
+    return record
+
+
 TRANSPORT = 30_000
 LUNCH = 15_000
 DAY_POOL = TRANSPORT + LUNCH
@@ -69,6 +92,11 @@ class PlanningPopulatesTheBudgetTest(TestCase):
             district=cls.district,
             school_type="client",
         )
+
+        # An ordinary school visit is "scheduled against the intervention it is
+        # meant to move", so the school must be assessed before that work can
+        # be planned. The fixture starts where real work starts.
+        _confirmed_ssa(cls.school)
         cls.user = User.objects.create_user(
             email="e2e-budget-cceo@edify.org",
             name="E2E Budget CCEO",
@@ -198,6 +226,11 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
             district=cls.district,
             school_type="client",
         )
+
+        # An ordinary school visit is "scheduled against the intervention it is
+        # meant to move", so the school must be assessed before that work can
+        # be planned. The fixture starts where real work starts.
+        _confirmed_ssa(cls.school)
 
         def _person(email, name, role):
             user = User.objects.create_user(

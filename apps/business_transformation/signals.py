@@ -22,6 +22,14 @@ def _ssa_confirmed_event(record_id: str, verified_at=None) -> tuple[dict, str]:
 def enqueue_ssa_confirmed(record_id: str, verified_at=None) -> None:
     payload, key = _ssa_confirmed_event(record_id, verified_at)
     enqueue("bt.ssa.confirmed", payload, idempotency_key=key)
+    # A confirmed assessment is also what SSA recommendations are derived
+    # from. Two independent projections off one confirmation, each with its
+    # own idempotency key so a retry of one never re-runs the other.
+    enqueue(
+        "ssa.recommendations.generate",
+        payload,
+        idempotency_key=key.replace("bt.ssa.confirmed:", "ssa.recommendations:"),
+    )
 
 
 def enqueue_ssa_confirmed_batch(records) -> None:
@@ -33,9 +41,16 @@ def enqueue_ssa_confirmed_batch(records) -> None:
     """
     from apps.outbox.services import enqueue_many
 
+    events = [
+        _ssa_confirmed_event(record.id, record.verified_at) for record in records
+    ]
+    enqueue_many("bt.ssa.confirmed", events)
     enqueue_many(
-        "bt.ssa.confirmed",
-        [_ssa_confirmed_event(record.id, record.verified_at) for record in records],
+        "ssa.recommendations.generate",
+        [
+            (payload, key.replace("bt.ssa.confirmed:", "ssa.recommendations:"))
+            for payload, key in events
+        ],
     )
 
 

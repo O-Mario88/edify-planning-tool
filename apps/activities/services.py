@@ -1237,6 +1237,46 @@ def _validated_participants_per_school(raw) -> int:
     return value
 
 
+def resolve_primary_driver(data: dict) -> tuple[str, str, str]:
+    """The one reason this activity exists, from what the caller already knows.
+
+    Ordered most-specific first. A school visit raised from a recommendation
+    IS driven by that recommendation even though it also sits under a priority
+    allocation; recording the allocation instead would lose the school need
+    that actually caused it.
+
+    Returns ("", "", "") when nothing identifies a driver — reported as a
+    data-quality exception rather than guessed at.
+    """
+    from apps.activities.models import Activity
+
+    driver = Activity.Driver
+    candidates = (
+        (driver.SSA_RECOMMENDATION, data.get("ssaRecommendationId")),
+        (driver.PRIORITY_ALLOCATION, data.get("priorityAllocationId")),
+        (driver.CORE_PACKAGE, data.get("corePackageSlotId") or data.get("coreSlotId")),
+        (
+            driver.BUSINESS_TRANSFORMATION,
+            data.get("businessTransformationCaseId") or data.get("btCaseId"),
+        ),
+        (driver.EXTRA_ASSIGNMENT, data.get("extraAssignmentId")),
+        (driver.SPECIAL_PROJECT, data.get("projectId")),
+    )
+    for kind, value in candidates:
+        if value:
+            return str(kind), str(value), ""
+
+    reason = (
+        data.get("driverReason")
+        or data.get("supportRationale")
+        or data.get("support_rationale")
+        or ""
+    ).strip()
+    if reason:
+        return str(driver.LEADERSHIP_EXCEPTION), "", reason
+    return "", "", ""
+
+
 # ── Create ───────────────────────────────────────────────────────────────────
 def create(
     data: dict,
@@ -2041,11 +2081,16 @@ def create(
                 .first()
             )
 
+        driver_type, driver_id, driver_reason = resolve_primary_driver(data)
         activity = Activity.objects.create(
             activity_type=activity_type,
             school=school,
             cluster_id=cluster_id,
             project_id=data.get("projectId"),
+            primary_driver_type=driver_type,
+            primary_driver_id=driver_id,
+            driver_reason=driver_reason,
+            ssa_recommendation_id=data.get("ssaRecommendationId") or None,
             end_date=end_date,
             planning_source=planning_source,
             activity_context_type=context_type,

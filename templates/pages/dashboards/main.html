@@ -151,8 +151,8 @@ and only this page and its own partials use it.
           <div class="admin-table-wrap">
             <table class="admin-table admin-table--schools">
               <caption class="sr-only">Schools requiring priority action</caption>
-              <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
-              <tbody>{% for school in priority_schools %}<tr><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Upload SSA' %}/uploads{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
+              <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
+              <tbody>{% for school in priority_schools %}<tr><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="5"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
             </table>
           </div>
           <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>

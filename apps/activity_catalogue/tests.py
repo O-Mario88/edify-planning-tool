@@ -382,6 +382,28 @@ class SsaLedRecommendationTests(TestCase):
         )
 
 
+    def test_an_unassessed_school_can_only_be_offered_the_finding_out_work(self):
+        """The recommender must not propose intervention delivery blind.
+
+        `recommend_activities` already refuses to name intervention work for a
+        school with no applicable SSA — this pins that the ONE thing it does
+        offer is the activity that resolves the gap.
+        """
+        result = recommend_activities(school=self.school, limit=5)
+        self.assertFalse(result["hasApplicableSsa"])
+        offered = {
+            row["stableCode"]
+            for row in [*result["primary"], *result["otherEligible"]]
+        }
+        self.assertEqual(offered, {"ASA_SSA_DATA_GATHERING"})
+        for gated in (
+            "STANDARD_IN_SCHOOL_TRAINING",
+            "STANDARD_IN_SCHOOL_COACHING_VISIT",
+            "STANDARD_TRAINING_FOLLOW_UP_VISIT",
+        ):
+            self.assertNotIn(gated, offered)
+
+
 class CatalogueImportAndBackfillTests(TestCase):
     def test_csv_preview_commit_and_stable_code_upsert(self):
         fields = [
@@ -583,3 +605,91 @@ class PartnerCatalogueWorkflowTests(TestCase):
                 self.user,
             )
         self.assertEqual(Activity.objects.count(), 1)
+
+
+class SsaGatingPolicyTests(TestCase):
+    """Which standard support may be planned for an unassessed school.
+
+    The rule, as the programme states it: a visit that goes to FIND OUT is
+    always allowed — collecting the SSA itself, data gathering, a donor visit,
+    content gathering. Cluster meetings and cluster training are allowed too,
+    because schools frequently complete their SSA at exactly those gatherings.
+
+    Anything that DELIVERS or FOLLOWS UP an intervention is not: in-school
+    training, coaching, in-school support, a training follow-up visit, and the
+    ordinary school visit, which the catalogue itself defines as "scheduled
+    against the intervention it is meant to move".
+
+    Standard support used to be uniformly exempt, which meant an officer could
+    schedule in-school training for a school nobody had ever assessed — the
+    intervention chosen blind.
+    """
+
+    #: Delivers or follows up an intervention → the school needs an SSA.
+    INTERVENTION_LINKED = {
+        "STANDARD_SCHOOL_VISIT",
+        "STANDARD_IN_SCHOOL_TRAINING",
+        "STANDARD_IN_SCHOOL_COACHING_VISIT",
+        "STANDARD_IN_SCHOOL_SUPPORT",
+        "STANDARD_TRAINING_FOLLOW_UP_VISIT",
+    }
+
+    #: Goes to find out, or is not an intervention at all.
+    FINDS_OUT_OR_UNRELATED = {
+        "STANDARD_SCHOOL_VISIT_SSA_COLLECTION",
+        "STANDARD_STORY_GATHERING_VISIT",
+        "STANDARD_DONOR_VISIT",
+        "STANDARD_SCHOOL_INVITATION",
+        "STANDARD_SOCIAL_VISIT",
+        "STANDARD_CLUSTER_MEETING",
+        "STANDARD_CLUSTER_TRAINING",
+    }
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.activity_catalogue.seeding import seed_activity_catalogue
+
+        seed_activity_catalogue(actor_id="test")
+
+    def _item(self, code):
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        return ActivityCatalogueItem.objects.get(stable_code=code)
+
+    def test_intervention_work_needs_an_assessed_school(self):
+        for code in sorted(self.INTERVENTION_LINKED):
+            with self.subTest(code=code):
+                self.assertTrue(
+                    self._item(code).requires_current_ssa,
+                    f"{code} delivers or follows up an intervention and must "
+                    f"not be plannable for an unassessed school",
+                )
+
+    def test_finding_out_is_never_blocked_on_an_assessment(self):
+        for code in sorted(self.FINDS_OUT_OR_UNRELATED):
+            with self.subTest(code=code):
+                self.assertFalse(
+                    self._item(code).requires_current_ssa,
+                    f"{code} is how a school gets assessed in the first place, "
+                    f"or has nothing to do with an intervention — gating it "
+                    f"would lock the school out of ever being assessed",
+                )
+
+    def test_data_gathering_stays_open(self):
+        self.assertFalse(self._item("ASA_SSA_DATA_GATHERING").requires_current_ssa)
+
+    def test_every_standard_item_is_classified_by_this_policy(self):
+        """A new standard item must be placed on one side or the other."""
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+
+        live = set(
+            ActivityCatalogueItem.objects.filter(standard_support=True).values_list(
+                "stable_code", flat=True
+            )
+        )
+        unclassified = live - self.INTERVENTION_LINKED - self.FINDS_OUT_OR_UNRELATED
+        self.assertEqual(
+            unclassified,
+            set(),
+            "new standard support item(s) with no SSA decision recorded",
+        )
