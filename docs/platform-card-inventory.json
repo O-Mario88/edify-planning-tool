@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 608,
+  "titled_cards": 609,
   "templates": 218,
-  "distinct_titles": 580,
+  "distinct_titles": 581,
   "with_card_key": 13,
-  "untitled_surfaces": 1014,
+  "untitled_surfaces": 1015,
   "untitled_chrome": 237,
   "untitled_nested": 389,
-  "untitled_headless": 388,
+  "untitled_headless": 389,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 1
@@ -581,7 +581,7 @@
    "title": "Add Partner Organisation",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface max-w-xl w-full p-6 shadow-lg relative border border-slate-100 space-y-5",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface max-w-xl w-full p-6 shadow-lg relative border border-slate-100 space-y-5",
    "branch_path": [
     [
      14,
@@ -609,7 +609,7 @@
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5",
    "branch_path": []
   },
   {
@@ -1461,7 +1461,7 @@
    "title": "New Strategy Note",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
    "branch_path": []
   },
   {
@@ -2431,7 +2431,7 @@
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": [
     [
-     20,
+     21,
      0
     ]
    ]
@@ -2709,7 +2709,7 @@
    "title": "Add Calendar Block",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "w-screen max-w-md edify-surface border-l border-slate-100 shadow-2xl flex flex-col p-6 space-y-6",
+   "classes": "edify-form-dialog__surface w-screen max-w-md edify-surface border-l border-slate-100 shadow-2xl flex flex-col p-6 space-y-6",
    "branch_path": []
   },
   {
@@ -3425,7 +3425,7 @@
    "title": "Add New School",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4",
    "branch_path": [
     [
      14,
@@ -3794,7 +3794,7 @@
    "title": "How roll-up works",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
    "branch_path": []
   },
   {
@@ -3803,7 +3803,7 @@
    "title": "Submit MSCS",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
+   "classes": "edify-form-dialog__surface edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3",
    "branch_path": []
   },
   {
@@ -5045,7 +5045,7 @@
    "title": "Disburse \u2014",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[500px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[500px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
    "branch_path": []
   },
   {
@@ -5054,7 +5054,7 @@
    "title": "Hold \u2014",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
    "branch_path": []
   },
   {
@@ -5063,7 +5063,7 @@
    "title": "Return \u2014",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
    "branch_path": []
   },
   {
@@ -5232,7 +5232,7 @@
    "title": "Plan Sources \u2014",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[720px] edify-surface shadow-2xl border-l border-slate-200 overflow-hidden flex flex-col",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[720px] edify-surface shadow-2xl border-l border-slate-200 overflow-hidden flex flex-col",
    "branch_path": []
   },
   {
@@ -5241,7 +5241,7 @@
    "title": "Return General Budget",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
    "branch_path": []
   },
   {
@@ -5350,7 +5350,7 @@
    "title": "Return 's Fund Plan",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
+   "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
    "branch_path": []
   },
   {
@@ -5549,7 +5549,7 @@
    "title": "Reassign Coverage Assignee",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
+   "classes": "edify-form-dialog__surface rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
    "branch_path": [
     [
      13,
@@ -5563,7 +5563,7 @@
    "title": "Return Leave for Clarification",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
+   "classes": "edify-form-dialog__surface rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
    "branch_path": []
   },
   {
@@ -5572,7 +5572,7 @@
    "title": "Reject Leave Request",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
+   "classes": "edify-form-dialog__surface rounded-surface border max-w-sm w-full p-6 space-y-4 shadow-xl edify-surface edify-border",
    "branch_path": []
   },
   {
@@ -5869,7 +5869,7 @@
    "title": "Onboard New Partner",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in",
+   "classes": "edify-popup-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in",
    "branch_path": []
   },
   {
@@ -5892,22 +5892,22 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 116,
+   "line": 131,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-risk-card",
    "branch_path": [
     [
-     9,
+     8,
      0
     ],
     [
-     11,
+     9,
      1
     ],
     [
-     12,
+     10,
      0
     ]
    ]
@@ -6301,26 +6301,49 @@
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 55,
+   "line": 56,
    "title": "Cluster selected automatically",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-200 p-4",
    "branch_path": [
     [
-     2,
+     1,
+     0
+    ],
+    [
+     3,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/schools/add_to_cluster_drawer.html",
-   "line": 188,
+   "line": 189,
    "title": "Responsible Field Staff",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-200 p-4",
-   "branch_path": []
+   "branch_path": [
+    [
+     1,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/schools/add_to_cluster_drawer.html",
+   "line": 224,
+   "title": "Complete the school geography first",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-amber-200 bg-amber-50/60 p-4",
+   "branch_path": [
+    [
+     1,
+     1
+    ]
+   ]
   },
   {
    "template": "templates/partials/schools/assign_to_project_drawer.html",

@@ -143,14 +143,21 @@ def _cost_preview_participants(request, activity_type):
             return fallback
         per_school = int(raw_per_school)
 
+    # The ticked schools are the multiplier, for meetings as well as
+    # trainings. A meeting used to be priced against live membership on the
+    # assumption that it always invites everyone, which stopped being true the
+    # moment the planner could untick a school.
+    ticked = [s for s in request.GET.getlist("invited_school_ids") if s.strip()]
+    if ticked:
+        return per_school * len(ticked)
+
     if activity_type != "training":
-        # A meeting invites the whole cluster, so the multiplier is live
-        # membership rather than anything the form carries.
         from apps.clusters.services import active_school_count
 
         schools = active_school_count(request.GET.get("cluster_id", "").strip())
         return per_school * schools if schools else fallback
 
+    # Older callers still send a count rather than a list.
     raw_schools_invited = request.GET.get("schools_invited", "").strip()
     if not raw_schools_invited.isdigit():
         return fallback
@@ -404,9 +411,14 @@ def cluster_schedule_activity_view(request):
         per_school = request.POST.get("participants_per_school", "").strip()
         if per_school:
             data["participantsPerSchool"] = per_school
-        schools_invited = request.POST.get("schools_invited", "").strip()
-        if schools_invited:
-            data["schoolsInvited"] = schools_invited
+        # Ticked by name. The count the budget multiplies by is derived from
+        # the list rather than typed beside it, so the two cannot disagree.
+        invited_school_ids = [
+            s.strip() for s in request.POST.getlist("invited_school_ids") if s.strip()
+        ]
+        if invited_school_ids:
+            data["invitedSchoolIds"] = invited_school_ids
+            data["schoolsInvited"] = str(len(invited_school_ids))
         try:
             ClusterActionPlannerService.schedule_activity(data, request.user)
             messages.success(
@@ -445,7 +457,7 @@ def cluster_schedule_activity_view(request):
                 interventions = [
                     {"value": key.value, "label": key.label} for key in SsaIntervention
                 ]
-                from apps.clusters.services import active_school_count
+                from apps.clusters.services import active_school_count, active_schools
                 from apps.activity_catalogue.availability import (
                     CLUSTER,
                     training_activity_options,
@@ -454,6 +466,17 @@ def cluster_schedule_activity_view(request):
                 cluster_school_count = (
                     active_school_count(selected_cluster.id) if selected_cluster else 0
                 )
+                # A failed submission must come back with the same schools
+                # ticked. Losing them would silently re-invite the whole
+                # cluster and re-price the session on the way through.
+                retry_members = (
+                    list(active_schools(selected_cluster.id))
+                    if selected_cluster
+                    else []
+                )
+                retry_invited = set(invited_school_ids) or {
+                    s.id for s in retry_members
+                }
                 training_options = (
                     training_activity_options(planning_context=CLUSTER)
                     if activity_type == "training"
@@ -490,7 +513,16 @@ def cluster_schedule_activity_view(request):
                     or 0,
                     "other_per_school": request.POST.get("other_per_school", "").strip()
                     or 0,
-                    "schools_invited": schools_invited or cluster_school_count,
+                    "schools_invited": len(retry_invited),
+                    "member_schools": [
+                        {
+                            "id": s.id,
+                            "name": s.name,
+                            "school_id": s.school_id,
+                            "invited": s.id in retry_invited,
+                        }
+                        for s in retry_members
+                    ],
                     "cluster_school_count": cluster_school_count,
                     "training_activity_options": training_options,
                     "training_activity_options_json": json.dumps(training_options),
@@ -771,11 +803,26 @@ def planner_drawer_view(request):
         {"value": key.value, "label": key.label} for key in SsaIntervention
     ]
 
-    from apps.clusters.services import active_school_count
+    from apps.clusters.services import active_school_count, active_schools
 
     cluster_school_count = (
         active_school_count(selected_cluster.id) if selected_cluster else 0
     )
+    # The planner ticks schools by name rather than typing how many. The count
+    # that multiplies into the budget is then derived from the ticks, so the
+    # figure and the list can never disagree — and the completion form knows
+    # who to expect instead of starting from a blank register.
+    member_schools = list(active_schools(selected_cluster.id)) if selected_cluster else []
+    raw_invited = [
+        s.strip() for s in request.GET.getlist("invited_school_ids") if s.strip()
+    ]
+    member_ids = {s.id for s in member_schools}
+    invited_ids = [s for s in raw_invited if s in member_ids]
+    # First open, and any re-render that has not been through the list yet,
+    # invites the whole cluster — which is what the old number defaulted to.
+    if not raw_invited:
+        invited_ids = [s.id for s in member_schools]
+    invited_id_set = set(invited_ids)
     # Who the planner is inviting from each school. The drawer re-renders on
     # every cluster / activity-type change, so these come back from the form
     # rather than resetting to the defaults each time.
@@ -792,22 +839,15 @@ def planner_drawer_view(request):
         )
     }
     participants_per_school = sum(per_school_categories.values()) or 2
-    raw_schools_invited = request.GET.get("schools_invited", "").strip()
-    schools_invited = (
-        int(raw_schools_invited)
-        if raw_schools_invited.isdigit() and int(raw_schools_invited) > 0
-        else cluster_school_count
-    )
-    schools_invited = min(schools_invited, cluster_school_count)
+    schools_invited = len(invited_ids)
 
     raw_participants = request.GET.get("expected_participants", "").strip()
-    if activity_type == "training":
+    if cluster_school_count:
+        # Meetings pick their schools the same way trainings do now. A meeting
+        # used to invite the whole cluster by definition, but schools miss
+        # meetings for the same reasons they miss trainings, and the register
+        # has to be able to say which ones were asked.
         participants = participants_per_school * schools_invited
-    elif cluster_school_count:
-        # A meeting invites the whole cluster, so its total is per-school ×
-        # live membership on the same basis as a training's — not a number
-        # typed into a box that no longer exists.
-        participants = participants_per_school * cluster_school_count
     elif raw_participants.isdigit():
         participants = int(raw_participants)
     else:
@@ -871,6 +911,15 @@ def planner_drawer_view(request):
         "selected_focus_intervention": selected_focus_intervention,
         **per_school_categories,
         "schools_invited": schools_invited,
+        "member_schools": [
+            {
+                "id": s.id,
+                "name": s.name,
+                "school_id": s.school_id,
+                "invited": s.id in invited_id_set,
+            }
+            for s in member_schools
+        ],
         # Read-only, from the canonical counter. It is the ceiling on schools
         # invited and the default when the planner invites everyone; the
         # backend recounts at submission so a stale drawer cannot price work.

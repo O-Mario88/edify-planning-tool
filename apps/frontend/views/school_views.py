@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 from urllib.parse import urlencode
 
+from apps.activities.salesforce import normalize_salesforce_id
 from apps.schools.models import School
 from apps.geography.models import Region, District, Parish, SubCounty
 from apps.core.enums import SchoolType, PlanningReadiness
@@ -54,6 +55,18 @@ from apps.frontend.view_models import SchoolDirectoryViewModel
 
 def _may_upload_schools(request) -> bool:
     return has_permission(request.user, Permission.SCHOOL_UPLOAD.value)
+
+
+def _may_create_single_school(request) -> bool:
+    """Adding one school by hand is not the same as importing a spreadsheet.
+
+    A field officer who meets an unlisted school at a cluster training has to
+    be able to record it. The control on that is the Salesforce id the form
+    demands, not the role — see Permission.SCHOOL_CREATE_SINGLE.
+    """
+    return has_permission(
+        request.user, Permission.SCHOOL_CREATE_SINGLE.value
+    ) or _may_upload_schools(request)
 
 
 def _may_upload_ssa(request) -> bool:
@@ -102,11 +115,33 @@ def _create_manual_school(request) -> School:
     if owner is None:
         raise BadRequest("Select a valid CCEO or Program Lead as Staff Name.")
 
+    # The Salesforce id is what makes this safe to open beyond IA: it proves
+    # the school already exists in Salesforce, and because the column is
+    # unique it is also the duplicate check — two people adding the same
+    # school from the field collide here instead of minting two records.
+    salesforce_account_id = normalize_salesforce_id(
+        request.POST.get("salesforce_account_id", "")
+    )
+    if not salesforce_account_id:
+        raise BadRequest(
+            "Enter the school's Salesforce ID. Add the school in Salesforce "
+            "first, then record it here with that ID."
+        )
+    existing = School.objects.filter(
+        salesforce_account_id=salesforce_account_id, deleted_at__isnull=True
+    ).first()
+    if existing is not None:
+        raise BadRequest(
+            f"That Salesforce ID already belongs to {existing.name} "
+            f"({existing.school_id}). Use that school rather than adding it twice."
+        )
+
     with transaction.atomic():
         school = create_school(
             {
                 "schoolId": request.POST.get("school_id", ""),
                 "name": request.POST.get("name", ""),
+                "salesforceAccountId": salesforce_account_id,
                 "regionId": district.region_id,
                 "districtId": district.id,
                 "subCountyId": sub_county.id if sub_county else None,
@@ -1554,10 +1589,10 @@ def bulk_match_staff_view(request):
 def add_school_view(request):
     if request.method != "POST":
         return redirect("/schools")
-    if not _may_upload_schools(request):
+    if not _may_create_single_school(request):
         return render_access_denied(
             request,
-            "Only Impact Assessment and administrators may add schools.",
+            "You do not have permission to add a school.",
         )
 
     try:
@@ -1978,10 +2013,10 @@ def school_edit_drawer_view(request, school_id):
 
 @require_page_permission("school_directory")
 def school_onboard_drawer_view(request):
-    if not _may_upload_schools(request):
+    if not _may_create_single_school(request):
         return render_access_denied(
             request,
-            "Only Impact Assessment and administrators may add schools.",
+            "You do not have permission to add a school.",
         )
 
     districts = District.objects.select_related("region").order_by("name")

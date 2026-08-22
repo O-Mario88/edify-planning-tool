@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from apps.activities.cluster_attendance import training_counts
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from typing import TYPE_CHECKING
 from apps.core.permissions import has_permission
@@ -26,7 +27,6 @@ class SchoolDirectoryViewModel:
         from apps.ssa.models import SsaRecord
         from apps.activities.models import Activity
         from apps.ssa.presentation import build_ssa_score_summary
-        from apps.targets.my_targets import IA_VERIFIED_STATUSES
 
         school_ids = list(school_ids)
         if not school_ids:
@@ -68,41 +68,12 @@ class SchoolDirectoryViewModel:
             .values_list("school_id", "c")
         )
 
-        trainings_by_school: dict[str, int] = dict(
-            Activity.objects.filter(
-                school_id__in=school_ids,
-                activity_type__in=["training", "core_training"],
-                status__in=COMPLETED_WORK_STATUSES,
-                deleted_at__isnull=True,
-            )
-            .values("school_id")
-            .annotate(c=Count("id"))
-            .values_list("school_id", "c")
-        )
-
-        # Cluster-wide trainings/meetings record attendance via a JSON array
-        # of school ids rather than a school FK, so they can't be grouped
-        # with a values().annotate() the way the two querysets above are.
-        # Fetch the (bounded) set of qualifying activities once and tally
-        # attendance in Python instead of re-querying per school.
-        wanted = set(school_ids)
-        cluster_attended = Activity.objects.filter(
-            # Trainings only — "a meeting is not a training"
-            # (apps/core/activity_types.py); counting meetings here let a
-            # school with 4 meetings and 0 trainings read as trained.
-            # And credit requires verification: "completed" is a status no
-            # production transition writes (only the demo seeder), so this
-            # gate credited unverified seed rows and skipped real verified
-            # work that ends at ia_verified/closed.
-            activity_type__in=["cluster_training"],
-            status__in=IA_VERIFIED_STATUSES,
-            deleted_at__isnull=True,
-            attended_school_ids__overlap=list(wanted),
-        ).values_list("attended_school_ids", flat=True)
-        for attended in cluster_attended:
-            for sid in attended or []:
-                if sid in wanted:
-                    trainings_by_school[sid] = trainings_by_school.get(sid, 0) + 1
+        # One definition, shared with every trained/not-trained count on the
+        # platform. This surface had the only correct answer — it was already
+        # adding cluster attendance to the school's own trainings — while four
+        # others filtered school_id alone and missed cluster work entirely.
+        # Now they all ask the same function.
+        trainings_by_school = training_counts(school_ids)
 
         return {
             sid: {

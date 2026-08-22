@@ -29,6 +29,7 @@ from apps.core.permissions import RolePermissionService
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
+from apps.activities.cluster_attendance import trained_school_ids
 from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     SSA_INTERVENTIONS,
@@ -975,11 +976,9 @@ class ProgramLeadDashboardService:
             .exclude(school_id__isnull=True)
             .values_list("school_id", flat=True)
         )
-        trained = set(
-            completed.filter(activity_type__in=TRAINING_TYPES)
-            .exclude(school_id__isnull=True)
-            .values_list("school_id", flat=True)
-        )
+        # Both routes, one answer. A cluster session has no school FK, so
+        # filtering on school_id alone missed every school it trained.
+        trained = trained_school_ids(pls.school_ref, fy=fy)
         all_ids = set(
             School.objects.filter(id__in=pls.school_ref).values_list("id", flat=True)
         )
@@ -1403,11 +1402,7 @@ class ProgramLeadDashboardService:
                 .exclude(school_id__isnull=True)
                 .values_list("school_id", flat=True)
             )
-            trained = set(
-                completed.filter(activity_type__in=TRAINING_TYPES)
-                .exclude(school_id__isnull=True)
-                .values_list("school_id", flat=True)
-            )
+            trained = trained_school_ids(schools.values("id"), fy=fy)
             all_ids = set(schools.values_list("id", flat=True))
             if drill == "no_visit":
                 ids, title = all_ids - visited, "Schools with No Visit"

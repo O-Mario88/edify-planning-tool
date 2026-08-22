@@ -478,8 +478,12 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn('name="teachers_per_school"', html)
         self.assertIn('name="leaders_per_school"', html)
         self.assertIn('name="other_per_school"', html)
-        self.assertIn('name="schools_invited"', html)
-        self.assertIn('max="3"', html)
+        # Schools are ticked by name now, not counted into a box: the number
+        # that multiplies into the budget is derived from the ticks, and the
+        # completion register opens already filled in.
+        self.assertNotIn('name="schools_invited"', html)
+        self.assertEqual(html.count('name="invited_school_ids"'), 3)
+        self.assertIn("toggleAll()", html)
         self.assertIn('name="focus_intervention"', html)
         self.assertIn('name="catalogue_item_id"', html)
         self.assertNotIn('name="project_id"', html)
@@ -503,16 +507,17 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn('name="catalogue_item_id"', html)
         self.assertIn("Teaching as a Mission (TAM) I", html)
         self.assertIn("Literacy/Numeracy Project", html)
-        self.assertIn('name="schools_invited"', html)
+        self.assertNotIn('name="schools_invited"', html)
+        self.assertIn('name="invited_school_ids"', html)
         self.assertIn('name="teachers_per_school"', html)
         self.assertIn(
-            "Lower it when some do not qualify or did not confirm",
+            "Untick the ones that do not qualify or did not confirm",
             html,
         )
         attendance_row = html.split("data-cluster-training-attendance-row", 1)[1].split(
             'aria-live="polite"', 1
         )[0]
-        self.assertIn('name="schools_invited"', attendance_row)
+        self.assertIn('name="invited_school_ids"', attendance_row)
         self.assertIn('name="scheduled_date"', attendance_row)
         self.assertNotIn("Purpose for Meeting / Training", html)
         self.assertNotIn("Session Goal", html)
@@ -533,10 +538,14 @@ class ClusterDrawerDeliveryTest(TestCase):
 
     def test_cluster_card_cost_preview_refreshes_for_numeric_input(self):
         html = self._cluster_card_drawer()
-        # Teachers, school leaders, other — and the schools invited they are
-        # multiplied by. Every input that moves the total re-prices it.
+        # Every input that moves the total re-prices it. The three typed
+        # figures debounce, because they are typed; the school ticks fire on
+        # change, because a tick is already a finished decision.
         self.assertEqual(
-            html.count('hx-trigger="input changed delay:250ms, change"'), 4
+            html.count('hx-trigger="input changed delay:250ms, change"'), 3
+        )
+        self.assertEqual(
+            html.count('hx-trigger="change" hx-include="#action-planner-form"'), 3
         )
 
     def test_cost_preview_derives_training_total_from_source_fields(self):

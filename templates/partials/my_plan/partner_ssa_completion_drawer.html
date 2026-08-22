@@ -41,7 +41,7 @@
                enterkeyhint="next"
                aria-describedby="partner-ssa-score-hint"
                required
-               class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+               class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] edify-surface px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
       </div>
       {% endfor %}
     </div>
@@ -63,7 +63,7 @@
            aria-describedby="partner-ssa-enrollment-hint"
            value="{{ a.school.enrollment|default_if_none:'' }}"
            required
-           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] edify-surface px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div>
@@ -79,7 +79,7 @@
            placeholder="SVE-…"
            value="{{ a.salesforce_activity_id|default_if_none:'' }}"
            required
-           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] font-semibold uppercase tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] edify-surface px-3 text-[16px] font-semibold uppercase tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div>
@@ -87,11 +87,11 @@
     <textarea id="partner-ssa-verification-note"
               name="verification_note"
               rows="2"
-              class="mt-1 w-full resize-y rounded-control border border-[var(--border-card)] bg-white px-3 py-2 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+              class="mt-1 w-full resize-y rounded-control border border-[var(--border-card)] edify-surface px-3 py-2 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
   </div>
 
   <div class="drawer-footer">
-    <button type="button" @click="requestClose()" class="h-12 rounded-control border border-[var(--border-strong)] bg-white px-5 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="button" @click="requestClose()" class="h-12 rounded-control border border-[var(--border-strong)] edify-surface px-5 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Cancel</button>
     <button type="submit" class="schedule-drawer-submit h-12 rounded-control bg-[var(--color-edify-primary)] px-6 font-bold text-white transition-colors hover:bg-[var(--color-edify-dark)]">Save SSA &amp; Complete</button>
   </div>
 </form>

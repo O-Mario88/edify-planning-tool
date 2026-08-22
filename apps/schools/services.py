@@ -132,8 +132,10 @@ def get_one(school_id: str, principal):
 
 # ── Create ───────────────────────────────────────────────────────────────────
 def create_one(data: dict, principal) -> School:
-    """Single school upload. The actor must have SCHOOL_UPLOAD permission
-    (enforced by the view); geography is resolved from the provided ids."""
+    """Single school upload. The actor must hold SCHOOL_CREATE_SINGLE or
+    SCHOOL_UPLOAD (enforced by the view); geography is resolved from the
+    provided ids. A Salesforce account id, where the caller supplies one, is
+    unique across live schools."""
     school_id = str(data.get("schoolId") or data.get("school_id") or "").strip()
     if not school_id:
         raise BadRequest("School ID is required. Use the official assigned ID.")
@@ -196,6 +198,9 @@ def create_one(data: dict, principal) -> School:
         enrollment=enrollment,
         school_type=school_type,
         account_owner_name_raw=data.get("accountOwnerName"),
+        # Proves the school reached Salesforce before work is recorded against
+        # it. Unique at the database, so it doubles as the duplicate check.
+        salesforce_account_id=(data.get("salesforceAccountId") or "").strip() or None,
         created_by_ia=getattr(principal, "active_role", None) == "ImpactAssessment",
     )
     return school

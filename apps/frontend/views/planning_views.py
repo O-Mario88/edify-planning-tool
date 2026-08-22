@@ -484,7 +484,7 @@ def planning_dashboard_view(request):
         "q": request.GET.get("q", ""),
         "tab": request.GET.get("tab", "client"),
         "page": request.GET.get("page", 1),
-        "per_page": request.GET.get("per_page", 10),
+        "per_page": request.GET.get("per_page", 15),
     }
 
     # CSV export of the currently filtered list (same pattern as /clusters).
@@ -725,7 +725,7 @@ def schedule_modal_view(request):
         cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
         action = request.GET.get("action", "training")
         partners = assignable_partners()
-        from apps.clusters.services import active_school_count
+        from apps.clusters.services import active_school_count, active_schools
         from apps.activity_catalogue.availability import (
             CLUSTER,
             training_activity_options,
@@ -736,6 +736,15 @@ def schedule_modal_view(request):
             if action == "training"
             else []
         )
+        # Ticked by name rather than counted into a box, so the number that
+        # multiplies into the budget is derived from the list and the two
+        # cannot disagree — and completion opens with the register already
+        # filled in. Everyone is ticked on first open, which is what the
+        # number it replaces defaulted to.
+        member_schools = [
+            {"id": s.id, "name": s.name, "school_id": s.school_id, "invited": True}
+            for s in active_schools(cluster.id)
+        ]
 
         context = {
             "cluster": cluster,
@@ -747,6 +756,8 @@ def schedule_modal_view(request):
             # the multiplication is visible; the backend recomputes it at
             # submission so a stale drawer cannot price an activity.
             "cluster_school_count": active_school_count(cluster.id),
+            "member_schools": member_schools,
+            "schools_invited": len(member_schools),
             "training_activity_options": training_options,
             "training_activity_options_json": json.dumps(training_options),
             # §16 — certified agencies only. `partners` above is the ordinary

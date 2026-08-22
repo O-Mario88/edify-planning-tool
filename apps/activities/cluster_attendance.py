@@ -266,3 +266,48 @@ def expected_participants(activity) -> int:
         activity=activity, invited=True, is_guest=False
     ).count()
     return per_school * invited
+
+
+def training_counts(school_ids, *, fy=None) -> dict[str, int]:
+    """How many verified trainings each school has had, by either route.
+
+    The school profile shows a number rather than a yes/no, so it needs this
+    rather than ``trained_school_ids`` — but both must agree about what counts,
+    which is why they live together and share the same status vocabularies.
+    """
+    from django.db.models import Count
+
+    from apps.activities.models import Activity, ClusterActivityAttendance
+
+    if school_ids is None:
+        return {}
+    if isinstance(school_ids, (list, tuple, set, frozenset)) and not school_ids:
+        return {}
+
+    own = Activity.objects.filter(
+        school_id__in=school_ids,
+        activity_type__in=SCHOOL_TRAINING_TYPES,
+        status__in=COMPLETED_WORK_STATUSES,
+        deleted_at__isnull=True,
+    )
+    cluster = ClusterActivityAttendance.objects.filter(
+        school_id__in=school_ids,
+        attended=True,
+        activity__activity_type__in=CLUSTER_TRAINING_TYPES,
+        activity__status__in=CLUSTER_CREDIT_STATUSES,
+        activity__deleted_at__isnull=True,
+    )
+    if fy:
+        own = own.filter(fy=fy)
+        cluster = cluster.filter(activity__fy=fy)
+
+    counts: dict[str, int] = {}
+    for source in (
+        own.values("school_id").annotate(n=Count("id")).values_list("school_id", "n"),
+        cluster.values("school_id")
+        .annotate(n=Count("id"))
+        .values_list("school_id", "n"),
+    ):
+        for school_id, n in source:
+            counts[school_id] = counts.get(school_id, 0) + n
+    return counts

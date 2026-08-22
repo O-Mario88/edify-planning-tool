@@ -57,6 +57,21 @@ class Permission(str, Enum):
     LEAVE_PLANNER_VIEW = "leavePlanner.view"
     DAILY_DEBRIEF_VIEW = "dailyDebrief.view"
     SCHOOL_UPLOAD = "school.upload"
+    # Adding ONE school, by hand, with its Salesforce id. Deliberately not
+    # SCHOOL_UPLOAD: that also opens bulk CSV import, and a field officer who
+    # meets an unlisted school at a cluster training needs to record that one
+    # school, not the ability to load a spreadsheet of thousands.
+    #
+    # Held by the field chain — CCEO, Program Lead, Country Director — and by
+    # IA. Project Coordinators and BT Officers plan and support work against
+    # schools that already exist; putting a school into the directory is not
+    # theirs to do.
+    #
+    # The control here is the Salesforce id rather than the role. Requiring it
+    # proves the school already reached Salesforce, and because the id is
+    # unique it is also the duplicate check — two people adding the same
+    # school from the field collide instead of minting two records.
+    SCHOOL_CREATE_SINGLE = "school.createSingle"
     SCHOOL_EDIT = "school.edit"
     # Close a school. Separate from SCHOOL_EDIT because closure is not an edit
     # — it removes a school from every current count, cancels planned work and
@@ -293,6 +308,7 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
     EdifyRole.COUNTRY_DIRECTOR: [
+        P.SCHOOL_CREATE_SINGLE,
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,
         # Country-scoped policy authorship, and the country's policy comments.
@@ -418,6 +434,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
+        P.SCHOOL_CREATE_SINGLE,
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
         P.SCHOOL_EDIT,
@@ -460,6 +477,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
     ],
     EdifyRole.CCEO: [
+        P.SCHOOL_CREATE_SINGLE,
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
@@ -492,6 +510,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
+        P.SCHOOL_CREATE_SINGLE,
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,
         # Training manuals and presentations are IA's; organisational policy

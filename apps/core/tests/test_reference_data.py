@@ -56,6 +56,16 @@ APPS = ROOT / "apps"
 # Adding to this list is a deliberate edit somebody has to justify in review,
 # which is the entire point of it being a list rather than a heuristic.
 ONE_OFF_DATA_MIGRATIONS = {
+    "activities": (
+        "0048 converts the attendance that cluster sessions had already "
+        "recorded in an `attended_school_ids` array into "
+        "ClusterActivityAttendance rows, so school-level counts can join "
+        "against it. It is a one-off by nature: it reads history and invents "
+        "nothing, and on a test database there is no history to read, so it "
+        "matches nothing and writes nothing. Re-running it on every flush "
+        "would restore attendance for activities a test had just built its "
+        "own register for."
+    ),
     "documents": (
         "0002 installs the two first-login agreements (safeguarding policy, "
         "Apostles' Creed). It declares itself a one-off: the migration returns "

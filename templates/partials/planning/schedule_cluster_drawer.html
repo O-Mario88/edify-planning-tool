@@ -211,8 +211,20 @@ changes cannot price an activity on a stale count.
     leaders: {% if action == 'meeting' %}2{% else %}0{% endif %},
     other: 0,
     schools: {{ cluster_school_count|default:0 }},
-    schoolsInvited: {{ cluster_school_count|default:0 }},
-    get perSchool() { return Number(this.teachers || 0) + Number(this.leaders || 0) + Number(this.other || 0); }
+    schoolsInvited: {{ schools_invited|default:0 }},
+    allChecked: {% if schools_invited == cluster_school_count and cluster_school_count %}true{% else %}false{% endif %},
+    get perSchool() { return Number(this.teachers || 0) + Number(this.leaders || 0) + Number(this.other || 0); },
+    boxes() { return Array.from(this.$el.querySelectorAll('input[name=invited_school_ids]')); },
+    syncInvited() {
+      const boxes = this.boxes();
+      this.schoolsInvited = boxes.filter(b => b.checked).length;
+      this.allChecked = boxes.length > 0 && this.schoolsInvited === boxes.length;
+    },
+    toggleAll() {
+      const next = !this.allChecked;
+      this.boxes().forEach(b => { b.checked = next; });
+      this.syncInvited();
+    }
   }">
     <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Per school <span class="text-rose-500">*</span></p>
     <div class="mt-1 grid grid-cols-3 gap-2">
@@ -262,34 +274,52 @@ changes cannot price an activity on a stale count.
     <p id="participants-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
       Who you intend to invite from each school. Edify adds them up and calculates the total.
     </p>
-    {% if action != 'meeting' %}
+    {% comment %}
+    Schools are ticked by name, not counted into a box. The number that
+    multiplies into the budget is derived from the ticks, so the figure and
+    the list cannot disagree — and the completion form opens with this list
+    already ticked instead of an empty register, which is why cluster work
+    never reached the schools that sat in the room.
+    {% endcomment %}
     <div class="mt-3">
-      <label for="schools_invited" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-        Schools Invited <span class="text-rose-500">*</span>
-      </label>
-      <input
-        type="number"
-        name="schools_invited"
-        id="schools_invited"
-        min="1"
-        max="{{ cluster_school_count|default:0 }}"
-        step="1"
-        required
-        x-model.number="schoolsInvited"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus"
-        aria-describedby="schools-invited-help participants-total"
-      >
+      <div class="flex items-baseline justify-between gap-2">
+        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+          Schools Invited <span class="text-rose-500">*</span>
+        </span>
+        <button type="button" @click="toggleAll()"
+                class="edify-text-caption font-bold edify-primary-text hover:underline">
+          <span x-text="allChecked ? 'Clear all' : 'Select all'">Select all</span>
+        </button>
+      </div>
+      <div role="group" aria-labelledby="schools-invited-help"
+           class="mt-1.5 max-h-56 overflow-y-auto rounded-control border border-slate-200 bg-slate-50 divide-y divide-slate-100">
+        {% for s in member_schools %}
+        <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-white">
+          <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
+                 {% if s.invited %}checked{% endif %}
+                 @change="syncInvited()"
+                 class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] font-semibold text-slate-700 truncate">{{ s.name }}</span>
+            <span class="block edify-text-caption font-medium text-slate-400">{{ s.school_id }}</span>
+          </span>
+        </label>
+        {% empty %}
+        <p class="px-3 py-4 text-[13px] font-semibold text-slate-500">
+          This cluster has no active schools, so there is nobody to invite. Add schools to the cluster first.
+        </p>
+        {% endfor %}
+      </div>
       <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-        Invite fewer than all {{ cluster_school_count }} schools when the selected training does not apply to every school type.
+        Untick a school the selected {% if action == 'meeting' %}meeting{% else %}training{% endif %} does not apply to — a Literacy training does not reach the secondary and vocational schools in a mixed cluster.
       </p>
     </div>
-    {% endif %}
 
     <div id="participants-total" class="mt-2 flex items-center justify-between gap-3 rounded-control bg-white/70 px-3 py-2" aria-live="polite">
       <span class="text-[12px] font-medium edify-text-muted">
-        <span x-text="{% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %}"></span> schools invited &times; <span x-text="perSchool"></span> per school
+        <span x-text="schoolsInvited"></span> schools invited &times; <span x-text="perSchool"></span> per school
       </span>
-      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="({% if action == 'meeting' %}schools{% else %}schoolsInvited{% endif %} * perSchool).toLocaleString()"></span>
+      <span class="text-[14px] font-bold edify-text tabular-nums" x-text="(schoolsInvited * perSchool).toLocaleString()"></span>
     </div>
   </div>
 </div>

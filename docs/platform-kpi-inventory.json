@@ -1357,7 +1357,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 939,
+   "line": 985,
    "label": null,
    "keys": [
     "amount",
@@ -1377,7 +1377,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 637,
+   "line": 662,
    "label": null,
    "keys": [
     "count",
@@ -1398,7 +1398,7 @@
    "audit_id": "KPI-SOURCE-072",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 931,
+   "line": 977,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -1452,7 +1452,7 @@
    "audit_id": "KPI-SOURCE-075",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1662,
+   "line": 1659,
    "label": null,
    "keys": [
     "bar_color",
@@ -1472,7 +1472,7 @@
    "audit_id": "KPI-SOURCE-076",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2048,
+   "line": 2045,
    "label": null,
    "keys": [
     "delta_pct",
@@ -1493,7 +1493,7 @@
    "audit_id": "KPI-SOURCE-077",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1010,
+   "line": 1009,
    "label": null,
    "keys": [
     "band",
@@ -1517,7 +1517,7 @@
    "audit_id": "KPI-SOURCE-078",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 970,
+   "line": 969,
    "label": null,
    "keys": [
     "band",
@@ -1541,7 +1541,7 @@
    "audit_id": "KPI-SOURCE-079",
    "kind": "other",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 776,
+   "line": 777,
    "label": null,
    "keys": [
     "done",
@@ -1562,7 +1562,7 @@
    "audit_id": "KPI-SOURCE-080",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 1306,
+   "line": 1305,
    "label": null,
    "keys": [
     "amount",
@@ -2235,7 +2235,7 @@
    "audit_id": "KPI-SOURCE-112",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 767,
+   "line": 803,
    "label": null,
    "keys": [
     "label",
@@ -2271,7 +2271,7 @@
    "audit_id": "KPI-SOURCE-114",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 448,
+   "line": 458,
    "label": null,
    "keys": [
     "label",
@@ -2849,7 +2849,7 @@
    "audit_id": "KPI-SOURCE-144",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 84,
+   "line": 127,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -2872,7 +2872,7 @@
    "audit_id": "KPI-SOURCE-145",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1615,
+   "line": 1821,
    "label": null,
    "keys": [
     "count",
@@ -2890,7 +2890,7 @@
    "audit_id": "KPI-SOURCE-146",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1726,
+   "line": 1932,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -3006,7 +3006,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 658,
+   "line": 695,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -26038,7 +26038,7 @@
   {
    "audit_id": "KPI-PAYLOAD-003",
    "module": "apps/clusters/services.py",
-   "line": 1675,
+   "line": 1692,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -26470,7 +26470,7 @@
   {
    "audit_id": "KPI-PAYLOAD-019",
    "module": "apps/frontend/views/school_views.py",
-   "line": 456,
+   "line": 493,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,

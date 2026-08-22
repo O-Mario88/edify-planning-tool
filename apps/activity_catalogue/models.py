@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.core.enums import (
@@ -62,6 +62,75 @@ class MappingMode(models.TextChoices):
         "any_ssa_intervention",
         "Any SSA intervention (planner selects)",
     )
+
+
+class MappingAuthor(models.TextChoices):
+    """Who wrote a mapping row, so machine writes stop clobbering human ones.
+
+    Seeding and the importer each write one mapping per catalogue item and
+    then deactivate every other mapping for that item. That made a second
+    intervention impossible to keep — the next import silently retired it —
+    and it would have thrown away Impact Assessment's measurement rules
+    along with it. Machine writers now only retire what they own.
+    """
+
+    SEED = "seed", "Seed data"
+    IMPORT = "import", "Catalogue import"
+    REFERENCE = "reference", "Reference data"
+    IMPACT_ASSESSMENT = "impact_assessment", "Impact Assessment"
+
+
+#: Rows a seed or import run may retire. An Impact Assessment mapping carries
+#: measurement rules a machine did not write and must not remove.
+MACHINE_AUTHORS = (
+    MappingAuthor.SEED,
+    MappingAuthor.IMPORT,
+    MappingAuthor.REFERENCE,
+)
+
+
+class MappingRelationship(models.TextChoices):
+    """One activity may move more than one intervention, but not equally."""
+
+    PRIMARY = "primary", "Primary intervention"
+    SECONDARY = "secondary", "Secondary intervention"
+
+
+class MeasurementRole(models.TextChoices):
+    """What the linked score is used FOR.
+
+    A school can qualify for a project because its Christlike Behaviour score
+    is weak, and the same score can be what the project is later judged on.
+    Those are two different jobs and an activity may do either or both.
+    """
+
+    ELIGIBILITY_ONLY = "eligibility_only", "Eligibility only"
+    OUTCOME_ONLY = "outcome_only", "Outcome measurement only"
+    ELIGIBILITY_AND_OUTCOME = "eligibility_and_outcome", "Eligibility and outcome"
+
+
+class ExpectedDirection(models.TextChoices):
+    """What counts as the intervention working.
+
+    Not every project is trying to raise a number. A school already scoring
+    Strong may be supported to stay there, and holding still is then success
+    rather than failure — which is why the rule is declared per mapping
+    instead of assumed to be "went up".
+    """
+
+    IMPROVE = "improve", "Improve the score"
+    MAINTAIN_STRONG = "maintain_strong", "Maintain a Strong score"
+    PREVENT_DECLINE = "prevent_decline", "Prevent decline"
+    CLOSE_COMPLIANCE_GAP = "close_compliance_gap", "Close a compliance gap"
+
+
+class MappingStatus(models.TextChoices):
+    """A published mapping is what completed activities were measured under."""
+
+    DRAFT = "draft", "Draft"
+    PUBLISHED = "published", "Published"
+    SUPERSEDED = "superseded", "Superseded"
+    RETIRED = "retired", "Retired"
 
 
 #: Mapping modes that carry no intervention of their own on the mapping row.
@@ -290,6 +359,69 @@ class ActivityInterventionMapping(TimeStampedModel):
     is_primary = models.BooleanField(default=True)
     active = models.BooleanField(default=True)
 
+    #: Who wrote this row. Machine writers retire only their own; an Impact
+    #: Assessment mapping carries measurement rules a seed run did not author
+    #: and must not delete.
+    authored_by = models.CharField(
+        max_length=32, choices=MappingAuthor.choices, default=MappingAuthor.SEED
+    )
+
+    relationship = models.CharField(
+        max_length=16,
+        choices=MappingRelationship.choices,
+        default=MappingRelationship.PRIMARY,
+    )
+    measurement_role = models.CharField(
+        max_length=32,
+        choices=MeasurementRole.choices,
+        default=MeasurementRole.ELIGIBILITY_AND_OUTCOME,
+    )
+    expected_direction = models.CharField(
+        max_length=32,
+        choices=ExpectedDirection.choices,
+        default=ExpectedDirection.IMPROVE,
+    )
+
+    #: Which schools this activity is for, by band. Empty means the mapping
+    #: sets no score condition, which is a legitimate answer for work that is
+    #: not targeted by weakness — and it is recorded rather than inferred.
+    eligible_bands = ArrayField(
+        base_field=models.CharField(max_length=16), default=list, blank=True
+    )
+    eligibility_note = models.TextField(blank=True, default="")
+
+    #: How long the intervention plausibly needs before a score means anything.
+    #: Measured in days from the first verified activity. A follow-up outside
+    #: the window is not evidence about this activity.
+    follow_up_min_days = models.PositiveIntegerField(null=True, blank=True)
+    follow_up_expected_days = models.PositiveIntegerField(null=True, blank=True)
+    follow_up_max_days = models.PositiveIntegerField(null=True, blank=True)
+
+    #: Deliberately nullable and never defaulted. Where Edify has approved a
+    #: meaningful-change threshold, Impact Assessment sets it; where it has
+    #: not, any positive movement is Improved and any negative is Declined.
+    #: Inventing a threshold would silently reclassify real movement.
+    min_meaningful_change = models.DecimalField(
+        max_digits=4, decimal_places=2, null=True, blank=True
+    )
+
+    #: An administrative activity is not measured by a score. Saying so
+    #: explicitly is honest; attaching it to an intervention to satisfy a
+    #: required field would put governance work into school-improvement
+    #: analytics.
+    not_ssa_measured_reason = models.TextField(blank=True, default="")
+
+    status = models.CharField(
+        max_length=16, choices=MappingStatus.choices, default=MappingStatus.DRAFT
+    )
+    version = models.PositiveIntegerField(default=1)
+    approved_by = models.CharField(max_length=30, blank=True, default="")
+    approved_at = models.DateTimeField(null=True, blank=True)
+    effective_from = models.DateField(null=True, blank=True)
+    effective_to = models.DateField(null=True, blank=True)
+    country = models.CharField(max_length=64, blank=True, default="")
+    fy = models.CharField(max_length=9, blank=True, default="")
+
     class Meta:
         db_table = "activity_intervention_mapping"
         ordering = ["priority", "catalogue_item__display_name"]
@@ -313,6 +445,28 @@ class ActivityInterventionMapping(TimeStampedModel):
                     )
                 ),
                 name="catalogue_mapping_intervention_shape",
+            ),
+            # Exactly one primary per catalogue item, among live rows. An
+            # activity may genuinely move several interventions, but it has
+            # one purpose, and analytics that weighed every linked
+            # intervention equally could not say which.
+            models.UniqueConstraint(
+                fields=["catalogue_item"],
+                condition=Q(
+                    relationship=MappingRelationship.PRIMARY,
+                    active=True,
+                )
+                & ~Q(status=MappingStatus.RETIRED),
+                name="uniq_primary_intervention_per_item",
+            ),
+            # A follow-up window has to be orderable to mean anything.
+            models.CheckConstraint(
+                condition=(
+                    Q(follow_up_min_days__isnull=True)
+                    | Q(follow_up_max_days__isnull=True)
+                    | Q(follow_up_min_days__lte=F("follow_up_max_days"))
+                ),
+                name="mapping_follow_up_window_ordered",
             ),
         ]
 

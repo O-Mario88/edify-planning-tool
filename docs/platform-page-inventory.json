@@ -145,17 +145,17 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5046,
+      "bytes": 5485,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance",
         "/activities/<str:activity_id>/evidence",
+        "/activities/<str:activity_id>/partner-ssa-complete",
         "/activities/<str:activity_id>/salesforce-id",
         "/activities/<str:activity_id>/ssa-upload",
         "/activities/<str:activity_id>/start",
         "/activities/<str:activity_id>/submit",
-        "/activities/<str:activity_id>/timeline",
-        "/analytics/country-director/drilldown"
+        "/activities/<str:activity_id>/timeline"
       ],
       "findings": [],
       "forms": 0,
@@ -2278,7 +2278,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21072,
+      "bytes": 22625,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2294,8 +2294,7 @@
       "states": [
         "default",
         "empty",
-        "disabled",
-        "open"
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html",
@@ -3348,9 +3347,9 @@
     },
     {
       "accessibility_requirements": [
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 3842,
+      "bytes": 3082,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3768,7 +3767,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4737,
+      "bytes": 4906,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3791,7 +3790,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3678,
+      "bytes": 3839,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3814,7 +3813,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3668,
+      "bytes": 3845,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4034,7 +4033,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4079,
+      "bytes": 4255,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/plan-sources"
@@ -4060,7 +4059,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3600,
+      "bytes": 3781,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/return"
@@ -4287,7 +4286,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3638,
+      "bytes": 3809,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals/return"
@@ -4995,7 +4994,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 27343,
+      "bytes": 27424,
       "deprecated_alternatives": [],
       "example_pages": [
         "/leave/approvals",
@@ -5055,7 +5054,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16191,
+      "bytes": 16385,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5372,7 +5371,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12529,
+      "bytes": 12987,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -5380,7 +5379,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 2,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Activity Detail Drawer",
       "purpose": "Reusable activity detail drawer interface primitive",
@@ -5398,7 +5397,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3758,
+      "bytes": 4048,
       "deprecated_alternatives": [],
       "example_pages": [
         "/evidence/returned",
@@ -5406,7 +5405,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 8,
+      "htmx_controls": 9,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -5447,7 +5446,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4562,
+      "bytes": 8086,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -5458,9 +5457,10 @@
       "kind": "application-partial",
       "name": "Attendance Drawer",
       "purpose": "Reusable attendance drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "open"
       ],
       "tables": 0,
       "template": "partials/my_plan/attendance_drawer.html",
@@ -5656,6 +5656,32 @@
       "variants": [
         "executive"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 5762,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/activities/<str:activity_id>/partner-ssa-complete"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Partner Ssa Completion Drawer",
+      "purpose": "Reusable partner ssa completion drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/partner_ssa_completion_drawer.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -6330,7 +6356,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5078,
+      "bytes": 5151,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -6382,7 +6408,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4418,
+      "bytes": 3038,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
@@ -6409,7 +6435,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8422,
+      "bytes": 8274,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -6423,9 +6449,9 @@
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty",
         "error",
-        "disabled"
+        "disabled",
+        "open"
       ],
       "tables": 0,
       "template": "partials/planning/assign_partner_drawer.html",
@@ -6503,7 +6529,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18755,
+      "bytes": 20954,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -6517,6 +6543,7 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
+        "empty",
         "error",
         "disabled",
         "open"
@@ -6531,7 +6558,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30016,
+      "bytes": 30566,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -7253,14 +7280,14 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 11920,
+      "bytes": 13560,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Add To Cluster Drawer",
       "purpose": "Reusable add to cluster drawer interface primitive",
@@ -7455,7 +7482,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 14874,
+      "bytes": 15196,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
@@ -7525,7 +7552,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7188,
+      "bytes": 8247,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
@@ -8081,7 +8108,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11433,
+      "bytes": 11460,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9117,6 +9144,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12179,6 +12207,7 @@
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
         "GET /my-plan/{{ act.id }}/complete-drawer"
       ],
@@ -12194,7 +12223,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Complete Activity",
+      "primary_action": "Update SSA &amp; Complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "School: Cluster:",
       "remediation": "No automated remediation outstanding",
@@ -12217,6 +12246,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12318,6 +12348,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12351,7 +12382,9 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]"
+        "text-[13px]",
+        "text-[14px]",
+        "text-[16px]"
       ]
     },
     {
@@ -12410,6 +12443,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12750,6 +12784,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12837,6 +12872,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -12932,6 +12968,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13025,6 +13062,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13120,6 +13158,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13156,6 +13195,193 @@
         "text-[14px]",
         "text-[32px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.partner_ssa_completion_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/partner_ssa_completion_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /activities/{{ a.id }}/partner-ssa-complete/action"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-FCEE2736D1",
+      "page_title": "Partner Ssa Completion Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Partner Ssa Completion Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Dedicated completion drawer for partner-delivered school SSA Support.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activities/<str:activity_id>/partner-ssa-complete",
+      "route_name": "partner_ssa_completion_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/activities/{{ a.id }}/partner-ssa-complete/action"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/partner_ssa_completion_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]",
+        "text-[14px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.partner_ssa_completion_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-E3902C4B96",
+      "page_title": "Partner Ssa Completion Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Partner Ssa Completion Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Save eight scores + pupil enrolment and complete the partner activity.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/activities/<str:activity_id>/partner-ssa-complete/action",
+      "route_name": "partner_ssa_completion_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -13295,6 +13521,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13387,6 +13614,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13479,6 +13707,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13571,6 +13800,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13663,6 +13893,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13755,6 +13986,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13847,6 +14079,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -13939,6 +14172,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -14027,6 +14261,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -20933,7 +21168,7 @@
         "test:referenced-by-automated-test",
         "permission:planning"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -21008,6 +21243,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -21027,7 +21263,7 @@
         "test:referenced-by-automated-test",
         "permission:planning"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -21102,6 +21338,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -28361,6 +28598,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -28451,6 +28689,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -34709,7 +34948,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /ia/partner-evidence/{{ a.id }}/return-drawer",
-        "GET /ia/partner-evidence/{{ a.id }}/complete-drawer"
+        "GET {% if is_partner_ssa_support %}/activities/{{ a.id }}/partner-ssa-complete{% else %}/ia/partner-evidence/{{ a.id }}/complete-drawer{% endif %}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -40547,6 +40786,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -40609,6 +40849,7 @@
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
         "GET /my-plan/{{ act.id }}/complete-drawer"
       ],
@@ -40624,7 +40865,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "my_plan",
-      "primary_action": "Complete Activity",
+      "primary_action": "Update SSA &amp; Complete",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "School: Cluster:",
       "remediation": "No automated remediation outstanding",
@@ -40647,6 +40888,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -40747,6 +40989,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -40840,6 +41083,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -40933,6 +41177,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -41030,6 +41275,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -41122,6 +41368,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -41209,6 +41456,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -41256,7 +41504,7 @@
         "test:referenced-by-automated-test",
         "permission:my_plan"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -41301,6 +41549,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -41393,6 +41642,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -45650,7 +45900,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
         "text-[16px]"
       ]
     },
@@ -46488,7 +46737,7 @@
       "backend_view": "apps.frontend.views.partner_views.create_partner_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/partners/create_partner_drawer.html",
         "test:referenced-by-automated-test",
@@ -47780,6 +48029,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -47872,6 +48122,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -47959,6 +48210,7 @@
         "apps.audit.models",
         "apps.audit.services",
         "apps.core.scoping",
+        "apps.evidence.models",
         "apps.evidence.services",
         "apps.my_plan.services",
         "apps.partners.models",
@@ -48196,7 +48448,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.planning_views",
       "backend_view": "apps.frontend.views.planning_views.assign_partner_modal_view",
       "card_count": 0,
@@ -48267,7 +48519,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -48766,7 +49018,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": false,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.planning_views",
       "backend_view": "apps.frontend.views.planning_views.schedule_modal_view",
       "card_count": 0,
@@ -48778,7 +49030,7 @@
         "test:referenced-by-automated-test",
         "permission:planning"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -48840,7 +49092,7 @@
       ],
       "state_coverage": {
         "disabled": true,
-        "empty": false,
+        "empty": true,
         "error": true,
         "loading": false
       },
@@ -52174,7 +52426,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /schools/{{ school.id }}/add-to-cluster"
+        "POST /schools/{{ school.id }}/add-to-cluster",
+        "GET /schools/{{ school.id }}/edit-drawer"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -59315,6 +59568,7 @@
       "leavePlanner.view",
       "dailyDebrief.view",
       "school.upload",
+      "school.createSingle",
       "school.edit",
       "school.close",
       "school.resolveDuplicate",
@@ -60520,6 +60774,32 @@
       "templates": [
         "pages/my_plan/evidence_packet.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.partner_ssa_completion_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activities/<str:activity_id>/partner-ssa-complete",
+      "route_name": "partner_ssa_completion_drawer",
+      "templates": [
+        "partials/my_plan/partner_ssa_completion_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.partner_ssa_completion_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/activities/<str:activity_id>/partner-ssa-complete/action",
+      "route_name": "partner_ssa_completion_action",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.closure_views.reopen_activity_action",
@@ -75312,30 +75592,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 372,
+    "accessibility_contract_pass": 373,
     "activity_states": 23,
-    "all_routes": 1023,
+    "all_routes": 1025,
     "api_routes": 349,
-    "component_templates": 338,
+    "component_templates": 339,
     "full_pages": 202,
-    "mobile_contract_pass": 372,
-    "nonvisual_actions": 175,
+    "mobile_contract_pass": 373,
+    "nonvisual_actions": 176,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 342,
+      "interaction-fragment": 344,
       "operational-queue": 120,
       "planning-or-creation": 6,
       "record-detail": 25,
       "report": 25
     },
-    "partials_and_drawers": 167,
-    "permission_gated": 555,
-    "permission_keys": 97,
+    "partials_and_drawers": 168,
+    "permission_gated": 557,
+    "permission_keys": 98,
     "roles": 14,
-    "routed_surfaces": 565,
+    "routed_surfaces": 567,
     "scheduled_jobs": 22,
     "severity_counts": {
       "critical": 0,
@@ -75343,8 +75623,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 372,
-    "test_referenced": 522,
-    "theme_contract_pass": 372
+    "tablet_contract_pass": 373,
+    "test_referenced": 524,
+    "theme_contract_pass": 373
   }
 }

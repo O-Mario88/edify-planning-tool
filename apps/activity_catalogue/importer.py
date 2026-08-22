@@ -11,12 +11,14 @@ from django.db import transaction
 from apps.core.enums import ActivityType, SsaIntervention
 
 from .models import (
+    MACHINE_AUTHORS,
     ActivityCatalogueItem,
     ActivityEligibilityRule,
     ActivityInterventionMapping,
     CatalogueActivityType,
     CatalogueStatus,
     DeliveryMethod,
+    MappingAuthor,
     MappingMode,
 )
 from .seeding import normalize_alias
@@ -250,11 +252,18 @@ def import_catalogue(path, *, actor_id, commit=False):
                 catalogue_item=item,
                 intervention=intervention,
                 mapping_mode=mapping_mode,
-                defaults={"active": True, "is_primary": True, "priority": 100},
+                defaults={
+                    "active": True,
+                    "is_primary": True,
+                    "priority": 100,
+                    "authored_by": MappingAuthor.IMPORT,
+                },
             )
-            ActivityInterventionMapping.objects.filter(catalogue_item=item).exclude(
-                id=mapping.id
-            ).update(active=False)
+            # Only rows a machine wrote — see the note in seeding.py. An
+            # import must not retire Impact Assessment's mappings.
+            ActivityInterventionMapping.objects.filter(
+                catalogue_item=item, authored_by__in=MACHINE_AUTHORS
+            ).exclude(id=mapping.id).update(active=False)
             ActivityEligibilityRule.objects.get_or_create(catalogue_item=item)
             create_version(
                 item,

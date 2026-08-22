@@ -3,10 +3,12 @@ from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
+    has_permission,
     require_any_page_permission,
     require_page_permission,
     RolePermissionService,
 )
+from apps.core.rbac import Permission
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
@@ -407,12 +409,49 @@ def complete_drawer_view(request, activity_id):
     evidence_list = evidence_records_for_activity(activity_id, request.user)
 
     cluster_schools = []
+    guest_rows = []
     if a.cluster:
+        from apps.activities.models import ClusterActivityAttendance
         from apps.schools.models import School
 
         cluster_schools = School.objects.filter(
             cluster_id=a.cluster_id, deleted_at__isnull=True
         ).order_by("name")
+        # The register opens on who was invited when this was scheduled, so
+        # the person who delivered confirms rather than reconstructs. Rows
+        # already marked attended stay ticked on a second visit.
+        rows = {
+            r.school_id: r
+            for r in ClusterActivityAttendance.objects.filter(activity=a)
+        }
+        cluster_schools = [
+            {
+                "id": s.id,
+                "name": s.name,
+                "school_id": s.school_id,
+                # No row at all means this drawer predates the invitation
+                # list; tick everyone, which is what it used to assume.
+                "ticked": (
+                    rows[s.id].attended or rows[s.id].invited
+                    if s.id in rows
+                    else not rows
+                ),
+            }
+            for s in cluster_schools
+        ]
+        guest_rows = [
+            {
+                "id": r.school_id,
+                "name": r.school.name,
+                "school_id": r.school.school_id,
+                "teachers": r.teachers,
+                "leaders": r.leaders,
+                "other": r.other,
+            }
+            for r in ClusterActivityAttendance.objects.filter(
+                activity=a, is_guest=True
+            ).select_related("school")
+        ]
 
     needs_netsuite_id = False
     disbursed_amount = None
@@ -427,6 +466,10 @@ def complete_drawer_view(request, activity_id):
         "act": act,
         "evidence_list": evidence_list,
         "cluster_schools": cluster_schools,
+        "guest_rows": guest_rows,
+        "can_add_school": has_permission(
+            request.user, Permission.SCHOOL_CREATE_SINGLE.value
+        ),
         "interventions": SsaIntervention.choices,
         "drawer_size": "md",
         "needs_netsuite_id": needs_netsuite_id,
@@ -1536,6 +1579,45 @@ def attendance_upload_action(request, activity_id):
             )
         except Exception as exc:
             return error_fragment(exc, action="Attendance Error", status=400)
+
+        # A school from outside the cluster that turned up. Recorded against
+        # the canonical school, so the training lands on its profile and earns
+        # the same follow-up a member would.
+        guest_school_id = (request.POST.get("guest_school_id") or "").strip()
+        if guest_school_id:
+            from apps.activities.cluster_attendance import add_guest_school
+            from apps.core.exceptions import BadRequest
+            from apps.schools.models import School
+
+            def _count(key):
+                raw = (request.POST.get(key) or "").strip()
+                return int(raw) if raw.isdigit() else None
+
+            guest = School.objects.filter(
+                school_id=guest_school_id, deleted_at__isnull=True
+            ).first()
+            if guest is None:
+                return error_fragment(
+                    BadRequest(
+                        f"No school in the directory has the ID "
+                        f"'{guest_school_id}'. Add the school first — it needs "
+                        f"its Salesforce ID before work can be recorded "
+                        f"against it."
+                    ),
+                    action="Attendance Error",
+                    status=400,
+                )
+            try:
+                add_guest_school(
+                    a,
+                    guest.id,
+                    teachers=_count("guest_teachers"),
+                    leaders=_count("guest_leaders"),
+                    other=_count("guest_other"),
+                    actor_id=str(request.user.id),
+                )
+            except Exception as exc:
+                return error_fragment(exc, action="Attendance Error", status=400)
 
         if attendance_file:
             # The governed Training Attendance form is PDF-only; a photographed

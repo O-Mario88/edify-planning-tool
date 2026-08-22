@@ -907,6 +907,48 @@ def _assert_schedule_entitlement(
         )
 
 
+def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
+    """Mirror the confirmed register into the attendance table.
+
+    The array column stays the record the older readers use while they are
+    migrated; the rows are what school-level counts join against, because a
+    cluster session has no school FK for them to filter on. Written together
+    so the two can never disagree about who was in the room.
+    """
+    from apps.activities.models import ClusterActivityAttendance
+
+    if not activity.cluster_id:
+        return
+    confirmed = set(school_ids or [])
+    rows = {
+        r.school_id: r
+        for r in ClusterActivityAttendance.objects.filter(activity=activity)
+    }
+    for school_id in confirmed:
+        row = rows.get(school_id)
+        if row is None:
+            ClusterActivityAttendance.objects.create(
+                activity=activity,
+                school_id=school_id,
+                invited=False,
+                attended=True,
+                teachers=activity.teachers_per_school,
+                leaders=activity.leaders_per_school,
+                other=activity.other_per_school,
+                recorded_by=actor_id or "",
+            )
+        elif not row.attended:
+            row.attended = True
+            row.recorded_by = actor_id or row.recorded_by
+            row.save(update_fields=["attended", "recorded_by", "updated_at"])
+    # An unticked school keeps its invitation as the record that it was asked.
+    stale = [r for sid, r in rows.items() if sid not in confirmed and r.attended]
+    if stale:
+        ClusterActivityAttendance.objects.filter(id__in=[r.id for r in stale]).update(
+            attended=False
+        )
+
+
 def _cluster_member_school_ids(activity, raw_ids) -> list[str]:
     """Attendance may only credit schools that belong to the activity's cluster.
 
@@ -2255,6 +2297,18 @@ def create(
                 principal=principal,
                 planned_contribution=data.get("plannedContribution"),
             )
+        # Who was asked to this cluster session. Recorded as an invitation,
+        # never as attendance: the person who delivers it confirms who
+        # actually came. Without this the session has no school FK at all, so
+        # the work it delivers is invisible on every school that attends.
+        if data.get("invitedSchoolIds") and activity.cluster_id:
+            from apps.activities.cluster_attendance import set_invited_schools
+
+            set_invited_schools(
+                activity,
+                data["invitedSchoolIds"],
+                actor_id=str(getattr(principal, "id", "") or ""),
+            )
         # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
         # each school's Activity via this function, then prices the whole batch in
         # one pass afterward — skip the single-activity cost snapshot here so a
@@ -2605,6 +2659,9 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.attended_school_ids = _cluster_member_school_ids(
             a, data.get("attendedSchoolIds")
         )
+        _sync_cluster_attendance(
+            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
+        )
         # Actuals — entered by the person who delivered, never copied from
         # the planned fields (§9.2). Absent keys leave stored values alone so
         # staged flows that submit in stages don't erase earlier entries.
@@ -2781,6 +2838,9 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
         a.other_participants = count("otherParticipants")
         a.attended_school_ids = _cluster_member_school_ids(
             a, data.get("attendedSchoolIds")
+        )
+        _sync_cluster_attendance(
+            a, a.attended_school_ids, str(getattr(principal, "id", "") or "")
         )
         if a.status in (
             "scheduled",

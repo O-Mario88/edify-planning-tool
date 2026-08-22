@@ -6,6 +6,8 @@ from copy import deepcopy
 from django.db import transaction
 
 from .models import (
+    MACHINE_AUTHORS,
+    MappingAuthor,
     ActivityCatalogueAlias,
     ActivityCatalogueItem,
     ActivityCatalogueVersion,
@@ -74,12 +76,22 @@ def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) 
             catalogue_item=item,
             intervention=intervention,
             mapping_mode=mapping_mode,
-            defaults={"priority": 10, "is_primary": True, "active": True},
+            defaults={
+                "priority": 10,
+                "is_primary": True,
+                "active": True,
+                "authored_by": MappingAuthor.SEED,
+            },
         )
         result["mappings"] += 1
-        ActivityInterventionMapping.objects.filter(catalogue_item=item).exclude(
-            id=mapping.id
-        ).update(active=False)
+        # Retire only what a machine wrote. This used to deactivate EVERY
+        # other mapping for the item, which made a second intervention
+        # impossible to keep — the next seed run silently retired it — and
+        # would have thrown away Impact Assessment's measurement rules with
+        # it.
+        ActivityInterventionMapping.objects.filter(
+            catalogue_item=item, authored_by__in=MACHINE_AUTHORS
+        ).exclude(id=mapping.id).update(active=False)
 
         ActivityEligibilityRule.objects.get_or_create(
             catalogue_item=item,

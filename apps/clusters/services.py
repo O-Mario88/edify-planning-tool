@@ -855,6 +855,23 @@ def active_school_count(cluster_id: str) -> int:
     ).count()
 
 
+def active_schools(cluster_id: str):
+    """The schools behind ``active_school_count``, in the drawer's order.
+
+    The count and the list must not drift: a planner ticking six names has to
+    see the same six the budget was priced against. Same filter, one place.
+    """
+    from apps.schools.models import School
+
+    if not cluster_id:
+        return School.objects.none()
+    return School.objects.filter(
+        cluster_id=cluster_id,
+        cluster_status="clustered",
+        deleted_at__isnull=True,
+    ).order_by("name")
+
+
 def cluster_detail(cluster_id: str, principal) -> dict:
     cluster = _scoped_cluster(cluster_id, principal)
 

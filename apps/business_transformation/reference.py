@@ -88,7 +88,12 @@ def ensure_business_transformation_reference() -> None:
             catalogue_item=item,
             intervention=intervention,
             mapping_mode="fixed",
-            defaults={"priority": 10, "is_primary": True, "active": True},
+            defaults={
+                "priority": 10,
+                "is_primary": True,
+                "active": True,
+                "authored_by": "reference",
+            },
         )
         ActivityEligibilityRule.objects.get_or_create(
             catalogue_item=item,

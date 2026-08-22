@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **565**
-- All registered routes: **1023**
+- Routed product surfaces: **567**
+- All registered routes: **1025**
 - API routes: **349**
 - Roles: **14**
-- Permission keys: **97**
+- Permission keys: **98**
 - Scheduled jobs: **22**
 - Activity states: **23**
-- Shared component templates: **338**
+- Shared component templates: **339**
 - Full pages: **202**
-- Partials and drawers: **167**
-- Permission-gated surfaces: **555**
-- Referenced by automated tests: **522**
+- Partials and drawers: **168**
+- Permission-gated surfaces: **557**
+- Referenced by automated tests: **524**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -80,6 +80,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-103AEF5887 | /activities/<str:activity_id>/evidence | Evidence Upload Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FCDBCAD3AE | /activities/<str:activity_id>/evidence/action | Evidence Upload Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7D426C803E | /activities/<str:activity_id>/evidence/detail | Evidence Packet | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-FCEE2736D1 | /activities/<str:activity_id>/partner-ssa-complete | Partner Ssa Completion Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E3902C4B96 | /activities/<str:activity_id>/partner-ssa-complete/action | Partner Ssa Completion Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-4358248AFA | /activities/<str:activity_id>/reopen | Reopen Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-07EA2F4E83 | /activities/<str:activity_id>/salesforce-id | Salesforce Id Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3A0D34024C | /activities/<str:activity_id>/salesforce-id/action | Salesforce Id Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

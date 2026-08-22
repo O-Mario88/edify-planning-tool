@@ -54,6 +54,7 @@ from apps.core.fy import (
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.activities.cluster_attendance import trained_school_ids
 from apps.core.activity_types import CLUSTER_MEETING_TYPES, TRAINING_TYPES, VISIT_TYPES
 # Target achievement is completed-vs-StaffTargetProfile (the spec's definition),
 # computed inline; the stricter apps.targets.performance engine is intentionally
@@ -532,12 +533,10 @@ class PLAnalyticsService:
             .values_list("school_id", flat=True)
         )
         schools_not_visited = max(0, schools_total - len(visited_school_ids))
-        trained_school_ids = set(
-            completed.filter(activity_type__in=TRAINING_TYPES)
-            .exclude(school_id__isnull=True)
-            .values_list("school_id", flat=True)
-        )
-        schools_not_trained = max(0, schools_total - len(trained_school_ids))
+        # Both routes, one answer. A cluster session has no school FK, so
+        # filtering on school_id alone missed every school it trained.
+        trained_ids = trained_school_ids(pls.school_ref, fy=fy)
+        schools_not_trained = max(0, schools_total - len(trained_ids))
 
         def _rate(types):
             planned = acts.filter(activity_type__in=types).count()
@@ -1577,11 +1576,9 @@ class PLAnalyticsService:
             .values_list("school_id", flat=True)
         )
         not_visited = max(0, schools.count() - len(visited))
-        trained = set(
-            acts.filter(activity_type__in=TRAINING_TYPES)
-            .exclude(school_id__isnull=True)
-            .values_list("school_id", flat=True)
-        )
+        # Both routes, one answer. A cluster session has no school FK, so
+        # filtering on school_id alone missed every school it trained.
+        trained = trained_school_ids(schools.values("id"), fy=fy)
         not_trained = max(0, schools.count() - len(trained))
         weak_clusters = 0
         cluster_data = PLAnalyticsService.cluster_performance(

@@ -62,6 +62,7 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 <div class="pt-2 space-y-2">
 <div class="flex items-center justify-between">
 <label class="block edify-text-caption font-bold text-slate-500 uppercase">School Attendance Checklist</label>
+{% if can_add_school %}
 <button
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.cluster.id }}"
@@ -70,6 +71,7 @@ class="edify-text-caption font-semibold edify-primary-text edify-primary-text-ho
 >
 + Onboard New School
 </button>
+{% endif %}
 </div>
 <p class="edify-text-caption text-slate-400 font-semibold leading-relaxed">Check all schools that attended this training/meeting session:</p>
 <div class="border border-slate-200 rounded-surface divide-y divide-slate-100 bg-slate-50/50 max-h-48 overflow-y-auto">
@@ -79,7 +81,7 @@ class="edify-text-caption font-semibold edify-primary-text edify-primary-text-ho
 type="checkbox"
 name="attended_schools"
 value="{{ school.id }}"
-{% if not act.attended_school_ids or school.id in act.attended_school_ids %}checked{% endif %}
+{% if school.ticked %}checked{% endif %}
 class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary-focus"
 >
 <div class="flex-1">
@@ -88,6 +90,62 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 </div>
 </label>
 {% endfor %}
+</div>
+
+{% comment %}
+Schools from outside this cluster that turned up. Real sessions draw them, and
+refusing to record it made the register a lie. A guest is credited the training
+against its own school, which is what makes it eligible for the follow-up the
+session earned — and it brings its own head counts, because the cluster's
+per-school figures describe the schools that were planned for.
+{% endcomment %}
+<div class="pt-1 space-y-2" x-data="{ adding: false }">
+  <div class="flex items-center justify-between">
+    <label class="block edify-text-caption font-bold text-slate-500 uppercase">From another cluster</label>
+    <button type="button" @click="adding = !adding"
+            class="edify-text-caption font-semibold edify-primary-text edify-primary-text-hover hover:underline">
+      <span x-text="adding ? 'Cancel' : '+ Add a school that attended'">+ Add a school that attended</span>
+    </button>
+  </div>
+
+  {% for g in guest_rows %}
+  <div class="flex items-center gap-3 px-4 py-2 rounded-surface border border-slate-200 bg-slate-50/50">
+    <span class="min-w-0 flex-1">
+      <span class="block text-[13px] font-bold text-slate-800 truncate">{{ g.name }}</span>
+      <span class="block edify-text-caption font-semibold text-slate-400">{{ g.school_id }} &middot; guest</span>
+    </span>
+    <span class="edify-text-caption font-semibold text-slate-500 tabular-nums shrink-0">
+      {{ g.teachers|default:0 }}T &middot; {{ g.leaders|default:0 }}L &middot; {{ g.other|default:0 }}O
+    </span>
+  </div>
+  {% endfor %}
+
+  <div x-show="adding" x-cloak class="rounded-surface border border-slate-200 p-3 space-y-2">
+    <label for="guest_school_id" class="block edify-text-caption font-semibold text-slate-500">School ID</label>
+    <input type="text" name="guest_school_id" id="guest_school_id" maxlength="64"
+           placeholder="The school's official ID"
+           class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+    <div class="grid grid-cols-3 gap-2">
+      <div>
+        <label for="guest_teachers" class="block edify-text-caption font-semibold text-slate-500">Teachers</label>
+        <input type="number" min="0" name="guest_teachers" id="guest_teachers"
+               class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+      </div>
+      <div>
+        <label for="guest_leaders" class="block edify-text-caption font-semibold text-slate-500">Leaders</label>
+        <input type="number" min="0" name="guest_leaders" id="guest_leaders"
+               class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+      </div>
+      <div>
+        <label for="guest_other" class="block edify-text-caption font-semibold text-slate-500">Other</label>
+        <input type="number" min="0" name="guest_other" id="guest_other"
+               class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] font-semibold edify-surface focus:outline-none focus:ring-4 edify-primary-focus">
+      </div>
+    </div>
+    <p class="edify-text-caption font-semibold text-slate-400">
+      Not in the directory? Add it first &mdash; a school needs its Salesforce ID before work can be recorded against it.
+    </p>
+  </div>
 </div>
 </div>
 {% endif %}

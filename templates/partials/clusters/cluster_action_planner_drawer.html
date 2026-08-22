@@ -150,7 +150,19 @@ hx-include="#action-planner-form"
       }
     },
     get perSchool() { return (Number(this.teachers) || 0) + (Number(this.leaders) || 0) + (Number(this.other) || 0); },
-    get total() { return this.perSchool * (Number(this.schoolsInvited) || 0); }
+    get total() { return this.perSchool * (Number(this.schoolsInvited) || 0); },
+    allChecked: {% if schools_invited == cluster_school_count and cluster_school_count %}true{% else %}false{% endif %},
+    boxes() { return Array.from(this.$el.querySelectorAll('input[name=invited_school_ids]')); },
+    syncInvited() {
+      const boxes = this.boxes();
+      this.schoolsInvited = boxes.filter(b => b.checked).length;
+      this.allChecked = boxes.length > 0 && this.schoolsInvited === boxes.length;
+    },
+    toggleAll() {
+      const next = !this.allChecked;
+      this.boxes().forEach(b => { b.checked = next; });
+      this.syncInvited();
+    }
   }"
   x-init="ensureActivity()"
   class="space-y-4"
@@ -212,15 +224,33 @@ hx-include="#action-planner-form"
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" data-cluster-training-attendance-row>
     <div>
-      <label for="schools_invited" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Schools Invited <span class="text-rose-500">*</span></label>
-      <input aria-label="Schools invited" type="number" min="1" step="1" required
-        :max="clusterSchools"
-        id="schools_invited" name="schools_invited" x-model.number="schoolsInvited"
-        hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
-        hx-trigger="input changed delay:250ms, change" hx-include="#action-planner-form"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none">
+      <div class="flex items-baseline justify-between gap-2 mb-1">
+        <span class="edify-text-caption uppercase tracking-wider text-slate-400">Schools Invited <span class="text-rose-500">*</span></span>
+        <button type="button" @click="toggleAll()" class="edify-text-caption font-bold edify-primary-text hover:underline">
+          <span x-text="allChecked ? 'Clear all' : 'Select all'">Select all</span>
+        </button>
+      </div>
+      <div role="group" aria-label="Schools invited"
+           class="max-h-52 overflow-y-auto rounded-control border border-slate-200 edify-surface divide-y divide-slate-100">
+        {% for s in member_schools %}
+        <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">
+          <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
+                 {% if s.invited %}checked{% endif %}
+                 @change="syncInvited()"
+                 hx-get="/clusters/cost-preview" hx-target="#planner-cost-preview-container"
+                 hx-trigger="change" hx-include="#action-planner-form"
+                 class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] font-semibold edify-text truncate">{{ s.name }}</span>
+            <span class="block edify-text-caption font-medium text-slate-400">{{ s.school_id }}</span>
+          </span>
+        </label>
+        {% empty %}
+        <p class="px-3 py-4 text-[13px] font-semibold text-slate-500">No active schools in this cluster.</p>
+        {% endfor %}
+      </div>
       <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-        Of <span x-text="clusterSchools"></span> in this cluster. Lower it when some do not qualify or did not confirm &mdash; a Literacy session does not reach secondary or vocational members.
+        <span x-text="schoolsInvited"></span> of <span x-text="clusterSchools"></span> ticked. Untick the ones that do not qualify or did not confirm &mdash; a Literacy session does not reach secondary or vocational members.
       </p>
     </div>
     <div>
