@@ -684,8 +684,84 @@ from .closure_models import (  # noqa: E402 — circular import, must load after
     ActivityTimelineEvent,
 )
 
+
+class ClusterActivityAttendance(TimeStampedModel):
+    """One row per school at a cluster training or meeting.
+
+    A cluster session has no school FK — it belongs to the cluster — so
+    without this table the work it delivered is invisible on every school that
+    sat in the room. That is the gap this closes: the school profile, the
+    trained/not-trained counts and follow-up eligibility all need to know
+    which schools were actually there.
+
+    Invitation and attendance are separate columns on purpose. A cluster
+    invitation is not attendance, and crediting a school for a session it was
+    invited to but never reached would be a planned figure read as a verified
+    one. `invited` is ticked when the session is scheduled; `attended` is
+    confirmed by the person who delivered it.
+
+    The composition columns default to the activity's uniform per-school
+    figures, so the ordinary case stays a tick. They exist per row because a
+    guest school from another cluster brings its own numbers, which a single
+    activity-level figure cannot express.
+    """
+
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.CASCADE,
+        related_name="school_attendance",
+    )
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.PROTECT,
+        related_name="cluster_attendance",
+    )
+
+    invited = models.BooleanField(default=False)
+    attended = models.BooleanField(default=False)
+
+    #: Outside the activity's own cluster. Kept as a flag rather than derived
+    #: on read, because cluster membership changes and a guest at an August
+    #: session must still read as a guest in November. It also keeps guests
+    #: visible to IA instead of blended into the member list — the review gap
+    #: that the server-side member filter was protecting against.
+    is_guest = models.BooleanField(default=False)
+
+    teachers = models.IntegerField(null=True, blank=True)
+    leaders = models.IntegerField(null=True, blank=True)
+    other = models.IntegerField(null=True, blank=True)
+
+    recorded_by = models.CharField(max_length=30, blank=True, default="")
+
+    class Meta:
+        db_table = "cluster_activity_attendance"
+        ordering = ["school__name"]
+        constraints = [
+            # One row per school per activity. Attendance is a fact about a
+            # school being in a room, and a school cannot be in it twice —
+            # ["S1","S1","S1"] must credit S1 once.
+            models.UniqueConstraint(
+                fields=["activity", "school"],
+                name="uniq_cluster_attendance_per_school",
+            ),
+        ]
+        indexes = [
+            # "Which schools attended this session?" — the completion drawer
+            # and IA's review workspace.
+            models.Index(fields=["activity", "attended"]),
+            # "Was this school trained this year?" — the school profile and
+            # every trained/not-trained count. This is the join that replaces
+            # scanning an array column.
+            models.Index(fields=["school", "attended"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.school_id} @ {self.activity_id}"
+
+
 __all__ = [
     "Activity",
+    "ClusterActivityAttendance",
     "ActivityScheduleCostLine",
     "SalesforceEntrySource",
     "ActivitySalesforceReference",

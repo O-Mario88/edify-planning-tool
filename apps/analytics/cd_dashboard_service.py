@@ -831,6 +831,7 @@ class CDDashboardService:
         its assessment, and the two-issue floor meant a single catastrophic
         weakness never appeared at all.
         """
+        from apps.activities.cluster_attendance import trained_school_ids
         from apps.core.enums import ssa_score_band
         from apps.ssa.models import SsaRecord
 
@@ -843,11 +844,11 @@ class CDDashboardService:
             .exclude(school_id__isnull=True)
             .values_list("school_id", flat=True)
         )
-        trained = set(
-            completed.filter(activity_type__in=TRAINING_TYPES)
-            .exclude(school_id__isnull=True)
-            .values_list("school_id", flat=True)
-        )
+        # Both routes, one answer. Filtering on school_id alone missed every
+        # cluster-delivered training — a cluster session has no school FK —
+        # so a school that sat through one read as No Training here while
+        # reading as trained on its own profile.
+        trained = trained_school_ids(cd.school_ref, fy=cd.fy)
         latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         # The score itself, not a yes/no. `average_score__lt=5.0` is exactly
         # the Critical band, so the old set threw away every Warning school

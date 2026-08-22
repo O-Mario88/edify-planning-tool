@@ -201,6 +201,22 @@ class School(SoftDeleteModel):
                 fields=["name"], name="school_name_trgm_idx", opclasses=["gin_trgm_ops"]
             ),
         ]
+        constraints = [
+            # The Salesforce account id is what proves a school was entered in
+            # Salesforce before anyone recorded work against it, so it is also
+            # the duplicate check: two people adding the same school from the
+            # field must collide here rather than mint two records.
+            #
+            # Partial, because the 16,988 schools that pre-date this rule have
+            # no id and must not collide with each other. Required at the
+            # point of manual creation, never backfilled with a guess.
+            models.UniqueConstraint(
+                fields=["salesforce_account_id"],
+                condition=~models.Q(salesforce_account_id=None)
+                & ~models.Q(salesforce_account_id=""),
+                name="uniq_school_salesforce_account_id",
+            ),
+        ]
 
     def recompute_quality_and_readiness(self):
         # 1. Compute Data Quality
