@@ -3,11 +3,9 @@
 Two behaviours, stated once in static/css/components/interactions.css and
 guarded here:
 
-  Hover inverts.  A blue control turns white with blue ink; a white control
-                  turns blue with white ink. Before this, "hover" meant a
-                  slightly darker blue in some families, a faint blue tint in
-                  others, and nothing at all for the many buttons written as
-                  raw Tailwind utilities.
+  Hover clarifies. A primary control remains white on brand blue and deepens
+                   on hover; a quiet control turns blue with white ink. Nested
+                   labels and icons always inherit the readable control ink.
 
   Press pushes.   The control shifts down a pixel and drops its shadow, so a
                   click reads as a press rather than a colour flicker.
@@ -67,15 +65,29 @@ class InteractionContractIsLoadedTest(SimpleTestCase):
         self.assertIn("interactions.css", links[-1])
 
 
-class HoverInvertsTest(SimpleTestCase):
+class ReadableButtonStatesTest(SimpleTestCase):
     def setUp(self):
         self.css = _read(STYLESHEET)
 
-    def test_a_blue_control_turns_into_a_white_one(self):
+    def test_a_primary_control_is_white_on_brand_at_rest(self):
         self.assertIn(
-            "background-color: var(--edify-invert-surface) !important;", self.css
+            "background-color: var(--edify-primary-action-fill) !important;",
+            self.css,
         )
-        self.assertIn("color: var(--edify-invert-surface-ink) !important;", self.css)
+        self.assertIn(
+            "color: var(--edify-primary-action-ink) !important;", self.css
+        )
+
+    def test_a_primary_control_deepens_without_changing_ink_on_hover(self):
+        self.assertIn(
+            "background-color: var(--edify-primary-action-fill-hover) !important;",
+            self.css,
+        )
+        primary_contract = self.css.split(
+            "Primary actions have one readable resting state", 1
+        )[1].split("White on rest → blue on hover", 1)[0]
+        self.assertNotIn("--edify-invert-surface-ink", primary_contract)
+        self.assertNotIn("--edify-invert-surface) !important", primary_contract)
 
     def test_a_white_control_turns_into_a_blue_one(self):
         self.assertIn(
@@ -83,13 +95,17 @@ class HoverInvertsTest(SimpleTestCase):
         )
         self.assertIn("color: var(--edify-invert-fill-ink) !important;", self.css)
 
-    def test_both_families_are_named_not_just_the_component_api(self):
+    def test_platform_families_are_named_not_just_the_component_api(self):
         """Most buttons on this platform are raw utilities. A contract that
         only covered `.btn-primary` would leave the majority behaving the old
         way, which is worse than not having one."""
         for needle in (
             ".btn-premium-primary",
             ".edify-action-button.primary",
+            ".ia-button--primary",
+            ".urgent-action--primary",
+            ".mobile-sticky-actions__primary",
+            "[data-mobile-primary-action]",
             r".bg-\[var\(--edify-primary\)\]",
             r".bg-\[var\(--edify-accent\)\]",
             ".btn-premium-secondary",
@@ -97,23 +113,34 @@ class HoverInvertsTest(SimpleTestCase):
         ):
             self.assertIn(needle, self.css, f"{needle} is outside the contract")
 
-    def test_nested_labels_and_icons_follow_the_inverted_ink(self):
-        """A utility colour on a nested span would otherwise repaint the label
-        white on a now-white surface."""
-        self.assertIn(":is(span, strong, small, svg, b)", self.css)
+    def test_nested_labels_and_icons_inherit_the_control_ink(self):
+        """A nested dark text utility must not repaint a primary label."""
+        self.assertIn(":is(span, strong, small, svg, path, b, em, i)", self.css)
+        self.assertIn("color: inherit !important;", self.css)
 
     def test_hover_rules_are_guarded_for_touch(self):
         """A tap must not leave a control stuck in its hover state."""
         self.assertIn("@media (hover: hover)", self.css)
 
-    def test_both_inversion_pairs_meet_aa_in_the_light_theme(self):
+    def test_primary_rest_and_hover_pairs_meet_aa_in_the_light_theme(self):
         tokens = _read("static/css/design-system.css")
         fill = self._token(tokens, "--brand-primary")
+        hover_fill = self._token(tokens, "--brand-primary-hover")
         ink_on_fill = self._token(tokens, "--brand-primary-on-solid")
-        ink_on_surface = self._token(tokens, "--brand-primary-text")
 
         self.assertGreaterEqual(_contrast_ratio(ink_on_fill, fill), 4.5)
-        self.assertGreaterEqual(_contrast_ratio(ink_on_surface, "#ffffff"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio(ink_on_fill, hover_fill), 4.5)
+
+    def test_disabled_primary_controls_are_left_to_the_disabled_contract(self):
+        rest_rule = self.css.split(
+            "Primary actions have one readable resting state", 1
+        )[1].split("Nested text utilities", 1)[0]
+        self.assertIn(':not(:disabled):not([aria-disabled="true"])', rest_rule)
+
+    def test_no_drawer_needs_a_one_off_readability_patch(self):
+        self.assertNotIn(
+            "button.btn-premium-primary.schedule-drawer-submit", self.css
+        )
 
     @staticmethod
     def _token(tokens, name):

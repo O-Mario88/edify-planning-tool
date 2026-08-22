@@ -12,39 +12,37 @@
 
    Two rules, applied everywhere:
 
-     Hover inverts.  A blue control turns white with blue ink; a white control
-                     turns blue with white ink. The pair is always one of the
-                     platform's checked contrast pairs, never a new colour.
+     Hover clarifies. A primary control keeps white ink and deepens its brand
+                      fill; a quiet control turns blue with white ink. Labels
+                      and icons inherit the control ink in every state.
 
      Press pushes.   The control moves down 1px and loses its lift, so a click
                      reads as a physical press rather than a colour flicker.
                      Removed entirely under prefers-reduced-motion.
    ════════════════════════════════════════════════════════════════════════════ */
 
-/* ── The two inversion pairs, per theme ────────────────────────────────────
-   Named once so every rule below is theme-agnostic. "Fill" is the blue state
-   and "surface" is the white one; each theme supplies the ink that reads on
-   it. Light uses the brand ramp; blue and dark use their accent ramps, whose
-   pairs are the ones already measured for AA on those backgrounds. */
+/* ── Action state pairs, per theme ─────────────────────────────────────────
+   Named once so every rule below is theme-agnostic. Primary actions always
+   use a checked white-on-brand pair. "Invert fill" remains the response for
+   quiet controls and the selected state for segmented rails. */
 :root {
   --edify-press-shift: 1px;
+  --edify-primary-action-fill: var(--brand-primary);
+  --edify-primary-action-fill-hover: var(--brand-primary-hover);
+  --edify-primary-action-ink: var(--brand-primary-on-solid);
+  --edify-primary-action-border: var(--brand-primary);
   --edify-invert-fill: var(--brand-primary);
   --edify-invert-fill-ink: var(--brand-primary-on-solid);
-  --edify-invert-surface: var(--edify-surface-raised);
-  --edify-invert-surface-ink: var(--brand-primary-text);
-  --edify-invert-border: var(--brand-primary);
 }
 
 .theme-blue,
 .theme-dark {
+  --edify-primary-action-fill: var(--edify-accent);
+  --edify-primary-action-fill-hover: var(--edify-accent-hover);
+  --edify-primary-action-ink: var(--edify-on-accent);
+  --edify-primary-action-border: var(--edify-accent);
   --edify-invert-fill: var(--edify-accent);
   --edify-invert-fill-ink: var(--edify-on-accent);
-  --edify-invert-surface: var(--edify-surface-raised);
-  /* --edify-accent is built for fills; as ink on the night/blue surface it
-     measures under AA, so the inverted label takes the theme's readable
-     blue — the same substitution the active tab already makes. */
-  --edify-invert-surface-ink: var(--edify-info);
-  --edify-invert-border: var(--edify-accent);
 }
 
 /* ── Who is a control ──────────────────────────────────────────────────────
@@ -52,47 +50,93 @@
    the component API names them. A family listed in neither is left alone:
    status buttons, danger actions and chips keep their own ramps. */
 
-/* Blue on rest → white on hover. */
+/* Primary actions have one readable resting state, even when a legacy page
+   gives the control (or one of its nested labels) a dark text utility. This
+   sheet loads last, so the contract absorbs older family-specific rules. */
+:is(button, a, input):is(
+  .btn-primary, .btn-premium-primary, .edify-btn-primary,
+  .edify-action-button.primary, .edify-primary-solid,
+  .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary, .urgent-action--primary,
+  .ad-action--primary, .agreement-action--primary,
+  .edify-session-dialog__primary, .mobile-sticky-actions__primary,
+  .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
+  [data-mobile-primary-action],
+  .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
+  .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
+  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+  .bg-sky-600, .bg-sky-700
+):not(:disabled):not([aria-disabled="true"]) {
+  color: var(--edify-primary-action-ink) !important;
+  background-color: var(--edify-primary-action-fill) !important;
+  border-color: var(--edify-primary-action-border) !important;
+  text-shadow: none !important;
+}
+
+/* Nested text utilities must not repaint primary content. `path` normally
+   follows SVG currentColor; including it also protects older local icons. */
+:is(button, a):is(
+  .btn-primary, .btn-premium-primary, .edify-btn-primary,
+  .edify-action-button.primary, .edify-primary-solid,
+  .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary, .urgent-action--primary,
+  .ad-action--primary, .agreement-action--primary,
+  .edify-session-dialog__primary, .mobile-sticky-actions__primary,
+  .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
+  [data-mobile-primary-action],
+  .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
+  .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
+  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+  .bg-sky-600, .bg-sky-700
+) :is(span, strong, small, svg, path, b, em, i) {
+  color: inherit !important;
+}
+
+/* Primary on rest → deeper primary on hover. White ink is invariant. */
 @media (hover: hover) {
   :is(button, a, input):is(
-    .btn-primary, .btn-premium-primary, .edify-action-button.primary,
-    .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+    .btn-primary, .btn-premium-primary, .edify-btn-primary,
+    .edify-action-button.primary, .edify-primary-solid,
+    .school-record-action--schedule, .premium-button-primary,
     .pto-button--primary, .sp-button--primary, .spa-button--primary,
     .spp-button--primary, .tt-button--primary, .hcos-button--primary,
-    .admin-button--primary,
-    /* Buttons written as raw utilities rather than through the component API.
-       They are blue by any other name, and a user hovering one has no way to
-       know which of the two spellings the page happened to use. Scoped to
-       button/a by the outer :is(), so a blue CARD keeps its fill. */
+    .admin-button--primary, .ia-button--primary, .urgent-action--primary,
+    .ad-action--primary, .agreement-action--primary,
+    .edify-session-dialog__primary, .mobile-sticky-actions__primary,
+    .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
+    [data-mobile-primary-action],
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
     .bg-sky-600, .bg-sky-700
   ):hover:not(:disabled):not([aria-disabled="true"]) {
-    color: var(--edify-invert-surface-ink) !important;
-    background-color: var(--edify-invert-surface) !important;
+    color: var(--edify-primary-action-ink) !important;
+    background-color: var(--edify-primary-action-fill-hover) !important;
     background-image: none !important;
-    border-color: var(--edify-invert-border) !important;
+    border-color: var(--edify-primary-action-fill-hover) !important;
   }
 
-  /* Icons and helper spans inherit the inverted ink, or a nested utility
-     colour repaints the label back to white on a white surface. */
-  :is(button, a, input):is(
-    .btn-primary, .btn-premium-primary, .edify-action-button.primary,
-    .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
+  :is(button, a):is(
+    .btn-primary, .btn-premium-primary, .edify-btn-primary,
+    .edify-action-button.primary, .edify-primary-solid,
+    .school-record-action--schedule, .premium-button-primary,
     .pto-button--primary, .sp-button--primary, .spa-button--primary,
     .spp-button--primary, .tt-button--primary, .hcos-button--primary,
-    .admin-button--primary,
-    /* Buttons written as raw utilities rather than through the component API.
-       They are blue by any other name, and a user hovering one has no way to
-       know which of the two spellings the page happened to use. Scoped to
-       button/a by the outer :is(), so a blue CARD keeps its fill. */
+    .admin-button--primary, .ia-button--primary, .urgent-action--primary,
+    .ad-action--primary, .agreement-action--primary,
+    .edify-session-dialog__primary, .mobile-sticky-actions__primary,
+    .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
+    [data-mobile-primary-action],
     .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
     .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
     .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
     .bg-sky-600, .bg-sky-700
-  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, b) {
-    color: var(--edify-invert-surface-ink) !important;
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i) {
+    color: inherit !important;
   }
 
   /* White on rest → blue on hover. */
@@ -105,7 +149,7 @@
     .admin-button--secondary,
     /* The same courtesy for quiet buttons spelled as utilities. */
     .bg-white, .bg-\[var\(--edify-surface\)\], .bg-\[var\(--edify-surface-raised\)\]
-  ),
+  ):hover:not(:disabled):not([aria-disabled="true"]),
   /* And for the commonest spelling of all: a bordered control with no
      background class at all. `.rounded-control` + `.border` is this
      codebase's signature for a quiet button — deliberately narrower than
@@ -130,7 +174,7 @@
     .admin-button--secondary,
     /* The same courtesy for quiet buttons spelled as utilities. */
     .bg-white, .bg-\[var\(--edify-surface\)\], .bg-\[var\(--edify-surface-raised\)\]
-  ),
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i),
   /* And for the commonest spelling of all: a bordered control with no
      background class at all. `.rounded-control` + `.border` is this
      codebase's signature for a quiet button — deliberately narrower than
@@ -139,9 +183,34 @@
   :is(button, a):is(.rounded-control):is(.border):not(
     [class*="danger"], [class*="rose"], [class*="red"], [class*="amber"],
     [class*="emerald"], [class*="green"], [class*="success"], [class*="warning"]
-  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, b) {
-    color: var(--edify-invert-fill-ink) !important;
+  ):hover:not(:disabled):not([aria-disabled="true"]) :is(span, strong, small, svg, path, b, em, i) {
+    color: inherit !important;
   }
+}
+
+/* Pressed primary actions use the same high-contrast pair on pointer and
+   touch devices. Movement is handled separately by the reduced-motion-aware
+   press block below. */
+:is(button, a, input):is(
+  .btn-primary, .btn-premium-primary, .edify-btn-primary,
+  .edify-action-button.primary, .edify-primary-solid,
+  .school-record-action--schedule, .premium-button-primary,
+  .pto-button--primary, .sp-button--primary, .spa-button--primary,
+  .spp-button--primary, .tt-button--primary, .hcos-button--primary,
+  .admin-button--primary, .ia-button--primary, .urgent-action--primary,
+  .ad-action--primary, .agreement-action--primary,
+  .edify-session-dialog__primary, .mobile-sticky-actions__primary,
+  .mobile-role-home__action, .tile-filter-btn-primary, .help-search-button,
+  [data-mobile-primary-action],
+  .bg-\[var\(--edify-primary\)\], .bg-\[var\(--edify-accent\)\],
+  .bg-\[var\(--color-edify-primary\)\], .bg-\[var\(--edify-chart-blue\)\],
+  .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700,
+  .bg-sky-600, .bg-sky-700
+):active:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--edify-primary-action-ink) !important;
+  background-color: var(--edify-primary-action-fill-hover) !important;
+  background-image: none !important;
+  border-color: var(--edify-primary-action-fill-hover) !important;
 }
 
 /* ── Tabs: a segmented rail, not a row of buttons ──────────────────────────
@@ -562,30 +631,6 @@ main :is(
     box-shadow: none !important;
     transition-duration: 60ms !important;
   }
-}
-
-/* Scheduling's primary action keeps white ink through hover and press. The
-   global inversion contract can otherwise pair a theme surface and theme ink
-   that converge in the blue/dark drawers, making the label appear to vanish. */
-@media (hover: hover) {
-  button.btn-premium-primary.schedule-drawer-submit:hover:not(:disabled):not([aria-disabled="true"]) {
-    color: #fff !important;
-    background-color: var(--edify-accent-hover) !important;
-    border-color: var(--edify-accent-hover) !important;
-  }
-
-  button.btn-premium-primary.schedule-drawer-submit:hover:not(:disabled):not([aria-disabled="true"]) :is(span, svg) {
-    color: inherit !important;
-  }
-}
-
-button.btn-premium-primary.schedule-drawer-submit:active:not(:disabled):not([aria-disabled="true"]) {
-  color: #fff !important;
-  background-color: var(--edify-accent-hover) !important;
-}
-
-button.btn-premium-primary.schedule-drawer-submit:active:not(:disabled):not([aria-disabled="true"]) :is(span, svg) {
-  color: inherit !important;
 }
 
 /* ── Consolidated analytics navigation ───────────────────────────────────
