@@ -1,0 +1,98 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Update SSA Scores &amp; Complete{% endblock %}
+{% block drawer_subtitle %}Record the completed SSA for {{ a.school.name }} and update its current pupil enrolment.{% endblock %}
+
+{% block drawer_body %}
+<form method="post"
+      action="/activities/{{ a.id }}/partner-ssa-complete/action"
+      hx-post="/activities/{{ a.id }}/partner-ssa-complete/action"
+      hx-target="#partner-ssa-complete-errors"
+      hx-disabled-elt="find button[type=submit]"
+      class="space-y-5 text-[13px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="partner-ssa-complete-errors" aria-live="polite"></div>
+
+  <div class="rounded-overlay border border-[var(--border-card)] bg-[var(--color-edify-soft)] p-4">
+    <p class="font-bold text-[var(--color-edify-primary)]">Partner SSA Support</p>
+    <dl class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div><dt class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">School</dt><dd class="mt-0.5 text-slate-700">{{ a.school.name }}</dd></div>
+      <div><dt class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Assessment date</dt><dd class="mt-0.5 tabular-nums text-slate-700">{{ assessment_date|date:"d M Y" }}</dd></div>
+      <div><dt class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Partner evidence</dt><dd class="mt-0.5 text-slate-700">{{ evidence_count }} file{{ evidence_count|pluralize }}</dd></div>
+    </dl>
+  </div>
+
+  <fieldset class="space-y-3">
+    <legend class="text-[14px] font-bold text-slate-800">SSA intervention scores</legend>
+    <p id="partner-ssa-score-hint" class="edify-text-caption font-medium leading-relaxed text-slate-500">Enter all eight scores from the completed assessment. Each score must be between 0 and 10.</p>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {% for field in score_fields %}
+      <div>
+        <label for="partner-ssa-score-{{ field.code }}" class="block font-semibold text-slate-700">
+          <span class="font-bold text-[var(--color-edify-primary)]">{{ field.abbreviation }}</span> — {{ field.label }}
+        </label>
+        <input id="partner-ssa-score-{{ field.code }}"
+               name="score_{{ field.code }}"
+               type="number"
+               min="0"
+               max="10"
+               step="0.1"
+               inputmode="decimal"
+               enterkeyhint="next"
+               aria-describedby="partner-ssa-score-hint"
+               required
+               class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <hr class="border-slate-100">
+
+  <div>
+    <label for="partner-ssa-enrollment" class="block text-[13px] font-bold text-slate-800">Pupil enrolment</label>
+    <p id="partner-ssa-enrollment-hint" class="mt-0.5 edify-text-caption font-medium leading-relaxed text-slate-500">Enter the school's current number of learners. This updates the School Directory headcount; it is separate from the SSA Enrolment score above.</p>
+    <input id="partner-ssa-enrollment"
+           name="enrollment"
+           type="number"
+           min="1"
+           max="1000000"
+           step="1"
+           inputmode="numeric"
+           enterkeyhint="next"
+           aria-describedby="partner-ssa-enrollment-hint"
+           value="{{ a.school.enrollment|default_if_none:'' }}"
+           required
+           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div>
+    <label for="partner-ssa-salesforce-id" class="block text-[13px] font-bold text-slate-800">Salesforce Activity ID</label>
+    <p id="partner-ssa-salesforce-hint" class="mt-0.5 edify-text-caption font-medium text-slate-500">Enter the School Visit Salesforce ID after delivery. It must start with SVE-.</p>
+    <input id="partner-ssa-salesforce-id"
+           name="salesforce_id"
+           type="text"
+           maxlength="30"
+           autocomplete="off"
+           enterkeyhint="done"
+           aria-describedby="partner-ssa-salesforce-hint"
+           placeholder="SVE-…"
+           value="{{ a.salesforce_activity_id|default_if_none:'' }}"
+           required
+           class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] bg-white px-3 text-[16px] font-semibold uppercase tabular-nums focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+  </div>
+
+  <div>
+    <label for="partner-ssa-verification-note" class="block text-[13px] font-bold text-slate-800">Completion note <span class="font-medium text-slate-400">(optional)</span></label>
+    <textarea id="partner-ssa-verification-note"
+              name="verification_note"
+              rows="2"
+              class="mt-1 w-full resize-y rounded-control border border-[var(--border-card)] bg-white px-3 py-2 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="h-12 rounded-control border border-[var(--border-strong)] bg-white px-5 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" class="schedule-drawer-submit h-12 rounded-control bg-[var(--color-edify-primary)] px-6 font-bold text-white transition-colors hover:bg-[var(--color-edify-dark)]">Save SSA &amp; Complete</button>
+  </div>
+</form>
+{% endblock %}

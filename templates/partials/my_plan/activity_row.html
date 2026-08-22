@@ -113,6 +113,16 @@ class="row-menu__item" role="menuitem"
 Submit for Review
 </button>
 {% endif %}
+{% elif row.is_partner_ssa_support and row.status == 'awaiting_ia_verification' %}
+<button
+hx-get="/activities/{{ row.id }}/partner-ssa-complete"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="close()"
+class="row-menu__item" role="menuitem"
+>
+Update SSA &amp; Complete
+</button>
 {% else %}
 <!-- Staff viewing partner-owned activity: read-only monitoring -->
 <p class="row-menu__note">Monitoring — partner-owned</p>

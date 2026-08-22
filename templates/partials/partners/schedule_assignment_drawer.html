@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Schedule Approved Activity{% endblock %}
-{% block drawer_subtitle %}{% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% endif %} · assigned by your managing staff{% endblock %}
+{% block drawer_title %}Schedule School Support{% endblock %}
+{% block drawer_subtitle %}{% if assignment.school %}{{ assignment.school.name }}{% elif assignment.cluster %}{{ assignment.cluster.name }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form method="post"
@@ -14,31 +14,13 @@
   {% csrf_token %}
   <div id="partner-schedule-errors" aria-live="polite"></div>
 
-  {% comment %}
-  The approved Activity is the assigner's decision, made at assignment and
-  fetched from the CD Cost Catalogue — this drawer shows it read-only and asks
-  the partner exactly one question: the delivery date. There is deliberately
-  nothing to choose here.
-  {% endcomment %}
-  {% if approved_item %}
-  <div class="edify-surface rounded-overlay border border-[var(--border-card)] p-4 shadow-sm">
-    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Activity</p>
-    <p class="mt-2 text-[14px] font-bold text-slate-800">{{ approved_item.display_name }}</p>
-    <p class="mt-1 font-medium text-slate-500">{{ approved_item.get_delivery_method_display }} · {{ approved_item.target_audience }}</p>
-    <p class="mt-1 edify-text-caption text-slate-500">Evidence: {{ approved_item.evidence_profile|status_label }}</p>
-    {% if assignment.focus_intervention %}<p class="mt-1 text-slate-500">Intervention: {{ assignment.focus_intervention|cut:"_"|title }}</p>{% endif %}
-    {% if assignment.recommendation_reason %}<p class="mt-2 font-medium text-slate-600">{{ assignment.recommendation_reason }}</p>{% endif %}
-    {% if assignment.source_ssa %}<p class="mt-2 edify-text-caption text-slate-500">SSA: {{ assignment.source_ssa.date_of_ssa }} · {{ assignment.source_ssa.verification_status|title }}</p>{% endif %}
-    <input type="hidden" name="catalogue_item_id" value="{{ approved_item.id }}">
-  </div>
-  {% else %}
+  {% if not approved_item %}
   <div class="rounded-surface border border-rose-200 bg-rose-50 p-3 text-rose-800" role="alert">This assignment does not name an approved Activity yet. Ask the managing staff member to repair it — the choice is made at assignment, not here.</div>
   {% endif %}
 
   {% comment %}
-  One drawer for every kind of assigned work — school visit, cluster meeting,
-  training. Nothing here branches on activity type, so the partner answers the
-  same question whatever they were handed.
+  The assigner already chose and governed the work. The partner supplies only
+  the delivery date and the person who will go to the School.
 
   Expected participants is deliberately gone. It was asked of the partner at
   scheduling, weeks before delivery, for every activity type including a
@@ -51,14 +33,16 @@
     <input id="partner-scheduled-date" name="scheduled_date" type="date" required class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
-  <div class="rounded-surface border border-sky-200 bg-sky-50 p-3 text-sky-900">
-    <p class="font-bold">Cost calculation happens now—not at assignment.</p>
-    <p class="mt-1 font-medium">The effective Partner rate from the CD Cost Catalogue will create the Activity budget lines after this date is confirmed.</p>
+  <div>
+    <label for="partner-delivery-contact" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Name of person visiting the School</label>
+    <input id="partner-delivery-contact" name="delivery_contact_name" type="text" maxlength="255" required autocomplete="name"
+      value="{{ request.user.name }}"
+      class="mt-1 min-h-12 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
   </div>
 
   <div class="drawer-footer">
     <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
-    <button type="submit" {% if not approved_item %}disabled{% endif %} class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)] disabled:cursor-not-allowed disabled:opacity-50">Schedule Activity</button>
+    <button type="submit" {% if not approved_item %}disabled{% endif %} class="schedule-drawer-submit btn-premium-primary px-6 h-10 rounded-control text-white font-bold disabled:cursor-not-allowed disabled:opacity-50">Submit</button>
   </div>
 </form>
 {% endblock %}

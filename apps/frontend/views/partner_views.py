@@ -750,9 +750,7 @@ def partner_schedule_assignment_action(request, assignment_id):
             assignment.id,
             {
                 "scheduledDate": request.POST.get("scheduled_date"),
-                "expectedParticipants": request.POST.get("expected_participants")
-                or None,
-                "catalogueItemId": request.POST.get("catalogue_item_id"),
+                "deliveryContactName": request.POST.get("delivery_contact_name"),
                 "requireCatalogue": True,
             },
             request.user,

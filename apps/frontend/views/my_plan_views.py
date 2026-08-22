@@ -2,7 +2,11 @@ from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission, RolePermissionService
+from apps.core.permissions import (
+    require_any_page_permission,
+    require_page_permission,
+    RolePermissionService,
+)
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
@@ -18,11 +22,13 @@ from apps.activities.services import (
     reschedule as reschedule_activity,
     start_completion,
     complete as complete_activity,
+    complete_partner_ssa_support,
     submit_for_review,
     record_attendance,
     ia_confirm,
     ia_return,
     sf_kind,
+    is_partner_ssa_support_activity,
 )
 from apps.activities.salesforce import (
     ENTRY_SOURCE_MANAGING_STAFF,
@@ -45,6 +51,18 @@ from apps.pl_review.services import (
 from apps.activities.models import Activity
 
 
+SSA_SCORE_ABBREVIATIONS = {
+    SsaIntervention.CHRISTLIKE_BEHAVIOUR.value: "CB",
+    SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value: "WOG",
+    SsaIntervention.FINANCIAL_HEALTH.value: "FH",
+    SsaIntervention.LEADERSHIP.value: "L",
+    SsaIntervention.GOVERNMENT_REQUIREMENT.value: "GR",
+    SsaIntervention.LEARNING_ENVIRONMENT.value: "LE",
+    SsaIntervention.TEACHING_ENVIRONMENT.value: "TE",
+    SsaIntervention.ENROLMENT.value: "ENR",
+}
+
+
 def _forbid_staff_on_partner_activity(request, a):
     """Partner-owned activities are read-only for staff monitors.
 
@@ -62,6 +80,29 @@ def _forbid_staff_on_partner_activity(request, a):
     if a.assigned_partner_id and a.assigned_partner_id in (scope.partner_ids or []):
         return None
     return HttpResponseForbidden("Partner-owned activity — staff can only monitor.")
+
+
+def _partner_ssa_completion_context(a: Activity) -> dict:
+    from apps.evidence.models import EvidenceRecord
+
+    return {
+        "a": a,
+        "score_fields": [
+            {
+                "code": code,
+                "label": label,
+                "abbreviation": SSA_SCORE_ABBREVIATIONS[code],
+            }
+            for code, label in SsaIntervention.choices
+        ],
+        "assessment_date": (
+            a.actual_delivery_date or a.planned_date or timezone.localdate()
+        ),
+        "evidence_count": EvidenceRecord.objects.filter(
+            activity_id=a.id, quarantined=False
+        ).count(),
+        "drawer_size": "md",
+    }
 
 
 @require_page_permission("my_plan")
@@ -238,11 +279,91 @@ def activity_detail_view(request, activity_id):
         "status_tone": status_tone(status_class),
         "responsible_staff_name": staff_name,
         "timeline": timeline,
+        "can_complete_partner_ssa_support": (
+            RolePermissionService.can_complete_partner_ssa_support(request.user, a)
+            and a.status == "awaiting_ia_verification"
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/activity_detail_drawer.html", context)
     return render(request, "pages/my_plan/detail.html", context)
+
+
+@require_any_page_permission("my_plan", "ia_partner_evidence")
+def partner_ssa_completion_drawer_view(request, activity_id):
+    """Dedicated completion drawer for partner-delivered school SSA Support."""
+    a = get_object_or_404(
+        Activity.objects.select_related("school"),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
+    if not RolePermissionService.can_complete_partner_ssa_support(request.user, a):
+        return HttpResponseForbidden(
+            "Only Impact Assessment or the staff member monitoring this partner "
+            "SSA Support activity may complete it."
+        )
+    if a.status != "awaiting_ia_verification":
+        return notice_fragment(
+            "The partner must submit the completed SSA evidence before scores "
+            "and enrolment can be recorded."
+        )
+    return render(
+        request,
+        "partials/my_plan/partner_ssa_completion_drawer.html",
+        _partner_ssa_completion_context(a),
+    )
+
+
+@require_any_page_permission("my_plan", "ia_partner_evidence")
+def partner_ssa_completion_action(request, activity_id):
+    """Save eight scores + pupil enrolment and complete the partner activity."""
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required")
+    a = get_object_or_404(
+        Activity.objects.select_related("school"),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
+    if not RolePermissionService.can_complete_partner_ssa_support(request.user, a):
+        return HttpResponseForbidden(
+            "Only Impact Assessment or the staff member monitoring this partner "
+            "SSA Support activity may complete it."
+        )
+
+    payload = {
+        "scores": [
+            {
+                "intervention": code,
+                "score": request.POST.get(f"score_{code}", ""),
+            }
+            for code, _label in SsaIntervention.choices
+        ],
+        "enrollment": request.POST.get("enrollment", ""),
+        "salesforceId": request.POST.get("salesforce_id", ""),
+        "verificationNote": request.POST.get("verification_note", ""),
+    }
+    try:
+        result = complete_partner_ssa_support(a.id, payload, request.user)
+    except Exception as exc:
+        return error_fragment(exc, action="SSA Support completion error", status=400)
+
+    audit_log(
+        action="complete_partner_ssa_support",
+        subject_kind="Activity",
+        subject_id=str(a.id),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=True,
+        payload={
+            "ssa_record_id": result["ssaRecordId"],
+            "enrollment": result["enrollment"],
+            "score_count": len(payload["scores"]),
+        },
+    )
+    response = HttpResponse("<script>window.location.reload();</script>")
+    response["HX-Trigger"] = "close-drawer"
+    return response
 
 
 @require_page_permission("my_plan")
@@ -261,6 +382,9 @@ def complete_drawer_view(request, activity_id):
         return HttpResponseForbidden(
             "Access Denied: You do not have permission to access this activity drawer."
         )
+
+    if is_partner_ssa_support_activity(a):
+        return partner_ssa_completion_drawer_view(request, activity_id)
 
     act = get_activity(activity_id, request.user)
 

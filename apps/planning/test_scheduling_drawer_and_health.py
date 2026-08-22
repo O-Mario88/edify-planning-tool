@@ -22,17 +22,21 @@ from django.core.management import call_command
 from django.test import Client, TestCase
 from django.utils import timezone
 
-from apps.accounts.models import User
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.activities.models import Activity
 from apps.activity_catalogue.availability import (
     CLUSTER,
     SCHOOL,
     available_activity_types,
+    training_activity_options,
+    validate_priority_training_selection,
 )
 from apps.activity_catalogue.models import ActivityCatalogueItem
 from apps.activity_catalogue.scheduling_health import scheduling_health
+from apps.activity_catalogue.services import resolve_activity_intervention
 from apps.clusters.models import Cluster
 from apps.core.enums import ExecutorType, ParticipantMode, SsaIntervention
+from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, Region
 from apps.partners.models import Partner
@@ -82,6 +86,60 @@ class AvailableActivityTypeServiceTest(TestCase):
         self.assertIn("cluster_meeting", kinds)
         self.assertIn("cluster_training", kinds)
         self.assertNotIn("school_visit", kinds)
+
+    def test_training_options_are_linked_to_intervention_and_delivery_context(self):
+        school_rows = {
+            row["stableCode"]: row
+            for row in training_activity_options(planning_context=SCHOOL)
+        }
+        cluster_rows = {
+            row["stableCode"]: row
+            for row in training_activity_options(planning_context=CLUSTER)
+        }
+
+        self.assertTrue(school_rows)
+        self.assertTrue(cluster_rows)
+        self.assertTrue(
+            all(row["priorityTitles"] for row in school_rows.values())
+        )
+        self.assertTrue(
+            all(row["priorityTitles"] for row in cluster_rows.values())
+        )
+
+        self.assertIn("EDTECH_FOUNDATIONS", school_rows)
+        self.assertEqual(
+            school_rows["EDTECH_FOUNDATIONS"]["interventions"],
+            [SsaIntervention.LEARNING_ENVIRONMENT],
+        )
+        self.assertNotIn("TAM_I", school_rows)
+
+        self.assertIn("TAM_I", cluster_rows)
+        self.assertEqual(
+            cluster_rows["TAM_I"]["interventions"],
+            [SsaIntervention.TEACHING_ENVIRONMENT],
+        )
+        self.assertEqual(
+            cluster_rows["LITERACY_NUMERACY_PROJECT"]["interventions"],
+            [SsaIntervention.LEARNING_ENVIRONMENT],
+        )
+        self.assertNotIn("EDTECH_FOUNDATIONS", cluster_rows)
+
+        tam = ActivityCatalogueItem.objects.get(stable_code="TAM_I")
+        with self.assertRaisesMessage(
+            BadRequest, "not linked to that SSA intervention"
+        ):
+            validate_priority_training_selection(
+                tam.id,
+                planning_context=CLUSTER,
+                intervention=SsaIntervention.LEADERSHIP,
+            )
+        with self.assertRaisesMessage(
+            BadRequest, "not approved for that SSA intervention"
+        ):
+            resolve_activity_intervention(
+                tam,
+                requested_intervention=SsaIntervention.LEADERSHIP,
+            )
 
     def test_an_intervention_never_removes_standard_support(self):
         """The heart of the correction.
@@ -143,6 +201,12 @@ class ScheduleDrawerFieldsTest(TestCase):
             district=cls.district,
             school_type="client",
         )
+        cls.cluster = Cluster.objects.create(
+            name="Drawer Cluster",
+            region=cls.region,
+            district=cls.district,
+            status="active",
+        )
         cls.user = User.objects.create(
             id="drawer-std-admin",
             email="drawer-std@edify.org",
@@ -151,6 +215,42 @@ class ScheduleDrawerFieldsTest(TestCase):
             active_role="Admin",
             is_active=True,
             status="active",
+        )
+        cls.owner_user = User.objects.create(
+            id="drawer-portfolio-owner",
+            email="drawer-owner@edify.org",
+            name="Portfolio Owner",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+            status="active",
+        )
+        cls.owner = StaffProfile.objects.create(
+            user=cls.owner_user,
+            staff_number="DRAWER-OWNER",
+        )
+        StaffSchoolAssignment.objects.create(staff=cls.owner, school_id=cls.school.id)
+        cls.follow_up_source = Activity.objects.create(
+            activity_type="cluster_training",
+            activity_name_snapshot="Literacy Training",
+            cluster=cls.cluster,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            planned_date=timezone.localdate() - datetime.timedelta(days=14),
+            status="completed",
+            attended_school_ids=[cls.school.id],
+            focus_intervention=SsaIntervention.TEACHING_ENVIRONMENT,
+        )
+        Activity.objects.create(
+            activity_type="cluster_training",
+            activity_name_snapshot="Unattended Training",
+            cluster=cls.cluster,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            planned_date=timezone.localdate() - datetime.timedelta(days=7),
+            status="completed",
+            attended_school_ids=[],
+            focus_intervention=SsaIntervention.LEADERSHIP,
         )
 
     def _drawer(self) -> str:
@@ -200,20 +300,65 @@ class ScheduleDrawerFieldsTest(TestCase):
         html = self._drawer()
         self.assertIn("profiles:", html)
         self.assertIn("onPurposeChange()", html)
-        self.assertIn("onDeliveryChange(", html)
+        self.assertIn("showFollowUpPicker", html)
 
     def test_switching_purpose_clears_participant_state(self):
         html = self._drawer()
         self.assertIn("this.plannedParticipants = ''", html)
 
-    def test_switching_delivery_away_from_agency_clears_the_agency(self):
+    def test_responsible_person_is_the_portfolio_owner_not_a_delivery_picker(self):
         html = self._drawer()
-        self.assertIn("this.selectedAgency = ''", html)
+        self.assertIn("Responsible Person", html)
+        self.assertIn("Portfolio Owner", html)
+        self.assertNotIn('id="executor_type"', html)
+        self.assertNotIn('id="assigned_partner_id"', html)
+
+    def test_purpose_specific_workflows_are_rendered_without_stale_inputs(self):
+        html = self._drawer()
+        self.assertIn('x-if="showFollowUpPicker"', html)
+        self.assertIn('name="source_activity_id"', html)
+        self.assertIn('x-if="showSsaDataGathering"', html)
+        self.assertIn("Data Gathering", html)
+        self.assertIn("TS-", html)
+        self.assertIn("Literacy Training", html)
+        self.assertNotIn("Unattended Training", html)
+
+    def test_post_assigns_the_portfolio_owner_server_side(self):
+        client = Client()
+        client.force_login(self.user)
+        donor = ActivityCatalogueItem.objects.get(stable_code="STANDARD_DONOR_VISIT")
+        with patch(
+            "apps.frontend.views.planning_views.schedule_school_visit"
+        ) as schedule:
+            response = client.post(
+                "/planning/schedule-action",
+                {
+                    "school_id": self.school.school_id,
+                    "purpose_of_visit": "donor_visit",
+                    "scheduled_date": str(timezone.localdate()),
+                    "catalogue_item_id": donor.id,
+                    "require_catalogue": "yes",
+                    "delivery_type": "staff",
+                    "executor_type": "staff",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+        self.assertEqual(response.status_code, 200)
+        payload = schedule.call_args.args[0]
+        self.assertEqual(payload["responsibleStaffId"], self.owner.id)
+
+    def test_schedule_button_keeps_a_dedicated_contrast_contract(self):
+        html = self._drawer()
+        self.assertIn("schedule-drawer-submit", html)
 
     def test_the_drawer_never_demands_a_project(self):
         html = self._drawer()
         self.assertNotIn("Create a Project", html)
         self.assertNotIn("requires a Project to continue", html)
+        self.assertNotIn('id="training_project_id"', html)
+        self.assertIn('id="training_activity_id"', html)
+        self.assertIn("EdTech Foundations", html)
+        self.assertIn("availableTrainingActivities", html)
 
 
 class ClusterDrawerDeliveryTest(TestCase):
@@ -295,6 +440,18 @@ class ClusterDrawerDeliveryTest(TestCase):
             is_active=True,
             status="active",
         )
+        cls.literacy_cluster_training = ActivityCatalogueItem.objects.get(
+            stable_code="LITERACY_NUMERACY_PROJECT"
+        )
+        cls.tam_cluster_training = ActivityCatalogueItem.objects.get(
+            stable_code="TAM_I"
+        )
+        ActivityCatalogueItem.objects.filter(
+            id__in=[
+                cls.literacy_cluster_training.id,
+                cls.tam_cluster_training.id,
+            ]
+        ).update(requires_current_ssa=False)
 
     def _drawer(self) -> str:
         client = Client()
@@ -316,23 +473,22 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn(self.certified.name, html)
         self.assertNotIn(self.uncertified.name, html)
 
-    def test_training_asks_for_a_created_project_and_invited_school_count(self):
+    def test_training_asks_for_intervention_linked_activity_and_invited_schools(self):
         html = self._drawer()
         self.assertIn('name="teachers_per_school"', html)
         self.assertIn('name="leaders_per_school"', html)
         self.assertIn('name="other_per_school"', html)
         self.assertIn('name="schools_invited"', html)
         self.assertIn('max="3"', html)
-        self.assertIn('name="project_id"', html)
-        self.assertIn("Literacy", html)
-        self.assertIn("EdTech Foundations", html)
-        self.assertIn("EdTech Integration", html)
-        self.assertIn("Paused Teacher Pedagogy", html)
-        self.assertIn("Paused", html)
         self.assertIn('name="focus_intervention"', html)
+        self.assertIn('name="catalogue_item_id"', html)
+        self.assertNotIn('name="project_id"', html)
+        self.assertIn("Teaching as a Mission (TAM) I", html)
+        self.assertIn("Literacy/Numeracy Project", html)
+        self.assertIn("activity.interventions.includes(this.intervention)", html)
         self.assertNotIn("Activity Goal / Purpose", html)
 
-    def test_cluster_card_drawer_uses_the_same_project_training_contract(self):
+    def test_cluster_card_drawer_uses_the_same_activity_training_contract(self):
         client = Client()
         client.force_login(self.user)
         response = client.get(
@@ -342,9 +498,11 @@ class ClusterDrawerDeliveryTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         html = response.content.decode("utf-8")
-        self.assertIn('name="project_id"', html)
-        self.assertIn("EdTech Foundations", html)
-        self.assertIn("EdTech Integration", html)
+        self.assertNotIn('name="project_id"', html)
+        self.assertIn('name="focus_intervention"', html)
+        self.assertIn('name="catalogue_item_id"', html)
+        self.assertIn("Teaching as a Mission (TAM) I", html)
+        self.assertIn("Literacy/Numeracy Project", html)
         self.assertIn('name="schools_invited"', html)
         self.assertIn('name="teachers_per_school"', html)
         self.assertIn(
@@ -455,7 +613,7 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200)
         return response.content.decode("utf-8")
 
-    def test_training_post_cannot_bypass_the_required_project(self):
+    def test_training_post_cannot_bypass_the_required_intervention_and_activity(self):
         client = Client()
         client.force_login(self.user)
         response = client.post(
@@ -470,7 +628,23 @@ class ClusterDrawerDeliveryTest(TestCase):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Select the Project", response.content.decode("utf-8"))
+        self.assertIn("Select the SSA intervention", response.content.decode("utf-8"))
+
+        response = client.post(
+            "/planning/schedule-action",
+            {
+                "cluster_id": self.cluster.id,
+                "activity_type": "cluster_training",
+                "focus_intervention": SsaIntervention.LEARNING_ENVIRONMENT,
+                "scheduled_date": timezone.localdate()
+                + datetime.timedelta(days=2),
+                "participants_per_school": "2",
+                "schools_invited": "2",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Select the Activity / Training", response.content.decode("utf-8"))
 
     def test_the_posted_categories_become_the_per_school_figure(self):
         """The whole seam, drawer to database: the form posts who comes from
@@ -486,24 +660,27 @@ class ClusterDrawerDeliveryTest(TestCase):
             {
                 "cluster_id": self.cluster.id,
                 "activity_type": "cluster_training",
-                "project_id": self.edtech_foundations.id,
+                "catalogue_item_id": self.literacy_cluster_training.id,
+                "focus_intervention": SsaIntervention.LEARNING_ENVIRONMENT,
                 "scheduled_date": scheduled.isoformat(),
                 "teachers_per_school": "3",
                 "leaders_per_school": "1",
                 "other_per_school": "0",
                 "schools_invited": "2",
                 "delivery_type": "staff",
+                "override_reason": "Drawer seam test fixture has no SSA records.",
             },
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200, response.content)
-        activity = Activity.objects.get(project_id=self.edtech_foundations.id)
+        activity = Activity.objects.get(catalogue_item=self.literacy_cluster_training)
+        self.assertIsNone(activity.project_id)
         self.assertEqual(activity.teachers_per_school, 3)
         self.assertEqual(activity.leaders_per_school, 1)
         self.assertEqual(activity.participants_per_school, 4)
         self.assertEqual(activity.expected_participants, 8)
 
-    def test_project_training_post_schedules_with_derived_intervention_and_total(self):
+    def test_selected_training_post_preserves_intervention_and_total(self):
         client = Client()
         client.force_login(self.user)
         scheduled = timezone.localdate() + datetime.timedelta(days=2)
@@ -514,21 +691,22 @@ class ClusterDrawerDeliveryTest(TestCase):
             {
                 "cluster_id": self.cluster.id,
                 "activity_type": "cluster_training",
-                "project_id": self.edtech_foundations.id,
-                # A forged intervention must lose to Project configuration.
-                "focus_intervention": SsaIntervention.LEADERSHIP,
+                "catalogue_item_id": self.tam_cluster_training.id,
+                "focus_intervention": SsaIntervention.TEACHING_ENVIRONMENT,
                 "scheduled_date": scheduled.isoformat(),
                 "participants_per_school": "2",
                 "schools_invited": "2",
                 "delivery_type": "staff",
+                "override_reason": "Drawer seam test fixture has no SSA records.",
             },
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200, response.content)
-        activity = Activity.objects.get(project_id=self.edtech_foundations.id)
+        activity = Activity.objects.get(catalogue_item=self.tam_cluster_training)
         self.assertEqual(
-            activity.focus_intervention, SsaIntervention.LEARNING_ENVIRONMENT
+            activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
         )
+        self.assertIsNone(activity.project_id)
         self.assertEqual(activity.schools_invited, 2)
         self.assertEqual(activity.expected_participants, 4)
 

@@ -10,6 +10,7 @@ import calendar
 from datetime import date, timedelta
 from django.db.models import Q
 from apps.activities.models import Activity
+from apps.activities.services import is_partner_ssa_support_activity
 from apps.geography.models import District
 from apps.accounts.models import User
 from apps.partners.models import Partner
@@ -1148,6 +1149,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             else "General",
             "owner": users_map.get(a.responsible_staff_id, "Staff"),
             "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
+            "is_partner_ssa_support": is_partner_ssa_support_activity(a),
             "budget_total": budget_total,
             "salesforce_activity_id": a.salesforce_activity_id,
             "evidence_status": a.evidence_status,

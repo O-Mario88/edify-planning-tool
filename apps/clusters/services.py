@@ -20,7 +20,7 @@ from collections import defaultdict
 from django.db import transaction
 from django.db.models import Avg, Count, Max, Min, Prefetch, Q, Sum
 
-from apps.core.enums import ClusterRecordStatus
+from apps.core.enums import ClusterRecordStatus, SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import Permission
 from apps.core.scoping import cluster_queryset, resolve_user_scope
@@ -1803,16 +1803,22 @@ class ClusterActionPlannerService:
         from apps.activities.services import create as create_activity
 
         if data.get("activityType") == "cluster_training":
-            if not data.get("projectId"):
-                raise BadRequest("Select the Project this Group Training delivers.")
-            # The Project is the source of truth for intervention attribution.
-            # Ignore a hidden-field value from the browser and let the Activity
-            # service derive the configured primary/supporting interventions.
-            data = {
-                **data,
-                "focusIntervention": None,
-                "purposeIntervention": None,
-            }
+            if not data.get("catalogueItemId"):
+                raise BadRequest("Select the Activity / Training to deliver.")
+            if data.get("focusIntervention") not in SsaIntervention.values:
+                raise BadRequest(
+                    "Select the SSA intervention this Group Training targets."
+                )
+            from apps.activity_catalogue.availability import (
+                CLUSTER,
+                validate_priority_training_selection,
+            )
+
+            validate_priority_training_selection(
+                data["catalogueItemId"],
+                planning_context=CLUSTER,
+                intervention=data["focusIntervention"],
+            )
 
         # The handover record is opened by `activities.services.create` for
         # every path that schedules with a partner in one step, this one

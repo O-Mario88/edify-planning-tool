@@ -15,15 +15,10 @@ from apps.core.exceptions import BadRequest
 # are deliberately stable database values — the LABEL may be reworded, the
 # left-hand value may not.
 #
-# `story_gathering` reads as "Content Gathering" because that is the term the
-# programme actually uses for it. It is one purpose under one name rather than
-# two near-identical entries, which is why the value was not renamed alongside
-# the label: existing rows keep resolving.
 PARTNER_VISIT_PURPOSES: tuple[tuple[str, str], ...] = (
     ("in_school_training", "In-school Training"),
     ("training_follow_up", "Training Follow Up"),
     ("ssa_support", "SSA Support"),
-    ("story_gathering", "Content Gathering"),
 )
 
 # Staff may deliver the delegated support above, as well as the operational
@@ -49,7 +44,12 @@ PURPOSE_ACTIVITY_TYPES = {
 
 _PARTNER_VALUES = {value for value, _label in PARTNER_VISIT_PURPOSES}
 _STAFF_VALUES = {value for value, _label in STAFF_VISIT_PURPOSES}
-_LABELS = {value: label for value, label in STAFF_VISIT_PURPOSES}
+_LABELS = {
+    **{value: label for value, label in STAFF_VISIT_PURPOSES},
+    # Historical rows retain a readable label even though Content Gathering
+    # is no longer assignable from either staff or partner support drawers.
+    "story_gathering": "Content Gathering",
+}
 
 
 def visit_purpose_label(value: str | None, fallback: str = "—") -> str:

@@ -358,6 +358,7 @@ def cluster_schedule_activity_view(request):
         participants_str = request.POST.get("expected_participants", "50").strip()
         purpose = request.POST.get("purpose", "").strip()
         focus_intervention = request.POST.get("focus_intervention", "").strip()
+        catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
         scheduled_date_str = request.POST.get("scheduled_date", "").strip()
         assigned_partner_id = request.POST.get("assigned_partner_id", "").strip()
         responsible_staff_id = request.POST.get("responsible_staff_id", "").strip()
@@ -384,6 +385,9 @@ def cluster_schedule_activity_view(request):
             "assignedPartnerId": assigned_partner_id or None,
             "deliveryType": "partner" if assigned_partner_id else "staff",
         }
+        if activity_type == "training":
+            data["catalogueItemId"] = catalogue_item_id
+            data["requireCatalogue"] = True
         # Cluster work plans people per school, by category, across the schools
         # actually invited. All of it is passed raw: the service validates the
         # categories, adds them into the per-school figure, recounts the
@@ -403,12 +407,6 @@ def cluster_schedule_activity_view(request):
         schools_invited = request.POST.get("schools_invited", "").strip()
         if schools_invited:
             data["schoolsInvited"] = schools_invited
-        # Optional Project attribution. The service derives the target
-        # intervention from it when the planner did not name one.
-        planner_project_id = request.POST.get("project_id", "").strip()
-        if planner_project_id:
-            data["projectId"] = planner_project_id
-
         try:
             ClusterActionPlannerService.schedule_activity(data, request.user)
             messages.success(
@@ -448,13 +446,18 @@ def cluster_schedule_activity_view(request):
                     {"value": key.value, "label": key.label} for key in SsaIntervention
                 ]
                 from apps.clusters.services import active_school_count
-                from apps.projects.presentation import training_project_options
+                from apps.activity_catalogue.availability import (
+                    CLUSTER,
+                    training_activity_options,
+                )
 
                 cluster_school_count = (
                     active_school_count(selected_cluster.id) if selected_cluster else 0
                 )
-                project_options = (
-                    training_project_options() if activity_type == "training" else []
+                training_options = (
+                    training_activity_options(planning_context=CLUSTER)
+                    if activity_type == "training"
+                    else []
                 )
 
                 cost_preview = None
@@ -489,9 +492,10 @@ def cluster_schedule_activity_view(request):
                     or 0,
                     "schools_invited": schools_invited or cluster_school_count,
                     "cluster_school_count": cluster_school_count,
-                    "projects": project_options,
-                    "projects_json": json.dumps(project_options),
-                    "selected_project_id": planner_project_id,
+                    "training_activity_options": training_options,
+                    "training_activity_options_json": json.dumps(training_options),
+                    "selected_training_activity_id": catalogue_item_id,
+                    "selected_focus_intervention": focus_intervention,
                     "cost_preview": cost_preview,
                     "error_msg": str(e),
                 }
@@ -821,18 +825,32 @@ def planner_drawer_view(request):
             activity_type, participants, selected_cluster.id
         )
 
-    # This is the Project table, not strategic priorities. "EdTech" can stay
-    # a priority grouping while concrete Projects such as EdTech Foundations
-    # and EdTech Integration appear here as their own records.
-    from apps.projects.presentation import training_project_options
+    from apps.activity_catalogue.availability import (
+        CLUSTER,
+        training_activity_options,
+    )
 
-    project_options = training_project_options() if activity_type == "training" else []
-    selectable_project_ids = {
-        str(option["id"]) for option in project_options if option["selectable"]
-    }
-    selected_project_id = request.GET.get("project_id", "").strip()
-    if selected_project_id not in selectable_project_ids:
-        selected_project_id = ""
+    training_options = (
+        training_activity_options(planning_context=CLUSTER)
+        if activity_type == "training"
+        else []
+    )
+    selectable_training_ids = {option["id"] for option in training_options}
+    selected_training_activity_id = request.GET.get(
+        "catalogue_item_id", ""
+    ).strip()
+    if selected_training_activity_id not in selectable_training_ids:
+        selected_training_activity_id = ""
+
+    selected_focus_intervention = request.GET.get(
+        "focus_intervention", ""
+    ).strip()
+    if selected_focus_intervention not in SsaIntervention.values:
+        selected_focus_intervention = (
+            weakest_interventions[0]["intervention"]
+            if weakest_interventions
+            else ""
+        )
 
     context = {
         "clusters": clusters,
@@ -847,9 +865,10 @@ def planner_drawer_view(request):
         "cost_preview": cost_preview,
         "default_date": default_date,
         "drawer_type": "center",
-        "projects": project_options,
-        "projects_json": json.dumps(project_options),
-        "selected_project_id": selected_project_id,
+        "training_activity_options": training_options,
+        "training_activity_options_json": json.dumps(training_options),
+        "selected_training_activity_id": selected_training_activity_id,
+        "selected_focus_intervention": selected_focus_intervention,
         **per_school_categories,
         "schools_invited": schools_invited,
         # Read-only, from the canonical counter. It is the ceiling on schools

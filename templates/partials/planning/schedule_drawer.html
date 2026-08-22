@@ -19,11 +19,9 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 x-data="{
 delivery: '{% if reschedule_mode %}{{ reschedule_activity.delivery_type|default:'staff' }}{% else %}staff{% endif %}',
 executorType: 'staff',
-selectedAgency: '',
 ssa_expected: 'yes',
 activityType: '{{ recommended_activity_type|default:'school_visit' }}',
 purposeOfVisit: '{{ recommended_visit_purpose|default:'' }}',
-partnerPurposes: [{% for value, label in partner_visit_purposes %}'{{ value }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
 focusIntervention: '{{ recommended_focus_intervention|default:'' }}',
 recommendationReason: '{{ selected_catalogue_item.recommendationReason|default:''|escapejs }}',
 alternative: false,
@@ -33,19 +31,37 @@ alternative: false,
   selectively hidden, because a hidden input still submits: switching
   Training -> Visit used to post the participant count typed a moment before.
 {% endcomment %}
-projects: {{ projects_json|default:'[]' }},
-projectId: '',
-get selectedProject() { return this.projects.find(project => project.id === this.projectId) || null; },
-get projectInterventionLabels() { return this.selectedProject ? this.selectedProject.interventionLabels : []; },
-get projectIntervention() { return this.selectedProject ? this.selectedProject.primaryIntervention : ''; },
+trainingActivities: {{ training_activity_options_json|default:'[]' }},
+trainingActivityId: '{{ selected_catalogue_item.catalogueItemId|default:""|escapejs }}',
+defaultCatalogueItemId: '{{ selected_catalogue_item.catalogueItemId|default:""|escapejs }}',
+followUpActivities: {{ follow_up_activity_options_json|default:'[]' }},
+sourceActivityId: '',
 {% comment %}
-  A Project declares which SSA interventions it exists to move, so once one is
-  chosen the intervention is shown rather than asked. Asking for both is two
-  answers to one question, and when they disagree intervention analytics
-  credit the training to something the Project is not trying to change.
+  General training is selected from the governed Activity Catalogue. The
+  intervention is chosen first and the list below contains only activities
+  whose active mapping includes it.
 {% endcomment %}
-get showProjectPicker() { return this.purposeOfVisit === 'in_school_training'; },
-get interventionFromProject() { return this.showProjectPicker && this.projectIntervention !== ''; },
+get showTrainingActivityPicker() { return this.purposeOfVisit === 'in_school_training'; },
+get showFollowUpPicker() { return this.purposeOfVisit === 'training_follow_up'; },
+get showSsaDataGathering() { return this.purposeOfVisit === 'ssa_support'; },
+get showManualIntervention() { return !this.showFollowUpPicker && !this.showSsaDataGathering; },
+get selectedSourceActivity() {
+  return this.followUpActivities.find(activity => activity.id === this.sourceActivityId) || null;
+},
+get availableTrainingActivities() {
+  if (!this.focusIntervention) return [];
+  return this.trainingActivities.filter(activity =>
+    activity.interventions.includes(this.focusIntervention)
+    && (this.executorType === 'certified_partner_agency'
+      ? activity.certifiedAgencyDeliveryAllowed
+      : activity.staffDeliveryAllowed)
+  );
+},
+ensureTrainingActivity() {
+  if (!this.availableTrainingActivities.some(activity => activity.id === this.trainingActivityId)) {
+    this.trainingActivityId = this.availableTrainingActivities.length ? this.availableTrainingActivities[0].id : '';
+  }
+},
 profiles: {{ purpose_profiles|default:'{}' }},
 get profile() {
   return this.profiles[this.purposeOfVisit] || {
@@ -56,7 +72,6 @@ get profile() {
   };
 },
 get showParticipants() { return this.profile.requiresParticipants === true; },
-get showAgency() { return this.executorType === 'certified_partner_agency'; },
 {% comment %}
   §13 — clearing is the rule, not a nicety. A value that no longer has a
   field to belong to must not travel with the submission, and the backend
@@ -64,16 +79,14 @@ get showAgency() { return this.executorType === 'certified_partner_agency'; },
 {% endcomment %}
 onPurposeChange() {
   if (!this.showParticipants) { this.plannedParticipants = ''; }
-  if (!this.showProjectPicker) { this.projectId = ''; }
-  if (!this.profile.certifiedAgencyDeliveryAllowed) { this.onDeliveryChange('staff'); }
-},
-onDeliveryChange(value) {
-  this.executorType = value;
-  this.delivery = (value === 'staff') ? 'staff' : 'partner';
-  if (value !== 'certified_partner_agency') { this.selectedAgency = ''; }
+  if (!this.showTrainingActivityPicker) { this.trainingActivityId = ''; }
+  else { this.ensureTrainingActivity(); }
+  if (!this.showFollowUpPicker) { this.sourceActivityId = ''; }
+  if (this.showSsaDataGathering || this.showFollowUpPicker) { this.focusIntervention = ''; }
 },
 plannedParticipants: ''
 }"
+x-init="ensureTrainingActivity()"
 >
 {% csrf_token %}
 {% if not reschedule_mode %}
@@ -102,7 +115,9 @@ plannedParticipants: ''
   (for example multiple in-school trainings), because the server correctly
   refuses to guess between them.
 {% endcomment %}
-{% if selected_catalogue_item %}<input type="hidden" name="catalogue_item_id" value="{{ selected_catalogue_item.catalogueItemId }}">{% endif %}
+<template x-if="!showTrainingActivityPicker && defaultCatalogueItemId">
+  <input type="hidden" name="catalogue_item_id" :value="defaultCatalogueItemId">
+</template>
 <input type="hidden" name="activity_type" :value="activityType">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
 
@@ -203,12 +218,10 @@ its costing on, so the costing link is derived server-side and never asked for.
   >
     <option value="">Select the purpose of this visit…</option>
     {% for value, label in staff_visit_purposes %}
-    <option value="{{ value }}"
-      {% if value == recommended_visit_purpose %}selected{% endif %}
-      :disabled="delivery === 'partner' && !partnerPurposes.includes('{{ value }}')">{{ label }}</option>
+    <option value="{{ value }}" {% if value == recommended_visit_purpose %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Partners can only be assigned In-school Training, Training Follow Up, or SSA Support.</p>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The purpose determines which activity and evidence workflow is created.</p>
   {% comment %}
     §30 — a purpose the Cost Catalogue cannot price says exactly that, and
     names the person who can fix it. It never tells anyone to create a
@@ -219,63 +232,20 @@ its costing on, so the costing link is derived server-side and never asked for.
      x-text="profile.unavailableReason" role="alert"></p>
 </div>
 
-{% if not project_id %}
 {% comment %}
-  In-school Training is often a Project's own curriculum — EdTech Foundations,
-  Literacy, Discipleship Dynamics. Naming the Project here is what makes the
-  training show up in that Project's plan, budget and reporting instead of
-  floating loose, and the Project already declares the intervention it exists
-  to move, so the intervention below stops being a question and becomes an
-  answer. Optional: ordinary school support that belongs to no Project is
-  scheduled exactly as before.
+  The intervention is the operational need. For In-school Training it filters
+  the governed Activity Catalogue below; for other visit purposes it remains
+  the SSA outcome this support is intended to move.
 {% endcomment %}
-<template x-if="showProjectPicker">
+<template x-if="showManualIntervention">
 <div>
-  <label for="training_project_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Project</label>
-  <select
-    name="project_id"
-    id="training_project_id"
-    x-model="projectId"
-    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
-  >
-    <option value="">No Project — standard school support</option>
-    {% for project in projects %}
-    <option value="{{ project.id }}" {% if not project.selectable %}disabled{% endif %}>{{ project.name }}{% if project.code %} ({{ project.code }}){% endif %}{% if project.unavailableReason %} — {{ project.unavailableReason }}{% endif %}</option>
-    {% endfor %}
-  </select>
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-    {% if projects %}Choosing a Project sets the SSA intervention it targets.{% else %}No Project has been created yet. This training can still be scheduled as standard school support.{% endif %}
-  </p>
-</div>
-</template>
-{% endif %}
-
-{% comment %}
-  Two mutually exclusive renderings of ONE field, and both are <template x-if>
-  rather than x-show: a hidden input still submits, so an x-show pair would
-  post the manual choice alongside the Project's own intervention and leave
-  the server to guess which one the planner meant.
-{% endcomment %}
-<template x-if="interventionFromProject">
-<div>
-  <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</span>
-  <div class="mt-1 flex min-h-10 w-full flex-wrap items-center gap-1.5 rounded-control border border-slate-200 bg-slate-50 px-3 py-2" aria-live="polite">
-    <template x-for="(label, index) in projectInterventionLabels" :key="index">
-      <span class="inline-block rounded-pill border border-emerald-100 bg-emerald-50 px-2 py-0.5 edify-text-caption font-semibold text-emerald-700" x-text="label"></span>
-    </template>
-  </div>
-  <input type="hidden" name="focus_intervention" :value="projectIntervention">
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Set by the Project this training delivers.</p>
-</div>
-</template>
-
-<template x-if="!interventionFromProject">
-<div>
-  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+  <label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention <span x-show="showTrainingActivityPicker" class="text-rose-500">*</span></label>
   <select
     name="focus_intervention"
     id="focus_intervention"
     x-model="focusIntervention"
+    @change="ensureTrainingActivity()"
+    :required="showTrainingActivityPicker"
     class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
   >
     <option value="">Select Focus Intervention…</option>
@@ -284,6 +254,62 @@ its costing on, so the costing link is derived server-side and never asked for.
     {% endfor %}
   </select>
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this visit is meant to move. Pre-selected from the weakest confirmed score.</p>
+</div>
+</template>
+
+<template x-if="showSsaDataGathering">
+<div>
+  <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+  <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" role="status">Data Gathering</div>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">SSA Support automatically uses the governed SSA data-gathering workflow.</p>
+</div>
+</template>
+
+<template x-if="showFollowUpPicker">
+<div class="space-y-3">
+  <div>
+    <label for="source_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training / Cluster Meeting Followed Up <span class="text-rose-500">*</span></label>
+    <select name="source_activity_id" id="source_activity_id" x-model="sourceActivityId" required
+      class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
+      <option value="">Select a completed session…</option>
+      <template x-for="activity in followUpActivities" :key="activity.id">
+        <option :value="activity.id" x-text="activity.label"></option>
+      </template>
+    </select>
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only completed sessions this School attended in Fiscal Year {{ follow_up_fy }} are listed.</p>
+    <p x-show="followUpActivities.length === 0" class="mt-1.5 edify-text-caption font-semibold normal-case tracking-normal text-amber-700" role="status">No eligible completed Cluster Training or Cluster Meeting is recorded for this School in Fiscal Year {{ follow_up_fy }}.</p>
+  </div>
+  <div x-show="selectedSourceActivity" style="display:none">
+    <span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</span>
+    <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700" x-text="selectedSourceActivity ? selectedSourceActivity.interventionLabel : ''"></div>
+    <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Inherited from the selected session and locked to preserve the follow-up lineage.</p>
+  </div>
+</div>
+</template>
+
+{% comment %}
+  This select exists only for In-school Training, so switching to another
+  purpose removes its named input from the DOM and cannot post a stale
+  Catalogue choice. The backend validates the selected item's mapping again.
+{% endcomment %}
+<template x-if="showTrainingActivityPicker">
+<div>
+  <label for="training_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity / Training <span class="text-rose-500">*</span></label>
+  <select
+    name="catalogue_item_id"
+    id="training_activity_id"
+    x-model="trainingActivityId"
+    required
+    :disabled="!focusIntervention || availableTrainingActivities.length === 0"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    <option value="" x-text="focusIntervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
+    <template x-for="activity in availableTrainingActivities" :key="activity.id">
+      <option :value="activity.id" x-text="activity.label"></option>
+    </template>
+  </select>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only priority activities linked to the selected intervention are shown.</p>
+  <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Scheduling creates this School Training automatically. After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
 </div>
 </template>
 {% else %}
@@ -459,42 +485,11 @@ x-text="day"
 </div>
 </template>
 
-{% comment %}
-  §14/§15 — Delivery Type. Two partner workflows that are NOT the same:
-  assigning a school to a partner (its own drawer, its own record, the
-  partner picks the date) versus booking a certified agency onto a date
-  Edify chooses. Only the second belongs here, and only where the Workflow
-  Profile approves the activity for it.
-{% endcomment %}
-<template x-if="profile.certifiedAgencyDeliveryAllowed">
 <div>
-  <label for="executor_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
-  <select id="executor_type" @change="onDeliveryChange($event.target.value)"
-    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
-    <option value="staff">Internal Staff</option>
-    <option value="certified_partner_agency">Certified Partner Agency</option>
-  </select>
+  <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Person</label>
+  <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">{{ responsible_staff_name|default:"You" }}</div>
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Automatically assigned from this School&rsquo;s portfolio owner.</p>
 </div>
-</template>
-
-<template x-if="showAgency">
-<div>
-  <label for="assigned_partner_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Certified Partner Agency <span class="text-rose-500">*</span></label>
-  <select name="assigned_partner_id" id="assigned_partner_id" x-model="selectedAgency"
-    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none">
-    <option value="">Select a certified agency…</option>
-    {% for agency in certified_agencies %}
-    <option value="{{ agency.id }}">{{ agency.name }}</option>
-    {% endfor %}
-  </select>
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-    Only certified, active agencies covering this district are listed. Booking one schedules the activity now and puts it straight on their My&nbsp;Plan &mdash; they do not schedule it again.
-  </p>
-  {% if not certified_agencies %}
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No certified agency currently covers this district. Choose Internal Staff, or ask the Country Director to certify one.</p>
-  {% endif %}
-</div>
-</template>
 <input type="hidden" name="executor_type" :value="executorType">
 
 {% comment %}
@@ -575,7 +570,7 @@ Cancel
 </button>
 <button
 type="submit"
-class="px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
+class="schedule-drawer-submit px-6 h-9 rounded-control btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
 >
 {% if reschedule_mode %}Save new date{% else %}<svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg> Schedule{% endif %}
 </button>

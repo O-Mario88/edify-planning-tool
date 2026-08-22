@@ -218,6 +218,92 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         self.assertEqual(activity.source_classification, "Critical")
         self.assertEqual(activity.status, "scheduled")
         self.assertEqual(activity.executor_type, ExecutorType.STAFF)
+        self.assertEqual(activity.school_id, self.school.id)
+        self.assertEqual(activity.salesforce_activity_type, "training")
+
+    def _completed_cluster_session(
+        self,
+        *,
+        attended=True,
+        fy=None,
+        activity_type="cluster_training",
+        focus=SsaIntervention.TEACHING_ENVIRONMENT,
+    ):
+        planned_for = _schedulable_date() - datetime.timedelta(days=14)
+        return Activity.objects.create(
+            activity_type=activity_type,
+            activity_name_snapshot="Completed Cluster Training",
+            cluster=self.cluster,
+            fy=fy or get_operational_fy(_schedulable_date()),
+            quarter="Q4",
+            planned_date=planned_for,
+            scheduled_date=_at(planned_for),
+            status="completed",
+            attended_school_ids=[self.school.id] if attended else [],
+            focus_intervention=focus,
+        )
+
+    def test_training_follow_up_requires_a_completed_attended_session(self):
+        source = self._completed_cluster_session()
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item("STANDARD_TRAINING_FOLLOW_UP_VISIT").id,
+            purposeType="training_follow_up",
+            sourceActivityId=source.id,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.follow_up_of_activity_id, source.id)
+        self.assertEqual(
+            activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
+        )
+
+    def test_training_follow_up_rejects_missing_source(self):
+        with self.assertRaisesMessage(BadRequest, "Select the completed"):
+            self.schedule(
+                schoolId=self.school.school_id,
+                catalogueItemId=self.item(
+                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
+                ).id,
+                purposeType="training_follow_up",
+            )
+
+    def test_training_follow_up_rejects_a_session_the_school_did_not_attend(self):
+        source = self._completed_cluster_session(attended=False)
+        with self.assertRaisesMessage(BadRequest, "not recorded as attending"):
+            self.schedule(
+                schoolId=self.school.school_id,
+                catalogueItemId=self.item(
+                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
+                ).id,
+                purposeType="training_follow_up",
+                sourceActivityId=source.id,
+            )
+
+    def test_training_follow_up_rejects_a_different_fiscal_year(self):
+        source = self._completed_cluster_session(fy="1900")
+        with self.assertRaisesMessage(BadRequest, "same Fiscal Year"):
+            self.schedule(
+                schoolId=self.school.school_id,
+                catalogueItemId=self.item(
+                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
+                ).id,
+                purposeType="training_follow_up",
+                sourceActivityId=source.id,
+            )
+
+    def test_ssa_support_is_locked_to_data_gathering_not_an_intervention(self):
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=self.item(
+                "STANDARD_SCHOOL_VISIT_SSA_COLLECTION"
+            ).id,
+            purposeType="ssa_support",
+            ssaCollectionExpected=True,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertTrue(activity.ssa_collection_expected)
+        self.assertIsNone(activity.focus_intervention)
+        self.assertEqual(activity.costing_profile_snapshot, "SSA_DATA_GATHERING")
 
     def test_school_visit_without_a_project(self):
         result = self.schedule(
@@ -629,7 +715,7 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         )
         self.assertEqual(activity.activity_purpose_text, "Literacy")
 
-    def test_cluster_drawer_workflow_requires_a_project(self):
+    def test_cluster_drawer_workflow_requires_an_activity_and_intervention(self):
         from apps.clusters.services import ClusterActionPlannerService
 
         with self.assertRaises(BadRequest) as caught:
@@ -643,20 +729,21 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
                 },
                 self.user,
             )
-        self.assertIn("Select the Project", str(caught.exception))
+        self.assertIn("Select the Activity / Training", str(caught.exception))
 
-    def test_cluster_drawer_derives_intervention_server_side(self):
+    def test_cluster_drawer_preserves_the_selected_intervention(self):
         from apps.clusters.services import ClusterActionPlannerService
 
         result = ClusterActionPlannerService.schedule_activity(
             {
                 "activityType": "cluster_training",
                 "clusterId": self.cluster.id,
-                "projectId": self.literacy.id,
-                "focusIntervention": SsaIntervention.LEADERSHIP,
+                "catalogueItemId": self.item("LITERACY_NUMERACY_PROJECT").id,
+                "focusIntervention": SsaIntervention.LEARNING_ENVIRONMENT,
                 "participantsPerSchool": 2,
                 "schoolsInvited": 3,
                 "scheduledDate": _at(_schedulable_date()).isoformat(),
+                "overrideReason": "Authorized priority training selection.",
             },
             self.user,
         )
@@ -664,6 +751,7 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         self.assertEqual(
             activity.focus_intervention, SsaIntervention.LEARNING_ENVIRONMENT
         )
+        self.assertIsNone(activity.project_id)
         self.assertEqual(activity.expected_participants, 6)
 
     def test_a_stated_intervention_is_never_overridden_by_the_project(self):

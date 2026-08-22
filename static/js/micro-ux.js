@@ -118,14 +118,14 @@
     if (mode === 'scroll') return true;
     if (mode === 'fit') return false;
 
-    /* Most operational tables with five or fewer columns can remain tangible
-       without scrolling once their cell spacing tightens. Preserve scrolling
-       for genuinely long tables and for tables whose markup declares a wide
-       minimum as part of their information design. */
+    /* Only genuinely compact summaries fit safely on a phone without losing
+       scanability. Four-column operational tables often contain names,
+       statuses and actions rather than four short numbers; keep those rows
+       intact and let their labelled region scroll instead of crushing cells. */
     var declaresWideMinimum = Array.from(table.classList).some(function (name) {
       return name.indexOf('min-w-') === 0 || name.indexOf('min-inline-') === 0;
     });
-    return declaresWideMinimum || tableColumnCount(table) > 5;
+    return declaresWideMinimum || tableColumnCount(table) > 3;
   }
 
   function enhanceTableChoices(table) {
@@ -154,6 +154,9 @@
     table.dataset.edifyTableReady = 'true';
 
     var label = ensureTableCaption(table);
+    var columnCount = tableColumnCount(table);
+    table.dataset.edifyTableColumns = String(columnCount);
+    table.dataset.edifyTableWidth = columnCount > 8 ? 'xwide' : (columnCount > 5 ? 'wide' : 'standard');
     var headerCells = Array.from(table.querySelectorAll('thead tr:last-child th'));
     headerCells.forEach(function (header) {
       if (!header.hasAttribute('scope')) header.setAttribute('scope', 'col');

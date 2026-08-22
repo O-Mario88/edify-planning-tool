@@ -113,7 +113,7 @@ def resolve_monitoring_staff_helper(school, actor):
 
 
 class PartnerPurposeTests(TestCase):
-    def test_the_four_reasons_the_drawer_offers(self):
+    def test_the_three_support_reasons_the_drawer_offers(self):
         labels = [label for _value, label in PARTNER_VISIT_PURPOSES]
         self.assertEqual(
             labels,
@@ -121,23 +121,18 @@ class PartnerPurposeTests(TestCase):
                 "In-school Training",
                 "Training Follow Up",
                 "SSA Support",
-                "Content Gathering",
             ],
         )
 
-    def test_content_gathering_is_accepted_for_a_partner(self):
-        """It was staff-only before, so a partner handoff naming it was
-        refused outright."""
-        self.assertEqual(
-            normalise_visit_purpose("story_gathering", for_partner=True),
-            "story_gathering",
-        )
+    def test_content_gathering_is_not_assignable_to_a_partner(self):
+        from apps.core.exceptions import BadRequest
 
-    def test_content_gathering_keeps_its_stable_database_value(self):
-        """The label was reworded; the value must not move, or every existing
-        row stops resolving."""
+        with self.assertRaises(BadRequest):
+            normalise_visit_purpose("story_gathering", for_partner=True)
+
+    def test_content_gathering_is_absent_from_new_choices(self):
         values = [value for value, _label in PARTNER_VISIT_PURPOSES]
-        self.assertIn("story_gathering", values)
+        self.assertNotIn("story_gathering", values)
         self.assertNotIn("content_gathering", values)
 
     def test_a_staff_only_purpose_is_still_refused_for_a_partner(self):

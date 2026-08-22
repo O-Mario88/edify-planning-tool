@@ -1,9 +1,13 @@
-from datetime import date
+from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.activity_catalogue.models import ActivityCatalogueItem
+from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
@@ -70,10 +74,16 @@ class PartnerWorkspaceTests(TestCase):
             quantity=1,
             amount=120000,
         )
+        ssa_item = ActivityCatalogueItem.objects.get(
+            stable_code="STANDARD_SCHOOL_VISIT_SSA_COLLECTION"
+        )
         PartnerAssignment.objects.create(
             school=self.school,
             partner=self.partner,
             assigning_staff_id=self.profile.id,
+            monitoring_staff_id=self.profile.id,
+            catalogue_item=ssa_item,
+            catalogue_snapshot=ssa_item.snapshot(),
             purpose_of_visit="ssa_support",
             expected_activity_type="school_visit_ssa_collection",
             status="pending_scheduling",
@@ -173,9 +183,194 @@ class PartnerWorkspaceTests(TestCase):
                     "purpose": "Support visit.",
                 },
             )
-        self.assertEqual(response.status_code, 400)
-        self.assertContains(
-            response,
-            "Select an approved Activity Catalogue item.",
-            status_code=400,
+        self.assertEqual(response.status_code, 200)
+        assignment = PartnerAssignment.objects.filter(
+            school=self.school,
+            partner=self.partner,
+            purpose_of_visit="ssa_support",
+        ).latest("created_at")
+        self.assertEqual(
+            assignment.catalogue_item.stable_code,
+            "STANDARD_SCHOOL_VISIT_SSA_COLLECTION",
         )
+        self.assertEqual(assignment.monitoring_staff_id, self.profile.id)
+
+    def test_school_assignment_drawer_has_only_the_three_support_reasons(self):
+        response = self.client.get(
+            f"/planning/assign-partner-modal?school_id={self.school.school_id}",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        for label in ("In-school Training", "Training Follow Up", "SSA Support"):
+            self.assertIn(label, html)
+        self.assertNotIn("Content Gathering", html)
+        self.assertNotIn('name="project_id"', html)
+        self.assertNotIn('name="expected_date"', html)
+        self.assertIn("Partner Workspace Admin", html)
+        self.assertIn("trainingActivities", html)
+        self.assertIn("followUpActivities", html)
+
+    def _partner_user(self):
+        user = User.objects.create_user(
+            email="partner-scheduler@example.org",
+            name="Grace Visitor",
+            roles=[EdifyRole.PARTNER_FIELD_OFFICER.value],
+            active_role=EdifyRole.PARTNER_FIELD_OFFICER.value,
+            password="test-password",
+        )
+        self.partner.user = user
+        self.partner.save(update_fields=["user"])
+        return user
+
+    def test_partner_schedule_drawer_asks_only_for_date_and_visitor(self):
+        assignment = PartnerAssignment.objects.filter(
+            school=self.school,
+            status="pending_scheduling",
+        ).first()
+        self.client.force_login(self._partner_user())
+        response = self.client.get(
+            f"/partner/assignments/{assignment.id}/schedule-drawer",
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('name="scheduled_date"', html)
+        self.assertIn('name="delivery_contact_name"', html)
+        self.assertIn("Grace Visitor", html)
+        self.assertIn(">Submit</button>", html)
+        self.assertNotIn('name="catalogue_item_id"', html)
+        self.assertNotIn('name="project_id"', html)
+        self.assertNotIn("Cost calculation happens", html)
+
+    def test_partner_scheduling_stamps_ssa_support_as_score_collection(self):
+        school = School.objects.create(
+            school_id="PARTNER-SSA-SCHEDULE-004",
+            name="Partner SSA Schedule School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="STANDARD_SCHOOL_VISIT_SSA_COLLECTION"
+        )
+        assignment = PartnerAssignment.objects.create(
+            school=school,
+            partner=self.partner,
+            assigning_staff_id=self.profile.id,
+            monitoring_staff_id=self.profile.id,
+            catalogue_item=item,
+            catalogue_snapshot=item.snapshot(),
+            purpose="SSA Support",
+            purpose_of_visit="ssa_support",
+            expected_activity_type="school_visit_ssa_collection",
+            status="pending_scheduling",
+        )
+        self.client.force_login(self._partner_user())
+
+        with patch("apps.activities.services._apply_schedule_cost_snapshot"):
+            response = self.client.post(
+                f"/partner/assignments/{assignment.id}/schedule-action",
+                {
+                    "scheduled_date": "2026-08-26",
+                    "delivery_contact_name": "SSA Field Officer",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        assignment.refresh_from_db()
+        activity = assignment.scheduled_activity
+        self.assertEqual(activity.purpose_type, "ssa_support")
+        self.assertTrue(activity.ssa_collection_expected)
+
+    def test_partner_scheduling_creates_the_school_training_and_visitor_snapshot(self):
+        school = School.objects.create(
+            school_id="PARTNER-TRAINING-002",
+            name="Partner Training School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="STANDARD_IN_SCHOOL_TRAINING"
+        )
+        assignment = PartnerAssignment.objects.create(
+            school=school,
+            partner=self.partner,
+            assigning_staff_id=self.profile.id,
+            monitoring_staff_id=self.profile.id,
+            catalogue_item=item,
+            catalogue_snapshot=item.snapshot(),
+            purpose="In-School Training",
+            purpose_of_visit="in_school_training",
+            focus_intervention="leadership",
+            expected_activity_type="in_school_training",
+            status="pending_scheduling",
+        )
+        self.client.force_login(self._partner_user())
+        with patch("apps.activities.services._apply_schedule_cost_snapshot"):
+            response = self.client.post(
+                f"/partner/assignments/{assignment.id}/schedule-action",
+                {
+                    "scheduled_date": "2026-08-25",
+                    "delivery_contact_name": "Sarah Field Officer",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+        self.assertEqual(response.status_code, 200, response.content)
+        assignment.refresh_from_db()
+        activity = assignment.scheduled_activity
+        self.assertEqual(activity.activity_type, "in_school_training")
+        self.assertEqual(activity.school_id, school.id)
+        self.assertEqual(activity.salesforce_activity_type, "training")
+        self.assertEqual(activity.delivery_contact_name, "Sarah Field Officer")
+
+    def test_training_follow_up_assignment_uses_an_attended_current_fy_session(self):
+        follow_up_school = School.objects.create(
+            school_id="PARTNER-FOLLOW-UP-003",
+            name="Partner Follow-up School",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        cluster = Cluster.objects.create(
+            name="Partner Follow-up Cluster",
+            region=self.region,
+            district=self.district,
+            status="active",
+        )
+        source = Activity.objects.create(
+            activity_type="cluster_training",
+            activity_name_snapshot="TAM I",
+            cluster=cluster,
+            fy=get_operational_fy(),
+            quarter="Q4",
+            planned_date=timezone.localdate() - timedelta(days=10),
+            status="completed",
+            attended_school_ids=[follow_up_school.id],
+            focus_intervention="teaching_environment",
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/planning/assign-partner-action",
+            {
+                "school_id": follow_up_school.school_id,
+                "partner_id": self.partner.id,
+                "purpose_of_visit": "training_follow_up",
+                "source_activity_id": source.id,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        assignment = PartnerAssignment.objects.filter(
+            purpose_of_visit="training_follow_up"
+        ).latest("created_at")
+        self.assertEqual(assignment.source_activity_id, source.id)
+        self.assertEqual(assignment.focus_intervention, "teaching_environment")
+        self.assertEqual(assignment.monitoring_staff_id, self.profile.id)
+        self.client.force_login(self._partner_user())
+        partner_page = self.client.get("/partner/assigned-schools")
+        self.assertEqual(partner_page.status_code, 200)
+        self.assertContains(partner_page, follow_up_school.name)
+        self.assertContains(partner_page, "Training Follow Up")

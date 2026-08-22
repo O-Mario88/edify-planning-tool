@@ -18,7 +18,7 @@
               hx-get="/ia/partner-evidence/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
               class="inline-flex h-9 items-center rounded-control border border-rose-200 edify-surface px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">Return</button>
       <button type="button"
-              hx-get="/ia/partner-evidence/{{ a.id }}/complete-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+              hx-get="{% if is_partner_ssa_support %}/activities/{{ a.id }}/partner-ssa-complete{% else %}/ia/partner-evidence/{{ a.id }}/complete-drawer{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML"
               class="inline-flex h-9 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[12px] font-bold text-white transition-colors">Complete</button>
       {% else %}
       <span class="edify-status-text" data-edify-tone="{% if a.status == 'ia_verified' %}success{% else %}neutral{% endif %}">{{ a.status|status_label }}</span>

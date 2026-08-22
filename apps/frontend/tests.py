@@ -186,7 +186,7 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.cceo_user)
         self.school.current_fy_ssa_status = "done"
         self.school.save(update_fields=["current_fy_ssa_status", "updated_at"])
-        # A confirmed SSA with teaching_environment as the weakest score, so
+        # A confirmed SSA with learning_environment as the weakest score, so
         # the catalogue recommends intervention support (not SSA gathering)
         # and the urgent action's focus matches the ranked need.
         record = SsaRecord.objects.create(
@@ -204,12 +204,12 @@ class FrontendViewsTestCase(TestCase):
             SsaScore.objects.create(
                 ssa_record=record,
                 intervention=intervention,
-                score=1.0 if intervention == "teaching_environment" else 9.0,
+                score=1.0 if intervention == "learning_environment" else 9.0,
             )
         response = self.client.get(
             f"/planning/schedule-modal?school_id={self.school.id}"
             "&recommended_activity_type=coaching_visit"
-            "&focus_intervention=teaching_environment",
+            "&focus_intervention=learning_environment",
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
@@ -236,7 +236,7 @@ class FrontendViewsTestCase(TestCase):
             response, 'name="activity_type" :value="activityType"', html=False
         )
         self.assertContains(
-            response, "focusIntervention: 'teaching_environment'", html=False
+            response, "focusIntervention: 'learning_environment'", html=False
         )
 
         # Exercise the exact production failure mode: more than one governed
@@ -251,17 +251,20 @@ class FrontendViewsTestCase(TestCase):
         while scheduled.weekday() == 6:
             scheduled += timedelta(days=1)
         self._publish_test_catalogue(scheduled.isoformat())
-        selected_item = response.context["selected_catalogue_item"]
-        self.assertIsNotNone(selected_item)
+        selected_item = next(
+            option
+            for option in response.context["training_activity_options"]
+            if "learning_environment" in option["interventions"]
+        )
         scheduled_response = self.client.post(
             "/planning/schedule-action",
             {
                 "school_id": self.school.school_id,
                 "require_catalogue": "yes",
-                "catalogue_item_id": selected_item["catalogueItemId"],
-                "activity_type": selected_item["workflowKind"],
+                "catalogue_item_id": selected_item["id"],
+                "activity_type": "in_school_training",
                 "purpose_of_visit": "in_school_training",
-                "focus_intervention": "teaching_environment",
+                "focus_intervention": "learning_environment",
                 "scheduled_date": scheduled.isoformat(),
                 "expected_participants": "1",
                 "delivery_type": "staff",
@@ -273,7 +276,7 @@ class FrontendViewsTestCase(TestCase):
             scheduled_response.status_code, 200, scheduled_response.content
         )
         activity = Activity.objects.get(school=self.school)
-        self.assertEqual(activity.catalogue_item_id, selected_item["catalogueItemId"])
+        self.assertEqual(activity.catalogue_item_id, selected_item["id"])
         self.assertEqual(
             activity.est_cost_cents,
             sum(activity.schedule_cost_lines.values_list("amount", flat=True)),

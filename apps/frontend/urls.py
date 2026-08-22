@@ -726,6 +726,16 @@ urlpatterns = [
         name="complete_activity_action",
     ),
     path(
+        "activities/<str:activity_id>/partner-ssa-complete",
+        my_plan_views.partner_ssa_completion_drawer_view,
+        name="partner_ssa_completion_drawer",
+    ),
+    path(
+        "activities/<str:activity_id>/partner-ssa-complete/action",
+        my_plan_views.partner_ssa_completion_action,
+        name="partner_ssa_completion_action",
+    ),
+    path(
         "activities/<str:activity_id>/evidence",
         my_plan_views.evidence_upload_drawer_view,
         name="evidence_upload_drawer",

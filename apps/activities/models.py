@@ -195,6 +195,11 @@ class Activity(SoftDeleteModel):
     planned_week = models.IntegerField(null=True, blank=True)
 
     responsible_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    # Human being the partner says will perform the visit. This is deliberately
+    # a name snapshot rather than a StaffProfile FK: partner field workers do
+    # not necessarily hold Edify staff accounts, but the delivery record still
+    # needs to say who is expected at the school.
+    delivery_contact_name = models.CharField(max_length=255, blank=True, default="")
     monitored_by_staff_id = models.CharField(max_length=30, null=True, blank=True)
     assigned_partner_id = models.CharField(max_length=30, null=True, blank=True)
     delivery_type = models.CharField(

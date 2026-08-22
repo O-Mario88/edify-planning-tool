@@ -1731,6 +1731,8 @@ def ia_partner_review_view(request, activity_id):
         ]
     )
     can_decide = a.status == "awaiting_ia_verification"
+    from apps.activities.services import is_partner_ssa_support_activity
+
     return render(
         request,
         "pages/ia/partner_review.html",
@@ -1742,6 +1744,7 @@ def ia_partner_review_view(request, activity_id):
             "evidence_checklist": checklist(a),
             "history": history,
             "can_decide": can_decide,
+            "is_partner_ssa_support": is_partner_ssa_support_activity(a),
             "back_url": "/ia/partner-evidence/",
         },
     )
@@ -1794,6 +1797,14 @@ def ia_partner_complete_drawer(request, activity_id):
     from apps.evidence.models import EvidenceRecord
 
     a = _own_ia_partner_activity(activity_id)
+    from apps.activities.services import is_partner_ssa_support_activity
+
+    if is_partner_ssa_support_activity(a):
+        from apps.frontend.views.my_plan_views import (
+            partner_ssa_completion_drawer_view,
+        )
+
+        return partner_ssa_completion_drawer_view(request, activity_id)
     evidence_count = EvidenceRecord.objects.filter(
         activity_id=a.id, quarantined=False
     ).count()
@@ -1814,6 +1825,12 @@ def ia_partner_complete_action(request, activity_id):
     if request.method != "POST":
         return HttpResponseForbidden("POST required")
     a = _own_ia_partner_activity(activity_id)
+    from apps.activities.services import is_partner_ssa_support_activity
+
+    if is_partner_ssa_support_activity(a):
+        from apps.frontend.views.my_plan_views import partner_ssa_completion_action
+
+        return partner_ssa_completion_action(request, activity_id)
     try:
         from apps.activities.services import ia_confirm
 

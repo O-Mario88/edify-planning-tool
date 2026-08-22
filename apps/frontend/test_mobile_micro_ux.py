@@ -80,7 +80,12 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertNotIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
         self.assertIn("tableNeedsInlineScroll(table)", behavior)
-        self.assertIn("tableColumnCount(table) > 5", behavior)
+        self.assertIn("tableColumnCount(table) > 3", behavior)
+        self.assertIn("table.dataset.edifyTableColumns", behavior)
+        self.assertIn("table.dataset.edifyTableWidth", behavior)
+        self.assertIn('data-edify-table-width="standard"', styles)
+        self.assertIn('data-edify-table-width="wide"', styles)
+        self.assertIn('data-edify-table-width="xwide"', styles)
         self.assertIn("table.matches('.sr-only, .edify-visually-hidden')", behavior)
         self.assertIn("table.classList.add('edify-mobile-table--scroll')", behavior)
         self.assertIn("edify-mobile-table--fit", styles)
@@ -159,9 +164,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
         base = _read("templates/base.html")
 
         self.assertIn("platform.css' %}?v=20260818type7", base)
-        self.assertIn("pages.css' %}?v=20260821uiaudit1", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260812checkbox1", base)
-        self.assertIn("micro-ux.js' %}?v=20260812checkbox1", base)
+        self.assertIn("pages.css' %}?v=20260822cceotable1", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260822tables1", base)
+        self.assertIn("micro-ux.js' %}?v=20260822tables1", base)
 
     def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (

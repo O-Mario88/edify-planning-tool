@@ -13,6 +13,15 @@ Configure cluster activity details for {{ cluster.name }}
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
+x-data="{
+  executorType: 'staff',
+  selectedAgency: '',
+  get isAgency() { return this.executorType === 'certified_partner_agency'; },
+  onDeliveryChange(value) {
+    this.executorType = value;
+    if (!this.isAgency) { this.selectedAgency = ''; }
+  }
+}"
 >
 {% csrf_token %}
 <input type="hidden" name="cluster_id" value="{{ cluster.id }}">
@@ -271,7 +280,7 @@ changes cannot price an activity on a stale count.
         aria-describedby="schools-invited-help participants-total"
       >
       <p id="schools-invited-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
-        Invite fewer than all {{ cluster_school_count }} schools when the Project does not apply to every school type.
+        Invite fewer than all {{ cluster_school_count }} schools when the selected training does not apply to every school type.
       </p>
     </div>
     {% endif %}
@@ -294,19 +303,11 @@ changes cannot price an activity on a stale count.
   and it lands dated in the agency's My Plan. The picker therefore lists only
   agencies that are actually certified and free to take the work.
 {% endcomment %}
-<div x-data="{
-  executorType: 'staff',
-  get isAgency() { return this.executorType === 'certified_partner_agency'; },
-  onDeliveryChange(value) {
-    this.executorType = value;
-    if (!this.isAgency) { this.selectedAgency = ''; }
-  },
-  selectedAgency: ''
-}">
+<div>
 <label for="delivery_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
 <select
 id="delivery_type"
-@change="onDeliveryChange($event.target.value)"
+@change="onDeliveryChange($event.target.value); $dispatch('training-delivery-changed')"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
@@ -341,47 +342,66 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 
 {% if action != 'meeting' %}
 {% comment %}
-The actual Project is the planner's choice. Its configured SSA intervention is
-displayed and submitted automatically, so Project reporting and intervention
-reporting cannot drift apart.
+The planner first names the SSA intervention, then chooses an approved training
+whose active catalogue mapping includes that intervention. The backend repeats
+the same mapping check before saving, so a crafted POST cannot create drift.
 {% endcomment %}
 <div
 x-data="{
-projects: {{ projects_json|default:'[]' }},
-projectId: '',
-get project() { return this.projects.find(project => project.id === this.projectId) || null; },
-get interventionLabels() { return this.project ? this.project.interventionLabels : []; },
-get primaryIntervention() { return this.project ? this.project.primaryIntervention : ''; }
+activities: {{ training_activity_options_json|default:'[]' }},
+intervention: '',
+activityId: '',
+get availableActivities() {
+  if (!this.intervention) return [];
+  return this.activities.filter(activity =>
+    activity.interventions.includes(this.intervention)
+    && (this.executorType === 'certified_partner_agency'
+      ? activity.certifiedAgencyDeliveryAllowed
+      : activity.staffDeliveryAllowed)
+  );
+},
+ensureActivity() {
+  if (!this.availableActivities.some(activity => activity.id === this.activityId)) {
+    this.activityId = this.availableActivities.length ? this.availableActivities[0].id : '';
+  }
+}
 }"
+x-init="ensureActivity()"
+@training-delivery-changed.window="ensureActivity()"
 class="grid grid-cols-1 sm:grid-cols-2 gap-3"
 >
 <div>
-<label for="training_project" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
+<label for="training_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Intervention <span class="text-rose-500">*</span></label>
 <select
-name="project_id"
-id="training_project"
-x-model="projectId"
+name="focus_intervention"
+id="training_intervention"
+x-model="intervention"
+@change="ensureActivity()"
 required
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
 >
-<option value="">Select a Project…</option>
-{% for project in projects %}
-<option value="{{ project.id }}" {% if not project.selectable %}disabled{% endif %}>{{ project.name }}{% if project.code %} ({{ project.code }}){% endif %}{% if project.unavailableReason %} — {{ project.unavailableReason }}{% endif %}</option>
+<option value="">Select an intervention…</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
 {% endfor %}
 </select>
-{% if not projects %}
-<p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-amber-700" role="status">No Project has been created yet. Create the Project before scheduling its Group Training.</p>
-{% endif %}
 </div>
 <div>
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Intervention</span>
-<div class="w-full min-h-10 px-3 py-2 rounded-control border border-slate-200 bg-slate-50 mt-1 flex flex-wrap items-center gap-1.5" aria-live="polite">
-<template x-for="(label, index) in interventionLabels" :key="index">
-<span class="inline-block px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100" x-text="label"></span>
+<label for="training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity / Training <span class="text-rose-500">*</span></label>
+<select
+name="catalogue_item_id"
+id="training_activity"
+x-model="activityId"
+required
+:disabled="!intervention || availableActivities.length === 0"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+>
+<option value="" x-text="intervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
+<template x-for="activity in availableActivities" :key="activity.id">
+<option :value="activity.id" x-text="activity.label"></option>
 </template>
-<span x-show="!interventionLabels.length" class="edify-text-caption text-slate-400">Select a Project to populate</span>
-</div>
-<input type="hidden" name="focus_intervention" :value="primaryIntervention">
+</select>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only priority activities linked to the selected intervention are shown.</p>
 </div>
 </div>
 {% endif %}

@@ -250,7 +250,16 @@ class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
 Close
 </button>
 
-{% if act.status != 'completed' %}
+{% if can_complete_partner_ssa_support %}
+<button
+hx-get="/activities/{{ act.id }}/partner-ssa-complete"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-10 text-[12px] shadow-sm font-semibold"
+>
+Update SSA &amp; Complete
+</button>
+{% elif act.status != 'completed' and act.delivery_type != 'partner' %}
 <button
 type="button"
 data-reschedule-trigger

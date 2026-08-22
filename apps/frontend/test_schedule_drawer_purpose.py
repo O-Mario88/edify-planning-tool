@@ -105,22 +105,20 @@ class DrawerAsksForPurposeTest(TestCase):
         title = source.split("{% block drawer_title %}")[1].split("{% endblock %}")[0]
         self.assertNotIn("recommended_activity_label", title.split("{% else %}")[1])
 
-    def test_in_school_training_offers_the_project_inventory(self):
-        """In-school Training is often a Project's own curriculum, and the
-        Project declares the intervention it exists to move."""
+    def test_in_school_training_offers_intervention_linked_activities(self):
         source = _drawer_source()
-        self.assertIn('x-if="showProjectPicker"', source)
-        self.assertIn('name="project_id"', source)
-        self.assertIn("{% for project in projects %}", source)
+        self.assertIn('x-if="showTrainingActivityPicker"', source)
+        self.assertIn('name="catalogue_item_id"', source)
+        self.assertIn("availableTrainingActivities", source)
+        self.assertNotIn('id="training_project_id"', source)
         self.assertIn("purposeOfVisit === 'in_school_training'", source)
 
-    def test_the_two_intervention_renderings_are_x_if_not_x_show(self):
-        """A field hidden with x-show still submits, so an x-show pair would
-        post the manual choice alongside the Project's own intervention."""
+    def test_switching_intervention_revalidates_the_activity_choice(self):
         source = _drawer_source()
-        self.assertIn('x-if="interventionFromProject"', source)
-        self.assertIn('x-if="!interventionFromProject"', source)
-        self.assertNotIn('x-show="interventionFromProject"', source)
+        self.assertIn('@change="ensureTrainingActivity()"', source)
+        self.assertIn(
+            "activity.interventions.includes(this.focusIntervention)", source
+        )
 
 
 class PurposeDrivesCostingTest(TestCase):
@@ -141,16 +139,15 @@ class PurposeDrivesCostingTest(TestCase):
         )
 
     def test_the_purposes_the_user_named_are_offered(self):
-        """SSA support, follow-up, donor and story visits — the list this
-        drawer exists to present."""
+        """Content gathering is no longer part of staff support scheduling."""
         offered = {value for value, _label in STAFF_VISIT_PURPOSES}
         for expected in (
             "ssa_support",
             "training_follow_up",
             "donor_visit",
-            "story_gathering",
         ):
             self.assertIn(expected, offered)
+        self.assertNotIn("story_gathering", offered)
 
     def test_partner_purposes_are_a_subset_of_staff_purposes(self):
         """The drawer disables non-partner purposes when delivery is Partner,
@@ -176,7 +173,12 @@ class PurposeDrivesCostingTest(TestCase):
         disambiguates the governed catalogue row that supplies provenance."""
         source = _drawer_source()
         self.assertIn('name="catalogue_item_id"', source)
-        self.assertIn('value="{{ selected_catalogue_item.catalogueItemId }}"', source)
+        self.assertIn(
+            "defaultCatalogueItemId: "
+            "'{{ selected_catalogue_item.catalogueItemId|default:\"\"|escapejs }}'",
+            source,
+        )
+        self.assertIn(':value="defaultCatalogueItemId"', source)
 
 
 class CatalogueResolverTest(TestCase):

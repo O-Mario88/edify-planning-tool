@@ -105,6 +105,69 @@ def _certified_agency_options(district_name: str = "", activity_type: str = ""):
     )
 
 
+def _school_training_follow_up_options(school) -> list[dict]:
+    """Completed current-FY cluster sessions this school actually attended.
+
+    A cluster invitation is not attendance.  Follow-up choices therefore come
+    from the completion ledger's ``attended_school_ids`` snapshot, not current
+    cluster membership, and only completed sessions with a usable intervention
+    are offered.  The create service repeats every one of these checks.
+    """
+    from apps.activities.models import Activity
+
+    source_types = (
+        ActivityType.CLUSTER_TRAINING,
+        ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
+        ActivityType.CLUSTER_MEETING,
+        ActivityType.CLUSTER_MEETING_SSA_REVIEW,
+    )
+    completed_statuses = (
+        "completed",
+        "ia_verified",
+        "accountant_confirmed",
+        "closed",
+    )
+    labels = dict(SsaIntervention.choices)
+    rows = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=get_operational_fy(),
+            status__in=completed_statuses,
+            activity_type__in=source_types,
+            attended_school_ids__contains=[school.id],
+        )
+        .exclude(focus_intervention__isnull=True)
+        .exclude(focus_intervention="")
+        .select_related("catalogue_item", "cluster")
+        .order_by("-planned_date", "-created_at")
+    )
+    options = []
+    for activity in rows:
+        name = (
+            activity.activity_name_snapshot
+            or getattr(activity.catalogue_item, "display_name", "")
+            or activity.get_activity_type_display()
+        )
+        when = (
+            activity.planned_date.strftime("%d %b %Y")
+            if activity.planned_date
+            else "Date not recorded"
+        )
+        cluster_name = getattr(activity.cluster, "name", "") or "Cluster session"
+        options.append(
+            {
+                "id": activity.id,
+                "label": f"{name} · {when} · {cluster_name}",
+                "intervention": activity.focus_intervention,
+                "interventionLabel": labels.get(
+                    activity.focus_intervention, activity.focus_intervention
+                ),
+                "salesforceId": activity.salesforce_activity_id or "",
+            }
+        )
+    return options
+
+
 def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
     """Open My Plan on the exact week containing a just-saved activity."""
     from datetime import date
@@ -663,9 +726,16 @@ def schedule_modal_view(request):
         action = request.GET.get("action", "training")
         partners = assignable_partners()
         from apps.clusters.services import active_school_count
-        from apps.projects.presentation import training_project_options
+        from apps.activity_catalogue.availability import (
+            CLUSTER,
+            training_activity_options,
+        )
 
-        project_options = training_project_options() if action == "training" else []
+        training_options = (
+            training_activity_options(planning_context=CLUSTER)
+            if action == "training"
+            else []
+        )
 
         context = {
             "cluster": cluster,
@@ -677,8 +747,8 @@ def schedule_modal_view(request):
             # the multiplication is visible; the backend recomputes it at
             # submission so a stale drawer cannot price an activity.
             "cluster_school_count": active_school_count(cluster.id),
-            "projects": project_options,
-            "projects_json": json.dumps(project_options),
+            "training_activity_options": training_options,
+            "training_activity_options_json": json.dumps(training_options),
             # §16 — certified agencies only. `partners` above is the ordinary
             # assignable-partner list and must not be offered for booking.
             "certified_agencies": _certified_agency_options(
@@ -815,9 +885,16 @@ def schedule_modal_view(request):
         fallback_activity_type=recommended_activity_type,
     )
 
-    from apps.projects.presentation import training_project_options
+    from apps.activity_catalogue.availability import (
+        SCHOOL,
+        training_activity_options,
+    )
 
-    project_options = training_project_options()
+    training_options = training_activity_options(planning_context=SCHOOL)
+    follow_up_options = _school_training_follow_up_options(school)
+    responsible_staff_id, responsible_staff_name = resolve_monitoring_staff(
+        school, request.user
+    )
 
     context = {
         "school": school,
@@ -846,13 +923,16 @@ def schedule_modal_view(request):
         "purpose_profiles": json.dumps(
             _purpose_workflow_profiles(STAFF_VISIT_PURPOSES)
         ),
-        # In-school Training is frequently a Project's own curriculum. The
-        # picker is the same honest inventory the Group Training drawer uses —
-        # every Project listed, unusable ones disabled with the reason — and
-        # the Project's configured intervention fills the field below it, so
-        # Project reporting and intervention reporting cannot drift apart.
-        "projects": project_options,
-        "projects_json": json.dumps(project_options),
+        # General training scheduling chooses the governed Activity itself.
+        # The selected intervention filters this list in the drawer and the
+        # same mapping is validated again by activities.services.create().
+        "training_activity_options": training_options,
+        "training_activity_options_json": json.dumps(training_options),
+        "follow_up_activity_options": follow_up_options,
+        "follow_up_activity_options_json": json.dumps(follow_up_options),
+        "follow_up_fy": get_operational_fy(),
+        "responsible_staff_id": responsible_staff_id,
+        "responsible_staff_name": responsible_staff_name,
         "certified_agencies": _certified_agency_options(
             district_name=(school.district.name if school.district_id else "")
         ),
@@ -903,6 +983,8 @@ def schedule_action_view(request):
     # only passes the planner's choice through.
     executor_type = request.POST.get("executor_type", "").strip()
     partner_id = request.POST.get("assigned_partner_id", "").strip()
+    # A Project id is accepted only as context from a Project-owned entry
+    # point. General training drawers no longer ask the planner to choose one.
     project_id = request.POST.get("project_id", "").strip()
     priority_allocation_id = request.POST.get("priority_allocation_id", "").strip()
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
@@ -912,14 +994,53 @@ def schedule_action_view(request):
     # `or None`, so an unset field arrived as "" instead of None.
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
     if cluster_id and activity_type == "cluster_training":
-        if not project_id:
+        if focus_intervention not in SsaIntervention.values:
             return error_fragment(
-                BadRequest("Select the Project this Group Training delivers."),
+                BadRequest("Select the SSA intervention this Group Training targets."),
                 status=400,
             )
-        # Project configuration owns intervention attribution. Do not trust a
-        # browser-supplied hidden value when the server can derive it.
-        focus_intervention = ""
+        if not catalogue_item_id:
+            return error_fragment(
+                BadRequest("Select the Activity / Training to deliver."),
+                status=400,
+            )
+        try:
+            from apps.activity_catalogue.availability import (
+                CLUSTER,
+                validate_priority_training_selection,
+            )
+
+            validate_priority_training_selection(
+                catalogue_item_id,
+                planning_context=CLUSTER,
+                intervention=focus_intervention,
+            )
+        except BadRequest as exc:
+            return error_fragment(exc, status=400)
+    if school_id and purpose_of_visit == "in_school_training":
+        if focus_intervention not in SsaIntervention.values:
+            return error_fragment(
+                BadRequest("Select the SSA intervention this Training targets."),
+                status=400,
+            )
+        if not catalogue_item_id:
+            return error_fragment(
+                BadRequest("Select the Activity / Training to deliver."),
+                status=400,
+            )
+        try:
+            from apps.activity_catalogue.availability import (
+                SCHOOL,
+                validate_priority_training_selection,
+            )
+
+            validate_priority_training_selection(
+                catalogue_item_id,
+                planning_context=SCHOOL,
+                intervention=focus_intervention,
+            )
+        except BadRequest as exc:
+            return error_fragment(exc, status=400)
     if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
         # The drawer asks for a purpose, not a catalogue row. Derive the
         # costing link from the purpose before refusing: purpose ->
@@ -1075,6 +1196,17 @@ def schedule_action_view(request):
 
     if school_id:
         payload["schoolId"] = school_id
+        # School scheduling is owned by the portfolio owner, not whichever
+        # authorised staff member happened to open the drawer.  Resolve again
+        # on POST so a forged/stale hidden field cannot reassign the work.
+        owner_school = get_operational_school_or_404(
+            request.user, Q(id=school_id) | Q(school_id=school_id)
+        )
+        responsible_staff_id, _name = resolve_monitoring_staff(
+            owner_school, request.user
+        )
+        if delivery_type == "staff" and not partner_id:
+            payload["responsibleStaffId"] = responsible_staff_id
     if cluster_id:
         payload["clusterId"] = cluster_id
     if focus_intervention:
@@ -1164,28 +1296,26 @@ def assign_partner_modal_view(request):
         cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
 
     partners = assignable_partners()
-    project_id = request.GET.get("project_id", "")
     partner_catalogue_recommendations = None
-    if school:
-        from apps.activity_catalogue.services import recommend_activities
-
-        partner_catalogue_recommendations = recommend_activities(
-            school=school,
-            principal=request.user,
-            project=project_id or None,
-            executor_type="partner",
-            limit=3,
-        )
-    elif cluster:
+    if cluster:
         from apps.activity_catalogue.services import recommend_cluster_activities
 
         partner_catalogue_recommendations = recommend_cluster_activities(
             cluster=cluster,
             principal=request.user,
-            project=project_id or None,
+            project=None,
             executor_type="partner",
             limit=3,
         )
+
+    from apps.activity_catalogue.availability import SCHOOL, training_activity_options
+
+    partner_training_options = [
+        option
+        for option in training_activity_options(planning_context=SCHOOL)
+        if option["partnerDeliveryAllowed"]
+    ]
+    follow_up_options = _school_training_follow_up_options(school) if school else []
 
     context = {
         "school": school,
@@ -1194,8 +1324,6 @@ def assign_partner_modal_view(request):
         "interventions": SsaIntervention.choices,
         "drawer_size": "md",
         "drawer_type": "center",
-        # Optional project context — stamps the partner activity for the loop.
-        "project_id": project_id,
         "recommended_focus_intervention": request.GET.get("focus_intervention", ""),
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "catalogue_recommendations": partner_catalogue_recommendations,
@@ -1212,7 +1340,10 @@ def assign_partner_modal_view(request):
         # Who monitors the partner. Never a field to fill: the school already
         # belongs to somebody, so asking again invites a different answer from
         # the assignment record and two versions of who is accountable.
-        "monitoring_staff_name": resolve_monitoring_staff(school, request.user)[1],
+        "monitoring_staff_name": request.user.name or "You",
+        "training_activity_options_json": json.dumps(partner_training_options),
+        "follow_up_activity_options_json": json.dumps(follow_up_options),
+        "follow_up_fy": get_operational_fy(),
         # What happened to this school's partner work before. Shown because
         # the person choosing a partner is the one who most needs to know the
         # last one was withdrawn for capacity — and because handing the same
@@ -1253,14 +1384,13 @@ def _prior_withdrawals(school):
 
 
 def resolve_monitoring_staff(school, actor):
-    """Who monitors a partner handoff: the school's own staff member.
+    """Who owns school work and monitors a partner handoff.
 
-    The single resolver behind both the drawer's "Monitored by" line and the
-    `monitored_by_staff_id` written on the assignment. They must agree — My
-    Plan surfaces partner work through `monitored_by_staff_id`, so a drawer
-    that named the school's owner while the record stored whoever clicked
-    Handoff would promise oversight to one person and deliver the row to
-    another.
+    The single resolver behind the scheduling drawer's Responsible Person,
+    the partner drawer's "Monitored by" line, and both persisted identities.
+    They must agree — naming the school's owner while storing whoever clicked
+    would promise accountability to one person and put the work on another
+    person's My Plan.
 
     Falls back to the person handing off when there is nobody to fall back
     *from*: a cluster has no single owner, and a school may not be assigned
@@ -1274,6 +1404,26 @@ def resolve_monitoring_staff(school, actor):
             name = getattr(getattr(staff, "user", None), "name", "")
             if name:
                 return staff.id, name
+        # ``account_owner_id`` is the canonical portfolio-owner column. Some
+        # imported schools predate the StaffSchoolAssignment projection, so
+        # use the canonical owner before falling back to the person clicking.
+        from apps.clusters.eligibility import portfolio_owner_profile_id
+
+        owner_id = portfolio_owner_profile_id(school)
+        owner = (
+            StaffProfile.objects.filter(id=owner_id, deleted_at__isnull=True)
+            .select_related("user")
+            .first()
+            if owner_id
+            else None
+        )
+        if owner and owner.user_id:
+            return (
+                owner.id,
+                owner.user.name
+                or school.account_owner_name_raw
+                or "Staff owner",
+            )
     return (
         getattr(actor, "staff_profile_id", None)
         or getattr(actor, "user_id", None)
@@ -1300,26 +1450,15 @@ def assign_partner_action_view(request):
     focus_intervention = request.POST.get("focus_intervention") or None
     purpose = request.POST.get("purpose", "").strip()
     notes = request.POST.get("notes", "").strip() or None
-    project_id = request.POST.get("project_id", "").strip() or None
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     recommendation_reason = request.POST.get("recommendation_reason", "").strip()
     override_reason = request.POST.get("override_reason", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
 
-    from datetime import date as _date
-
-    expected_date_raw = request.POST.get("expected_date", "").strip()
+    # School support handoffs are not Project planning. The assignment holds
+    # the approved support reason and the Partner supplies the delivery date.
+    project_id = None
     expected_date = None
-    if expected_date_raw:
-        try:
-            expected_date = _date.fromisoformat(expected_date_raw)
-        except ValueError:
-            pass
-    if project_id and not expected_date:
-        return HttpResponse(
-            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Choose an assignment due date for this special-project handoff. Final cost is calculated only after the Partner schedules.</div>',
-            status=400,
-        )
 
     try:
         partner = get_object_or_404(Partner, id=partner_id)
@@ -1327,22 +1466,14 @@ def assign_partner_action_view(request):
         source_ssa = None
         source_activity = None
         if school_id or cluster_id:
-            if not catalogue_item_id:
-                raise BadRequest("Select an approved Activity Catalogue item.")
             from apps.activity_catalogue.services import (
                 get_selectable_item,
                 resolve_activity_intervention,
+                resolve_assignment_item,
                 validate_context,
             )
-            from apps.projects.models import Project
             from apps.ssa.services import latest_applicable_record
 
-            catalogue_item = get_selectable_item(catalogue_item_id)
-            project = (
-                Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
-                if project_id
-                else None
-            )
             school_for_validation = (
                 get_operational_school_or_404(
                     request.user, Q(id=school_id) | Q(school_id=school_id)
@@ -1355,11 +1486,60 @@ def assign_partner_action_view(request):
                 if cluster_id
                 else None
             )
+            if school_for_validation:
+                purpose_of_visit = normalise_visit_purpose(
+                    purpose_of_visit,
+                    for_partner=True,
+                    fallback_activity_type=activity_type,
+                )
+                if purpose_of_visit == "in_school_training":
+                    if not catalogue_item_id:
+                        raise BadRequest("Select the Activity / Training to assign.")
+                    from apps.activity_catalogue.availability import (
+                        SCHOOL,
+                        validate_priority_training_selection,
+                    )
+
+                    selected_training = validate_priority_training_selection(
+                        catalogue_item_id,
+                        planning_context=SCHOOL,
+                        intervention=focus_intervention,
+                    )
+                    if not selected_training["partnerDeliveryAllowed"]:
+                        raise BadRequest(
+                            "The selected Activity / Training is not approved for "
+                            "Partner delivery."
+                        )
+                    recommendation_reason = (
+                        "Priority activity: "
+                        + ", ".join(selected_training["priorityTitles"])
+                    )
+                else:
+                    derived = resolve_assignment_item(
+                        purpose_of_visit=purpose_of_visit,
+                        expected_activity_type=purpose_activity_type(
+                            purpose_of_visit, activity_type
+                        ),
+                    )
+                    if derived is None:
+                        raise BadRequest(
+                            "No approved Partner Activity is configured for this reason."
+                        )
+                    catalogue_item_id = derived.id
+                    recommendation_reason = (
+                        f"{visit_purpose_label(purpose_of_visit)} selected by "
+                        "the assigning staff member."
+                    )
+            elif not catalogue_item_id:
+                raise BadRequest("Select an approved Activity Catalogue item.")
+
+            catalogue_item = get_selectable_item(catalogue_item_id)
+            activity_type = catalogue_item.workflow_kind
             validate_context(
                 catalogue_item,
                 school=school_for_validation,
                 cluster=cluster_for_validation,
-                project=project,
+                project=None,
                 executor_type="partner",
             )
             source_ssa = (
@@ -1367,23 +1547,39 @@ def assign_partner_action_view(request):
                 if school_for_validation
                 else None
             )
-            if source_activity_id:
+            if school_for_validation and purpose_of_visit == "training_follow_up":
+                if not source_activity_id:
+                    raise BadRequest(
+                        "Select the completed Cluster Training or Cluster Meeting "
+                        "this assignment follows up."
+                    )
                 from apps.activities.models import Activity
 
+                eligible_source_ids = {
+                    option["id"]
+                    for option in _school_training_follow_up_options(
+                        school_for_validation
+                    )
+                }
+                if source_activity_id not in eligible_source_ids:
+                    raise BadRequest(
+                        "Choose a completed current-FY Cluster Training or Cluster "
+                        "Meeting this School attended."
+                    )
                 source_activity = Activity.objects.filter(
                     id=source_activity_id,
-                    school=school_for_validation,
-                    cluster=cluster_for_validation,
                     deleted_at__isnull=True,
                 ).first()
-                if source_activity is None:
-                    raise BadRequest(
-                        "Choose a valid prior Activity for this School to follow up."
-                    )
+                focus_intervention = source_activity.focus_intervention
+            elif source_activity_id:
+                raise BadRequest(
+                    "A source session is only valid for Training Follow Up."
+                )
             if (
                 catalogue_item.requires_current_ssa
                 and school_for_validation
                 and source_ssa is None
+                and purpose_of_visit != "training_follow_up"
             ):
                 raise BadRequest(
                     "Complete the School SSA first. Intervention-specific support "
@@ -1394,58 +1590,8 @@ def assign_partner_action_view(request):
                 requested_intervention=focus_intervention,
                 source_activity=source_activity,
             )
-            from apps.activity_catalogue.models import MappingMode
-            from apps.activity_catalogue.services import (
-                recommend_activities,
-                recommend_cluster_activities,
-            )
-
-            recommendation_result = (
-                recommend_activities(
-                    school=school_for_validation,
-                    principal=request.user,
-                    project=project,
-                    executor_type="partner",
-                    limit=3,
-                )
-                if school_for_validation
-                else recommend_cluster_activities(
-                    cluster=cluster_for_validation,
-                    principal=request.user,
-                    project=project,
-                    executor_type="partner",
-                    limit=3,
-                )
-            )
-            rows = [
-                *recommendation_result["primary"],
-                *recommendation_result["otherEligible"],
-            ]
-            match = next(
-                (row for row in rows if row["catalogueItemId"] == catalogue_item.id),
-                None,
-            )
-            primary_ids = {
-                row["catalogueItemId"] for row in recommendation_result["primary"]
-            }
-            dynamic = catalogue_item.intervention_mappings.filter(
-                active=True,
-                mapping_mode=MappingMode.INHERIT_FROM_SOURCE_ACTIVITY,
-            ).exists()
-            if (
-                catalogue_item.id not in primary_ids
-                and not dynamic
-                and not override_reason
-            ):
-                raise BadRequest(
-                    "Record an authorized reason for selecting a non-primary "
-                    "Partner Activity."
-                )
-            recommendation_reason = (
-                match["recommendationReason"]
-                if match
-                else "Authorized alternative Catalogue Activity."
-            )
+            if cluster_for_validation and not recommendation_reason:
+                recommendation_reason = "Approved Cluster Activity assignment."
 
         # PartnerAssignment and Activity.monitor fields use the StaffProfile
         # CUID when one exists.  Falling back to the User id keeps Admins
@@ -1487,10 +1633,9 @@ def assign_partner_action_view(request):
             )
             assignment_purpose = purpose or catalogue_item.display_name
             normalized_type = catalogue_item.workflow_kind
-            # The same resolver the drawer displayed, so the record agrees with
-            # what the person was shown — and so the partner's work lands on
-            # the owning staff member's My Plan rather than the assigner's.
-            monitoring_staff_id = resolve_monitoring_staff(school, request.user)[0]
+            # The person making the handoff remains its monitor. This is the
+            # same identity shown read-only in the drawer.
+            monitoring_staff_id = monitored_by_staff_id
             dup = _recent_duplicate(school=school, act_type=normalized_type)
             if dup:
                 target = "/projects/my-plan" if project_id else None

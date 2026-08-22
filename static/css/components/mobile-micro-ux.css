@@ -81,6 +81,49 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
   min-inline-size: 100%;
 }
 
+/* A scroll mode owns table anatomy, not merely overflow. Page-specific mobile
+   styles historically converted some tbody/tr/td elements into grids or
+   blocks. When one of those rules survived in a cached asset, headings stayed
+   horizontal while every row fell into disconnected vertical cells. These
+   declarations are intentionally structural and last-loaded: any operational
+   table selected for scroll remains a real table on phone, tablet and desktop. */
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden) {
+  display: table !important;
+  table-layout: auto;
+}
+
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden) > thead {
+  display: table-header-group !important;
+}
+
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden) > tbody {
+  display: table-row-group !important;
+}
+
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden) > tfoot {
+  display: table-footer-group !important;
+}
+
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
+  > :is(thead, tbody, tfoot) > tr {
+  display: table-row !important;
+}
+
+:is(.edify-workspace, .drawer-body)
+  :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
+  > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  display: table-cell !important;
+}
+
+:is(.edify-workspace, .drawer-body) .edify-mobile-table--scroll [data-label]::before {
+  content: none !important;
+}
+
 /* Small comparison tables can declare their own column proportions and stay
    as tables at phone widths. This mode deliberately avoids the 44rem scroll
    floor. */
@@ -92,8 +135,16 @@ table[data-mobile-table="fit"] {
 }
 
 @media (max-width: 63.999rem) {
-  .edify-mobile-table--scroll {
+  .edify-mobile-table--scroll[data-edify-table-width="standard"] {
     min-inline-size: max(44rem, 100%);
+  }
+
+  .edify-mobile-table--scroll[data-edify-table-width="wide"] {
+    min-inline-size: max(56rem, 100%);
+  }
+
+  .edify-mobile-table--scroll[data-edify-table-width="xwide"] {
+    min-inline-size: max(68rem, 100%);
   }
 
   /* Compact tables use the available width instead of inheriting roomy

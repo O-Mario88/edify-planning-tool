@@ -60,13 +60,18 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
             "school, or cluster with participants and schools invited",
             "date",
             "executor (staff or partner)",
+            "approved activity or training",
+            "completed session being followed up, when applicable",
+            "partner visitor name",
         ),
         why_a_human=(
             "Who does the work and when is an allocation decision against real "
             "capacity. For a cluster event, the organiser also knows how many "
             "people each invited school should send and how many schools were "
-            "actually invited; the platform derives the total from those two "
-            "facts."
+            "actually invited. The organiser also chooses which approved "
+            "priority activity will be delivered and, for a follow-up, which "
+            "completed attended session is being continued; the platform "
+            "derives totals and inherited intervention from those facts."
         ),
     ),
     Touchpoint(
@@ -74,6 +79,16 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
         actor="Executor (CCEO / PL / Partner / IA)",
         inputs=("evidence file",),
         why_a_human="Only the person who was there can produce it.",
+    ),
+    Touchpoint(
+        stage="Record partner SSA results",
+        actor="Monitoring staff / Impact Assessment",
+        inputs=("eight SSA intervention scores", "current pupil enrolment"),
+        why_a_human=(
+            "These are the observed results on the completed assessment form. "
+            "The platform validates and derives their reporting metadata but "
+            "cannot infer the school's scores or learner headcount."
+        ),
     ),
     Touchpoint(
         stage="Enter the Salesforce activity ID",
@@ -131,6 +146,11 @@ PLATFORM_DERIVED: tuple[Derived, ...] = (
     Derived("notifications", "apps.notifications.WorkflowNotificationService"),
     Derived("to-dos", "derived live from workflow state, never stored"),
     Derived("audit trail", "apps.audit.services.log"),
+    Derived("SSA average score", "apps.ssa.services.upload"),
+    Derived("SSA fiscal period", "apps.core.fy from the assessment date"),
+    Derived("SSA collector provenance", "actor role on governed completion"),
+    Derived("enrolment history row", "partner SSA completion transaction"),
+    Derived("school SSA readiness status", "apps.ssa.services._recompute_readiness"),
 )
 
 
@@ -180,6 +200,12 @@ WORKFLOW_FORMS: dict[str, str] = {
     ),
     "templates/partials/planning/assign_partner_drawer.html": (
         "Assign to a partner, or schedule the activity"
+    ),
+    "templates/partials/partners/schedule_assignment_drawer.html": (
+        "Assign to a partner, or schedule the activity"
+    ),
+    "templates/partials/my_plan/partner_ssa_completion_drawer.html": (
+        "Record partner SSA results"
     ),
 }
 
@@ -231,8 +257,21 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         "ssa_collection_expected",
         "reason",
         "note",
+        # Governed choices, not typed identifiers: the planner selects a
+        # priority-backed Activity and, only for Training Follow Up, the
+        # completed attended session whose lineage must continue.
+        "catalogue_item_id",
+        "source_activity_id",
+        "delivery_contact_name",
+        # Observed SSA results entered from the completed assessment. The
+        # score field is generated once per canonical intervention in the
+        # template; pupil enrolment updates School.enrollment, not the 0-10
+        # SSA Enrolment intervention score.
+        "score_{{ field.code }}",
+        "enrollment",
         # External system identifiers, carried across by hand.
         "salesforce_activity_id",
+        "salesforce_id",
         "netsuite_id",
         "accountability_netsuite_id",
         # Machinery, not a question: CSRF, routing, and hidden context the page
@@ -324,5 +363,10 @@ FIELD_NAME_ALIASES: tuple[tuple[str, str, str], ...] = (
         "activity_purpose_text",
         "purpose",
         "the free-text goal; PartnerAssignment.purpose becomes it verbatim",
+    ),
+    (
+        "salesforce_activity_id",
+        "salesforce_id",
+        "the activity Salesforce reference in model and completion-form naming",
     ),
 )

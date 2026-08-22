@@ -383,6 +383,33 @@ class RolePermissionService:
         )
 
     @staticmethod
+    def can_complete_partner_ssa_support(user, activity) -> bool:
+        """Allow IA or the named staff monitor to record partner SSA results.
+
+        This is deliberately narrower than evidence upload or record
+        visibility: entering the eight authoritative scores, changing pupil
+        enrolment, and completing the partner activity releases it into the
+        finance chain. A supervisor who can merely see the school must not be
+        able to do that, and the delivery partner must never verify its own
+        assessment.
+        """
+        from apps.activities.services import is_partner_ssa_support_activity
+
+        if not is_partner_ssa_support_activity(activity):
+            return False
+        if RolePermissionService.can_verify_ia(user, activity):
+            return True
+        if getattr(user, "active_role", None) not in (
+            "CCEO",
+            "Program Lead",
+            "ProjectCoordinator",
+        ):
+            return False
+        from apps.core.scoping import owner_ids
+
+        return activity.monitored_by_staff_id in owner_ids(user)
+
+    @staticmethod
     def can_enter_activity_sf_id(user, activity) -> bool:
         """Who may stamp the Salesforce Activity ID on a completed activity.
 

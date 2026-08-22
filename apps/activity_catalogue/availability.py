@@ -24,12 +24,19 @@ from __future__ import annotations
 from django.utils import timezone
 
 from apps.core.enums import (
+    ActivityType,
     DeliveryType,
     ExecutorType,
     PARTNER_EXECUTOR_TYPES,
+    SsaIntervention,
 )
 
-from .models import ActivityCatalogueItem
+from .models import (
+    ActivityCatalogueItem,
+    CatalogueActivityType,
+    DeliveryMethod,
+    MappingMode,
+)
 from .services import effective_items
 
 
@@ -175,6 +182,165 @@ def workflow_profile_for(
     return resolve_item_for_workflow_kind(workflow_kind, on_date=on_date)
 
 
+def training_activity_options(*, planning_context: str, on_date=None) -> list[dict]:
+    """Return priority-backed training choices and their intervention links.
+
+    This is presentation data for the dependent selects in the general
+    School and Cluster training drawers. Only catalogue items named by an
+    active ``MilestoneActivityRule`` in the strategic priorities inventory are
+    included. A Special Project is deliberately not part of the query.
+
+    The option payload still carries delivery permissions.  Alpine uses them
+    to keep the list honest when the planner switches between Staff and a
+    Certified Partner Agency, and :func:`apps.activities.services.create`
+    repeats every check server-side before anything is saved.
+    """
+    if planning_context not in {SCHOOL, CLUSTER}:
+        raise ValueError("Training activity options require School or Cluster context.")
+
+    from django.db.models import Prefetch
+
+    from apps.hr.models import MilestoneActivityRule
+
+    delivery_method = (
+        DeliveryMethod.CLUSTER_TRAINING
+        if planning_context == CLUSTER
+        else DeliveryMethod.IN_SCHOOL_TRAINING
+    )
+    workflow_kind = (
+        ActivityType.CLUSTER_TRAINING
+        if planning_context == CLUSTER
+        else ActivityType.IN_SCHOOL_TRAINING
+    )
+    priority_rules = MilestoneActivityRule.objects.filter(active=True).select_related(
+        "milestone__priority"
+    )
+    items = (
+        effective_items(on_date)
+        .filter(
+            milestone_rules__active=True,
+            activity_type=CatalogueActivityType.TRAINING,
+            delivery_method=delivery_method,
+            workflow_kind=workflow_kind,
+            **(
+                {"cluster_delivery_allowed": True}
+                if planning_context == CLUSTER
+                else {"individual_school_allowed": True}
+            ),
+        )
+        .prefetch_related(
+            "intervention_mappings",
+            Prefetch(
+                "milestone_rules",
+                queryset=priority_rules,
+                to_attr="active_priority_rules",
+            ),
+        )
+        .distinct()
+        .order_by("display_name", "stable_code")
+    )
+
+    options = []
+    for item in items:
+        mappings = [
+            mapping
+            for mapping in item.intervention_mappings.all()
+            if mapping.active
+        ]
+        any_intervention = any(
+            mapping.mapping_mode == MappingMode.ANY_SSA_INTERVENTION
+            for mapping in mappings
+        )
+        priority_interventions = sorted(
+            {
+                rule.target_intervention
+                for rule in item.active_priority_rules
+                if rule.target_intervention in SsaIntervention.values
+            }
+        )
+        interventions = (
+            priority_interventions
+            or (
+                list(SsaIntervention.values)
+                if any_intervention
+                else sorted(
+                    {
+                        mapping.intervention
+                        for mapping in mappings
+                        if mapping.intervention
+                    }
+                )
+            )
+        )
+        # A training with no active SSA mapping cannot fulfil the dependent
+        # dropdown contract and would be refused at save time, so do not offer
+        # it as a selectable dead end.
+        if not interventions:
+            continue
+        options.append(
+            {
+                "id": str(item.id),
+                "label": item.display_name,
+                "stableCode": item.stable_code,
+                "interventions": interventions,
+                "standardSupport": item.standard_support,
+                "staffDeliveryAllowed": item.staff_delivery_allowed,
+                "partnerDeliveryAllowed": item.partner_delivery_allowed,
+                "certifiedAgencyDeliveryAllowed": (
+                    item.partner_delivery_allowed
+                    and item.certified_agency_delivery_allowed
+                ),
+                "priorityTitles": sorted(
+                    {
+                        rule.milestone.title
+                        for rule in item.active_priority_rules
+                    }
+                ),
+            }
+        )
+    return sorted(
+        options,
+        key=lambda option: (
+            not option["standardSupport"],
+            option["label"].casefold(),
+            option["stableCode"],
+        ),
+    )
+
+
+def validate_priority_training_selection(
+    item_id: str,
+    *,
+    planning_context: str,
+    intervention: str | None = None,
+    on_date=None,
+) -> dict:
+    """Return the selected priority-backed option or reject a forged choice."""
+    from apps.core.exceptions import BadRequest
+
+    selected = next(
+        (
+            option
+            for option in training_activity_options(
+                planning_context=planning_context,
+                on_date=on_date,
+            )
+            if option["id"] == str(item_id)
+        ),
+        None,
+    )
+    if selected is None:
+        raise BadRequest(
+            "Select an Activity / Training linked to an active strategic priority."
+        )
+    if intervention and intervention not in selected["interventions"]:
+        raise BadRequest(
+            "The selected Activity / Training is not linked to that SSA "
+            "intervention by an active strategic priority."
+        )
+    return selected
+
+
 __all__ = [
     "CLUSTER",
     "NON_SCHOOL",
@@ -183,5 +349,7 @@ __all__ = [
     "SCHOOL",
     "available_activity_types",
     "available_catalogue_items",
+    "training_activity_options",
+    "validate_priority_training_selection",
     "workflow_profile_for",
 ]

@@ -564,6 +564,30 @@ main :is(
   }
 }
 
+/* Scheduling's primary action keeps white ink through hover and press. The
+   global inversion contract can otherwise pair a theme surface and theme ink
+   that converge in the blue/dark drawers, making the label appear to vanish. */
+@media (hover: hover) {
+  button.btn-premium-primary.schedule-drawer-submit:hover:not(:disabled):not([aria-disabled="true"]) {
+    color: #fff !important;
+    background-color: var(--edify-accent-hover) !important;
+    border-color: var(--edify-accent-hover) !important;
+  }
+
+  button.btn-premium-primary.schedule-drawer-submit:hover:not(:disabled):not([aria-disabled="true"]) :is(span, svg) {
+    color: inherit !important;
+  }
+}
+
+button.btn-premium-primary.schedule-drawer-submit:active:not(:disabled):not([aria-disabled="true"]) {
+  color: #fff !important;
+  background-color: var(--edify-accent-hover) !important;
+}
+
+button.btn-premium-primary.schedule-drawer-submit:active:not(:disabled):not([aria-disabled="true"]) :is(span, svg) {
+  color: inherit !important;
+}
+
 /* ── Consolidated analytics navigation ───────────────────────────────────
    Analytics has five durable product areas in its primary rail. Distinct
    server routes inside the current area live in this compact disclosure,

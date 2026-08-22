@@ -17,7 +17,12 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.core.enums import ExecutorType, PARTNER_EXECUTOR_TYPES
+from apps.core.enums import (
+    ActivityType,
+    ExecutorType,
+    PARTNER_EXECUTOR_TYPES,
+    SsaIntervention,
+)
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
@@ -90,6 +95,32 @@ STARTABLE_STATUSES = (
     "assigned_to_partner",
     "rescheduled",
 )
+
+# School-level partner work that represents an SSA assessment. Historical
+# assignments did not always stamp ``ssa_collection_expected`` even though the
+# purpose/activity type was SSA Support, so workflow routing must recognise all
+# three authoritative signals while new writes stamp the boolean consistently.
+PARTNER_SSA_SUPPORT_ACTIVITY_TYPES = frozenset(
+    {
+        ActivityType.SSA_ACTIVITY.value,
+        ActivityType.BASELINE_SSA_VISIT.value,
+        ActivityType.SCHOOL_VISIT_SSA_COLLECTION.value,
+        ActivityType.PARTNER_SSA_COLLECTION.value,
+    }
+)
+
+
+def is_partner_ssa_support_activity(activity: Activity) -> bool:
+    """Whether completion must capture a school's SSA scores and enrolment."""
+    return bool(
+        activity.delivery_type == "partner"
+        and activity.school_id
+        and (
+            activity.ssa_collection_expected
+            or activity.purpose_type == "ssa_support"
+            or activity.activity_type in PARTNER_SSA_SUPPORT_ACTIVITY_TYPES
+        )
+    )
 
 
 def _supervisor_user_ids(activity) -> list[str]:
@@ -318,6 +349,8 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     if scope.country_scope:
         return
     if scope.staff_ids and activity.responsible_staff_id in scope.staff_ids:
+        return
+    if getattr(activity, "monitored_by_staff_id", None) in owner_ids(principal):
         return
     if scope.partner_ids and activity.assigned_partner_id in scope.partner_ids:
         return
@@ -607,6 +640,7 @@ def _serialize(a: Activity) -> dict:
         "quarter": a.quarter,
         "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
         "responsibleStaffId": a.responsible_staff_id,
+        "deliveryContactName": a.delivery_contact_name,
         "assignedPartnerId": a.assigned_partner_id,
         "deliveryType": a.delivery_type,
         "status": a.status,
@@ -629,6 +663,7 @@ def _serialize(a: Activity) -> dict:
         "secondaryFocusInterventions": a.secondary_focus_interventions,
         "expectedOutcome": a.expected_outcome,
         "attendedSchoolIds": a.attended_school_ids,
+        "ssaCollectionExpected": a.ssa_collection_expected,
     }
 
 
@@ -1459,7 +1494,6 @@ def create(
         from apps.core.enums import (
             ProgrammeActivityType,
             ProgrammeDeliveryMode,
-            SsaIntervention,
             SupportRationale,
         )
 
@@ -1680,6 +1714,17 @@ def create(
     source_ssa = None
     source_activity = None
     catalogue_cluster = _catalogue_cluster(cluster_id) if cluster_id else None
+    is_school_training_follow_up = bool(
+        school is not None
+        and (
+            p_type == "training_follow_up"
+            or activity_type == ActivityType.TRAINING_FOLLOW_UP_VISIT
+        )
+    )
+    if is_school_training_follow_up and not data.get("sourceActivityId"):
+        raise BadRequest(
+            "Select the completed Cluster Training or Cluster Meeting this visit follows up."
+        )
     governed_recommendation_reason = data.get("recommendationReason", "")
     governed_recommendation_source = {}
     if catalogue_item:
@@ -1696,7 +1741,11 @@ def create(
             ).first()
             if source_activity is None:
                 raise BadRequest("The selected source Activity does not exist.")
-            if school is not None and source_activity.school_id != school.id:
+            if (
+                school is not None
+                and not is_school_training_follow_up
+                and source_activity.school_id != school.id
+            ):
                 raise BadRequest("The source Activity must belong to the same School.")
             if (
                 catalogue_cluster is not None
@@ -1716,6 +1765,45 @@ def create(
                 raise BadRequest(
                     "Follow-up requires a completed source Training or support Activity."
                 )
+            if is_school_training_follow_up:
+                permitted_source_types = {
+                    ActivityType.CLUSTER_TRAINING,
+                    ActivityType.CLUSTER_TRAINING_SSA_COLLECTION,
+                    ActivityType.CLUSTER_MEETING,
+                    ActivityType.CLUSTER_MEETING_SSA_REVIEW,
+                }
+                if source_activity.activity_type not in permitted_source_types:
+                    raise BadRequest(
+                        "Training Follow Up must reference a completed Cluster "
+                        "Training or Cluster Meeting."
+                    )
+                if source_activity.fy != fy:
+                    raise BadRequest(
+                        "Training Follow Up must reference a session from the "
+                        "same Fiscal Year as the scheduled visit."
+                    )
+                if school.id not in (source_activity.attended_school_ids or []):
+                    raise BadRequest(
+                        "This School is not recorded as attending the selected "
+                        "Cluster Training or Cluster Meeting."
+                    )
+                inherited_focus = (
+                    source_activity.focus_intervention
+                    or source_activity.purpose_intervention
+                )
+                if inherited_focus not in SsaIntervention.values:
+                    raise BadRequest(
+                        "The selected session has no valid intervention to follow up. "
+                        "Ask IA to repair its completion record."
+                    )
+                # The source session, not a free-form browser field, owns the
+                # intervention and its lineage.
+                focus = inherited_focus
+                data = {
+                    **data,
+                    "focusIntervention": inherited_focus,
+                    "purposeIntervention": inherited_focus,
+                }
         source_ssa = latest_applicable_record(school) if school is not None else None
         mapping_modes = set(
             catalogue_item.intervention_mappings.filter(active=True).values_list(
@@ -2714,6 +2802,111 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
     return _serialize(a)
 
 
+def complete_partner_ssa_support(
+    activity_id: str, data: dict, principal
+) -> dict:
+    """Record SSA results and complete partner SSA Support in one transaction.
+
+    The eight intervention scores remain SSA data; pupil enrolment updates the
+    School directory's authoritative headcount and is never written into the
+    legacy ``SsaRecord.new_enrollment`` column. Either IA or the staff member
+    recorded as this partner activity's monitor may perform this one governed
+    completion action.
+    """
+    a = _get_in_scope(activity_id, principal)
+    from apps.core.permissions import RolePermissionService
+
+    if not RolePermissionService.can_complete_partner_ssa_support(principal, a):
+        raise Forbidden(
+            "Only Impact Assessment or the staff member monitoring this partner "
+            "SSA Support activity may complete it."
+        )
+    if a.status != "awaiting_ia_verification":
+        raise BadRequest(
+            "The partner must submit the completed SSA evidence before scores "
+            "and enrolment can be recorded."
+        )
+
+    raw_enrollment = data.get("enrollment")
+    try:
+        enrollment = int(raw_enrollment)
+    except (TypeError, ValueError) as exc:
+        raise BadRequest("Pupil enrolment must be a whole number.") from exc
+    if enrollment < 1:
+        raise BadRequest("Pupil enrolment must be at least 1 learner.")
+    if enrollment > 1_000_000:
+        raise BadRequest("Pupil enrolment cannot exceed 1,000,000 learners.")
+
+    assessment_date = (
+        a.actual_delivery_date or a.planned_date or timezone.localdate()
+    )
+    is_ia = RolePermissionService.can_verify_ia(principal, a)
+    entry_source = (
+        ENTRY_SOURCE_IA_CONFIRMATION if is_ia else ENTRY_SOURCE_MANAGING_STAFF
+    )
+
+    from apps.ssa.services import upload as upload_ssa
+
+    with transaction.atomic():
+        # Lock the school before both the SSA write and headcount update. The
+        # upload service takes the same row lock inside its nested transaction,
+        # so concurrent completions for one school serialize cleanly.
+        school = School.objects.select_for_update().get(pk=a.school_id)
+        ssa_record = upload_ssa(
+            {
+                "schoolId": school.school_id,
+                "dateOfSsa": assessment_date.isoformat(),
+                "scores": data.get("scores") or [],
+                "collectorType": "ia" if is_ia else "staff",
+            },
+            principal,
+        )
+        previous_enrollment = school.enrollment
+        school.enrollment = enrollment
+        school.last_enrollment_date = assessment_date
+        school.save(
+            update_fields=["enrollment", "last_enrollment_date", "updated_at"]
+        )
+        from apps.schools.models import SchoolChangeLog, SchoolEnrollmentHistory
+
+        SchoolEnrollmentHistory.objects.update_or_create(
+            school=school,
+            fy=get_operational_fy(assessment_date),
+            defaults={"enrollment": enrollment, "recorded_at": timezone.now()},
+        )
+        if previous_enrollment != enrollment:
+            SchoolChangeLog.objects.create(
+                school=school,
+                field_name="enrollment",
+                old_value=(
+                    str(previous_enrollment)
+                    if previous_enrollment is not None
+                    else None
+                ),
+                new_value=str(enrollment),
+                changed_by=principal.user_id,
+            )
+        if a.ssa_collection_expected is False or a.ssa_not_collected_reason:
+            a.ssa_collection_expected = True
+            a.ssa_not_collected_reason = None
+            a.save(
+                update_fields=[
+                    "ssa_collection_expected",
+                    "ssa_not_collected_reason",
+                    "updated_at",
+                ]
+            )
+        result = _confirm_activity_after_authorization(
+            a,
+            data,
+            principal,
+            entry_source=entry_source,
+        )
+    result["ssaRecordId"] = ssa_record["id"]
+    result["enrollment"] = enrollment
+    return result
+
+
 def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> dict:
     """IA confirms the Salesforce entry (manual confirmation)."""
     a = _get_in_scope(activity_id, principal)
@@ -2725,6 +2918,22 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
 
     if not RolePermissionService.can_verify_ia(principal, a):
         raise Forbidden("Only Impact Assessment may verify this work.")
+    return _confirm_activity_after_authorization(
+        a,
+        data,
+        principal,
+        entry_source=ENTRY_SOURCE_IA_CONFIRMATION,
+    )
+
+
+def _confirm_activity_after_authorization(
+    a: Activity,
+    data: dict | None,
+    principal,
+    *,
+    entry_source: str,
+) -> dict:
+    """Shared confirmation transition after a caller-specific authority gate."""
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
     # §Direct IA handoff (2026-08-20): partner evidence comes straight to
@@ -2745,7 +2954,7 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
                 raw_value=ia_sf_id,
                 kind=kind,
                 principal=principal,
-                entry_source=ENTRY_SOURCE_IA_CONFIRMATION,
+                entry_source=entry_source,
             )
             a.refresh_from_db(
                 fields=["salesforce_activity_id", "salesforce_activity_type"]
@@ -3288,6 +3497,15 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 raise Forbidden("Assignment outside your scope.")
 
         scheduled_date = _parse_date(data["scheduledDate"])
+        delivery_contact_name = str(
+            data.get("deliveryContactName")
+            or getattr(principal, "name", "")
+            or ""
+        ).strip()
+        if len(delivery_contact_name) < 2:
+            raise BadRequest("Enter the name of the person visiting the School.")
+        if len(delivery_contact_name) > 255:
+            raise BadRequest("Visitor name must be 255 characters or fewer.")
         avail = _SchedulingPolicyService.check(
             _user_for_staff_identity(pa.assigning_staff_id)
             if pa.assigning_staff_id
@@ -3392,6 +3610,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             fy=fy,
             quarter=quarter,
             responsible_staff_id=None,
+            delivery_contact_name=delivery_contact_name,
             monitored_by_staff_id=monitored_by_staff_id,
             assigned_partner_id=pa.partner_id,
             delivery_type="partner",
@@ -3399,6 +3618,10 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             purpose_intervention=pa.focus_intervention,
             activity_purpose_text=pa.notes or pa.purpose or "Scheduled partner support",
             purpose_type=pa.purpose_of_visit,
+            ssa_collection_expected=(
+                pa.purpose_of_visit == "ssa_support"
+                or _sched_activity_type in PARTNER_SSA_SUPPORT_ACTIVITY_TYPES
+            ),
             expected_participants=data.get("expectedParticipants"),
             scheduled_date=scheduled_date,
             planned_date=planned_date,
@@ -4063,6 +4286,8 @@ __all__ = [
     "create",
     "start_completion",
     "complete",
+    "complete_partner_ssa_support",
+    "is_partner_ssa_support_activity",
     "ia_confirm",
     "ia_return",
     "reschedule",

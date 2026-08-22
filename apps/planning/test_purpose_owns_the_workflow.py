@@ -89,12 +89,14 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
     def test_a_pin_that_agrees_with_the_purpose_is_left_alone(self):
         """The control: reconciliation must not churn a correct pin, or the
         test above would pass with the pin simply always discarded."""
-        pinned = self.item("STANDARD_IN_SCHOOL_TRAINING")
+        pinned = self.item("EDTECH_FOUNDATIONS")
 
         response = self._post(
             purpose_of_visit="in_school_training",
             catalogue_item_id=pinned.id,
+            focus_intervention="learning_environment",
             recommendation_reason="SSA recommends in-school training.",
+            override_reason="Authorized priority training selection.",
             teachers_per_school="4",
             expected_participants="4",
         )
@@ -104,8 +106,8 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
         self.assertIsNotNone(activity)
         self.assertEqual(activity.activity_type, "in_school_training")
         self.assertEqual(activity.catalogue_item_id, pinned.id)
-        self.assertEqual(
+        self.assertIn(
+            "Learning Environment",
             activity.recommendation_reason,
-            "SSA recommends in-school training.",
-            "A pin that agrees with the purpose must keep its SSA provenance.",
+            "A matching priority activity must keep the governed SSA provenance.",
         )

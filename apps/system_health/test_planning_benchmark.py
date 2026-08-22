@@ -22,13 +22,14 @@ from apps.system_health.planning_benchmark import (
 
 
 class ContractShapeTests(SimpleTestCase):
-    def test_the_five_touchpoints_are_the_ones_the_owner_named(self):
+    def test_the_governed_touchpoints_are_the_ones_the_owner_named(self):
         self.assertEqual(
             [t.stage for t in HUMAN_TOUCHPOINTS],
             [
                 "Cluster the school",
                 "Assign to a partner, or schedule the activity",
                 "Upload the evidence",
+                "Record partner SSA results",
                 "Enter the Salesforce activity ID",
                 "Enter the NetSuite ID",
             ],
@@ -44,8 +45,12 @@ class ContractShapeTests(SimpleTestCase):
 
     def test_the_platform_carries_far_more_than_the_person(self):
         figures = contract()
-        self.assertGreater(figures["platform_derived"], figures["human_inputs"] * 3)
-        self.assertGreater(figures["automation_ratio"], 75)
+        # The two governed selectors are deliberate human judgements: which
+        # priority Activity is delivered, and which attended session a
+        # follow-up continues. Even with those added, the platform still
+        # derives more than twice as many facts as the planner supplies.
+        self.assertGreater(figures["platform_derived"], figures["human_inputs"] * 2)
+        self.assertGreater(figures["automation_ratio"], 70)
 
     def test_nothing_a_person_types_is_asked_for_twice(self):
         self.assertEqual(contract()["repeated_entries"], 0)
