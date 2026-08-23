@@ -381,9 +381,7 @@ def training_counts(school_ids, *, fy=None) -> dict[str, int]:
             counts[school_id] = counts.get(school_id, 0) + n
 
     wanted = set(school_ids) if isinstance(school_ids, (list, tuple, set)) else None
-    counted = set(
-        cluster.values_list("activity_id", flat=True).distinct()
-    )
+    counted = set(cluster.values_list("activity_id", flat=True).distinct())
     for activity_id, attended in legacy.values_list("id", "attended_school_ids"):
         # An activity that already has rows is counted from them; adding the
         # array as well would credit the same session twice.

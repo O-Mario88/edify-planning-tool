@@ -107,7 +107,9 @@ class FollowUpWindowTests(ImpactFixture):
 
         self.assertIsNone(found)
 
-    def test_the_earliest_reading_inside_the_window_is_the_one_closest_to_the_work(self):
+    def test_the_earliest_reading_inside_the_window_is_the_one_closest_to_the_work(
+        self,
+    ):
         delivered = date(2026, 1, 10)
         self._ssa(self.school, date(2026, 5, 1), 6.0)
         self._ssa(self.school, date(2026, 9, 1), 9.0)
@@ -126,9 +128,7 @@ class ClassificationTests(ImpactFixture):
         return si.ScoreReading("r", on, score, ssa_score_band(score)[0])
 
     def test_a_project_nobody_reassessed_has_not_failed(self):
-        verdict, change = si.classify(
-            self._reading(4.0), None, window_open=False
-        )
+        verdict, change = si.classify(self._reading(4.0), None, window_open=False)
 
         self.assertEqual(verdict, si.Impact.NOT_YET_MEASURABLE)
         # Not zero. A zero would sit alongside schools that were measured and
@@ -271,9 +271,7 @@ class BaselineSnapshotTests(ImpactFixture):
         self.staff = StaffProfile.objects.create(
             user=self.user, title=EdifyRole.CCEO.value
         )
-        StaffSchoolAssignment.objects.create(
-            staff=self.staff, school_id=self.school.id
-        )
+        StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
         from apps.projects.models import ProjectStaffAssignment
 
         ProjectStaffAssignment.objects.create(
@@ -323,9 +321,7 @@ class BaselineSnapshotTests(ImpactFixture):
             project=self.project, school=self.school
         )
         self.assertIsNone(row.baseline_score)
-        self.assertEqual(
-            row.impact_classification, si.Impact.INSUFFICIENT_EVIDENCE
-        )
+        self.assertEqual(row.impact_classification, si.Impact.INSUFFICIENT_EVIDENCE)
 
     def test_enrolling_is_not_delivery_and_not_impact(self):
         self._ssa(self.school, date(2025, 6, 1), 3.5)
@@ -416,9 +412,7 @@ class OverlapTests(ImpactFixture):
             name="Character Camps", code="CCAMP", intervention=INTERVENTION
         )
         ProjectSchoolAssignment.objects.create(project=other, school=self.school)
-        ProjectSchoolAssignment.objects.create(
-            project=self.project, school=self.school
-        )
+        ProjectSchoolAssignment.objects.create(project=self.project, school=self.school)
 
         overlap = si.schools_in_other_projects(
             [self.school.id], intervention=INTERVENTION, exclude_project=self.project
@@ -445,7 +439,9 @@ class OverlapTests(ImpactFixture):
 class _Mapping:
     """The measurement rules, without needing a catalogue item to hang them on."""
 
-    def __init__(self, *, min_days=None, max_days=None, direction="improve", threshold=None):
+    def __init__(
+        self, *, min_days=None, max_days=None, direction="improve", threshold=None
+    ):
         self.follow_up_min_days = min_days
         self.follow_up_max_days = max_days
         self.expected_direction = direction

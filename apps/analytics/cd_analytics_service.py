@@ -1681,9 +1681,7 @@ class CDAnalyticsService:
                     # the badge cell, the story count in its own column, so a
                     # fifth badge cannot wrap under the fourth.
                     "areas": [a for a in area_rows if a["key"] != "mscs"],
-                    "mscs": next(
-                        (a for a in area_rows if a["key"] == "mscs"), None
-                    ),
+                    "mscs": next((a for a in area_rows if a["key"] == "mscs"), None),
                     "schools_at_risk": schools_at_risk,
                     "budget_util": budget_util,
                     "backlog": backlog,

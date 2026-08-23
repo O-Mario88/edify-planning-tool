@@ -243,9 +243,7 @@ def training_activity_options(*, planning_context: str, on_date=None) -> list[di
     options = []
     for item in items:
         mappings = [
-            mapping
-            for mapping in item.intervention_mappings.all()
-            if mapping.active
+            mapping for mapping in item.intervention_mappings.all() if mapping.active
         ]
         any_intervention = any(
             mapping.mapping_mode == MappingMode.ANY_SSA_INTERVENTION
@@ -258,18 +256,11 @@ def training_activity_options(*, planning_context: str, on_date=None) -> list[di
                 if rule.target_intervention in SsaIntervention.values
             }
         )
-        interventions = (
-            priority_interventions
-            or (
-                list(SsaIntervention.values)
-                if any_intervention
-                else sorted(
-                    {
-                        mapping.intervention
-                        for mapping in mappings
-                        if mapping.intervention
-                    }
-                )
+        interventions = priority_interventions or (
+            list(SsaIntervention.values)
+            if any_intervention
+            else sorted(
+                {mapping.intervention for mapping in mappings if mapping.intervention}
             )
         )
         # A training with no active SSA mapping cannot fulfil the dependent
@@ -291,10 +282,7 @@ def training_activity_options(*, planning_context: str, on_date=None) -> list[di
                     and item.certified_agency_delivery_allowed
                 ),
                 "priorityTitles": sorted(
-                    {
-                        rule.milestone.title
-                        for rule in item.active_priority_rules
-                    }
+                    {rule.milestone.title for rule in item.active_priority_rules}
                 ),
             }
         )

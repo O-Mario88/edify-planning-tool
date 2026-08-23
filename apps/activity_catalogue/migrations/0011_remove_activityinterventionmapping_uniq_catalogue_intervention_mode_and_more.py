@@ -4,18 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activity_catalogue', '0010_activityinterventionmapping_approved_at_and_more'),
+        ("activity_catalogue", "0010_activityinterventionmapping_approved_at_and_more"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='activityinterventionmapping',
-            name='uniq_catalogue_intervention_mode',
+            model_name="activityinterventionmapping",
+            name="uniq_catalogue_intervention_mode",
         ),
         migrations.AddConstraint(
-            model_name='activityinterventionmapping',
-            constraint=models.UniqueConstraint(condition=models.Q(('active', True)), fields=('catalogue_item', 'intervention', 'mapping_mode'), name='uniq_catalogue_intervention_mode'),
+            model_name="activityinterventionmapping",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("active", True)),
+                fields=("catalogue_item", "intervention", "mapping_mode"),
+                name="uniq_catalogue_intervention_mode",
+            ),
         ),
     ]

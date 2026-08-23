@@ -111,9 +111,7 @@ class PartnerSsaCompletionTest(TestCase):
         payload.update(
             {
                 f"score_{code}": str(index)
-                for index, (code, _label) in enumerate(
-                    SsaIntervention.choices, start=1
-                )
+                for index, (code, _label) in enumerate(SsaIntervention.choices, start=1)
             }
         )
         return payload
@@ -159,7 +157,9 @@ class PartnerSsaCompletionTest(TestCase):
         self.assertEqual(record.scores.count(), 8)
         self.assertIsNone(record.new_enrollment)
         self.assertEqual(self.school.enrollment, 420)
-        self.assertEqual(self.school.last_enrollment_date, activity.actual_delivery_date)
+        self.assertEqual(
+            self.school.last_enrollment_date, activity.actual_delivery_date
+        )
         history = SchoolEnrollmentHistory.objects.get(school=self.school)
         self.assertEqual(history.enrollment, 420)
         change = SchoolChangeLog.objects.get(
@@ -176,9 +176,7 @@ class PartnerSsaCompletionTest(TestCase):
         activity = self._activity()
         self.client.force_login(self.ia)
 
-        drawer = self.client.get(
-            f"/ia/partner-evidence/{activity.id}/complete-drawer"
-        )
+        drawer = self.client.get(f"/ia/partner-evidence/{activity.id}/complete-drawer")
         response = self.client.post(
             f"/ia/partner-evidence/{activity.id}/complete-action",
             self._payload(enrollment="360", salesforce_id="SVE-SSA-IA-1"),
@@ -196,9 +194,7 @@ class PartnerSsaCompletionTest(TestCase):
         activity = self._activity()
         self.client.force_login(self.other_staff)
 
-        drawer = self.client.get(
-            f"/activities/{activity.id}/partner-ssa-complete"
-        )
+        drawer = self.client.get(f"/activities/{activity.id}/partner-ssa-complete")
         response = self.client.post(
             f"/activities/{activity.id}/partner-ssa-complete/action",
             self._payload(),

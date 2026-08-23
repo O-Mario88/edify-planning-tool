@@ -116,9 +116,7 @@ class DrawerAsksForPurposeTest(TestCase):
     def test_switching_intervention_revalidates_the_activity_choice(self):
         source = _drawer_source()
         self.assertIn('@change="ensureTrainingActivity()"', source)
-        self.assertIn(
-            "activity.interventions.includes(this.focusIntervention)", source
-        )
+        self.assertIn("activity.interventions.includes(this.focusIntervention)", source)
 
 
 class PurposeDrivesCostingTest(TestCase):

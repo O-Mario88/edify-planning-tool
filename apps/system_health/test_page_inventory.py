@@ -144,9 +144,15 @@ class PageInventoryTest(SimpleTestCase):
                 failures.append((page["route"], missing))
             self.assertIn(page["page_type"], APPROVED_PAGE_TYPES, page["route"])
         self.assertEqual(failures, [])
-        self.assertEqual(len(page_ids), len(set(page_ids)), "page audit IDs must be stable and unique")
+        self.assertEqual(
+            len(page_ids),
+            len(set(page_ids)),
+            "page audit IDs must be stable and unique",
+        )
 
-    def test_every_visual_surface_has_responsive_theme_and_accessibility_contracts(self):
+    def test_every_visual_surface_has_responsive_theme_and_accessibility_contracts(
+        self,
+    ):
         inventory = build_page_inventory()
         visual = [
             page
@@ -155,10 +161,18 @@ class PageInventoryTest(SimpleTestCase):
         ]
         self.assertTrue(visual)
         for page in visual:
-            self.assertEqual(page["mobile_status"], "pass-automated-contract", page["route"])
-            self.assertEqual(page["tablet_status"], "pass-automated-contract", page["route"])
-            self.assertEqual(page["theme_status"], "pass-automated-contract", page["route"])
-            self.assertEqual(page["accessibility_status"], "pass-automated-contract", page["route"])
+            self.assertEqual(
+                page["mobile_status"], "pass-automated-contract", page["route"]
+            )
+            self.assertEqual(
+                page["tablet_status"], "pass-automated-contract", page["route"]
+            )
+            self.assertEqual(
+                page["theme_status"], "pass-automated-contract", page["route"]
+            )
+            self.assertEqual(
+                page["accessibility_status"], "pass-automated-contract", page["route"]
+            )
 
     def test_template_audit_distinguishes_state_bindings_and_ids_from_style_debt(self):
         findings = _template_findings(

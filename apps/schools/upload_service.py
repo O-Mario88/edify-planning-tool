@@ -69,9 +69,7 @@ def _build_geography_index() -> dict:
         "district_by_id": {district.id: district for district in districts},
         "district_aliases": district_aliases,
         "sub_counties": sub_counties,
-        "sub_county_by_id": {
-            sub_county.id: sub_county for sub_county in sub_counties
-        },
+        "sub_county_by_id": {sub_county.id: sub_county for sub_county in sub_counties},
         "sub_county_aliases": sub_county_aliases,
         "sub_county_exact": sub_county_exact,
         "sub_counties_by_district": sub_counties_by_district,

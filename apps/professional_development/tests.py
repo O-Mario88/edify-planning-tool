@@ -801,6 +801,7 @@ class HRDashboardTests(PDTestBase):
         resp = client.post("/cpd-learning/action", {"action": "nonsense"})
         self.assertEqual(resp.status_code, 400)
 
+
 class HRTrackingAndApplyRemindersTests(PDTestBase):
     """HR is the only adjuster; the tracker prices the envelope; staff who
     never applied are tracked and remindable."""
@@ -1005,4 +1006,3 @@ class HRTrackingAndApplyRemindersTests(PDTestBase):
         self.assertEqual(ctx["tracker_total"], 1)
         # Both disbursements draw on the envelope even though the search shows one.
         self.assertEqual(ctx["tracker_rows"][0]["staff_balance"], "USD 50,000")
-

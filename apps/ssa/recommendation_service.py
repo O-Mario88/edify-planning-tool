@@ -114,10 +114,7 @@ def generate_for_school(school, *, fy: str, limit: int = 3, principal=None) -> d
             intervention_mappings__active=True,
             status="active",
         ).order_by("-intervention_mappings__is_primary", "display_name")
-        item = (
-            answers.filter(individual_school_allowed=True).first()
-            or answers.first()
-        )
+        item = answers.filter(individual_school_allowed=True).first() or answers.first()
         try:
             with transaction.atomic():
                 recommendation = SsaRecommendation.objects.create(
@@ -151,7 +148,9 @@ def generate_for_school(school, *, fy: str, limit: int = 3, principal=None) -> d
             refreshed += 1
             continue
         created += 1
-        _audit("ssa.recommendation_generated", recommendation, principal, {"rank": rank})
+        _audit(
+            "ssa.recommendation_generated", recommendation, principal, {"rank": rank}
+        )
 
     return {"created": created, "refreshed": refreshed, "skipped": None}
 

@@ -87,7 +87,10 @@ class Activity(SoftDeleteModel):
         SSA_RECOMMENDATION = "ssa_recommendation", "SSA recommendation"
         PRIORITY_ALLOCATION = "priority_allocation", "Priority target allocation"
         CORE_PACKAGE = "core_package", "Core school package slot"
-        BUSINESS_TRANSFORMATION = "business_transformation", "Business Transformation case"
+        BUSINESS_TRANSFORMATION = (
+            "business_transformation",
+            "Business Transformation case",
+        )
         SPECIAL_PROJECT = "special_project", "Special Project"
         EXTRA_ASSIGNMENT = "extra_assignment", "Extra assigned work"
         COMPLIANCE = "compliance", "Mandatory verification or compliance"

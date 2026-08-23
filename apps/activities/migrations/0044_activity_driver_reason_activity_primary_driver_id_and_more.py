@@ -4,25 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0043_activity_actuals'),
+        ("activities", "0043_activity_actuals"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='driver_reason',
-            field=models.TextField(blank=True, default=''),
+            model_name="activity",
+            name="driver_reason",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='primary_driver_id',
-            field=models.CharField(blank=True, default='', max_length=30),
+            model_name="activity",
+            name="primary_driver_id",
+            field=models.CharField(blank=True, default="", max_length=30),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='primary_driver_type',
-            field=models.CharField(blank=True, choices=[('ssa_recommendation', 'SSA recommendation'), ('priority_allocation', 'Priority target allocation'), ('core_package', 'Core school package slot'), ('business_transformation', 'Business Transformation case'), ('special_project', 'Special Project'), ('extra_assignment', 'Extra assigned work'), ('compliance', 'Mandatory verification or compliance'), ('leadership_exception', 'Approved leadership exception')], db_index=True, default='', max_length=32),
+            model_name="activity",
+            name="primary_driver_type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("ssa_recommendation", "SSA recommendation"),
+                    ("priority_allocation", "Priority target allocation"),
+                    ("core_package", "Core school package slot"),
+                    ("business_transformation", "Business Transformation case"),
+                    ("special_project", "Special Project"),
+                    ("extra_assignment", "Extra assigned work"),
+                    ("compliance", "Mandatory verification or compliance"),
+                    ("leadership_exception", "Approved leadership exception"),
+                ],
+                db_index=True,
+                default="",
+                max_length=32,
+            ),
         ),
     ]

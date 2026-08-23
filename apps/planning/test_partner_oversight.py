@@ -331,9 +331,7 @@ class PartnerWorkReachesItsSupervisorsTest(PartnerOversightFixture):
             responsible_staff_id=None,
             monitored_by_staff_id=None,
         )
-        School.objects.filter(id=self.school.id).update(
-            account_owner_id=self.cceo.id
-        )
+        School.objects.filter(id=self.school.id).update(account_owner_id=self.cceo.id)
         return activity
 
     def _partner_items(self, user):

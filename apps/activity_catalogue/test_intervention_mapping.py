@@ -88,9 +88,7 @@ class PrimaryTests(MappingFixture):
         resolved = im.mapping_for(self.item)
 
         self.assertEqual(resolved["primary"].intervention, CB)
-        self.assertEqual(
-            [m.intervention for m in resolved["secondary"]], [LEADERSHIP]
-        )
+        self.assertEqual([m.intervention for m in resolved["secondary"]], [LEADERSHIP])
 
     def test_republishing_a_changed_rule_keeps_the_old_version_readable(self):
         first = im.link_intervention(

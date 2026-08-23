@@ -2096,8 +2096,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     for shallow in lit:
         shallow_url = shallow["url"].rstrip("/") + "/"
         if any(
-            deep is not shallow and deep["url"].startswith(shallow_url)
-            for deep in lit
+            deep is not shallow and deep["url"].startswith(shallow_url) for deep in lit
         ):
             shallow["active"] = False
     for sec in sections:

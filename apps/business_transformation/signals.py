@@ -41,9 +41,7 @@ def enqueue_ssa_confirmed_batch(records) -> None:
     """
     from apps.outbox.services import enqueue_many
 
-    events = [
-        _ssa_confirmed_event(record.id, record.verified_at) for record in records
-    ]
+    events = [_ssa_confirmed_event(record.id, record.verified_at) for record in records]
     enqueue_many("bt.ssa.confirmed", events)
     enqueue_many(
         "ssa.recommendations.generate",

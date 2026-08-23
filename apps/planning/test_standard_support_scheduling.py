@@ -261,9 +261,7 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         with self.assertRaisesMessage(BadRequest, "Select the completed"):
             self.schedule(
                 schoolId=self.school.school_id,
-                catalogueItemId=self.item(
-                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
-                ).id,
+                catalogueItemId=self.item("STANDARD_TRAINING_FOLLOW_UP_VISIT").id,
                 purposeType="training_follow_up",
             )
 
@@ -272,9 +270,7 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         with self.assertRaisesMessage(BadRequest, "not recorded as attending"):
             self.schedule(
                 schoolId=self.school.school_id,
-                catalogueItemId=self.item(
-                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
-                ).id,
+                catalogueItemId=self.item("STANDARD_TRAINING_FOLLOW_UP_VISIT").id,
                 purposeType="training_follow_up",
                 sourceActivityId=source.id,
             )
@@ -284,9 +280,7 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         with self.assertRaisesMessage(BadRequest, "same Fiscal Year"):
             self.schedule(
                 schoolId=self.school.school_id,
-                catalogueItemId=self.item(
-                    "STANDARD_TRAINING_FOLLOW_UP_VISIT"
-                ).id,
+                catalogueItemId=self.item("STANDARD_TRAINING_FOLLOW_UP_VISIT").id,
                 purposeType="training_follow_up",
                 sourceActivityId=source.id,
             )
@@ -294,9 +288,7 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
     def test_ssa_support_is_locked_to_data_gathering_not_an_intervention(self):
         result = self.schedule(
             schoolId=self.school.school_id,
-            catalogueItemId=self.item(
-                "STANDARD_SCHOOL_VISIT_SSA_COLLECTION"
-            ).id,
+            catalogueItemId=self.item("STANDARD_SCHOOL_VISIT_SSA_COLLECTION").id,
             purposeType="ssa_support",
             ssaCollectionExpected=True,
         )

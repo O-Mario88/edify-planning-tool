@@ -173,7 +173,9 @@ def classify(
     if follow_up is None:
         # The distinction the whole module exists for.
         return (
-            Impact.NOT_YET_MEASURABLE if not window_open else Impact.INSUFFICIENT_EVIDENCE
+            Impact.NOT_YET_MEASURABLE
+            if not window_open
+            else Impact.INSUFFICIENT_EVIDENCE
         ), None
 
     change = round(follow_up.score - baseline.score, 2)

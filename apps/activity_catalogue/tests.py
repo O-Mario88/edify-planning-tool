@@ -381,7 +381,6 @@ class SsaLedRecommendationTests(TestCase):
             {"LEARNING_ENVIRONMENT_TRAINING"},
         )
 
-
     def test_an_unassessed_school_can_only_be_offered_the_finding_out_work(self):
         """The recommender must not propose intervention delivery blind.
 
@@ -392,8 +391,7 @@ class SsaLedRecommendationTests(TestCase):
         result = recommend_activities(school=self.school, limit=5)
         self.assertFalse(result["hasApplicableSsa"])
         offered = {
-            row["stableCode"]
-            for row in [*result["primary"], *result["otherEligible"]]
+            row["stableCode"] for row in [*result["primary"], *result["otherEligible"]]
         }
         self.assertEqual(offered, {"ASA_SSA_DATA_GATHERING"})
         for gated in (

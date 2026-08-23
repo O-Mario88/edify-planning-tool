@@ -1,5 +1,8 @@
 from django.test import TestCase
-from apps.activities.cluster_attendance import set_invited_schools, expected_participants
+from apps.activities.cluster_attendance import (
+    set_invited_schools,
+    expected_participants,
+)
 from apps.activities.models import Activity
 from apps.clusters.models import Cluster
 from apps.geography.models import District, Region, SubCounty
@@ -19,16 +22,24 @@ class InvitationDrivesTheHeadCountTest(TestCase):
         self.schools = []
         for i in range(3):
             s = School.objects.create(
-                school_id=f"S{i}", name=f"School {i}", region=self.region,
-                district=self.district, sub_county=self.sub, enrollment=100,
+                school_id=f"S{i}",
+                name=f"School {i}",
+                region=self.region,
+                district=self.district,
+                sub_county=self.sub,
+                enrollment=100,
             )
             School.objects.filter(pk=s.pk).update(cluster_id=self.cluster.id)
             s.refresh_from_db()
             self.schools.append(s)
         self.activity = Activity.objects.create(
-            activity_type="cluster_training", cluster_id=self.cluster.id,
-            fy="2026", status="scheduled",
-            teachers_per_school=2, leaders_per_school=1, other_per_school=0,
+            activity_type="cluster_training",
+            cluster_id=self.cluster.id,
+            fy="2026",
+            status="scheduled",
+            teachers_per_school=2,
+            leaders_per_school=1,
+            other_per_school=0,
         )
 
     def test_unticking_a_school_lowers_the_priced_head_count(self):

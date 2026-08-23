@@ -41,8 +41,7 @@ def backfill(apps, schema_editor):
                     # asked, but that is an inference, not a record.
                     invited=False,
                     attended=True,
-                    is_guest=school_id
-                    not in _member_ids(School, activity.cluster_id),
+                    is_guest=school_id not in _member_ids(School, activity.cluster_id),
                     teachers=activity.teachers_per_school,
                     leaders=activity.leaders_per_school,
                     other=activity.other_per_school,

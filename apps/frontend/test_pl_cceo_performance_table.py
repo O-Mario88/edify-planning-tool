@@ -27,7 +27,7 @@ class ProgramLeadCCEOPerformanceTableTest(SimpleTestCase):
             "Action",
         ):
             with self.subTest(heading=heading):
-                self.assertIn(f'>{heading}</th>', self.template)
+                self.assertIn(f">{heading}</th>", self.template)
 
         self.assertEqual(self.template.count('scope="col"'), 7)
         self.assertIn('scope="row"', self.template)

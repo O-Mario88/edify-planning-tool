@@ -1002,9 +1002,7 @@ def _project_ssa_todos(principal, role, today):
             )
         )
         unmapped = (
-            ActivityCatalogueItem.objects.filter(
-                status="active", requires_school=True
-            )
+            ActivityCatalogueItem.objects.filter(status="active", requires_school=True)
             .exclude(id__in=mapped)
             .order_by("display_name")[:20]
         )

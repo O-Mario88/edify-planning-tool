@@ -84,9 +84,7 @@ class ClusterInviteDrawerTest(TestCase):
         # invite inputs specifically — the drawer has other checkboxes.
         body = self._drawer("training").content.decode()
 
-        ticked = re.findall(
-            r'name="invited_school_ids"[^>]*?\bchecked\b', body, re.S
-        )
+        ticked = re.findall(r'name="invited_school_ids"[^>]*?\bchecked\b', body, re.S)
         self.assertEqual(len(ticked), len(self.schools))
 
     def test_the_drawer_offers_select_all_rather_than_three_clicks(self):

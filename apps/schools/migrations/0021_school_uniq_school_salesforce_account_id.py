@@ -4,15 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geography', '0005_seed_uganda_boundaries'),
-        ('schools', '0020_dataqualityissue_condition_key_and_more'),
+        ("geography", "0005_seed_uganda_boundaries"),
+        ("schools", "0020_dataqualityissue_condition_key_and_more"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='school',
-            constraint=models.UniqueConstraint(condition=models.Q(models.Q(('salesforce_account_id', None), _negated=True), models.Q(('salesforce_account_id', ''), _negated=True)), fields=('salesforce_account_id',), name='uniq_school_salesforce_account_id'),
+            model_name="school",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(
+                    models.Q(("salesforce_account_id", None), _negated=True),
+                    models.Q(("salesforce_account_id", ""), _negated=True),
+                ),
+                fields=("salesforce_account_id",),
+                name="uniq_school_salesforce_account_id",
+            ),
         ),
     ]

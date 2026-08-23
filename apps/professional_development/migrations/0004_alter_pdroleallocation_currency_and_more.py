@@ -30,31 +30,33 @@ def relabel_usd_to_ugx(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('professional_development', '0003_professionaldevelopmentcertificate_document_type'),
+        (
+            "professional_development",
+            "0003_professionaldevelopmentcertificate_document_type",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='pdroleallocation',
-            name='currency',
-            field=models.CharField(default='USD', max_length=8),
+            model_name="pdroleallocation",
+            name="currency",
+            field=models.CharField(default="USD", max_length=8),
         ),
         migrations.AlterField(
-            model_name='professionaldevelopmentallocation',
-            name='currency',
-            field=models.CharField(default='USD', max_length=8),
+            model_name="professionaldevelopmentallocation",
+            name="currency",
+            field=models.CharField(default="USD", max_length=8),
         ),
         migrations.AlterField(
-            model_name='professionaldevelopmentfundrequest',
-            name='currency',
-            field=models.CharField(default='USD', max_length=8),
+            model_name="professionaldevelopmentfundrequest",
+            name="currency",
+            field=models.CharField(default="USD", max_length=8),
         ),
         migrations.AlterField(
-            model_name='professionaldevelopmentrequest',
-            name='currency',
-            field=models.CharField(default='USD', max_length=8),
+            model_name="professionaldevelopmentrequest",
+            name="currency",
+            field=models.CharField(default="USD", max_length=8),
         ),
         migrations.RunPython(relabel_ugx_to_usd, relabel_usd_to_ugx),
     ]

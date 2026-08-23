@@ -145,9 +145,7 @@ def _supersede(mapping, principal) -> None:
     mapping.status = MappingStatus.SUPERSEDED
     mapping.active = False
     mapping.effective_to = timezone.now().date()
-    mapping.save(
-        update_fields=["status", "active", "effective_to", "updated_at"]
-    )
+    mapping.save(update_fields=["status", "active", "effective_to", "updated_at"])
 
 
 def publish(principal, mapping):

@@ -74,9 +74,7 @@ class ReadableButtonStatesTest(SimpleTestCase):
             "background-color: var(--edify-primary-action-fill) !important;",
             self.css,
         )
-        self.assertIn(
-            "color: var(--edify-primary-action-ink) !important;", self.css
-        )
+        self.assertIn("color: var(--edify-primary-action-ink) !important;", self.css)
 
     def test_a_primary_control_deepens_without_changing_ink_on_hover(self):
         self.assertIn(
@@ -138,9 +136,7 @@ class ReadableButtonStatesTest(SimpleTestCase):
         self.assertIn(':not(:disabled):not([aria-disabled="true"])', rest_rule)
 
     def test_no_drawer_needs_a_one_off_readability_patch(self):
-        self.assertNotIn(
-            "button.btn-premium-primary.schedule-drawer-submit", self.css
-        )
+        self.assertNotIn("button.btn-premium-primary.schedule-drawer-submit", self.css)
 
     @classmethod
     def _token(cls, tokens, name, *, _seen=None):
@@ -347,6 +343,7 @@ class SegmentedTabsTest(SimpleTestCase):
         self.assertIn("font: inherit !important;", content_contract)
         self.assertIn("opacity: 1 !important;", content_contract)
 
+
 class DrawerMountPointTest(SimpleTestCase):
     """Every locking drawer must mount in #drawer-container.
 
@@ -368,7 +365,10 @@ class DrawerMountPointTest(SimpleTestCase):
         for path in ROOT.joinpath("templates").rglob("*.html"):
             source = path.read_text(encoding="utf-8")
             rel = str(path.relative_to(ROOT))
-            if 'hx-target="#drawer-root"' in source or 'hx-target="#pd-drawer-root"' in source:
+            if (
+                'hx-target="#drawer-root"' in source
+                or 'hx-target="#pd-drawer-root"' in source
+            ):
                 offenders.append(f"{rel}: targets a bespoke drawer root")
             if 'id="drawer-root"' in source or 'id="pd-drawer-root"' in source:
                 offenders.append(f"{rel}: defines a bespoke drawer root")
@@ -379,6 +379,7 @@ class DrawerMountPointTest(SimpleTestCase):
             "lock cannot see any other mount point, so the page freezes: "
             + "; ".join(offenders),
         )
+
 
 class SegmentedRailFamilyTest(SimpleTestCase):
     """Every tab-family class in a template must be one the rail contract
@@ -411,7 +412,9 @@ class SegmentedRailFamilyTest(SimpleTestCase):
         # Only class attributes: ids like #school-tabs-header are htmx/anchor
         # plumbing, not styling hooks, and prose in comments is prose.
         class_attr = re.compile(r'class="([^"]*)"')
-        family = re.compile(r"^[a-z][a-z0-9_-]*(?:-tabs|-segmented|tab-btn|tab-container)(?:__[a-z-]+)?$")
+        family = re.compile(
+            r"^[a-z][a-z0-9_-]*(?:-tabs|-segmented|tab-btn|tab-container)(?:__[a-z-]+)?$"
+        )
         for path in ROOT.joinpath("templates").rglob("*.html"):
             source = path.read_text(encoding="utf-8")
             for attr in class_attr.findall(source):

@@ -48,16 +48,12 @@ def ssa_mapping_page(request):
         row = {
             "item": item,
             "primary": primary,
-            "primary_label": labels.get(
-                getattr(primary, "intervention", None), ""
-            ),
+            "primary_label": labels.get(getattr(primary, "intervention", None), ""),
             "secondary_labels": [
                 labels.get(m.intervention, "") for m in resolved["secondary"]
             ],
             "not_ssa_measured": resolved["not_ssa_measured"],
-            "published": bool(
-                primary and primary.status == MappingStatus.PUBLISHED
-            ),
+            "published": bool(primary and primary.status == MappingStatus.PUBLISHED),
         }
         (unmapped if resolved["needs_mapping"] else mapped).append(row)
 

@@ -140,6 +140,7 @@ class BarChartSystemContractTest(SimpleTestCase):
             projects,
         )
 
+
 class SharedChartFormTest(SimpleTestCase):
     """Every chart builds from EdifyChartSystem, not just its palette.
 
@@ -170,6 +171,7 @@ class SharedChartFormTest(SimpleTestCase):
             "These templates create charts without a shared form: "
             + ", ".join(sorted(offenders)),
         )
+
 
 class ReferenceChartFormTest(SimpleTestCase):
     """The reference form, encoded once: values on marks, no gridlines.

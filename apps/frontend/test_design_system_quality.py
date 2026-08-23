@@ -1625,6 +1625,7 @@ class TemplateFilterArgumentGuardTest(SimpleTestCase):
         self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:'Search' }}"))
         self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:b }}"))
 
+
 class TableColumnBudgetTest(SimpleTestCase):
     """A no-wrap row must still fit its card, and never hide its action.
 

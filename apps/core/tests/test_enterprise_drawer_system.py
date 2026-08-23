@@ -19,7 +19,7 @@ DRAWER_CSS = ROOT / "static" / "css" / "drawers.css"
 BASE_DRAWER = TEMPLATES / "components" / "drawers" / "base_drawer.html"
 
 SUPPORTED_SURFACE_MARKERS = (
-    'components/drawers/base_drawer.html',
+    "components/drawers/base_drawer.html",
     "edify-popup-dialog",
     "edify-form-dialog__surface",
 )
@@ -68,7 +68,9 @@ class EnterpriseDrawerSystemTests(SimpleTestCase):
             if path in BODY_ONLY_DRAWER_PARTIALS:
                 continue
             markup = path.read_text(encoding="utf-8", errors="replace")
-            if not any(tag in markup for tag in ("<form", "<input", "<select", "<textarea")):
+            if not any(
+                tag in markup for tag in ("<form", "<input", "<select", "<textarea")
+            ):
                 continue
             if not any(marker in markup for marker in SUPPORTED_SURFACE_MARKERS):
                 offenders.append(str(path.relative_to(ROOT)))
@@ -84,7 +86,7 @@ class EnterpriseDrawerSystemTests(SimpleTestCase):
         canonical = [
             path
             for path in TEMPLATES.rglob("*.html")
-            if 'components/drawers/base_drawer.html'
+            if "components/drawers/base_drawer.html"
             in path.read_text(encoding="utf-8", errors="replace")
         ]
         self.assertGreaterEqual(
@@ -117,4 +119,3 @@ class EnterpriseDrawerSystemTests(SimpleTestCase):
 
         self.assertIn("color: var(--edify-on-accent, #fff) !important", enterprise)
         self.assertIn(".btn-premium-primary:hover:not(:disabled)", enterprise)
-

@@ -105,7 +105,9 @@ class AttendanceTests(ClusterAttendanceTest):
 
         ca.confirm_attendance(self.training, [self.a.id])
 
-        self.assertEqual(ca.trained_school_ids([self.a.id, self.b.id], fy=FY), {self.a.id})
+        self.assertEqual(
+            ca.trained_school_ids([self.a.id, self.b.id], fy=FY), {self.a.id}
+        )
 
     def test_a_school_that_was_never_invited_cannot_be_ticked(self):
         ca.set_invited_schools(self.training, [self.a.id])
@@ -195,7 +197,5 @@ class TrainedElsewhereTests(ClusterAttendanceTest):
             planned_date=date(2026, 4, 10),
         )
 
-        trained = ca.trained_school_ids(
-            [self.a.id, self.b.id, self.c.id], fy=FY
-        )
+        trained = ca.trained_school_ids([self.a.id, self.b.id, self.c.id], fy=FY)
         self.assertEqual(trained, {self.a.id, self.b.id})

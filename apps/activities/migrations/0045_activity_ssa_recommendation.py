@@ -5,16 +5,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0044_activity_driver_reason_activity_primary_driver_id_and_more'),
-        ('ssa', '0008_ssarecommendation'),
+        (
+            "activities",
+            "0044_activity_driver_reason_activity_primary_driver_id_and_more",
+        ),
+        ("ssa", "0008_ssarecommendation"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='ssa_recommendation',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='activities', to='ssa.ssarecommendation'),
+            model_name="activity",
+            name="ssa_recommendation",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="activities",
+                to="ssa.ssarecommendation",
+            ),
         ),
     ]

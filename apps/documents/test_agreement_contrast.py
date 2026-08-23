@@ -32,11 +32,7 @@ TEMPLATE = (
     / "canonical_document.html"
 )
 STYLESHEET = (
-    Path(settings.BASE_DIR)
-    / "static"
-    / "css"
-    / "pages"
-    / "document-agreement.css"
+    Path(settings.BASE_DIR) / "static" / "css" / "pages" / "document-agreement.css"
 )
 
 

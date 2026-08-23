@@ -5,34 +5,72 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0046_activity_delivery_contact_name'),
-        ('schools', '0020_dataqualityissue_condition_key_and_more'),
+        ("activities", "0046_activity_delivery_contact_name"),
+        ("schools", "0020_dataqualityissue_condition_key_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ClusterActivityAttendance',
+            name="ClusterActivityAttendance",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('invited', models.BooleanField(default=False)),
-                ('attended', models.BooleanField(default=False)),
-                ('is_guest', models.BooleanField(default=False)),
-                ('teachers', models.IntegerField(blank=True, null=True)),
-                ('leaders', models.IntegerField(blank=True, null=True)),
-                ('other', models.IntegerField(blank=True, null=True)),
-                ('recorded_by', models.CharField(blank=True, default='', max_length=30)),
-                ('activity', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='school_attendance', to='activities.activity')),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='cluster_attendance', to='schools.school')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("invited", models.BooleanField(default=False)),
+                ("attended", models.BooleanField(default=False)),
+                ("is_guest", models.BooleanField(default=False)),
+                ("teachers", models.IntegerField(blank=True, null=True)),
+                ("leaders", models.IntegerField(blank=True, null=True)),
+                ("other", models.IntegerField(blank=True, null=True)),
+                (
+                    "recorded_by",
+                    models.CharField(blank=True, default="", max_length=30),
+                ),
+                (
+                    "activity",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="school_attendance",
+                        to="activities.activity",
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="cluster_attendance",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'cluster_activity_attendance',
-                'ordering': ['school__name'],
-                'indexes': [models.Index(fields=['activity', 'attended'], name='cluster_act_activit_34f861_idx'), models.Index(fields=['school', 'attended'], name='cluster_act_school__39cad6_idx')],
-                'constraints': [models.UniqueConstraint(fields=('activity', 'school'), name='uniq_cluster_attendance_per_school')],
+                "db_table": "cluster_activity_attendance",
+                "ordering": ["school__name"],
+                "indexes": [
+                    models.Index(
+                        fields=["activity", "attended"],
+                        name="cluster_act_activit_34f861_idx",
+                    ),
+                    models.Index(
+                        fields=["school", "attended"],
+                        name="cluster_act_school__39cad6_idx",
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("activity", "school"),
+                        name="uniq_cluster_attendance_per_school",
+                    )
+                ],
             },
         ),
     ]

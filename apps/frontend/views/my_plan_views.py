@@ -421,8 +421,7 @@ def complete_drawer_view(request, activity_id):
         # the person who delivered confirms rather than reconstructs. Rows
         # already marked attended stay ticked on a second visit.
         rows = {
-            r.school_id: r
-            for r in ClusterActivityAttendance.objects.filter(activity=a)
+            r.school_id: r for r in ClusterActivityAttendance.objects.filter(activity=a)
         }
         cluster_schools = [
             {

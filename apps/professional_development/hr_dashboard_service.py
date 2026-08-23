@@ -411,9 +411,7 @@ class HRPDDashboardService:
             row_currency = alloc.currency if alloc else currency
             if row["staff_id"] not in spent_cache:
                 spent_cache[row["staff_id"]] = (
-                    StaffPDService.committed_and_accounted_cents(
-                        row["staff_id"], fy
-                    )
+                    StaffPDService.committed_and_accounted_cents(row["staff_id"], fy)
                 )
             balance = allocation_cents - spent_cache[row["staff_id"]]
             row["staff_allocation"] = f"{row_currency} {allocation_cents/100:,.0f}"
@@ -643,17 +641,14 @@ class HRPDDashboardService:
             for a in ProfessionalDevelopmentAllocation.objects.filter(fy=fy)
         }
         role_defaults = {
-            (p.role, p.country): p
-            for p in PDRoleAllocation.objects.filter(fy=fy)
+            (p.role, p.country): p for p in PDRoleAllocation.objects.filter(fy=fy)
         }
         rows = []
         for sp in eligible_qs.order_by("user__name"):
             if sp.id in applied_ids:
                 continue
             role = sp.user.active_role if sp.user else ""
-            alloc = alloc_by_staff.get(sp.id) or role_defaults.get(
-                (role, sp.country)
-            )
+            alloc = alloc_by_staff.get(sp.id) or role_defaults.get((role, sp.country))
             if alloc is None:
                 cents, cur = 0, "USD"
             elif hasattr(alloc, "annual_allocation_cents"):

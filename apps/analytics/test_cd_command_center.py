@@ -535,7 +535,6 @@ class PrimedSeriesChangesCostNotNumbersTest(TestCase):
         self.assertIn("_prime_target_series", source)
 
 
-
 class PrioritySchoolsRankBySeverityTest(TestCase):
     """Priority Schools ranks by what a gap means, not by how many there are.
 
