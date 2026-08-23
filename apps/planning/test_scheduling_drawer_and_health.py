@@ -99,12 +99,8 @@ class AvailableActivityTypeServiceTest(TestCase):
 
         self.assertTrue(school_rows)
         self.assertTrue(cluster_rows)
-        self.assertTrue(
-            all(row["priorityTitles"] for row in school_rows.values())
-        )
-        self.assertTrue(
-            all(row["priorityTitles"] for row in cluster_rows.values())
-        )
+        self.assertTrue(all(row["priorityTitles"] for row in school_rows.values()))
+        self.assertTrue(all(row["priorityTitles"] for row in cluster_rows.values()))
 
         self.assertIn("EDTECH_FOUNDATIONS", school_rows)
         self.assertEqual(
@@ -207,15 +203,6 @@ class ScheduleDrawerFieldsTest(TestCase):
             district=cls.district,
             status="active",
         )
-        cls.user = User.objects.create(
-            id="drawer-std-admin",
-            email="drawer-std@edify.org",
-            name="Drawer Admin",
-            roles=["Admin"],
-            active_role="Admin",
-            is_active=True,
-            status="active",
-        )
         cls.owner_user = User.objects.create(
             id="drawer-portfolio-owner",
             email="drawer-owner@edify.org",
@@ -230,6 +217,12 @@ class ScheduleDrawerFieldsTest(TestCase):
             staff_number="DRAWER-OWNER",
         )
         StaffSchoolAssignment.objects.create(staff=cls.owner, school_id=cls.school.id)
+        # The drawer opens for the person who will do the work. It used to be
+        # driven by an Admin here purely because that role opened every school
+        # regardless of assignment; Admin no longer plans field work, and the
+        # school's own portfolio owner is the honest actor for these tests
+        # anyway — it is whose My Plan the result lands on.
+        cls.user = cls.owner_user
         cls.follow_up_source = Activity.objects.create(
             activity_type="cluster_training",
             activity_name_snapshot="Literacy Training",
@@ -431,14 +424,28 @@ class ClusterDrawerDeliveryTest(TestCase):
             active_status=True,
             is_certified=False,
         )
+        # A CCEO who owns this cluster, for the same reason as above: cluster
+        # scope is derived from the schools in the caller's own portfolio, so
+        # assigning them the member schools is what makes the cluster theirs.
         cls.user = User.objects.create(
-            id="cluster-drawer-admin",
+            id="cluster-drawer-cceo",
             email="cluster-drawer@edify.org",
-            name="Cluster Drawer Admin",
-            roles=["Admin"],
-            active_role="Admin",
+            name="Cluster Drawer CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
             is_active=True,
             status="active",
+        )
+        cls.user_profile = StaffProfile.objects.create(
+            user=cls.user,
+            staff_number="CLUSTER-DRAWER-OWNER",
+        )
+        for member in School.objects.filter(cluster_id=cls.cluster.id):
+            StaffSchoolAssignment.objects.create(
+                staff=cls.user_profile, school_id=member.id
+            )
+        Cluster.objects.filter(id=cls.cluster.id).update(
+            responsible_staff_id=cls.user_profile.id
         )
         cls.literacy_cluster_training = ActivityCatalogueItem.objects.get(
             stable_code="LITERACY_NUMERACY_PROJECT"
@@ -645,15 +652,16 @@ class ClusterDrawerDeliveryTest(TestCase):
                 "cluster_id": self.cluster.id,
                 "activity_type": "cluster_training",
                 "focus_intervention": SsaIntervention.LEARNING_ENVIRONMENT,
-                "scheduled_date": timezone.localdate()
-                + datetime.timedelta(days=2),
+                "scheduled_date": timezone.localdate() + datetime.timedelta(days=2),
                 "participants_per_school": "2",
                 "schools_invited": "2",
             },
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Select the Activity / Training", response.content.decode("utf-8"))
+        self.assertIn(
+            "Select the Activity / Training", response.content.decode("utf-8")
+        )
 
     def test_the_posted_categories_become_the_per_school_figure(self):
         """The whole seam, drawer to database: the form posts who comes from

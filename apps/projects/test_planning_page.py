@@ -144,11 +144,21 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertIn("Lakeview Project School", export.content.decode())
         self.assertNotIn("Reading Excellence Initiative", export.content.decode())
 
-    def test_admin_can_open_bulk_schedule_project_work(self):
+    def test_admin_does_not_bulk_schedule_project_work(self):
+        """Planning is the owner's, on Special Projects as everywhere else.
+
+        Admin used to be allowed here. It creates real dated visits whose
+        responsible staff is derived from the school, so the work lands on a
+        field officer's plan without that person choosing it — the reason
+        scheduling joined the reserved authorities in
+        apps/core/tests/test_admin_platform_boundary.py. Reading the planning
+        page is unaffected; the test below still pins that.
+        """
         schedule = self.client.get(
             f"/projects/planning/bulk-schedule?assignments={self.assignment_a.id}"
         )
-        self.assertNotEqual(schedule.status_code, 403)
+        self.assertEqual(schedule.status_code, 403)
+        self.assertIn("does not schedule field work", schedule.content.decode())
 
     def test_admin_still_reads_the_project_planning_page(self):
         page = self.client.get("/projects/planning")

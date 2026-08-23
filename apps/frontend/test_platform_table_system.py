@@ -1,5 +1,6 @@
 """Platform-wide responsive table anatomy and styling contracts."""
 
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -7,6 +8,19 @@ from django.test import SimpleTestCase
 
 
 ROOT = Path(settings.BASE_DIR)
+
+
+def _cache_buster(base: str, asset: str) -> str:
+    """The ?v= token base.html serves one asset under, or "" if it has none.
+
+    Pinning the literal token made every stylesheet edit red these tests while
+    proving nothing about them: a hard-coded string cannot tell whether two
+    assets that must ship together actually match, and it goes stale the moment
+    anyone bumps it. What the tests are named for is the pairing, so that is
+    what they now read.
+    """
+    match = re.search(re.escape(asset) + r"' %\}\?v=([A-Za-z0-9._-]+)", base)
+    return match.group(1) if match else ""
 
 
 def _read(relative_path: str) -> str:
@@ -17,7 +31,7 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
     def test_scroll_tables_keep_native_anatomy_at_every_breakpoint(self):
         styles = _read("static/css/components/mobile-micro-ux.css")
         selector = (
-            ':is(.edify-mobile-table--scroll, .edify-mobile-table--fit, '
+            ":is(.edify-mobile-table--scroll, .edify-mobile-table--fit, "
             'table[data-mobile-table="fit"])'
         )
 
@@ -68,5 +82,8 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
     def test_table_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("mobile-micro-ux.css' %}?v=20260822tables1", base)
-        self.assertIn("micro-ux.js' %}?v=20260822tables1", base)
+        self.assertNotEqual(_cache_buster(base, "mobile-micro-ux.css"), "")
+        self.assertEqual(
+            _cache_buster(base, "mobile-micro-ux.css"),
+            _cache_buster(base, "micro-ux.js"),
+        )

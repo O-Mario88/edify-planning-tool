@@ -222,8 +222,19 @@ class IconAssetTest(SimpleTestCase):
         renders with black corners. A maskable icon is specified to fill its
         frame because the launcher crops a circle out of it, so alpha there
         shows the launcher background through the crop.
+
+        The surround is read from the generator rather than repeated here. It
+        was a literal pale blue, which is how it survived being wrong: the
+        maskable crop cut through that surround instead of through the
+        artwork, so the launcher and the generated splash both drew a white
+        ring around the logo. Pinning the constant keeps the two in step and
+        leaves the *value* a design decision, not a test fixture.
         """
         from PIL import Image
+
+        from apps.frontend.management.commands.build_app_icons import (
+            OPAQUE_SURROUND,
+        )
 
         for name in (
             "apple-touch-icon.png",
@@ -240,6 +251,6 @@ class IconAssetTest(SimpleTestCase):
             for x, y in ((1, 1), (w - 2, 1), (1, h - 2), (w - 2, h - 2)):
                 self.assertEqual(
                     px[x, y],
-                    (240, 246, 249),
+                    OPAQUE_SURROUND,
                     f"{name} corner ({x},{y}) must use the circular-icon surround",
                 )

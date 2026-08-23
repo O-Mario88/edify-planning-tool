@@ -98,8 +98,10 @@ class Command(BaseCommand):
             self.stdout.write("")
             self.stdout.write(
                 "Nothing to derive: these clusters hold no school that records "
-                "which sub-county it is in. Coverage has to be declared on the "
-                "cluster itself before any school can be matched to it."
+                "which sub-county it is in. Add one school to each cluster "
+                "through the Add-to-Cluster drawer and the cluster records that "
+                "sub-county itself; every later school in it then resolves "
+                "automatically. Editing the cluster declares coverage directly."
             )
         if planned and not commit:
             self.stdout.write("")

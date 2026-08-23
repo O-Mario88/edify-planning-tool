@@ -2503,7 +2503,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3293,
+      "bytes": 3242,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/impact-drawer/<str:cluster_id>"
@@ -2841,7 +2841,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8181,
+      "bytes": 8155,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -6486,7 +6486,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3088,
+      "bytes": 3026,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning",
@@ -6563,7 +6563,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30566,
+      "bytes": 30536,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -7239,6 +7239,34 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 10906,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/",
+        "/accounts",
+        "/accounts/",
+        "/accounts/accountability",
+        "/accounts/accountability/",
+        "/accounts/activities/<str:activity_id>",
+        "/accounts/activities/<str:activity_id>/",
+        "/accounts/activity-evidence/<str:activity_id>"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Pwa Launch",
+      "purpose": "Reusable pwa launch interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/pwa_launch.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 322,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -7557,7 +7585,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8247,
+      "bytes": 8199,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/create-drawer"
@@ -7627,7 +7655,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 157,
+      "bytes": 753,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/sub-counties"
@@ -7640,7 +7668,9 @@
       "purpose": "Reusable sub county options interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "empty",
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/schools/sub_county_options.html",
@@ -53957,7 +53987,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /schools/create-drawer",
-        "GET /schools/sub-counties"
+        "GET /schools/sub-counties?with_clusters=1"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -54239,7 +54269,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.school_views",
       "backend_view": "apps.frontend.views.school_views.school_sub_county_options_view",
       "card_count": 0,
@@ -54306,8 +54336,8 @@
         "standalone-document-or-fragment"
       ],
       "state_coverage": {
-        "disabled": false,
-        "empty": false,
+        "disabled": true,
+        "empty": true,
         "error": false,
         "loading": false
       },
@@ -75934,7 +75964,7 @@
     "activity_states": 23,
     "all_routes": 1028,
     "api_routes": 349,
-    "component_templates": 339,
+    "component_templates": 340,
     "full_pages": 203,
     "mobile_contract_pass": 375,
     "nonvisual_actions": 177,

@@ -1,0 +1,309 @@
+{% load static %}
+{% comment %}
+The launch screen the installed app shows while it boots.
+
+It exists because the operating system's own splash ends the moment the
+document starts painting, which is well before the shell is usable — the app
+appeared to flash a half-drawn page. This overlay continues that splash: same
+navy as the manifest's `background_color` and the icon surround, so the handover
+from the OS screen to this one is invisible and the launch reads as one motion
+rather than two.
+
+Standalone only, and once per launch. In a browser tab there is no OS splash to
+continue, and an overlay there would just be a delay; `sessionStorage` keeps it
+to the first document of a session so in-app navigation never replays it.
+
+The markup and its critical CSS are inline on purpose. A launch screen that
+waits for a stylesheet is not a launch screen — it has to paint on the first
+frame, before main.css has been fetched.
+{% endcomment %}
+<div id="edify-launch" hidden aria-hidden="true">
+  <div class="edify-launch__stage">
+    <span class="edify-launch__ripple" aria-hidden="true"></span>
+    <span class="edify-launch__ripple" aria-hidden="true"></span>
+    <span class="edify-launch__ripple" aria-hidden="true"></span>
+    <span class="edify-launch__spinner" aria-hidden="true"></span>
+    <img
+      class="edify-launch__mark"
+      src="{% static 'icons/icon-512.png' %}"
+      alt=""
+      aria-hidden="true"
+      decoding="sync"
+      fetchpriority="high"
+    >
+  </div>
+</div>
+
+<style>
+  /* The reveal is a hole in the overlay that grows from behind the logo, so
+     the final ripple is what uncovers the app rather than a fade laid over it.
+     Animating a length inside a mask needs the custom property to be typed —
+     without @property the browser cannot interpolate it, so the reveal would
+     jump. Where that is unsupported the overlay falls back to a plain fade
+     further down; both end in the same place. */
+  @property --edify-launch-reveal {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  #edify-launch {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483646;
+    display: grid;
+    place-items: center;
+    /* Matches manifest background_color and the icon surround exactly. */
+    background: #2d4862;
+    --edify-launch-reveal: 0px;
+  }
+
+  #edify-launch[hidden] { display: none; }
+
+  .edify-launch__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 34vmin;
+    height: 34vmin;
+    /* Enough room for a ripple to travel without the stage clipping it. */
+    overflow: visible;
+  }
+
+  .edify-launch__mark {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    /* No ring, no plate: the artwork is already a circle and the field behind
+       it is the same navy, so anything drawn around it would read as one. */
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    animation: edify-launch-breathe 3.4s ease-in-out infinite;
+  }
+
+  .edify-launch__ripple {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    /* Drawn as a ring rather than a disc so it reads as a wave leaving the
+       logo instead of a pulse covering it. */
+    border: 0.35vmin solid rgba(255, 255, 255, 0.42);
+    opacity: 0;
+    transform: scale(1);
+    /* Slow and long: a wave leaving the logo, not a tap feedback pulse. The
+       long deceleration is what makes it read as travelling outward under its
+       own momentum rather than being drawn and erased. */
+    animation: edify-launch-ripple 3.4s cubic-bezier(0.16, 0.6, 0.3, 1) infinite;
+  }
+
+  /* Staggered by less than a third of the duration, so three rings are in
+     flight at once and the surface never goes still between them. */
+  .edify-launch__ripple:nth-child(2) { animation-delay: 1.05s; }
+  .edify-launch__ripple:nth-child(3) { animation-delay: 2.1s; }
+
+  @keyframes edify-launch-ripple {
+    0%   { opacity: 0;    transform: scale(1); }
+    12%  { opacity: 0.5; }
+    60%  { opacity: 0.2; }
+    100% { opacity: 0;    transform: scale(4.2); }
+  }
+
+  @keyframes edify-launch-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.045); }
+  }
+
+  /* The progress ring: it hugs the logo and turns for as long as the app is
+     still coming up, so the wave says "alive" and this says "working". It is
+     an ARC, not a closed circle — a travelling highlight around a hairline
+     band. A solid ring here would put back the very thing the icon surround
+     was changed to remove. */
+  .edify-launch__spinner {
+    position: absolute;
+    inset: -8%;
+    z-index: 2;
+    border-radius: 50%;
+    animation: edify-launch-spin 1.6s linear infinite;
+  }
+
+  @supports (mask: radial-gradient(#000, #000)) or
+            (-webkit-mask: radial-gradient(#000, #000)) {
+    .edify-launch__spinner {
+      background: conic-gradient(
+        from 0deg,
+        rgba(255, 255, 255, 0) 0deg,
+        rgba(255, 255, 255, 0) 170deg,
+        rgba(255, 255, 255, 0.10) 250deg,
+        rgba(255, 255, 255, 0.85) 348deg,
+        rgba(255, 255, 255, 0) 360deg
+      );
+      /* Keep only the outermost hairline, so the cone reads as a ring. */
+      -webkit-mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - 0.45vmin),
+        #000 calc(100% - 0.45vmin)
+      );
+      mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - 0.45vmin),
+        #000 calc(100% - 0.45vmin)
+      );
+    }
+  }
+
+  /* Without mask support a cone would fill the whole disc and cover the logo.
+     The classic three-quarter border spinner is the safe shape there. */
+  @supports not ((mask: radial-gradient(#000, #000)) or
+                 (-webkit-mask: radial-gradient(#000, #000))) {
+    .edify-launch__spinner {
+      border: 0.45vmin solid rgba(255, 255, 255, 0.14);
+      border-top-color: rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  @keyframes edify-launch-spin {
+    to { transform: rotate(1turn); }
+  }
+
+  /* The exit. One last ring leaves the logo and keeps going past the edge of
+     the screen, and the overlay is masked away behind it — so the app is
+     revealed by the ripple rather than behind it. */
+  #edify-launch.is-opening .edify-launch__ripple { animation: none; opacity: 0; }
+
+  #edify-launch.is-opening::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 34vmin;
+    height: 34vmin;
+    margin: -17vmin 0 0 -17vmin;
+    border-radius: 50%;
+    border: 0.4vmin solid rgba(255, 255, 255, 0.5);
+    animation: edify-launch-final 900ms cubic-bezier(0.16, 0.6, 0.3, 1) forwards;
+  }
+
+  @keyframes edify-launch-final {
+    0%   { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0;   transform: scale(11); }
+  }
+
+  @supports (mask-image: radial-gradient(circle, #000 0, #000 1px)) {
+    #edify-launch.is-opening {
+      -webkit-mask-image: radial-gradient(
+        circle at 50% 50%,
+        transparent var(--edify-launch-reveal),
+        #000 calc(var(--edify-launch-reveal) + 1.5vmin)
+      );
+      mask-image: radial-gradient(
+        circle at 50% 50%,
+        transparent var(--edify-launch-reveal),
+        #000 calc(var(--edify-launch-reveal) + 1.5vmin)
+      );
+      animation: edify-launch-reveal 900ms cubic-bezier(0.16, 0.6, 0.3, 1) forwards;
+    }
+
+    @keyframes edify-launch-reveal {
+      from { --edify-launch-reveal: 0px; }
+      to   { --edify-launch-reveal: 160vmax; }
+    }
+  }
+
+  /* Fallback for engines without an animatable mask: the overlay simply fades
+     while the last ring travels. */
+  @supports not (mask-image: radial-gradient(circle, #000 0, #000 1px)) {
+    #edify-launch.is-opening {
+      animation: edify-launch-fade 900ms ease forwards;
+    }
+
+    @keyframes edify-launch-fade {
+      to { opacity: 0; }
+    }
+  }
+
+  #edify-launch.is-opening .edify-launch__mark,
+  #edify-launch.is-opening .edify-launch__spinner {
+    animation: edify-launch-depart 900ms cubic-bezier(0.16, 0.6, 0.3, 1) forwards;
+  }
+
+  @keyframes edify-launch-depart {
+    to { opacity: 0; transform: scale(1.25); }
+  }
+
+  /* Motion is decoration here, never the message. Reduced motion still gets
+     the launch screen — it is what hides the half-painted shell — but it holds
+     still and leaves quickly. */
+  @media (prefers-reduced-motion: reduce) {
+    .edify-launch__ripple { display: none; }
+    .edify-launch__mark { animation: none; }
+    /* Held still rather than hidden: it is the only remaining sign that
+       something is happening once the wave is gone. */
+    .edify-launch__spinner { animation: none; }
+    #edify-launch.is-opening,
+    #edify-launch.is-opening::after,
+    #edify-launch.is-opening .edify-launch__spinner,
+    #edify-launch.is-opening .edify-launch__mark {
+      animation: edify-launch-fade 200ms linear forwards;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    var overlay = document.getElementById('edify-launch');
+    if (!overlay) return;
+
+    var installed = window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches
+      || window.navigator.standalone === true;
+
+    // Once per launch, not once per page. Without this the overlay replays on
+    // every full-page navigation inside the installed app.
+    var KEY = 'edify:launched';
+    var alreadyLaunched = false;
+    try { alreadyLaunched = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+
+    if (!installed || alreadyLaunched) {
+      overlay.remove();
+      return;
+    }
+    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+
+    overlay.hidden = false;
+    // The shell must not scroll behind the overlay while it is up.
+    var root = document.documentElement;
+    var previousOverflow = root.style.overflow;
+    root.style.overflow = 'hidden';
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Rings are 3.4s long and 1.05s apart, so HOLD lets two clear the logo
+    // and the third is still travelling when the closing one overtakes it —
+    // the wave never stops, it just becomes the one that opens the app.
+    var HOLD = reduced ? 400 : 3000;
+    var EXIT = reduced ? 200 : 900;
+
+    var finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      root.style.overflow = previousOverflow;
+      overlay.remove();
+    }
+
+    function open() {
+      overlay.classList.add('is-opening');
+      // Timer rather than animationend: several animations run on this element
+      // and its children, and whichever fires first would cut the others off.
+      window.setTimeout(finish, EXIT + 60);
+    }
+
+    window.setTimeout(open, HOLD);
+    // A launch screen must never be the reason the app is unusable. If an
+    // animation is dropped or a timer is throttled in the background, this
+    // takes the overlay down regardless.
+    window.setTimeout(finish, HOLD + EXIT + 2500);
+  })();
+</script>

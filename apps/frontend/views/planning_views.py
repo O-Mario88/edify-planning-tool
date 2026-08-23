@@ -168,6 +168,81 @@ def _school_training_follow_up_options(school) -> list[dict]:
     return options
 
 
+def _scheduled_into_own_plan(created, principal) -> tuple[bool, str]:
+    """Will the activity just created show on this person's My Plan?
+
+    My Plan selects on `responsible_staff_id` (plus the monitoring staff member
+    on partner delivery), and `responsible_staff` is derived from the school's
+    owner — never from whoever pressed Schedule. So a country role scheduling
+    at somebody else's school creates real work that lands in *their* plan, and
+    redirecting the creator to their own My Plan drops them on a page the new
+    activity can never appear on. That looks exactly like a failed save.
+
+    Returns the answer and, when it is no, the name of the person who now owns
+    the work, so the confirmation can say where it went.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.activities.models import Activity
+    from apps.core.scoping import owner_ids
+
+    activity_id = (created or {}).get("id") if isinstance(created, dict) else None
+    if not activity_id:
+        return True, ""  # nothing to correct; keep the established behaviour
+    activity = (
+        Activity.objects.filter(id=activity_id)
+        .only("id", "responsible_staff_id", "monitored_by_staff_id", "delivery_type")
+        .first()
+    )
+    if activity is None:
+        return True, ""
+    mine = set(owner_ids(principal))
+    if activity.responsible_staff_id in mine:
+        return True, ""
+    if activity.delivery_type == "partner" and activity.monitored_by_staff_id in mine:
+        return True, ""
+    owner = (
+        StaffProfile.objects.filter(id=activity.responsible_staff_id)
+        .select_related("user")
+        .first()
+    )
+    return False, (owner.user.name if owner and owner.user else "the school's CCEO")
+
+
+def _no_scheduling_permission_message(user, *, cluster: bool = False) -> str:
+    """Why this person cannot schedule, phrased for the person reading it.
+
+    "You do not have permission" is the right answer for a role that simply
+    lacks the capability. It is the wrong answer for an Admin, who holds every
+    permission there is: nothing is missing, and the refusal is a deliberate
+    boundary with a way around it. Saying so stops it reading as a bug in the
+    permission system.
+    """
+    from apps.activities.services import ADMIN_IS_NOT_A_PLANNER_MESSAGE
+    from apps.core.rbac import EdifyRole
+
+    if getattr(user, "active_role", None) == EdifyRole.ADMIN.value:
+        return ADMIN_IS_NOT_A_PLANNER_MESSAGE
+    what = "cluster activities" if cluster else "activities"
+    return f"Access Denied: You do not have permission to schedule {what}."
+
+
+def _calendar_url_for_scheduled_date(raw_date: str | None) -> str:
+    """The month of the calendar that does show somebody else's scheduled work.
+
+    The calendar is scoped by role rather than by ownership, so it is the one
+    list surface a country role can watch work it planned but does not own.
+    """
+    from datetime import date
+
+    try:
+        scheduled_for = date.fromisoformat(str(raw_date or "")[:10])
+    except ValueError:
+        return "/calendar"
+    return "/calendar?" + urlencode(
+        {"month": scheduled_for.month, "year": scheduled_for.year}
+    )
+
+
 def _my_plan_url_for_scheduled_date(raw_date: str | None) -> str:
     """Open My Plan on the exact week containing a just-saved activity."""
     from datetime import date
@@ -246,9 +321,7 @@ def _common_project_recommendations(assignments, *, principal, executor_type):
 def special_projects_bulk_schedule_view(request):
     """Schedule the same dated visit for selected project-school pairs."""
     if not RolePermissionService.can_schedule_activity(request.user):
-        return HttpResponseForbidden(
-            "You do not have permission to schedule activities."
-        )
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
     assignments = _scoped_project_assignments(
         request,
@@ -708,9 +781,7 @@ def planning_dashboard_view(request):
 @require_page_permission("planning")
 def schedule_modal_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
-        return HttpResponseForbidden(
-            "Access Denied: You do not have permission to schedule activities."
-        )
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
     priority_allocation_id = (request.GET.get("priority_allocation") or "").strip()
     planning_priority = None
@@ -956,9 +1027,7 @@ def schedule_modal_view(request):
 @require_page_permission("planning")
 def schedule_action_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
-        return HttpResponseForbidden(
-            "Access Denied: You do not have permission to schedule activities."
-        )
+        return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
@@ -1264,20 +1333,38 @@ def schedule_action_view(request):
             # workflow as training and meetings.  Daily batching remains a
             # planning/reporting tool for deliberate bulk schedules, not a
             # set of rules that can prevent a field worker from booking work.
-            schedule_school_visit(payload, request.user)
-            messages.success(request, "School visit scheduled successfully.")
+            created = schedule_school_visit(payload, request.user)
+            noun = "School visit"
         else:
-            schedule_cluster_activity(payload, request.user)
-            messages.success(request, "Cluster activity scheduled successfully.")
+            created = schedule_cluster_activity(payload, request.user)
+            noun = "Cluster activity"
+        # Confirm where it went, not just that it happened. When the work is
+        # filed against somebody else the creator must be told so, because the
+        # next screen will not show it and silence there reads as a failure.
+        lands_here, owner_name = _scheduled_into_own_plan(created, request.user)
+        if lands_here:
+            messages.success(request, f"{noun} scheduled successfully.")
+        else:
+            messages.success(
+                request,
+                f"{noun} scheduled successfully. It is now on {owner_name}'s "
+                "My Plan, because the responsible staff member comes from the "
+                "school's owner — you will find it on the Calendar.",
+            )
         # Redirect to My Plan and close drawer via client headers.
         # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
         # redirect to "/my-plan/" 404s — the activity saves but the user lands
         # on an error page and never sees confirmation.
-        plan_url = (
-            "/projects/my-plan"
-            if project_id
-            else _my_plan_url_for_scheduled_date(scheduled_date)
-        )
+        #
+        # And never to a My Plan the activity is absent from: that page is
+        # scoped to the viewer's own work, so sending somebody there to look at
+        # someone else's is showing them a blank week as proof of success.
+        if project_id:
+            plan_url = "/projects/my-plan"
+        elif lands_here:
+            plan_url = _my_plan_url_for_scheduled_date(scheduled_date)
+        else:
+            plan_url = _calendar_url_for_scheduled_date(scheduled_date)
         response = HttpResponse(
             f'<script>window.location.href = "{plan_url}";</script>'
         )
@@ -1431,9 +1518,7 @@ def resolve_monitoring_staff(school, actor):
         if owner and owner.user_id:
             return (
                 owner.id,
-                owner.user.name
-                or school.account_owner_name_raw
-                or "Staff owner",
+                owner.user.name or school.account_owner_name_raw or "Staff owner",
             )
     return (
         getattr(actor, "staff_profile_id", None)
@@ -1521,9 +1606,8 @@ def assign_partner_action_view(request):
                             "The selected Activity / Training is not approved for "
                             "Partner delivery."
                         )
-                    recommendation_reason = (
-                        "Priority activity: "
-                        + ", ".join(selected_training["priorityTitles"])
+                    recommendation_reason = "Priority activity: " + ", ".join(
+                        selected_training["priorityTitles"]
                     )
                 else:
                     derived = resolve_assignment_item(
@@ -1944,7 +2028,7 @@ def bulk_action_view(request):
         # Each School uses its own top eligible Catalogue recommendation.
         if not RolePermissionService.can_schedule_activity(request.user):
             return HttpResponseForbidden(
-                "Access Denied: You do not have permission to schedule activities."
+                _no_scheduling_permission_message(request.user)
             )
 
         from datetime import date as _date
@@ -2067,7 +2151,7 @@ def schedule_activity_form_view(request):
     if request.method == "POST":
         if not RolePermissionService.can_schedule_activity(request.user):
             return HttpResponseForbidden(
-                "Access Denied: You do not have permission to schedule activities."
+                _no_scheduling_permission_message(request.user)
             )
 
         activity_type = request.POST.get("activity_type", "")

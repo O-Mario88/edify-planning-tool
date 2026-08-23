@@ -443,3 +443,103 @@ class DanglingClusterReferenceTest(TestCase):
             school.cluster_id,
             "a school must not sit in a cluster that has been withdrawn",
         )
+
+
+class TheOnboardDrawerOffersOnlyItsDistrictsClustersTest(TestCase):
+    """Rule 4, reported from production: a cluster belongs to one district.
+
+    The Add School drawer listed every active cluster in the country beside a
+    District field, so any pairing was selectable and most were wrong. The
+    assignment service then refused with "A school can only be assigned within
+    its own district" — a correct sentence about a choice the form had just
+    offered, which reads as the save failing rather than as the picker being
+    wrong. The list follows the district now, and the submit re-checks it.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.region = Region.objects.create(name="Boundary Region")
+        cls.here = District.objects.create(name="Here", region=cls.region)
+        cls.elsewhere = District.objects.create(name="Elsewhere", region=cls.region)
+        cls.barren = District.objects.create(name="Barren", region=cls.region)
+        cls.here_cluster = Cluster.objects.create(
+            name="Here Cluster",
+            region=cls.region,
+            district=cls.here,
+            status="active",
+        )
+        cls.far_cluster = Cluster.objects.create(
+            name="Far Cluster",
+            region=cls.region,
+            district=cls.elsewhere,
+            status="active",
+        )
+        cls.user = User.objects.create(
+            email="onboard@boundary.test",
+            name="Onboarder",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            is_active=True,
+            status="active",
+        )
+        cls.staff = StaffProfile.objects.create(user=cls.user, title="IA")
+        # The owner field accepts a CCEO or Program Lead only, so the person
+        # creating the school and the person who will own it are different.
+        cls.owner_user = User.objects.create(
+            email="owner@boundary.test",
+            name="Boundary Owner",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+            status="active",
+        )
+        cls.owner = StaffProfile.objects.create(user=cls.owner_user, title="CCEO")
+
+    def _options(self, district):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            f"/schools/sub-counties?with_clusters=1&district_id={district.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.content.decode()
+
+    def test_the_picker_lists_this_districts_clusters(self):
+        body = self._options(self.here)
+
+        self.assertIn("Here Cluster", body)
+
+    def test_the_picker_hides_another_districts_clusters(self):
+        body = self._options(self.here)
+
+        # Positive control above proves the fragment rendered, so this is a
+        # real absence rather than an empty response.
+        self.assertNotIn("Far Cluster", body)
+
+    def test_a_district_with_no_cluster_says_so_rather_than_listing_others(self):
+        body = self._options(self.barren)
+
+        self.assertIn("No active cluster in this district", body)
+        self.assertNotIn("Here Cluster", body)
+        self.assertNotIn("Far Cluster", body)
+
+    def test_submitting_another_districts_cluster_is_refused_by_the_form(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            "/schools/create-drawer",
+            {
+                "school_id": "BOUNDARY-1",
+                "name": "Boundary School",
+                "district_id": self.here.id,
+                "account_owner_id": self.owner.id,
+                "salesforce_account_id": "0018d00000BOUNDARY",
+                "school_type": "client",
+                # The rule is not the dropdown: this id arrives in a POST body.
+                "cluster_id": self.far_cluster.id,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("same district as the school", response.content.decode())
+        self.assertFalse(School.objects.filter(school_id="BOUNDARY-1").exists())

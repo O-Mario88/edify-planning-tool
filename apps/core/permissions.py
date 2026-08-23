@@ -310,9 +310,20 @@ class RolePermissionService:
     @staticmethod
     def can_schedule_activity(user, school_or_cluster=None) -> bool:
         role = getattr(user, "active_role", None)
-        if role == EdifyRole.ADMIN.value:
-            return True
-        if role in ["PartnerAdmin", "PartnerFieldOfficer"]:
+        # Planning is the owner's, and Admin is not an owner. The technical
+        # super-role holds country visibility for configuration and support,
+        # but an activity it creates is filed against the school's own CCEO —
+        # responsible_staff comes from the school owner, never from whoever
+        # clicked Schedule. So the person who will be held to the visit never
+        # chose to make it, and it lands in their My Plan while the creator is
+        # redirected to their own, where it can never appear. That reads as
+        # "it did not save".
+        #
+        # This does not constrain the admin *person*: roles are per user and
+        # switched through active_role, so an admin who is also a CCEO plans
+        # their own portfolio as the CCEO — the same escape hatch every other
+        # reserved authority in this boundary uses.
+        if role in [EdifyRole.ADMIN.value, "PartnerAdmin", "PartnerFieldOfficer"]:
             return False
         if school_or_cluster is None:
             return role in ["CCEO", "Program Lead", "ProjectCoordinator"]

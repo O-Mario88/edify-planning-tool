@@ -23,7 +23,7 @@ import re
 
 from django.test import Client, TestCase
 
-from apps.accounts.models import User
+from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -58,18 +58,23 @@ class ScheduleDrawerDomIntegrityTest(TestCase):
             region=region,
             district=district,
         )
-        # Admin: full authority and platform-wide scope, so the drawer opens
-        # for a school no field assignment covers. The DOM structure under
-        # test is identical for every role.
+        # The school's own CCEO. An Admin used to stand in here because the
+        # role opened every school regardless of assignment, but Admin no
+        # longer plans field work — and the assigned owner was always the
+        # truer actor, since the DOM under test is the one a planner sees.
         cls.user = User.objects.create(
-            id="drawer-dom-admin",
+            id="drawer-dom-cceo",
             email="drawer-dom@edify.org",
-            name="Drawer DOM Admin",
-            roles=["Admin"],
-            active_role="Admin",
+            name="Drawer DOM CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
             is_active=True,
             status="active",
         )
+        profile = StaffProfile.objects.create(
+            user=cls.user, staff_number="DRAWER-DOM-OWNER"
+        )
+        StaffSchoolAssignment.objects.create(staff=profile, school_id=cls.school.id)
 
     def _drawer(self, path: str) -> str:
         client = Client()

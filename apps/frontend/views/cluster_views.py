@@ -14,6 +14,7 @@ import json
 from datetime import datetime, timedelta
 
 from apps.clusters.models import Cluster, ClusterSubCounty
+from apps.frontend.views.planning_views import _no_scheduling_permission_message
 from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
@@ -23,6 +24,7 @@ from apps.core.scoping import (
     resolve_user_scope,
 )
 from apps.core.enums import SsaIntervention
+from apps.core.rbac import Permission
 
 from apps.clusters.services import (
     cluster_schools,
@@ -357,7 +359,7 @@ def cluster_cost_preview_partial(request):
 def cluster_schedule_activity_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
         return HttpResponseForbidden(
-            "Access Denied: You do not have permission to schedule cluster activities."
+            _no_scheduling_permission_message(request.user, cluster=True)
         )
     if request.method == "POST":
         cluster_id = request.POST.get("cluster_id", "").strip()
@@ -474,9 +476,7 @@ def cluster_schedule_activity_view(request):
                     if selected_cluster
                     else []
                 )
-                retry_invited = set(invited_school_ids) or {
-                    s.id for s in retry_members
-                }
+                retry_invited = set(invited_school_ids) or {s.id for s in retry_members}
                 training_options = (
                     training_activity_options(planning_context=CLUSTER)
                     if activity_type == "training"
@@ -575,7 +575,16 @@ def _default_cluster_owner(user):
 
 @require_page_permission("planning")
 def create_cluster_view(request):
-    if not RolePermissionService.can_schedule_activity(request.user):
+    # CLUSTER_ASSIGN, not "can this person schedule". Defining a cluster is
+    # registry work — the same question `cluster_overview`'s `canCreate` flag
+    # already answers with this permission — while scheduling its meetings is
+    # execution. Borrowing the scheduling predicate tied the two together, so
+    # narrowing who may plan field work silently removed cluster creation from
+    # the Admin who owns the registry.
+    if (
+        Permission.CLUSTER_ASSIGN.value
+        not in resolve_user_scope(request.user).permissions
+    ):
         return HttpResponseForbidden(
             "Access Denied: You do not have permission to create clusters."
         )
@@ -812,7 +821,9 @@ def planner_drawer_view(request):
     # that multiplies into the budget is then derived from the ticks, so the
     # figure and the list can never disagree — and the completion form knows
     # who to expect instead of starting from a blank register.
-    member_schools = list(active_schools(selected_cluster.id)) if selected_cluster else []
+    member_schools = (
+        list(active_schools(selected_cluster.id)) if selected_cluster else []
+    )
     raw_invited = [
         s.strip() for s in request.GET.getlist("invited_school_ids") if s.strip()
     ]
@@ -876,20 +887,14 @@ def planner_drawer_view(request):
         else []
     )
     selectable_training_ids = {option["id"] for option in training_options}
-    selected_training_activity_id = request.GET.get(
-        "catalogue_item_id", ""
-    ).strip()
+    selected_training_activity_id = request.GET.get("catalogue_item_id", "").strip()
     if selected_training_activity_id not in selectable_training_ids:
         selected_training_activity_id = ""
 
-    selected_focus_intervention = request.GET.get(
-        "focus_intervention", ""
-    ).strip()
+    selected_focus_intervention = request.GET.get("focus_intervention", "").strip()
     if selected_focus_intervention not in SsaIntervention.values:
         selected_focus_intervention = (
-            weakest_interventions[0]["intervention"]
-            if weakest_interventions
-            else ""
+            weakest_interventions[0]["intervention"] if weakest_interventions else ""
         )
 
     context = {
@@ -1000,9 +1005,16 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
                 direct_portfolio_schools(resolve_user_scope(user))
                 or School.objects.none()
             )
+            # District is checked on both arms. Only the second one had it, so
+            # a school whose own district disagreed with its sub-county — a
+            # geography error the register does carry — passed the covered
+            # sub-county test and was then refused by the membership service
+            # with "A school can only be assigned within its own district",
+            # after the batch had already reported it as selectable.
             if covered_sub_counties:
                 school = writable.filter(
                     id=sid,
+                    district_id=cluster.district_id,
                     sub_county_id__in=covered_sub_counties,
                     deleted_at__isnull=True,
                 ).first()

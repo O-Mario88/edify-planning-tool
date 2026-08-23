@@ -160,20 +160,27 @@ banner says which route to take rather than leaving the planner stuck. The
 older wording ("No activity addresses X") was true only because standard
 support did not exist, and reading it as "you need a Project or a Cluster" is
 exactly what people did.
+
+Written as a notice, not a letter. The drawer's own subtitle already names the
+school, so the banner never repeats it — the earlier copy said it five times in
+six sentences, which reads as a mail merge rather than as the system telling
+you something. Each line carries one thing: the need, the action, the
+alternatives. The costing sentence was dropped: the CD Cost Catalogue rate
+applies to everything planned here, so stating it against this one need implied
+a choice the planner does not have.
 {% endcomment %}
 <div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3.5 text-[12px] leading-normal text-amber-900 shadow-sm" role="status">
-  <p class="font-bold">{{ school.name }} has an unmet priority need</p>
-  <p class="mt-1 font-medium">{{ school.name }}&rsquo;s latest verified SSA identifies <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong> as its most urgent need, with a score of {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). None of the programme trainings currently available for this school directly addresses that need; the trainings shown below align with its next-highest priorities.</p>
+  <p class="font-bold">Top need not covered by the trainings below</p>
+  <p class="mt-1 font-medium">The trainings listed address lower-ranked needs.{% if not catalogue_recommendations.unmetPriority.standardSupportAvailable %} No standard support is available for it here either.{% endif %}</p>
   {% if catalogue_recommendations.unmetPriority.standardSupportAvailable %}
-  <p class="mt-1.5 font-medium">You can schedule standard support for {{ school.name }} from this drawer. Select the appropriate purpose below, then set Focus Intervention to <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong>. This support does not require a Project.</p>
+  <p class="mt-1.5 font-medium">To act on <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong> here, choose a purpose below and set Focus Intervention to it. No Project required.</p>
   {% endif %}
-  {% if catalogue_recommendations.unmetPriority.blockedBy %}
+  {% if catalogue_recommendations.unmetPriority.blockedGroups %}
   <ul class="mt-1.5 space-y-0.5 font-medium">
-    {% for blocked in catalogue_recommendations.unmetPriority.blockedBy %}
-    <li>&middot; <strong>{{ blocked.displayName }}</strong> is not available for {{ school.name }} in this drawer because it {{ blocked.reason }}. {{ blocked.route }}.</li>
+    {% for group in catalogue_recommendations.unmetPriority.blockedGroups %}
+    <li>&middot; {{ group.reason|capfirst }}: {% for name in group.names %}<strong>{{ name }}</strong>{% if not forloop.last %}, {% endif %}{% endfor %} &mdash; {{ group.route }}.</li>
     {% endfor %}
   </ul>
-  <p class="mt-1.5 font-medium">The applicable CD Cost Catalogue rate will be used for any support planned in response to {{ school.name }}&rsquo;s need.</p>
   {% endif %}
 </div>
 {% endif %}
@@ -194,7 +201,7 @@ its costing on, so the costing link is derived server-side and never asked for.
 {% if recommendations|length > 1 %}
 <div class="rounded-surface border edify-danger-border edify-danger-soft p-3" role="status">
   <p class="edify-text-caption font-bold uppercase tracking-wider edify-danger-text">Additional SSA interventions performing poorly</p>
-  <p class="mt-0.5 font-medium edify-danger-text">Other needs from the latest verified SSA for {{ school.name }} that this visit can address.</p>
+  <p class="mt-0.5 font-medium edify-danger-text">Other needs from the same SSA that this visit can address.</p>
   <ul class="mt-2 space-y-1">
     {% for r in recommendations|slice:"1:" %}
     <li class="flex items-center justify-between gap-3 px-1 py-1">

@@ -75,6 +75,70 @@ def active_cluster_for_school_geography(school):
     )
 
 
+def declare_sub_county_coverage(cluster, sub_county_id) -> bool:
+    """Record that a cluster works in one sub-county. Returns whether it wrote.
+
+    Coverage is the only thing `active_cluster_for_geography` matches on, and
+    until now it could only be typed in at creation. A cluster created with a
+    district and nothing else could therefore never be resolved from a school's
+    profile, and `backfill_cluster_sub_counties` could not rescue it: that
+    command reads coverage back off member schools, and the members it needs
+    are the ones the missing coverage prevents. Every cluster in the live
+    deployment sits inside that loop, which is why no school there has ever
+    seen "Cluster selected automatically".
+
+    An assignment breaks the loop. A school joining a cluster *is* the cluster
+    working in that school's sub-county — a fact the assignment just
+    established, not an inference about one — so it is recorded, and the next
+    school in the same sub-county resolves by itself.
+
+    Refused when another active cluster already claims the sub-county: that is
+    the uniqueness rule `create_cluster` enforces, and coverage acquired
+    sideways must not be a way around it. Refused too when the sub-county sits
+    in another district, which is a geography error on the school and must not
+    be spread into the cluster's declared ground.
+    """
+    from apps.clusters.models import ClusterSubCounty
+    from apps.geography.models import SubCounty
+
+    if cluster is None or not sub_county_id:
+        return False
+    if getattr(cluster, "sub_county_id", None) == sub_county_id:
+        return False
+    if ClusterSubCounty.objects.filter(
+        cluster=cluster, sub_county_id=sub_county_id
+    ).exists():
+        return False
+
+    district_id = (
+        SubCounty.objects.filter(id=sub_county_id)
+        .values_list("district_id", flat=True)
+        .first()
+    )
+    if not district_id or district_id != cluster.district_id:
+        return False
+
+    rival = (
+        Cluster.objects.filter(
+            deleted_at__isnull=True,
+            status=ClusterRecordStatus.ACTIVE,
+        )
+        .exclude(pk=cluster.pk)
+        .filter(
+            Q(sub_county_id=sub_county_id)
+            | Q(covered_sub_counties__sub_county_id=sub_county_id)
+        )
+        .exists()
+    )
+    if rival:
+        return False
+
+    _, created = ClusterSubCounty.objects.get_or_create(
+        cluster=cluster, sub_county_id=sub_county_id
+    )
+    return created
+
+
 def owner_id_variants(owner_id: str) -> set[str]:
     """Both id spaces for one owner.
 

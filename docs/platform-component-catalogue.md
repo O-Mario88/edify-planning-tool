@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **339**
+Components and application partials: **340**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -301,6 +301,7 @@ Components and application partials: **339**
 | `partials/projects/project_minilist.html` | application-partial | Reusable project minilist interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/projects/workflow_step.html` | application-partial | Reusable workflow step interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/pwa_head.html` | application-partial | Reusable pwa head interface primitive | canonical; default, error | inherits containing page contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
+| `partials/pwa_launch.html` | application-partial | Reusable pwa launch interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /<br>/accounts<br>/accounts/<br>/accounts/accountability<br>/accounts/accountability/<br>/accounts/activities/<str:activity_id><br>/accounts/activities/<str:activity_id>/<br>/accounts/activity-evidence/<str:activity_id> | 0 |
 | `partials/schools/_cluster_action_icon.html` | application-partial | Reusable  cluster action icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
 | `partials/schools/_project_action_icon.html` | application-partial | Reusable  project action icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools | 0 |
 | `partials/schools/add_to_cluster_drawer.html` | application-partial | Reusable add to cluster drawer interface primitive | canonical; default, error, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools/<str:school_id>/add-to-cluster | 0 |
@@ -317,7 +318,7 @@ Components and application partials: **339**
 | `partials/schools/onboard_drawer.html` | application-partial | Reusable onboard drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility | /schools/create-drawer | 0 |
 | `partials/schools/parish_options.html` | application-partial | Reusable parish options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/parishes | 0 |
 | `partials/schools/ssa_score_groups.html` | application-partial | Reusable ssa score groups interface primitive | canonical; default | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |
-| `partials/schools/sub_county_options.html` | application-partial | Reusable sub county options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /schools/sub-counties | 0 |
+| `partials/schools/sub_county_options.html` | application-partial | Reusable sub county options interface primitive | canonical; default, empty, disabled | inherits containing page contract | inherits semantic parent contract | /schools/sub-counties | 0 |
 | `partials/schools/table.html` | application-partial | Reusable table interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools | 0 |
 | `partials/schools/tabs.html` | application-partial | Reusable tabs interface primitive | canonical; default, loading, selected | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools | 0 |
 | `partials/schools/toast_success.html` | application-partial | Reusable toast success interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /analytics/customize-dashboard<br>/analytics/schedule-report<br>/clusters/<str:cluster_id>/bulk-assign-drawer<br>/schools/<str:school_id>/add-to-cluster<br>/schools/<str:school_id>/assign-to-project | 0 |

@@ -272,7 +272,11 @@ def _purpose_from_template(source: str, fallback_title: str, module_name: str) -
         value = _clean_text(description.group(1))
         if value:
             return value
-    module = module_name.split(".")[1].replace("_", " ") if module_name.startswith("apps.") else "platform"
+    module = (
+        module_name.split(".")[1].replace("_", " ")
+        if module_name.startswith("apps.")
+        else "platform"
+    )
     return f"Operate {fallback_title.lower()} within the {module} workflow."
 
 
@@ -319,6 +323,23 @@ def _dependencies(module_name: str) -> list[str]:
         source,
     )
     return sorted(set(matches))
+
+
+# The launch screen is the one surface these two rules cannot reach.
+#
+# A splash that waits for main.css is not a splash: it has to paint on the
+# first frame, before any stylesheet has even been requested, so its CSS is
+# necessarily inline. For the same reason its background cannot be a semantic
+# token — tokens are defined in a stylesheet that has not loaded yet — and it
+# must be the *literal* navy that the web manifest's `background_color` and the
+# opaque icon surround already use, because the whole point is that the handover
+# from the operating system's splash to this one is invisible. A token that
+# drifted from those two would show as a seam at launch.
+#
+# Deliberately keyed to one template and two rule keys: every other finding
+# still applies to it, and every other template still answers to all of them.
+_PRE_STYLESHEET_TEMPLATES = ("partials/pwa_launch.html",)
+_PRE_STYLESHEET_EXEMPT = frozenset({"template-style-block", "raw-hex"})
 
 
 def _template_findings(source: str, name: str = "") -> list[Finding]:
@@ -485,8 +506,13 @@ def _template_findings(source: str, name: str = "") -> list[Finding]:
             "Use minmax, fluid sizing, or a size-aware container rule.",
         ),
     ]
+    exempt = (
+        _PRE_STYLESHEET_EXEMPT
+        if any(t in name for t in _PRE_STYLESHEET_TEMPLATES)
+        else frozenset()
+    )
     for key, severity, match, evidence, action in checks:
-        if match:
+        if match and key not in exempt:
             findings.append(Finding(key, severity, evidence, action))
     return findings
 
@@ -537,7 +563,10 @@ def _test_corpus() -> str:
 def _surface_kind(route: str, route_name: str, templates: list[str]) -> str:
     value = " ".join([route, route_name, *templates]).lower()
     if not templates:
-        if any(word in value for word in ("export", "download", "attachment", "pdf", ".csv")):
+        if any(
+            word in value
+            for word in ("export", "download", "attachment", "pdf", ".csv")
+        ):
             return "export"
         return "action"
     if "drawer" in value:
@@ -649,8 +678,16 @@ def _component_catalog(consumers: dict[str, list[str]] | None = None) -> list[di
             source = path.read_text(encoding="utf-8")
             relative = str(path.relative_to(TEMPLATE_ROOT))
             state_markers = {
-                "loading": bool(re.search(r"skeleton|hx-indicator|\bloading\b", source, re.I)),
-                "empty": bool(re.search(r"empty-state|No (?:data|results|records|items)|{%\s*empty\s*%}", source, re.I)),
+                "loading": bool(
+                    re.search(r"skeleton|hx-indicator|\bloading\b", source, re.I)
+                ),
+                "empty": bool(
+                    re.search(
+                        r"empty-state|No (?:data|results|records|items)|{%\s*empty\s*%}",
+                        source,
+                        re.I,
+                    )
+                ),
                 "error": bool(re.search(r"role=[\"']alert|\berror\b", source, re.I)),
                 "disabled": "disabled" in source or "aria-disabled" in source,
                 "selected": "aria-selected" in source or "is-selected" in source,
@@ -663,10 +700,15 @@ def _component_catalog(consumers: dict[str, list[str]] | None = None) -> list[di
                 {
                     "name": path.stem.replace("_", " ").title(),
                     "template": relative,
-                    "kind": "shared-component" if relative.startswith("components/") else "application-partial",
+                    "kind": "shared-component"
+                    if relative.startswith("components/")
+                    else "application-partial",
                     "purpose": f"Reusable {path.stem.replace('_', ' ')} interface primitive",
                     "variants": variants,
-                    "states": ["default", *[key for key, present in state_markers.items() if present]],
+                    "states": [
+                        "default",
+                        *[key for key, present in state_markers.items() if present],
+                    ],
                     "responsive_behavior": (
                         "explicit responsive contract"
                         if re.search(r"(?:sm|md|lg|xl):|@media|data-mobile", source)
@@ -675,9 +717,28 @@ def _component_catalog(consumers: dict[str, list[str]] | None = None) -> list[di
                     "accessibility_requirements": [
                         requirement
                         for requirement, present in (
-                            ("accessible name and label", bool(re.search(r"aria-label|<label\b", source, re.I))),
-                            ("keyboard focus visibility", bool(re.search(r"focus:|focus-visible|tabindex", source, re.I))),
-                            ("announced dynamic state", bool(re.search(r"aria-live|role=[\"'](?:alert|status)", source, re.I))),
+                            (
+                                "accessible name and label",
+                                bool(re.search(r"aria-label|<label\b", source, re.I)),
+                            ),
+                            (
+                                "keyboard focus visibility",
+                                bool(
+                                    re.search(
+                                        r"focus:|focus-visible|tabindex", source, re.I
+                                    )
+                                ),
+                            ),
+                            (
+                                "announced dynamic state",
+                                bool(
+                                    re.search(
+                                        r"aria-live|role=[\"'](?:alert|status)",
+                                        source,
+                                        re.I,
+                                    )
+                                ),
+                            ),
                         )
                         if present
                     ],
@@ -845,9 +906,7 @@ def _card_count(source: str) -> int:
 
 def _tab_summary(source: str) -> dict:
     true_tabs = len(re.findall(r"\brole=[\"']tab[\"']", source, re.I))
-    route_tabs = len(
-        re.findall(r"edify-section-nav__(?:link|view-link)", source, re.I)
-    )
+    route_tabs = len(re.findall(r"edify-section-nav__(?:link|view-link)", source, re.I))
     segmented = len(re.findall(r"data-edify-tab", source, re.I))
     if true_tabs:
         control_type = "in-page-tabs"
@@ -960,7 +1019,8 @@ def build_page_inventory() -> dict:
         }
         responsive = bool(
             re.search(
-                r"(?:sm|md|lg|xl):|@media|@container|admin-command|page-shell", responsive_source
+                r"(?:sm|md|lg|xl):|@media|@container|admin-command|page-shell",
+                responsive_source,
             )
         )
         theme_aware = bool(
@@ -998,12 +1058,18 @@ def build_page_inventory() -> dict:
             for layout in shared_layout
         )
         visual_surface = surface_kind != "action" and bool(templates)
-        responsive_contract = responsive or inherits_shared_shell or surface_kind in {"partial", "drawer"}
+        responsive_contract = (
+            responsive or inherits_shared_shell or surface_kind in {"partial", "drawer"}
+        )
         # Fragments and drawers render inside an already-themed shell and are
         # independently scanned for literal colour/style leaks. They therefore
         # inherit the parent's token contract even when the fragment itself
         # does not declare a CSS variable.
-        theme_contract = theme_aware or inherits_shared_shell or surface_kind in {"partial", "drawer"}
+        theme_contract = (
+            theme_aware
+            or inherits_shared_shell
+            or surface_kind in {"partial", "drawer"}
+        )
         serialized_findings = []
         for index, finding in enumerate(findings, start=1):
             record = asdict(finding)
@@ -1013,9 +1079,7 @@ def build_page_inventory() -> dict:
             record["finding_id"] = f"UI-FINDING-{digest.upper()}"
             serialized_findings.append(record)
         test_status = (
-            "referenced-by-automated-test"
-            if has_test
-            else "coverage-review-required"
+            "referenced-by-automated-test" if has_test else "coverage-review-required"
         )
         fix_status = "fixed" if not findings else "pending"
         remediation = (
@@ -1053,7 +1117,8 @@ def build_page_inventory() -> dict:
                 page_type=page_type,
                 permission_key=permission_key or (nav_item or {}).get("page_key", ""),
                 role_access=sorted(roles),
-                purpose=purpose or _purpose_from_template(source, fallback_title, module_name),
+                purpose=purpose
+                or _purpose_from_template(source, fallback_title, module_name),
                 primary_user_decision=_primary_decision(page_type),
                 primary_action=_fallback_primary_action(page_type, source, route_name),
                 secondary_actions=actions[:12],
@@ -1062,7 +1127,9 @@ def build_page_inventory() -> dict:
                 services_and_models=_dependencies(module_name),
                 templates=templates,
                 shared_layout=shared_layout,
-                header_variant=_header_variant(dependency_source or source, surface_kind),
+                header_variant=_header_variant(
+                    dependency_source or source, surface_kind
+                ),
                 kpi_count=_kpi_count(source),
                 card_count=_card_count(source),
                 tabs=_tab_summary(source),
@@ -1184,7 +1251,9 @@ def build_page_inventory() -> dict:
             "partials_and_drawers": sum(
                 item["surface_kind"] in {"partial", "drawer"} for item in serialized
             ),
-            "nonvisual_actions": sum(item["surface_kind"] == "action" for item in serialized),
+            "nonvisual_actions": sum(
+                item["surface_kind"] == "action" for item in serialized
+            ),
             "permission_gated": sum(
                 bool(item["permission_key"]) for item in serialized
             ),
@@ -1193,10 +1262,21 @@ def build_page_inventory() -> dict:
                 for item in serialized
             ),
             "severity_counts": severity_counts,
-            "mobile_contract_pass": sum(item["mobile_status"] == "pass-automated-contract" for item in serialized),
-            "tablet_contract_pass": sum(item["tablet_status"] == "pass-automated-contract" for item in serialized),
-            "theme_contract_pass": sum(item["theme_status"] == "pass-automated-contract" for item in serialized),
-            "accessibility_contract_pass": sum(item["accessibility_status"] == "pass-automated-contract" for item in serialized),
+            "mobile_contract_pass": sum(
+                item["mobile_status"] == "pass-automated-contract"
+                for item in serialized
+            ),
+            "tablet_contract_pass": sum(
+                item["tablet_status"] == "pass-automated-contract"
+                for item in serialized
+            ),
+            "theme_contract_pass": sum(
+                item["theme_status"] == "pass-automated-contract" for item in serialized
+            ),
+            "accessibility_contract_pass": sum(
+                item["accessibility_status"] == "pass-automated-contract"
+                for item in serialized
+            ),
         },
         "platform": {
             "installed_domain_apps": sorted(
@@ -1299,7 +1379,10 @@ def component_catalogue_as_markdown(inventory: dict) -> str:
     for component in inventory["components"]:
         variants = ", ".join(component["variants"]) or "canonical"
         states = ", ".join(component["states"])
-        accessibility = ", ".join(component["accessibility_requirements"]) or "inherits semantic parent contract"
+        accessibility = (
+            ", ".join(component["accessibility_requirements"])
+            or "inherits semantic parent contract"
+        )
         examples = "<br>".join(component["example_pages"]) or "dynamic / parent-owned"
         lines.append(
             "| `{template}` | {kind} | {purpose} | {variants}; {states} | {responsive} | {accessibility} | {examples} | {findings} |".format(

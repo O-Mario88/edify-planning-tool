@@ -3007,52 +3007,71 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row:not(.is-expanded) .school-record-row__details { display: none; }
 
 /* The cluster card carries the same metadata list but a different root class,
-   so the rule above never reached it: every one of its fourteen fields
-   rendered in the COLLAPSED summary. On a phone that produced a wall — a
-   four-line location, a phone number broken across three lines — above a card
-   whose whole point was to be a name and two actions until you open it. */
+   so the collapse rule above never reached it: every one of its fourteen
+   fields rendered in the COLLAPSED summary, which is what put a wall of text
+   above a card whose whole point was to be a name and two actions until you
+   open it.
+
+   Opened, the pairs read as prose: "Location: Mukono, Goma · Phone: 2567…",
+   each label immediately followed by its own value, pairs flowing along the
+   line and breaking onto the next only when the line is full. A label stacked
+   above its value was tried and rejected — it doubles the height of every
+   field and reads as a form, not a record. This is the desktop shape held on
+   a phone, which is the point: one list, one behaviour. */
 @media (max-width: 63.999rem) {
   .cluster-card:not(.is-expanded) .cluster-card__metadata { display: none; }
 
-  /* Opened, the list becomes a real one: label above value in two columns,
-     each pair intact. The inline flex row is a desktop shape — at 375px it
-     reflows into ragged label/value fragments. */
-  .cluster-card.is-expanded .cluster-card__metadata {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem 1rem;
-    margin-block-start: 0.75rem;
+  .cluster-card.is-expanded .cluster-card__metadata,
+  .school-record-row.is-expanded .school-record-row__metadata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 1.15rem;
+    margin-block-start: 0.6rem;
+    max-inline-size: none;
   }
 
-  .cluster-card.is-expanded .cluster-card__metadata > div {
-    display: grid;
-    align-items: start;
-    gap: 0.125rem;
+  /* Each label+value is one unit. `inline-flex` keeps them on the same line
+     and `flex: 0 1 auto` lets a long pair shrink rather than push the row
+     wider than the card. */
+  .cluster-card.is-expanded .cluster-card__metadata > div,
+  .school-record-row.is-expanded .school-record-row__metadata > div {
+    display: inline-flex;
+    align-items: baseline;
+    flex: 0 1 auto;
+    gap: 0.3rem;
     min-inline-size: 0;
   }
 
-  .cluster-card.is-expanded .cluster-card__metadata dt {
-    color: var(--edify-text-muted);
-    font-size: var(--edify-text-micro-size);
-    font-weight: var(--edify-text-label-weight);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  /* The label never breaks away from the value it introduces. */
+  .cluster-card.is-expanded .cluster-card__metadata dt,
+  .school-record-row.is-expanded .school-record-row__metadata dt {
+    flex: 0 0 auto;
     white-space: nowrap;
+    /* Quiet label, strong value: the pair separates by weight and colour
+       rather than by case. */
+    color: var(--edify-text-muted);
+    font-weight: var(--edify-text-label-weight);
+    text-transform: none;
+    letter-spacing: normal;
   }
 
-  .cluster-card.is-expanded .cluster-card__metadata dd {
-    /* `anywhere` is what split the leader's phone number across three lines.
-       A phone number and a place name are single values: they wrap between
-       words or not at all. */
-    overflow-wrap: normal;
+  .cluster-card.is-expanded .cluster-card__metadata dd,
+  .school-record-row.is-expanded .school-record-row__metadata dd {
+    font-weight: var(--edify-text-title-weight);
+  }
+
+  .cluster-card.is-expanded .cluster-card__metadata dd,
+  .school-record-row.is-expanded .school-record-row__metadata dd {
+    /* `break-word`, deliberately between the two extremes. `anywhere` breaks
+       eagerly and is what split the cluster leader's phone number across
+       three lines; `normal` cannot break at all, so an address written with
+       no spaces — "Sembabule,Nakasenyi,Kabale" — ran straight past the card
+       edge. `break-word` breaks a token ONLY when it would otherwise
+       overflow, so the phone number stays whole and the address wraps. */
+    overflow-wrap: break-word;
     word-break: normal;
-    font-size: var(--edify-text-label-size);
-  }
-
-  /* The two long values take the full row rather than a half-width column. */
-  .cluster-card.is-expanded .cluster-card__metadata > div:nth-child(1),
-  .cluster-card.is-expanded .cluster-card__metadata > div:nth-child(3) {
-    grid-column: 1 / -1;
+    min-inline-size: 0;
   }
 }
 
@@ -3475,13 +3494,18 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .cluster-card__eyebrow,
+/* Sentence case, not all-caps. Uppercasing fifteen labels turns a record
+   into a shout: it costs ~12% width, removes the word-shapes the eye reads
+   by, and at 700 the labels compete with the values they introduce. The
+   hierarchy is carried by colour and weight instead — a muted medium label
+   against a full-strength value — which is quieter and reads faster. */
 .cluster-card__metadata dt {
-  color: var(--edify-text-subtle);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 700;
-  letter-spacing: 0.035em;
-  line-height: 1.25;
-  text-transform: uppercase;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  letter-spacing: normal;
+  line-height: 1.35;
+  text-transform: none;
 }
 
 .cluster-card__eyebrow {
@@ -3852,9 +3876,16 @@ main [data-mobile-family="directory"] .school-filter-clear {
   letter-spacing: var(--edify-text-micro-tracking) !important;
 }
 
+/* The row's later lines start under the ICON, not indented past it.
+
+   A 3.6rem inline start-padding used to align them under the TITLE, which
+   left an empty band the width of the tick box and the icon running the whole
+   height of the actions — the most visible dead space on the list. It is set
+   twice on purpose: once here and once in the container-query twin below, so
+   a browser without container support gets the same row. */
 @media (max-width: 52rem) {
   .school-record-row__summary { grid-template-columns: 1fr; }
-  .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+  .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 0; padding-block-start: 0; }
   .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr); }
   .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 2; grid-row: 2; }
   .school-ssa-groups { grid-template-columns: 1fr; }
@@ -3872,14 +3903,14 @@ main [data-mobile-family="directory"] .school-filter-clear {
   .school-record-action span { font-size: var(--edify-text-micro-size); }
   .school-record-action__label--full { display: none; }
   .school-record-action__label--compact { display: inline; }
-  .school-record-row__actions { padding-inline-start: 3.15rem; }
+  .school-record-row__actions { padding-inline-start: 0; }
   .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
 }
 
 @supports (container-type: inline-size) {
   @container school-record (max-width: 58rem) {
     .school-record-row__summary { grid-template-columns: 1fr; }
-    .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 3.6rem; padding-block-start: 0; }
+    .school-record-row__actions { justify-content: flex-start; max-inline-size: none; padding-inline-start: 0; padding-block-start: 0; }
     .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr); }
     .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 2; grid-row: 2; }
   }
@@ -3896,7 +3927,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
     .school-record-action span { font-size: var(--edify-text-micro-size); }
     .school-record-action__label--full { display: none; }
     .school-record-action__label--compact { display: inline; }
-    .school-record-row__actions { padding-inline-start: 3.15rem; }
+    .school-record-row__actions { padding-inline-start: 0; }
     .school-record-row__details { margin-inline: 1rem; padding-block: 1rem; }
     .school-ssa-groups { grid-template-columns: 1fr; }
   }
@@ -4624,4 +4655,77 @@ main .core-scope-switch [data-edify-tab] {
   }
 
   .core-oversight-table { min-inline-size: 68rem; }
+}
+
+/* ── Card gutters do not stack on a phone ────────────────────────────────
+   A list card reserves its own gutter, and a section row inside it was
+   reserving another. On the school directory that put the tab rail at 55px
+   while the "Select page" row beside it sat at 31px — two content edges
+   inside one card, and roughly 15% of a 375px screen spent on padding that
+   padding had already covered.
+
+   The card's gutter is the only one at this width, so the inner rows drop
+   theirs and every child lines up on one edge. Desktop keeps the nested
+   padding, where the room exists and the inset reads as structure. */
+@media (max-width: 47.99rem) {
+  main .school-directory-shell > [class*="px-6"] {
+    padding-inline: 0;
+  }
+
+  /* Same accumulation on the cluster card: the generic card rule pads 14px
+     with !important, and the shared disclosure-row rule pads another 12px
+     with !important on top of it, putting the cluster name 27px inside a
+     card whose own edge is already the inset. The row yields its INLINE
+     padding so the card's gutter is the single one; the block padding stays,
+     because that is the row's height, not its indent.
+
+     Specificity is deliberate, not decorative: the rule it has to outrank is
+     `[data-mobile-family="directory"] [data-row-disclosure-summary]` at
+     (0,2,0) !important, so this names three classes to reach (0,3,0). */
+  .cluster-card .cluster-card__summary[data-row-disclosure-summary] {
+    padding-inline: 0 !important;
+  }
+
+  /* Expanded, the detail list must not stay boxed in the identity column.
+     The summary is a two-column grid — identity | actions — and the list is
+     nested inside identity, so it was competing with the buttons for width
+     and got 183px of a 337px card: eleven of its fifteen values overflowed
+     their cells. `display: contents` dissolves the identity wrapper so its
+     children join the summary's grid directly, letting the list claim the
+     full row beneath the name while the buttons stay on the name's row. */
+  .cluster-card.is-expanded .cluster-card__identity {
+    display: contents;
+  }
+
+  .cluster-card.is-expanded .cluster-card__metadata {
+    /* Row 2 explicitly, not by auto-placement: the actions are a later
+       sibling, so leaving this to flow pushed Schedule and Assign underneath
+       the whole detail list. The name row keeps its buttons whether the card
+       is open or shut — opening a card must not move its actions. */
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .cluster-card.is-expanded .cluster-card__actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* The detail list was boxed in the identity column — column 3 of the
+     content grid, 138px of a 241px row — so it started under the TITLE, left
+     the area beneath the tick box, icon and number completely empty, and cut
+     its own values off at the right ("Shipping Address: Sembabule,M…").
+
+     `display: contents` dissolves the identity wrapper so the title stays in
+     column 3 on the first line while the list, freed of it, claims every
+     column from the icon across. Same move as the cluster card, same reason:
+     a wrapper that exists for the desktop layout must not cage the content
+     on a phone. */
+  .school-record-row.is-expanded .school-record-row__identity {
+    display: contents;
+  }
+
+  .school-record-row.is-expanded .school-record-row__metadata {
+    grid-column: 1 / -1;
+  }
 }

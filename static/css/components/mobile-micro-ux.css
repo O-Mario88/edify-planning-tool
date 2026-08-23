@@ -704,9 +704,14 @@ main #filters-form .school-filter-grid > * {
     block-size: 2.25rem;
   }
 
+  /* No indent under the icon. This ladder (3.6 / 3.15 / 2.8 / 2.45rem over
+     five breakpoints in two files) aligned the row's second line under the
+     TITLE, leaving an empty band the width of the tick box and the icon,
+     running the full height of the actions. Later lines start under the icon
+     instead — where the eye already is — and run to the card edge. */
   .school-record-row__actions,
   .school-record-row__summary--selectable > .school-record-row__actions {
-    padding-inline-start: 2.8rem;
+    padding-inline-start: 0;
   }
 }
 
@@ -759,7 +764,7 @@ main #filters-form .school-filter-grid > * {
 
   .school-record-row__actions,
   .school-record-row__summary--selectable > .school-record-row__actions {
-    padding-inline-start: 2.45rem;
+    padding-inline-start: 0;
   }
 }
 

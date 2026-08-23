@@ -40,10 +40,18 @@ FAVICONS = [16, 32, 48]
 # Fraction of the frame the artwork occupies in a maskable icon. The spec's
 # safe zone is a circle of 80% diameter; 0.78 keeps a little margin.
 SAFE_ZONE = 0.78
-# Apple and Android require opaque icon canvases. A quiet neutral surround
-# keeps the circular Edify artwork visibly circular even when the operating
-# system applies a square or squircle frame of its own.
-OPAQUE_SURROUND = (240, 246, 249)
+# Apple and Android require opaque icon canvases, so the circular artwork has
+# to sit on something. That something is the brand navy — the same colour as
+# the manifest's `background_color`.
+#
+# It used to be a near-white (240, 246, 249), chosen to keep the circle looking
+# circular inside a square frame. What it actually produced was a white ring:
+# an Android adaptive icon is cropped to a circle, so the crop cut through the
+# pale surround rather than through the artwork, ringing the logo on the
+# launcher and again on the generated splash screen. Matching the background
+# colour makes the surround invisible instead — the crop takes navy, the splash
+# is navy, and the logo simply sits on it.
+OPAQUE_SURROUND = (45, 72, 98)
 
 
 class Command(BaseCommand):

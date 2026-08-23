@@ -51,7 +51,12 @@ from apps.projects.models import (
     Project,
     ProjectSchoolAssignment,
 )
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.enums import ClusterRecordStatus
+from apps.core.scoping import (
+    cluster_queryset,
+    resolve_user_scope,
+    school_queryset,
+)
 from apps.frontend.view_models import SchoolDirectoryViewModel
 
 
@@ -171,13 +176,24 @@ def _create_manual_school(request) -> School:
 
         cluster_id = request.POST.get("cluster_id", "").strip()
         if cluster_id:
+            # Narrowed by the school's own district, because a cluster belongs
+            # to one and `set_school_cluster_membership` refuses the mismatch.
+            # Reaching it produced "A school can only be assigned within its
+            # own district" — accurate, but raised from the membership service
+            # about a choice this form had offered, so it read as the save
+            # breaking rather than as the picker being wrong.
             cluster = Cluster.objects.filter(
                 id=cluster_id,
+                district_id=school.district_id,
                 deleted_at__isnull=True,
                 status="active",
             ).first()
             if cluster is None:
-                raise BadRequest("Select a valid active cluster.")
+                raise BadRequest(
+                    "Select an active cluster in the same district as the "
+                    "school. Clusters belong to one district, so the list "
+                    "changes when you change the district."
+                )
             set_school_cluster_membership(
                 school,
                 cluster,
@@ -753,17 +769,43 @@ def school_directory_view(request):
 
 @require_page_permission("school_directory")
 def school_sub_county_options_view(request):
-    """Return native select options for a district-dependent school form."""
+    """Return native select options for a district-dependent school form.
+
+    With ``with_clusters=1`` the response also carries the cluster options for
+    the same district, swapped out-of-band. A cluster belongs to one district,
+    so a cluster picker that does not follow the district field offers choices
+    the assignment service must then refuse — "A school can only be assigned
+    within its own district", raised after the form was filled in and
+    submitted. Both selects depend on the same answer, so both are refreshed
+    by the same request.
+    """
     district_id = request.GET.get("district_id", "").strip()
     sub_counties = (
         SubCounty.objects.filter(district_id=district_id).order_by("name")
         if district_id
         else SubCounty.objects.none()
     )
+    context = {"sub_counties": sub_counties}
+
+    if request.GET.get("with_clusters"):
+        clusters = Cluster.objects.none()
+        if district_id:
+            base = Cluster.objects.filter(
+                district_id=district_id,
+                deleted_at__isnull=True,
+                status=ClusterRecordStatus.ACTIVE,
+            )
+            # Scoped as well as filtered: the picker listed every active
+            # cluster in the country to anyone who could add a school.
+            writable = cluster_queryset(resolve_user_scope(request.user), base=base)
+            clusters = (writable if writable is not None else base).order_by("name")
+        context["clusters"] = clusters
+        context["include_cluster_options"] = True
+
     return render(
         request,
         "partials/schools/sub_county_options.html",
-        {"sub_counties": sub_counties},
+        context,
     )
 
 

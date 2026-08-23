@@ -56,6 +56,16 @@ from .salesforce import (
     reserve_salesforce_id,
 )
 
+# Why an administrator is turned away from a planning action, in the words the
+# drawer should use. Names the way forward, because there is one: the same
+# person switches to their CCEO role and plans their own portfolio.
+ADMIN_IS_NOT_A_PLANNER_MESSAGE = (
+    "Planning belongs to the staff member responsible for the school. The "
+    "Admin role administers the platform and does not schedule field work — "
+    "ask the school's CCEO to plan it, or switch to your own field role if "
+    "you hold one."
+)
+
 
 # Work that a reviewer sent back. Every return path in the platform lands on one
 # of these, and each must be able to re-enter the completion flow — otherwise
@@ -542,6 +552,19 @@ def _assert_target_in_scope(
     """
     scope = resolve_user_scope(principal)
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
+        # Admin stays permitted *here* on purpose, even though the drawer no
+        # longer offers it (`can_schedule_activity`). The two are different
+        # questions. Delegation with an explicitly named `responsibleStaffId`
+        # is a designed path with worked-out finance semantics — the assigned
+        # staff member, not the administrator who pressed Save, owns the cost
+        # lines and the weekly and monthly fund requests
+        # (test_admin_scheduling_for_staff_uses_staff_finance_owner). Imports,
+        # management commands and the REST surface all rely on it.
+        #
+        # What was wrong was never delegation; it was the drawer deriving the
+        # responsible staff silently from the school owner and then sending
+        # the administrator to their own My Plan to look for it. That is closed
+        # at the view, where the silent derivation actually happens.
         return
     if _target_in_direct_portfolio(scope, school, cluster_id):
         return
@@ -2862,9 +2885,7 @@ def record_attendance(activity_id: str, data: dict, principal) -> dict:
     return _serialize(a)
 
 
-def complete_partner_ssa_support(
-    activity_id: str, data: dict, principal
-) -> dict:
+def complete_partner_ssa_support(activity_id: str, data: dict, principal) -> dict:
     """Record SSA results and complete partner SSA Support in one transaction.
 
     The eight intervention scores remain SSA data; pupil enrolment updates the
@@ -2897,9 +2918,7 @@ def complete_partner_ssa_support(
     if enrollment > 1_000_000:
         raise BadRequest("Pupil enrolment cannot exceed 1,000,000 learners.")
 
-    assessment_date = (
-        a.actual_delivery_date or a.planned_date or timezone.localdate()
-    )
+    assessment_date = a.actual_delivery_date or a.planned_date or timezone.localdate()
     is_ia = RolePermissionService.can_verify_ia(principal, a)
     entry_source = (
         ENTRY_SOURCE_IA_CONFIRMATION if is_ia else ENTRY_SOURCE_MANAGING_STAFF
@@ -2924,9 +2943,7 @@ def complete_partner_ssa_support(
         previous_enrollment = school.enrollment
         school.enrollment = enrollment
         school.last_enrollment_date = assessment_date
-        school.save(
-            update_fields=["enrollment", "last_enrollment_date", "updated_at"]
-        )
+        school.save(update_fields=["enrollment", "last_enrollment_date", "updated_at"])
         from apps.schools.models import SchoolChangeLog, SchoolEnrollmentHistory
 
         SchoolEnrollmentHistory.objects.update_or_create(
@@ -3558,9 +3575,7 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
 
         scheduled_date = _parse_date(data["scheduledDate"])
         delivery_contact_name = str(
-            data.get("deliveryContactName")
-            or getattr(principal, "name", "")
-            or ""
+            data.get("deliveryContactName") or getattr(principal, "name", "") or ""
         ).strip()
         if len(delivery_contact_name) < 2:
             raise BadRequest("Enter the name of the person visiting the School.")

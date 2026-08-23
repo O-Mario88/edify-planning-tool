@@ -84,6 +84,7 @@
   <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 </head>
 <body class="login-page">
+{% include "partials/pwa_launch.html" %}
   {% include "partials/connectivity_status.html" %}
   <main class="login-shell">
     <section class="login-brand" aria-label="About Edify Planning and Monitoring">

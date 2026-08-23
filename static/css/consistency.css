@@ -1259,7 +1259,13 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
    Cards and content tiles use surface contrast plus theme-aware elevation,
    not decorative outlines. The border remains one pixel but transparent so
    migrating a page never changes its geometry. Form controls, tables, alerts,
-   focus indicators and semantic badges keep their functional boundaries. */
+   focus indicators and semantic badges keep their functional boundaries.
+
+   The prose said "alerts" but the selector never exempted them, so every
+   coloured notice inside <main> — success, warning and error alike — was
+   repainted as a plain white card with a transparent border. An error message
+   that looks identical to a content card is not an error message. Both live
+   regions are exempt now, matching the drawer rule further down this file. */
 main :is(
   .card:not(.card-alert),
   .card-elevated,
@@ -1306,7 +1312,7 @@ main :is(
   section.rounded-surface.border,
   article.rounded-surface.border,
   aside.rounded-surface.border
-) {
+):not([role="alert"]):not([role="status"]) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border-color: var(--edify-card-border) !important;
@@ -2084,7 +2090,15 @@ main :where(div, section, article)[class*="grid"]:has(
 
 /* Drawers and modal forms are mounted beside <main>, so they need the same
    no-nested-card rule without relying on page ancestry. Field controls,
-   alerts and option selectors remain bounded and interactive. */
+   alerts and option selectors remain bounded and interactive.
+
+   `role="status"` is exempt for the same reason `role="alert"` is. The two are
+   one category — a live region carrying a notice — separated only by urgency,
+   and a notice is not a nested card: its tinted panel IS the message, which is
+   how a reader tells "this is the system telling you something" from ordinary
+   body copy. Exempting only `alert` stripped the background, border and ink
+   off every polite banner in every drawer, so amber warnings and rose SSA
+   panels rendered as loose unstyled paragraphs. */
 :is(
   .drawer-surface,
   .edify-popup-dialog__surface,
@@ -2107,7 +2121,9 @@ main :where(div, section, article)[class*="grid"]:has(
   div[class*="rounded"][class*="border"],
   section[class*="rounded"][class*="border"],
   article[class*="rounded"][class*="border"]
-):not([role="alert"]):not([role="listbox"]):not([role="radiogroup"]):not(
+):not([role="alert"]):not([role="status"]):not([role="listbox"]):not(
+  [role="radiogroup"]
+):not(
   .platform-filter-bar, .overflow-x-auto, .overflow-auto
 ) {
   background-color: transparent !important;

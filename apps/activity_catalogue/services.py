@@ -822,35 +822,53 @@ def recommend_activities(
         ):
             reasons = []
             if cluster is None and not item.individual_school_allowed:
-                reasons.append("is not delivered to a single School")
+                reasons.append("not delivered to a single school")
             if executor_type == DeliveryType.PARTNER:
                 if not item.partner_delivery_allowed:
-                    reasons.append("is not approved for partner delivery")
+                    reasons.append("not approved for partner delivery")
             elif not item.staff_delivery_allowed:
-                reasons.append("is not approved for staff delivery")
+                reasons.append("not approved for staff delivery")
             # Name the surface that CAN schedule it. School planning is for
             # visits and partner assignment; a programme activity is planned
             # centrally from the Work Plan as one dated event at a venue, and
             # draws its cost from the same CD Cost Catalogue either way. Saying
             # only "not available here" leaves the planner with a need they
             # cannot act on.
+            # A complete short instruction, not a fragment: the third branch
+            # is an ask of a person rather than a place to go, so a template
+            # that prefixed "schedule from …" would read wrongly for it.
             if item.non_school_allowed:
-                route = "Schedule it from the Work Plan page"
+                route = "schedule from the Work Plan page"
             elif item.cluster_delivery_allowed:
-                route = "Schedule it through a Cluster"
+                route = "schedule through a cluster"
             else:
-                route = "Ask IA to review its Catalogue delivery settings"
+                route = "ask IA to review its catalogue delivery settings"
             blocked.append(
                 {
                     "displayName": item.display_name,
                     "reason": " and ".join(reasons)
-                    or "is not eligible for this School right now",
+                    or "not eligible for this school right now",
                     "route": route,
                 }
             )
+        # Grouped by the (reason, route) they share. Every blocked title used
+        # to be its own full sentence, so five titles blocked for the same
+        # reason printed that reason five times — and the school's name with
+        # it. The reason is a property of the delivery rule, not of the title,
+        # so it is stated once and the titles are listed against it.
+        grouped: dict[tuple[str, str], list[str]] = {}
+        for row in blocked:
+            grouped.setdefault((row["reason"], row["route"]), []).append(
+                row["displayName"]
+            )
+        blocked_groups = [
+            {"reason": reason, "route": route, "names": sorted(names)}
+            for (reason, route), names in sorted(grouped.items())
+        ]
         unmet_priority = {
             "need": top_need,
             "blockedBy": blocked,
+            "blockedGroups": blocked_groups,
             "standardSupportAvailable": standard_support_available,
         }
 

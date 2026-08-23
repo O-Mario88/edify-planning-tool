@@ -570,6 +570,16 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
             SchoolClusterAssignment.objects.create(
                 school=school, cluster=cluster, assigned_by=assigned_by
             )
+            # The cluster now demonstrably works in this school's sub-county,
+            # so it says so. Without this the first assignment teaches the
+            # cluster nothing: the next school in the same sub-county is
+            # offered the same manual list, and a later edit to *this* school's
+            # sub-county finds its own cluster not covering it and unclusters
+            # it. Declining is normal (another cluster already claims the
+            # ground, or the coverage is already there) and is not an error.
+            from apps.clusters.eligibility import declare_sub_county_coverage
+
+            declare_sub_county_coverage(cluster, school.sub_county_id)
 
     if old_cluster_id != target_cluster_id:
         # Audit here (the canonical service), not per-caller — audit found

@@ -330,6 +330,10 @@ class School(SoftDeleteModel):
         sub_county_changed = is_new or (self.sub_county_id != old_sub_county_id)
         district_changed = is_new or (self.district_id != old_district_id)
 
+        # Set when the school keeps a hand-made membership the geography lookup
+        # could not confirm; the cluster adopts the sub-county after the save.
+        adopt_coverage_for = None
+
         if sub_county_changed or district_changed:
             current_cluster = None
             if self.cluster_id:
@@ -347,6 +351,24 @@ class School(SoftDeleteModel):
                 )
 
             if not still_covered:
+                # Could the geography lookup itself have produced this
+                # membership before the edit? If the cluster covered the *old*
+                # sub-county then yes, and the claim was geographic: the
+                # geography moved, so the claim lapses with it. If the cluster
+                # covered nothing, no lookup could have produced it and only a
+                # person could have — a different kind of membership, which
+                # survives differently below.
+                derived_membership = (
+                    bool(current_cluster)
+                    and bool(old_sub_county_id)
+                    and (
+                        current_cluster.sub_county_id == old_sub_county_id
+                        or current_cluster.covered_sub_counties.filter(
+                            sub_county_id=old_sub_county_id
+                        ).exists()
+                    )
+                )
+
                 # Use the same geography resolver as the School Profile and
                 # Add-to-Cluster drawer. Imports and direct School saves must
                 # not invent a fourth ordering or a district-level fallback.
@@ -360,6 +382,23 @@ class School(SoftDeleteModel):
                 if new_cluster:
                     self.cluster_id = new_cluster.id
                     self.cluster_status = "clustered"
+                elif (
+                    current_cluster
+                    and not derived_membership
+                    and current_cluster.district_id == self.district_id
+                ):
+                    # Nothing covers this sub-county, and this membership is
+                    # not one the lookup could have produced — a person put the
+                    # school here. An explicit membership is broken by a
+                    # *better* answer, never by the absence of any answer, and
+                    # reading it the other way made filling in the sub-county —
+                    # the one edit meant to make clustering work — the edit
+                    # that removed the school from its cluster. Nobody was
+                    # told; the cluster page went on listing it. The membership
+                    # stands, and the cluster declares the sub-county after the
+                    # save so the next school there resolves by itself.
+                    self.cluster_status = "clustered"
+                    adopt_coverage_for = current_cluster
                 elif self.sub_county_id:
                     # A sub-county exists and no active cluster covers it, so
                     # this school genuinely belongs to none.
@@ -389,6 +428,11 @@ class School(SoftDeleteModel):
 
         # Trigger data quality issue tracking creation
         create_data_quality_issues(self)
+
+        if adopt_coverage_for is not None:
+            from apps.clusters.eligibility import declare_sub_county_coverage
+
+            declare_sub_county_coverage(adopt_coverage_for, self.sub_county_id)
 
         if sub_county_changed or district_changed:
             # Compatibility projection only: School.cluster_id remains the

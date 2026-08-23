@@ -1158,7 +1158,7 @@
    "audit_id": "KPI-SOURCE-060",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2121,
+   "line": 2119,
    "label": null,
    "keys": [
     "aging",
@@ -1225,7 +1225,7 @@
    "audit_id": "KPI-SOURCE-063",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2039,
+   "line": 2037,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1243,7 +1243,7 @@
    "audit_id": "KPI-SOURCE-064",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2040,
+   "line": 2038,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1261,7 +1261,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2041,
+   "line": 2039,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1279,7 +1279,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2042,
+   "line": 2040,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1297,7 +1297,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2043,
+   "line": 2041,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1315,7 +1315,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2044,
+   "line": 2042,
    "label": "Returned",
    "keys": [
     "amount",
@@ -2235,7 +2235,7 @@
    "audit_id": "KPI-SOURCE-112",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 803,
+   "line": 812,
    "label": null,
    "keys": [
     "label",
@@ -2252,7 +2252,7 @@
    "audit_id": "KPI-SOURCE-113",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 96,
+   "line": 98,
    "label": null,
    "keys": [
     "amount",
@@ -2271,7 +2271,7 @@
    "audit_id": "KPI-SOURCE-114",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 458,
+   "line": 460,
    "label": null,
    "keys": [
     "label",
@@ -2872,7 +2872,7 @@
    "audit_id": "KPI-SOURCE-145",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1821,
+   "line": 1820,
    "label": null,
    "keys": [
     "count",
@@ -2890,7 +2890,7 @@
    "audit_id": "KPI-SOURCE-146",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1932,
+   "line": 1931,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -3006,7 +3006,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 695,
+   "line": 711,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -4192,7 +4192,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
-   "line": 500,
+   "line": 498,
    "label": null,
    "keys": [
     "count",
@@ -4209,7 +4209,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
-   "line": 450,
+   "line": 448,
    "label": null,
    "keys": [
     "count",
@@ -4745,7 +4745,7 @@
    "audit_id": "KPI-SOURCE-245",
    "kind": "breakdown-row",
    "module": "apps/system_health/page_inventory.py",
-   "line": 1209,
+   "line": 1289,
    "label": null,
    "keys": [
     "label",
@@ -26038,7 +26038,7 @@
   {
    "audit_id": "KPI-PAYLOAD-003",
    "module": "apps/clusters/services.py",
-   "line": 1692,
+   "line": 1702,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -26470,7 +26470,7 @@
   {
    "audit_id": "KPI-PAYLOAD-019",
    "module": "apps/frontend/views/school_views.py",
-   "line": 493,
+   "line": 509,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,

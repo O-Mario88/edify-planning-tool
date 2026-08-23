@@ -2,3 +2,18 @@
 {% for sub_county in sub_counties %}
 <option value="{{ sub_county.id }}">{{ sub_county.name }}</option>
 {% endfor %}
+{% comment %}
+The cluster picker rides along on the district change, out of band. A cluster
+belongs to one district, so a list that does not follow the district field is a
+list of choices the assignment service has to refuse after the fact.
+{% endcomment %}
+{% if include_cluster_options %}
+<div hx-swap-oob="innerHTML:#onboard-school-cluster">
+  <option value="">Unassigned (select later)</option>
+  {% for c in clusters %}
+  <option value="{{ c.id }}">{{ c.name }}</option>
+  {% empty %}
+  <option value="" disabled>No active cluster in this district</option>
+  {% endfor %}
+</div>
+{% endif %}

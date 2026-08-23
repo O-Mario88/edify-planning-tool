@@ -2,8 +2,8 @@
 
 Admin holds every application permission and may execute every role-gated
 workflow EXCEPT reserved operational authorities: IA verification,
-disbursement, field budget approval, and governed loan execution. Admin sees
-them and exercises none of them.
+disbursement, field budget approval, governed loan execution, and scheduling
+field work. Admin sees them and exercises none of them.
 
 That boundary is the point. Admin was briefly given the full set while fixing a
 real problem — the role was read-only and blocked ordinary administration — but
@@ -97,6 +97,18 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
             "reserved operational actions stay outside the technical Admin role",
         )
 
+    def test_admin_does_not_plan_field_work(self):
+        """Scheduling joined the reserved list (owner decision, 2026-08-24).
+
+        The other reserved authorities are about separation of duties. This one
+        is about accountability: `responsible_staff` is derived from the school
+        owner, never from whoever pressed Schedule, so an activity created from
+        the Admin seat is filed against a CCEO who did not choose to make it —
+        and it appears in that person's My Plan while the creator is sent to
+        their own, where it never will. Planning is the owner's.
+        """
+        self.assertFalse(RolePermissionService.can_schedule_activity(ADMIN))
+
     def test_admin_can_execute_field_workflow_actions(self):
         activity = SimpleNamespace(
             assigned_partner_id=None,
@@ -104,7 +116,6 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
             monitored_by_staff_id=None,
         )
         checks = (
-            RolePermissionService.can_schedule_activity(ADMIN),
             RolePermissionService.can_assign_to_partner(ADMIN),
             RolePermissionService.can_assign_to_staff(ADMIN, None),
             RolePermissionService.can_assign_to_project(ADMIN, None),

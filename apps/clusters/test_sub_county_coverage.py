@@ -13,7 +13,11 @@ from django.core.management import call_command
 from django.test import TestCase
 from io import StringIO
 
-from apps.clusters.eligibility import active_cluster_for_school_geography
+from apps.clusters.eligibility import (
+    active_cluster_for_school_geography,
+    declare_sub_county_coverage,
+)
+from apps.clusters.services import set_school_cluster_membership
 from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.geography.models import District, Parish, Region, SubCounty
 from apps.schools.models import School
@@ -25,9 +29,7 @@ class CoverageFixture(TestCase):
         self.district = District.objects.create(
             name="Dist", region=self.region, district_type="primary"
         )
-        self.sub_county = SubCounty.objects.create(
-            name="Kira", district=self.district
-        )
+        self.sub_county = SubCounty.objects.create(name="Kira", district=self.district)
         self.cluster = Cluster.objects.create(
             name="Cluster A",
             district=self.district,
@@ -45,12 +47,12 @@ class CoverageFixture(TestCase):
             enrollment=100,
         )
         if cluster_id:
-            # Written past save(), on purpose. save() drops a membership whose
-            # cluster declares no coverage of the school's sub-county — which
-            # is exactly the state the backfill exists to repair, and exactly
-            # the state that predates that rule in the live database. Creating
-            # it through save() would have save() undo it, so the fixture
-            # could never build the legacy row the command reads.
+            # Written past save(), on purpose. A new school has no membership
+            # for save() to preserve — the row is created first and pointed at
+            # a cluster afterwards — so its geography lookup runs against an
+            # uncovered sub-county and lands on none. That is exactly the
+            # legacy state the backfill exists to repair, and going through
+            # save() could never build it.
             School.objects.filter(pk=school.pk).update(
                 cluster_id=cluster_id, cluster_status="clustered"
             )
@@ -152,3 +154,138 @@ class HealthCheckTests(CoverageFixture):
         keys = {check["key"] for check in data_quality_health().get("checks", [])}
 
         self.assertNotIn("cluster_without_sub_county_coverage", keys)
+
+
+class CoverageLearnedFromAssignmentTests(CoverageFixture):
+    """A cluster learns its ground from the schools put into it.
+
+    Coverage could previously only be typed in when the cluster was created, and
+    `backfill_cluster_sub_counties` derives it from member schools — so a
+    cluster created with only a district had no way to acquire any: the members
+    the backfill reads are the ones the missing coverage prevents. Every cluster
+    in the live deployment sits in that loop, which is why no school has ever
+    seen "Cluster selected automatically".
+    """
+
+    def test_assigning_a_school_declares_its_sub_county(self):
+        school = self._school("A", sub_county=self.sub_county)
+
+        set_school_cluster_membership(school, self.cluster, "tester")
+
+        self.assertTrue(
+            ClusterSubCounty.objects.filter(
+                cluster=self.cluster, sub_county=self.sub_county
+            ).exists()
+        )
+
+    def test_the_next_school_in_that_sub_county_resolves_automatically(self):
+        first = self._school("A", sub_county=self.sub_county)
+        second = self._school("B", sub_county=self.sub_county)
+        self.assertIsNone(active_cluster_for_school_geography(second))
+
+        set_school_cluster_membership(first, self.cluster, "tester")
+
+        self.assertEqual(
+            active_cluster_for_school_geography(second).id, self.cluster.id
+        )
+
+    def test_coverage_is_refused_when_another_cluster_already_claims_it(self):
+        rival = Cluster.objects.create(
+            name="Cluster B",
+            district=self.district,
+            region=self.region,
+            sub_county=self.sub_county,
+            status="active",
+        )
+        ClusterSubCounty.objects.create(cluster=rival, sub_county=self.sub_county)
+        school = self._school("A", sub_county=self.sub_county)
+
+        set_school_cluster_membership(school, self.cluster, "tester")
+
+        # One active cluster per sub-county is the rule `create_cluster`
+        # enforces; coverage acquired sideways must not evade it.
+        self.assertFalse(
+            ClusterSubCounty.objects.filter(
+                cluster=self.cluster, sub_county=self.sub_county
+            ).exists()
+        )
+
+    def test_a_sub_county_in_another_district_is_never_adopted(self):
+        elsewhere = District.objects.create(
+            name="Other", region=self.region, district_type="primary"
+        )
+        foreign = SubCounty.objects.create(name="Foreign", district=elsewhere)
+
+        self.assertFalse(declare_sub_county_coverage(self.cluster, foreign.id))
+
+
+class SubCountyEditKeepsMembershipTests(CoverageFixture):
+    """Filling in the sub-county must not be what removes the school.
+
+    `School.save()` re-derived membership whenever the sub-county changed and
+    unclustered the school when the lookup found nothing — including when
+    nothing *could* be found, because no cluster declared any coverage. The edit
+    intended to make clustering work was therefore the edit that undid it, and
+    silently: the cluster page went on listing the school.
+    """
+
+    def test_setting_a_sub_county_keeps_a_hand_made_membership(self):
+        school = self._school("A", cluster_id=self.cluster.id)
+
+        school.sub_county = self.sub_county
+        school.save()
+        school.refresh_from_db()
+
+        self.assertEqual(school.cluster_id, self.cluster.id)
+        self.assertEqual(school.cluster_status, "clustered")
+
+    def test_and_the_cluster_adopts_the_sub_county_it_kept(self):
+        school = self._school("A", cluster_id=self.cluster.id)
+
+        school.sub_county = self.sub_county
+        school.save()
+
+        self.assertTrue(
+            ClusterSubCounty.objects.filter(
+                cluster=self.cluster, sub_county=self.sub_county
+            ).exists()
+        )
+
+    def test_a_cluster_that_really_covers_the_new_sub_county_still_wins(self):
+        # An explicit membership yields to a better answer — just never to the
+        # absence of one.
+        covering = Cluster.objects.create(
+            name="Cluster B",
+            district=self.district,
+            region=self.region,
+            status="active",
+        )
+        ClusterSubCounty.objects.create(cluster=covering, sub_county=self.sub_county)
+        school = self._school("A", cluster_id=self.cluster.id)
+
+        school.sub_county = self.sub_county
+        school.save()
+        school.refresh_from_db()
+
+        self.assertEqual(school.cluster_id, covering.id)
+
+    def test_a_membership_the_lookup_produced_still_lapses_with_the_geography(self):
+        # The mirror of the rule above, and the reason it is narrow. This
+        # cluster claims the old sub-county, so the lookup itself could have
+        # produced the membership; the claim was geographic and moving the
+        # school out of that ground ends it. Only a membership no lookup could
+        # have made is treated as a person's decision.
+        ClusterSubCounty.objects.create(
+            cluster=self.cluster, sub_county=self.sub_county
+        )
+        school = self._school("A", sub_county=self.sub_county)
+        school.refresh_from_db()
+        self.assertEqual(school.cluster_id, self.cluster.id)
+
+        elsewhere = SubCounty.objects.create(name="Nansana", district=self.district)
+        school.sub_county = elsewhere
+        school.save()
+        school.refresh_from_db()
+
+        self.assertIsNone(school.cluster_id)
+        self.assertEqual(school.cluster_status, "unclustered")

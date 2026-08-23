@@ -1,11 +1,25 @@
 """Platform-wide contracts for the exhaustive mobile micro-UX pass."""
 
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _cache_buster(base: str, asset: str) -> str:
+    """The ?v= token base.html serves one asset under, or "" if it has none.
+
+    Pinning the literal token made every stylesheet edit red these tests while
+    proving nothing about them: a hard-coded string cannot tell whether two
+    assets that must ship together actually match, and it goes stale the moment
+    anyone bumps it. What the tests are named for is the pairing, so that is
+    what they now read.
+    """
+    match = re.search(re.escape(asset) + r"' %\}\?v=([A-Za-z0-9._-]+)", base)
+    return match.group(1) if match else ""
 
 
 def _read(relative_path: str) -> str:
@@ -44,9 +58,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
         foundation = _read("static/css/design-system.css")
         bridge = _read("static/css/consistency.css")
 
-        coarse_rule = foundation.rsplit("@media (max-width: 48rem), (pointer: coarse)", 1)[
-            1
-        ].split("}", 2)[0]
+        coarse_rule = foundation.rsplit(
+            "@media (max-width: 48rem), (pointer: coarse)", 1
+        )[1].split("}", 2)[0]
         self.assertNotIn(":where(input, select, textarea)", coarse_rule)
         self.assertIn('input[type="text"]', coarse_rule)
         self.assertIn('input[type="time"]', coarse_rule)
@@ -163,10 +177,15 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260823cluster1", base)
-        self.assertIn("pages.css' %}?v=20260823aura2", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260822tables1", base)
-        self.assertIn("micro-ux.js' %}?v=20260822tables1", base)
+        for asset in ("platform.css", "pages.css", "mobile-micro-ux.css"):
+            self.assertNotEqual(_cache_buster(base, asset), "", asset)
+
+        # The stylesheet and the script it drives are one change; serving a
+        # fresh CSS against a cached JS is the bug this pairing exists to stop.
+        self.assertEqual(
+            _cache_buster(base, "mobile-micro-ux.css"),
+            _cache_buster(base, "micro-ux.js"),
+        )
 
     def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (

@@ -502,29 +502,77 @@
   border-color: var(--edify-border-strong) !important;
 }
 
-/* ── Mobile: bottom sheet ──────────────────────────────────────────────── */
+/* ── Tablet: the same floating panel, just narrower ────────────────────────
+   It stays a card rather than becoming a full-width sheet, because at this
+   width there is room for the page to remain visible behind it. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  /* A smaller version of the desktop panel — same side, same entrance, just
+     inset from the edges so it reads as a floating card rather than a wall.
+     Positioning only: `transform` is left alone because the slide-in and, for
+     type-center, the centring both live there. An earlier attempt centred
+     this with `translate: -50% 0` and it fought the existing
+     translate(-50%,-50%), throwing the panel off-screen. */
+  .drawer-surface:not(.type-center) {
+    top: 1.5rem !important;
+    bottom: auto !important;
+    right: 1.5rem !important;
+    height: auto !important;
+    max-height: 84svh !important;
+    width: min(30rem, calc(100vw - 3rem)) !important;
+    max-width: min(30rem, calc(100vw - 3rem)) !important;
+    border-radius: var(--drawer-radius) !important;
+  }
+
+  /* Centred dialogs keep their own placement; only the footprint shrinks. */
+  .drawer-surface.type-center {
+    height: auto !important;
+    max-height: 84svh !important;
+    width: min(30rem, calc(100vw - 3rem)) !important;
+    max-width: min(30rem, calc(100vw - 3rem)) !important;
+    border-radius: var(--drawer-radius) !important;
+  }
+}
+
+/* ── Mobile: a sheet from the TOP, not the bottom ──────────────────────────
+   A bottom-anchored sheet lands exactly where the bottom navigation lives, so
+   the drawer's own footer — where Save and Cancel are — opened underneath the
+   nav bar and the sheet had to be fought past it. Anchoring to the top keeps
+   the drawer clear of the nav entirely and matches the direction the desktop
+   panel already comes from, so the gesture is the same on both.
+
+   Height is capped against the small viewport unit: `svh` is the viewport
+   with the mobile browser's chrome SHOWN, so the sheet does not grow under an
+   address bar that reappears on scroll. */
 @media (max-width: 767.98px) {
   .drawer-surface {
-    right: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    top: auto !important;
+    /* A floating card, not a full-bleed sheet. It sits below the top bar with
+       a margin on every side, so the page stays visible around it and the
+       drawer reads as something laid ON the page rather than a second screen
+       that replaced it — the same object the desktop shows, scaled down.
+       `svh` keeps it clear of the mobile browser chrome when that reappears. */
+    top: 0.75rem !important;
+    bottom: auto !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    width: auto !important;
+    max-width: none !important;
     height: auto !important;
-    max-height: 88vh !important;
-    max-width: 100% !important;
-    border-radius: var(--drawer-radius) var(--drawer-radius) 0 0 !important;
-    border-left: none !important;
-    transform: translateY(100%) !important;
+    max-height: 82svh !important;
+    border-radius: var(--drawer-radius) !important;
+    border-left: 1px solid var(--edify-border) !important;
+    /* Clears its own top margin on the way in, so it enters fully off-screen
+       rather than peeking. */
+    transform: translateY(calc(-100% - 1rem)) !important;
   }
   .drawer-surface.active {
     transform: translateY(0) !important;
   }
   .drawer-surface.type-center {
-    top: auto !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    left: 0 !important;
-    max-width: 100% !important;
+    top: 0.75rem !important;
+    bottom: auto !important;
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    max-width: none !important;
   }
 }
 
@@ -894,9 +942,9 @@
 
 @media (max-width: 47.99rem) {
   .drawer-surface.type-center:has(.cluster-create-drawer) {
-    inline-size: 100% !important;
-    max-block-size: 94dvh !important;
-    border-radius: 1.25rem 1.25rem 0 0 !important;
+    inline-size: auto !important;
+    max-block-size: 82svh !important;
+    border-radius: 1.25rem !important;
   }
 
   .drawer-surface:has(.cluster-create-drawer) .drawer-header {
@@ -1433,10 +1481,14 @@
 }
 
 @media (max-width: 47.99rem) {
+  /* Rounded at the BOTTOM: the sheet enters from the top now, so the curve
+     belongs on the edge that hangs into the page. `dvh` is the dynamic
+     viewport — with a top anchor the sheet must not extend under the mobile
+     browser's chrome when it reappears, so this uses the small unit. */
   .drawer-surface,
   .drawer-surface.type-center {
-    max-height: 94dvh !important;
-    border-radius: 1.25rem 1.25rem 0 0 !important;
+    max-height: 82svh !important;
+    border-radius: 1.25rem !important;
   }
 
   .drawer-surface::after {

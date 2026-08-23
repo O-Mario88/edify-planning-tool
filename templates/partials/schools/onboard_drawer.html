@@ -82,7 +82,7 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 <select
 name="district_id"
 id="district_id"
-hx-get="/schools/sub-counties"
+hx-get="/schools/sub-counties?with_clusters=1"
 hx-trigger="change"
 hx-target="#onboard-school-sub-county"
 hx-swap="innerHTML"
@@ -161,16 +161,13 @@ class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] 
 </div>
 {% else %}
 <div>
-<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
+<label for="onboard-school-cluster" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
 <select
 name="cluster_id"
-id="cluster_id"
+id="onboard-school-cluster"
 class="w-full min-h-11 px-3 rounded-control border border-slate-200 text-[16px] sm:text-[13px] mt-1 edify-surface focus:outline-none focus:ring-4 edify-primary-focus edify-primary-focus cursor-pointer"
 >
-<option value="">Unassigned (Select later)</option>
-{% for c in clusters %}
-<option value="{{ c.id }}">{{ c.name }}</option>
-{% endfor %}
+<option value="">Choose a district first</option>
 </select>
 </div>
 {% endif %}
