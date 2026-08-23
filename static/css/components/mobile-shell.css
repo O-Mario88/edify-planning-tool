@@ -94,7 +94,13 @@
     min-block-size: calc(3.25rem + env(safe-area-inset-top, 0px));
     block-size: auto;
     gap: 0;
-    padding-inline: max(0.25rem, env(safe-area-inset-left, 0px)) max(0.25rem, env(safe-area-inset-right, 0px));
+    /* The topbar shares the page's gutter, so the search icon lines up with
+       the left edge of the cards below it and the avatar with their right
+       edge. It sat at 4px against content at 16px, which read as the header
+       being nudged out of the layout. */
+    padding-inline:
+      max(var(--edify-page-gutter), env(safe-area-inset-left, 0px))
+      max(var(--edify-page-gutter), env(safe-area-inset-right, 0px));
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -394,8 +400,12 @@
    file loads after — decides, which is exactly the dependency the buster
    pair test pins for tab assets. */
 @media (max-width: 40rem) {
+  /* The gutter is worth more than the space between icons: at 375px the row
+     carries six controls and the date chip, and honouring the page gutter
+     costs 24px. Tightening the gap buys it back without shrinking a single
+     tap target. */
   .edify-topbar__utilities {
-    gap: 0.25rem;
+    gap: 0.125rem;
   }
 
   .edify-topbar__utilities .edify-topbar__icon-control {

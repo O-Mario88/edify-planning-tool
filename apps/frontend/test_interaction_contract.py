@@ -186,9 +186,33 @@ class PressPushesTest(SimpleTestCase):
 
     def test_the_control_moves_down_rather_than_only_changing_colour(self):
         self.assertIn("--edify-press-shift: 1px;", self.css)
-        self.assertIn(
-            "transform: translateY(var(--edify-press-shift)) !important;", self.css
-        )
+        self.assertIn("translate: 0 var(--edify-press-shift);", self.css)
+        self.assertIn("scale: var(--edify-press-scale);", self.css)
+
+    def test_the_press_composes_with_a_layout_transform(self):
+        """`transform` would overwrite a control's own positioning.
+
+        The topbar search button centres itself with translateY(-50%). While
+        the press was written as `transform: translateY(1px) !important` it
+        replaced that centring outright, so pressing the button made it leap
+        half its own height — the "weird animation" this fixes. `translate`
+        and `scale` are independent properties that compose with an existing
+        transform instead of replacing it.
+        """
+        press = self.css.split("prefers-reduced-motion: no-preference", 1)[1]
+        self.assertNotIn("transform: translateY(var(--edify-press-shift))", press)
+
+    def test_controls_answer_the_first_tap(self):
+        """Without this a mobile browser reserves ~300ms for double-tap zoom
+        before it dispatches the click, which reads as an unresponsive
+        control rather than a slow one."""
+        self.assertIn("touch-action: manipulation;", self.css)
+
+    def test_the_press_sinks_faster_than_it_returns(self):
+        """A control should meet the finger and relax back; equal timings in
+        both directions feel mechanical."""
+        self.assertIn("--edify-press-in: 90ms", self.css)
+        self.assertIn("--edify-press-out: 220ms", self.css)
 
     def test_the_press_is_removed_for_reduced_motion(self):
         """The whole press block sits inside the no-preference query, so a
@@ -198,8 +222,8 @@ class PressPushesTest(SimpleTestCase):
         head, _, tail = self.css.partition(
             "@media (prefers-reduced-motion: no-preference)"
         )
-        self.assertNotIn("translateY(var(--edify-press-shift))", head)
-        self.assertIn("translateY(var(--edify-press-shift))", tail)
+        self.assertNotIn("translate: 0 var(--edify-press-shift);", head)
+        self.assertIn("translate: 0 var(--edify-press-shift);", tail)
 
     def test_tabs_press_too(self):
         self.assertIn('[role="tab"]', self.css)

@@ -16,9 +16,20 @@
                       fill; a quiet control turns blue with white ink. Labels
                       and icons inherit the control ink in every state.
 
-     Press pushes.   The control moves down 1px and loses its lift, so a click
-                     reads as a physical press rather than a colour flicker.
-                     Removed entirely under prefers-reduced-motion.
+     Press settles.  The control sinks 1px, eases in slightly and loses its
+                     lift, so a click reads as a physical press rather than a
+                     colour flicker. Expressed with the `translate` and
+                     `scale` properties, NOT `transform` — a control that is
+                     positioned with a transform (the topbar search button
+                     centres itself with translateY(-50%)) had that transform
+                     overwritten by the press and leapt half its own height.
+                     `translate`/`scale` compose with an existing transform
+                     instead of replacing it.
+
+                     Press-in is faster than release (90ms vs 220ms): the
+                     control should meet the finger immediately and relax
+                     back, which is what separates a premium press from a
+                     mechanical toggle. Removed under prefers-reduced-motion.
    ════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Action state pairs, per theme ─────────────────────────────────────────
@@ -27,6 +38,10 @@
    quiet controls and the selected state for segmented rails. */
 :root {
   --edify-press-shift: 1px;
+  --edify-press-scale: 0.97;
+  /* Meet the finger, then relax. */
+  --edify-press-in: 90ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  --edify-press-out: 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
   --edify-primary-action-fill: var(--brand-primary);
   --edify-primary-action-fill-hover: var(--brand-primary-hover);
   --edify-primary-action-ink: var(--brand-primary-on-solid);
@@ -609,9 +624,14 @@ main :is(
     .oversight-entity-tabs__link, .edify-section-nav__cluster,
     .edify-section-nav__link
   ):active:not(:disabled):not([aria-disabled="true"]) {
-    transform: translateY(var(--edify-press-shift)) !important;
+    translate: 0 var(--edify-press-shift);
+    scale: var(--edify-press-scale);
     box-shadow: none !important;
-    transition-duration: 60ms !important;
+    transition:
+      translate var(--edify-press-in),
+      scale var(--edify-press-in),
+      background-color var(--edify-press-in),
+      box-shadow var(--edify-press-in) !important;
   }
 
   main :is(
@@ -627,9 +647,14 @@ main :is(
     .edify-section-nav__cluster,
     .edify-section-nav__link
   ):active:not(:disabled) {
-    transform: translateY(var(--edify-press-shift)) !important;
+    translate: 0 var(--edify-press-shift);
+    scale: var(--edify-press-scale);
     box-shadow: none !important;
-    transition-duration: 60ms !important;
+    transition:
+      translate var(--edify-press-in),
+      scale var(--edify-press-in),
+      background-color var(--edify-press-in),
+      box-shadow var(--edify-press-in) !important;
   }
 }
 
@@ -818,4 +843,32 @@ main :is(a, button):is(.btn, [class*="btn-"], .edify-primary-solid, [class*="rou
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+/* ── Controls answer the first tap ───────────────────────────────────────
+   Without `touch-action: manipulation` a mobile browser holds every tap for
+   its double-tap-to-zoom gesture before dispatching the click — roughly
+   300ms of nothing, which is why the topbar search felt unresponsive rather
+   than slow. This opts out of that gesture for controls (page zoom via
+   pinch is untouched) so the first tap acts immediately.
+
+   The release easing lives outside the press block on purpose: the sink is
+   fast and the return is gentle, and a control that never gets pressed still
+   needs the transition declared to animate back. */
+:is(main, .edify-topbar, .app-sidebar, .drawer-surface, .edify-bottom-nav)
+  :is(a, button, summary, [role="button"], [role="tab"], input[type="submit"]) {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(main, .edify-topbar, .app-sidebar, .drawer-surface, .edify-bottom-nav)
+    :is(a, button, summary, [role="button"], [role="tab"], input[type="submit"]) {
+    transition:
+      translate var(--edify-press-out),
+      scale var(--edify-press-out),
+      background-color var(--edify-press-out),
+      border-color var(--edify-press-out),
+      color var(--edify-press-out),
+      box-shadow var(--edify-press-out);
+  }
 }
