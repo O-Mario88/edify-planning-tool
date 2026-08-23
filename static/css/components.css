@@ -3479,7 +3479,11 @@ search:has(.edify-search-submit) input[type="search"] {
   [role="button"],
   .edify-primary-solid
 ):not(:disabled):not([aria-disabled="true"]):active {
-  transform: scale(var(--edify-press-scale));
+  /* `scale`, not `transform: scale()`. A control that positions itself with
+     a transform — the topbar search button centres with translateY(-50%) —
+     had that centring overwritten by the press and dropped half its own
+     height. The independent `scale` property composes instead. */
+  scale: var(--edify-press-scale);
   transition-duration: var(--edify-duration-press);
   transition-timing-function: var(--edify-ease-press);
 }
@@ -3516,7 +3520,11 @@ search:has(.edify-search-submit) input[type="search"] {
    should feel like one that was clicked. Focus rings are defined elsewhere and
    are untouched — this is only the press. */
 :where(button, [role="button"], .edify-primary-solid):focus-visible:active {
-  transform: scale(var(--edify-press-scale));
+  /* `scale`, not `transform: scale()`. A control that positions itself with
+     a transform — the topbar search button centres with translateY(-50%) —
+     had that centring overwritten by the press and dropped half its own
+     height. The independent `scale` property composes instead. */
+  scale: var(--edify-press-scale);
 }
 
 /* Motion is a preference, not a decision we get to make for someone. Colour

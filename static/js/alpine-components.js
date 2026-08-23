@@ -91,6 +91,56 @@ document.addEventListener('alpine:init', () => {
   });
 
   // Shared Toast Alerts Controller
+  /* Install the app.
+   *
+   * `beforeinstallprompt` fires once, early, and is the ONLY handle on the
+   * browser's install flow — so it is captured at document level (see the
+   * listener registered outside alpine:init below) and parked on window,
+   * because Alpine initialises after it has already fired. Reading it from
+   * the event alone means the button never appears.
+   *
+   * prompt() must be called from a real user gesture and can only be used
+   * once, so the stored event is dropped after use whatever the outcome.
+   *
+   * Safari has no equivalent API. Rather than show a button that cannot work,
+   * iOS gets the Share > Add to Home Screen instruction — and only when it is
+   * actually actionable: on iOS, in a browser, not already installed.
+   */
+  Alpine.data('edifyInstall', () => ({
+    canInstall: false,
+    showIosHint: false,
+
+    init() {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+      if (standalone) return;
+
+      this.canInstall = !!window.__edifyInstallPrompt;
+      window.addEventListener('edify-install-available', () => { this.canInstall = true; });
+      window.addEventListener('appinstalled', () => {
+        this.canInstall = false;
+        this.showIosHint = false;
+        window.__edifyInstallPrompt = null;
+      });
+
+      // iOS Safari only: no beforeinstallprompt exists there, so the absence
+      // of the event is expected rather than a failure to detect.
+      const ua = window.navigator.userAgent;
+      const isIos = /iPad|iPhone|iPod/.test(ua)
+        || (ua.includes('Macintosh') && 'ontouchend' in document);
+      const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome/.test(ua);
+      this.showIosHint = isIos && isSafari && !this.canInstall;
+    },
+
+    install() {
+      const deferred = window.__edifyInstallPrompt;
+      if (!deferred) { this.canInstall = false; return; }
+      window.__edifyInstallPrompt = null;
+      this.canInstall = false;
+      deferred.prompt();
+    },
+  }));
+
   Alpine.data('toastManager', () => ({
     toasts: [],
     add(message, type = 'success', duration = 3000) {

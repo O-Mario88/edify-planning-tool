@@ -3006,6 +3006,56 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row:not(.is-expanded) .school-record-row__metadata,
 .school-record-row:not(.is-expanded) .school-record-row__details { display: none; }
 
+/* The cluster card carries the same metadata list but a different root class,
+   so the rule above never reached it: every one of its fourteen fields
+   rendered in the COLLAPSED summary. On a phone that produced a wall — a
+   four-line location, a phone number broken across three lines — above a card
+   whose whole point was to be a name and two actions until you open it. */
+@media (max-width: 63.999rem) {
+  .cluster-card:not(.is-expanded) .cluster-card__metadata { display: none; }
+
+  /* Opened, the list becomes a real one: label above value in two columns,
+     each pair intact. The inline flex row is a desktop shape — at 375px it
+     reflows into ragged label/value fragments. */
+  .cluster-card.is-expanded .cluster-card__metadata {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+    margin-block-start: 0.75rem;
+  }
+
+  .cluster-card.is-expanded .cluster-card__metadata > div {
+    display: grid;
+    align-items: start;
+    gap: 0.125rem;
+    min-inline-size: 0;
+  }
+
+  .cluster-card.is-expanded .cluster-card__metadata dt {
+    color: var(--edify-text-muted);
+    font-size: var(--edify-text-micro-size);
+    font-weight: var(--edify-text-label-weight);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .cluster-card.is-expanded .cluster-card__metadata dd {
+    /* `anywhere` is what split the leader's phone number across three lines.
+       A phone number and a place name are single values: they wrap between
+       words or not at all. */
+    overflow-wrap: normal;
+    word-break: normal;
+    font-size: var(--edify-text-label-size);
+  }
+
+  /* The two long values take the full row rather than a half-width column. */
+  .cluster-card.is-expanded .cluster-card__metadata > div:nth-child(1),
+  .cluster-card.is-expanded .cluster-card__metadata > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Hiding the metadata alone barely moved the row: at 1280px it went 151px to
    142px, because the height was never set by the metadata — it was set by the
    actions column, whose 17rem cap wrapped two buttons onto two lines (98px).

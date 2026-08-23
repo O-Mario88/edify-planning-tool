@@ -80,7 +80,7 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260823aura1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260823aura10">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260823press2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260823aura1">
@@ -100,7 +100,7 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260823aura1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260823aura1">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260823cluster1">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
@@ -155,7 +155,7 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260809drawerbg1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260823install1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each

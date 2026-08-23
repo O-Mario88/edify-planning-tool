@@ -109,7 +109,14 @@ without making an icon-only submit silently send an empty query.
   x-data="{ searchOpen: false, compactSearch: window.matchMedia('(max-width: 64rem)').matches }"
   :class="{ 'is-open': searchOpen }"
   @resize.window="compactSearch = window.matchMedia('(max-width: 64rem)').matches; if (!compactSearch) searchOpen = false"
-  @click="if ($event.target.closest('.edify-search-submit') && compactSearch && !searchOpen) { $event.preventDefault(); searchOpen = true; $nextTick(() => $refs.searchInput?.focus()) }"
+  {% comment %}Opening must finish INSIDE the tap. Safari only honours a
+  programmatic focus() while the user gesture is still on the stack, and
+  $nextTick is asynchronous — so the field opened but the keyboard never
+  appeared, which read as a frozen search needing a second tap to type into.
+  The class is applied directly here so the input is visible in the same
+  frame, then focused synchronously; Alpine's own :class binding lands on the
+  next tick and agrees.{% endcomment %}
+  @click="if ($event.target.closest('.edify-search-submit') && compactSearch && !searchOpen) { $event.preventDefault(); searchOpen = true; $el.classList.add('is-open'); $refs.searchInput?.focus({ preventScroll: true }) }"
   @click.outside="if (compactSearch) searchOpen = false"
   @keydown.escape.stop="if (compactSearch && searchOpen) { searchOpen = false; $nextTick(() => $refs.searchButton?.focus()) }"
 >
@@ -344,6 +351,37 @@ class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-s
 {% endif %}
 
 <a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text">My Profile</a>
+
+{% comment %}
+Install the app. The platform has been installable for a while — manifest,
+icons and a service worker are all served — but nothing in the product ever
+said so, and the browser's own control is buried in a menu most people never
+open. This surfaces it where app-level actions already live.
+
+Two paths, because the browsers differ. Chrome and Edge fire
+`beforeinstallprompt`, which can be captured and replayed from a real click;
+that gives a one-tap install. Safari fires nothing and has no API, so iOS gets
+the actual instruction instead of a dead button. Both are hidden once the app
+is already running installed.
+{% endcomment %}
+<div x-data="edifyInstall()" x-show="canInstall || showIosHint" x-cloak style="display: none">
+  <div class="my-1.5 border-t edify-border-top"></div>
+  <button
+    type="button"
+    x-show="canInstall"
+    @click="install()"
+    class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold edify-text flex items-center gap-2"
+  >
+    <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/>
+    </svg>
+    Install app
+  </button>
+  <div x-show="showIosHint" class="px-4 py-2 edify-text-caption edify-text-muted leading-snug">
+    <p class="font-semibold edify-text">Install on this iPhone</p>
+    <p class="mt-0.5">Tap Share, then <span class="font-semibold">Add to Home Screen</span>.</p>
+  </div>
+</div>
 <form action="/logout" method="post" class="m-0 mt-1 border-t edify-border-top">
 {% csrf_token %}
 <button

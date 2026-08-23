@@ -165,7 +165,46 @@ def set_invited_schools(activity, school_ids, *, actor_id="") -> int:
             ClusterActivityAttendance.objects.filter(
                 id__in=[r.id for r in stale]
             ).delete()
+
+        # The head count is DERIVED from the ticks, so it has to be written
+        # back. `Activity.expected_participants` is the figure costing prices
+        # against, and nothing recomputed it when the invitation list changed
+        # — so unticking a school left the session still priced for schools it
+        # no longer invites. Same transaction as the ticks, because a stored
+        # total that disagrees with the rows it comes from is the defect.
+        sync_expected_participants(activity)
     return len(wanted)
+
+
+def sync_expected_participants(activity) -> int:
+    """Write the derived head count back and re-price if it moved.
+
+    The number is never typed: composition per school times the schools
+    actually invited. Returns the figure written.
+    """
+    total = expected_participants(activity)
+    if activity.expected_participants == total:
+        return total
+
+    activity.expected_participants = total
+    activity.save(update_fields=["expected_participants", "updated_at"])
+
+    # Re-price after the ticks commit, through the one cost writer every other
+    # scheduling path uses. Best effort on purpose: a session with no costed
+    # catalogue item, or one whose budget is already approved, keeps what it
+    # has. Failing the invitation edit because pricing could not refresh would
+    # be the worse outcome — the ticks are the user's actual intent, and the
+    # activity carries `cost_missing` for finance to see.
+    def _reprice():
+        try:
+            from apps.activities.services import _apply_schedule_cost_snapshot
+
+            _apply_schedule_cost_snapshot(activity, {})
+        except Exception:  # noqa: BLE001
+            return
+
+    transaction.on_commit(_reprice)
+    return total
 
 
 def _clean_ids(raw) -> set[str]:

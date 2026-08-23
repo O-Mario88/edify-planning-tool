@@ -23,6 +23,18 @@
 <link rel="shortcut icon" href="{% static 'icons/favicon.ico' %}">
 
 <script>
+  // `beforeinstallprompt` fires once, early — usually before Alpine has
+  // initialised — and it is the only handle on the browser's install flow.
+  // Captured here, at the top of the document, and parked on window so the
+  // account menu's Install control can replay it from a real click. Without
+  // preventDefault Chrome shows its own mini-infobar as well as ours.
+  window.__edifyInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    window.__edifyInstallPrompt = event;
+    window.dispatchEvent(new CustomEvent('edify-install-available'));
+  });
+
   // Registered on load rather than inline so the worker never competes with
   // first paint. Failure is logged, not surfaced: the app works fine
   // uninstalled, and a worker error is not something a user can act on.
