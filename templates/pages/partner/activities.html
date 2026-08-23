@@ -46,8 +46,8 @@
           the assignment, not the school.
           {% endcomment %}
           <div class="flex shrink-0 gap-2">
-            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/return-drawer" hx-target="#drawer-root" class="edify-surface min-h-10 rounded-control border border-[var(--border-strong)] px-4 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Return</button>
-            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/schedule-drawer" hx-target="#drawer-root" class="min-h-10 rounded-control bg-[var(--color-edify-primary)] px-4 font-bold text-white hover:bg-[var(--color-edify-dark)]">Schedule</button>
+            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/return-drawer" hx-target="#drawer-container" class="edify-surface min-h-10 rounded-control border border-[var(--border-strong)] px-4 font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)]">Return</button>
+            <button type="button" hx-get="/partner/assignments/{{ assignment.id }}/schedule-drawer" hx-target="#drawer-container" class="min-h-10 rounded-control bg-[var(--color-edify-primary)] px-4 font-bold text-white hover:bg-[var(--color-edify-dark)]">Schedule</button>
           </div>
         </div>
         {% endfor %}
@@ -91,7 +91,6 @@
     {% endif %}
   </div>
 
-  <div id="drawer-root"></div>
 
 </div>
 {% endblock %}

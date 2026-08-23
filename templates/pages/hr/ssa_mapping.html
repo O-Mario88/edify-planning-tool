@@ -1,0 +1,135 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters table_pagination %}
+
+{% block title %}SSA & Activity Mapping · Edify</div>
+{% endblock %}
+
+{% block shell_content %}
+<div class="edify-page-canvas">
+<div class="edify-page-header">
+  <div class="edify-page-header__lead">
+    <p class="edify-page-header__eyebrow">Priorities</p>
+    <h1 class="edify-page-title">SSA &amp; Activity Mapping</h1>
+    <p class="edify-page-header__description">
+      Which SSA intervention each school-facing activity is meant to move, and how that
+      is judged later. An activity leaves the queue the moment it has a mapping — nobody
+      maintains this list.
+    </p>
+  </div>
+</div>
+
+<div class="edify-card-row grid grid-cols-1 gap-5">
+  <section class="edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3">
+    <div class="flex items-baseline justify-between gap-3">
+      <h2 class="text-[13px] font-bold edify-text tracking-tight">Mapping required</h2>
+      <span class="edify-text-caption font-bold {% if unmapped_count %}text-rose-600{% else %}text-emerald-600{% endif %} tabular-nums">
+        {{ unmapped_count }}
+      </span>
+    </div>
+    <p class="edify-text-caption font-semibold text-slate-500">
+      These deliver work to a school, and nothing records which intervention that work is
+      for. Until one is set, the activity cannot appear in intervention-impact analysis.
+    </p>
+
+    {% paginate unmapped "unmapped_page" as unmapped_pager %}
+    <div class="overflow-x-auto -mx-1">
+      <table class="w-full text-left text-[13px] min-w-[680px]">
+        <thead>
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-[var(--border-card)]">
+            <th class="text-left font-bold py-1.5 pl-1">Activity</th>
+            <th class="text-left font-bold py-1.5">Type</th>
+            <th class="text-right font-bold py-1.5 pr-1">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in unmapped_pager.rows %}
+          <tr>
+            <td class="py-2 pl-1 font-semibold edify-text">{{ row.item.display_name }}</td>
+            <td class="py-2 edify-text-muted">{{ row.item.get_activity_type_display }}</td>
+            <td class="py-2 pr-1 text-right">
+              {% if can_manage %}
+              <button type="button"
+                      hx-get="/priorities/ssa-mapping/{{ row.item.id }}/drawer"
+                      hx-target="#drawer-container"
+                      class="edify-text-caption font-bold edify-primary-text hover:underline">Link intervention</button>
+              {% else %}
+              <span class="edify-text-caption font-semibold text-slate-400">Impact Assessment</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="py-6 text-center edify-text-caption font-semibold text-slate-400">
+              Every active school-facing activity says what it is for.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=unmapped_pager param="unmapped_page" %}
+  </section>
+</div>
+
+<div class="edify-card-row grid grid-cols-1 gap-5">
+  <section class="edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3">
+    <div class="flex items-baseline justify-between gap-3">
+      <h2 class="text-[13px] font-bold edify-text tracking-tight">Mapped activities</h2>
+      <span class="edify-text-caption font-bold edify-text-muted tabular-nums">{{ mapped_count }}</span>
+    </div>
+
+    {% paginate mapped "mapped_page" as mapped_pager %}
+    <div class="overflow-x-auto -mx-1">
+      <table class="w-full text-left text-[13px] min-w-[680px]">
+        <thead>
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-[var(--border-card)]">
+            <th class="text-left font-bold py-1.5 pl-1">Activity</th>
+            <th class="text-left font-bold py-1.5">Primary intervention</th>
+            <th class="text-left font-bold py-1.5">Also moves</th>
+            <th class="text-left font-bold py-1.5">State</th>
+            <th class="text-right font-bold py-1.5 pr-1">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in mapped_pager.rows %}
+          <tr>
+            <td class="py-2 pl-1 font-semibold edify-text">{{ row.item.display_name }}</td>
+            <td class="py-2 edify-text-muted">
+              {% if row.not_ssa_measured %}
+                <span class="edify-text-caption font-semibold text-slate-400">Not measured by a score</span>
+              {% else %}{{ row.primary_label }}{% endif %}
+            </td>
+            <td class="py-2 edify-text-muted">
+              {% for label in row.secondary_labels %}{{ label }}{% if not forloop.last %} · {% endif %}{% empty %}—{% endfor %}
+            </td>
+            <td class="py-2">
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
+                {% if row.published %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
+                {% if row.published %}Published{% else %}Draft{% endif %}
+              </span>
+            </td>
+            <td class="py-2 pr-1 text-right">
+              {% if can_manage %}
+              <button type="button"
+                      hx-get="/priorities/ssa-mapping/{{ row.item.id }}/drawer"
+                      hx-target="#drawer-container"
+                      class="edify-text-caption font-bold edify-primary-text hover:underline">Edit</button>
+              {% else %}
+              <span class="edify-text-caption font-semibold text-slate-400">View only</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-6 text-center edify-text-caption font-semibold text-slate-400">
+              No mappings yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/table_pager.html" with pager=mapped_pager param="mapped_page" %}
+  </section>
+</div>
+{% endblock %}

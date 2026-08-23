@@ -37,6 +37,45 @@ def data_quality_health() -> dict:
                 "resolution_link": "/admin-panel/data-quality-center",
             }
         )
+    # A cluster that declares no sub-county can never claim a school.
+    # `active_cluster_for_geography` matches on district AND sub-county, so
+    # the Add-to-Cluster drawer, the School Profile and School.save() all
+    # resolve to nothing — and all three fail identically to "no cluster
+    # covers this area", which is a different problem with a different fix.
+    from apps.clusters.models import Cluster, ClusterSubCounty
+
+    declared = set(ClusterSubCounty.objects.values_list("cluster_id", flat=True))
+    uncovered = [
+        cluster
+        for cluster in Cluster.objects.filter(
+            deleted_at__isnull=True, status="active", sub_county__isnull=True
+        )
+        if cluster.id not in declared
+    ]
+    if uncovered:
+        checks.append(
+            {
+                "key": "cluster_without_sub_county_coverage",
+                "severity": "critical",
+                "component": "Cluster geography coverage",
+                "current_state": (
+                    f"{len(uncovered)} active cluster(s) declare no sub-county"
+                ),
+                "expected_state": (
+                    "Every active cluster names the sub-counties it covers"
+                ),
+                "last_check": now.isoformat(),
+                "owner": "ImpactAssessment",
+                "recommended_action": (
+                    "Set the covered sub-counties on each cluster, or run "
+                    "backfill_cluster_sub_counties --commit to read them off "
+                    "the schools already in it. Until then no school can be "
+                    "matched to these clusters automatically."
+                ),
+                "resolution_link": "/clusters",
+            }
+        )
+
     if summary["missingCoordinates"]:
         checks.append(
             {

@@ -6,29 +6,22 @@
          if (this.chart) { this.chart.destroy(); }
          const el = document.querySelector('#plDashPerfChart');
          if (!el) return;
-         this.chart = new ApexCharts(el, {
-           series: [
-             { name: 'Planned', type: 'column', data: {{ team_performance.planned|escape }} },
-             { name: 'Completed', type: 'column', data: {{ team_performance.completed|escape }} },
-             { name: 'Verified', type: 'column', data: {{ team_performance.verified|escape }} },
-             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|escape }} }
-           ],
-           chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
-           stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
-           colors: window.EdifyChartSystem.mixedSeries,
-           dataLabels: { enabled: false },
-           labels: {{ team_performance.labels|escape }},
-           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
-           yaxis: [
-             { seriesName: 'Planned', title: { text: 'Activities', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } }, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
-             { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
-             { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
-           ],
-           grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
-           legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
-           tooltip: { theme: 'dark', shared: true, intersect: false }
-         });
+         const cfg = window.EdifyChartSystem.mixedTrend(4);
+         cfg.series = [
+           { name: 'Planned', type: 'column', data: {{ team_performance.planned|escape }} },
+           { name: 'Completed', type: 'column', data: {{ team_performance.completed|escape }} },
+           { name: 'Verified', type: 'column', data: {{ team_performance.verified|escape }} },
+           { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|escape }} }
+         ];
+         cfg.chart.height = 300;
+         cfg.labels = {{ team_performance.labels|escape }};
+         cfg.xaxis.type = 'category';
+         cfg.yaxis = [
+           { seriesName: 'Planned', title: { text: 'Activities', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } }, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+           { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
+           { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
+         ];
+         this.chart = new ApexCharts(el, cfg);
          this.chart.render();
        }
      }" x-init="$nextTick(() => initChart())">

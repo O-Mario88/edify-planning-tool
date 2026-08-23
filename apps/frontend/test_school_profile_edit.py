@@ -5,6 +5,7 @@ from django.urls import reverse
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.analytics.subcounty_insight import boundary_key, subcounty_insight
 from apps.audit.models import AuditLog
+from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.core.enums import SchoolType
 from apps.geography.models import District, Parish, Region, SubCounty
 from apps.schools.models import School
@@ -106,6 +107,46 @@ class SchoolProfileEditTest(TestCase):
             self.assertContains(response, f'name="{field}"')
         self.assertContains(response, self.sub_county.name)
         self.assertContains(response, self.parish.name)
+        self.assertNotContains(response, 'name="cluster_id"')
+        self.assertContains(response, "resolved automatically")
+
+    def test_profile_sub_county_resolves_its_attached_cluster(self):
+        cluster = Cluster.objects.create(
+            name="Namagunga Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.other_sub_county,
+            responsible_staff_id=self.staff.id,
+            status="active",
+        )
+        ClusterSubCounty.objects.create(
+            cluster=cluster,
+            sub_county=self.other_sub_county,
+        )
+
+        response = self.client.post(
+            self.edit_url,
+            self._valid_payload(
+                sub_county_id=self.other_sub_county.id,
+                parish_id=self.other_parish.id,
+                # A stale client may still send this retired field. The server
+                # must ignore it and use the saved canonical geography.
+                cluster_id="",
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.sub_county_id, self.other_sub_county.id)
+        self.assertEqual(self.school.cluster_id, cluster.id)
+        self.assertEqual(self.school.cluster_status, "clustered")
+
+        drawer = self.client.get(
+            reverse("frontend:add_to_cluster_drawer", args=[self.school.id])
+        )
+        self.assertEqual(drawer.status_code, 200)
+        self.assertEqual(drawer.context["existing_covering_cluster"], cluster)
+        self.assertContains(drawer, "Cluster selected automatically")
 
     def test_directory_school_name_links_to_its_profile(self):
         response = self.client.get(reverse("frontend:schools_directory"))
@@ -450,6 +491,10 @@ class SchoolManualOnboardRequiredFieldsTest(TestCase):
             "school_type": "client",
             "enrollment": "",
             "cluster_id": "",
+            # Required since school creation opened beyond IA: the Salesforce
+            # id is what proves the school exists there first, and being
+            # unique it is also the duplicate check.
+            "salesforce_account_id": "0011A00001Onboard",
         }
         payload.update(overrides)
         return payload

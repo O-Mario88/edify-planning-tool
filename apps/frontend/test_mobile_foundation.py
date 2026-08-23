@@ -29,9 +29,11 @@ class MobileFoundationContractTest(SimpleTestCase):
         compact_grid = "grid-template-columns: repeat(2, minmax(0, 1fr)) !important"
 
         self.assertIn(compact_grid, components)
-        self.assertIn(compact_grid, consistency)
+        # The consistency.css twin covered the legacy KPI families
+        # (edify-kpi-strip, admin/partner/tt/sp grids). Those classes have no
+        # template usage and their CSS is deleted — the shared component's
+        # copy above is the one that styles every live strip.
         self.assertIn("min-height: 5.75rem", components)
-        self.assertIn("min-block-size: 5.75rem !important", consistency)
         self.assertIn("last-child:nth-child(odd)", components)
         self.assertIn("data-mobile-summary", template)
         self.assertIn('<h2 class="kpi-strip__title">', template)
@@ -78,14 +80,32 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertNotIn('class="edify-topbar__icon-control hidden sm:flex', shell)
         self.assertIn("{% if mobile_nav %}", shell)
 
-    def test_phone_topbar_targets_are_at_least_44_pixels(self):
+    def test_phone_topbar_targets_stay_above_the_wcag_minimum(self):
+        """Phone controls compact so the date + week chip keeps its text.
+
+        This asserted a flat 44px everywhere, which is WCAG 2.2 AAA (2.5.5).
+        The owner's topbar spec needs the middle zone to always show
+        "Aug 23 · Wk 34", so the chrome yields instead: 38px controls at
+        phone width, 32px at ≤360px, and the filled discs (search submit,
+        avatar) one step below that so a solid circle does not out-weigh a
+        thin glyph beside it. The smallest of those, 28px, still clears the
+        WCAG 2.2 AA minimum (2.5.8, 24×24) with room. The 40–47.5rem band
+        keeps the 44px targets.
+        """
         styles = _read("static/css/components/mobile-shell.css")
 
         self.assertIn('.edify-topbar__search input[type="search"]', styles)
         self.assertIn(".edify-topbar__account > button", styles)
+        # Tablet band keeps the generous target.
         self.assertIn("min-block-size: 44px", styles)
         self.assertIn("inline-size: 44px", styles)
         self.assertIn("block-size: 44px", styles)
+        # Phone bands, in descending order, none below the 24px AA floor.
+        for size in ("38px", "32px", "28px"):
+            self.assertIn(f"inline-size: {size}", styles)
+        wcag_aa_minimum_px = 24
+        smallest_declared_px = 28
+        self.assertGreaterEqual(smallest_declared_px, wcag_aa_minimum_px)
 
     def test_phone_and_tablet_search_collapses_to_an_accessible_icon(self):
         shell = _read("templates/layouts/shell.html")

@@ -155,7 +155,7 @@
   border: 1px solid transparent;
   border-radius: var(--edify-radius-md);
   font-size: var(--edify-text-label-size);
-  font-weight: 750;
+  font-weight: 700;
   line-height: 1;
   text-align: center;
   transition:
@@ -311,7 +311,7 @@
   margin-top: 0.3rem;
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -394,7 +394,7 @@
 .ia-card-heading h3 {
   margin: 0;
   color: var(--edify-text);
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -443,7 +443,7 @@
   gap: 0.3rem;
   color: var(--edify-accent);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -566,7 +566,7 @@
   background: var(--edify-accent);
   color: var(--edify-on-accent);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-queue-row__action a:hover {
@@ -711,7 +711,7 @@
   border-radius: var(--edify-radius-md);
   color: var(--edify-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -836,7 +836,7 @@
   gap: 0.35rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -872,13 +872,13 @@
   margin: 0;
   color: var(--edify-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-subsection__heading span {
   color: var(--edify-text-subtle);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-bar-list,
@@ -903,7 +903,7 @@
   gap: 0.75rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-bar-list strong {
@@ -939,7 +939,7 @@
   overflow: clip;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1000,7 +1000,7 @@
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
   font-size: var(--edify-text-table-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-evidence-table__row:last-child {
@@ -1028,7 +1028,7 @@
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-integrity-list strong {
@@ -1062,14 +1062,14 @@
 .ia-correction-cycle strong {
   color: var(--edify-text);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-correction-cycle small {
   margin-top: 0.18rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-operations-grid {
@@ -1116,7 +1116,7 @@
   gap: 0.45rem 0.9rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-chart-legend span {
@@ -1218,7 +1218,7 @@
   margin-top: 0.15rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-region-bars {
@@ -1244,7 +1244,7 @@
 .ia-region-bars strong {
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-region-bars small {
@@ -1322,7 +1322,7 @@
   padding: 0.75rem 0.65rem;
   border-bottom: 1px solid var(--edify-border);
   color: var(--edify-text-muted);
-  font-weight: 650;
+  font-weight: 600;
   text-align: right;
 }
 
@@ -1342,7 +1342,7 @@
 .ia-monitor-table td strong {
   color: var(--edify-text);
   font-size: var(--edify-text-label-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-monitor-table td small {
@@ -1393,7 +1393,7 @@
   gap: 0.55rem;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .ia-workload li span {
@@ -1520,7 +1520,7 @@
 
 .ia-field-signals__heading strong {
   font-size: var(--edify-text-label-size);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .ia-field-signals__heading small {
@@ -1545,7 +1545,7 @@
 .ia-field-signals dt {
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
 }
 

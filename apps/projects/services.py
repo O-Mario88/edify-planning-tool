@@ -257,9 +257,54 @@ def assign_school(project_id: str, data: dict, principal=None) -> dict:
     if reason and assignment.assignment_reason != reason:
         assignment.assignment_reason = reason
         updates.append("assignment_reason")
+
+    # The baseline is what the school scored the day it joined, captured once
+    # and never recomputed. Reading it live would let an assessment taken
+    # during delivery become the thing delivery is judged against, which
+    # flatters or damns a project by accident of timing.
+    #
+    # A school with no confirmed assessment gets no baseline rather than a
+    # zero: it is enrolled, and the project simply cannot claim SSA movement
+    # for it until one exists.
+    if assignment.baseline_score is None:
+        _capture_baseline(assignment, matched or (p.intervention or ""))
+        updates.extend(
+            [
+                "baseline_ssa",
+                "baseline_score",
+                "baseline_band",
+                "baseline_captured_at",
+                "impact_classification",
+            ]
+        )
+
     if updates:
         assignment.save(update_fields=[*updates, "updated_at"])
     return {"ok": True, "projectId": project_id, "schoolId": school.school_id}
+
+
+def _capture_baseline(assignment, intervention: str) -> None:
+    """Snapshot the score this enrolment will later be measured against."""
+    from django.utils import timezone
+
+    from apps.projects.ssa_impact import Impact, baseline_for
+
+    if not intervention:
+        # Nothing to measure against yet. Honest, and visible to IA as a
+        # project school awaiting a baseline.
+        assignment.impact_classification = Impact.INSUFFICIENT_EVIDENCE
+        return
+
+    reading = baseline_for(assignment.school_id, intervention)
+    if reading is None:
+        assignment.impact_classification = Impact.INSUFFICIENT_EVIDENCE
+        return
+
+    assignment.baseline_ssa_id = reading.record_id
+    assignment.baseline_score = reading.score
+    assignment.baseline_band = reading.band
+    assignment.baseline_captured_at = timezone.now()
+    assignment.impact_classification = Impact.NOT_YET_MEASURABLE
 
 
 def staff_assignments(project_id: str, principal=None) -> list[dict]:

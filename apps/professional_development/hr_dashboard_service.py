@@ -211,12 +211,20 @@ class HRPDDashboardService:
             )
             alloc_qs = alloc_qs.filter(staff_id__in=role_staff_ids)
             req_qs = req_qs.filter(staff_id__in=role_staff_ids)
+        # A person's remaining allocation is a fact about them, not about the
+        # current filter — so balances (and the who-hasn't-applied list) are
+        # taken from the scope BEFORE the search box narrows the rows.
+        balance_rows = list(req_qs.order_by("-updated_at"))
         if search:
-            req_qs = req_qs.filter(
-                Q(staff_name__icontains=search) | Q(course_name__icontains=search)
-            )
-
-        all_rows = list(req_qs.order_by("-updated_at"))
+            needle = search.casefold()
+            all_rows = [
+                r
+                for r in balance_rows
+                if needle in (r.staff_name or "").casefold()
+                or needle in (r.course_name or "").casefold()
+            ]
+        else:
+            all_rows = balance_rows
         today = date.today()
 
         # ── KPI strip (8) ────────────────────────────────────────────────────
@@ -241,7 +249,7 @@ class HRPDDashboardService:
         signoff_pending = sum(
             1 for r in all_rows if r.status == PDStatus.AWAITING_HR_SIGNOFF
         )
-        currency = alloc_qs.first().currency if alloc_qs.exists() else "UGX"
+        currency = alloc_qs.first().currency if alloc_qs.exists() else "USD"
 
         kpis = [
             render_precomputed_metric_item(
@@ -341,6 +349,7 @@ class HRPDDashboardService:
             tracker_rows.append(
                 {
                     "id": r.id,
+                    "staff_id": r.staff_id,
                     "staff_name": r.staff_name,
                     "role": r.position or "—",
                     "supervisor": r.supervisor_name or "—",
@@ -383,6 +392,32 @@ class HRPDDashboardService:
         pages = max(1, (total_entries + per_page - 1) // per_page)
         page = min(page, pages)
         page_rows = tracker_rows[(page - 1) * per_page : page * per_page]
+
+        # The old "remaining" was request-scoped (requested − accounted), which
+        # answered a question nobody asks. What HR needs is the envelope: the
+        # person's annual allocation with every commitment and every accounted
+        # spend subtracted directly from it — the same arithmetic the employee
+        # sees on My PD (StaffPDService.balances). Computed only for the ten
+        # visible rows, and shown negative rather than clamped when someone is
+        # over their envelope: max(0, …) is how the last overdraw stayed
+        # invisible.
+        from apps.professional_development.services import StaffPDService
+
+        alloc_by_staff = {a.staff_id: a for a in alloc_qs}
+        spent_cache: dict[str, int] = {}
+        for row in page_rows:
+            alloc = alloc_by_staff.get(row["staff_id"])
+            allocation_cents = alloc.annual_allocation if alloc else 0
+            row_currency = alloc.currency if alloc else currency
+            if row["staff_id"] not in spent_cache:
+                spent_cache[row["staff_id"]] = (
+                    StaffPDService.committed_and_accounted_cents(
+                        row["staff_id"], fy
+                    )
+                )
+            balance = allocation_cents - spent_cache[row["staff_id"]]
+            row["staff_allocation"] = f"{row_currency} {allocation_cents/100:,.0f}"
+            row["staff_balance"] = f"{row_currency} {balance/100:,.0f}"
 
         # ── HR Action Center (5 groups) ──────────────────────────────────────
         action_center = []
@@ -437,6 +472,17 @@ class HRPDDashboardService:
         # ── Role-based allocation settings ───────────────────────────────────
         role_settings = HRPDDashboardService._role_allocation_settings(
             fy, country, scoped_ids
+        )
+
+        # ── Everyone HR is meant to track, not only those who applied ───────
+        # The tracker is built from requests, so a staff member who never
+        # applied was simply invisible — the exact person HR needs to chase.
+        not_applied = HRPDDashboardService.staff_without_requests(
+            principal, fy, country=country, role_filter=role_filter
+        )
+        can_adjust_allocation = getattr(principal, "active_role", "") in (
+            "HumanResources",
+            "Admin",
         )
 
         # ── Compliance donuts ────────────────────────────────────────────────
@@ -540,6 +586,9 @@ class HRPDDashboardService:
             "tracker_pages": pages,
             "action_center": action_center,
             "role_settings": role_settings,
+            "not_applied": not_applied[:15],
+            "not_applied_count": len(not_applied),
+            "can_adjust_allocation": can_adjust_allocation,
             "status_distribution": status_distribution,
             "status_distribution_total": len(all_rows),
             "fund_utilization": fund_utilization,
@@ -555,6 +604,73 @@ class HRPDDashboardService:
             "overdue_accountability_count": len(overdue_accountability),
             "last_refreshed": timezone.now(),
         }
+
+    @staticmethod
+    def staff_without_requests(
+        principal, fy: str, *, country: str = "", role_filter: str = ""
+    ) -> list[dict]:
+        """Every scoped, PD-eligible staff member with no live request this FY.
+
+        One definition serves both the dashboard panel and the bulk "remind
+        everyone to apply" action, so the list HR reads is exactly the list
+        the reminder reaches — a posted set of ids is never trusted.
+        Draft-only staff count as not-applied on purpose: a draft nobody
+        submitted is invisible to every approval queue, so for tracking
+        purposes that person has not applied.
+        """
+        from apps.accounts.models import StaffProfile
+
+        scoped_ids, locked_country = _scoped_staff_ids(principal)
+        country = locked_country or country
+
+        applied_ids = set(
+            ProfessionalDevelopmentRequest.objects.filter(fy=fy)
+            .exclude(status=PDStatus.DRAFT)
+            .values_list("staff_id", flat=True)
+        )
+        eligible_qs = StaffProfile.objects.filter(
+            user__active_role__in=[role for role, _ in PD_ELIGIBLE_ROLES]
+        ).select_related("user")
+        if scoped_ids is not None:
+            eligible_qs = eligible_qs.filter(id__in=scoped_ids)
+        if country:
+            eligible_qs = eligible_qs.filter(country=country)
+        if role_filter:
+            eligible_qs = eligible_qs.filter(user__active_role=role_filter)
+
+        alloc_by_staff = {
+            a.staff_id: a
+            for a in ProfessionalDevelopmentAllocation.objects.filter(fy=fy)
+        }
+        role_defaults = {
+            (p.role, p.country): p
+            for p in PDRoleAllocation.objects.filter(fy=fy)
+        }
+        rows = []
+        for sp in eligible_qs.order_by("user__name"):
+            if sp.id in applied_ids:
+                continue
+            role = sp.user.active_role if sp.user else ""
+            alloc = alloc_by_staff.get(sp.id) or role_defaults.get(
+                (role, sp.country)
+            )
+            if alloc is None:
+                cents, cur = 0, "USD"
+            elif hasattr(alloc, "annual_allocation_cents"):
+                cents, cur = alloc.annual_allocation_cents, alloc.currency
+            else:
+                cents, cur = alloc.annual_allocation, alloc.currency
+            rows.append(
+                {
+                    "staff_id": sp.id,
+                    "user_id": sp.user_id,
+                    "name": sp.user.name if sp.user else sp.id,
+                    "role": ROLE_LABELS.get(role, role or "—"),
+                    "country": sp.country or "—",
+                    "allocation": f"{cur} {cents/100:,.0f}",
+                }
+            )
+        return rows
 
     @staticmethod
     def _role_allocation_settings(fy: str, country: str, scoped_ids) -> dict:
@@ -580,7 +696,7 @@ class HRPDDashboardService:
             default = defaults.get(role)
             per_staff = default.annual_allocation_cents if default else 0
             row_total = per_staff * staff_count
-            currency = default.currency if default else "UGX"
+            currency = default.currency if default else "USD"
             rows.append(
                 {
                     "role": role,
@@ -607,7 +723,7 @@ class HRPDDashboardService:
         fy: str,
         country: str,
         amount_major: float,
-        currency: str = "UGX",
+        currency: str = "USD",
         apply_to_existing: bool = False,
     ) -> PDRoleAllocation:
         """HR sets (or updates) the default annual PD allocation for a role.

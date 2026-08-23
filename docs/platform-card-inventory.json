@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 609,
-  "templates": 218,
-  "distinct_titles": 581,
+  "titled_cards": 612,
+  "templates": 219,
+  "distinct_titles": 584,
   "with_card_key": 13,
-  "untitled_surfaces": 1015,
+  "untitled_surfaces": 1014,
   "untitled_chrome": 237,
   "untitled_nested": 389,
-  "untitled_headless": 389,
+  "untitled_headless": 388,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 1
@@ -750,7 +750,7 @@
   },
   {
    "template": "templates/pages/analytics/declining_schools.html",
-   "line": 138,
+   "line": 148,
    "title": "Where the decline is concentrated",
    "heading_level": 2,
    "has_card_key": false,
@@ -1349,7 +1349,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 98,
+   "line": 93,
    "title": "2. Region Performance Ranking",
    "heading_level": 2,
    "has_card_key": false,
@@ -1358,7 +1358,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 124,
+   "line": 119,
    "title": "3. Country Directors Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -1367,7 +1367,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 165,
+   "line": 160,
    "title": "4. General Budget &amp; Approval Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -1376,7 +1376,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 203,
+   "line": 198,
    "title": "5. Special Projects Performance \u2014 impact is measured on verified annual SSA only",
    "heading_level": 2,
    "has_card_key": false,
@@ -1385,7 +1385,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 258,
+   "line": 253,
    "title": "6. Special Project Impact",
    "heading_level": 2,
    "has_card_key": false,
@@ -1394,7 +1394,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 271,
+   "line": 266,
    "title": "7. Partner &amp; Stakeholder Growth",
    "heading_level": 2,
    "has_card_key": false,
@@ -1403,7 +1403,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 308,
+   "line": 303,
    "title": "8. Resource Allocation &amp; Scaling",
    "heading_level": 2,
    "has_card_key": false,
@@ -1412,7 +1412,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 333,
+   "line": 328,
    "title": "9. Operational Risk / Attention Needed",
    "heading_level": 2,
    "has_card_key": false,
@@ -1421,7 +1421,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 349,
+   "line": 344,
    "title": "10. Quick Executive Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1430,7 +1430,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 364,
+   "line": 359,
    "title": "Pending RVP Approvals",
    "heading_level": 2,
    "has_card_key": false,
@@ -1439,7 +1439,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 422,
+   "line": 417,
    "title": "Recommended Next Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -1448,7 +1448,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 452,
+   "line": 447,
    "title": "Strategy Notes",
    "heading_level": 2,
    "has_card_key": false,
@@ -1457,7 +1457,7 @@
   },
   {
    "template": "templates/pages/dashboards/rvp.html",
-   "line": 479,
+   "line": 474,
    "title": "New Strategy Note",
    "heading_level": 3,
    "has_card_key": false,
@@ -2137,6 +2137,24 @@
      1
     ]
    ]
+  },
+  {
+   "template": "templates/pages/hr/ssa_mapping.html",
+   "line": 22,
+   "title": "Mapping required",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/hr/ssa_mapping.html",
+   "line": 75,
+   "title": "Mapped activities",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3",
+   "branch_path": []
   },
   {
    "template": "templates/pages/hr/strategic_priorities.html",
@@ -4721,7 +4739,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 79,
+   "line": 75,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4730,7 +4748,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 118,
+   "line": 114,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4739,7 +4757,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 179,
+   "line": 184,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4748,7 +4766,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 224,
+   "line": 229,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4757,7 +4775,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 254,
+   "line": 266,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4766,7 +4784,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 278,
+   "line": 290,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4775,7 +4793,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 327,
+   "line": 339,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4784,7 +4802,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 401,
+   "line": 413,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4973,7 +4991,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 71,
+   "line": 68,
    "title": "Top Challenges Reported",
    "heading_level": 2,
    "has_card_key": false,
@@ -4982,7 +5000,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 85,
+   "line": 82,
    "title": "Action Center",
    "heading_level": 2,
    "has_card_key": false,
@@ -4991,7 +5009,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 115,
+   "line": 112,
    "title": "Team &amp; Partner Debriefs",
    "heading_level": 2,
    "has_card_key": false,
@@ -5000,7 +5018,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 122,
+   "line": 119,
    "title": "Recent Activity",
    "heading_level": 2,
    "has_card_key": false,
@@ -5009,7 +5027,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 140,
+   "line": 137,
    "title": "Recent Peer Solutions",
    "heading_level": 2,
    "has_card_key": false,
@@ -5018,7 +5036,7 @@
   },
   {
    "template": "templates/partials/debriefs/dashboard_body.html",
-   "line": 182,
+   "line": 177,
    "title": "Debrief Intelligence Highlights",
    "heading_level": 2,
    "has_card_key": false,
@@ -5438,6 +5456,15 @@
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
    "line": 72,
+   "title": "2b. Not Yet Applied ()",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border p-5 space-y-3 edify-surface edify-border",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/hr/pd_dashboard/body.html",
+   "line": 116,
    "title": "3. Role-Based PD Allocation Settings",
    "heading_level": 2,
    "has_card_key": false,
@@ -5446,7 +5473,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 172,
+   "line": 215,
    "title": "5. Automated Notification Workflow",
    "heading_level": 2,
    "has_card_key": false,
@@ -5455,7 +5482,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 215,
+   "line": 258,
    "title": "6. Completed Courses &amp; HR Sign-Off Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -5464,7 +5491,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 230,
+   "line": 273,
    "title": "7. Upcoming &amp; Overdue Courses",
    "heading_level": 2,
    "has_card_key": false,
@@ -5473,7 +5500,7 @@
   },
   {
    "template": "templates/partials/hr/pd_dashboard/body.html",
-   "line": 284,
+   "line": 327,
    "title": "8. Quick Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -6488,7 +6515,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 185,
+   "line": 186,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -6497,7 +6524,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 202,
+   "line": 203,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -6506,7 +6533,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 231,
+   "line": 232,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,

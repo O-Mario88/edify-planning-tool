@@ -95,16 +95,24 @@ class BarChartSystemContractTest(SimpleTestCase):
             hr,
             "The HR line is green so its two bar series remain Blue then Orange.",
         )
+        # The recruitment funnel is on EdifyChartSystem.rankedBar now, whose
+        # `colors: S.singleSeries.slice()` IS system blue — so the literal
+        # array it used to declare is gone by design. Pin the preset.
         self.assertIn(
-            "colors: ['var(--edify-chart-blue)']",
+            "EdifyChartSystem.rankedBar",
             hr,
-            "The single-series recruitment bar must use system Blue.",
+            "The single-series recruitment bar must use the shared ranked-bar "
+            "form, whose palette is system Blue.",
         )
 
     def test_status_bars_keep_semantic_meaning(self):
         hr = _read("templates/partials/dashboards/hr/body.html")
+        # Palette, not assignment syntax: the chart-preset migration builds
+        # from EdifyChartSystem and then mutates, so `colors:` became
+        # `colors =`. The severity ramp itself is unchanged and is what
+        # actually carries the meaning.
         self.assertIn(
-            "colors: ['var(--edify-chart-green)', "
+            "['var(--edify-chart-green)', "
             "'var(--edify-chart-amber)', 'var(--edify-chart-red)']",
             hr,
         )
@@ -131,3 +139,78 @@ class BarChartSystemContractTest(SimpleTestCase):
             "background:var(--edify-chart-series-secondary)",
             projects,
         )
+
+class SharedChartFormTest(SimpleTestCase):
+    """Every chart builds from EdifyChartSystem, not just its palette.
+
+    Twelve charts across ten templates borrowed the ordered colours and then
+    hand-rolled everything else — bar geometry, stroke weight, markers, grid,
+    legend, tooltip. They matched on hue and differed on form, which is why
+    one dashboard showed hairline bars and another slab ones, and why the
+    owner could still point at a chart that did not look like the reference.
+    A palette is not a design system; the form is.
+    """
+
+    def test_no_template_hand_rolls_a_chart_config(self):
+        import re
+
+        offenders = []
+        preset = re.compile(
+            r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend)"
+        )
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            source = path.read_text(encoding="utf-8")
+            if "new ApexCharts" not in source:
+                continue
+            if not preset.search(source):
+                offenders.append(str(path.relative_to(ROOT)))
+        self.assertEqual(
+            sorted(offenders),
+            [],
+            "These templates create charts without a shared form: "
+            + ", ".join(sorted(offenders)),
+        )
+
+class ReferenceChartFormTest(SimpleTestCase):
+    """The reference form, encoded once: values on marks, no gridlines.
+
+    The reference dashboard labels every bar and slice with its own number,
+    which is what makes a ruled background redundant — the reader takes the
+    value off the mark instead of tracing it to an axis. Both halves have to
+    hold together: dropping the gridlines without the labels would remove the
+    only way to read a value.
+
+    The global `window.Apex` block matters as much as the presets. It merges
+    into EVERY chart, so while it still declared y-axis gridlines a preset
+    asking for `grid.show: false` was overruled and the rules kept rendering.
+    """
+
+    def test_gridlines_are_off_in_the_global_default_and_the_presets(self):
+        base = _read("templates/base.html")
+
+        globals_block = base.split("window.Apex = {", 1)[1]
+        self.assertIn("yaxis: { lines: { show: false } }", globals_block)
+        self.assertIn("xaxis: { lines: { show: false } }", globals_block)
+        self.assertIn("show: false", globals_block)
+
+    def test_bar_forms_label_their_marks(self):
+        base = _read("templates/base.html")
+
+        for preset in ("comparisonBar", "mixedTrend", "rankedBar"):
+            block = base.split(preset + ": function", 1)[1].split("},\n\n", 1)[0]
+            self.assertIn(
+                "dataLabels", block, f"{preset} must put the value on the mark"
+            )
+            self.assertIn(
+                "barLabelFits" if preset != "rankedBar" else "barValueFitsInside",
+                block,
+                f"{preset} must suppress a label that cannot fit rather than "
+                "letting neighbours collide",
+            )
+
+    def test_the_rate_line_is_never_labelled_point_by_point(self):
+        """A label on every point of a twelve-month line is noise."""
+        base = _read("templates/base.html")
+
+        block = base.split("mixedTrend: function", 1)[1]
+        self.assertIn("enabledOnSeries: columnIndexes", block)

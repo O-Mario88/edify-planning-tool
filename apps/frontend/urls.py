@@ -2,6 +2,7 @@ from django.urls import include, path
 from apps.help_center import views as help_views
 from .views import (
     action_views,
+    ssa_mapping_views,
     extra_work_views,
     hr_today_views,
     work_plan_views,
@@ -107,6 +108,21 @@ urlpatterns = [
         "priorities",
         target_distribution_views.priorities_master_page,
         name="priorities_master",
+    ),
+    path(
+        "priorities/ssa-mapping",
+        ssa_mapping_views.ssa_mapping_page,
+        name="ssa_mapping",
+    ),
+    path(
+        "priorities/ssa-mapping/<str:item_id>/drawer",
+        ssa_mapping_views.ssa_mapping_drawer,
+        name="ssa_mapping_drawer",
+    ),
+    path(
+        "priorities/ssa-mapping/<str:item_id>/save",
+        ssa_mapping_views.ssa_mapping_action,
+        name="ssa_mapping_action",
     ),
     # §2.2 compatibility: saved links, older notifications and bookmarks that
     # still say "priority dashboard" land on the one canonical page, keeping

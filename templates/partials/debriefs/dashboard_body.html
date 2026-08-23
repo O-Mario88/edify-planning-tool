@@ -15,23 +15,26 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#debriefTrendChart');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: [
-                 { name: 'Submitted', data: {{ trend.submitted|escape }} },
-                 { name: 'Completed', data: {{ trend.completed|escape }} },
-                 { name: 'Action Required', data: {{ trend.action_required|escape }} },
-                 { name: 'Critical', data: {{ trend.critical|escape }} }
-               ],
-               chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
-               stroke: { width: [2.25, 2, 2, 2], curve: 'straight' },
-               colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
-               markers: { size: 4, strokeWidth: 2 },
-               xaxis: { categories: {{ trend.labels|escape }}, labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' }, rotate: -45 } },
-               yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' }, formatter: v => Math.round(v) } },
-               legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
-               grid: { borderColor: 'rgba(148, 163, 184, 0.1)' },
-               tooltip: { theme: 'dark' }
-             });
+             /* Submitted / Completed / Action Required / Critical is a severity
+                ladder, so amber and red are carrying meaning here — status
+                colours stay. Everything else is the shared form. */
+             const cfg = window.EdifyChartSystem.formBase({});
+             cfg.series = [
+               { name: 'Submitted', data: {{ trend.submitted|escape }} },
+               { name: 'Completed', data: {{ trend.completed|escape }} },
+               { name: 'Action Required', data: {{ trend.action_required|escape }} },
+               { name: 'Critical', data: {{ trend.critical|escape }} }
+             ];
+             cfg.chart.type = 'line';
+             cfg.chart.height = 260;
+             cfg.stroke = { width: [2.25, 2, 2, 2], curve: 'straight' };
+             cfg.colors = ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
+             cfg.markers = { size: 4, strokeWidth: 2 };
+             cfg.xaxis.categories = {{ trend.labels|escape }};
+             cfg.xaxis.labels.rotate = -45;
+             cfg.yaxis.labels.formatter = v => Math.round(v);
+             cfg.legend.position = 'top';
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">
@@ -46,17 +49,11 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#debriefActivityDonut');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: {{ activity_donut.counts|escape }},
-               labels: [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 260, fontFamily: 'Geist Sans, sans-serif' },
-               colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
-               legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
-               dataLabels: { enabled: false },
-               plotOptions: { pie: { donut: { size: '70%', labels: { show: true,
-                 total: { show: true, label: 'Total', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ activity_donut.total }}' } } } } },
-               stroke: { width: 0 }, tooltip: { theme: 'dark' }
-             });
+             const cfg = window.EdifyChartSystem.donut('Total');
+             cfg.series = {{ activity_donut.counts|escape }};
+             cfg.labels = [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+             cfg.chart.height = 260;
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">
@@ -161,16 +158,14 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#debriefRiskDonut');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: {{ risk_donut.counts|escape }},
-               labels: [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 220, fontFamily: 'Geist Sans, sans-serif' },
-               colors: ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
-               legend: { position: 'bottom', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
-               dataLabels: { enabled: false },
-               plotOptions: { pie: { donut: { size: '70%' } } },
-               stroke: { width: 0 }, tooltip: { theme: 'dark' }
-             });
+             /* Risk levels are a severity ramp, not categories — the amber
+                band and red terminus stay status colours. */
+             const cfg = window.EdifyChartSystem.donut('Total');
+             cfg.series = {{ risk_donut.counts|escape }};
+             cfg.labels = [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+             cfg.chart.height = 220;
+             cfg.colors = ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">

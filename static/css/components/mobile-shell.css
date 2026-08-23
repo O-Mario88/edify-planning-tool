@@ -105,32 +105,16 @@
     gap: 0;
   }
 
+  /* The utilities used to become the row's flexible scroller here, which
+     packed everything to the LEFT edge and reduced the date to a bare icon.
+     The owner's spec is the opposite: search holds the left, the date and
+     week number hold the middle and always show their text, and the action
+     icons hold the right — compacting to 38px (still past WCAG 2.2 target
+     size) before any text yields. */
   .edify-topbar__utilities {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     min-inline-size: 0;
     gap: 0;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-width: none;
-  }
-
-  .edify-topbar__utilities::-webkit-scrollbar {
-    display: none;
-  }
-
-  .edify-topbar__date {
-    flex: 0 0 44px;
-    inline-size: 44px;
-    block-size: 44px;
-    justify-content: center;
-    padding: 0;
-    border-color: transparent;
-    background: transparent;
-  }
-
-  .edify-topbar__date-short,
-  .edify-topbar__date-long {
-    display: none !important;
   }
 
   /* WCAG target sizing is a layout property, not a pointer-media hint. A
@@ -380,5 +364,121 @@
   .edify-record-table [data-record-title]::before,
   .edify-record-table [data-record-action]::before {
     content: none !important;
+  }
+}
+
+/* ── Topbar zones: search left · date centre · actions right ─────────────
+   The date chip is a direct child of the header now, between the lead
+   (hamburger + search) and the utilities. On desktop the lead's flex-1
+   keeps the wide search field and pushes date + actions right, unchanged.
+   At compact widths the search collapses to one icon; the lead stops
+   stretching so the freed middle belongs to the date chip, centred, with
+   the action icons holding the right edge. */
+@media (max-width: 64rem) {
+  .edify-topbar__lead {
+    flex: 0 0 auto;
+  }
+
+  .edify-topbar > .edify-topbar__date {
+    margin-inline: auto;
+    /* The chip is the reason the middle exists — it never yields its text.
+       Everything else in the row compacts before this truncates. */
+    flex: 0 0 max-content;
+  }
+}
+
+/* Phones: the icons yield size before the date yields legibility. 40px still
+   clears WCAG 2.2 target-size AA (24px) with room; the full 44px returns the
+   moment the row has space. The pointer-coarse 44px rule in components.css
+   targets the same elements at equal specificity, so source order — this
+   file loads after — decides, which is exactly the dependency the buster
+   pair test pins for tab assets. */
+@media (max-width: 40rem) {
+  .edify-topbar__utilities {
+    gap: 0.25rem;
+  }
+
+  .edify-topbar__utilities .edify-topbar__icon-control {
+    min-inline-size: 38px;
+    min-block-size: 38px;
+    inline-size: 38px;
+    block-size: 38px;
+  }
+
+  /* The bottom navigation already carries Messages on phones — the topbar
+     copy is marked redundant in the template for exactly this situation. */
+  .edify-topbar__utilities .edify-topbar__utility--mobile-redundant {
+    display: none;
+  }
+
+  .edify-topbar__utilities .edify-topbar__icon-control svg {
+    block-size: 1.125rem;
+    inline-size: 1.125rem;
+  }
+
+  /* The two FILLED discs — search submit and the account avatar — read far
+     larger than their neighbours at an identical box size, because a solid
+     32px circle is optically the whole box while an outline icon is only its
+     18px glyph. Sizing them to the glyph's optical weight is what makes the
+     row look like one set of controls. Still well past the WCAG 2.2 AA
+     target minimum (24px). */
+  .edify-topbar__search .edify-search-submit,
+  .edify-topbar__utilities .edify-topbar__icon-control--avatar {
+    inline-size: 32px;
+    block-size: 32px;
+    min-inline-size: 32px;
+    min-block-size: 32px;
+  }
+
+  .edify-topbar__search:not(.is-open):has(.edify-search-submit) {
+    flex: 0 0 32px;
+    inline-size: 32px;
+    max-inline-size: 32px;
+  }
+
+  .edify-topbar > .edify-topbar__date {
+    padding-inline: 0.375rem;
+    gap: 0.25rem;
+  }
+}
+
+/* Narrow phones (≤360px): the same three zones, one size down. The date is
+   the reason the middle exists, so the chrome yields first — 32px controls
+   and no gap — rather than truncating the week number or letting the row
+   scroll sideways. */
+@media (max-width: 22.5rem) {
+  .edify-topbar__utilities {
+    gap: 0;
+  }
+
+  .edify-topbar__utilities .edify-topbar__icon-control {
+    min-inline-size: 32px;
+    min-block-size: 32px;
+    inline-size: 32px;
+    block-size: 32px;
+  }
+
+  .edify-topbar__utilities .edify-topbar__icon-control svg {
+    block-size: 1rem;
+    inline-size: 1rem;
+  }
+
+  .edify-topbar__search .edify-search-submit,
+  .edify-topbar__utilities .edify-topbar__icon-control--avatar {
+    inline-size: 28px;
+    block-size: 28px;
+    min-inline-size: 28px;
+    min-block-size: 28px;
+  }
+
+  .edify-topbar__search:not(.is-open):has(.edify-search-submit) {
+    flex: 0 0 28px;
+    inline-size: 28px;
+    max-inline-size: 28px;
+  }
+
+  .edify-topbar > .edify-topbar__date {
+    padding-inline: 0.25rem;
+    gap: 0.1875rem;
   }
 }

@@ -426,8 +426,13 @@ class ActivityInterventionMapping(TimeStampedModel):
         db_table = "activity_intervention_mapping"
         ordering = ["priority", "catalogue_item__display_name"]
         constraints = [
+            # Among LIVE rows only. A superseded mapping is the rule some
+            # finished activity was measured under, and it has to stay
+            # readable beside the version that replaced it — which an
+            # unconditional uniqueness on the same three columns forbade.
             models.UniqueConstraint(
                 fields=["catalogue_item", "intervention", "mapping_mode"],
+                condition=Q(active=True),
                 name="uniq_catalogue_intervention_mode",
             ),
             models.CheckConstraint(

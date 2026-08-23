@@ -150,6 +150,49 @@ class ProjectSchoolAssignment(TimeStampedModel):
     assignment_reason = models.TextField(null=True, blank=True)
     matched_intervention = models.CharField(max_length=64, null=True, blank=True)
 
+    # ── Baseline snapshot ────────────────────────────────────────────────
+    # Taken when the school joins, and never recomputed. A project's baseline
+    # is what the school scored the day it entered; letting a later assessment
+    # move it would quietly rewrite how well the project appears to have done.
+    # If a confirmed SSA is formally corrected the snapshot stays and the
+    # amendment is recorded against it, so the before and after both survive.
+    baseline_ssa = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="project_baselines",
+    )
+    baseline_score = models.FloatField(null=True, blank=True)
+    baseline_band = models.CharField(max_length=16, blank=True, default="")
+    baseline_captured_at = models.DateTimeField(null=True, blank=True)
+
+    #: Which mapping's rules this enrolment is measured under. A later change
+    #: to the mapping must not rewrite what a finished project meant.
+    mapping_version = models.PositiveIntegerField(null=True, blank=True)
+
+    # ── Follow-up ────────────────────────────────────────────────────────
+    follow_up_due_on = models.DateField(null=True, blank=True)
+    follow_up_ssa = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="project_follow_ups",
+    )
+    follow_up_score = models.FloatField(null=True, blank=True)
+
+    #: Left empty until there is evidence for it. "No follow-up yet" is not
+    #: the same as "no improvement", and a project that has not been measured
+    #: must not read as one that failed.
+    impact_classification = models.CharField(max_length=32, blank=True, default="")
+
+    #: An eligibility exception, where a school outside the score rule was
+    #: admitted for a recorded reason and approved by IA.
+    exception_status = models.CharField(max_length=24, blank=True, default="")
+    exception_reason = models.TextField(blank=True, default="")
+    exception_approved_by = models.CharField(max_length=30, blank=True, default="")
+
     class Meta:
         db_table = "project_school_assignment"
         constraints = [

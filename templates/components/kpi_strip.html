@@ -77,7 +77,14 @@
           {% elif item.data_state and not item.is_measured %}
           <span class="kpi-strip__trend kpi-strip__trend--neutral">Pending</span>
           {% else %}
-          <span class="kpi-strip__trend kpi-strip__trend--neutral">Current</span>
+          {% comment %}
+            "Current" is a statement about the DATA, not about the metric —
+            it says this figure is up to date. It therefore keeps one meaning
+            and one colour on every tile, rather than taking the tile's accent
+            the way a movement pill does. Green because up-to-date is the good
+            state; "Pending" beside it stays muted because it is not.
+          {% endcomment %}
+          <span class="kpi-strip__trend kpi-strip__trend--fresh">Current</span>
           {% endif %}
         </span>
 

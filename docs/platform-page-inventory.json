@@ -229,33 +229,11 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 2417,
-      "deprecated_alternatives": [],
-      "example_pages": [],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
-      "kind": "shared-component",
-      "name": "Kpi Card",
-      "purpose": "Reusable kpi card interface primitive",
-      "responsive_behavior": "inherits containing page contract",
-      "states": [
-        "default"
-      ],
-      "tables": 0,
-      "template": "components/kpi_card.html",
-      "variants": [
-        "success",
-        "warning"
-      ]
-    },
-    {
       "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6441,
+      "bytes": 6874,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -761,7 +739,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1226,
+      "bytes": 1559,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director",
@@ -831,7 +809,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3688,
+      "bytes": 3712,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -853,7 +831,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3004,
+      "bytes": 3028,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -875,7 +853,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3074,
+      "bytes": 3098,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1008,7 +986,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3352,
+      "bytes": 2808,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1029,7 +1007,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2889,
+      "bytes": 3616,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1116,7 +1094,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4161,
+      "bytes": 2942,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1401,7 +1379,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3439,
+      "bytes": 2233,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1586,7 +1564,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3199,
+      "bytes": 2976,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1760,7 +1738,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2074,
+      "bytes": 1640,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1781,7 +1759,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2979,
+      "bytes": 2470,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -3226,7 +3204,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 29705,
+      "bytes": 30355,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3251,7 +3229,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 25833,
+      "bytes": 24851,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -3298,7 +3276,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 1458,
+      "bytes": 1482,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3323,7 +3301,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13057,
+      "bytes": 12783,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3464,7 +3442,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2705,
+      "bytes": 2006,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3668,7 +3646,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13521,
+      "bytes": 12605,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -4507,7 +4485,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15513,
+      "bytes": 15489,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4787,13 +4765,13 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 22266,
+      "bytes": 24833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning"
       ],
       "findings": [],
-      "forms": 5,
+      "forms": 7,
       "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Body",
@@ -4811,7 +4789,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5952,
+      "bytes": 6298,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning"
@@ -4858,6 +4836,33 @@
       "variants": [
         "{% if row.status == "
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 8900,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities/ssa-mapping/<str:item_id>/drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Ssa Mapping Drawer",
+      "purpose": "Reusable ssa mapping drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "disabled",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/hr/ssa_mapping_drawer.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -7809,7 +7814,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 21236,
+      "bytes": 21143,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -19976,6 +19981,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -21556,6 +21562,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -21627,6 +21634,7 @@
       "role_access": [
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL",
         "PROJECT_COORDINATOR"
@@ -21888,6 +21896,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -25021,6 +25030,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -25109,6 +25119,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -25192,6 +25203,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -25273,6 +25285,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -28348,6 +28361,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -33960,6 +33974,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -34037,6 +34052,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -34198,6 +34214,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -34282,6 +34299,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -40415,6 +40433,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -40506,6 +40525,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -40597,6 +40617,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -40688,6 +40709,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -43641,6 +43663,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -43718,6 +43741,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -43795,6 +43819,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -46883,6 +46908,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -46971,6 +46997,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47061,6 +47088,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47146,6 +47174,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47236,6 +47265,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47320,6 +47350,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47404,6 +47435,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -47483,6 +47515,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -49168,6 +49201,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -49616,6 +49650,262 @@
         "text-[13px]",
         "text-[15px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.ssa_mapping_views",
+      "backend_view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_page",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/hr/ssa_mapping.html",
+        "test:referenced-by-automated-test",
+        "permission:priorities_master"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [
+        "GET /priorities/ssa-mapping/{{ row.item.id }}/drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EB2FC6A25B",
+      "page_title": "SSA & Activity Mapping \u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [],
+      "permission_key": "priorities_master",
+      "primary_action": "Open next queue record",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "School-facing activities, and what each is measured against.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/priorities/ssa-mapping",
+      "route_name": "ssa_mapping",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activity_catalogue.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/hr/ssa_mapping.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.ssa_mapping_views",
+      "backend_view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/ssa_mapping_drawer.html",
+        "test:coverage-review-required",
+        "permission:priorities_master"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /priorities/ssa-mapping/{{ item.id }}/save"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8BBA1A3E04",
+      "page_title": "Ssa Mapping Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "priorities_master",
+      "primary_action": "Ssa Mapping Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The focused drawer for one activity's mapping.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/priorities/ssa-mapping/<str:item_id>/drawer",
+      "route_name": "ssa_mapping_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/priorities/ssa-mapping/{{ item.id }}/save"
+      ],
+      "services_and_models": [
+        "apps.activity_catalogue.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/ssa_mapping_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[14px]",
+        "text-[16px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.ssa_mapping_views",
+      "backend_view": "apps.frontend.views.ssa_mapping_views.ssa_mapping_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:priorities_master"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-5D8206AE15",
+      "page_title": "Ssa Mapping Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "priorities_master",
+      "primary_action": "Ssa Mapping Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Save, publish, or record that an activity is not SSA-measured.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/priorities/ssa-mapping/<str:item_id>/save",
+      "route_name": "ssa_mapping_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.activity_catalogue.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -51577,6 +51867,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -51655,6 +51946,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -55848,6 +56140,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -55925,6 +56218,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -56292,8 +56586,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 7,
+        "type": "segmented-control"
       },
       "templates": [
         "pages/hr/target_distribution.html"
@@ -58875,6 +59169,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -59361,6 +59656,7 @@
         "apps.accounts.models",
         "apps.audit.models",
         "apps.hr.models",
+        "apps.notifications.services",
         "apps.professional_development.models",
         "apps.schools.models"
       ],
@@ -59569,6 +59865,8 @@
       "dailyDebrief.view",
       "school.upload",
       "school.createSingle",
+      "ssaActivityMapping.view",
+      "ssaActivityMapping.manage",
       "school.edit",
       "school.close",
       "school.resolveDuplicate",
@@ -74007,6 +74305,46 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.ssa_mapping_views.ssa_mapping_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "priorities_master",
+      "required_permissions": [],
+      "route": "/priorities/ssa-mapping",
+      "route_name": "ssa_mapping",
+      "templates": [
+        "pages/hr/ssa_mapping.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.ssa_mapping_views.ssa_mapping_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "priorities_master",
+      "required_permissions": [],
+      "route": "/priorities/ssa-mapping/<str:item_id>/drawer",
+      "route_name": "ssa_mapping_drawer",
+      "templates": [
+        "partials/hr/ssa_mapping_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.ssa_mapping_views.ssa_mapping_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "priorities_master",
+      "required_permissions": [],
+      "route": "/priorities/ssa-mapping/<str:item_id>/save",
+      "route_name": "ssa_mapping_action",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.target_distribution_views.priority_dashboard_redirect",
       "kind": "action",
       "methods": [
@@ -75592,30 +75930,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 373,
+    "accessibility_contract_pass": 375,
     "activity_states": 23,
-    "all_routes": 1025,
+    "all_routes": 1028,
     "api_routes": 349,
     "component_templates": 339,
-    "full_pages": 202,
-    "mobile_contract_pass": 373,
-    "nonvisual_actions": 176,
+    "full_pages": 203,
+    "mobile_contract_pass": 375,
+    "nonvisual_actions": 177,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 344,
-      "operational-queue": 120,
+      "interaction-fragment": 346,
+      "operational-queue": 121,
       "planning-or-creation": 6,
       "record-detail": 25,
       "report": 25
     },
-    "partials_and_drawers": 168,
-    "permission_gated": 557,
-    "permission_keys": 98,
+    "partials_and_drawers": 169,
+    "permission_gated": 560,
+    "permission_keys": 100,
     "roles": 14,
-    "routed_surfaces": 567,
+    "routed_surfaces": 570,
     "scheduled_jobs": 22,
     "severity_counts": {
       "critical": 0,
@@ -75623,8 +75961,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 373,
-    "test_referenced": 524,
-    "theme_contract_pass": 373
+    "tablet_contract_pass": 375,
+    "test_referenced": 525,
+    "theme_contract_pass": 375
   }
 }

@@ -800,3 +800,209 @@ class HRDashboardTests(PDTestBase):
         client.force_login(self.hr)
         resp = client.post("/cpd-learning/action", {"action": "nonsense"})
         self.assertEqual(resp.status_code, 400)
+
+class HRTrackingAndApplyRemindersTests(PDTestBase):
+    """HR is the only adjuster; the tracker prices the envelope; staff who
+    never applied are tracked and remindable."""
+
+    def test_adjust_drawer_get_is_forbidden_for_non_hr(self):
+        client = Client()
+        client.force_login(self.cd)
+        resp = client.get("/cpd-learning/adjust-allocation?role=CCEO")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_adjust_drawer_get_renders_for_hr(self):
+        client = Client()
+        client.force_login(self.hr)
+        resp = client.get("/cpd-learning/adjust-allocation?role=CCEO")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_dashboard_hides_adjust_controls_from_non_hr(self):
+        client = Client()
+        client.force_login(self.cd)
+        resp = client.get("/cpd-learning")
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, "/cpd-learning/adjust-allocation?role=")
+        client.force_login(self.hr)
+        resp = client.get("/cpd-learning")
+        self.assertContains(resp, "/cpd-learning/adjust-allocation?role=")
+
+    def test_staff_without_requests_lists_only_the_unapplied(self):
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
+        from apps.professional_development.models import PDRoleAllocation
+
+        self._draft(self.cceo, status=PDStatus.SUBMITTED_TO_SUPERVISOR)
+        PDRoleAllocation.objects.create(
+            role="Program Lead",
+            fy=FY,
+            country="Uganda",
+            annual_allocation_cents=50000_00,
+            currency="USD",
+            set_by=self.hr.id,
+        )
+        rows = HRPDDashboardService.staff_without_requests(self.hr, FY)
+        names = {r["name"] for r in rows}
+        self.assertNotIn(self.cceo.name, names)
+        self.assertIn(self.pl.name, names)
+        pl_row = next(r for r in rows if r["name"] == self.pl.name)
+        # No personal allocation row yet, so the role default prices the line.
+        self.assertEqual(pl_row["allocation"], "USD 50,000")
+
+    def test_a_draft_only_request_still_counts_as_not_applied(self):
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
+
+        self._draft(self.cceo, status=PDStatus.DRAFT)
+        rows = HRPDDashboardService.staff_without_requests(self.hr, FY)
+        self.assertIn(self.cceo.name, {r["name"] for r in rows})
+
+    def test_dashboard_context_carries_not_applied_and_the_hr_flag(self):
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
+
+        ctx = HRPDDashboardService.get_dashboard(self.hr, {})
+        self.assertTrue(ctx["can_adjust_allocation"])
+        self.assertGreater(ctx["not_applied_count"], 0)
+        ctx = HRPDDashboardService.get_dashboard(self.cd, {})
+        self.assertFalse(ctx["can_adjust_allocation"])
+
+    def test_send_apply_reminder_notifies_the_target(self):
+        from apps.notifications.models import Notification
+
+        client = Client()
+        client.force_login(self.hr)
+        resp = client.post(
+            "/cpd-learning/action",
+            {
+                "action": "send_apply_reminder",
+                "staff_user_id": self.cceo.id,
+                "fy": FY,
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        note = Notification.objects.filter(
+            recipient_id=self.cceo.id,
+            title="Apply for Professional Development",
+        ).first()
+        self.assertIsNotNone(note)
+
+    def test_apply_reminder_refuses_someone_who_already_applied(self):
+        from apps.notifications.models import Notification
+
+        self._draft(self.cceo, status=PDStatus.SUBMITTED_TO_SUPERVISOR)
+        client = Client()
+        client.force_login(self.hr)
+        client.post(
+            "/cpd-learning/action",
+            {
+                "action": "send_apply_reminder",
+                "staff_user_id": self.cceo.id,
+                "fy": FY,
+            },
+        )
+        self.assertFalse(
+            Notification.objects.filter(
+                recipient_id=self.cceo.id,
+                title="Apply for Professional Development",
+            ).exists()
+        )
+
+    def test_apply_reminders_are_hr_only(self):
+        from apps.notifications.models import Notification
+
+        client = Client()
+        client.force_login(self.cd)
+        client.post(
+            "/cpd-learning/action",
+            {
+                "action": "bulk_apply_reminders",
+                "fy": FY,
+            },
+        )
+        self.assertFalse(
+            Notification.objects.filter(
+                title="Apply for Professional Development"
+            ).exists()
+        )
+
+    def test_bulk_apply_reminders_reaches_every_unapplied_staff(self):
+        from apps.notifications.models import Notification
+
+        self._draft(self.cceo, status=PDStatus.SUBMITTED_TO_SUPERVISOR)
+        client = Client()
+        client.force_login(self.hr)
+        resp = client.post(
+            "/cpd-learning/action",
+            {"action": "bulk_apply_reminders", "fy": FY},
+        )
+        self.assertEqual(resp.status_code, 302)
+        reminded = set(
+            Notification.objects.filter(
+                title="Apply for Professional Development"
+            ).values_list("recipient_id", flat=True)
+        )
+        # Applied staff are never nagged; everyone else eligible is.
+        self.assertNotIn(self.cceo.id, reminded)
+        self.assertIn(self.pl.id, reminded)
+
+    def test_tracker_balance_is_the_allocation_minus_direct_deductions(self):
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
+        from apps.professional_development.models import (
+            ProfessionalDevelopmentAllocation,
+        )
+
+        ProfessionalDevelopmentAllocation.objects.create(
+            staff_id=self.cceo_sp.id,
+            fy=FY,
+            country="Uganda",
+            currency="USD",
+            annual_allocation=100000_00,
+        )
+        self._draft(
+            self.cceo,
+            status=PDStatus.DISBURSED,
+            requested_amount_cents=30000_00,
+        )
+        ctx = HRPDDashboardService.get_dashboard(self.hr, {})
+        row = ctx["tracker_rows"][0]
+        self.assertEqual(row["staff_allocation"], "USD 100,000")
+        self.assertEqual(row["staff_balance"], "USD 70,000")
+
+    def test_search_does_not_distort_the_balance_column(self):
+        from apps.professional_development.hr_dashboard_service import (
+            HRPDDashboardService,
+        )
+        from apps.professional_development.models import (
+            ProfessionalDevelopmentAllocation,
+        )
+
+        ProfessionalDevelopmentAllocation.objects.create(
+            staff_id=self.cceo_sp.id,
+            fy=FY,
+            country="Uganda",
+            currency="USD",
+            annual_allocation=100000_00,
+        )
+        self._draft(
+            self.cceo,
+            status=PDStatus.DISBURSED,
+            requested_amount_cents=30000_00,
+            course_name="Alpha Course",
+        )
+        self._draft(
+            self.cceo,
+            status=PDStatus.DISBURSED,
+            requested_amount_cents=20000_00,
+            course_name="Beta Course",
+        )
+        ctx = HRPDDashboardService.get_dashboard(self.hr, {"q": "Alpha"})
+        self.assertEqual(ctx["tracker_total"], 1)
+        # Both disbursements draw on the envelope even though the search shows one.
+        self.assertEqual(ctx["tracker_rows"][0]["staff_balance"], "USD 50,000")
+

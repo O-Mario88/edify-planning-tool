@@ -72,6 +72,14 @@ class Permission(str, Enum):
     # unique it is also the duplicate check — two people adding the same
     # school from the field collide instead of minting two records.
     SCHOOL_CREATE_SINGLE = "school.createSingle"
+    # Which SSA intervention an activity is meant to move, and the rules by
+    # which that is later measured. Held apart from the priority and target
+    # permissions on purpose: authority to set a country target is not
+    # authority to decide what counts as the target having worked, and the
+    # Country Director holding the first must not silently acquire the
+    # second.
+    SSA_ACTIVITY_MAPPING_VIEW = "ssaActivityMapping.view"
+    SSA_ACTIVITY_MAPPING_MANAGE = "ssaActivityMapping.manage"
     SCHOOL_EDIT = "school.edit"
     # Close a school. Separate from SCHOOL_EDIT because closure is not an edit
     # — it removes a school from every current count, cancels planned work and
@@ -308,6 +316,7 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
 ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     EdifyRole.ADMIN: [p for p in Permission if p not in ADMIN_EXCLUDED_PERMISSIONS],
     EdifyRole.COUNTRY_DIRECTOR: [
+        P.SSA_ACTIVITY_MAPPING_VIEW,
         P.SCHOOL_CREATE_SINGLE,
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,
@@ -394,6 +403,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
+        P.SSA_ACTIVITY_MAPPING_VIEW,
         # May author and publish policy within its scope, and sees regional
         # acknowledgement summaries -- not the private comments behind them.
         P.UPLOADS_VIEW,
@@ -434,6 +444,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_EXPORT,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
+        P.SSA_ACTIVITY_MAPPING_VIEW,
         P.SCHOOL_CREATE_SINGLE,
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,
@@ -510,6 +521,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
+        P.SSA_ACTIVITY_MAPPING_VIEW,
+        P.SSA_ACTIVITY_MAPPING_MANAGE,
         P.SCHOOL_CREATE_SINGLE,
         # §5 — authorized non-school programme activities.
         P.MANUAL_ACTIVITY_CREATE,
@@ -609,6 +622,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.MILESTONES_VIEW_PROGRESS,
     ],
     EdifyRole.PROJECT_COORDINATOR: [
+        P.SSA_ACTIVITY_MAPPING_VIEW,
         # Explicitly granted directory access — assigns project schools.
         P.SCHOOL_VIEW,
         P.SCHOOL_DIRECTORY_VIEW,

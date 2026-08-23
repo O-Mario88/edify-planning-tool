@@ -191,7 +191,7 @@ class StaffPDService:
                 "returned": 0,
                 "remaining": 0,
                 "remaining_raw": 0,
-                "currency": "UGX",
+                "currency": "USD",
                 "has_staff_profile": False,
             }
         rows = ProfessionalDevelopmentRequest.objects.filter(staff_id=sp.id, fy=fy)
@@ -276,7 +276,7 @@ class StaffPDService:
             rows.append(
                 {
                     "fy": fy,
-                    "currency": alloc.currency if alloc else "UGX",
+                    "currency": alloc.currency if alloc else "USD",
                     "annual_allocation": annual,
                     "committed": committed,
                     "accounted": accounted,

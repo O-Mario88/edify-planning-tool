@@ -1419,7 +1419,7 @@ class TypeScaleFloorTest(SimpleTestCase):
             tokens,
         )
         self.assertIn(
-            "--edify-text-body-size:    0.9375rem;",
+            "--edify-text-body-size:    0.875rem;",
             tokens,
         )
 
@@ -1453,15 +1453,11 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertNotRegex(typography_block, r"\b(?:vw|cqi|cqw)\b")
 
         # Containers still respond by changing layout, never the type scale.
+        # (The edify-kpi-card twin left with the legacy adapter — the classes
+        # it served have no template usage and the old design is deleted.)
         self.assertIn("container: kpi-card / inline-size", components)
-        self.assertIn("container: edify-kpi-card / inline-size", consistency)
         self.assertIn("@container kpi-card (max-width: 16rem)", components)
-        self.assertIn("@container edify-kpi-card (max-width: 16rem)", consistency)
         self.assertIn("font-size: var(--edify-text-tile-value-size)", components)
-        self.assertIn(
-            "font-size: var(--edify-text-tile-value-size) !important",
-            consistency,
-        )
 
     def test_responsive_svg_text_uses_screen_stable_typography(self):
         """A viewBox must not scale the app's semantic font sizes."""
@@ -1506,16 +1502,18 @@ class StableTypographyContractTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
 
         for expected in (
-            "--edify-text-display-size: 1.75rem;",
-            "--edify-text-heading-size: 1.25rem;",
+            "--edify-text-display-size: 1.375rem;",
+            "--edify-text-heading-size: 1.125rem;",
             "--edify-text-tile-value-size: 1.375rem;",
             "--edify-text-table-size: 0.875rem;",
             "--edify-text-floor:        0.75rem;",
             "--edify-text-micro-size:   var(--edify-text-floor);",
         ):
             self.assertIn(expected, tokens)
+        # Headers sit one step below cells (13px medium, muted) per the
+        # reference dashboard — the band separates by weight and colour.
         self.assertIn(
-            "--edify-text-table-heading-size: var(--edify-text-table-size);",
+            "--edify-text-table-heading-size: 0.8125rem;",
             tokens,
         )
 
@@ -1535,11 +1533,6 @@ class StableTypographyContractTest(SimpleTestCase):
             r"\.kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
             r"[^}]*white-space:\s*nowrap;",
         )
-        self.assertRegex(
-            consistency,
-            r"\.edify-kpi-strip__label\s*\{[^}]*text-wrap:\s*nowrap;"
-            r"[^}]*white-space:\s*nowrap;",
-        )
         self.assertIn("container: metric-tile / inline-size", components)
         self.assertIn("container: metric-tile / inline-size", pages)
         self.assertIn("container: metric-tile / inline-size", hcos)
@@ -1555,7 +1548,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("font-size: var(--edify-text-table-size) !important", platform)
         self.assertIn(".drawer-body table th {", platform)
         self.assertIn(".drawer-body table td {", platform)
-        self.assertNotIn(
+        self.assertIn(
             "--edify-text-table-heading-size: 0.8125rem;",
             _read("static/css/design-system.css"),
         )
@@ -1563,6 +1556,18 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("white-space: nowrap", platform)
         self.assertIn("overflow-x: auto", platform)
         self.assertIn("word-break: normal", platform)
+
+        # The desktop no-wrap contract must reach drawer and dialog tables,
+        # not only main — a drawer table wrapping while the page behind it
+        # does not reads as two different products. This selector was
+        # main-only when first written.
+        consistency = _read("static/css/consistency.css")
+        self.assertIn(
+            ':is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])\n'
+            "    table",
+            consistency,
+        )
+        self.assertIn(".edify-cell--wrap", consistency)
 
 
 class TemplateFilterArgumentGuardTest(SimpleTestCase):
@@ -1619,3 +1624,36 @@ class TemplateFilterArgumentGuardTest(SimpleTestCase):
         self.assertIsNone(self.DOTTED_ARGUMENT.search('{{ a|default:"—" }}'))
         self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:'Search' }}"))
         self.assertIsNone(self.DOTTED_ARGUMENT.search("{{ a|default:b }}"))
+
+class TableColumnBudgetTest(SimpleTestCase):
+    """A no-wrap row must still fit its card, and never hide its action.
+
+    The desktop no-wrap contract caps each cell so a long value truncates
+    instead of folding. With one flat cap that arithmetic breaks down as
+    columns are added: six columns at 30ch outgrew the card on "Schools
+    Needing Urgent Attention", and the last column — the one holding the
+    Send button — was pushed outside the visible area behind a scroller
+    nobody notices. The cap therefore falls as the column count rises, and
+    a cell holding a control is exempt outright, because a truncated button
+    is an unusable button.
+    """
+
+    def test_the_cell_cap_tightens_as_columns_are_added(self):
+        consistency = _read("static/css/consistency.css")
+
+        self.assertIn("--edify-cell-max, 30ch", consistency)
+        for selector, cap in (
+            ("table:has(thead th:nth-child(5))", "22ch"),
+            ("table:has(thead th:nth-child(7))", "16ch"),
+            ("table:has(thead th:nth-child(9))", "12ch"),
+        ):
+            self.assertIn(selector, consistency)
+            self.assertIn(f"--edify-cell-max: {cap}", consistency)
+
+    def test_an_action_cell_is_never_truncated(self):
+        consistency = _read("static/css/consistency.css")
+
+        self.assertIn(":last-child:has(button, a)", consistency)
+        block = consistency.split(":last-child:has(button, a)", 1)[1].split("}", 1)[0]
+        self.assertIn("max-inline-size: none", block)
+        self.assertIn("overflow: visible", block)

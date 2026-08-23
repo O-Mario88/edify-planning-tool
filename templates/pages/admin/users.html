@@ -258,7 +258,7 @@ aria-labelledby="create-partner-title"
 >
   <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="showPartnerModal = false"></div>
   <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="edify-surface rounded-surface max-w-xl w-full p-6 shadow-lg relative border border-slate-100 space-y-5" @click.away="showPartnerModal = false" x-transition>
+    <div class="edify-form-dialog__surface edify-surface rounded-surface max-w-xl w-full p-6 shadow-lg relative border border-slate-100 space-y-5" @click.away="showPartnerModal = false" x-transition>
       <header class="flex items-center justify-between border-b pb-3">
         <div>
           <p class="edify-page-eyebrow">Partner directory</p>
@@ -376,7 +376,7 @@ class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
 <!-- Modal Content -->
 <div class="flex items-center justify-center min-h-screen p-4">
 <div
-class="edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
+class="edify-form-dialog__surface edify-surface rounded-surface max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
 @click.away="showAddModal = false"
 x-transition
 role="dialog"

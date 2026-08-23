@@ -59,7 +59,7 @@ class DesignSystemContractTest(SimpleTestCase):
             self.assertNotIn("@view-transition", stylesheet)
             self.assertNotIn("::view-transition-old(root)", stylesheet)
             self.assertNotIn("::view-transition-new(root)", stylesheet)
-        self.assertIn("css/main.css' %}?v=20260818nav2", base)
+        self.assertIn("css/main.css' %}?v=20260823aura2", base)
 
     def test_workspace_route_links_prefetch_without_global_page_swaps(self):
         """Likely sibling views warm up natively, while navigation stays real.
@@ -410,7 +410,6 @@ class DesignSystemContractTest(SimpleTestCase):
             "var(--edify-card-border)",
             "var(--edify-card-shadow)",
             "var(--edify-action-button-block-size)",
-            "var(--edify-purple-light)",
             "var(--edify-success-light)",
             "var(--edify-warning-light)",
             "var(--edify-danger-light)",
@@ -587,8 +586,8 @@ class DesignSystemContractTest(SimpleTestCase):
         tokens = (ROOT / "static/css/design-system.css").read_text()
         contract = (ROOT / "static/css/consistency.css").read_text()
 
-        self.assertIn("--edify-text-body-weight:    350", tokens)
-        self.assertIn("--edify-text-label-weight:   400", tokens)
+        self.assertIn("--edify-text-body-weight:    400", tokens)
+        self.assertIn("--edify-text-label-weight:   500", tokens)
         self.assertIn("--edify-text-micro-weight:   400", tokens)
         for tracking_token in (
             "--edify-text-display-tracking: normal",
@@ -599,7 +598,7 @@ class DesignSystemContractTest(SimpleTestCase):
             "--edify-text-micro-tracking: normal",
         ):
             self.assertIn(tracking_token, tokens)
-        self.assertIn("RESTRAINED WEIGHT HIERARCHY", contract)
+        self.assertIn("CONVENTIONAL WEIGHT HIERARCHY", contract)
         self.assertIn("NORMAL CHARACTER SPACING", contract)
         self.assertIn("letter-spacing: normal !important", contract)
         self.assertIn("font-weight: var(--edify-text-body-weight) !important", contract)
@@ -614,6 +613,45 @@ class DesignSystemContractTest(SimpleTestCase):
             '[class*="__heading"]',
         ):
             self.assertIn(title_role, contract)
+
+    def test_hero_kpi_value_outranks_the_strip_weight_normalisers(self):
+        """The hero numeral must win its weight, not merely ask for it.
+
+        consistency.css flattens every KPI-strip descendant to label weight
+        with !important, to undo template drift. That is right for labels,
+        helpers and meta — the quiet tiers are what make the number read as
+        the number. But it also caught .kpi-strip__value, so the executive
+        strip's font-weight was overridden while its font-size was not: the
+        numeral rendered at the hero size in regular weight, and nothing
+        failed. A silent half-applied rule is the exact defect this pins.
+        """
+        components = (ROOT / "static/css/components.css").read_text()
+        block = components.split(".kpi-strip.kpi-strip--executive .kpi-strip__value")[1]
+        block = block.split("}")[0]
+        self.assertIn(
+            "font-weight: 700 !important",
+            block,
+            "The hero KPI weight lost its !important, so the consistency.css "
+            "normalisers will flatten it back to label weight silently.",
+        )
+        self.assertIn("--edify-text-hero-size", block)
+
+    def test_narrow_tiles_move_the_pill_onto_its_own_row(self):
+        """The corner-pill composition needs room a six-up tile lacks.
+
+        Below ~15rem the label's float spacer leaves less width than one
+        unbreakable word, so the whole first line drops beneath the float and
+        grazes the absolutely-positioned pill — five of six IA tiles at
+        laptop width. The per-tile container query degrades to a pill-on-its-
+        own-row layout and removes the spacer; deleting either half brings
+        the collision back.
+        """
+        components = (ROOT / "static/css/components.css").read_text()
+        self.assertIn("@container kpi-card (max-width: 14.99rem)", components)
+        narrow = components.split("@container kpi-card (max-width: 14.99rem)")[1]
+        narrow = narrow.split("\n}\n")[0]
+        self.assertIn('"pill"', narrow)
+        self.assertIn("content: none", narrow)
 
     def test_authenticated_pages_use_the_shells_single_main_region(self):
         """Nested page mains cause competing landmarks and inconsistent spacing."""

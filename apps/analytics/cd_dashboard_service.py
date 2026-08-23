@@ -528,7 +528,12 @@ class CDDashboardService:
                     "name": pl.name,
                     "region": CDDashboardService._pl_region(school_ids),
                     "target_pct": b["target_pct"],
+                    # Already split by pl_oversight, which is where these rows
+                    # come from: four delivery counts in `areas`, the story
+                    # count on its own. Re-splitting here would look for MSCS
+                    # in a list it had just been taken out of.
                     "areas": b["areas"],
+                    "mscs": b.get("mscs"),
                     "staff": len(cceos),
                     "planned": planned,
                     "verified": verified,

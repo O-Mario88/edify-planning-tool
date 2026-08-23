@@ -1,7 +1,7 @@
 {% load frontend_filters %}
-<div class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4" x-data="{ open: true }" x-show="open" role="dialog" aria-modal="true" aria-labelledby="onboard-partner-title">
-  <div class="edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in" @click.outside="open = false; $el.remove()">
-    <header class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+<div class="edify-popup-dialog fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4" x-data="{ open: true }" x-show="open" role="dialog" aria-modal="true" aria-labelledby="onboard-partner-title">
+  <div class="edify-popup-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in" @click.outside="open = false; $el.remove()">
+    <header class="drawer-header flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
       <div>
         <span class="edify-page-eyebrow">Delivery Partner</span>
         <h2 id="onboard-partner-title" class="text-[16px] font-bold text-slate-800 tracking-tight">Onboard New Partner</h2>
@@ -11,7 +11,7 @@
       </button>
     </header>
 
-    <form method="post" action="{% url 'frontend:create_partner' %}" class="p-5 space-y-4">
+    <form method="post" action="{% url 'frontend:create_partner' %}" class="drawer-body p-5 space-y-4">
       {% csrf_token %}
 
       <div>

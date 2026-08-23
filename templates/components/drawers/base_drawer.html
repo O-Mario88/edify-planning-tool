@@ -66,7 +66,8 @@ finishClose();
 @keydown.escape.window="
 confirmDiscard ? (confirmDiscard = false) : requestClose()
 "
-class="relative z-50"
+class="edify-drawer-root relative z-50"
+data-edify-drawer
 >
 <!-- Backdrop — frosted blur -->
 <div
@@ -85,6 +86,7 @@ x-ref="surface"
 role="dialog"
 aria-modal="true"
 aria-labelledby="drawer-title"
+aria-describedby="drawer-subtitle"
 tabindex="-1"
 @keydown.tab="trapFocus($event)"
 @input="isDirty = true"
@@ -92,15 +94,25 @@ tabindex="-1"
 >
 <!-- Header -->
 <header class="drawer-header">
-<div>
-<div class="flex items-center gap-2">
+<div class="drawer-header__identity">
+<span class="drawer-header__mark" aria-hidden="true">
 {% if drawer_icon %}
-<span class="edify-text-muted text-[18px] font-semibold">{{ drawer_icon }}</span>
+<span class="drawer-header__mark-text">{{ drawer_icon }}</span>
+{% else %}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+<path stroke-linecap="round" stroke-linejoin="round" d="M7 3.75h7.5L19 8.25V20.25H7z"/>
+<path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.75v4.5H19M10 12h6M10 15.5h6"/>
+</svg>
 {% endif %}
-<h3 id="drawer-title" class="edify-text m-0 text-[15px] font-bold leading-[1.2] tracking-[-.005em]">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
+</span>
+<div class="drawer-header__copy">
+<p class="drawer-header__eyebrow">Edify workspace</p>
+<div class="drawer-header__title-row">
+<h3 id="drawer-title">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
 {% block drawer_badge %}{% endblock %}
 </div>
-<p class="edify-text-muted mb-0 mt-1 text-[12px] font-medium">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>
+<p id="drawer-subtitle" class="drawer-header__subtitle">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>
+</div>
 </div>
 
 <button

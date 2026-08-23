@@ -840,39 +840,8 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 }
 
 /* KPI Card semantic component styling */
-.edify-kpi-card, .card-kpi {
-  position: relative;
-  container: metric-tile / inline-size;
-  overflow: hidden;
-  background-color: var(--edify-surface);
-  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-md);
-  padding: 0.75rem;
-  box-shadow: var(--edify-shadow-sm);
-  transition: var(--edify-transition-all);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 5.75rem;
-}
-.edify-kpi-card:hover, .card-kpi:hover {
-  box-shadow: var(--edify-shadow-md);
-  border-color: var(--edify-border-strong);
-}
 
 /* KPI Icon Circle container */
-.kpi-icon-circle {
-  height: 32px;
-  width: 32px;
-  border-radius: var(--edify-radius-circle);
-  background-color: var(--edify-primary-light);
-  color: var(--edify-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
 
 /* Risk / Alert Card */
 .edify-risk-card, .card-alert {
@@ -1015,7 +984,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 
 .edify-filter-drawer__header { border-bottom-width: 1px; }
 .edify-filter-drawer__footer { border-top-width: 1px; }
-.edify-filter-drawer__header h2 { font-size: var(--edify-text-title-size); font-weight: 750; }
+.edify-filter-drawer__header h2 { font-size: var(--edify-text-title-size); font-weight: 600; }
 .edify-filter-drawer__body { display: grid; gap: 1rem; padding: 1.25rem; }
 
 @media (max-width: 30rem) {
@@ -1532,7 +1501,7 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip__label {
   font-size: var(--edify-text-tile-label-size);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: var(--edify-kpi-label-tracking);
   color: var(--edify-text-muted);
   line-height: 1.2;
@@ -1565,9 +1534,12 @@ select:not([multiple]):not(.select-native) {
    looking as authoritative as a measurement. */
 .kpi-strip__item--absent .kpi-strip__value {
   font-size: var(--edify-text-label-size, 0.875rem);
-  font-weight: 650;
+  font-weight: 500;
   color: var(--edify-text-subtle);
   letter-spacing: normal;
+  /* Prose, not a numeral: the base rule's nowrap clips "Not measured" at
+     six-across tile widths, so the absent state gets its wrapping back. */
+  white-space: normal;
   text-wrap: balance;
 }
 
@@ -1599,6 +1571,14 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip__trend--neutral {
   color: var(--edify-text-muted);
+}
+
+/* Data freshness, not performance. One colour on every tile whatever the
+   tile measures — the accent tint below deliberately does not reach it,
+   because a green "Current" on an amber card is still saying the same thing
+   about the same data. */
+.kpi-strip__trend--fresh {
+  color: var(--edify-success-text);
 }
 
 .kpi-strip__helper {
@@ -1821,7 +1801,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__item {
-  min-block-size: clamp(9.75rem, 9.1rem + 1.6cqi, 11.5rem);
+  min-block-size: clamp(7.75rem, 7.3rem + 1.2cqi, 8.75rem);
   padding: clamp(1rem, 0.85rem + 0.45cqi, 1.25rem);
   border-color: color-mix(in srgb, var(--edify-border) 82%, transparent);
   border-radius: clamp(0.875rem, 0.75rem + 0.35cqi, 1.125rem);
@@ -1831,63 +1811,150 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__item-body {
+  /* The reference tile is three stacked text rows — label, numeral, delta —
+     with the movement pill in the top-right corner. The old layout reserved a
+     whole first row for an icon chip the reference does not have, which is
+     why the label sat mid-card instead of at the top. The pill overlays the
+     corner absolutely and the label's ::before float spacer clears it on the
+     FIRST LINE ONLY — a second label line runs the full tile width. A grid
+     column for the pill was tried first and rejected: it narrowed every
+     label line, and Edify labels run far longer than the reference's. */
+  position: relative;
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: clamp(1rem, 0.8rem + 0.5cqi, 1.35rem);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "label"
+    "value"
+    "meta";
+  align-content: start;
   block-size: 100%;
 }
 
-.kpi-strip.kpi-strip--executive .kpi-strip__topline {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-inline-size: 0;
-}
-
-.kpi-strip.kpi-strip--executive .kpi-strip__icon-container {
-  display: flex;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  border-radius: 0.75rem;
-}
-
+/* The details wrapper dissolves so label, value and meta slot straight into
+   the tile grid above. Its sr-only child is position:absolute — out of flow,
+   unaffected. */
 .kpi-strip.kpi-strip--executive .kpi-strip__item-details {
-  justify-content: end;
+  display: contents;
 }
+
+.kpi-strip.kpi-strip--executive .kpi-strip__topline {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+}
+
+/* First-line clearance for the corner pill. Floats do work inside the
+   label's -webkit-box clamp (verified in-browser); the spacer is one line
+   tall, so only the first line yields. */
+.kpi-strip.kpi-strip--executive .kpi-strip__label::before {
+  content: "";
+  float: right;
+  inline-size: 3.9rem;
+  /* Must be at least as tall as the pill it clears (12px × 1.2 ≈ 14.4px),
+     measured against the label's own 14px line boxes — 1.25em ≈ 17.5px.
+     When this was 1.1em against a padded ~19px pill, the second line of a
+     long label ran under the pill's bottom edge on narrow tiles. */
+  block-size: 1.25em;
+}
+
+/* Below ~15rem the corner slot and a long label cannot share a row: the
+   spacer leaves less width than one unbreakable word ("Verification"), so
+   the whole first line drops beneath the float and grazes the pill — the
+   IA dashboard's six-up tiles at laptop width. The pill takes its own top
+   row instead; the reference's corner composition resumes the moment the
+   tile is wide enough to honour it. */
+@container kpi-card (max-width: 14.99rem) {
+  .kpi-strip.kpi-strip--executive .kpi-strip__item-body {
+    grid-template-areas:
+      "pill"
+      "label"
+      "value"
+      "meta";
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__topline {
+    position: static;
+    grid-area: pill;
+    justify-self: end;
+    margin-block-end: 0.25rem;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__label::before {
+    content: none;
+  }
+}
+
+/* The reference tile carries no icon. The chip markup stays in the template
+   for the variants that do use it; the executive tray simply does not show
+   it, the same way the reference spends that corner on the movement pill. */
+.kpi-strip.kpi-strip--executive .kpi-strip__icon-container {
+  display: none;
+}
+
+
 
 .kpi-strip.kpi-strip--executive .kpi-strip__label {
   display: -webkit-box;
-  order: 1;
-  min-block-size: 3.6em;
-  margin-block-end: 0.3rem;
-  overflow: clip;
+  grid-area: label;
+  min-block-size: 2.4em;
+  margin-block-end: 0.35rem;
+  /* hidden, not clip: with the -webkit-box clamp, hidden is what produces
+     the ellipsis. IA's "Salesforce Verification Pending" was clipping
+     mid-word with no signal that anything was missing. */
+  overflow: hidden;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-tile-label-size);
-  font-weight: 650;
+  font-weight: 500;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   line-clamp: 2;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   text-wrap: pretty;
   white-space: normal;
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__value {
-  order: 2;
-  font-size: clamp(1.5rem, 1.35rem + 0.45cqi, 1.9rem);
-  font-weight: 750;
+  grid-area: value;
+  /* Sized against the CARD, not the viewport — the strip carries six tiles on
+     a wide desktop where the reference this follows carried four, so a fixed
+     numeral that looks generous at four crowds at six. The container query
+     lets one rule serve both: it reaches the hero tier when a tile has room
+     and steps down when it does not, instead of overflowing or being capped
+     for everyone. */
+  font-size: clamp(1.5rem, 1.3rem + 3.9cqi, var(--edify-text-hero-size));
+  /* !important, and deliberately so. Three KPI normalisers in consistency.css
+     flatten every strip descendant to label weight, to undo template drift
+     where hand-rolled font-bold landed on labels and helpers. The hero value
+     is the one case that rule was never meant to catch: it is the number the
+     page exists to show, and weight is what separates it from its own label.
+     Those normalisers assert !important, so a component reclaiming its own
+     type has to as well — this selector outranks all three on specificity.
+     Without it the size lands and the weight silently does not, which is
+     exactly how this regressed the first time. */
+  font-weight: 700 !important;
+  margin-block-end: 0.25rem;
 }
 
+/* The movement, under the number, in the tile's own colour. Hidden until now,
+   which is why the card ended at the value and the delta lived only in the
+   pill. Both are driven by the same figure, so they cannot contradict each
+   other the way a hand-built mockup's can. */
 .kpi-strip.kpi-strip--executive .kpi-strip__meta {
-  display: none;
+  display: block;
+  grid-area: meta;
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__helper {
+  font-size: var(--edify-text-tile-helper-size);
+  font-weight: 500;
+  color: color-mix(in srgb, var(--kpi-accent, var(--edify-text-muted)) 70%, var(--edify-text-muted));
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__trend {
   flex: 0 0 auto;
-  padding-block-start: 0.2rem;
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 @container kpi-strip (max-width: 21.99rem) {
@@ -1998,13 +2065,35 @@ select:not([multiple]):not(.select-native) {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
+  /* Square on phones, per the reference: two equal tracks of equal-sided
+     cards. aspect-ratio needs the height floor removed or the taller of the
+     two wins and the row stops being square. */
   .kpi-strip.kpi-strip--executive .kpi-strip__item {
-    min-block-size: 8.75rem;
+    aspect-ratio: 1;
+    min-block-size: 0;
   }
 
-  .kpi-strip.kpi-strip--executive .kpi-strip__icon-container {
-    display: flex;
-  }
+  /* The old executive design re-showed the icon chip on phones here. The
+     reference tile carries no icon at any width — deleted with the rest of
+     the legacy design. */
+}
+
+/* ── Absent state is prose, not a measurement ────────────────────────────
+   "Not measured" / "No data" was rendering at the hero numeral size — 25px
+   on a phone tile — because the executive variant's value rule (0,3,0) beat
+   the absent rule (0,2,0). Two lines of 25px prose then blew the tile's
+   height out and made the whole strip look broken. Matched to (0,4,0) so
+   the state text sits on the label tier wherever a strip appears, in every
+   variant, at every width. */
+.kpi-strip.kpi-strip--executive .kpi-strip__item--absent .kpi-strip__value,
+.kpi-strip .kpi-strip__item--absent .kpi-strip__value {
+  font-size: var(--edify-text-label-size);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: normal;
+  color: var(--edify-text-subtle);
+  white-space: normal;
+  text-wrap: balance;
 }
 
 /* Period totals are navigation, not headline KPIs. Keep them in a compact
@@ -2164,7 +2253,7 @@ select:not([multiple]):not(.select-native) {
 .settings-detail-tile__label {
   color: var(--edify-text-muted);
   font-size: var(--edify-text-tile-label-size);
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.2;
   letter-spacing: var(--edify-text-micro-tracking);
   overflow: hidden;
@@ -2177,21 +2266,8 @@ select:not([multiple]):not(.select-native) {
 /* The reusable card predates the KPI strip but appears across reports and
    operational dashboards. It follows the same one-line label contract and
    returns its decorative icon lane before the label becomes cramped. */
-.card-kpi > .flex > .min-w-0 > p:first-child {
-  max-inline-size: 100%;
-  font-size: var(--edify-text-tile-label-size) !important;
-  overflow: hidden;
-  overflow-wrap: normal;
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
-  white-space: nowrap;
-  word-break: normal;
-}
 
 @container metric-tile (max-width: 16rem) {
-  .card-kpi .kpi-icon-circle {
-    display: none;
-  }
 }
 
 .settings-detail-tile__value {
@@ -2576,7 +2652,7 @@ select:not([multiple]):not(.select-native) {
 .edify-header-filters label > span:not(.sr-only) {
   color: var(--edify-text-muted);
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 500;
 }
 .edify-header-filters select,
 .edify-header-filters input { width: 100%; height: 39px; }
@@ -2636,7 +2712,7 @@ select:not([multiple]):not(.select-native) {
   :is(div:has(> select) > span:not(.sr-only), .edify-filter-label) {
   color: var(--edify-text-muted) !important;
   font-size: var(--edify-text-micro-size);
-  font-weight: 750;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
 }
@@ -3731,3 +3807,123 @@ search:has(.edify-search-submit) input[type="search"] {
     }
     .sr-tip .sr-tip__rule{margin-top:.45rem;padding-top:.45rem}
   }
+
+/* ── KPI accent tint ──────────────────────────────────────────────────────
+   Each tile carries the hue of what it measures rather than sharing one
+   surface. The tone already exists on the item (`kpi-strip__item--blue` and
+   friends, set from the metric's own variant), so this is a treatment over
+   an existing signal, not a new one to maintain.
+
+   Built from one variable so a tone is one line, and so a tile that has no
+   tone simply keeps the plain surface instead of falling back to an
+   arbitrary colour. The wash sits under the content at low opacity and the
+   glow leans to the right, which is where the reference puts its trend
+   curve — the card reads as lit from that corner whether or not a curve is
+   there to draw.
+   ------------------------------------------------------------------------ */
+/* Each tone qualified by .kpi-strip__item so it carries the same specificity
+   as the reset below. An attribute selector outweighs a single class, so an
+   unqualified `.kpi-strip__item--info` lost to the reset and every tile came
+   out transparent — the tint was written and never seen. */
+.kpi-strip__item.kpi-strip__item--blue,
+.kpi-strip__item.kpi-strip__item--info,
+.kpi-strip__item.kpi-strip__item--primary { --kpi-accent: var(--edify-accent); }
+.kpi-strip__item.kpi-strip__item--amber,
+.kpi-strip__item.kpi-strip__item--warning { --kpi-accent: var(--edify-warn, #f59e0b); }
+.kpi-strip__item.kpi-strip__item--emerald,
+.kpi-strip__item.kpi-strip__item--green,
+.kpi-strip__item.kpi-strip__item--success { --kpi-accent: var(--edify-success, #10b981); }
+.kpi-strip__item.kpi-strip__item--violet,
+.kpi-strip__item.kpi-strip__item--purple { --kpi-accent: #8b5cf6; }
+.kpi-strip__item.kpi-strip__item--rose,
+.kpi-strip__item.kpi-strip__item--danger { --kpi-accent: var(--edify-danger, #ef4444); }
+
+.kpi-strip__item[class*="kpi-strip__item--"] {
+  border-color: color-mix(in srgb, var(--kpi-accent) 42%, var(--edify-border));
+  background-image:
+    radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in srgb, var(--kpi-accent) 40%, transparent) 0%,
+      color-mix(in srgb, var(--kpi-accent) 12%, transparent) 45%,
+      transparent 78%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--kpi-accent) 20%, transparent) 0%,
+      color-mix(in srgb, var(--kpi-accent) 6%, transparent) 50%,
+      transparent 88%
+    ),
+    var(--edify-glass-kpi-treatment, var(--edify-surface-treatment));
+}
+
+/* The hairline along the top edge picks up the accent too, so the tile reads
+   as one object rather than a coloured wash sitting on a grey card. */
+.kpi-strip__item[class*="kpi-strip__item--"]::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--kpi-accent) 55%, transparent),
+    transparent
+  );
+}
+
+/* An unmeasured tile must not borrow the confidence of a coloured one — but
+   it is still the same tile. Setting the accent to TRANSPARENT removed the
+   wash, the accent border and the top hairline outright, so the two tiles
+   with no data read as a different component sitting in the same strip.
+   A neutral accent keeps every part of the anatomy and only drains the hue:
+   same wash, same hairline, same pill treatment, no colour claiming a
+   measurement that does not exist. */
+.kpi-strip__item.kpi-strip__item--absent {
+  --kpi-accent: var(--edify-text-muted);
+}
+
+/* The movement pill, tinted to its own tile. Two pills are excluded because
+   they are not movements: --fresh ("Current") reports whether the data is up
+   to date, and --neutral ("Pending", or a status word) reports the tile's
+   state. Both say the same thing on every tile whatever it measures, so they
+   stay plain text — otherwise "Pending" renders as a chip beside a "Current"
+   that is not one, in the same strip. */
+.kpi-strip__item[class*="kpi-strip__item--"]
+  .kpi-strip__trend:not(.kpi-strip__trend--fresh):not(.kpi-strip__trend--neutral) {
+  background-color: color-mix(in srgb, var(--kpi-accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--kpi-accent) 30%, transparent);
+  color: color-mix(in srgb, var(--kpi-accent) 72%, var(--edify-text));
+}
+
+/* ── Performance table: one row, one line ────────────────────────────────
+   The lead and region cells wrapped to three lines, so a six-row table stood
+   58px tall per row and read as ragged blocks rather than a scannable grid.
+   The `whitespace-nowrap` utility was already on those cells and losing:
+   Tailwind's utilities layer ranks below unlayered CSS, so the class was
+   present and had no effect.
+
+   Stated here rather than per-cell so the contract belongs to the table:
+   identity columns hold one line and truncate with their full text in the
+   title, numeric columns never wrap, and the badge cell never restacks.
+   ----------------------------------------------------------------------- */
+.edify-performance-table :is(td, th) {
+  white-space: nowrap;
+}
+
+.edify-performance-table td:first-child,
+.edify-performance-table td:nth-child(2) {
+  max-inline-size: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wider identity columns once there is room for them, so the truncation is a
+   small-screen behaviour rather than a permanent one. */
+@container (min-width: 60rem) {
+  .edify-performance-table td:first-child,
+  .edify-performance-table td:nth-child(2) {
+    max-inline-size: 17ch;
+  }
+}
+
+/* Eleven columns is a lot to fit. The numeric ones need only their digits, so
+   they give their width back to the two that carry names. */
+.edify-performance-table :is(td, th):nth-child(n + 5) {
+  padding-inline: 0.4rem;
+}

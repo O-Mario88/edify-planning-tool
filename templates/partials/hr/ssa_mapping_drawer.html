@@ -1,0 +1,131 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Link SSA Intervention{% endblock %}
+{% block drawer_subtitle %}{{ item.display_name }} — what this activity is meant to move, and how that is judged later.{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/priorities/ssa-mapping/{{ item.id }}/save"
+      hx-post="/priorities/ssa-mapping/{{ item.id }}/save" hx-target="#ssa-mapping-errors"
+      hx-disabled-elt="find button[type=submit]"
+      x-data="{ notMeasured: false }"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  <div id="ssa-mapping-errors" aria-live="polite"></div>
+
+  <div class="edify-surface-muted rounded-overlay border border-[var(--border-card)] p-3">
+    <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity</p>
+    <p class="mt-1 text-[13px] font-bold edify-text">{{ item.display_name }}</p>
+    <p class="edify-text-caption font-semibold text-slate-500">{{ item.stable_code }} · {{ item.get_activity_type_display }}</p>
+  </div>
+
+  {% comment %}
+  An internal planning meeting does not improve a school's Leadership score.
+  Attaching one to an intervention to satisfy a required field would put
+  governance work into school-improvement analytics, so the honest answer is
+  recorded instead — with its reason, because an unexplained exemption is
+  indistinguishable from an oversight.
+  {% endcomment %}
+  <label class="flex items-start gap-2.5 cursor-pointer">
+    <input type="checkbox" name="not_ssa_measured" value="1" x-model="notMeasured"
+           class="mt-0.5 h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+    <span>
+      <span class="block text-[13px] font-bold edify-text">This activity is not measured by an SSA score</span>
+      <span class="block edify-text-caption font-semibold text-slate-500">Administrative, governance or internal work. It stays out of intervention-impact analysis.</span>
+    </span>
+  </label>
+
+  <div x-show="notMeasured" x-cloak>
+    <label for="not-reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Why <span class="text-rose-500">*</span></label>
+    <textarea id="not-reason" name="not_ssa_measured_reason" rows="2"
+              class="mt-1 w-full rounded-control border border-[var(--border-card)] px-3 py-2 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus"></textarea>
+  </div>
+
+  <div x-show="!notMeasured" x-cloak class="space-y-4">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label for="intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA intervention <span class="text-rose-500">*</span></label>
+        <select id="intervention" name="intervention" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          {% for value, label in interventions %}
+          <option value="{{ value }}" {% if current and current.intervention == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="relationship" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Relationship</label>
+        <select id="relationship" name="relationship" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[14px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          {% for value, label in relationships %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+        <p class="mt-1 edify-text-caption font-semibold text-slate-400">One primary per activity. A second replaces the first.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label for="measurement_role" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">This score is used for</label>
+        <select id="measurement_role" name="measurement_role" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          {% for value, label in measurement_roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="expected_direction" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Success looks like</label>
+        <select id="expected_direction" name="expected_direction" class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+          {% for value, label in directions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Which schools this is for</p>
+      <div class="mt-1.5 flex flex-wrap gap-3">
+        {% for band in bands %}
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" name="eligible_bands" value="{{ band }}"
+                 class="h-4 w-4 rounded border-slate-300 edify-primary-text edify-primary-focus">
+          <span class="text-[13px] font-semibold edify-text">{{ band }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <p class="mt-1 edify-text-caption font-semibold text-slate-400">Leave every band unticked where the work is not targeted by weakness.</p>
+    </div>
+
+    {% comment %}
+    Too soon and the intervention has not had time to show; too late and other
+    things have happened, so the reading is no longer about this activity.
+    {% endcomment %}
+    <div>
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up window, in days after delivery</p>
+      <div class="mt-1.5 grid grid-cols-3 gap-2">
+        <div>
+          <label for="fu-min" class="block edify-text-caption font-semibold text-slate-500">Earliest</label>
+          <input id="fu-min" type="number" min="0" name="follow_up_min_days" value="{{ current.follow_up_min_days|default_if_none:'' }}"
+                 class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        </div>
+        <div>
+          <label for="fu-exp" class="block edify-text-caption font-semibold text-slate-500">Expected</label>
+          <input id="fu-exp" type="number" min="0" name="follow_up_expected_days" value="{{ current.follow_up_expected_days|default_if_none:'' }}"
+                 class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        </div>
+        <div>
+          <label for="fu-max" class="block edify-text-caption font-semibold text-slate-500">Latest</label>
+          <input id="fu-max" type="number" min="0" name="follow_up_max_days" value="{{ current.follow_up_max_days|default_if_none:'' }}"
+                 class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label for="threshold" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Minimum meaningful change <span class="normal-case tracking-normal font-semibold">(optional)</span></label>
+      <input id="threshold" type="number" step="0.01" min="0" name="min_meaningful_change" value="{{ current.min_meaningful_change|default_if_none:'' }}"
+             class="mt-1 h-11 w-full rounded-control border border-[var(--border-card)] px-3 text-[16px] sm:text-[13px] focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
+      <p class="mt-1 edify-text-caption font-semibold text-slate-400">
+        Leave empty unless Edify has approved a threshold. Left empty, any positive movement counts as improvement — a default here would quietly reclassify a real half-point gain as no change.
+      </p>
+    </div>
+  </div>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="edify-surface px-5 h-10 rounded-control border border-[var(--border-strong)] text-[var(--color-edify-primary)] font-bold hover:bg-[var(--color-edify-soft)]">Cancel</button>
+    <button type="submit" name="publish" value="1" class="px-6 h-10 rounded-control bg-[var(--color-edify-primary)] text-white font-bold hover:bg-[var(--color-edify-dark)]">Save &amp; Publish</button>
+  </div>
+</form>
+{% endblock %}

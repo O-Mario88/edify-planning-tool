@@ -1,8 +1,8 @@
 """
 Management command: relink_school_geography
 
-Re-resolves School.district / School.region from the district name the upload
-originally carried (``School.uploaded_district_text``).
+Re-resolves School.district / School.region / School.sub_county from the
+geography names the upload originally carried.
 
 Why this exists: Uganda's administrative boundaries were seeded only under
 ``seed --demo``, so a production database came up with no Region or District
@@ -16,8 +16,8 @@ importer only resolves geography at import time. This re-runs that resolution
 against the rows already in the database, so a 16,000-school register does not
 have to be uploaded again to gain the links it should always have had.
 
-Idempotent, and it never clears an existing link: a school that already has a
-district is left untouched unless --force is given.
+Idempotent, and it never clears an existing link. Without ``--force``, a school
+is considered whenever either its district or sub-county link is missing.
 
 Usage:
     python manage.py relink_school_geography --dry-run
@@ -31,12 +31,13 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import Q
 
 logger = logging.getLogger("edify.management")
 
 
 class Command(BaseCommand):
-    help = "Re-resolve School.district/region from the uploaded district text."
+    help = "Re-resolve school district, region, and sub-county geography links."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -47,7 +48,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--force",
             action="store_true",
-            help="Also re-resolve schools that already have a district.",
+            help="Also re-resolve schools whose geography links are complete.",
         )
         parser.add_argument(
             "--batch-size",
@@ -80,11 +81,19 @@ class Command(BaseCommand):
 
         index = _build_geography_index()
 
-        queryset = School.objects.filter(deleted_at__isnull=True)
+        queryset = School.objects.filter(deleted_at__isnull=True).select_related(
+            "district"
+        )
         if not force:
-            queryset = queryset.filter(district__isnull=True)
-        queryset = queryset.exclude(uploaded_district_text__isnull=True).exclude(
-            uploaded_district_text=""
+            queryset = queryset.filter(
+                Q(district__isnull=True) | Q(sub_county__isnull=True)
+            )
+        queryset = queryset.filter(
+            (Q(uploaded_district_text__isnull=False) & ~Q(uploaded_district_text=""))
+            | (
+                Q(uploaded_sub_county_text__isnull=False)
+                & ~Q(uploaded_sub_county_text="")
+            )
         )
 
         total = queryset.count()
@@ -96,7 +105,8 @@ class Command(BaseCommand):
 
         for school in queryset.iterator(chunk_size=batch_size):
             district, sub_county, _ambiguous = _resolve_geography(
-                school.uploaded_district_text,
+                school.uploaded_district_text
+                or (school.district.name if school.district_id else ""),
                 # Sub-county is resolved from the school's own stored value
                 # when present; the operational register has left it blank, so
                 # this usually contributes nothing and must not invent one.
@@ -142,6 +152,6 @@ class Command(BaseCommand):
     def _flush(pending: list) -> None:
         with transaction.atomic():
             type(pending[0]).objects.bulk_update(
-                pending, ["district", "region", "updated_at"]
+                pending, ["district", "region", "sub_county", "updated_at"]
             )
         pending.clear()

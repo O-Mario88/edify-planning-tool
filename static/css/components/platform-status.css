@@ -60,7 +60,7 @@
 
 .edify-connectivity-status__copy strong {
   font-size: 0.875rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .edify-connectivity-status__copy span {
@@ -141,7 +141,7 @@
   padding-inline: 1rem;
   border-radius: var(--edify-radius-sm);
   font-size: 0.8125rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .edify-session-dialog__primary {

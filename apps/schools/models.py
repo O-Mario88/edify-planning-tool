@@ -314,7 +314,6 @@ class School(SoftDeleteModel):
         return "No SSA"
 
     def save(self, *args, **kwargs):
-        from django.db.models import Q
         from apps.clusters.models import Cluster, SchoolClusterAssignment
 
         is_new = self._state.adding
@@ -348,33 +347,15 @@ class School(SoftDeleteModel):
                 )
 
             if not still_covered:
-                new_cluster = None
-                if self.sub_county_id:
-                    candidates = Cluster.objects.filter(
-                        deleted_at__isnull=True, status="active"
-                    )
-                    # A school only ever joins a cluster in its own district —
-                    # clusters are built from a district's sub-counties, so a
-                    # cross-district membership is not a stretch of the rule but
-                    # a contradiction of how the cluster was defined.
-                    #
-                    # The sub-county match gets there transitively (covered
-                    # sub-counties are constrained to the cluster's district at
-                    # creation), but this path writes `cluster_id` directly and
-                    # never reaches `set_school_cluster_membership`, where the
-                    # rule is actually enforced. Stating it here means the
-                    # guarantee does not depend on an invariant two models away
-                    # continuing to hold.
-                    if self.district_id:
-                        candidates = candidates.filter(district_id=self.district_id)
-                    new_cluster = (
-                        candidates.filter(
-                            Q(sub_county_id=self.sub_county_id)
-                            | Q(covered_sub_counties__sub_county_id=self.sub_county_id)
-                        )
-                        .distinct()
-                        .first()
-                    )
+                # Use the same geography resolver as the School Profile and
+                # Add-to-Cluster drawer. Imports and direct School saves must
+                # not invent a fourth ordering or a district-level fallback.
+                from apps.clusters.eligibility import active_cluster_for_geography
+
+                new_cluster = active_cluster_for_geography(
+                    district_id=self.district_id,
+                    sub_county_id=self.sub_county_id,
+                )
 
                 if new_cluster:
                     self.cluster_id = new_cluster.id

@@ -895,7 +895,7 @@ a.calendar-event:focus-visible {
     padding-inline: 0.45rem;
     color: var(--brand-primary-text);
     font-size: var(--edify-text-micro-size);
-    font-weight: 750;
+    font-weight: 700;
   }
 
   .calendar-mobile__month-grid {
@@ -915,7 +915,7 @@ a.calendar-event:focus-visible {
     place-items: center;
     color: var(--edify-text-subtle);
     font-size: var(--edify-text-micro-size);
-    font-weight: 750;
+    font-weight: 700;
     text-transform: uppercase;
   }
 
@@ -1026,7 +1026,7 @@ a.calendar-event:focus-visible {
     background: var(--brand-primary-soft);
     color: var(--brand-primary-text);
     font-size: var(--edify-text-micro-size);
-    font-weight: 750;
+    font-weight: 700;
     cursor: pointer;
   }
 

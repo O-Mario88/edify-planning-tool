@@ -8,44 +8,32 @@
          const el = document.querySelector('#cdTargetPlChart');
          if (!el) return;
          const self = this;
-         this.chart = new ApexCharts(el, {
-           series: [
-             { name: 'Target Achievement %', data: [{% for r in target_by_pl.rows %}{{ r.pl_pct }}{% if not forloop.last %},{% endif %}{% endfor %}] },
-             { name: 'CCEO Average %', data: [{% for r in target_by_pl.rows %}{{ r.cceo_avg }}{% if not forloop.last %},{% endif %}{% endfor %}] }
-           ],
-           chart: { height: 268, type: 'bar', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif',
-                    events: { dataPointSelection: (e, ctx, cfg) => {
-                      const id = self.ids[cfg.dataPointIndex];
-                      if (id) window.htmx && window.htmx.ajax('GET',
-                        '/analytics/country-director/drilldown?drill=pl&id=' + id + '&fy={{ fy }}',
-                        { target: '#drawer-container', swap: 'innerHTML' });
-                    } } },
-           colors: window.EdifyChartSystem.comparisonSeries.slice(0, 2),
-           /* Wider than the platform default because this chart plots a handful
-              of PLs, and the extra width is what separates the two adjacent
-              value labels. */
-           plotOptions: { bar: { columnWidth: '78%', dataLabels: { position: 'top' } } },
-           /* Two series share each category, so the labels sit on narrow
-              adjacent bars. The shared 12px floor keeps a four-character value
-              such as 208% readable; the fit guard below suppresses a label
-              rather than wrapping or forcing the chart wider. Never use double quotes
-              in here: this whole object is an x-data attribute. */
-           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '12px', fontWeight: 700, colors: ['var(--edify-text-muted)'] },
-                         formatter: (v, o) => (window.EdifyChartSystem.barLabelFits(o) ? v + '%' : '') },
-           labels: [{% for r in target_by_pl.rows %}'{{ r.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-           xaxis: { axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' }, rotate: 0, hideOverlappingLabels: false } },
-           /* Target achievement can exceed 100%. A hard max: 100 drew those bars
-              outside the plot area and stacked both series' labels on the
-              clipped ceiling, so the axis grows to fit the data and keeps ~15%
-              headroom for the above-bar label. It still frames 0-100% whenever
-              nobody is over target. */
-           yaxis: { min: 0, max: v => Math.max(100, Math.ceil(v * 1.15)),
-                    labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
-           grid: { show: false },
-           legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
-           tooltip: { theme: 'dark', shared: true, intersect: false }
-         });
+         /* Shared form from EdifyChartSystem so every chart in the app
+            carries one geometry, grid, legend and tooltip. */
+         const cfg = window.EdifyChartSystem.comparisonBar({});
+         cfg.series = [
+           { name: 'Target Achievement %', data: [{% for r in target_by_pl.rows %}{{ r.pl_pct }}{% if not forloop.last %},{% endif %}{% endfor %}] },
+           { name: 'CCEO Average %', data: [{% for r in target_by_pl.rows %}{{ r.cceo_avg }}{% if not forloop.last %},{% endif %}{% endfor %}] }
+         ];
+         cfg.chart.height = 268;
+         /* Clicking a PL opens that PL's drill-down drawer. */
+         cfg.chart.events = { dataPointSelection: (e, ctx, c) => {
+           const id = self.ids[c.dataPointIndex];
+           if (id) window.htmx && window.htmx.ajax('GET',
+             '/analytics/country-director/drilldown?drill=pl&id=' + id + '&fy={{ fy }}',
+             { target: '#drawer-container', swap: 'innerHTML' });
+         } };
+         /* Wider than the platform default: this plots a handful of PLs, and the
+            extra width is what separates the two adjacent value labels. */
+         cfg.plotOptions.bar.columnWidth = '78%';
+         cfg.plotOptions.bar.dataLabels = { position: 'top' };
+         cfg.labels = [{% for r in target_by_pl.rows %}'{{ r.pl_name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+         cfg.xaxis.type = 'category';
+         cfg.dataLabels = { enabled: true, offsetY: -16,
+           style: { fontSize: '12px', colors: ['var(--edify-text-muted)'], fontWeight: 700 },
+           formatter: (v, o) => (window.EdifyChartSystem.barLabelFits(o) ? Math.round(v) + '%' : '') };
+         cfg.yaxis = { max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } };
+         this.chart = new ApexCharts(el, cfg);
          this.chart.render();
        }
      }" x-init="$nextTick(() => initChart())">

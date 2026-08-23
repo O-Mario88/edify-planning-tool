@@ -732,6 +732,7 @@ class Command(BaseCommand):
         from apps.activities.models import Activity, ActivityScheduleCostLine
         from apps.budget.costing_service import apply_to_activity
         from apps.clusters.models import Cluster
+        from apps.clusters.models import ClusterSubCounty
         from apps.core.enums import ClusterRecordStatus
         from datetime import datetime, timezone
 
@@ -755,6 +756,21 @@ class Command(BaseCommand):
                     "status": ClusterRecordStatus.ACTIVE,
                 },
             )
+            # A cluster with no declared sub-county can never claim a school.
+            # `active_cluster_for_geography` matches on district AND
+            # sub-county, so a seeded cluster carrying only a district made
+            # the Add-to-Cluster drawer, the School Profile and School.save()
+            # all resolve to nothing — silently, because "no cluster covers
+            # this sub-county" and "no cluster declares any sub-county" look
+            # identical from the outside.
+            if not cluster.sub_county_id:
+                covered = SubCounty.objects.filter(district=cluster.district).first()
+                if covered:
+                    cluster.sub_county = covered
+                    cluster.save(update_fields=["sub_county", "updated_at"])
+                    ClusterSubCounty.objects.get_or_create(
+                        cluster=cluster, sub_county=covered
+                    )
             clusters.append(cluster)
 
         from apps.partners.models import Partner, PartnerAssignment

@@ -162,18 +162,18 @@ support did not exist, and reading it as "you need a Project or a Cluster" is
 exactly what people did.
 {% endcomment %}
 <div class="mt-2 rounded-surface border border-amber-200 bg-amber-50 p-3.5 text-[12px] leading-normal text-amber-900 shadow-sm" role="status">
-  <p class="font-bold">No programme training below addresses {{ catalogue_recommendations.unmetPriority.need.label }}</p>
-  <p class="mt-1 font-medium">This School&rsquo;s most urgent need is {{ catalogue_recommendations.unmetPriority.need.label }} at {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). The named trainings listed answer the next needs down.</p>
+  <p class="font-bold">{{ school.name }} has an unmet priority need</p>
+  <p class="mt-1 font-medium">{{ school.name }}&rsquo;s latest verified SSA identifies <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong> as its most urgent need, with a score of {{ catalogue_recommendations.unmetPriority.need.score }}/10 ({{ catalogue_recommendations.unmetPriority.need.band }}). None of the programme trainings currently available for this school directly addresses that need; the trainings shown below align with its next-highest priorities.</p>
   {% if catalogue_recommendations.unmetPriority.standardSupportAvailable %}
-  <p class="mt-1.5 font-medium">You can still schedule standard support for it here &mdash; choose a purpose below and set Focus Intervention to <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong>. No Project is required.</p>
+  <p class="mt-1.5 font-medium">You can schedule standard support for {{ school.name }} from this drawer. Select the appropriate purpose below, then set Focus Intervention to <strong>{{ catalogue_recommendations.unmetPriority.need.label }}</strong>. This support does not require a Project.</p>
   {% endif %}
   {% if catalogue_recommendations.unmetPriority.blockedBy %}
   <ul class="mt-1.5 space-y-0.5 font-medium">
     {% for blocked in catalogue_recommendations.unmetPriority.blockedBy %}
-    <li>&middot; <strong>{{ blocked.displayName }}</strong> {{ blocked.reason }}. {{ blocked.route }}.</li>
+    <li>&middot; <strong>{{ blocked.displayName }}</strong> is not available for {{ school.name }} in this drawer because it {{ blocked.reason }}. {{ blocked.route }}.</li>
     {% endfor %}
   </ul>
-  <p class="mt-1.5 font-medium">It is costed from the same CD Cost Catalogue wherever it is scheduled.</p>
+  <p class="mt-1.5 font-medium">The applicable CD Cost Catalogue rate will be used for any support planned in response to {{ school.name }}&rsquo;s need.</p>
   {% endif %}
 </div>
 {% endif %}
@@ -301,7 +301,7 @@ its costing on, so the costing link is derived server-side and never asked for.
     x-model="trainingActivityId"
     required
     :disabled="!focusIntervention || availableTrainingActivities.length === 0"
-    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+    class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
   >
     <option value="" x-text="focusIntervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
     <template x-for="activity in availableTrainingActivities" :key="activity.id">

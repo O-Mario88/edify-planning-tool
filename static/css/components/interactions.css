@@ -778,3 +778,44 @@ main .edify-section-nav__view-link:focus-visible {
     transition: none;
   }
 }
+
+/* ── One primary: solid buttons are blue ─────────────────────────────────
+   A solid fill on a button says "this is the action" — and the action colour
+   is the brand primary, full stop. Templates had grown solid emerald CTAs
+   (Create Disbursement), violet ones (Schedule Training), sky ones (Onboard
+   Partner): five different "primaries" on five pages. This bridge maps every
+   off-brand solid onto the same tokens .edify-primary-solid uses, the same
+   way the type bridges map stray px sizes onto the scale. Rose/red and amber
+   are NOT bridged — destructive and caution fills carry meaning. */
+main :is(a, button, input[type="submit"]):is(
+  [class*="bg-emerald-6"], [class*="bg-green-6"], [class*="bg-teal-6"],
+  [class*="bg-cyan-6"], [class*="bg-sky-6"], [class*="bg-indigo-6"],
+  [class*="bg-violet-6"], [class*="bg-purple-6"]
+) {
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  color: var(--brand-primary-on-solid) !important;
+}
+
+main :is(a, button, input[type="submit"]):is(
+  [class*="bg-emerald-6"], [class*="bg-green-6"], [class*="bg-teal-6"],
+  [class*="bg-cyan-6"], [class*="bg-sky-6"], [class*="bg-indigo-6"],
+  [class*="bg-violet-6"], [class*="bg-purple-6"]
+):hover {
+  background-color: var(--brand-primary-hover) !important;
+  border-color: var(--brand-primary-hover) !important;
+  color: var(--brand-primary-on-solid) !important;
+}
+
+/* ── Button labels sit dead centre ───────────────────────────────────────
+   Control-shaped actions (anything on the control radius or a btn class)
+   centre their label on both axes. Some buttons were plain inline links
+   whose text sat on the baseline, low and left. justify-between rows opt
+   out — a quick-action row that spreads label and chevron is a layout, not
+   a mis-centred label. */
+main :is(a, button):is(.btn, [class*="btn-"], .edify-primary-solid, [class*="rounded-control"]):not([class*="justify-between"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

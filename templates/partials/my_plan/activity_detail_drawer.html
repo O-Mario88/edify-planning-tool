@@ -6,27 +6,27 @@
 {# refusing clicks after this drawer closed. See static/js/drawer-background.js #}
 x-data="{ activeTab: 'details', closeDrawer() { window.__edifyDrawerBackground?.release(); document.getElementById('drawer-container')?.replaceChildren(); } }"
 @keydown.escape.window="closeDrawer()"
-class="fixed inset-0 z-50 flex justify-end"
+class="edify-popup-dialog edify-popup-dialog--rail fixed inset-0 z-50 flex justify-end"
 aria-labelledby="slide-over-title"
 role="dialog"
 aria-modal="true"
 >
 <!-- Backdrop Blur overlay -->
 <div
-class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
 @click="closeDrawer()"
 ></div>
 
 <!-- Slide-in Container -->
-<div class="relative w-full max-w-xl edify-surface shadow-2xl flex flex-col h-full z-10 transition-all duration-300 transform">
+<div class="edify-popup-dialog__surface relative w-full max-w-xl edify-surface shadow-2xl flex flex-col h-full z-10 transition-all duration-300 transform">
 
 <!-- Drawer Header -->
-<div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+<div class="drawer-header px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
 <div>
 <span class="inline-flex items-center rounded-pill px-1.5 py-0.5 edify-text-caption font-semibold tracking-wider edify-primary-soft edify-primary-text border edify-primary-border mb-1">
 Activity Parameters
 </span>
-<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
+<h2 id="slide-over-title" class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
 {{ act.activity_type|title|replace_underscore }}
 </h2>
 </div>
@@ -41,7 +41,7 @@ class="h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-2
 </div>
 
 <!-- Drawer Content Scrollable Area -->
-<div class="flex-1 overflow-y-auto p-5 space-y-6">
+<div class="drawer-body flex-1 overflow-y-auto p-5 space-y-6">
 
 <!-- Basic Meta Parameters -->
 <div class="grid grid-cols-2 gap-4 text-[12px]">
@@ -241,7 +241,7 @@ No evidence files uploaded yet.
 </div>
 
 <!-- Drawer Footer Actions -->
-<div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5">
+<div class="drawer-footer px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5">
 <button
 type="button"
 class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"

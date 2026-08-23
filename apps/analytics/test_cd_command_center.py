@@ -253,6 +253,13 @@ class CDCommandCenterTest(TestCase):
         self.assertGreaterEqual(int(by["High-Risk Teams"]["value"]), 1)
 
     def test_program_lead_rows_include_all_supervised_cceo_target_areas(self):
+        """All five areas are still reported — MSCS just has its own column.
+
+        The badge cell carries the four delivery counts and MSCS is served
+        separately, because five badges wrapped: the fifth fell under the
+        fourth and made every row in the table two lines tall. Splitting the
+        payload is what lets the column exist; nothing was dropped.
+        """
         d = self._dash()
         ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
         areas = {area["key"]: area for area in ada["areas"]}
@@ -264,9 +271,9 @@ class CDCommandCenterTest(TestCase):
                 "cluster_meetings",
                 "cluster_trainings",
                 "ssa_completed",
-                "mscs",
             ],
         )
+        self.assertEqual(ada["mscs"]["key"], "mscs")
         # One validated visit against A1's target of two. The completed
         # training has no Activity SF ID, so it remains provisional.
         self.assertEqual(areas["school_visits"]["pct"], 50)

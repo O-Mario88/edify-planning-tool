@@ -182,7 +182,7 @@ hx-include="#action-planner-form"
       <label for="planner_training_activity" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Activity / Training <span class="text-rose-500">*</span></label>
       <select id="planner_training_activity" name="catalogue_item_id" x-model="activityId" required
         :disabled="!intervention || availableActivities.length === 0"
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60">
+        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
         <option value="" x-text="intervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
         <template x-for="activity in availableActivities" :key="activity.id">
           <option :value="activity.id" x-text="activity.label"></option>
@@ -231,7 +231,7 @@ hx-include="#action-planner-form"
         </button>
       </div>
       <div role="group" aria-label="Schools invited"
-           class="max-h-52 overflow-y-auto rounded-control border border-slate-200 edify-surface divide-y divide-slate-100">
+           class="max-h-56 overflow-y-auto rounded-control border border-slate-200 edify-surface divide-y divide-slate-100">
         {% for s in member_schools %}
         <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">
           <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"

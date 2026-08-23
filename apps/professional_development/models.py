@@ -40,7 +40,7 @@ class ProfessionalDevelopmentAllocation(TimeStampedModel):
     staff_id = models.CharField(max_length=30)  # StaffProfile.id
     fy = models.CharField(max_length=16)
     country = models.CharField(max_length=64, default="Uganda")
-    currency = models.CharField(max_length=8, default="UGX")
+    currency = models.CharField(max_length=8, default="USD")
     annual_allocation = models.BigIntegerField(default=0)
     status = models.CharField(
         max_length=20,
@@ -75,7 +75,7 @@ class PDRoleAllocation(TimeStampedModel):
     role = models.CharField(max_length=32)  # EdifyRole value, e.g. "CCEO"
     fy = models.CharField(max_length=16)
     country = models.CharField(max_length=64, default="Uganda")
-    currency = models.CharField(max_length=8, default="UGX")
+    currency = models.CharField(max_length=8, default="USD")
     annual_allocation_cents = models.BigIntegerField(default=0)
     set_by = models.CharField(max_length=30, null=True, blank=True)
 
@@ -211,7 +211,7 @@ class ProfessionalDevelopmentRequest(TimeStampedModel):
     funding_type = models.CharField(
         max_length=20, choices=PDFundingType.choices, default=PDFundingType.SELF_FUNDED
     )
-    currency = models.CharField(max_length=8, default="UGX")
+    currency = models.CharField(max_length=8, default="USD")
     payment_recipient = models.CharField(max_length=255, null=True, blank=True)
     payment_details = models.TextField(null=True, blank=True)
     is_exception = models.BooleanField(default=False)
@@ -409,7 +409,7 @@ class ProfessionalDevelopmentFundRequest(TimeStampedModel):
     fy = models.CharField(max_length=16)
     staff_id = models.CharField(max_length=30)
     amount_cents = models.BigIntegerField()
-    currency = models.CharField(max_length=8, default="UGX")
+    currency = models.CharField(max_length=8, default="USD")
     payment_recipient = models.CharField(max_length=255, null=True, blank=True)
     payment_details = models.TextField(null=True, blank=True)
     status = models.CharField(

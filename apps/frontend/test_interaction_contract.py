@@ -142,12 +142,41 @@ class ReadableButtonStatesTest(SimpleTestCase):
             "button.btn-premium-primary.schedule-drawer-submit", self.css
         )
 
-    @staticmethod
-    def _token(tokens, name):
+    @classmethod
+    def _token(cls, tokens, name, *, _seen=None):
+        """Resolve a token to a literal colour, following var() references.
+
+        The ink tokens stopped being literal hex when they started following
+        the theme's own --text-on-brand: a fill that moves per theme needs an
+        ink that moves with it, so the pair is declared by reference rather
+        than restated. Reading only the first line therefore returned
+        "var(--text-on-brand, #ffffff)" and the parser choked on it.
+        """
+        import re
+
+        seen = _seen or set()
+        if name in seen:
+            raise AssertionError(f"{name} resolves in a circle")
+        seen.add(name)
+
         for line in tokens.splitlines():
             stripped = line.strip()
-            if stripped.startswith(f"{name}:"):
-                return stripped.split(":", 1)[1].strip().rstrip(";")
+            if not stripped.startswith(f"{name}:"):
+                continue
+            value = stripped.split(":", 1)[1].strip().rstrip(";")
+            if value.startswith("#"):
+                return value
+            reference = re.match(
+                r"var\(\s*(--[\w-]+)\s*(?:,\s*(#[0-9a-fA-F]{3,8}))?\s*\)", value
+            )
+            if reference:
+                target, fallback = reference.group(1), reference.group(2)
+                try:
+                    return cls._token(tokens, target, _seen=seen)
+                except AssertionError:
+                    if fallback:
+                        return fallback
+                    raise
         raise AssertionError(f"{name} is not defined")
 
 
@@ -293,3 +322,84 @@ class SegmentedTabsTest(SimpleTestCase):
         self.assertIn("color: inherit !important;", content_contract)
         self.assertIn("font: inherit !important;", content_contract)
         self.assertIn("opacity: 1 !important;", content_contract)
+
+class DrawerMountPointTest(SimpleTestCase):
+    """Every locking drawer must mount in #drawer-container.
+
+    static/js/drawer-background.js is the ONE owner of "a drawer is open":
+    it inerts the siblings of #drawer-container and releases by watching that
+    container's contents. A drawer template that extends base_drawer.html
+    calls the lock on open — so mounting one anywhere else (a bespoke
+    #pd-drawer-root inside <main>) inerts the drawer along with the page and
+    nothing ever releases it. That is the "Adjust PD Allocation freezes the
+    page" bug, and it had three more latent copies (partner activities, work
+    plan, fund requests) when it was found.
+
+    Swapping content INSIDE an open drawer (#notification-drawer-container,
+    #drawer-content-placeholder) is fine — this pins only the mount point.
+    """
+
+    def test_no_template_mounts_a_drawer_outside_the_lock_owners_container(self):
+        offenders = []
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            source = path.read_text(encoding="utf-8")
+            rel = str(path.relative_to(ROOT))
+            if 'hx-target="#drawer-root"' in source or 'hx-target="#pd-drawer-root"' in source:
+                offenders.append(f"{rel}: targets a bespoke drawer root")
+            if 'id="drawer-root"' in source or 'id="pd-drawer-root"' in source:
+                offenders.append(f"{rel}: defines a bespoke drawer root")
+        self.assertEqual(
+            offenders,
+            [],
+            "Drawers must be swapped into #drawer-container — the background "
+            "lock cannot see any other mount point, so the page freezes: "
+            + "; ".join(offenders),
+        )
+
+class SegmentedRailFamilyTest(SimpleTestCase):
+    """Every tab-family class in a template must be one the rail contract
+    enumerates.
+
+    The segmented rail is enforced by selector LISTS in platform.css (layout)
+    and interactions.css (surface). A template inventing a new "*-tabs" class
+    gets no styling from either — .ia-tabs on the Uganda Master Priority Plan
+    had no stylesheet anywhere and rendered five bare links where every other
+    page shows the rail. New tab UIs use role="tablist"/"tab" or
+    data-edify-tablist/-tab, which both lists already carry.
+    """
+
+    KNOWN_FAMILIES = {
+        "messages-inbox-tabs",
+        "messages-inbox-tab",
+        "pto-tabs",
+        "sp-period-tabs",
+        "spp-tabs",
+        "tt-segmented",
+        "oversight-entity-tabs",
+        "edify-tab-container",
+        "edify-tab-btn",
+    }
+
+    def test_no_template_invents_a_tab_family_outside_the_rail_contract(self):
+        import re
+
+        offenders = []
+        # Only class attributes: ids like #school-tabs-header are htmx/anchor
+        # plumbing, not styling hooks, and prose in comments is prose.
+        class_attr = re.compile(r'class="([^"]*)"')
+        family = re.compile(r"^[a-z][a-z0-9_-]*(?:-tabs|-segmented|tab-btn|tab-container)(?:__[a-z-]+)?$")
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            source = path.read_text(encoding="utf-8")
+            for attr in class_attr.findall(source):
+                for cls in attr.split():
+                    if not family.match(cls):
+                        continue
+                    if cls.split("__")[0] not in self.KNOWN_FAMILIES:
+                        offenders.append(f"{path.relative_to(ROOT)}: {cls}")
+        self.assertEqual(
+            sorted(set(offenders)),
+            [],
+            "Unknown tab-family class — use role=tablist/tab or "
+            "data-edify-tablist/-tab so the rail contract styles it: "
+            + "; ".join(sorted(set(offenders))),
+        )

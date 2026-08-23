@@ -294,7 +294,7 @@ changes cannot price an activity on a stale count.
       <div role="group" aria-labelledby="schools-invited-help"
            class="mt-1.5 max-h-56 overflow-y-auto rounded-control border border-slate-200 bg-slate-50 divide-y divide-slate-100">
         {% for s in member_schools %}
-        <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-white">
+        <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-100/50">
           <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
                  {% if s.invited %}checked{% endif %}
                  @change="syncInvited()"
@@ -424,7 +424,7 @@ id="training_activity"
 x-model="activityId"
 required
 :disabled="!intervention || availableActivities.length === 0"
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
 >
 <option value="" x-text="intervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
 <template x-for="activity in availableActivities" :key="activity.id">

@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static table_pagination %}
 
 {% block title %}Declining Schools — Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260809layout8">{% endblock %}
@@ -101,6 +101,15 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <div class="px-5 py-3 border-b border-[var(--edify-border)]">
 <h2 class="text-[13px] font-extrabold text-slate-800">Schools losing ground</h2>
 </div>
+{% comment %}
+Paged. This rendered every declining school in one response — 5,648 rows and
+4.3MB, twenty-six times the next largest page in the platform and three
+seconds to build. A country-level list is exactly where that happens, and
+exactly where it hurts most: the reader is on the other end of a Ugandan
+connection. The ranking already puts the steepest declines first, so a page
+of them is the part anyone reads.
+{% endcomment %}
+{% paginate d.schools "declining_page" as schools_pager %}
 <div class="overflow-x-auto">
 <table class="w-full text-[13px]">
 <thead>
@@ -114,7 +123,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for s in d.schools %}
+{% for s in schools_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3">
 <span class="font-bold text-slate-900 block leading-tight">{{ s.name }}</span>
@@ -133,6 +142,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=schools_pager param="declining_page" %}
 </div>
 {% else %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">

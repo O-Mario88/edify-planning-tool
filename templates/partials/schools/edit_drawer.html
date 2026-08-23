@@ -198,7 +198,7 @@ hx-get="/schools/sub-counties"
 hx-trigger="change"
 hx-target="#sub_county_id"
 hx-swap="innerHTML"
-@change="$refs.subCounty.value = ''; filterParishes('', true); const cluster = document.getElementById('cluster_id'); if (cluster) cluster.value = ''"
+@change="$refs.subCounty.value = ''; filterParishes('', true)"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
 >
 <option value="">Select a District</option>
@@ -226,6 +226,9 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 <option value="{{ sub_county.id }}" {% if school.sub_county_id == sub_county.id %}selected{% endif %}>{{ sub_county.name }}</option>
 {% endfor %}
 </select>
+<p class="mt-1 edify-text-caption font-medium leading-5 text-slate-400">
+Choose the system sub-county that matches the school's updated profile. Its active cluster is resolved automatically from this location.
+</p>
 </div>
 
 <div>
@@ -301,19 +304,17 @@ class="w-full p-3 rounded-control border border-slate-200 text-[12px] font-semib
 </div>
 </fieldset>
 
-<!-- Cluster assignment dropdown -->
-<div>
-<label for="cluster_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster Assignment <span class="normal-case tracking-normal text-slate-400">(Optional)</span></label>
-<select
-name="cluster_id"
-id="cluster_id"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-semibold edify-surface focus:outline-none focus:ring-2 edify-primary-focus"
->
-<option value="">-- Unclustered --</option>
-{% for cl in clusters %}
-<option value="{{ cl.id }}" {% if school.cluster_id == cl.id %}selected{% endif %}>{{ cl.name }} ({{ cl.district.name }})</option>
-{% endfor %}
-</select>
+<!-- Cluster assignment is derived from the canonical geography above. -->
+<div class="rounded-surface border border-slate-200 bg-slate-50/70 p-3.5">
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Cluster assignment</p>
+<div class="mt-2 flex items-start gap-2.5">
+<svg class="mt-0.5 h-4 w-4 shrink-0 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+</svg>
+<p class="text-[12px] font-semibold leading-5 text-slate-600">
+Saving this profile automatically links the school to the active cluster covering its selected system sub-county. If none exists, use <span class="font-extrabold text-slate-800">Add to Cluster</span> after saving.
+</p>
+</div>
 </div>
 
 <!-- Staff matcher / account owner dropdown -->

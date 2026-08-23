@@ -310,9 +310,9 @@ class PlanningDashboardService:
         except ValueError:
             page = 1
         try:
-            per_page = int(filters.get("per_page", 10))
+            per_page = int(filters.get("per_page", 15))
         except ValueError:
-            per_page = 10
+            per_page = 15
 
         paginated_clusters = []
         schools_data = []

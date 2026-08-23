@@ -321,7 +321,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cd_analytics": {CD, ADMIN},
     "reports": {CD, PL, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
-    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN},
+    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD},
     # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
     # (apps/core/rbac.py ROLE_PERMISSIONS) and
     # RolePermissionService.can_manage_users() already includes
@@ -488,6 +488,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The canonical master table (§9): every staff role reads the SAME rows;
     # the target column is role-scoped (PL/CCEO see their own allocation).
     "priorities_master": {CCEO, PL, CD, IA, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    # A section of Priorities, not a separate system. Everyone who reads
+    # priorities can see what each activity is measured against; only Impact
+    # Assessment can change it, which the page enforces per control.
+    "ssa_mapping": {CD, IA, RVP, PL, PROJECT_COORDINATOR, ADMIN},
     # §18 Extra Assigned Work: CD/PL assign, CCEO executes; Admin supports.
     "extra_work": {CD, PL, CCEO, ADMIN},
     "hr_today": {HR, CD, PL, RVP, ADMIN},
@@ -619,6 +623,7 @@ ICONS.update(
         "closed_schools": ICONS["completed_archive"],
         "leave_tracker": ICONS["team_availability"],
         "priorities_master": ICONS["target_distribution"],
+        "ssa_mapping": ICONS["target_distribution"],
         "extra_work": ICONS["todos"],
         "hr_today": ICONS["todos"],
         "admin_my_plan": ICONS["my_plan"],
@@ -2079,6 +2084,27 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
                     ),
                 }
             )
+
+    # Longest match wins. Two items can both prefix-match one path — on
+    # /schools/closed, "Schools" (/schools) and "Closed Schools"
+    # (/schools/closed) were both lit, which reads as being in two places at
+    # once. The deeper URL is where the user actually is; the shallower item
+    # stays active for its own pages (/schools, /schools/<pk>) because on
+    # those paths no deeper sibling matches. Section expansion recomputes
+    # afterwards so a group does not stay open for a highlight it lost.
+    lit = [item for sec in sections for item in sec["items"] if item["active"]]
+    for shallow in lit:
+        shallow_url = shallow["url"].rstrip("/") + "/"
+        if any(
+            deep is not shallow and deep["url"].startswith(shallow_url)
+            for deep in lit
+        ):
+            shallow["active"] = False
+    for sec in sections:
+        sec["active"] = any(item["active"] for item in sec["items"])
+        sec["expanded"] = (
+            sec["active"] or sec["standalone"] or sec["label"] == "MY WORK"
+        )
 
     return sections
 

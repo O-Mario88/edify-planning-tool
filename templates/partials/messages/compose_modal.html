@@ -1,17 +1,17 @@
 {% load frontend_filters %}
 <!-- Compose popup: centered, backdrop-blurred, positioned slightly above center -->
 <div x-show="composeOpen" x-cloak
-     class="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[7vh] pb-6"
+     class="edify-popup-dialog edify-popup-dialog--wide fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[7vh] pb-6"
      @keydown.escape.window="composeOpen = false"
-     aria-modal="true" role="dialog">
+     aria-modal="true" role="dialog" aria-labelledby="compose-message-title">
 
   <!-- Backdrop -->
-  <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md"
+  <div class="edify-popup-dialog__backdrop fixed inset-0 bg-slate-900/50 backdrop-blur-md"
        x-show="composeOpen" x-transition.opacity
        @click="composeOpen = false"></div>
 
   <!-- Modal -->
-  <div class="relative z-10 w-full max-w-[680px] max-h-[86vh] edify-surface rounded-surface shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+  <div class="edify-popup-dialog__surface relative z-10 w-full max-w-[680px] max-h-[86vh] edify-surface rounded-surface shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
        x-show="composeOpen"
        x-transition:enter="transition ease-out duration-200"
        x-transition:enter-start="opacity-0 translate-y-3 scale-[0.98]"
@@ -22,13 +22,13 @@
        x-data="composeModal()">
 
     <!-- Header -->
-    <div class="shrink-0 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div class="drawer-header shrink-0 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
       <div class="flex items-center gap-2.5">
         <div class="h-9 w-9 rounded-surface edify-primary-soft edify-primary-text flex items-center justify-center shrink-0">
           <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </div>
         <div>
-          <h2 class="text-[16px] font-semibold text-slate-800 tracking-tight leading-tight">New Message</h2>
+          <h2 id="compose-message-title" class="text-[16px] font-semibold text-slate-800 tracking-tight leading-tight">New Message</h2>
           <p class="edify-text-caption font-semibold text-slate-400 leading-tight">Context-linked, sent to registered users</p>
         </div>
       </div>
@@ -38,7 +38,7 @@
     </div>
 
     <form method="post" action="/messages/new/" enctype="multipart/form-data"
-          class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
+          class="drawer-body flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="context_type" :value="ctxType">
       <input type="hidden" name="context_id" :value="ctxId">

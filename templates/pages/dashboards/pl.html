@@ -21,6 +21,18 @@
       <h1 class="edify-page-header__title edify-page-title">Program Lead Dashboard</h1>
       <p class="edify-page-header__description">Team execution, approvals, targets, planning quality &amp; operations.</p>
     </div>
+    {% comment %}Scope, not a filter. This sat inside the filter form, which
+    put a read-only statement in a row of controls and — on a phone, where
+    the row stacks — dropped a three-line block between the filters and the
+    KPIs. The Country Director dashboard already states its scope here; this
+    is the same statement in the same place.{% endcomment %}
+    <div class="edify-page-header__controls">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap edify-surface border edify-border edify-text-muted">
+        <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>
+        <span class="hidden sm:inline">{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools</span>
+        <span class="sm:hidden">{{ scope_meta.school_count }} schools</span>
+      </span>
+    </div>
   </header>
 
     <form id="pl-dashboard-filters"
@@ -43,9 +55,6 @@
           <option value="partner_activity" {% if filters.activity_type == 'partner_activity' %}selected{% endif %}>Partner</option>
         </select>
       </div>
-      <span class="edify-page-header-control rounded-pill edify-text-caption font-semibold edify-text-muted">
-        <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools
-      </span>
     </form>
 
   <div id="pl-dashboard-body">

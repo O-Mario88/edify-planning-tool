@@ -35,6 +35,46 @@ from apps.clusters.models import Cluster
 from apps.core.enums import ClusterRecordStatus
 
 
+def active_cluster_for_geography(*, district_id, sub_county_id):
+    """Return the active cluster explicitly covering one canonical sub-county.
+
+    Both ``Cluster.sub_county`` (the primary/back-compat field) and
+    ``ClusterSubCounty`` (multi-sub-county coverage) describe the same
+    relationship. Keeping this lookup here prevents the School Profile, school
+    upload and Add-to-Cluster drawer from each producing a different answer.
+
+    A district-level cluster does not count: it has no declared sub-county
+    coverage and therefore cannot be inferred from a school's profile.
+    """
+    if not district_id or not sub_county_id:
+        return None
+    return (
+        Cluster.objects.filter(
+            district_id=district_id,
+            deleted_at__isnull=True,
+            status=ClusterRecordStatus.ACTIVE,
+        )
+        .filter(
+            Q(sub_county_id=sub_county_id)
+            | Q(covered_sub_counties__sub_county_id=sub_county_id)
+        )
+        .select_related("district", "sub_county")
+        .distinct()
+        .order_by("name", "id")
+        .first()
+    )
+
+
+def active_cluster_for_school_geography(school):
+    """Resolve a school's cluster only from its saved canonical geography."""
+    if school is None:
+        return None
+    return active_cluster_for_geography(
+        district_id=getattr(school, "district_id", None),
+        sub_county_id=getattr(school, "sub_county_id", None),
+    )
+
+
 def owner_id_variants(owner_id: str) -> set[str]:
     """Both id spaces for one owner.
 

@@ -163,8 +163,8 @@ class MobileMicroUXContractTest(SimpleTestCase):
     def test_tab_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
-        self.assertIn("platform.css' %}?v=20260818type7", base)
-        self.assertIn("pages.css' %}?v=20260822cceotable1", base)
+        self.assertIn("platform.css' %}?v=20260823aura1", base)
+        self.assertIn("pages.css' %}?v=20260823aura2", base)
         self.assertIn("mobile-micro-ux.css' %}?v=20260822tables1", base)
         self.assertIn("micro-ux.js' %}?v=20260822tables1", base)
 

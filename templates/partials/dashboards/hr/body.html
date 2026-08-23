@@ -318,86 +318,71 @@ under whatever country the filter bar happened to show.
     var hrDeptLabels = JSON.parse(document.getElementById('hr-dept-labels').textContent);
     var hrLeaveLabels = JSON.parse(document.getElementById('hr-leave-labels').textContent);
     // 1. Workforce Overview Chart (headcount exits/hires)
-    var woOptions = {
-      series: [
-        { name: 'Total Headcount', type: 'line', data: {{ workforce_overview.headcount|safe }} },
-        { name: 'New Hires', type: 'column', data: {{ workforce_overview.new_hires|safe }} },
-        { name: 'Exits', type: 'column', data: {{ workforce_overview.exits|safe }} }
-      ],
-      chart: { height: 260, type: 'line', toolbar: { show: false } },
-      stroke: { width: [2.25, 0, 0], curve: 'straight' },
-      colors: ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'],
-      xaxis: { categories: {{ workforce_overview.months|safe }} },
-      yaxis: { labels: { style: { colors: 'var(--edify-text-subtle)' } } },
-      legend: { show: true, position: 'bottom', labels: { colors: 'var(--edify-text-subtle)' } },
-      grid: { borderColor: 'rgba(148, 163, 184, 0.1)' }
-    };
+    var woOptions = window.EdifyChartSystem.formBase({});
+    woOptions.series = [
+      { name: 'Total Headcount', type: 'line', data: {{ workforce_overview.headcount|safe }} },
+      { name: 'New Hires', type: 'column', data: {{ workforce_overview.new_hires|safe }} },
+      { name: 'Exits', type: 'column', data: {{ workforce_overview.exits|safe }} }
+    ];
+    woOptions.chart.type = 'line';
+    woOptions.chart.height = 260;
+    woOptions.stroke = { width: [2.25, 0, 0], curve: 'straight' };
+    /* The platform's mixed-chart convention: the LINE takes green, and its
+       two bar series follow the shared comparison order, Blue then Orange.
+       (An earlier pass reordered this on the mistaken belief that the ramp
+       would paint exits green — exits were already orange; green was on the
+       headcount line. test_bar_chart_system pins the convention.) */
+    woOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'];
+    woOptions.xaxis.categories = {{ workforce_overview.months|safe }};
+    woOptions.legend.position = 'bottom';
     new ApexCharts(document.querySelector("#chart-workforce-overview"), woOptions).render();
 
     // 2. Department Headcount Donut Chart
-    var dhOptions = {
-      series: {{ headcount_by_department.counts|safe }},
-      chart: { type: 'donut', height: 180 },
-      labels: hrDeptLabels,
-      colors: ['var(--edify-chart-blue)', 'var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-pink)', 'var(--edify-text-muted)'],
-      legend: { show: false },
-      dataLabels: { enabled: false },
-      plotOptions: { pie: { donut: { size: '75%' } } }
-    };
+    var dhOptions = window.EdifyChartSystem.donut('Staff');
+    dhOptions.series = {{ headcount_by_department.counts|safe }};
+    dhOptions.labels = hrDeptLabels;
+    dhOptions.chart.height = 220;
+    /* Quarter-width card: the legend keeps the reference's value-and-share
+       text but sits below the ring, where six department names fit. */
+    dhOptions.legend.position = 'bottom';
     new ApexCharts(document.querySelector("#chart-department-headcount"), dhOptions).render();
 
     // 3. Leave Overview Donut
-    var loOptions = {
-      series: {{ leave_overview.counts|safe }},
-      chart: { type: 'donut', height: 180 },
-      labels: hrLeaveLabels,
-      colors: ['var(--edify-chart-blue)', 'var(--edify-chart-red)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)', 'var(--edify-chart-pink)'],
-      legend: { show: false },
-      dataLabels: { enabled: false },
-      plotOptions: { pie: { donut: { size: '75%' } } }
-    };
+    var loOptions = window.EdifyChartSystem.donut('On leave');
+    loOptions.series = {{ leave_overview.counts|safe }};
+    loOptions.labels = hrLeaveLabels;
+    loOptions.chart.height = 220;
+    loOptions.legend.position = 'bottom';
     new ApexCharts(document.querySelector("#chart-leave-overview"), loOptions).render();
 
     // 4. Performance Overview stacked columns
-    var poOptions = {
-      series: [
-        { name: 'Strong (70-100%)', data: {{ performance_overview.strong|safe }} },
-        { name: 'Fair (50-69%)', data: {{ performance_overview.fair|safe }} },
-        { name: 'At Risk (<50%)', data: {{ performance_overview.at_risk|safe }} }
-      ],
-      chart: { type: 'bar', height: 180, stacked: true, stackType: '100%', toolbar: { show: false } },
-      /* 100% stacked fills the whole row, so the track would never show —
-         turn it off rather than paint it under an opaque bar. */
-      plotOptions: { bar: { horizontal: true, colors: { backgroundBarOpacity: 0 } } },
-      xaxis: { categories: {{ performance_overview.categories|safe }} },
-      colors: ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'],
-      legend: { show: false },
-      grid: { show: false }
-    };
+    var poOptions = window.EdifyChartSystem.formBase({});
+    poOptions.series = [
+      { name: 'Strong (70-100%)', data: {{ performance_overview.strong|safe }} },
+      { name: 'Fair (50-69%)', data: {{ performance_overview.fair|safe }} },
+      { name: 'At Risk (<50%)', data: {{ performance_overview.at_risk|safe }} }
+    ];
+    poOptions.chart.type = 'bar';
+    poOptions.chart.height = 180;
+    poOptions.chart.stacked = true;
+    poOptions.chart.stackType = '100%';
+    /* 100% stacked fills the whole row, so the track would never show —
+       turn it off rather than paint it under an opaque bar. Strong / Fair /
+       At Risk is a severity ladder: status colours stay. */
+    poOptions.plotOptions = { bar: { horizontal: true, colors: { backgroundBarOpacity: 0 } } };
+    poOptions.xaxis.categories = {{ performance_overview.categories|safe }};
+    poOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
+    poOptions.legend.show = false;
+    poOptions.grid = { show: false };
     new ApexCharts(document.querySelector("#chart-performance-overview"), poOptions).render();
 
     // 5. Recruitment Funnel horizontal bar chart
-    var rfOptions = {
-      series: [{ name: 'Candidates', data: [{% for stage in recruitment_funnel %}{{ stage.count }}, {% endfor %}] }],
-      chart: { type: 'bar', height: 180, toolbar: { show: false } },
-      /* Single series, so the bar carries its own value and the track carries
-         the scale — no gridlines or value axis needed. */
-      plotOptions: { bar: { horizontal: true, borderRadiusApplication: 'around',
-                            dataLabels: { position: 'top' } } },
-      xaxis: { categories: [{% for stage in recruitment_funnel %}'{{ stage.stage }}', {% endfor %}],
-               labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-      yaxis: { labels: { style: { colors: 'var(--edify-text-muted)', fontSize: '12px' } } },
-      colors: ['var(--edify-chart-blue)'],
-      /* A zero stage renders no bar, so there is nothing to write the count
-         inside — the empty track already reads as zero, and white-on-track
-         would be invisible. The tooltip still gives the exact number. */
-      dataLabels: { enabled: true, textAnchor: 'end', offsetX: -10,
-                    style: { fontSize: '12px', fontWeight: 700, colors: [getComputedStyle(document.documentElement).getPropertyValue('--edify-on-accent').trim()] },
-                    dropShadow: { enabled: false },
-                    formatter: function (val, o) { return window.EdifyChartSystem.barValueFitsInside(val, o) ? val : ''; } },
-      grid: { show: false },
-      tooltip: { y: { formatter: function (val) { return val + ' candidates'; } } }
-    };
+    var rfOptions = window.EdifyChartSystem.rankedBar({});
+    rfOptions.series = [{ name: 'Candidates', data: [{% for stage in recruitment_funnel %}{{ stage.count }}, {% endfor %}] }];
+    rfOptions.chart.height = 180;
+    rfOptions.xaxis.categories = [{% for stage in recruitment_funnel %}'{{ stage.stage }}', {% endfor %}];
+    rfOptions.xaxis.labels = { show: false };
+    rfOptions.tooltip.y = { formatter: function (val) { return val + ' candidates'; } };
     new ApexCharts(document.querySelector("#chart-recruitment-funnel"), rfOptions).render();
   })();
 </script>

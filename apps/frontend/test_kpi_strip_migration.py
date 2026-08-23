@@ -130,9 +130,18 @@ class KpiStripMigrationTests(SimpleTestCase):
         self.assertIn("background-color: var(--edify-surface);", styles)
         self.assertIn("clip-path: inset(50%);", styles)
         self.assertIn("box-shadow: 0 2px 3px", styles)
-        self.assertIn('kpi-strip__trend--neutral">Current', source)
+        # `--fresh`, not `--neutral`: "Current" reports that the DATA is up
+        # to date, which is one meaning on every tile. It is the one pill the
+        # per-tile accent tint deliberately does not repaint, and it sits
+        # beside "Pending", which means the opposite and stays muted.
+        self.assertIn('kpi-strip__trend--fresh">Current', source)
         self.assertIn("{% firstof item.label item.canonical_label %}", source)
-        self.assertIn("-webkit-line-clamp: 3;", styles)
+        # Two lines, not three. The point of the clamp is that a long label
+        # cannot push the number down the card — the value is what the tile
+        # exists to show, and three reserved lines of label moved it below
+        # the fold on a six-up strip. Clamping still happens; it just happens
+        # sooner.
+        self.assertIn("-webkit-line-clamp: 2;", styles)
         self.assertIn("white-space: normal;", styles)
 
     def test_specialised_workspaces_use_the_shared_component_not_an_adapter(self):

@@ -681,6 +681,15 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertContains(response, "Schedule Group Training")
 
+    def test_planning_dashboard_defaults_to_fifteen_schools_per_page(self):
+        self.client.force_login(self.cceo_user)
+
+        response = self.client.get("/planning")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["per_page"], 15)
+        self.assertContains(response, '<option value="15" selected>15 / page</option>')
+
     def test_planning_dashboard_view_renders(self):
         from django.utils import timezone
         from apps.core.fy import get_operational_fy
@@ -940,6 +949,10 @@ class FrontendViewsTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["show_cluster_directory"])
+        self.assertFalse(response.context["geography_ready"])
+        self.assertContains(response, "Update the Sub-county on the School Profile")
+        self.assertContains(response, "Update School Profile")
+        self.assertNotContains(response, 'name="new_cluster_name"')
         self.assertNotContains(response, "Nearby clusters")
 
     def test_create_cluster_drawer_uses_guided_geography_workflow(self):

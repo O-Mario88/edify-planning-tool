@@ -48,9 +48,16 @@
           <div class="lg:col-span-8">{% include "partials/analytics/pl/cceo_performance.html" %}</div>
         </div>
         <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div class="lg:col-span-5">{% include "partials/analytics/pl/activity_tracking.html" %}</div>
-          <div class="lg:col-span-3">{% include "partials/analytics/pl/staff_partner.html" %}</div>
-          <div class="lg:col-span-4">{% include "partials/analytics/pl/core_champion.html" %}</div>
+          <div class="lg:col-span-12">{% include "partials/analytics/pl/activity_tracking.html" %}</div>
+        </div>
+        {% comment %}I and J moved onto their own row. Three charts sharing
+        twelve columns left these two at three and four columns — narrow
+        enough that the grouped bars collapsed to hairlines and the value
+        labels suppressed themselves. An even split gives each the width its
+        own form assumes.{% endcomment %}
+        <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div class="lg:col-span-6">{% include "partials/analytics/pl/staff_partner.html" %}</div>
+          <div class="lg:col-span-6">{% include "partials/analytics/pl/core_champion.html" %}</div>
         </div>
       </div>
     </details>

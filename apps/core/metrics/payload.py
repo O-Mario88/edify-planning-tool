@@ -246,7 +246,7 @@ def render_kpi_item(
 
 _UNSET = object()
 _ABSENT_DISPLAY_VALUES = frozenset(
-    {"", "—", "-", "no data", "no ssa", "not available", "not set"}
+    {"", "—", "-", "no data", "no ssa", "not available", "not measured", "not set"}
 )
 
 

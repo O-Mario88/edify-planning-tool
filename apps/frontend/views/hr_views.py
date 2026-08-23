@@ -526,6 +526,15 @@ def pd_dashboard_adjust_allocation_view(request):
     )
     from apps.professional_development.models import PDRoleAllocation
 
+    # PL / CD / RVP share the page read-only; setting the money is HR's
+    # alone (Admin retains platform administration). Gated here as well as
+    # in the service so the drawer never renders a form the server would
+    # refuse.
+    if getattr(request.user, "active_role", "") not in ("HumanResources", "Admin"):
+        return HttpResponseForbidden(
+            "Only HR may adjust Professional Development allocations."
+        )
+
     role = request.GET.get("role") or request.POST.get("role") or ""
     fy = request.GET.get("fy") or request.POST.get("fy") or get_operational_fy()
     country = request.GET.get("country") or request.POST.get("country") or "Uganda"
@@ -566,7 +575,7 @@ def pd_dashboard_adjust_allocation_view(request):
             fy=fy,
             country=country,
             amount_major=amount,
-            currency=request.POST.get("currency") or "UGX",
+            currency=request.POST.get("currency") or "USD",
             apply_to_existing=request.POST.get("apply_to_existing") == "on",
         )
         messages.success(
@@ -594,6 +603,63 @@ def pd_dashboard_action_view(request):
 
             PDCourseTrackingService.sign_off(request_id, request.user)
             messages.success(request, "Course signed off and closed.")
+        elif action in ("send_apply_reminder", "bulk_apply_reminders"):
+            # Chasing people who never applied is HR's job, and the bulk set
+            # is recomputed server-side from the same definition the panel
+            # shows — a posted list of ids is never trusted.
+            from apps.notifications.services import WorkflowNotificationService
+            from apps.professional_development.hr_dashboard_service import (
+                HRPDDashboardService,
+            )
+
+            if getattr(request.user, "active_role", "") not in (
+                "HumanResources",
+                "Admin",
+            ):
+                raise Forbidden("Only HR may send apply reminders.")
+            from apps.core.fy import get_operational_fy
+
+            fy = request.POST.get("fy") or get_operational_fy()
+            pending = HRPDDashboardService.staff_without_requests(
+                request.user,
+                fy,
+                country=request.POST.get("country") or "",
+                role_filter=request.POST.get("role") or "",
+            )
+            if action == "send_apply_reminder":
+                target_user_id = request.POST.get("staff_user_id") or ""
+                pending = [p for p in pending if p["user_id"] == target_user_id]
+                if not pending:
+                    raise BadRequest(
+                        "That staff member has already applied, or is outside "
+                        "your scope."
+                    )
+            sent = 0
+            for person in pending:
+                if not person["user_id"]:
+                    continue
+                WorkflowNotificationService.trigger(
+                    event_type="pd_action_required",
+                    category="professional_development",
+                    priority="medium",
+                    title="Apply for Professional Development",
+                    body=(
+                        f"HR reminder: your FY {fy} PD allocation is "
+                        f"{person['allocation']} and you have not applied yet — "
+                        "open My Professional Development to submit a request."
+                    ),
+                    context_type="pd_apply_reminder",
+                    context_id=person["staff_id"],
+                    recipients=[person["user_id"]],
+                )
+                sent += 1
+            if action == "send_apply_reminder":
+                messages.success(request, f"Reminder sent to {pending[0]['name']}.")
+            else:
+                messages.success(
+                    request,
+                    f"Apply reminders sent to {sent} staff member{'s' if sent != 1 else ''}.",
+                )
         elif action == "send_reminder":
             from apps.professional_development.approval_service import (
                 PDApprovalRoutingService,

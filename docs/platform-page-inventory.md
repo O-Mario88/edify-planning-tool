@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **567**
-- All registered routes: **1025**
+- Routed product surfaces: **570**
+- All registered routes: **1028**
 - API routes: **349**
 - Roles: **14**
-- Permission keys: **98**
+- Permission keys: **100**
 - Scheduled jobs: **22**
 - Activity states: **23**
 - Shared component templates: **339**
-- Full pages: **202**
-- Partials and drawers: **168**
-- Permission-gated surfaces: **557**
-- Referenced by automated tests: **524**
+- Full pages: **203**
+- Partials and drawers: **169**
+- Permission-gated surfaces: **560**
+- Referenced by automated tests: **525**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -486,6 +486,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5A094101A0 | /policy-compliance | Policy Compliance | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4B290608CB | /policy-compliance/comments/<str:comment_id> | Respond Comment | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-B337BA86BF | /priorities | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EB2FC6A25B | /priorities/ssa-mapping | SSA & Activity Mapping · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8BBA1A3E04 | /priorities/ssa-mapping/<str:item_id>/drawer | Ssa Mapping Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-5D8206AE15 | /priorities/ssa-mapping/<str:item_id>/save | Ssa Mapping Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-63217B55B8 | /priority-dashboard | Priority Dashboard Redirect | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-5583719547 | /profile | My Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3B7E4DFD30 | /projects | Projects | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

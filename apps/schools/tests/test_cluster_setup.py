@@ -537,7 +537,15 @@ class ClusterSetupTest(APITestCase):
         SchoolClusterAssignment — previously this path updated
         School.cluster_id/cluster_status without ever touching the join
         table, so the school never appeared in its new cluster's school list
-        and never disappeared from the old one."""
+        and never disappeared from the old one.
+
+        The reassignment is now expressed by moving the school's SUB-COUNTY,
+        not by posting a cluster id. The drawer used to carry both, which gave
+        membership two sources of truth: School.save() derived the right
+        cluster from the new geography and the blank cluster dropdown then
+        cleared it. Sub-county is the single source now, so this test moves
+        the school to sub_county2 and expects cluster2 — the join-table sync
+        it was written to guard is unchanged."""
         from django.urls import reverse
 
         self.client.force_login(self.user)
@@ -578,12 +586,12 @@ class ClusterSetupTest(APITestCase):
                 # …and requires an account owner and a district on every save.
                 "account_owner_id": self.profile.id,
                 "district_id": self.district.id,
+                "sub_county_id": self.sub_county2.id,
                 "school_phone": "",
                 "primary_contact_name": "",
                 "director_name": "",
                 "headteacher_name": "",
                 "shipping_address": "",
-                "cluster_id": self.cluster2.id,
             },
             format="multipart",
         )

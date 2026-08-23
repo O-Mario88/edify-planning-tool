@@ -29,6 +29,12 @@ main :is(
   font-size: var(--edify-text-label-size) !important;
 }
 
+/* The old 15px body rung, still carried by ~87 templates. The scale's base
+   is 14px now, so survivors follow the token instead of being edited again. */
+main [class*="text-[15px]"] {
+  font-size: var(--edify-text-body-size) !important;
+}
+
 main :is(
   .edify-text-micro,
   [class*="eyebrow"],
@@ -1241,504 +1247,13 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
   font-family: var(--edify-font-sans) !important;
 }
 
-/* ═══ LEGACY KPI STRIP ADAPTER ═════════════════════════════════════════════
-   Older role workspaces own specialised markup and interactions. They share
-   the same theme-driven card contract as components/kpi_strip.html so no page
-   falls back to a loose grid of unrelated KPI tiles. The strip container is a
-   transparent grid; each cell reads as its own themed card. */
-main :is(
-  .edify-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-) {
-  /* Repointed to design tokens so the strip follows the active theme —
-     white/light cards in Light, dark cards in Dark, blue glass in Blue. */
-  --edify-kpi-strip-label: var(--edify-text-muted);
-  --edify-kpi-strip-value: var(--edify-text);
-  --edify-kpi-strip-helper: var(--edify-text-subtle);
-  --edify-kpi-strip-icon: var(--edify-accent);
-  display: grid !important;
-  gap: 0.75rem !important;
-  min-inline-size: 0 !important;
-  margin-block-end: clamp(1rem, 0.8rem + 0.6vw, 1.5rem) !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  isolation: isolate;
-}
-
-/* The auto-fit column count is a FALLBACK, which is what the block above says
-   it is — it exists so a strip that never states a layout still reads as cards
-   rather than a loose pile. It was declared with !important inside that block,
-   so it also overrode the strips that DO state one: the reports page asks for
-   lg:grid-cols-5 and got four columns with the fifth card orphaned on its own
-   row, because 12.5rem minimums only fit four across a 963px container.
-
-   Splitting it out means a page that declares its columns keeps them, and a
-   page that declares nothing still gets the fallback. Stating the counts again
-   here instead would just be the same intent written in two places, waiting to
-   disagree. */
-main :is(
-  .edify-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-):not([class*="grid-cols-"]) {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)) !important;
-}
-
-/* Period timelines retain chronological DOM order but wrap as a compact grid.
-   A forced 1400px rail made ordinary report and target pages look zoomed-in
-   and cut the first/last period off-screen. */
-main .edify-kpi-strip.edify-kpi-strip--timeline {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)) !important;
-  overflow: visible !important;
-}
-main .edify-kpi-strip.edify-kpi-strip--timeline > * {
-  min-inline-size: 0 !important;
-}
-
-main :is(
-  .edify-kpi-strip > *,
-  .admin-kpi,
-  .partner-kpi-card,
-  .tt-kpi,
-  .sp-kpis > .sp-kpi,
-  .sp-kpi-grid > .sp-kpi,
-  .spp-kpi,
-  .spa-kpi
-) {
-  position: relative !important;
-  container: edify-kpi-card / inline-size;
-  display: flex !important;
-  grid-column: auto !important;
-  min-inline-size: 0 !important;
-  min-block-size: 6.75rem !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: clamp(0.65rem, 0.6rem + 0.25vw, 0.9rem) !important;
-  margin: 0 !important;
-  padding: var(--edify-kpi-padding) !important;
-  overflow: visible !important;
-  border: 1px solid var(--edify-border) !important;
-  border-radius: var(--edify-radius-md) !important;
-  background: var(--edify-surface) !important;
-  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment)) !important;
-  box-shadow: var(--edify-shadow-sm) !important;
-  color: var(--edify-kpi-strip-value) !important;
-}
-
-/*
-  Beat the platform's intentionally broad rounded-link/card normalization.
-  These descendants are cells inside one strip, never standalone surfaces.
-*/
-main :is(
-  .edify-kpi-strip.edify-kpi-strip > *,
-  .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
-  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
-  .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
-  .sp-kpis.sp-kpis > .sp-kpi,
-  .sp-kpi-grid.sp-kpi-grid > .sp-kpi,
-  .spp-kpi-grid.spp-kpi-grid > .spp-kpi,
-  .spa-kpi-grid.spa-kpi-grid > .spa-kpi
-) {
-  border: 1px solid var(--edify-border) !important;
-  border-radius: var(--edify-radius-md) !important;
-  background-color: var(--edify-surface) !important;
-  background-image: var(--edify-glass-kpi-treatment, var(--edify-surface-treatment)) !important;
-  box-shadow: var(--edify-shadow-sm) !important;
-}
-
-main :is(
-  .edify-kpi-strip.edify-kpi-strip > :first-child,
-  .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
-  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
-  .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
-  .sp-kpis.sp-kpis > .sp-kpi:first-child,
-  .sp-kpi-grid.sp-kpi-grid > .sp-kpi:first-child,
-  .spp-kpi-grid.spp-kpi-grid > .spp-kpi:first-child,
-  .spa-kpi-grid.spa-kpi-grid > .spa-kpi:first-child
-) {
-  border-inline-start: 1px solid var(--edify-border) !important;
-}
-
-/* Count-aware legacy layouts use viewport tiers because these strips are the
-   layout containers themselves. The tiers account for the authenticated
-   sidebar and reduce columns before labels wrap. */
-@media (min-width: 36.01rem) and (max-width: 59.99rem) {
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (min-width: 60rem) and (max-width: 79.99rem) {
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (min-width: 80rem) and (max-width: 94.99rem) {
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ):has(> :nth-child(7)):not(:has(> :nth-child(11))) {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (min-width: 95rem) {
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ):has(> :nth-child(7)):not(:has(> :nth-child(9))) {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
-
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ):has(> :nth-child(9)):not(:has(> :nth-child(11))) {
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  }
-}
-
-main :is(
-  .edify-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-) > :is(a, button, [role="tab"]) {
-  transition: background-color var(--edify-transition-fast) !important;
-}
-
-main :is(
-  .edify-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-) > :is(a, button, [role="tab"]):hover {
-  background: var(--edify-surface-hover) !important;
-  border-color: var(--edify-border-strong) !important;
-  transform: none !important;
-}
-
-main :is(
-  .edify-kpi-strip,
-  .admin-kpi-strip,
-  .partner-kpi-grid,
-  .tt-kpi-strip,
-  .sp-kpis,
-  .sp-kpi-grid,
-  .spp-kpi-grid,
-  .spa-kpi-grid
-) > :is(a, button, [role="tab"]):focus-visible {
-  z-index: 1;
-  outline: 2px solid var(--edify-accent) !important;
-  outline-offset: -3px !important;
-}
-
-/* Direct-template labels, values and helper lines. */
-main .edify-kpi-strip > * :is(
-  .uppercase,
-  .edify-kpi-label,
-  .card-kpi > div > div > p:first-child
-) {
-  max-inline-size: 100%;
-  color: var(--edify-kpi-strip-label) !important;
-  font-weight: var(--edify-text-label-weight) !important;
-  letter-spacing: var(--edify-kpi-label-tracking) !important;
-  overflow: hidden;
-  overflow-wrap: normal;
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
-  text-transform: none !important;
-  white-space: nowrap;
-  word-break: normal;
-}
-
-main .edify-kpi-strip > * :is(
-  h3,
-  h4,
-  strong,
-  .tabular-nums,
-  [class*="text-[17px]"],
-  [class*="text-[18px]"],
-  [class*="text-[19px]"],
-  [class*="text-[20px]"],
-  [class*="text-[21px]"],
-  [class*="text-[22px]"],
-  [class*="text-[24px]"],
-  [class*="text-[26px]"],
-  [class*="text-[28px]"]
-) {
-  color: var(--edify-kpi-strip-value) !important;
-  font-variant-numeric: tabular-nums;
-}
-
-main .edify-kpi-strip > * :is(
-  .edify-text-caption:not(.uppercase):not(.edify-kpi-label),
-  .card-kpi > div > div > p:last-child
-) {
-  color: var(--edify-kpi-strip-helper) !important;
-}
-
-main .edify-kpi-strip--value-first > * > p:first-child {
-  color: var(--edify-kpi-strip-value) !important;
-  font-size: clamp(1.55rem, 1.25rem + 0.85vw, 2rem) !important;
-  line-height: 1 !important;
-}
-
-main .edify-kpi-strip--value-first > * > p:last-child {
-  color: var(--edify-kpi-strip-label) !important;
-}
-
-main .edify-kpi-strip--timeline {
-  min-inline-size: 0 !important;
-}
-
-main .edify-kpi-strip--timeline > :is(span, div.hidden, div[class*="hidden"]) {
-  display: none !important;
-}
-
-/* Specialised workspace typography maps to the same strip hierarchy. */
-main :is(
-  .admin-kpi__label,
-  .partner-kpi-card > div > span,
-  .tt-kpi__copy > span,
-  .sp-kpis .sp-kpi > div > span,
-  .sp-kpi__label,
-  .spp-kpi span:not(.spp-kpi__icon),
-  .spa-kpi small
-) {
-  min-block-size: 0 !important;
-  color: var(--edify-kpi-strip-label) !important;
-  font-size: var(--edify-text-tile-label-size) !important;
-  font-weight: var(--edify-text-label-weight) !important;
-  letter-spacing: var(--edify-kpi-label-tracking) !important;
-  line-height: 1.2 !important;
-  max-inline-size: 100%;
-  overflow: hidden;
-  overflow-wrap: normal;
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
-  text-transform: none !important;
-  white-space: nowrap;
-  word-break: normal;
-}
-
-main :is(
-  .admin-kpi,
-  .partner-kpi-card,
-  .tt-kpi,
-  .sp-kpis .sp-kpi,
-  .sp-kpi-grid .sp-kpi,
-  .spp-kpi,
-  .spa-kpi
-) strong {
-  color: var(--edify-kpi-strip-value) !important;
-  font-size: var(--edify-text-tile-value-size) !important;
-  font-weight: var(--edify-text-label-weight) !important;
-  line-height: 1 !important;
-  letter-spacing: normal !important;
-  font-variant-numeric: tabular-nums;
-  max-inline-size: 100%;
-  white-space: nowrap;
-}
-
-main :is(
-  .admin-kpi small,
-  .partner-kpi-card small,
-  .tt-kpi__copy small,
-  .sp-kpis .sp-kpi small,
-  .sp-kpi__helper,
-  .spp-kpi small,
-  .spa-kpi p
-) {
-  min-block-size: 0 !important;
-  margin-block-start: 0.4rem !important;
-  color: var(--edify-kpi-strip-helper) !important;
-  font-size: var(--edify-text-tile-helper-size) !important;
-  font-weight: var(--edify-text-label-weight) !important;
-  line-height: 1.25 !important;
-  overflow-wrap: normal;
-  text-wrap: pretty;
-  word-break: normal;
-}
-
-main :is(
-  .admin-kpi__icon,
-  .partner-kpi-card__icon,
-  .tt-kpi__icon,
-  .sp-kpi__icon,
-  .spp-kpi__icon,
-  .spa-kpi > span,
-  .edify-kpi-strip__icon,
-  .edify-kpi-strip .kpi-icon-circle
-) {
-  width: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
-  height: clamp(2rem, calc(1.7rem + 3cqi), 3.4rem) !important;
-  flex: 0 0 auto !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--edify-kpi-strip-icon) !important;
-}
-
-main :is(
-  .admin-kpi__icon,
-  .partner-kpi-card__icon,
-  .tt-kpi__icon,
-  .sp-kpi__icon,
-  .spp-kpi__icon,
-  .spa-kpi > span,
-  .edify-kpi-strip__icon,
-  .edify-kpi-strip .kpi-icon-circle
-) svg {
-  width: 100% !important;
-  height: 100% !important;
-  stroke-width: 1.65;
-}
-
-.edify-kpi-strip__copy {
-  display: flex;
-  min-inline-size: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-}
-
-.edify-kpi-strip__label {
-  color: var(--edify-kpi-strip-label) !important;
-  font-size: var(--edify-text-tile-label-size);
-  font-weight: var(--edify-text-label-weight);
-  letter-spacing: var(--edify-kpi-label-tracking);
-  line-height: 1.2;
-  max-inline-size: 100%;
-  overflow: hidden;
-  overflow-wrap: normal;
-  text-overflow: ellipsis;
-  text-wrap: nowrap;
-  text-transform: none;
-  white-space: nowrap;
-  word-break: normal;
-}
-
-.edify-kpi-strip__value {
-  margin-block-start: 0.2rem;
-  color: var(--edify-kpi-strip-value) !important;
-  font-size: var(--edify-text-tile-value-size) !important;
-  font-weight: var(--edify-text-label-weight);
-  line-height: 1;
-  letter-spacing: normal;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.edify-kpi-strip__helper {
-  margin-block-start: 0.4rem;
-  color: var(--edify-kpi-strip-helper) !important;
-  font-size: var(--edify-text-tile-helper-size);
-  font-weight: var(--edify-text-label-weight);
-  line-height: 1.25;
-  overflow-wrap: normal;
-  text-wrap: pretty;
-  word-break: normal;
-}
-
-@container edify-kpi-card (max-width: 16rem) {
-  main :is(
-    .admin-kpi__icon,
-    .partner-kpi-card__icon,
-    .tt-kpi__icon,
-    .sp-kpi__icon,
-    .spp-kpi__icon,
-    .spa-kpi > span,
-    .edify-kpi-strip__icon,
-    .edify-kpi-strip .kpi-icon-circle
-  ) {
-    display: none !important;
-  }
-}
-
-main .edify-kpi-strip--finance > * {
-  gap: clamp(0.65rem, 0.55rem + 0.25vw, 0.85rem) !important;
-  padding-inline: clamp(0.8rem, 0.68rem + 0.3vw, 1rem) !important;
-}
-
-main .edify-kpi-strip--finance .edify-kpi-strip__icon {
-  width: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
-  height: clamp(2rem, 1.8rem + 0.45vw, 2.3rem) !important;
-}
-
-main .edify-kpi-strip--finance .edify-kpi-strip__value {
-  font-size: clamp(1rem, calc(0.9375rem + 2cqi), 1.28rem) !important;
-}
-
-main .edify-kpi-strip .card-kpi > .flex {
-  align-items: center !important;
-  gap: 1rem !important;
-}
-
-main .edify-kpi-strip .card-kpi {
-  min-block-size: 8rem !important;
-}
+/* ═══ LEGACY KPI STRIP ADAPTER — DELETED ═══════════════════════════════════
+   ~500 lines adapted bespoke KPI markup (.edify-kpi-strip, .admin-kpi-strip,
+   .partner-kpi-grid, .tt-kpi-strip, .sp/.spa/.spp grids) onto the card
+   contract. Every template has since moved to components/kpi_strip.html —
+   the classes have ZERO template usage and test_kpi_strip_migration bans
+   their return — so the adapter could only ever style a regression. The old
+   design is deleted rather than dormant: nothing is left to fall back to. */
 
 /* ═══ GLOBAL BORDERLESS SURFACE CONTRACT ════════════════════════════════════
    Cards and content tiles use surface contrast plus theme-aware elevation,
@@ -1862,17 +1377,7 @@ main :is(.card, .panel, [class*="-card"], [class*="-panel"]):is(.p-12, .p-16) {
   backdrop-filter: none !important;
 }
 
-main :is(
-  .settings-detail-tile,
-  .edify-kpi-strip.edify-kpi-strip > *,
-  .admin-kpi-strip.admin-kpi-strip > .admin-kpi,
-  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card,
-  .tt-kpi-strip.tt-kpi-strip > .tt-kpi,
-  .sp-kpis.sp-kpis > .sp-kpi,
-  .sp-kpi-grid.sp-kpi-grid > .sp-kpi,
-  .spp-kpi-grid.spp-kpi-grid > .spp-kpi,
-  .spa-kpi-grid.spa-kpi-grid > .spa-kpi
-) {
+main .settings-detail-tile {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border-color: var(--edify-card-border) !important;
@@ -2072,17 +1577,7 @@ main .edify-card-action {
   display: none;
 }
 
-:is(.theme-blue, .theme-dark) .kpi-strip--band .kpi-strip__item,
-:is(.theme-blue, .theme-dark) main :is(
-  .edify-kpi-strip.edify-kpi-strip > :first-child,
-  .admin-kpi-strip.admin-kpi-strip > .admin-kpi:first-child,
-  .partner-kpi-grid.partner-kpi-grid > .partner-kpi-card:first-child,
-  .tt-kpi-strip.tt-kpi-strip > .tt-kpi:first-child,
-  .sp-kpis.sp-kpis > .sp-kpi:first-child,
-  .sp-kpi-grid.sp-kpi-grid > .sp-kpi:first-child,
-  .spp-kpi-grid.spp-kpi-grid > .spp-kpi:first-child,
-  .spa-kpi-grid.spa-kpi-grid > .spa-kpi:first-child
-) {
+:is(.theme-blue, .theme-dark) .kpi-strip--band .kpi-strip__item {
   border-color: var(--edify-card-border) !important;
 }
 
@@ -2099,65 +1594,8 @@ main :is(
   box-shadow: var(--edify-card-shadow-hover) !important;
 }
 
-/* Legacy KPI families follow the shared phone summary: two compact columns,
-   with an odd final metric spanning the row. This removes the 700–900px wall
-   of one-card-per-row summaries while preserving DOM order and touch targets. */
-@media (max-width: 36rem) {
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ) {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.625rem !important;
-  }
-
-  main :is(
-    .edify-kpi-strip > *,
-    .admin-kpi,
-    .partner-kpi-card,
-    .tt-kpi,
-    .sp-kpis > .sp-kpi,
-    .sp-kpi-grid > .sp-kpi,
-    .spp-kpi,
-    .spa-kpi
-  ) {
-    min-inline-size: 0 !important;
-    min-block-size: 5.75rem !important;
-    padding: 0.75rem !important;
-  }
-
-  main :is(
-    .edify-kpi-strip,
-    .admin-kpi-strip,
-    .partner-kpi-grid,
-    .tt-kpi-strip,
-    .sp-kpis,
-    .sp-kpi-grid,
-    .spp-kpi-grid,
-    .spa-kpi-grid
-  ) > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-
-  .edify-kpi-strip__label {
-    display: -webkit-box;
-    min-block-size: 2.4em;
-    overflow: clip;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    text-overflow: clip;
-    text-wrap: balance;
-    white-space: normal;
-  }
-}
+/* The legacy KPI families' phone-summary block lived here; deleted with the
+   adapter — nothing renders those classes any more. */
 
 /* ═══ PAGE HEROES: CONTENT ON THE PAGE CANVAS ═══════════════════════════════
    A page hero is hierarchy, not a container. Every current header family and
@@ -2511,7 +1949,6 @@ main .edify-data-row__value {
 
 /* KPI tiles are reserved for a summary immediately associated with the page
    header. Unmarked strips become a professional divided metric band. */
-main .edify-kpi-strip:not([data-edify-summary-kpi]),
 main .kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__grid {
   gap: 0 !important;
   background: transparent !important;
@@ -2525,7 +1962,6 @@ main .kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__grid {
    card normalizer above claims them at (0,5,1) via its
    `[class*="-kpi"]:not(...)x4` branch. Anything weaker leaves unmarked strips
    as shadowed tiles jammed edge-to-edge once the wrapper's gap collapses. */
-main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *,
 main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item {
   min-block-size: auto !important;
   padding: var(--edify-content-row-padding) var(--edify-space-4) !important;
@@ -2535,7 +1971,6 @@ main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi
   box-shadow: none !important;
 }
 
-main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *:not(:last-child),
 main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item:not(:last-child) {
   border-inline-end: 1px solid var(--edify-content-divider) !important;
 }
@@ -2576,7 +2011,6 @@ main :where(.edify-status-text, [data-edify-tone="neutral"])[data-edify-tone="ne
     text-align: start;
   }
 
-  main .edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip.edify-kpi-strip:not([data-edify-summary-kpi]) > *:not(:last-child),
   main .kpi-strip.kpi-strip.kpi-strip.kpi-strip:not([data-edify-summary-kpi]) .kpi-strip__item:not(:last-child) {
     border-inline-end: 0 !important;
     border-block-end: 1px solid var(--edify-content-divider) !important;
@@ -2758,6 +2192,16 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   line-height: var(--edify-text-label-leading);
 }
 
+/* Table headers step down to 13px so the band reads as chrome rather than as
+   a row of data — medium weight and muted colour do the separating. The
+   .edify-table-heading arm exists only to lift specificity to (0,2,0), tying
+   the role rule above so that source order — this rule is later — decides. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(th, .edify-table-heading) {
+  font-size: var(--edify-text-table-heading-size) !important;
+  color: var(--edify-text-muted);
+}
+
 /* Caption/micro roles come last so a caption rendered as a paragraph or table
    label stays at the intentional 12px floor rather than inheriting body size. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
@@ -2777,10 +2221,13 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   line-height: var(--edify-text-micro-leading);
 }
 
-/* ═══ RESTRAINED WEIGHT HIERARCHY ═══════════════════════════════════════
- * Weight now communicates structure instead of compensating for small type.
- * Body copy is optically light, labels and controls are regular, and only
- * genuine headings/subheadings/card titles retain semibold or bold weight. */
+/* ═══ CONVENTIONAL WEIGHT HIERARCHY ═════════════════════════════════════
+ * Retuned to the reference dashboard, replacing the earlier restrained
+ * stance (350 body, everything flattened to regular). Body copy is regular
+ * (400); labels, controls, navigation and table headers are medium (500);
+ * headings are semibold (600); page titles and KPI numerals are bold (700).
+ * The enforcement below is unchanged in shape — templates still cannot
+ * invent their own weights — only the token values it enforces moved. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"]) {
   font-weight: var(--edify-text-body-weight);
 }
@@ -2853,7 +2300,6 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
     .edify-profile-value,
     .edify-data-row__value,
     .edify-kpi-strip__label,
-    .edify-kpi-strip__value,
     .edify-kpi-strip__helper
   ):not(:is(h1, h2, h3, h4, .card-title, .panel-title, .edify-section__heading)) {
   font-weight: var(--edify-text-label-weight) !important;
@@ -2928,7 +2374,15 @@ main a[class]:not([class*="__title"]):not([class*="__heading"]) {
 }
 
 /* Summary KPI values may be large, but their weight stays regular; the page
-   heading remains the only bold anchor. */
+   heading remains the only bold anchor.
+
+   ONE EXCEPTION, added deliberately: .kpi-strip__value on the executive strip
+   reclaims its weight in components.css. These three rules exist to undo
+   template drift — hand-rolled font-bold scattered across labels, helpers and
+   meta — and flattening those is still right, because the contrast between a
+   heavy number and a quiet label is the whole effect. The hero numeral is not
+   drift. It is the primary datum, and it was being flattened along with the
+   noise. Everything else in a strip still answers to these rules. */
 main :is(
   .edify-kpi-strip,
   .kpi-strip,
@@ -2972,6 +2426,18 @@ main :is(.apexcharts-text, .apexcharts-legend-text, .apexcharts-datalabel, text,
   font-weight: var(--edify-text-label-weight) !important;
 }
 
+/* Numbers ON a chart follow the same hierarchy as numbers on a tile: the
+   chrome around them (axis, legend) stays medium, the figures themselves are
+   bold. Written after the flattener above so source order decides the tie —
+   datalabels sit at 600 because they crowd each other at 700, and the donut
+   centre value is a hero numeral, so it carries the hero weight. */
+main :is(.apexcharts-datalabel, .apexcharts-datalabels text) {
+  font-weight: 600 !important;
+}
+main :is(.apexcharts-datalabel-value) {
+  font-weight: 700 !important;
+}
+
 /* ═══ NORMAL CHARACTER SPACING ══════════════════════════════════════════
  * Geist's native spacing is the platform spacing. Legacy dashboards used
  * everything from tightly compressed headings to 0.36em tracked labels;
@@ -3009,4 +2475,55 @@ main :is(.apexcharts-text, .apexcharts-legend-text, .apexcharts-datalabel, text,
   .edify-bottom-nav
 ) [class] {
   letter-spacing: normal !important;
+}
+
+/* ═══ DESKTOP TABLES DO NOT WRAP ════════════════════════════════════════
+ * The reference design's tables read as single-line rows: a long identity
+ * truncates with an ellipsis before any cell is allowed to fold, and column
+ * width is spent on the columns that carry names. Wrapping is a small-screen
+ * behaviour. The cap is generous — most cells never reach it. A cell that
+ * genuinely must fold on desktop opts out with .edify-cell--wrap; a cell
+ * hosting a popover menu is excluded automatically, because overflow:hidden
+ * would clip the open menu. */
+@media (min-width: 64rem) {
+  /* Drawers and dialogs included: a drawer table wrapping while the page
+     behind it does not would read as two different products. */
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table
+    :is(td, th):not(.edify-cell--wrap):not(:has(details, dialog, [x-show])) {
+    white-space: nowrap;
+    max-inline-size: var(--edify-cell-max, 30ch);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The cap has to fall as the column count rises, or the row simply grows
+     past its card and the last column — usually the one holding the row's
+     ACTION — is pushed out of sight behind an overflow scroller nobody
+     notices. That is exactly what happened to "Schools Needing Urgent
+     Attention": six columns at 30ch each, and the Send button left the
+     viewport. Counting columns off the header row keeps this automatic, so
+     a table that grows a column tightens itself instead of overflowing. */
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:has(thead th:nth-child(5)) {
+    --edify-cell-max: 22ch;
+  }
+
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:has(thead th:nth-child(7)) {
+    --edify-cell-max: 16ch;
+  }
+
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:has(thead th:nth-child(9)) {
+    --edify-cell-max: 12ch;
+  }
+
+  /* An action cell is never the one that yields: it holds a control, not
+     prose, and a truncated button is an unusable button. */
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table :is(td, th):last-child:has(button, a) {
+    max-inline-size: none;
+    overflow: visible;
+  }
 }

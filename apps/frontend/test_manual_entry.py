@@ -52,6 +52,10 @@ class ManualSchoolAndSsaEntryTest(TestCase):
             "school_type": "client",
             "enrollment": "275",
             "account_owner_id": self.cceo_staff.id,
+            # Required since adding a school opened up beyond IA: the id is
+            # what proves the school reached Salesforce first, and it is the
+            # duplicate check. See SalesforceIdRequiredTests below.
+            "salesforce_account_id": "0011A00001Manual",
         }
         payload.update(overrides)
         return payload
@@ -235,19 +239,54 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         self.assertContains(response, "Ensure this value is less than or equal to 10")
         self.assertFalse(SsaRecord.objects.filter(school=school).exists())
 
-    def test_non_upload_roles_cannot_create_authoritative_records(self):
+    def test_ssa_authorship_stays_with_impact_assessment(self):
+        """A CCEO may record a school it met; it may not author an assessment.
+
+        These were one test because both were IA-only. Adding a school opened
+        up — the control there is the Salesforce id rather than the role — but
+        an SSA record is a verified measurement and its authorship did not
+        move with it.
+        """
         self.client.force_login(self.cceo)
 
-        school_response = self.client.post(
+        ssa_response = self.client.post("/ssa/manual/", self._ssa_payload("1042"))
+
+        self.assertEqual(ssa_response.status_code, 403)
+
+    def test_a_school_cannot_be_added_without_a_salesforce_id(self):
+        """The id is the control that replaced the role, so it has to hold."""
+        self.client.force_login(self.ia)
+        payload = self._school_payload()
+        payload["salesforce_account_id"] = "   "
+
+        self.client.post("/schools/add-school", payload)
+
+        self.assertFalse(School.objects.filter(school_id="1042").exists())
+
+    def test_the_same_salesforce_id_cannot_be_used_twice(self):
+        self.client.force_login(self.ia)
+        self.client.post("/schools/add-school", self._school_payload())
+
+        self.client.post(
             "/schools/add-school",
-            self._school_payload(),
-        )
-        ssa_response = self.client.post(
-            "/ssa/manual/",
-            self._ssa_payload("1042"),
+            self._school_payload(school_id="1043", name="Second Attempt"),
         )
 
-        self.assertEqual(school_response.status_code, 403)
-        self.assertEqual(ssa_response.status_code, 403)
-        self.assertFalse(School.objects.filter(school_id="1042").exists())
+        # Two people adding the same school from the field collide here
+        # instead of minting two records for one school.
+        self.assertFalse(School.objects.filter(school_id="1043").exists())
+
+    def test_a_field_officer_may_add_one_school_with_an_id(self):
+        self.client.force_login(self.cceo)
+
+        self.client.post(
+            "/schools/add-school",
+            self._school_payload(
+                school_id="1044",
+                name="Met At A Cluster Training",
+                salesforce_account_id="0011A00001Field",
+            ),
+        )
+
+        self.assertTrue(School.objects.filter(school_id="1044").exists())
         self.assertEqual(SsaRecord.objects.count(), 0)

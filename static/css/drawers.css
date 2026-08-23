@@ -440,8 +440,8 @@
   margin-bottom: 16px;
 }
 .drawer-body help-text,
-.drawer-body .text-[10px],
-.drawer-body .text-[11px] {
+.drawer-body .text-\[10px\],
+.drawer-body .text-\[11px\] {
   color: var(--edify-text-subtle) !important;
 }
 
@@ -639,7 +639,7 @@
   margin: 0 0 0.4rem;
   color: var(--edify-text) !important;
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.35;
   text-transform: none;
@@ -799,7 +799,7 @@
   margin: 0.5rem 0 0;
   color: var(--edify-danger) !important;
   font-size: var(--edify-text-label-size);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -954,5 +954,603 @@
   .cluster-create-drawer *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY ENTERPRISE DRAWER FOUNDATION
+
+   The sign-in form is the visual reference: quiet blue depth, generous but
+   efficient spacing, confident type, clearly labelled controls and one
+   unmistakable primary action.  These rules are intentionally scoped to the
+   canonical drawer and the legacy bridge so HTMX forms across the platform
+   inherit the same finish without page-level overrides.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --drawer-width-sm: 30rem;
+  --drawer-width-md: 39rem;
+  --drawer-width-lg: 54rem;
+  --drawer-radius: 1.375rem;
+  --drawer-shadow:
+    0 32px 80px -24px color-mix(in srgb, #071f34 42%, transparent),
+    0 14px 36px -18px color-mix(in srgb, #0b568f 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 92%, transparent);
+  --drawer-backdrop-color: color-mix(in srgb, #061b2d 58%, transparent);
+  --drawer-backdrop-blur: 10px;
+}
+
+.drawer-backdrop,
+.edify-popup-dialog__backdrop {
+  background:
+    radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--edify-accent) 16%, transparent), transparent 34%),
+    var(--drawer-backdrop-color);
+}
+
+.drawer-surface,
+.edify-popup-dialog__surface {
+  border-color: color-mix(in srgb, var(--edify-border-strong) 72%, transparent) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--edify-surface-raised) 98%, #e9f6ff 2%), var(--edify-surface-raised));
+  box-shadow: var(--drawer-shadow) !important;
+}
+
+.drawer-surface.type-center,
+.drawer-surface.type-right_top,
+.edify-popup-dialog__surface {
+  border-radius: var(--drawer-radius) !important;
+}
+
+.drawer-surface.type-center {
+  max-height: min(90dvh, 58rem);
+}
+
+.drawer-header {
+  position: relative;
+  min-height: 6.5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  overflow: hidden;
+  border-bottom-color: color-mix(in srgb, var(--edify-border) 78%, transparent);
+  background:
+    radial-gradient(circle at 94% -20%, color-mix(in srgb, var(--edify-accent) 12%, transparent), transparent 46%),
+    linear-gradient(145deg, color-mix(in srgb, var(--edify-surface-raised) 96%, #eaf7ff 4%), var(--edify-surface-muted));
+}
+
+.drawer-header::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.25rem;
+  content: "";
+  background: linear-gradient(180deg, var(--edify-accent), color-mix(in srgb, var(--edify-accent) 42%, #3ed6c2));
+}
+
+.drawer-header__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.drawer-header__mark {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  place-items: center;
+  overflow: hidden;
+  color: var(--edify-accent);
+  border: 1px solid color-mix(in srgb, var(--edify-accent) 22%, var(--edify-border));
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--edify-accent-light) 78%, var(--edify-surface-raised));
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--edify-accent) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, .74);
+}
+
+.drawer-header__mark svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.drawer-header__mark-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.drawer-header__copy {
+  min-width: 0;
+}
+
+.drawer-header__eyebrow {
+  margin: 0 0 0.22rem !important;
+  color: var(--edify-accent) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.105em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.drawer-header__title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.drawer-header__title-row h3 {
+  margin: 0;
+  color: var(--edify-text) !important;
+  font-size: clamp(1.05rem, 1rem + 0.25vw, 1.25rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.2 !important;
+}
+
+.drawer-header__subtitle {
+  max-width: 66ch;
+  margin: 0.3rem 0 0 !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 450 !important;
+  line-height: 1.45;
+}
+
+.drawer-close-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  padding: 0;
+  color: var(--edify-text-muted);
+  border: 1px solid var(--edify-border);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--edify-surface-raised) 82%, transparent);
+  box-shadow: 0 4px 12px -10px rgba(15, 23, 42, .5);
+}
+
+.drawer-close-btn:hover {
+  color: var(--edify-accent);
+  border-color: color-mix(in srgb, var(--edify-accent) 38%, var(--edify-border));
+  background: var(--edify-accent-light);
+}
+
+.drawer-close-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.drawer-body {
+  padding: 1.5rem;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--edify-surface-muted) 36%, transparent), transparent 8rem),
+    var(--edify-surface-raised);
+}
+
+.drawer-body :where(form) {
+  color: var(--edify-text);
+}
+
+.drawer-body :where(fieldset) {
+  min-width: 0;
+}
+
+.drawer-body :where(legend) {
+  margin-bottom: 0.5rem;
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.drawer-body label:not(:has(input[type="checkbox"], input[type="radio"])) {
+  margin-bottom: 0.45rem;
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size);
+  font-weight: 625;
+  letter-spacing: -0.005em;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.drawer-body :where(
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="tel"], input[type="url"],
+  input[type="search"], input[type="date"], input[type="time"],
+  input[type="datetime-local"], input[type="file"], select, textarea
+) {
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  color: var(--edify-text) !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: 0.75rem !important;
+  outline: 0;
+  background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
+  font-size: 0.875rem;
+  font-weight: 475;
+  line-height: 1.35;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.drawer-body :where(textarea) {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.drawer-body :where(input, select, textarea):hover:not(:disabled):not([readonly]) {
+  border-color: color-mix(in srgb, var(--edify-accent) 38%, var(--edify-border-strong)) !important;
+}
+
+.drawer-body :where(input, select, textarea):focus,
+.drawer-body :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  outline: none !important;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--edify-accent) 14%, transparent) !important;
+}
+
+.drawer-body :where(input, textarea)::placeholder {
+  color: var(--edify-text-subtle);
+  opacity: 0.86;
+}
+
+.drawer-body :where(input, select, textarea):disabled,
+.drawer-body :where(input, select, textarea)[readonly] {
+  color: var(--edify-text-muted) !important;
+  border-color: var(--edify-border) !important;
+  background: var(--edify-surface-muted) !important;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.drawer-body :where(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--edify-danger) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-danger) 12%, transparent) !important;
+}
+
+.drawer-body label:has(input[type="checkbox"], input[type="radio"]) {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size);
+  letter-spacing: 0;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.drawer-body :where(input[type="checkbox"], input[type="radio"]) {
+  min-width: 1.125rem;
+  width: 1.125rem;
+  min-height: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--edify-accent);
+}
+
+.drawer-footer {
+  min-height: 4.75rem;
+  padding: 0.875rem 1.5rem calc(0.875rem + env(safe-area-inset-bottom));
+  gap: 0.65rem;
+  border-top-color: color-mix(in srgb, var(--edify-border) 78%, transparent);
+  background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.drawer-footer :where(button, a),
+.drawer-body form > :where(.flex):last-child > :where(button, a) {
+  min-height: 2.75rem;
+  padding: 0.65rem 1.05rem;
+  border-radius: 0.75rem !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 500 !important;
+  line-height: 1.2;
+}
+
+.drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary),
+.drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]),
+.drawer-body .btn-premium-primary {
+  color: var(--edify-on-accent, #fff) !important;
+  border: 1px solid color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
+  box-shadow: 0 10px 20px -12px color-mix(in srgb, var(--edify-accent) 75%, transparent), inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+}
+
+.drawer-footer :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), a.btn-premium-primary):hover:not(:disabled),
+.drawer-body form > :where(.flex):last-child > button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]):hover:not(:disabled),
+.drawer-body .btn-premium-primary:hover:not(:disabled) {
+  color: var(--edify-on-accent, #fff) !important;
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
+  transform: translateY(-1px);
+}
+
+.drawer-footer :where(button, a):active,
+.drawer-body form > :where(.flex):last-child > :where(button, a):active {
+  transform: translateY(0) scale(0.985);
+}
+
+.drawer-footer :where(button, a):focus-visible,
+.drawer-body form > :where(.flex):last-child > :where(button, a):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent) 22%, transparent) !important;
+  outline-offset: 2px;
+}
+
+.drawer-footer :where(button, a):disabled,
+.drawer-body form > :where(.flex):last-child > :where(button, a):disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+}
+
+.drawer-discard {
+  background: color-mix(in srgb, #071f34 62%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.drawer-discard__panel {
+  border-color: var(--edify-border-strong);
+  border-radius: 1rem;
+  box-shadow: var(--drawer-shadow);
+}
+
+/* Legacy forms participate in the same visual system while their endpoints
+   are migrated to base_drawer.  They must opt into these two semantic classes;
+   the regression test below rejects a new hand-built modal without them. */
+.edify-popup-dialog__surface {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.edify-popup-dialog__surface :where(form) {
+  color: var(--edify-text);
+}
+
+.edify-popup-dialog__surface :where(label, legend) {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 625 !important;
+  letter-spacing: -0.005em !important;
+  text-transform: none !important;
+}
+
+.edify-popup-dialog__surface :where(
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="tel"], input[type="url"],
+  input[type="search"], input[type="date"], input[type="time"],
+  input[type="datetime-local"], input[type="file"], select, textarea
+) {
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: 0.75rem !important;
+  background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
+  font-size: 0.875rem;
+}
+
+.edify-popup-dialog__surface :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--edify-accent) 14%, transparent) !important;
+}
+
+.edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
+  color: var(--edify-on-accent, #fff) !important;
+  border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
+}
+
+.edify-popup-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
+  color: var(--edify-on-accent, #fff) !important;
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
+}
+
+/* Full-height detail rails are not data-entry drawers, but they share the
+   same surface, backdrop and responsive finish so opening one never drops the
+   user into a second design language. */
+.edify-popup-dialog--rail {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.edify-popup-dialog--rail .edify-popup-dialog__surface {
+  width: min(100%, 45rem) !important;
+  max-width: 45rem !important;
+  max-height: 100dvh !important;
+  height: 100dvh !important;
+  border-block: 0 !important;
+  border-inline-end: 0 !important;
+  border-radius: var(--drawer-radius) 0 0 var(--drawer-radius) !important;
+}
+
+.edify-popup-dialog--wide .edify-popup-dialog__surface {
+  width: min(100%, 42.5rem) !important;
+  max-width: 42.5rem !important;
+}
+
+/* A few workflow forms live inside their page Alpine state instead of being
+   fetched into #drawer-container.  Marking their actual panel with this class
+   gives them the same sign-in-derived surface and control treatment without
+   changing their server fallback or Alpine workflow. */
+.edify-form-dialog__surface {
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: var(--drawer-radius) !important;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--edify-surface-raised) 98%, #e9f6ff 2%), var(--edify-surface-raised)) !important;
+  box-shadow: var(--drawer-shadow) !important;
+}
+
+.edify-form-dialog__surface :where(label, legend) {
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 625 !important;
+  letter-spacing: -0.005em !important;
+  text-transform: none !important;
+}
+
+.edify-form-dialog__surface :where(
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="tel"], input[type="url"],
+  input[type="search"], input[type="date"], input[type="time"],
+  input[type="datetime-local"], input[type="file"], select, textarea
+) {
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  color: var(--edify-text) !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: 0.75rem !important;
+  outline: 0 !important;
+  background: color-mix(in srgb, var(--edify-surface-raised) 92%, var(--edify-surface-muted)) !important;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, #071f34 4%, transparent) !important;
+  font-size: 0.875rem;
+}
+
+.edify-form-dialog__surface :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--edify-accent) 14%, transparent) !important;
+}
+
+.edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary) {
+  color: var(--edify-on-accent, #fff) !important;
+  border-color: color-mix(in srgb, var(--edify-accent) 78%, #072e50) !important;
+  background-color: var(--edify-accent) !important;
+  background-image: linear-gradient(105deg, color-mix(in srgb, var(--edify-accent) 78%, #063f73), var(--edify-accent)) !important;
+}
+
+.edify-form-dialog__surface :where(button[type="submit"]:not([class*="rose"]):not([class*="danger"]):not([class*="amber"]), .btn-primary):hover:not(:disabled) {
+  color: var(--edify-on-accent, #fff) !important;
+  background-color: var(--edify-accent-hover) !important;
+  background-image: linear-gradient(105deg, var(--edify-primary-hover, var(--edify-accent-hover)), var(--edify-accent-hover)) !important;
+}
+
+@media (max-width: 47.99rem) {
+  .drawer-surface,
+  .drawer-surface.type-center {
+    max-height: 94dvh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+  }
+
+  .drawer-surface::after {
+    position: absolute;
+    z-index: 4;
+    top: 0.45rem;
+    left: 50%;
+    width: 2.5rem;
+    height: 0.25rem;
+    content: "";
+    border-radius: 999px;
+    background: var(--edify-border-strong);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .drawer-header {
+    min-height: 6rem;
+    padding: 1.4rem 1rem 1rem;
+  }
+
+  .drawer-header__identity {
+    gap: 0.7rem;
+  }
+
+  .drawer-header__mark {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-basis: 2.5rem;
+  }
+
+  .drawer-header__eyebrow {
+    display: none;
+  }
+
+  .drawer-header__title-row h3 {
+    font-size: 1rem !important;
+  }
+
+  .drawer-header__subtitle {
+    font-size: var(--edify-text-micro-size) !important;
+  }
+
+  .drawer-close-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .drawer-body {
+    padding: 1rem;
+  }
+
+  .drawer-body :where(
+    input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="tel"], input[type="url"],
+    input[type="search"], input[type="date"], input[type="time"],
+    input[type="datetime-local"], input[type="file"], select, textarea
+  ),
+  .edify-popup-dialog__surface :where(input, select, textarea) {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+
+  .drawer-footer {
+    padding-inline: 1rem;
+  }
+
+  .drawer-footer :where(button, a) {
+    min-height: 3rem;
+  }
+
+  .edify-popup-dialog {
+    align-items: end;
+    padding: 0;
+  }
+
+  .edify-popup-dialog__surface {
+    max-height: 94dvh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+  }
+
+  .edify-popup-dialog--rail .edify-popup-dialog__surface {
+    width: 100% !important;
+    height: 94dvh !important;
+    max-height: 94dvh !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+  }
+
+  .edify-form-dialog__surface {
+    max-height: 94dvh;
+    overflow-y: auto;
+    border-radius: 1.25rem !important;
+  }
+
+  .edify-form-dialog__surface :where(input, select, textarea) {
+    min-height: 3rem;
+    font-size: 1rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .drawer-close-btn,
+  .edify-popup-dialog__surface :where(button, a, input, select, textarea) {
+    min-height: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-surface,
+  .drawer-surface *,
+  .edify-popup-dialog__surface,
+  .edify-popup-dialog__surface * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }

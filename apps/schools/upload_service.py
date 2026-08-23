@@ -51,18 +51,28 @@ def _build_geography_index() -> dict:
         sub_county_exact[_lookup_key(sub_county.name)].append(sub_county)
         sub_counties_by_district[sub_county.district_id].append(sub_county)
 
-    aliases = {}
+    district_aliases = {}
     for alias, admin_id in GeographyAlias.objects.filter(
         admin_level="district"
     ).values_list("normalized_alias", "admin_id"):
-        aliases.setdefault(_lookup_key(alias), admin_id)
+        district_aliases.setdefault(_lookup_key(alias), admin_id)
+
+    sub_county_aliases = {}
+    for alias, admin_id in GeographyAlias.objects.filter(
+        admin_level="sub_county"
+    ).values_list("normalized_alias", "admin_id"):
+        sub_county_aliases.setdefault(_lookup_key(alias), admin_id)
 
     return {
         "districts": districts,
         "district_exact": district_exact,
         "district_by_id": {district.id: district for district in districts},
-        "district_aliases": aliases,
+        "district_aliases": district_aliases,
         "sub_counties": sub_counties,
+        "sub_county_by_id": {
+            sub_county.id: sub_county for sub_county in sub_counties
+        },
+        "sub_county_aliases": sub_county_aliases,
         "sub_county_exact": sub_county_exact,
         "sub_counties_by_district": sub_counties_by_district,
     }
@@ -113,6 +123,11 @@ def _resolve_geography(
     if not district and sub_county_key:
         matches = list(index["sub_county_exact"].get(sub_county_key, []))
         if not matches:
+            alias_id = index["sub_county_aliases"].get(sub_county_key)
+            alias_match = index["sub_county_by_id"].get(alias_id)
+            if alias_match:
+                matches = [alias_match]
+        if not matches:
             matches = [
                 candidate
                 for candidate in index["sub_counties"]
@@ -135,6 +150,11 @@ def _resolve_geography(
             ),
             None,
         )
+        if not sub_county:
+            alias_id = index["sub_county_aliases"].get(sub_county_key)
+            alias_match = index["sub_county_by_id"].get(alias_id)
+            if alias_match and alias_match.district_id == district.id:
+                sub_county = alias_match
         if not sub_county:
             sub_county = next(
                 (

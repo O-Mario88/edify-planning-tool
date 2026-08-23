@@ -3,95 +3,28 @@ x-data="{
 chart: null,
 initChart() {
 if (this.chart) this.chart.destroy();
-const options = {
-  series: [
-    { name: 'Planned', type: 'column', data: {{ performance_overview.planned|escape }} },
-    { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|escape }} },
-    { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|escape }} }
-  ],
-  chart: {
-    height: 240,
-    type: 'line',
-    toolbar: { show: false },
-    fontFamily: 'Geist Sans, sans-serif',
-    foreColor: 'var(--edify-text-muted)'
-  },
-  stroke: {
-    width: [0, 0, 2.5],
-    curve: 'straight',
-    lineCap: 'round',
-    colors: ['transparent', 'transparent', 'var(--edify-chart-green)']
-  },
-  fill: {
-    type: 'solid',
-    opacity: 1
-  },
-  colors: window.EdifyChartSystem.comparisonSeries,
-  plotOptions: {
-    bar: {
-      columnWidth: '48%',
-      borderRadius: 4,
-      borderRadiusApplication: 'end',
-      colors: { backgroundBarOpacity: 0, backgroundBarRadius: 4 }
-    }
-  },
-  markers: {
-    size: [0, 0, 4],
-    colors: ['var(--edify-surface)'],
-    strokeColors: 'var(--edify-chart-green)',
-    strokeWidth: 2,
-    hover: { sizeOffset: 2 }
-  },
-  dataLabels: {
-    enabled: false
-  },
-  labels: {{ performance_overview.labels|escape }},
-  xaxis: {
-    type: 'category',
-    axisBorder: { show: false },
-    axisTicks: { show: false },
-    labels: {
-      style: {
-        colors: 'var(--edify-text-subtle)',
-        fontSize: '12px',
-        fontWeight: '500'
-      }
-    }
-  },
-  yaxis: [
-    {
-      title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500', fontFamily: 'Geist Sans' } },
-      labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
-    },
-    {
-      opposite: true,
-      title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600', fontFamily: 'Geist Sans' } },
-      max: 100,
-      labels: { formatter: function (val) { return Math.round(val) + '%'; }, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } }
-    }
-  ],
-  grid: {
-    borderColor: 'var(--edify-chart-grid)',
-    strokeDashArray: 0,
-    xaxis: { lines: { show: false } },
-    yaxis: { lines: { show: true } },
-    padding: { left: 2, right: 6 }
-  },
-  legend: {
-    position: 'bottom',
-    horizontalAlign: 'left',
-    fontSize: '12px',
-    fontWeight: '500',
-    labels: { colors: 'var(--edify-text-muted)' },
-    markers: { size: 6, strokeWidth: 0, radius: 3 },
-    itemMargin: { horizontal: 8, vertical: 2 }
-  },
-  tooltip: {
-    theme: 'dark',
-    shared: true,
-    style: { fontSize: '12px', fontFamily: 'Geist Sans' }
-  }
-};
+/* Shared dual-axis form from EdifyChartSystem — the achievement line
+   keeps green because it is a rate against target, not a peer series. */
+const options = window.EdifyChartSystem.mixedTrend(3);
+options.series = [
+  { name: 'Planned', type: 'column', data: {{ performance_overview.planned|escape }} },
+  { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|escape }} },
+  { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|escape }} }
+];
+options.chart.height = 240;
+options.colors = [window.EdifyChartSystem.comparisonSeries[0], window.EdifyChartSystem.comparisonSeries[1], 'var(--edify-chart-green)'];
+options.stroke.colors = ['transparent', 'transparent', 'var(--edify-chart-green)'];
+options.markers.strokeColors = 'var(--edify-surface)';
+options.labels = {{ performance_overview.labels|escape }};
+options.xaxis.type = 'category';
+options.yaxis = [
+  { title: { text: 'Activities', style: { color: 'var(--edify-text-muted)', fontSize: '12px', fontWeight: '500' } },
+    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+  { show: false },
+  { opposite: true, max: 100,
+    title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600' } },
+    labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
+];
 this.chart = new ApexCharts(document.querySelector('#performanceChart'), options);
 this.chart.render();
 }

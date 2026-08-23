@@ -1,7 +1,13 @@
-<div class="flex min-w-[250px] flex-wrap justify-end gap-1">
+{% comment %}
+Four badges on one line. This wrapped before — a fifth badge fell under the
+fourth and made every row two lines tall, so the table read as ragged rather
+than dense. MSCS now has its own column, and nowrap keeps the rest honest: if
+a set ever grows again the row scrolls rather than silently restacking.
+{% endcomment %}
+<div class="flex flex-nowrap justify-end gap-1">
   {% for area in areas %}
   <span
-    class="inline-flex items-center gap-1 rounded-pill border px-1.5 py-0.5 edify-text-caption font-bold tabular-nums
+    class="inline-flex shrink-0 items-center gap-1 rounded-pill border px-1.5 py-0.5 edify-text-caption font-bold tabular-nums
       {% if area.tone == 'success' %}border-emerald-100 bg-emerald-50 text-emerald-700
       {% elif area.tone == 'info' %}border-sky-100 bg-sky-50 text-sky-700
       {% elif area.tone == 'warning' %}border-amber-100 bg-amber-50 text-amber-700

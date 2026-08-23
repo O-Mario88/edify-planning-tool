@@ -68,6 +68,50 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     </div>
   </div>
 
+  <!-- 2b. Not Yet Applied -->
+  <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b flex-wrap gap-2 edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">2b. Not Yet Applied <span class="text-slate-400">({{ not_applied_count }})</span></h2>
+      {% if can_adjust_allocation and not_applied_count %}
+      <form method="post" action="/cpd-learning/action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="bulk_apply_reminders">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        <input type="hidden" name="country" value="{{ country }}">
+        <input type="hidden" name="role" value="{{ role_filter }}">
+        <button type="submit" class="px-3 py-1.5 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Remind All to Apply</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if not_applied %}
+    <div class="divide-y edify-border">
+      {% for p in not_applied %}
+      <div class="flex items-center justify-between gap-3 py-2">
+        <div class="min-w-0">
+          <span class="block edify-text-caption font-bold edify-text">{{ p.name }}</span>
+          <span class="edify-text-caption text-slate-400">{{ p.role }} · {{ p.country }} · Allocation {{ p.allocation }}</span>
+        </div>
+        {% if can_adjust_allocation %}
+        <form method="post" action="/cpd-learning/action" class="shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="send_apply_reminder">
+          <input type="hidden" name="staff_user_id" value="{{ p.user_id }}">
+          <input type="hidden" name="fy" value="{{ fy }}">
+          <input type="hidden" name="country" value="{{ country }}">
+          <button type="submit" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Send Reminder</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% if not_applied_count > not_applied|length %}
+      <p class="edify-text-caption text-slate-400 font-semibold pt-2">Showing {{ not_applied|length }} of {{ not_applied_count }} — Remind All reaches everyone, and the Role filter narrows this list.</p>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="edify-text-caption text-slate-400 font-semibold py-4 text-center">Every eligible staff member in this scope has applied for FY {{ fy }} Professional Development.</p>
+    {% endif %}
+  </div>
+
   <!-- 3. Role-Based PD Allocation Settings -->
   <div id="pd-role-settings" class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <div class="flex items-center justify-between pb-3 border-b flex-wrap gap-2 edify-border">
@@ -93,8 +137,10 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
             <td class="py-2.5 pr-3 text-center tabular-nums text-slate-400">{{ row.staff_count }}</td>
             <td class="py-2.5 pr-3 text-right tabular-nums edify-text">{{ row.total_allocated }}</td>
             <td class="py-2.5 text-right">
-              <button type="button" hx-get="/cpd-learning/adjust-allocation?role={{ row.role }}&fy={{ fy }}&country={{ country|default:'Uganda' }}" hx-target="#pd-drawer-root" hx-swap="innerHTML"
+              {% if can_adjust_allocation %}
+              <button type="button" hx-get="/cpd-learning/adjust-allocation?role={{ row.role }}&fy={{ fy }}&country={{ country|default:'Uganda' }}" hx-target="#drawer-container" hx-swap="innerHTML"
                 class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Adjust</button>
+              {% else %}<span class="edify-text-caption text-slate-500">HR only</span>{% endif %}
             </td>
           </tr>
           {% empty %}
@@ -114,18 +160,15 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#pdStatusDonut');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: [{% for s in status_distribution %}{{ s.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
-               labels: [{% for s in status_distribution %}'{{ s.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-               chart: { type: 'donut', height: 220, fontFamily: 'Geist Sans, sans-serif' },
-               colors: ['var(--edify-text-subtle)', 'var(--edify-chart-blue)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-green)'],
-               legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
-               dataLabels: { enabled: false },
-               plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                 total: { show: true, label: 'Total', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ status_distribution_total }}' } } } } },
-               stroke: { width: 0 },
-               tooltip: { theme: 'dark' }
-             });
+             /* The reference donut form: bold centre total, legend carrying
+                value and share. Status colours stay this chart's own — the
+                lifecycle runs draft → completed, not a set of peers. */
+             const cfg = window.EdifyChartSystem.donut('Total');
+             cfg.series = [{% for s in status_distribution %}{{ s.count }}{% if not forloop.last %},{% endif %}{% endfor %}];
+             cfg.labels = [{% for s in status_distribution %}'{{ s.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+             cfg.chart.height = 220;
+             cfg.colors = ['var(--edify-text-subtle)', 'var(--edify-chart-blue)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-green)'];
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">
@@ -144,18 +187,18 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#pdFundDonut');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: [{{ fund_utilization.accounted }}, {{ fund_utilization.committed_not_accounted }}, {{ fund_utilization.uncommitted }}],
-               labels: ['Accounted For', 'Committed, Not Accounted', 'Uncommitted'],
-               chart: { type: 'donut', height: 220, fontFamily: 'Geist Sans, sans-serif' },
-               colors: ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)'],
-               legend: { position: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-subtle)' } },
-               dataLabels: { enabled: false },
-               plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
-                 total: { show: true, label: 'Accounted', fontSize: '12px', color: 'var(--edify-text-subtle)', formatter: () => '{{ fund_utilization.accounted_pct }}%' } } } } },
-               stroke: { width: 0 },
-               tooltip: { theme: 'dark' }
-             });
+             /* Status, not category: accounted / committed / uncommitted is an
+                ordering from settled to open. Reserved status colours stay
+                reserved — swapping in the categorical ramp would make the
+                chart stop meaning anything. The centre reads the accounted
+                share, not the raw sum, because that is this chart's verdict. */
+             const cfg = window.EdifyChartSystem.donut('Accounted');
+             cfg.series = [{{ fund_utilization.accounted }}, {{ fund_utilization.committed_not_accounted }}, {{ fund_utilization.uncommitted }}];
+             cfg.labels = ['Accounted For', 'Committed, Not Accounted', 'Uncommitted'];
+             cfg.chart.height = 220;
+             cfg.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)'];
+             cfg.plotOptions.pie.donut.labels.total.formatter = () => '{{ fund_utilization.accounted_pct }}%';
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">
@@ -311,10 +354,12 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
           <span class="edify-text-caption font-extrabold leading-tight edify-text">Remind Pending Accountability</span>
         </button>
       </form>
+      {% if can_adjust_allocation %}
       <a href="#pd-role-settings" class="rounded-surface border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5 edify-surface-muted edify-border">
         <span class="h-8 w-8 rounded-pill bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">{% include "partials/analytics/pl/_icon.html" with name="currency" %}</span>
         <span class="edify-text-caption font-extrabold leading-tight edify-text">Adjust Allocations</span>
       </a>
+      {% endif %}
     </div>
   </div>
 

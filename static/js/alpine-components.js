@@ -292,7 +292,7 @@ document.addEventListener('alpine:init', () => {
           ...shared,
           series: [{ name: 'School', data: data.funding_scatter || [] }],
           chart: { ...shared.chart, height: 260, type: 'scatter', zoom: { enabled: false } },
-          colors: ['var(--edify-chart-blue)'],
+          colors: window.EdifyChartSystem.singleSeries.slice(),
           xaxis: {
             title: { text: 'Accepted spend (UGX)', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
             labels: { formatter: (value) => `${Math.round(value / 1000)}k`, style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } },
@@ -559,9 +559,14 @@ document.addEventListener('alpine:init', () => {
     render() {
       const all = this.payload();
       const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-      const brand = css('--edify-chart-blue') || '#0d5b9e';
+      /* The first two categorical slots, so a comparison here matches one
+         drawn anywhere else — and picks up the dark-mode steps, which the
+         --edify-chart-* tokens have no validated variant of. The semantic
+         four below stay as they are: green/amber/red are carrying meaning
+         in the status charts that use them. */
+      const brand = css('--edify-series-1') || '#0e5da3';
       const muted = '#94a3b8';
-      const orange = css('--edify-chart-orange') || '#ea580c';
+      const orange = css('--edify-series-2') || '#ea580c';
       const green = css('--edify-chart-green') || '#10b981';
       const amber = css('--edify-chart-amber') || '#f59e0b';
       const red = css('--edify-chart-red') || '#ef4444';

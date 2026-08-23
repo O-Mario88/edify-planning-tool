@@ -37,32 +37,28 @@
              if (this.chart) { this.chart.destroy(); }
              const el = document.querySelector('#cdDashPerfChart');
              if (!el) return;
-             this.chart = new ApexCharts(el, {
-               series: [
-                 { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|escape }} },
-                 { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|escape }} },
-                 { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
-                 { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
-               ],
-               chart: { height: 265, type: 'line', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
-               stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
-               colors: window.EdifyChartSystem.mixedSeries,
-               dataLabels: { enabled: false },
-               labels: {{ country_performance.labels|escape }},
-               xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
-                        labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
-               yaxis: [
-                 { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
-                   labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
-                 { seriesName: 'Planned Activities', show: false },
-                 { seriesName: 'Planned Activities', show: false },
-                 { opposite: true, max: 100, min: 0,
-                   labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
-               ],
-               grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
-               legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
-               tooltip: { theme: 'dark', shared: true, intersect: false }
-             });
+             /* Shared dual-axis form — bar geometry, line weight, markers, grid,
+                legend and tooltip all come from the platform preset so this reads
+                as the same chart as its PL and RVP twins. */
+             const cfg = window.EdifyChartSystem.mixedTrend(4);
+             cfg.series = [
+               { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|escape }} },
+               { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|escape }} },
+               { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
+               { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
+             ];
+             cfg.chart.height = 265;
+             cfg.labels = {{ country_performance.labels|escape }};
+             cfg.xaxis.type = 'category';
+             cfg.yaxis = [
+               { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: 'var(--edify-text-subtle)', fontSize: '12px' } },
+                 labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+               { seriesName: 'Planned Activities', show: false },
+               { seriesName: 'Planned Activities', show: false },
+               { opposite: true, max: 100, min: 0,
+                 labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
+             ];
+             this.chart = new ApexCharts(el, cfg);
              this.chart.render();
            }
          }" x-init="$nextTick(() => initChart())">
@@ -123,13 +119,14 @@
         <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
       </div>
       <div class="overflow-x-auto -mx-1">
-        <table class="w-full min-w-[980px] edify-text-caption">
+        <table class="edify-performance-table w-full min-w-[980px] edify-text-caption">
           <thead>
             <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
               <th class="text-left font-bold py-1.5 pl-1">Lead</th>
               <th class="text-left font-bold py-1.5">Region</th>
               <th class="text-right font-bold py-1.5">Target %</th>
               <th class="text-right font-bold py-1.5">Supervised CCEO Areas</th>
+              <th class="text-right font-bold py-1.5 whitespace-nowrap">MSCS</th>
               <th class="text-right font-bold py-1.5">Staff</th>
               <th class="text-right font-bold py-1.5">Planned</th>
               <th class="text-right font-bold py-1.5">Verified</th>
@@ -141,8 +138,8 @@
           <tbody class="divide-y divide-slate-50">
             {% for r in pl_performance.rows %}
             <tr>
-              <td class="text-left font-semibold text-slate-700 py-2 pl-1 whitespace-nowrap">{{ r.name }}</td>
-              <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ r.region }}</td>
+              <td class="text-left font-semibold text-slate-700 py-2 pl-1" title="{{ r.name }}">{{ r.name }}</td>
+              <td class="text-left text-slate-500 py-2" title="{{ r.region }}">{{ r.region }}</td>
               <td class="text-right py-2">
                 <span class="inline-flex items-center gap-1.5 justify-end">
                   <span class="hidden sm:block w-14 h-[6px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if r.target_pct >= 70 %}bg-teal-500{% elif r.target_pct >= 55 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.target_pct }}%"></span></span>
@@ -151,6 +148,14 @@
               </td>
               <td class="py-2 pl-3">
                 {% include "partials/analytics/cd/_target_area_badges.html" with areas=r.areas %}
+              </td>
+              <td class="text-right tabular-nums py-2 whitespace-nowrap">
+                {% if r.mscs and r.mscs.pct is not None %}
+                  <span title="{{ r.mscs.label }}: {{ r.mscs.pct }}% ({{ r.mscs.achieved }}/{{ r.mscs.target }})"
+                        class="font-bold {% if r.mscs.tone == 'success' %}text-emerald-600{% elif r.mscs.tone == 'warning' %}text-amber-600{% elif r.mscs.tone == 'danger' %}text-rose-600{% else %}text-slate-600{% endif %}">{{ r.mscs.pct }}%</span>
+                {% else %}
+                  <span class="text-slate-400" title="No MSCS target set">—</span>
+                {% endif %}
               </td>
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.staff }}</td>
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.planned|intcomma }}</td>
@@ -165,7 +170,7 @@
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="10" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios yet.</td></tr>
+            <tr><td colspan="11" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -244,7 +249,14 @@
           <p class="edify-text-caption font-bold text-slate-500 uppercase">Not Started</p>
         </div>
       </div>
-      <a href="/disbursements" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">Aged analysis →</a>
+      {% comment %}
+      /disbursements is the Accountant's action queue and the Country Director
+      cannot open it — the link bounced him back to this page. He is not meant
+      to disburse, so the fix is not to grant it: it is to send him where the
+      same money is his to look at. Funded-not-completed is a fund-request
+      question for him, and that page he owns.
+      {% endcomment %}
+      <a href="/fund-requests/weekly" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">Open fund requests →</a>
     </div>
   </div>
 
@@ -296,7 +308,7 @@
               <tr>
                 <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}{% if row.kind == 'cluster' %} <span class="text-slate-400 edify-text-caption">cluster</span>{% endif %}</td>
                 {% for cell in row.cells %}
-                <td class="text-center font-bold tabular-nums rounded-small px-0.5 py-1
+                <td class="text-center font-bold tabular-nums px-0.5 py-1
                   {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800
                   {% elif cell.tone == 'lime' %}bg-lime-100 text-lime-800
                   {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
@@ -305,7 +317,7 @@
                   {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}
                 </td>
                 {% endfor %}
-                <td class="text-center font-extrabold tabular-nums rounded-small px-0.5 py-1
+                <td class="text-center font-extrabold tabular-nums px-0.5 py-1
                   {% if row.overall_tone == 'success' %}bg-emerald-200 text-emerald-900
                   {% elif row.overall_tone == 'lime' %}bg-lime-200 text-lime-900
                   {% elif row.overall_tone == 'warning' %}bg-amber-200 text-amber-900

@@ -29,7 +29,7 @@
 
 .admin-command__breadcrumbs svg { width: 0.78rem; height: 0.78rem; color: var(--edify-text-subtle); }
 .admin-command__breadcrumbs a:hover { color: var(--edify-accent); }
-.admin-command__breadcrumbs span { color: var(--edify-text); font-weight: 650; }
+.admin-command__breadcrumbs span { color: var(--edify-text); font-weight: 600; }
 
 .admin-command__header {
   display: flex;
@@ -80,65 +80,15 @@
 .admin-button--secondary:hover { color: var(--edify-accent); border-color: var(--edify-accent-border); background: var(--edify-accent-light); }
 
 /* KPI strip */
-.admin-kpi-strip {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-block-end: 0.9rem;
-}
 
-.admin-kpi {
-  min-width: 0;
-  min-height: 5.85rem;
-  display: flex;
-  align-items: center;
-  gap: 0.72rem;
-  padding: 0.82rem;
-  border: 1px solid var(--edify-border);
-  border-radius: var(--edify-radius-md);
-  background: var(--edify-surface);
-  box-shadow: var(--edify-shadow-sm);
-  transition: transform var(--edify-transition-fast), border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
-}
-
-a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accent-border); box-shadow: var(--edify-shadow-md); }
-
-.admin-kpi__icon {
-  width: 2.45rem;
-  height: 2.45rem;
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--edify-info);
-  background: var(--edify-info-light);
-}
-
-.admin-kpi__icon svg { width: 1.35rem; height: 1.35rem; }
-.admin-kpi[data-tone="success"] .admin-kpi__icon,
-.admin-kpi[data-tone="finance"] .admin-kpi__icon { color: var(--edify-success); background: var(--edify-success-light); }
-.admin-kpi[data-tone="warning"] .admin-kpi__icon { color: var(--edify-warning); background: var(--edify-warning-light); }
-.admin-kpi[data-tone="danger"] .admin-kpi__icon { color: var(--edify-danger); background: var(--edify-danger-light); }
-.admin-kpi[data-tone="purple"] .admin-kpi__icon,
-.admin-kpi[data-tone="violet"] .admin-kpi__icon { color: var(--edify-purple); background: var(--edify-purple-light); }
-
-.admin-kpi__copy { min-width: 0; display: block; }
-.admin-kpi__label { min-height: 1.8em; display: block; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 580; line-height: 1.22; }
-.admin-kpi strong { display: block; margin-block-start: 0.1rem; color: var(--edify-text); font-size: 1.34rem; font-weight: 680; line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
 /* The helper carries the denominator ("200 of 221 scheduled this month"), which
    is the part that makes a percentage auditable. `white-space: nowrap` clipped
    it to "200 of 221 schedule…" in a seven-column grid, so the one detail worth
    reading was the one thrown away. Wraps to two lines, then clamps — the card
    keeps a bounded height without truncating mid-word. */
-.admin-kpi small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; margin-block-start: 0.26rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 470; line-height: 1.2; }
 
 /* Workspace composition */
-.admin-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(21.5rem, 25rem);
-  gap: 0.9rem;
-  align-items: start;
-}
+
 
 .admin-workspace__main,
 .admin-stack,
@@ -209,14 +159,14 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   color: var(--edify-accent);
   background: var(--edify-accent-light);
   font-size: var(--edify-text-micro-size);
-  font-weight: 650;
+  font-weight: 600;
   vertical-align: 0.05rem;
 }
 
 .admin-panel__footer-link { display: block; padding: 0.62rem 0.95rem 0.78rem; border-top: 1px solid var(--edify-border); }
 
 /* Tables */
-.admin-table-wrap { min-width: 0; padding-inline: 0.95rem; overflow-x: auto; overscroll-behavior-inline: contain; }
+
 .admin-table { width: 100%; border-collapse: collapse; color: var(--edify-text-muted); font-size: var(--edify-text-table-size); }
 .admin-table caption { text-align: start; }
 .admin-table th {
@@ -255,7 +205,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 }
 /* Micro badge text on the light tints needs the AA text tones (the base fill
    tones measured 2.1-3.4:1 here). Dark themes alias -text back to the fills. */
-.admin-status.s-green { color: var(--edify-success-text); background: var(--edify-success-light); }
+
 .admin-status.s-orange { color: var(--edify-warning-text); background: var(--edify-warning-light); }
 .admin-status.s-red { color: var(--edify-danger-text); background: var(--edify-danger-light); }
 .admin-status.s-blue { color: var(--edify-info-text); background: var(--edify-info-light); }
@@ -267,7 +217,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-empty--compact { padding: 0.65rem 0.9rem; }
 
 /* Planning chart */
-.admin-planning-progress { padding-block-end: 0.55rem; }
+
 .admin-planning-progress__header { flex-wrap: wrap; }
 .admin-panel__header-actions {
   min-inline-size: 0;
@@ -328,7 +278,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-line-chart__labels { display: flex; justify-content: space-between; gap: 0.25rem; padding: 0 0.25rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 500; }
 
 /* SSA and target performance */
-.admin-ssa { padding-block-end: 0.78rem; }
+
 .admin-intervention-group { padding: 0.72rem 0.95rem 0; }
 .admin-intervention-group h3 { margin-block-end: 0.5rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .admin-intervention { display: grid; grid-template-columns: minmax(7rem, 8rem) minmax(3.5rem, 1fr) 2rem; align-items: center; gap: 0.65rem; min-height: 1.55rem; color: var(--edify-text); font-size: var(--edify-text-micro-size); }
@@ -351,7 +301,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-target-row > .admin-status { grid-column: 2; }
 
 /* Lower dashboard */
-.admin-spark-line { width: 3.5rem; color: var(--edify-success); }
+
 .admin-clusters tbody tr:nth-child(3n + 2) .admin-spark-line { color: var(--edify-warning); }
 .admin-clusters tbody tr:nth-child(3n) .admin-spark-line { color: var(--edify-danger); }
 
@@ -378,7 +328,7 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-mini__bars i:nth-child(5n) { height: 100%; }
 
 /* Right rail */
-.admin-rail-card { min-width: 0; }
+
 .admin-upcoming-list { display: grid; }
 .admin-upcoming { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.65rem; padding: 0.72rem 0.9rem; border-bottom: 1px solid var(--edify-border); }
 .admin-upcoming:last-child { border-bottom: 0; }
@@ -436,26 +386,19 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 .admin-execution > div { min-width: 0; padding: 0.48rem 0.55rem; border-right: 1px solid var(--edify-border); text-align: center; }
 .admin-execution > div:last-child { border-right: 0; }
 .admin-execution span { display: block; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
-.admin-execution strong { display: block; margin-block-start: 0.28rem; color: var(--edify-text); font-size: 1.05rem; font-weight: 650; line-height: 1; }
+.admin-execution strong { display: block; margin-block-start: 0.28rem; color: var(--edify-text); font-size: 1.05rem; font-weight: 600; line-height: 1; }
 /* 0.47rem rendered at 7.5px — below any readable floor — and the success fill
    tone read 2.54:1. The text tone + the panel's 0.58rem metadata size fix both. */
-.admin-execution small { display: block; margin-block-start: 0.25rem; color: var(--edify-success-text); font-size: var(--edify-text-micro-size); font-weight: 540; }
+
 
 /* Blue is intentionally glassier than Dark; both keep the same hierarchy. */
-.theme-blue .admin-command :is(.admin-panel, .admin-kpi) {
-  background: var(--edify-surface-treatment);
-  border-color: var(--edify-border);
-  box-shadow: inset 0 1px 0 var(--edify-glass-highlight), var(--edify-shadow-md);
-  -webkit-backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-  backdrop-filter: blur(var(--edify-glass-blur)) saturate(var(--edify-glass-saturation));
-}
+
 .theme-blue .admin-command :is(.admin-mini, .admin-budget-grid article) { background: var(--edify-glass-tile-treatment); }
 .theme-blue .admin-button--primary { color: var(--edify-on-accent); background: var(--edify-button-primary-treatment); }
 .theme-blue .admin-button--secondary { background: var(--edify-button-secondary-treatment); }
 .theme-dark .admin-command :is(.admin-panel, .admin-kpi) { background: var(--edify-surface-treatment); box-shadow: var(--edify-shadow-md); }
 
 @container admin-command (max-width: 88rem) {
-  .admin-kpi-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* One column here, not two-plus-a-span: that reflow existed to give the
      Priority Schools table a full-width row beneath the two narrow panels.
      With two panels left, stacking keeps the table full-width all the same. */
@@ -477,11 +420,8 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 
 @container admin-command (max-width: 48rem) {
   .admin-command { padding: 1rem; }
-  /* Column direction — the shared lead basis is a main-axis size here. */
-  .admin-command__header { align-items: flex-start; flex-direction: column; --page-header-lead-basis: auto; --page-header-align: flex-start; }
   .admin-command__actions { width: 100%; }
   .admin-command__actions .admin-button { flex: 1; }
-  .admin-kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-grid--middle,
   .admin-rail { grid-template-columns: minmax(0, 1fr); }
   .admin-priority-schools,
@@ -492,10 +432,6 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
   .admin-command__breadcrumbs { margin-block-end: 0.6rem; }
   .admin-command__header p { font-size: var(--edify-text-micro-size); }
   .admin-command__actions { display: grid; grid-template-columns: 1fr; }
-  .admin-kpi { min-height: 5.4rem; padding: 0.68rem; }
-  .admin-kpi__icon { width: 2.15rem; height: 2.15rem; }
-  .admin-kpi strong { font-size: 1.16rem; }
-  .admin-kpi__label { font-size: var(--edify-text-micro-size); }
   .admin-intervention { grid-template-columns: minmax(6.5rem, 7.2rem) minmax(2rem, 1fr) 1.75rem; gap: 0.45rem; }
   .admin-target-list--rail .admin-target-row { grid-template-columns: minmax(0, 1fr) auto; }
   .admin-target-list--rail .admin-target-row > .admin-status { grid-column: 2; }
@@ -558,6 +494,6 @@ a.admin-kpi:hover { transform: translateY(-1px); border-color: var(--edify-accen
 }
 
 /* The ops tiles are links; the strip's own styling assumes <article>. */
-a.admin-kpi { text-decoration: none; color: inherit; }
-a.admin-kpi:hover { border-color: var(--brand-primary); }
-a.admin-kpi:focus-visible { outline: var(--edify-focus-outline); outline-offset: 2px; }
+
+
+

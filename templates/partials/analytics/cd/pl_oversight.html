@@ -5,13 +5,14 @@
     <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Supervised CCEO performance across all five target areas · click a PL for individual results</p>
   </div>
   <div class="overflow-x-auto -mx-1">
-    <table class="w-full min-w-[760px] edify-text-caption">
+    <table class="edify-performance-table w-full min-w-[760px] edify-text-caption">
       <thead>
         <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
           <th class="text-left font-bold py-1.5 pl-1">PL</th>
           <th class="text-right font-bold py-1.5">CCEOs</th>
           <th class="text-right font-bold py-1.5">Tgt %</th>
           <th class="text-right font-bold py-1.5">CCEO Area Results</th>
+          <th class="text-right font-bold py-1.5 whitespace-nowrap">MSCS</th>
           <th class="text-right font-bold py-1.5">At Risk</th>
           <th class="text-right font-bold py-1.5 pr-1">Risk</th>
         </tr>
@@ -27,6 +28,14 @@
           <td class="py-1.5 pl-3">
             {% include "partials/analytics/cd/_target_area_badges.html" with areas=r.areas %}
           </td>
+          <td class="text-right tabular-nums py-1.5 whitespace-nowrap">
+            {% if r.mscs and r.mscs.pct is not None %}
+              <span title="{{ r.mscs.label }}: {{ r.mscs.pct }}% ({{ r.mscs.achieved }}/{{ r.mscs.target }})"
+                    class="font-bold {% if r.mscs.tone == 'success' %}text-emerald-600{% elif r.mscs.tone == 'warning' %}text-amber-600{% elif r.mscs.tone == 'danger' %}text-rose-600{% else %}text-slate-600{% endif %}">{{ r.mscs.pct }}%</span>
+            {% else %}
+              <span class="text-slate-400" title="No MSCS target set">—</span>
+            {% endif %}
+          </td>
           <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.schools_at_risk|intcomma }}</td>
           <td class="text-right py-1.5 pr-1">
             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
@@ -40,7 +49,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios in scope.</td></tr>
+        <tr><td colspan="7" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios in scope.</td></tr>
         {% endfor %}
       </tbody>
     </table>

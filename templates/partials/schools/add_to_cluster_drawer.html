@@ -1,7 +1,7 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Add School to Cluster{% endblock %}
-{% block drawer_subtitle %}Confirm the cluster for this school. Its assigned owner will automatically remain responsible.{% endblock %}
+{% block drawer_subtitle %}The school's saved system sub-county determines its cluster automatically.{% endblock %}
 
 {% block drawer_body %}
 <div class="cluster-assignment-drawer edify-surface space-y-5">
@@ -27,12 +27,13 @@
         <dd class="mt-0.5 font-bold text-slate-700">{{ school.district.name }}</dd>
       </div>
       <div class="col-span-2">
-        <dt class="font-semibold text-slate-400">Sub-county</dt>
+        <dt class="font-semibold text-slate-400">System sub-county</dt>
         <dd class="mt-0.5 font-bold text-slate-700">{{ school.sub_county.name|default:"Not assigned" }}</dd>
       </div>
     </dl>
   </section>
 
+  {% if geography_ready %}
   <form
     hx-post="/schools/{{ school.id }}/add-to-cluster"
     hx-target="#drawer-container"
@@ -219,5 +220,38 @@
       </button>
     </div>
   </form>
+  {% else %}
+  <section class="rounded-surface border border-amber-200 bg-amber-50/60 p-4" aria-labelledby="cluster-geography-required-heading">
+    <div class="flex items-start gap-3">
+      <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>
+      </svg>
+      <div>
+        <h3 id="cluster-geography-required-heading" class="text-[13px] font-extrabold text-slate-800">Complete the school geography first</h3>
+        <p class="mt-1 text-[12px] font-semibold leading-5 text-slate-600">
+          Select the school's updated sub-county on its profile. The saved value is mapped to the system geography and used to find the cluster that covers it.
+        </p>
+      </div>
+    </div>
+  </section>
+  <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+    <button
+      type="button"
+      @click="$dispatch('close-drawer')"
+      class="edify-surface min-h-11 rounded-control border border-slate-200 px-5 text-[12px] font-bold text-slate-700 transition-colors hover:border-slate-300"
+    >
+      Close
+    </button>
+    <button
+      type="button"
+      hx-get="/schools/{{ school.id }}/edit-drawer"
+      hx-target="#drawer-container"
+      hx-swap="innerHTML"
+      class="btn-premium-primary min-h-11 rounded-control px-6 text-[12px] font-bold text-white transition-colors"
+    >
+      Update School Profile
+    </button>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

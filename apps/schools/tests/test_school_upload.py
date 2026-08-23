@@ -199,6 +199,22 @@ class SchoolUploadTest(APITestCase):
         school = School.objects.get(school_id="SCH-SC")
         self.assertEqual(school.sub_county_id, sub_county.id)
 
+    def test_updated_sub_county_header_maps_to_system_geography(self):
+        from apps.geography.models import SubCounty
+
+        sub_county = SubCounty.objects.create(name="Bardege", district=self.district)
+        body = (
+            "School ID,School Name,District,Updated Sub-County,Staff Name\n"
+            "SCH-UPDATED-SC,Updated Location Primary,Gulu,Bardege,Aisha Dar\n"
+        )
+
+        res = self._post_and_import(self._csv(body))
+
+        self.assertEqual(res.status_code, 200, res.content)
+        school = School.objects.get(school_id="SCH-UPDATED-SC")
+        self.assertEqual(school.sub_county_id, sub_county.id)
+        self.assertEqual(school.uploaded_sub_county_text, "Bardege")
+
     def test_numeric_uploaded_school_id_is_preserved_without_prefix(self):
         body = (
             "School ID,School Name,District,Staff Name\n"
@@ -567,6 +583,47 @@ class ResolveGeographyTest(APITestCase):
         district, sub_county, ambiguous = _resolve_geography("", "Bardege")
         self.assertEqual(district, self.gulu)
         self.assertEqual(sub_county, sc)
+        self.assertEqual(ambiguous, [])
+
+    def test_sub_county_alias_maps_to_its_canonical_system_record(self):
+        from apps.geography.models import GeographyAlias, SubCounty
+        from apps.schools.upload_service import _resolve_geography
+
+        sc = SubCounty.objects.create(name="Bardege-Layibi", district=self.gulu)
+        GeographyAlias.objects.create(
+            admin_level="sub_county",
+            admin_id=sc.id,
+            alias="Bardege Layibi Division",
+            normalized_alias="bardege layibi division",
+            source="school profile update",
+        )
+
+        district, sub_county, ambiguous = _resolve_geography(
+            "Gulu", "Bardege Layibi Division"
+        )
+
+        self.assertEqual(district, self.gulu)
+        self.assertEqual(sub_county, sc)
+        self.assertEqual(ambiguous, [])
+
+    def test_sub_county_alias_cannot_cross_the_selected_district(self):
+        from apps.geography.models import GeographyAlias, SubCounty
+        from apps.schools.upload_service import _resolve_geography
+
+        sc = SubCounty.objects.create(name="Bardege-Layibi", district=self.gulu)
+        GeographyAlias.objects.create(
+            admin_level="sub_county",
+            admin_id=sc.id,
+            alias="Bardege Layibi Division",
+            normalized_alias="bardege layibi division",
+        )
+
+        district, sub_county, ambiguous = _resolve_geography(
+            "Lira", "Bardege Layibi Division"
+        )
+
+        self.assertEqual(district, self.lira)
+        self.assertIsNone(sub_county)
         self.assertEqual(ambiguous, [])
 
     def test_ambiguous_sub_county_name_is_reported_not_guessed(self):

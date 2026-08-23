@@ -190,30 +190,29 @@
 
   function buildChart() {
     var t = getChartTheme();
-    return {
-      series: [
-        { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
-        { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
-        { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
-        { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
-      ],
-      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
-      stroke: { width: [0,0,0,2.25], curve: 'straight' },
-      colors: window.EdifyChartSystem.mixedSeries,
-      fill: { opacity: [1, 1, 1, 1] },
-      dataLabels: { enabled: false },
-      labels: {{ team_performance.labels|safe }},
-      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '12px', fontWeight: 600 } } },
-      yaxis: [
-        { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '12px' } } },
-        { seriesName: 'Planned', show: false },
-        { seriesName: 'Planned', show: false },
-        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '12px' } } }
-      ],
-      grid: { borderColor: t.grid, strokeDasharray: 3, padding: { left: 0, right: 0 } },
-      legend: { show: false },
-      tooltip: { theme: t.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '12px' } }
-    };
+    /* One shared form (bar geometry, line weight, markers, grid, legend,
+       tooltip) so this reads as the same chart family as every other role
+       dashboard. Only the data, the dual axis and the height are local. */
+    var cfg = window.EdifyChartSystem.mixedTrend(4);
+    cfg.series = [
+      { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
+      { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
+      { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
+      { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
+    ];
+    cfg.chart.height = 200;
+    cfg.chart.animations = { enabled: true, speed: 400, easing: 'easeinout' };
+    cfg.labels = {{ team_performance.labels|safe }};
+    cfg.xaxis.type = 'category';
+    cfg.yaxis = [
+      { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '12px' } } },
+      { seriesName: 'Planned', show: false },
+      { seriesName: 'Planned', show: false },
+      { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '12px' } } }
+    ];
+    cfg.tooltip.theme = t.isDark ? 'dark' : 'light';
+    cfg.legend.show = false;
+    return cfg;
   }
 
   var chartEl = document.querySelector('#plDashPerfChart');

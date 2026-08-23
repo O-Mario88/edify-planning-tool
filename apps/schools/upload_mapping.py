@@ -47,6 +47,8 @@ SCHOOL_HEADER_MAP: dict[str, str] = {
     # Sub-county / division
     "subcounty": "sub_county",
     "sub county": "sub_county",
+    "updated subcounty": "sub_county",
+    "updated sub county": "sub_county",
     # Current Partner Type → school_type
     "current partner type": "school_type",
     "partner type": "school_type",

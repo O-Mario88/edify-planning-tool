@@ -66,28 +66,23 @@
                  if (this.chart) { this.chart.destroy(); }
                  const el = document.querySelector('#rvpOverview');
                  if (!el) return;
-                 this.chart = new ApexCharts(el, {
-                   series: [
-                     { name: 'Planned', type: 'column', data: {{ overview.planned }} },
-                     { name: 'Completed', type: 'column', data: {{ overview.completed }} },
-                     { name: 'Verified', type: 'column', data: {{ overview.verified }} },
-                     { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
-                   ],
-                   chart: { height: 260, type: 'line', stacked: false, toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
-                   stroke: { width: [0, 0, 0, 2.25], curve: 'straight' },
-                   colors: window.EdifyChartSystem.mixedSeries,
-                   labels: [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
-                   yaxis: [
-                     { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
-                     { show: false }, { show: false },
-                     { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
-                   ],
-                   xaxis: { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: '600' } } },
-                   legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' } },
-                   grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
-                   dataLabels: { enabled: false },
-                   tooltip: { theme: 'dark' }
-                 });
+                 /* Shared dual-axis form from EdifyChartSystem — one bar geometry,
+                    line weight, grid, legend and tooltip across every role. */
+                 const cfg = window.EdifyChartSystem.mixedTrend(4);
+                 cfg.series = [
+                   { name: 'Planned', type: 'column', data: {{ overview.planned }} },
+                   { name: 'Completed', type: 'column', data: {{ overview.completed }} },
+                   { name: 'Verified', type: 'column', data: {{ overview.verified }} },
+                   { name: 'Target Achievement %', type: 'line', data: {{ overview.achievement }} }
+                 ];
+                 cfg.chart.height = 260;
+                 cfg.labels = [{% for l in overview.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+                 cfg.yaxis = [
+                   { labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
+                   { show: false }, { show: false },
+                   { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
+                 ];
+                 this.chart = new ApexCharts(el, cfg);
                  this.chart.render();
                }
              }" x-init="$nextTick(() => initChart())">
@@ -476,7 +471,7 @@
   <div x-show="showNote" x-cloak @click.self="showNote = false"
        class="fixed inset-0 z-50 bg-slate-900/40 flex items-center justify-center p-4"
        role="dialog" aria-modal="true" aria-labelledby="strategy-note-title">
-    <div class="edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+    <div class="edify-form-dialog__surface edify-surface rounded-surface shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
       <div class="flex items-center justify-between">
         <div>
           <h3 id="strategy-note-title" class="text-[14px] font-bold text-slate-800">New Strategy Note</h3>

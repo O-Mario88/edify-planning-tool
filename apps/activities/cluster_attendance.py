@@ -79,12 +79,31 @@ def trained_school_ids(school_ids, *, fy=None) -> set[str]:
         activity__status__in=CLUSTER_CREDIT_STATUSES,
         activity__deleted_at__isnull=True,
     )
+    # The array this table replaces is still written, and still holds every
+    # attendance recorded before the table existed. Reading only the table
+    # would make that history vanish from the counts on the day it shipped —
+    # so both are read until the column is dropped.
+    legacy = Activity.objects.filter(
+        activity_type__in=CLUSTER_TRAINING_TYPES,
+        status__in=CLUSTER_CREDIT_STATUSES,
+        deleted_at__isnull=True,
+    ).exclude(attended_school_ids=[])
     if fy:
         own = own.filter(fy=fy)
         cluster = cluster.filter(activity__fy=fy)
+        legacy = legacy.filter(fy=fy)
 
-    return set(own.values_list("school_id", flat=True)) | set(
-        cluster.values_list("school_id", flat=True)
+    wanted = set(school_ids) if isinstance(school_ids, (list, tuple, set)) else None
+    from_legacy = set()
+    for attended in legacy.values_list("attended_school_ids", flat=True):
+        for school_id in attended or []:
+            if wanted is None or school_id in wanted:
+                from_legacy.add(school_id)
+
+    return (
+        set(own.values_list("school_id", flat=True))
+        | set(cluster.values_list("school_id", flat=True))
+        | from_legacy
     )
 
 
@@ -301,6 +320,17 @@ def training_counts(school_ids, *, fy=None) -> dict[str, int]:
         own = own.filter(fy=fy)
         cluster = cluster.filter(activity__fy=fy)
 
+    # Same two-source rule as trained_school_ids: the array this table
+    # replaces still holds pre-migration attendance, and dropping it from the
+    # counts would make delivered work disappear from school profiles.
+    legacy = Activity.objects.filter(
+        activity_type__in=CLUSTER_TRAINING_TYPES,
+        status__in=CLUSTER_CREDIT_STATUSES,
+        deleted_at__isnull=True,
+    ).exclude(attended_school_ids=[])
+    if fy:
+        legacy = legacy.filter(fy=fy)
+
     counts: dict[str, int] = {}
     for source in (
         own.values("school_id").annotate(n=Count("id")).values_list("school_id", "n"),
@@ -310,4 +340,17 @@ def training_counts(school_ids, *, fy=None) -> dict[str, int]:
     ):
         for school_id, n in source:
             counts[school_id] = counts.get(school_id, 0) + n
+
+    wanted = set(school_ids) if isinstance(school_ids, (list, tuple, set)) else None
+    counted = set(
+        cluster.values_list("activity_id", flat=True).distinct()
+    )
+    for activity_id, attended in legacy.values_list("id", "attended_school_ids"):
+        # An activity that already has rows is counted from them; adding the
+        # array as well would credit the same session twice.
+        if activity_id in counted:
+            continue
+        for school_id in attended or []:
+            if wanted is None or school_id in wanted:
+                counts[school_id] = counts.get(school_id, 0) + 1
     return counts

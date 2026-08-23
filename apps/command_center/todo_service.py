@@ -908,6 +908,121 @@ def _returned_assignment_todos(principal, scope, today):
     return todos
 
 
+def _project_ssa_todos(principal, role, today):
+    """Special Project measurement work, derived live.
+
+    Three conditions, each of which stops matching the moment it is resolved:
+    a school enrolled with no baseline assessment to measure it against, a
+    follow-up whose window has opened and which nobody has collected, and —
+    for Impact Assessment — a catalogue item delivering school work that
+    nobody has said which intervention it is meant to move.
+
+    None of these is a stored task. A confirmed SSA lands and the row simply
+    stops appearing.
+    """
+    from apps.projects.models import ProjectSchoolAssignment
+    from apps.projects.ssa_impact import Impact
+
+    uid = getattr(principal, "id", None) or getattr(principal, "user_id", None)
+    if not uid:
+        return []
+    uid = str(uid)
+    todos = []
+
+    def row(*, key, title, description, priority, status_label, tone, url, action):
+        due_label, due_tone, due_sort = _due(today, today)
+        todos.append(
+            {
+                "id": key,
+                "title": title,
+                "description": description,
+                "category": "Special Project",
+                "priority": priority,
+                "status_key": "open",
+                "status_label": status_label,
+                "status_tone": tone,
+                "due_label": due_label,
+                "due_tone": due_tone,
+                "linked": description,
+                "action_label": action,
+                "action_url": url,
+                "actionable": True,
+                "source": "Special Project measurement",
+                "_due_sort": due_sort,
+            }
+        )
+
+    mine = ProjectSchoolAssignment.objects.filter(assigned_by=uid).select_related(
+        "project", "school"
+    )
+
+    # A school enrolled with nothing to measure it against. The project cannot
+    # claim movement for it until a confirmed assessment exists, so this is
+    # the work that unblocks the measurement rather than a reminder.
+    for row_obj in mine.filter(baseline_score__isnull=True)[:20]:
+        row(
+            key=f"psa-baseline-{row_obj.id}",
+            title="Collect Baseline SSA",
+            description=f"{row_obj.school.name} · {row_obj.project.name}",
+            priority="high",
+            status_label="Baseline required",
+            tone="danger",
+            url=f"/schools/{row_obj.school_id}",
+            action="Open school",
+        )
+
+    # The window has opened and the assessment that would judge the work has
+    # not arrived. Left uncollected this reads forever as "not yet
+    # measurable", which is honest but never becomes an answer.
+    for row_obj in mine.filter(
+        impact_classification=Impact.NOT_YET_MEASURABLE,
+        follow_up_due_on__lte=today,
+        follow_up_ssa__isnull=True,
+    ).select_related("project", "school")[:20]:
+        row(
+            key=f"psa-followup-{row_obj.id}",
+            title="Complete Follow-Up SSA",
+            description=f"{row_obj.school.name} · {row_obj.project.name}",
+            priority="high",
+            status_label="Follow-up due",
+            tone="warning",
+            url=f"/schools/{row_obj.school_id}",
+            action="Open school",
+        )
+
+    if role == "ImpactAssessment":
+        from apps.activity_catalogue.models import (
+            ActivityCatalogueItem,
+            ActivityInterventionMapping,
+        )
+
+        mapped = set(
+            ActivityInterventionMapping.objects.filter(active=True).values_list(
+                "catalogue_item_id", flat=True
+            )
+        )
+        unmapped = (
+            ActivityCatalogueItem.objects.filter(
+                status="active", requires_school=True
+            )
+            .exclude(id__in=mapped)
+            .order_by("display_name")[:20]
+        )
+        for item in unmapped:
+            row(
+                key=f"map-{item.id}",
+                title="Link Activity to SSA Intervention",
+                description=item.display_name,
+                priority="medium",
+                status_label="Mapping required",
+                tone="warning",
+                url="/settings/activity-catalogue",
+                action="Open catalogue",
+            )
+
+    return todos
+
+
 def _extra_work_todos(principal, role, today):
     """§18 To-Dos, derived live: the assignee's open/overdue/returned tasks,
     the reviewer's submissions, the assigner's overdue chase. Auto-close by
@@ -2813,7 +2928,7 @@ def _business_transformation_todos(principal, role, today):
 
         from apps.geography.models import District
 
-        for district in (
+        uncovered = list(
             District.objects.annotate(
                 eligible_count=models.Count(
                     "schools",
@@ -2832,12 +2947,32 @@ def _business_transformation_todos(principal, role, today):
             .filter(eligible_count__gt=0, financed_count=0)
             .select_related("region")
             .order_by("region__name", "name")[:20]
-        ):
+        )
+        # ONE item, not one per district. This produced a row per unfinanced
+        # district — twenty of them, every one carrying the same title, the
+        # same action label and the same destination. That is a single
+        # decision ("the loan programme has not reached these districts")
+        # rendered twenty times, and at that volume it was 74% of everything
+        # the Country Director was asked to do: his oversight of Program
+        # Leads, finance and budget sat underneath it, one item each.
+        #
+        # A country-level queue is a list of DECISIONS, not of rows matching
+        # a condition. The districts are still named, in the description, so
+        # nothing is lost by saying it once.
+        if uncovered:
+            names = ", ".join(d.name for d in uncovered[:6])
+            if len(uncovered) > 6:
+                names += f", and {len(uncovered) - 6} more"
+            schools = sum(d.eligible_count for d in uncovered)
             out.append(
                 {
-                    "id": f"bt-geography-gap-{district.id}",
+                    "id": "bt-geography-gap",
                     "title": "Review Geographic Financing Gap",
-                    "description": f"{district.name} has eligible schools but no confirmed school financing.",
+                    "description": (
+                        f"{len(uncovered)} district"
+                        f"{'' if len(uncovered) == 1 else 's'} have eligible "
+                        f"schools but no confirmed financing: {names}."
+                    ),
                     "category": "Business Transformation",
                     "priority": "medium",
                     "status_key": "waiting_me",
@@ -2845,8 +2980,8 @@ def _business_transformation_todos(principal, role, today):
                     "status_tone": "info",
                     "due_label": "This month",
                     "due_tone": "neutral",
-                    "linked": f"{district.region.name} · {district.eligible_count} schools",
-                    "action_label": "Review",
+                    "linked": f"{schools:,} eligible schools",
+                    "action_label": "Review coverage",
                     "action_url": "/business-transformation",
                     "actionable": True,
                     "source": "Geographic equity",
@@ -3026,6 +3161,7 @@ def get_todos(principal) -> dict:
     todos += _partner_delay_todos(principal, scope, today)
     todos += _partner_assignment_todos(principal, scope, today)
     todos += _partner_invoice_todos(principal, role)
+    todos += _project_ssa_todos(principal, role, today)
     todos += _extra_work_todos(principal, role, today)
     todos += _hr_exception_todos(principal, role, today)
     todos += _returned_assignment_todos(principal, scope, today)

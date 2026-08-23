@@ -55,7 +55,11 @@
   --brand-primary-focus: rgba(14, 93, 163, 0.28);
   --brand-primary-text: #0a4d86;
   --brand-primary-text-hover: var(--brand-primary);
-  --brand-primary-on-solid: #ffffff;
+  /* Same pairing rule as --edify-on-accent: the ink belongs to the theme,
+     not to the token. .edify-primary-solid fills with --brand-primary, which
+     is #e9eef8 in dark mode, so a hard-coded white label disappeared into
+     its own button. */
+  --brand-primary-on-solid: var(--text-on-brand, #ffffff);
 
   --edify-brand-primary: var(--brand-primary);
   --edify-brand-primary-hover: var(--brand-primary-hover);
@@ -82,7 +86,15 @@
      --edify-accent so button FILLS keep the brand colour — lightening those
      would break white-on-fill contrast the other way (2026-08 UI/UX audit). */
   --edify-accent-text: var(--edify-brand-primary);
-  --edify-on-accent: #ffffff;
+  /* The ink a primary button carries, per theme rather than always white.
+     Dark mode's primary fill is #e9eef8 and its hover is #ffffff, because on
+     a dark page a LIGHT button is the prominent one. White ink on those
+     measured 1.16:1 and 1.00:1 — on hover the label was literally the same
+     colour as the button it sat on, so it vanished. Each theme already
+     declares the right ink as --text-on-brand (white on the light and blue
+     themes, #0a0d14 on dark, which measures 16.70:1 and 19.43:1); this just
+     uses it instead of hard-coding one side of the pair. */
+  --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--edify-brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
 
@@ -141,6 +153,27 @@
   --edify-chart-orange: #ea580c;
   --edify-chart-pink: #ec4899;
   --edify-chart-lime: #84cc16;
+  /* ── Categorical series, in fixed order ──────────────────────────────
+     Blue first, always: a single-series chart is blue, and a comparison
+     starts from blue and takes the next hue in this order. Assigned in order
+     and never cycled — colour follows the entity, so a filter that drops a
+     series must not repaint the ones that remain.
+
+     These eight are validated, not chosen by eye: worst adjacent CVD
+     separation is ΔE 10.8 (deutan) and the worst normal-vision pair is 24.9.
+     Four of them sit under 3:1 against the light surface, which is why every
+     chart in this system carries direct value labels — the label is the
+     relief, not a nicety. Dark mode has its OWN steps below, because the same
+     hues against a dark surface fall outside the readable lightness band. */
+  --edify-series-1: #0e5da3;
+  --edify-series-2: #ea580c;
+  --edify-series-3: #10b981;
+  --edify-series-4: #8b5cf6;
+  --edify-series-5: #14b8a6;
+  --edify-series-6: #f59e0b;
+  --edify-series-7: #ec4899;
+  --edify-series-8: #84cc16;
+
   --edify-chart-grid: color-mix(in srgb, var(--edify-border) 58%, transparent);
   --edify-chart-tooltip: #111827;
   /* Ordered comparison-series contract. Bar charts always consume these
@@ -268,11 +301,12 @@
      Type uses stable semantic steps instead of viewport/container arithmetic.
      Layout may reflow responsively; a label, table cell or KPI does not change
      size merely because its card or browser happens to be a few pixels wider.
-       display → page titles (28px)
-       heading → section titles (20px)
-       title   → card/panel titles (16px)
-       body    → default text and long-form copy (15px)
-       label   → controls, table cells and secondary copy (14px)
+       hero    → the one number a card exists to show (30px bold)
+       display → page titles (22px bold)
+       heading → section titles (18px semibold)
+       title   → card/panel titles (16px semibold)
+       body    → default text and long-form copy (14px regular)
+       label   → controls, table cells and secondary copy (14px medium)
        micro   → short overlines and compact badges only (12px) */
   --edify-font-sans: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
@@ -280,10 +314,17 @@
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: var(--edify-font-sans);
 
-  --edify-text-display-size: 1.75rem;
-  --edify-text-heading-size: 1.25rem;
+  --edify-text-display-size: 1.375rem;
+  /* The rung above display, for the one number a card exists to show.
+     30px bold, per the reference design this scale follows: the numeral is
+     the largest text on the page, page titles sit two clear steps below it,
+     and nothing else competes with the data. The executive strip scales
+     fluidly up to this ceiling — declared here so the ladder owns the value
+     instead of it living as an arbitrary clamp. */
+  --edify-text-hero-size: 1.875rem;
+  --edify-text-heading-size: 1.125rem;
   --edify-text-title-size:   1rem;
-  --edify-text-body-size:    0.9375rem;
+  --edify-text-body-size:    0.875rem;
   --edify-text-label-size:   0.875rem;
   /* No rendered interface text may fall below this floor. Keep the micro tier
      semantic so charts and compact controls share the same 12px contract. */
@@ -295,18 +336,18 @@
   --edify-text-card-heading-size: 1.125rem;
   --edify-text-card-title-size: 1rem;
   --edify-text-tile-value-size: 1.375rem;
-  --edify-text-tile-label-size: 0.8125rem;
+  --edify-text-tile-label-size: 0.875rem;
   --edify-text-tile-helper-size: 0.8125rem;
   --edify-text-table-size: 0.875rem;
-  /* Headers and cells share one readable step. Hierarchy comes from weight,
-     colour and the header band, not from shrinking column labels. */
-  --edify-text-table-heading-size: var(--edify-text-table-size);
+  /* Headers sit one step below cells — 13px medium and muted against 14px
+     data. The band separates itself by weight and colour, not by bolding. */
+  --edify-text-table-heading-size: 0.8125rem;
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
   --edify-text-title-weight:   600;
-  --edify-text-body-weight:    350;
-  --edify-text-label-weight:   400;
+  --edify-text-body-weight:    400;
+  --edify-text-label-weight:   500;
   --edify-text-micro-weight:   400;
 
   --edify-text-display-leading: 1.15;
@@ -501,7 +542,8 @@
   --edify-primary-light: var(--brand-primary-soft);
   --edify-accent: var(--brand-primary);
   --edify-accent-hover: var(--brand-primary-hover);
-  --edify-on-accent: #ffffff;
+  /* Per theme — see the note beside the first definition. */
+  --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
   --brand-primary-text: var(--edify-sky-100);
@@ -678,7 +720,8 @@ html.theme-blue body {
   --edify-primary-light: var(--brand-primary-soft);
   --edify-accent: var(--brand-primary);
   --edify-accent-hover: var(--brand-primary-hover);
-  --edify-on-accent: #ffffff;
+  /* Per theme — see the note beside the first definition. */
+  --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
   --brand-primary-text: #bdd8e9;

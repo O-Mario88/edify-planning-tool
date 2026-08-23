@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260818nav2">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260823aura2">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260821foundation1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260821uiaudit1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260823aura1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260823aura10">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260817compactsearch1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260819homeonly1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260822cceotable1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbarzones6">
+<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260823aura1">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260823aura2">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,20 +98,20 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260821uiaudit1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260823aura1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260818type7">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260823aura1">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260820kpi2">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260823aura5">
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260822tables1">
-<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260816resilience1">
+<link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260822buttons1">
+<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260823aura1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -237,16 +237,30 @@ controller exists by the time a drawer's x-init runs.
   /* App-wide ordered palette for comparison charts. Semantic status charts
      (success / warning / danger) intentionally opt out so colour never lies. */
   window.EdifyChartSystem = Object.freeze({
+    /* One series is blue. A chart showing a single measure has nothing to
+       distinguish, so a second hue there would encode something that is not
+       in the data. The title names the series; no legend box is needed. */
+    singleSeries: Object.freeze(['var(--edify-series-1)']),
+
+    /* Comparison starts at blue and takes the next hue in order. Assigned in
+       order and NEVER cycled: colour follows the entity, so filtering a
+       series out must not repaint the survivors. A ninth series folds into
+       "Other" rather than inventing a hue. */
     comparisonSeries: Object.freeze([
-      'var(--edify-chart-blue)',
-      'var(--edify-chart-orange)',
-      'var(--edify-chart-green)',
+      'var(--edify-series-1)',
+      'var(--edify-series-2)',
+      'var(--edify-series-3)',
+      'var(--edify-series-4)',
+      'var(--edify-series-5)',
+      'var(--edify-series-6)',
+      'var(--edify-series-7)',
+      'var(--edify-series-8)',
     ]),
     mixedSeries: Object.freeze([
-      'var(--edify-chart-blue)',
-      'var(--edify-chart-orange)',
-      'var(--edify-chart-green)',
-      'var(--edify-chart-amber)',
+      'var(--edify-series-1)',
+      'var(--edify-series-2)',
+      'var(--edify-series-3)',
+      'var(--edify-series-4)',
     ]),
 
     /* Value labels above grouped bars collide as soon as the slot is narrower
@@ -280,6 +294,235 @@ controller exists by the time a drawer's x-init runs.
       });
       var max = Math.max.apply(null, flat.concat([1]));
       return (Math.abs(val) / max) * span >= (minPx || 26);
+    },
+
+    /* ── Chart forms ──────────────────────────────────────────────────────
+       A template asks for a FORM and gets the whole spec: mark thickness,
+       rounding, grid weight, label placement, tooltip. Twelve templates each
+       restating twenty options is how the charts drifted apart — the note
+       below about window.Apex makes the same point about empty states.
+
+       The specs are fixed rather than per-chart taste: bars cap at 24px so
+       the band's leftover stays as air, data-ends round 4px, lines are 2px,
+       markers 8px, area fills a ~10% wash rather than a saturated block, and
+       gridlines a solid hairline one step off the surface. Axis and label
+       text wears text tokens, never the series colour — a light hue is
+       illegible as text, and identity comes from the coloured mark beside it.
+       ------------------------------------------------------------------- */
+    ink: Object.freeze({
+      axis: 'var(--edify-text-subtle)',
+      legend: 'var(--edify-text-muted)',
+      grid: 'var(--edify-chart-grid)',
+    }),
+
+    /* Options every form shares. `extra` overrides, and a caller's own
+       options override that, so a chart can still say something specific
+       without restating the form. */
+    formBase: function (extra, opts) {
+      var ink = window.EdifyChartSystem.ink;
+      var base = {
+        chart: { toolbar: { show: false }, fontFamily: 'inherit' },
+        /* No gridlines. The reference labels every mark with its own value,
+           which makes a ruled background redundant ink — the reader takes the
+           number off the bar rather than tracing it to an axis. Charts that
+           genuinely need a rule (a % scale with no per-point label) turn
+           `grid.show` back on for themselves. */
+        grid: { show: false, padding: { left: 4, right: 4 } },
+        dataLabels: { enabled: false },
+        tooltip: { theme: 'dark', style: { fontSize: '12px' } },
+        legend: {
+          position: 'right', horizontalAlign: 'left', fontSize: '12px',
+          fontWeight: 600, itemMargin: { vertical: 3 },
+          markers: { width: 9, height: 9, radius: 9 },
+          labels: { colors: ink.legend },
+        },
+        xaxis: {
+          labels: { style: { colors: ink.axis, fontSize: '12px', fontWeight: 600 } },
+          axisBorder: { show: false }, axisTicks: { show: false },
+        },
+        yaxis: { labels: { style: { colors: ink.axis, fontSize: '12px' } } },
+      };
+      return Object.assign(base, extra || {}, opts || {});
+    },
+
+    /* One measure over time. Blue, and no legend box: there is only one
+       series, so a swatch would restate the title and cost space. */
+    areaTrend: function (opts) {
+      var S = window.EdifyChartSystem;
+      return S.formBase({
+        chart: { type: 'area', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: S.singleSeries.slice(),
+        stroke: { curve: 'smooth', width: 2, lineCap: 'round' },
+        fill: {
+          type: 'gradient',
+          gradient: { shadeIntensity: 0, opacityFrom: 0.18, opacityTo: 0.02, stops: [0, 100] },
+        },
+        markers: { size: 0, hover: { size: 5 } },
+        legend: { show: false },
+      }, opts);
+    },
+
+    /* Magnitude across categories, sorted. The value rides the bar tip, so
+       the reader never matches a bar back to an axis — and it is what makes
+       the lighter hues legible, since four of them sit under 3:1 against the
+       surface. Silent when the bar is too short to hold it. */
+    rankedBar: function (opts) {
+      var S = window.EdifyChartSystem;
+      return S.formBase({
+        chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: S.singleSeries.slice(),
+        plotOptions: {
+          bar: {
+            horizontal: true, barHeight: '62%', maxBarHeight: 24,
+            borderRadius: 4, borderRadiusApplication: 'end',
+            dataLabels: { position: 'top' },
+          },
+        },
+        dataLabels: {
+          enabled: true,
+          offsetX: 22,
+          style: { fontSize: '12px', fontWeight: 700, colors: [S.ink.legend] },
+          formatter: function (v, o) {
+            return S.barValueFitsInside(v, o) ? v : '';
+          },
+        },
+        legend: { show: false },
+        /* No rules here either: the value rides the bar tip, so the reader
+           never has to trace a bar back to the axis. */
+        grid: { show: false, padding: { left: 4, right: 4 } },
+      }, opts);
+    },
+
+    /* Composition of a whole. The centre carries the total, so the ring is
+       read as parts OF something rather than as free-floating slices. */
+    donut: function (totalLabel, opts) {
+      var S = window.EdifyChartSystem;
+      return S.formBase({
+        chart: { type: 'donut', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: S.comparisonSeries.slice(),
+        /* The legend carries the value and its share, so the ring never has
+           to be measured by eye — and it is what makes the lighter hues
+           usable, since several sit under 3:1 against the surface. The
+           swatch beside the text carries identity; the text itself stays in
+           a text token. */
+        legend: {
+          position: 'right', horizontalAlign: 'left', fontSize: '12px',
+          fontWeight: 600, itemMargin: { vertical: 3 },
+          markers: { width: 9, height: 9, radius: 9 },
+          labels: { colors: S.ink.legend },
+          formatter: function (label, o) {
+            /* The share is READ, not derived. ApexCharts has already worked
+               out each slice's percentage for its own rendering, so taking
+               that value keeps the client out of the arithmetic — the
+               platform's rule is that a figure a user reads was computed by
+               the server or by the chart engine, never assembled in a
+               formatter where nothing can check it. */
+            var g = (o && o.w && o.w.globals) || {};
+            var value = (g.series || [])[o.seriesIndex];
+            if (typeof value !== 'number') return label;
+            var share = ((g.seriesPercent || [])[o.seriesIndex] || [])[0];
+            var suffix = typeof share === 'number'
+              ? ' (' + share.toFixed(1) + '%)'
+              : '';
+            return label + '  ' + value.toLocaleString() + suffix;
+          },
+        },
+        stroke: { width: 2, colors: ['var(--edify-surface)'] },
+        plotOptions: {
+          pie: {
+            donut: {
+              size: '68%',
+              labels: {
+                show: true,
+                value: { fontSize: '22px', fontWeight: 700, color: 'var(--edify-text)' },
+                total: {
+                  show: true,
+                  label: totalLabel || 'Total',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: S.ink.legend,
+                },
+              },
+            },
+          },
+        },
+      }, opts);
+    },
+
+    /* Two or more measures side by side. Hues are taken in order from the
+       ordered palette, so a series keeps its colour when a filter removes
+       one of its neighbours. */
+    comparisonBar: function (opts) {
+      var S = window.EdifyChartSystem;
+      return S.formBase({
+        chart: { type: 'bar', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: S.comparisonSeries.slice(),
+        plotOptions: {
+          bar: {
+            columnWidth: '58%', maxColumnWidth: 24,
+            borderRadius: 4, borderRadiusApplication: 'end',
+            dataLabels: { position: 'top' },
+          },
+        },
+        /* The value sits above its bar, as in the reference. barLabelFits
+           keeps it silent when the slot is too narrow to hold the text
+           rather than letting neighbours collide. */
+        dataLabels: {
+          enabled: true, offsetY: -18,
+          style: { fontSize: '12px', fontWeight: 600, colors: [S.ink.legend] },
+          formatter: function (v, o) { return S.barLabelFits(o) ? v : ''; },
+        },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+      }, opts);
+    },
+
+    /* Columns plus a rate line on a second axis — the shape every role
+       dashboard uses for "planned vs delivered vs % of target". Ten
+       templates each restated this: bar geometry, line weight, marker size,
+       grid and the opposite axis, which is how one chart ended up with
+       hairline bars and another with slab ones. `lineIndex` says which
+       series is the line (default: the last), because that is the only part
+       that genuinely differs between them. */
+    mixedTrend: function (seriesCount, opts) {
+      var S = window.EdifyChartSystem;
+      var count = seriesCount || 2;
+      var lineIndex = (opts && opts.lineIndex != null) ? opts.lineIndex : count - 1;
+      var widths = [];
+      var markers = [];
+      var columnIndexes = [];
+      for (var i = 0; i < count; i++) {
+        widths.push(i === lineIndex ? 2.25 : 0);
+        markers.push(i === lineIndex ? 4 : 0);
+        if (i !== lineIndex) { columnIndexes.push(i); }
+      }
+      if (opts) { delete opts.lineIndex; }
+      return S.formBase({
+        chart: { type: 'line', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: S.mixedSeries.slice(),
+        stroke: { width: widths, curve: 'straight', lineCap: 'round' },
+        markers: { size: markers, strokeWidth: 2, hover: { size: 6 } },
+        plotOptions: {
+          bar: {
+            columnWidth: '58%', maxColumnWidth: 24,
+            borderRadius: 4, borderRadiusApplication: 'end',
+            dataLabels: { position: 'top' },
+          },
+        },
+        /* Columns carry their value; the rate line does not — a label on
+           every point of a twelve-month line is noise, and the line's whole
+           job is the shape. enabledOnSeries lists the column indices. */
+        dataLabels: {
+          enabled: true, enabledOnSeries: columnIndexes, offsetY: -18,
+          style: { fontSize: '12px', fontWeight: 600, colors: [S.ink.legend] },
+          formatter: function (v, o) { return S.barLabelFits(o) ? v : ''; },
+        },
+        legend: { position: 'top', horizontalAlign: 'left', fontSize: '12px',
+                  fontWeight: 600, itemMargin: { vertical: 3 },
+                  markers: { width: 9, height: 9, radius: 9 },
+                  labels: { colors: S.ink.legend } },
+        tooltip: { theme: 'dark', shared: true, intersect: false,
+                   style: { fontSize: '12px' } },
+      }, opts);
     },
   });
 
@@ -321,11 +564,16 @@ controller exists by the time a drawer's x-init runs.
         speed: 320,
       },
     },
+    /* No gridlines, platform-wide. The reference labels every mark with its
+       own value, so a ruled background is redundant ink — and this global
+       merges into EVERY chart, which is why a preset asking for `show: false`
+       still drew y-axis rules until the default itself changed. */
     grid: {
+      show: false,
       borderColor: 'var(--edify-chart-grid)',
       strokeDashArray: 0,
       xaxis: { lines: { show: false } },
-      yaxis: { lines: { show: true } },
+      yaxis: { lines: { show: false } },
       padding: { left: 4, right: 8, top: 4, bottom: 0 },
     },
     plotOptions: {
@@ -394,7 +642,7 @@ controller exists by the time a drawer's x-init runs.
       style: {
         fontFamily: 'Geist Sans, sans-serif',
         fontSize: '12px',
-        fontWeight: 650,
+        fontWeight: 600,
       },
     },
   };

@@ -163,12 +163,16 @@
       </div>
     </header>
 
-    <nav class="ia-tabs" aria-label="Milestone allocation views">
-      <a href="?fy={{ fy }}&tab=all" {% if selected.tab == "all" %}aria-current="page"{% endif %}>All milestones</a>
-      <a href="?fy={{ fy }}&tab=field_cascade" {% if selected.tab == "field_cascade" %}aria-current="page"{% endif %}>Field cascade</a>
-      <a href="?fy={{ fy }}&tab=specialist" {% if selected.tab == "specialist" %}aria-current="page"{% endif %}>Project / specialist</a>
-      <a href="?fy={{ fy }}&tab=country_owned" {% if selected.tab == "country_owned" %}aria-current="page"{% endif %}>Country owned</a>
-      <a href="?fy={{ fy }}&tab=non_scoreable" {% if selected.tab == "non_scoreable" %}aria-current="page"{% endif %}>Non-scoreable</a>
+    {% comment %}data-edify-tablist/-tab put these links on the platform's
+    one segmented-rail contract (platform.css layout + interactions.css
+    surface). The old ia-tabs class had no stylesheet anywhere — this was
+    the only tab control in the app rendering as bare links.{% endcomment %}
+    <nav data-edify-tablist class="flex items-center overflow-x-auto" aria-label="Milestone allocation views">
+      <a data-edify-tab href="?fy={{ fy }}&tab=all" {% if selected.tab == "all" %}aria-current="page"{% endif %}>All milestones</a>
+      <a data-edify-tab href="?fy={{ fy }}&tab=field_cascade" {% if selected.tab == "field_cascade" %}aria-current="page"{% endif %}>Field cascade</a>
+      <a data-edify-tab href="?fy={{ fy }}&tab=specialist" {% if selected.tab == "specialist" %}aria-current="page"{% endif %}>Project / specialist</a>
+      <a data-edify-tab href="?fy={{ fy }}&tab=country_owned" {% if selected.tab == "country_owned" %}aria-current="page"{% endif %}>Country owned</a>
+      <a data-edify-tab href="?fy={{ fy }}&tab=non_scoreable" {% if selected.tab == "non_scoreable" %}aria-current="page"{% endif %}>Non-scoreable</a>
     </nav>
 
     {% if active_filter_count %}

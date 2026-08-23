@@ -32,6 +32,8 @@ from apps.analytics.services import school_impact
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment
 from apps.accounts.staff_matching import OWNER_ROLES, on_staff
 from apps.clusters.eligibility import (
+    active_cluster_for_geography,
+    active_cluster_for_school_geography,
     eligible_clusters_for_school,
     ineligibility_reason,
 )
@@ -784,7 +786,10 @@ def school_parish_options_view(request):
 @require_page_permission("school_directory")
 def add_to_cluster_drawer_view(request, school_id):
     school = get_scoped_object_or_404(
-        School, request.user, id=school_id, deleted_at__isnull=True
+        School.objects.select_related("district", "sub_county"),
+        request.user,
+        id=school_id,
+        deleted_at__isnull=True,
     )
     user = request.user
 
@@ -795,26 +800,6 @@ def add_to_cluster_drawer_view(request, school_id):
             request,
             "partials/schools/drawer_error.html",
             {"error": "You do not have permission to assign clusters."},
-        )
-
-    def get_existing_covering_cluster(sch):
-        """Resolve both primary and multi-sub-county cluster coverage."""
-        if not sch.sub_county_id:
-            return None
-        return (
-            Cluster.objects.filter(
-                district_id=sch.district_id,
-                deleted_at__isnull=True,
-                status="active",
-            )
-            .filter(
-                Q(sub_county_id=sch.sub_county_id)
-                | Q(covered_sub_counties__sub_county_id=sch.sub_county_id)
-            )
-            .select_related("district", "sub_county")
-            .distinct()
-            .order_by("name")
-            .first()
         )
 
     def get_responsible_staff(sch):
@@ -842,7 +827,9 @@ def add_to_cluster_drawer_view(request, school_id):
         )
         return assigned_profiles[0] if len(assigned_profiles) == 1 else None
 
-    existing_covering_cluster = get_existing_covering_cluster(school)
+    # The profile's canonical SubCounty FK is the only location input. Raw
+    # uploaded text and posted cluster ids never participate in this lookup.
+    existing_covering_cluster = active_cluster_for_school_geography(school)
     responsible_staff = get_responsible_staff(school)
     show_cluster_directory = bool(
         school.sub_county_id and existing_covering_cluster is None
@@ -871,21 +858,34 @@ def add_to_cluster_drawer_view(request, school_id):
             # about this school's owner and geography.
             "filtered_by_sub_county": bool(school.sub_county_id),
             "sub_county_missing": not school.sub_county_id,
+            "geography_ready": bool(school.district_id and school.sub_county_id),
             "ineligibility_reason": ineligibility_reason(school),
             "drawer_type": "center",
             "drawer_size": "md",
         }
 
     # 1. Enforce Minimum Data Needed for Clustering
-    # Minimum data gate: school_id, name, and district are required.
-    # Sub-county is NOT required — staff can cluster at district level.
+    # Automatic assignment is only truthful when the school profile points to
+    # a canonical system sub-county. A free-text/district fallback would make
+    # the drawer guess which cluster the school belongs to.
     if not school.school_id or not school.name or not school.district_id:
         return render(
             request,
             "partials/schools/add_to_cluster_drawer.html",
             drawer_context(
                 "This school needs a School ID, Name, and District before it can "
-                "be clustered. Sub-county is optional."
+                "be clustered."
+            ),
+        )
+
+    if not school.sub_county_id:
+        return render(
+            request,
+            "partials/schools/add_to_cluster_drawer.html",
+            drawer_context(
+                "Update the Sub-county on the School Profile first. It must be "
+                "mapped to a system geography record before a cluster can be "
+                "selected automatically."
             ),
         )
 
@@ -1712,20 +1712,6 @@ def school_edit_drawer_view(request, school_id):
         else school.district_id
     )
     districts = District.objects.select_related("region").order_by("name")
-    clusters = (
-        # The same eligibility rule as the assignment drawer. This list was
-        # district-only, so the edit form quietly offered every cluster in the
-        # district including other CCEOs' — the fifth picker deriving its own
-        # answer to a question that has one canonical service.
-        #
-        # While the district select still shows the school's own district the
-        # school itself is the right subject. Once somebody changes it, no
-        # cluster is offered: a district change invalidates the membership
-        # (§17), and the new one is chosen after the move, not during it.
-        eligible_clusters_for_school(school, scope=resolve_user_scope(request.user))
-        if str(selected_district_id or "") == str(school.district_id or "")
-        else Cluster.objects.none()
-    )
     staff = _school_owner_queryset()
     sub_counties = SubCounty.objects.filter(district_id=selected_district_id).order_by(
         "name"
@@ -1740,7 +1726,6 @@ def school_edit_drawer_view(request, school_id):
         return {
             "school": school,
             "districts": districts,
-            "clusters": clusters,
             "staff": staff,
             "school_types": SchoolType.choices,
             "sub_counties": sub_counties,
@@ -1847,19 +1832,14 @@ def school_edit_drawer_view(request, school_id):
                 if parish is None:
                     raise BadRequest("Select a parish within the selected sub-county.")
 
-            cluster_id = (request.POST.get("cluster_id") or "").strip()
-            new_cluster = None
-            if cluster_id:
-                new_cluster = Cluster.objects.filter(
-                    id=cluster_id,
-                    district_id=district.id,
-                    deleted_at__isnull=True,
-                    status="active",
-                ).first()
-                if new_cluster is None:
-                    raise BadRequest(
-                        "Select an active cluster within the school's district."
-                    )
+            # Cluster membership is derived from the newly selected canonical
+            # sub-county, never from a second manual field. This fixes the old
+            # two-source race where School.save() found the right cluster and
+            # the blank cluster dropdown immediately cleared it again.
+            new_cluster = active_cluster_for_geography(
+                district_id=district.id,
+                sub_county_id=sub_county.id if sub_county else None,
+            )
 
             owner_id = (request.POST.get("account_owner_id") or "").strip()
             staff_owner = (

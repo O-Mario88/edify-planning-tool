@@ -7,24 +7,25 @@
          const el = document.querySelector('#plCoreChampionChart');
          if (!el) return;
          const labels = {{ core_champion.core.labels|escape }}.length ? {{ core_champion.core.labels|escape }} : {{ core_champion.champion.labels|escape }};
-         this.chart = new ApexCharts(el, {
-           series: [
-             { name: 'Core Schools', data: {{ core_champion.core.series|escape }} },
-             { name: 'Champion Schools', data: {{ core_champion.champion.series|escape }} }
-           ],
-           chart: { height: 210, type: 'line', toolbar: { show: false }, fontFamily: 'Geist Sans, sans-serif' },
-           stroke: { width: 2.25, curve: 'straight' },
-           markers: { size: 4, strokeWidth: 2 },
-           colors: ['var(--edify-chart-blue)', 'var(--edify-chart-amber)'],
-           dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Number(v).toFixed(1) },
-           labels: labels,
-           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
-                    labels: { style: { colors: 'var(--edify-text-subtle)', fontSize: '12px', fontWeight: 600 } } },
-           yaxis: { min: 0, max: 10, tickAmount: 5, labels: { formatter: v => Number(v).toFixed(1), style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } },
-           grid: { borderColor: 'var(--edify-chart-grid)', strokeDashArray: 4 },
-           legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px', fontWeight: 600, labels: { colors: 'var(--edify-text-muted)' }, markers: { radius: 12 } },
-           tooltip: { theme: 'dark', shared: true, intersect: false }
-         });
+         /* Shared form from EdifyChartSystem so every chart in the app
+            carries one geometry, grid, legend and tooltip. */
+         const cfg = window.EdifyChartSystem.formBase({});
+         cfg.series = [
+           { name: 'Core Schools', data: {{ core_champion.core.series|escape }} },
+           { name: 'Champion Schools', data: {{ core_champion.champion.series|escape }} }
+         ];
+         cfg.chart.type = 'line';
+         cfg.chart.height = 210;
+         cfg.colors = window.EdifyChartSystem.comparisonSeries.slice(0, 2);
+         cfg.stroke = { width: 2.25, curve: 'straight', lineCap: 'round' };
+         cfg.markers = { size: 4, strokeWidth: 2, hover: { size: 6 } };
+         cfg.dataLabels = { enabled: true, style: { fontSize: '12px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Number(v).toFixed(1) };
+         cfg.labels = labels;
+         cfg.xaxis.type = 'category';
+         cfg.yaxis = { min: 0, max: 10, tickAmount: 5, labels: { formatter: v => Number(v).toFixed(1), style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } };
+         cfg.legend.position = 'top';
+         cfg.legend.horizontalAlign = 'right';
+         this.chart = new ApexCharts(el, cfg);
          this.chart.render();
        }
      }" x-init="$nextTick(() => initChart())">
