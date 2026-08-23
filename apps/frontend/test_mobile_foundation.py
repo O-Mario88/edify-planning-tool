@@ -118,7 +118,12 @@ class MobileFoundationContractTest(SimpleTestCase):
         self.assertIn("compactSearch", shell)
         self.assertIn(":aria-expanded", shell)
         self.assertIn("'Submit search' : 'Open search'", shell)
-        self.assertIn("$refs.searchInput?.focus()", shell)
+        # Prefix, not the exact call: the focus now passes
+        # `{ preventScroll: true }` and happens synchronously inside the tap,
+        # because Safari only honours a programmatic focus() while the user
+        # gesture is still on the stack. What this pins is that expanding the
+        # icon puts the caret in the field — not the argument list.
+        self.assertIn("$refs.searchInput?.focus(", shell)
 
     def test_topbar_icon_controls_share_one_round_interaction_language(self):
         shell = _read("templates/layouts/shell.html")
