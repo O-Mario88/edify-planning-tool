@@ -573,3 +573,43 @@
   .ia-status::before,
   .ia-portfolio-legend span::before { forced-color-adjust: auto; }
 }
+
+/* ── The envelope picker (2026-08-24) ─────────────────────────────────────
+   The drawer stopped pre-filling every eligible holder: leads/CCEOs are added
+   one at a time from a dropdown and the remaining figure falls live toward
+   zero (static/js/target-distribution.js). These pieces style the compact
+   summary header, the pick bar, the added rows, and the live balance's third
+   line — everything else reuses the ia-distribution-* family above. */
+.ia-alloc-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .9rem 1rem; border: 1px solid var(--ia-border); border-radius: .9rem; background: var(--ia-surface-muted, #f8fafc); }
+.ia-alloc-summary__what h3 { margin: .15rem 0 .2rem; font-size: .92rem; font-weight: 760; color: var(--ia-ink); }
+.ia-alloc-summary__meta { font-size: .68rem; font-weight: 600; color: var(--ia-muted); }
+.ia-alloc-summary__notes { margin-top: .35rem; font-size: .68rem; color: var(--ia-muted); }
+.ia-alloc-summary__notes summary { cursor: pointer; font-weight: 700; }
+.ia-live-balance small { display: block; margin-top: .1rem; font-size: .58rem; font-weight: 620; opacity: .85; }
+
+.ia-alloc-pickbar { display: flex; align-items: flex-end; gap: .6rem; margin: .9rem 0 .6rem; }
+.ia-alloc-pickbar__select { flex: 1 1 auto; display: block; }
+.ia-alloc-pickbar__select span { display: block; margin-bottom: .25rem; font-size: .62rem; font-weight: 760; color: var(--ia-muted); text-transform: uppercase; letter-spacing: .04em; }
+.ia-alloc-pickbar__select select { width: 100%; min-height: 2.4rem; padding: 0 .65rem; border: 1px solid var(--ia-border); border-radius: .6rem; background: #fff; font-size: .74rem; font-weight: 640; }
+
+.ia-alloc-rows { display: grid; gap: .55rem; }
+.ia-alloc-row { display: flex; align-items: center; gap: .85rem; padding: .6rem .75rem; border: 1px solid var(--ia-border); border-radius: .75rem; background: #fff; }
+.ia-alloc-row[hidden] { display: none; }
+.ia-alloc-row__who { flex: 1 1 auto; display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.ia-alloc-row__who h4 { font-size: .76rem; font-weight: 740; color: var(--ia-ink); }
+.ia-alloc-row__who p { font-size: .64rem; font-weight: 600; color: var(--ia-muted); }
+.ia-alloc-row__inputs { display: flex; gap: .5rem; }
+.ia-alloc-row__inputs label span { display: block; font-size: .58rem; font-weight: 740; color: var(--ia-muted); }
+.ia-alloc-row__inputs input { width: 6.4rem; min-height: 2.15rem; padding: 0 .5rem; border: 1px solid var(--ia-border); border-radius: .55rem; font-size: .76rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ia-alloc-row__inputs input::placeholder { font-weight: 560; color: #94a3b8; }
+.ia-alloc-row__aside { display: flex; align-items: center; gap: .5rem; }
+.ia-alloc-row__remove { inline-size: 1.7rem; block-size: 1.7rem; border: 1px solid var(--ia-border); border-radius: 50%; background: #fff; color: var(--ia-muted); font-size: .95rem; line-height: 1; cursor: pointer; }
+.ia-alloc-row__remove:hover { color: var(--ia-danger); border-color: currentColor; }
+
+[data-alloc-approve][disabled] { opacity: .55; cursor: not-allowed; }
+.ia-distribution-form__sub-balances strong.is-off { color: var(--ia-warning); }
+
+@media (max-width: 40rem) {
+  .ia-alloc-summary { flex-direction: column; }
+  .ia-alloc-row { flex-wrap: wrap; }
+}

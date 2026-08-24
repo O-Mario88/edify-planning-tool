@@ -2,7 +2,7 @@
 {% load static frontend_filters %}
 
 {% block title %}Team Priority Distribution · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260814premium4"><link rel="stylesheet" href="{% static 'css/pages/team-target-distribution.css' %}?v=20260814premium1">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260824envelope1"><link rel="stylesheet" href="{% static 'css/pages/team-target-distribution.css' %}?v=20260814premium1">{% endblock %}
 
 {% block shell_content %}
 <div class="edify-page-canvas ia-master team-distribution-workspace space-y-5" aria-labelledby="team-distribution-title" data-mobile-family="performance">
@@ -67,6 +67,7 @@
   {% endif %}
 </div>
 
+<script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>
 <script>
 (() => {
   const dialog = document.getElementById('team-allocation-dialog');
@@ -74,20 +75,7 @@
   const title = document.getElementById('team-allocation-dialog-title');
   const subtitle = dialog?.querySelector('[data-team-dialog-subtitle]');
   const fy = document.getElementById('team-distribution-fy');
-  // Reconciliation is server law: balance figures are only ever rendered by
-  // the backend. Edited-but-unsaved inputs mark the panel stale so nobody
-  // reads a pre-edit balance as current — saving the draft reconciles.
-  const markUnsaved = (form) => {
-    if (!form || form.dataset.summable !== 'true') return;
-    const panel = form.querySelector('[data-team-balance-panel]');
-    if (panel) {
-      panel.classList.add('is-stale');
-      panel.classList.remove('is-zero', 'is-over');
-    }
-    const approve = form.querySelector('[data-team-approve]');
-    const label = approve?.querySelector('[data-team-approve-label]');
-    if (label) label.textContent = 'Save draft to reconcile';
-  };
+  // Live balance behaviour lives in static/js/target-distribution.js.
 
   const openAllocation = (button) => {
     const template = document.getElementById(button.dataset.teamAllocationOpen || '');
@@ -103,7 +91,6 @@
     if (opener) openAllocation(opener);
     if (event.target.closest('[data-team-dialog-close]')) dialog?.close();
   });
-  document.addEventListener('input', (event) => markUnsaved(event.target.closest('[data-team-allocation-form]')));
   dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   fy?.addEventListener('change', () => fy.form?.submit());
 })();

@@ -4866,9 +4866,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 10212,
+      "bytes": 8938,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution/form"
@@ -4887,15 +4888,15 @@
       "tables": 0,
       "template": "partials/hr/target_distribution_form.html",
       "variants": [
-        "success",
-        "warning"
+        "success"
       ]
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 9436,
+      "bytes": 9065,
       "deprecated_alternatives": [],
       "example_pages": [
         "/target-distribution/team"
@@ -4915,8 +4916,7 @@
       "tables": 0,
       "template": "partials/hr/team_target_distribution_form.html",
       "variants": [
-        "success",
-        "warning"
+        "success"
       ]
     },
     {
@@ -56556,7 +56556,7 @@
       "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_page",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/target_distribution.html",
         "test:referenced-by-automated-test",
@@ -56714,7 +56714,7 @@
       "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_form",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/hr/target_distribution_form.html",
         "test:referenced-by-automated-test",

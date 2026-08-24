@@ -4,7 +4,7 @@
 {% block title %}Uganda Master Priority Plan · Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260814premium4">
+<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260824envelope1">
 {% endblock %}
 
 {% block shell_content %}
@@ -263,6 +263,7 @@
   {% endif %}
 </div>
 
+<script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>
 <script>
 (() => {
   const distributionDialog = document.getElementById('ia-distribution-dialog');
@@ -315,22 +316,9 @@
     }
   };
 
-  // Reconciliation is server law: the balance figures on this panel are only
-  // ever rendered by the backend. Edited-but-unsaved inputs mark the panel
-  // stale so nobody reads a pre-edit balance as current — the numbers refresh
-  // when the draft is saved and the engine reconciles.
-  const markUnsaved = (form) => {
-    if (!form || form.dataset.summable !== 'true') return;
-    const panel = form.querySelector('[data-balance-panel]');
-    if (panel) {
-      panel.classList.add('is-stale');
-      panel.classList.remove('is-zero', 'is-over');
-    }
-    const approve = form.querySelector('[data-approve-distribution]');
-    const approveLabel = approve?.querySelector('[data-approve-label]');
-    if (approveLabel) approveLabel.textContent = 'Save draft to reconcile';
-    approve?.classList.remove('is-ready');
-  };
+  // The live balance moved into static/js/target-distribution.js: the drawer
+  // recomputes the remaining figure on every keystroke, and the engine still
+  // reconciles server-side on save and approve.
 
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
 
@@ -352,7 +340,6 @@
       dialog?.showModal();
     }
   });
-  document.addEventListener('input', (event) => markUnsaved(event.target.closest('[data-distribution-form]')));
   financialYearSelect?.addEventListener('change', () => financialYearSelect.form?.submit());
   groupSelect?.addEventListener('change', filterMilestones);
   milestoneSelect?.addEventListener('change', () => loadDistribution(milestoneSelect.value));
