@@ -9,6 +9,18 @@ navy as the manifest's `background_color` and the icon surround, so the handover
 from the OS screen to this one is invisible and the launch reads as one motion
 rather than two.
 
+The choreography tells one small story — the logo is a pebble dropped into
+still water:
+
+  0.0s  the logo falls in from above, accelerating;
+  0.8s  it lands with a bob, and the impact throws a single splash ring;
+  1.6s  a rotating loading arc fades in around it and keeps turning while the
+        app boots, shedding a slow ripple with every pass — the ripples begin
+        at the arc's own radius, so the turning ring reads as what is stirring
+        the water;
+  5.0s  the arc throws one last ring outward and the overlay is masked away
+        behind it, so the final ripple is what uncovers the app.
+
 Standalone only, and once per launch. In a browser tab there is no OS splash to
 continue, and an overlay there would just be a delay; `sessionStorage` keeps it
 to the first document of a session so in-app navigation never replays it.
@@ -19,6 +31,7 @@ frame, before main.css has been fetched.
 {% endcomment %}
 <div id="edify-launch" hidden aria-hidden="true">
   <div class="edify-launch__stage">
+    <span class="edify-launch__splash" aria-hidden="true"></span>
     <span class="edify-launch__ripple" aria-hidden="true"></span>
     <span class="edify-launch__ripple" aria-hidden="true"></span>
     <span class="edify-launch__ripple" aria-hidden="true"></span>
@@ -56,6 +69,7 @@ frame, before main.css has been fetched.
     /* Matches manifest background_color and the icon surround exactly. */
     background: #2d4862;
     --edify-launch-reveal: 0px;
+    overflow: hidden;
   }
 
   #edify-launch[hidden] { display: none; }
@@ -75,40 +89,43 @@ frame, before main.css has been fetched.
     z-index: 1;
     width: 100%;
     height: 100%;
-    /* No ring, no plate: the artwork is already a circle and the field behind
-       it is the same navy, so anything drawn around it would read as one. */
     border: 0;
     border-radius: 50%;
     background: transparent;
     box-shadow: none;
-    animation: edify-launch-breathe 3.4s ease-in-out infinite;
+    /* The artwork carries a pale lighting bevel on its outer rim — lit from
+       above, so the top edge is a broad steel-blue band that reads as a white
+       ring against the navy field. It is baked into the source pixels, not
+       drawn by CSS, so no border rule can remove it. Feathering the outer
+       ~15% of the image into transparency dissolves that bevel into the
+       matching navy behind it, and the logo reads as resting IN the water
+       rather than sitting on a plate. Engines without mask support show the
+       plain icon, which is only the old appearance, not a break. */
+    -webkit-mask-image: radial-gradient(closest-side, #000 78%, transparent 97%);
+    mask-image: radial-gradient(closest-side, #000 78%, transparent 97%);
+    /* The drop. Three animations share the one transform channel and run
+       strictly in sequence: the fall (accelerating — gravity, not an ease),
+       then the landing bob (down past rest and back, the way a float settles
+       on water), then the idle breathe. The bob and breathe carry no
+       backwards fill on purpose — with it, their first keyframe would apply
+       DURING their delay and pin the logo at rest while the fall is still
+       mid-flight. */
+    animation:
+      edify-launch-fall 0.8s cubic-bezier(0.5, 0, 1, 0.6) both,
+      edify-launch-bob 0.9s cubic-bezier(0.3, 0.9, 0.4, 1) 0.8s forwards,
+      edify-launch-breathe 3.4s ease-in-out 1.75s infinite;
   }
 
-  .edify-launch__ripple {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    /* Drawn as a ring rather than a disc so it reads as a wave leaving the
-       logo instead of a pulse covering it. */
-    border: 0.35vmin solid rgba(255, 255, 255, 0.42);
-    opacity: 0;
-    transform: scale(1);
-    /* Slow and long: a wave leaving the logo, not a tap feedback pulse. The
-       long deceleration is what makes it read as travelling outward under its
-       own momentum rather than being drawn and erased. */
-    animation: edify-launch-ripple 3.4s cubic-bezier(0.16, 0.6, 0.3, 1) infinite;
+  @keyframes edify-launch-fall {
+    from { transform: translateY(-64vh); }
+    to   { transform: translateY(0); }
   }
 
-  /* Staggered by less than a third of the duration, so three rings are in
-     flight at once and the surface never goes still between them. */
-  .edify-launch__ripple:nth-child(2) { animation-delay: 1.05s; }
-  .edify-launch__ripple:nth-child(3) { animation-delay: 2.1s; }
-
-  @keyframes edify-launch-ripple {
-    0%   { opacity: 0;    transform: scale(1); }
-    12%  { opacity: 0.5; }
-    60%  { opacity: 0.2; }
-    100% { opacity: 0;    transform: scale(4.2); }
+  @keyframes edify-launch-bob {
+    0%   { transform: translateY(0); }
+    35%  { transform: translateY(2.1vmin) scale(1.02, 0.97); }
+    70%  { transform: translateY(-0.8vmin); }
+    100% { transform: translateY(0); }
   }
 
   @keyframes edify-launch-breathe {
@@ -116,17 +133,67 @@ frame, before main.css has been fetched.
     50%      { transform: scale(1.045); }
   }
 
-  /* The progress ring: it hugs the logo and turns for as long as the app is
-     still coming up, so the wave says "alive" and this says "working". It is
-     an ARC, not a closed circle — a travelling highlight around a hairline
-     band. A solid ring here would put back the very thing the icon surround
-     was changed to remove. */
+  /* The splash: one ring, thrown once, at the moment the logo lands. Brighter
+     and faster than the idle ripples that follow, because an impact is not a
+     wave — it happens, then the water settles into rhythm. */
+  .edify-launch__splash {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 0.5vmin solid rgba(255, 255, 255, 0.6);
+    opacity: 0;
+    transform: scale(0.85);
+    animation: edify-launch-splash 1.5s cubic-bezier(0.1, 0.7, 0.3, 1) 0.82s forwards;
+  }
+
+  @keyframes edify-launch-splash {
+    0%   { opacity: 0.7; transform: scale(0.85); }
+    100% { opacity: 0;   transform: scale(3.6); }
+  }
+
+  /* The idle ripples. They start at scale(1.12) — just inside the spinner's
+     own radius, not at the logo's edge — so each one appears to be shed BY
+     the turning arc, and they only begin once the arc is visible. Slow and
+     long: a wave leaving under its own momentum, not tap feedback. Staggered
+     at a third of the duration so the surface never goes still. */
+  .edify-launch__ripple {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 0.35vmin solid rgba(255, 255, 255, 0.42);
+    opacity: 0;
+    transform: scale(1.12);
+    animation: edify-launch-ripple 3.4s cubic-bezier(0.16, 0.6, 0.3, 1) infinite;
+    animation-delay: 1.9s;
+  }
+
+  .edify-launch__ripple:nth-child(3) { animation-delay: 3.05s; }
+  .edify-launch__ripple:nth-child(4) { animation-delay: 4.2s; }
+
+  @keyframes edify-launch-ripple {
+    0%   { opacity: 0;    transform: scale(1.12); }
+    12%  { opacity: 0.5; }
+    60%  { opacity: 0.2; }
+    100% { opacity: 0;    transform: scale(4.4); }
+  }
+
+  /* The loading arc: fades in once the water has settled and turns for as
+     long as the app is still coming up. It is an ARC, not a closed circle —
+     a travelling highlight around a hairline band. A solid ring here would
+     put back the very thing the edge feather above removes. */
   .edify-launch__spinner {
     position: absolute;
     inset: -8%;
     z-index: 2;
     border-radius: 50%;
-    animation: edify-launch-spin 1.6s linear infinite;
+    opacity: 0;
+    animation:
+      edify-launch-appear 0.5s ease-out 1.6s forwards,
+      edify-launch-spin 1.6s linear 1.6s infinite;
+  }
+
+  @keyframes edify-launch-appear {
+    to { opacity: 1; }
   }
 
   @supports (mask: radial-gradient(#000, #000)) or
@@ -165,22 +232,26 @@ frame, before main.css has been fetched.
   }
 
   @keyframes edify-launch-spin {
-    to { transform: rotate(1turn); }
+    /* rotate alone: opacity belongs to edify-launch-appear, and putting both
+       properties in both animations would have each overwrite the other. */
+    from { transform: rotate(0turn); }
+    to   { transform: rotate(1turn); }
   }
 
-  /* The exit. One last ring leaves the logo and keeps going past the edge of
-     the screen, and the overlay is masked away behind it — so the app is
+  /* The exit. The arc throws one last ring outward past the edge of the
+     screen, and the overlay is masked away just behind it — so the app is
      revealed by the ripple rather than behind it. */
-  #edify-launch.is-opening .edify-launch__ripple { animation: none; opacity: 0; }
+  #edify-launch.is-opening .edify-launch__ripple,
+  #edify-launch.is-opening .edify-launch__splash { animation: none; opacity: 0; }
 
   #edify-launch.is-opening::after {
     content: '';
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 34vmin;
-    height: 34vmin;
-    margin: -17vmin 0 0 -17vmin;
+    width: 39vmin;
+    height: 39vmin;
+    margin: -19.5vmin 0 0 -19.5vmin;
     border-radius: 50%;
     border: 0.4vmin solid rgba(255, 255, 255, 0.5);
     animation: edify-launch-final 900ms cubic-bezier(0.16, 0.6, 0.3, 1) forwards;
@@ -235,13 +306,13 @@ frame, before main.css has been fetched.
 
   /* Motion is decoration here, never the message. Reduced motion still gets
      the launch screen — it is what hides the half-painted shell — but it holds
-     still and leaves quickly. */
+     still and leaves quickly: no fall, no ripples, and the arc is shown
+     without spinning as the one sign that something is happening. */
   @media (prefers-reduced-motion: reduce) {
-    .edify-launch__ripple { display: none; }
+    .edify-launch__ripple,
+    .edify-launch__splash { display: none; }
     .edify-launch__mark { animation: none; }
-    /* Held still rather than hidden: it is the only remaining sign that
-       something is happening once the wave is gone. */
-    .edify-launch__spinner { animation: none; }
+    .edify-launch__spinner { animation: none; opacity: 1; }
     #edify-launch.is-opening,
     #edify-launch.is-opening::after,
     #edify-launch.is-opening .edify-launch__spinner,
@@ -279,10 +350,13 @@ frame, before main.css has been fetched.
     root.style.overflow = 'hidden';
 
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Rings are 3.4s long and 1.05s apart, so HOLD lets two clear the logo
-    // and the third is still travelling when the closing one overtakes it —
-    // the wave never stops, it just becomes the one that opens the app.
-    var HOLD = reduced ? 400 : 3000;
+    // Five seconds. The platform conventions treat a splash as something to
+    // clear in 1-3s, so this is already the indulgent end of the range — long
+    // enough for the fall and splash (~1.7s), the arc to settle in, and two
+    // ripples to be mid-flight when the closing ring overtakes them, so the
+    // wave never stops — it just becomes the one that opens the app. It plays
+    // once per session, which is what keeps the indulgence affordable.
+    var HOLD = reduced ? 400 : 5000;
     var EXIT = reduced ? 200 : 900;
 
     var finished = false;

@@ -7239,7 +7239,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 10906,
+      "bytes": 14349,
       "deprecated_alternatives": [],
       "example_pages": [
         "/",
@@ -7259,7 +7259,8 @@
       "purpose": "Reusable pwa launch interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "loading"
       ],
       "tables": 0,
       "template": "partials/pwa_launch.html",
