@@ -21,9 +21,14 @@ still water:
   5.0s  the arc throws one last ring outward and the overlay is masked away
         behind it, so the final ripple is what uncovers the app.
 
-Standalone only, and once per launch. In a browser tab there is no OS splash to
-continue, and an overlay there would just be a delay; `sessionStorage` keeps it
-to the first document of a session so in-app navigation never replays it.
+Standalone only, and at every launch — but only at launches. In a browser tab
+there is no OS splash to continue, and an overlay there would just be a delay.
+A launch is recognised by how the document arrived: opening the app from its
+icon navigates with no referrer, while every link followed inside the running
+app is referred by the page before it. Gating on the referrer rather than a
+once-per-session flag means closing the app and opening it again always replays
+the splash — sessionStorage could not promise that, because browsers restore it
+when they restore the app after killing it in the background.
 
 The markup and its critical CSS are inline on purpose. A launch screen that
 waits for a stylesheet is not a launch screen — it has to paint on the first
@@ -331,17 +336,20 @@ frame, before main.css has been fetched.
       || window.matchMedia('(display-mode: fullscreen)').matches
       || window.navigator.standalone === true;
 
-    // Once per launch, not once per page. Without this the overlay replays on
-    // every full-page navigation inside the installed app.
-    var KEY = 'edify:launched';
-    var alreadyLaunched = false;
-    try { alreadyLaunched = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+    // Once per launch, not once per page. A document with a same-origin
+    // referrer was reached from inside the running app — a link, a form, a
+    // redirect — so the splash stays down; a document with none (or an
+    // outside one) is the app being opened, and always plays it.
+    var cameFromApp = false;
+    try {
+      cameFromApp = document.referrer !== ''
+        && new URL(document.referrer).origin === window.location.origin;
+    } catch (e) {}
 
-    if (!installed || alreadyLaunched) {
+    if (!installed || cameFromApp) {
       overlay.remove();
       return;
     }
-    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
 
     overlay.hidden = false;
     // The shell must not scroll behind the overlay while it is up.
@@ -355,7 +363,8 @@ frame, before main.css has been fetched.
     // enough for the fall and splash (~1.7s), the arc to settle in, and two
     // ripples to be mid-flight when the closing ring overtakes them, so the
     // wave never stops — it just becomes the one that opens the app. It plays
-    // once per session, which is what keeps the indulgence affordable.
+    // once per launch, never on in-app navigation, which is what keeps the
+    // indulgence affordable.
     var HOLD = reduced ? 400 : 5000;
     var EXIT = reduced ? 200 : 900;
 
