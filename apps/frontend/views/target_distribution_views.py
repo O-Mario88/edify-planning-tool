@@ -720,7 +720,23 @@ def priorities_master_page(request):
     role-scoped: CD, IA, RVP, HR and Admin read the country figure; a
     Program Lead or CCEO reads THEIR OWN approved allocation — a CCEO
     allocated 20 new schools sees 20 here, never the country's 1,000.
+
+    For the roles that run the master this page and the distribution
+    workspace are the same thing, so they are one page: IA, CD and Admin
+    are sent to /target-distribution, which renders every row this table
+    renders plus the controls to act on them. Everyone else — including the
+    sub-pages under /priorities/ — is untouched.
     """
+
+    if getattr(request.user, "active_role", "") in (
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    ):
+        query = request.META.get("QUERY_STRING", "")
+        return redirect(
+            f"/target-distribution?{query}" if query else "/target-distribution"
+        )
 
     from decimal import Decimal
 

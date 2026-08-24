@@ -32,10 +32,19 @@ class GateBaselineTests(SimpleTestCase):
     #: docs/production-readiness-ledger.md. The number may fall; it must never
     #: rise without the ledger entry that explains why.
     KNOWN_OPEN = {
-        # Closed. The map's school-cohort totals and its n-weighted SSA mean
-        # are both computed on the server now; the browser matches geometry
-        # and posts that matching once per layer draw.
-        "javascript_business_maths": 0,
+        # One deliberate finding, recorded 2026-08-24 in the ledger: the
+        # distribution drawers' live remaining-balance preview
+        # (static/js/target-distribution.js). The envelope UX the owner asked
+        # for — type a number, watch what is left fall to zero — requires the
+        # subtraction to happen on the keystroke, and a round-trip per
+        # keystroke is the stale-panel design it replaced. The figure is a
+        # preview only: reconcile_team_level / reconcile_employee_level
+        # recompute server-side on every save and approve, and refuse any
+        # balance that does not hold, so nothing downstream ever consumes the
+        # client's arithmetic. Before this entry the gate stood at zero (the
+        # map's cohort totals and SSA mean moved server-side); it must not
+        # grow past this one named exception.
+        "javascript_business_maths": 1,
         # Closed. The six performance-conversation endpoints now declare
         # their audience at the route as well as enforcing it in
         # apps.hr.performance_engine. The engine still owns the real rules;

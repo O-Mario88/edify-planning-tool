@@ -340,12 +340,12 @@
 .ia-master-table__number { width: 2.35rem; color: #7d8b99; text-align: center !important; font-variant-numeric: tabular-nums; }
 .ia-master-table__priority { width: 11rem; }
 .ia-master-table__milestone { width: 15rem; }
-.ia-master-table__priority,
-.ia-master-table__milestone { position: sticky; z-index: 2; }
-.ia-master-table__priority { left: 0; }
-.ia-master-table__milestone { left: 11rem; box-shadow: .65rem 0 1rem -.95rem rgb(12 42 66 / .55); }
-.ia-master-table th.ia-master-table__priority,
-.ia-master-table th.ia-master-table__milestone { z-index: 6; background: #f5f9fc; }
+/* The priority and milestone columns used to be frozen (position: sticky with
+   left offsets) so they rode over the rest of the row during horizontal
+   scroll. The owner asked for a free-scrolling table (2026-08-24): the pinned
+   pair covered the very figures being compared on narrower screens. The
+   header row's vertical stick (th { top: 0 } above) is kept — that is what
+   keeps column names readable on a 75-row table. */
 .ia-master-table__metric { color: #21384e; font-weight: 810; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ia-master-table__core { color: #147858; }
 .ia-master-table__client { color: #176bc0; }

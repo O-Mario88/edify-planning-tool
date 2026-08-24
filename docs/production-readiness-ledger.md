@@ -661,3 +661,24 @@ users find.
 4. ISSUE-006 — declare or formally except.
 5. Build the planning-time instrumentation harness so the human baseline can be
    collected.
+
+
+## 2026-08-24 — javascript_business_maths: 0 → 1 (deliberate)
+
+The Uganda target-distribution drawers gained a live remaining-balance
+preview (`static/js/target-distribution.js`): the distributor picks a holder,
+types a target, and the "left to distribute" figure falls on the keystroke,
+arming Approve only at exactly zero. That subtraction is client-side
+arithmetic over business quantities, which this gate exists to flag.
+
+It is allowed to stand because the figure is a preview and nothing more. The
+authoritative balance is recomputed by `reconcile_team_level` /
+`reconcile_employee_level` on every save and approve, both of which refuse an
+unbalanced distribution outright — verified by an end-to-end test posting a
+deliberately short allocation, which stayed a draft. A doctored DOM can arm
+the button; it cannot approve anything. The alternative — a server round-trip
+per keystroke — is the stale-balance design the drawers replaced at the
+owner's request.
+
+The ceiling is one named finding. A second finding in this gate is a
+regression, not an extension of this entry.

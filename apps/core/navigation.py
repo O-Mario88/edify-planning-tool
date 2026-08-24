@@ -1131,9 +1131,21 @@ SIDEBAR_ITEMS = [
                 # The canonical Uganda Master table in its four source
                 # columns; PL/CCEO read their OWN allocated figure here
                 # (owner, 2026-08-20).
+                #
+                # For the roles that RUN the master — IA distributes, the CD
+                # confirms and publishes, Admin supports — Priorities IS the
+                # distribution workspace, so the one nav entry goes straight
+                # there (owner, 2026-08-24: "they are the same thing"). The
+                # read-only table stays the destination for everyone who only
+                # consumes their own figure.
                 "label": "Priorities",
                 "url": "/priorities",
                 "page_key": "priorities_master",
+                "role_urls": {
+                    IA: "/target-distribution",
+                    CD: "/target-distribution",
+                    ADMIN: "/target-distribution",
+                },
             },
             {
                 "label": "Extra Work",
@@ -1748,14 +1760,10 @@ SIDEBAR_ITEMS = [
                 # for the support roles that do not receive that override.
                 "visible_to": {HR, ADMIN},
             },
-            {
-                # §12 — the Uganda Master Priority Plan workspace: CD confirms
-                # and publishes the master; IA distributes annual targets to
-                # Program Leads and monitors the country cascade.
-                "label": "Target Distribution",
-                "url": "/target-distribution",
-                "page_key": "target_distribution",
-            },
+            # §12's workspace is no longer a second sidebar entry: for IA, CD
+            # and Admin the Priorities item above IS the distribution
+            # workspace. The /target-distribution route, its permission and
+            # its page key all remain — only the duplicate link is gone.
             {
                 # §13 — the PL's one distribution among supervised CCEOs.
                 "label": "Team Target Distribution",
