@@ -4,7 +4,7 @@
 {% block title %}Uganda Master Priority Plan · Edify{% endblock %}
 
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260824envelope2">
+<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260824wrap1">
 {% endblock %}
 
 {% block shell_content %}
@@ -189,23 +189,23 @@
     <div class="ia-master-table-wrap" tabindex="0" aria-label="Scrollable table: Uganda master milestones">
       <table class="ia-master-table">
         <caption>Uganda master priority milestones, allocation balances and workflow status</caption>
-        <thead><tr><th scope="col" class="ia-master-table__number">#</th><th scope="col" class="ia-master-table__priority">Priority group</th><th scope="col" class="ia-master-table__milestone">Milestone</th><th scope="col">Activity</th><th scope="col">Uganda target</th><th scope="col">Unit</th><th scope="col">Core</th><th scope="col">Client</th><th scope="col">Allocation method</th><th scope="col">Owner</th><th scope="col">Balance</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead>
+        <thead class="edify-cell--wrap"><tr><th scope="col" class="edify-cell--wrap ia-master-table__number">#</th><th scope="col" class="edify-cell--wrap ia-master-table__priority">Priority group</th><th scope="col" class="edify-cell--wrap ia-master-table__milestone">Milestone</th><th scope="col" class="edify-cell--wrap">Activity</th><th scope="col" class="edify-cell--wrap">Uganda target</th><th scope="col" class="edify-cell--wrap">Unit</th><th scope="col" class="edify-cell--wrap">Core</th><th scope="col" class="edify-cell--wrap">Client</th><th scope="col" class="edify-cell--wrap">Allocation method</th><th scope="col" class="edify-cell--wrap">Owner</th><th scope="col" class="edify-cell--wrap">Balance</th><th scope="col" class="edify-cell--wrap">Status</th><th scope="col" class="edify-cell--wrap"><span class="sr-only">Action</span></th></tr></thead>
         <tbody>
           {% for row in page_obj %}
           <tr>
-            <td class="ia-master-table__number" data-label="#">{{ page_obj.start_index|add:forloop.counter0 }}</td>
-            <td class="ia-master-table__priority" data-label="Priority group"><span class="ia-priority-chip" data-sequence="{{ row.priority.sequence }}">{{ row.priority.title }}</span></td>
-            <td class="ia-master-table__milestone" data-label="Milestone"><strong>{{ row.milestone.title }}</strong></td>
-            <td class="ia-mobile-secondary" data-label="Activity">{{ row.activityDisplay }}</td>
-            <td data-label="Uganda target" class="ia-master-table__metric">{% if row.milestone.target_value != None %}{{ row.milestone.target_value|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
-            <td class="ia-mobile-secondary" data-label="Unit">{{ row.milestone.target_unit|default:"—" }}</td>
-            <td class="ia-master-table__metric ia-master-table__core ia-mobile-secondary" data-label="Core">{% if row.milestone.core_target != None %}{{ row.milestone.core_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
-            <td class="ia-master-table__metric ia-master-table__client ia-mobile-secondary" data-label="Client">{% if row.milestone.client_target != None %}{{ row.milestone.client_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
-            <td class="ia-mobile-secondary" data-label="Allocation method">{{ row.milestone.get_allocation_method_display }}</td>
-            <td class="ia-mobile-secondary" data-label="Owner">{{ row.milestone.responsible_role|default:"Country owner" }}</td>
-            <td data-label="Balance" class="ia-master-table__metric ia-master-table__balance {% if row.remaining == 0 %}is-zero{% elif row.remaining != None %}is-open{% endif %}">{% if row.remaining != None %}{{ row.remaining|floatformat:"-2"|intcomma }}{% elif row.state and not row.state.summable %}{% if row.state.balanced %}Aligned{% else %}Open{% endif %}{% else %}—{% endif %}</td>
-            <td data-label="Status"><span class="ia-status" data-tone="{{ row.statusTone }}">{{ row.displayStatus }}</span></td>
-            <td data-label="Action">
+            <td class="edify-cell--wrap ia-master-table__number" data-label="#">{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td class="edify-cell--wrap ia-master-table__priority" data-label="Priority group"><span class="ia-priority-chip" data-sequence="{{ row.priority.sequence }}">{{ row.priority.title }}</span></td>
+            <td class="edify-cell--wrap ia-master-table__milestone" data-label="Milestone"><strong>{{ row.milestone.title }}</strong></td>
+            <td class="edify-cell--wrap ia-mobile-secondary" data-label="Activity">{{ row.activityDisplay }}</td>
+            <td data-label="Uganda target" class="edify-cell--wrap ia-master-table__metric">{% if row.milestone.target_value != None %}{{ row.milestone.target_value|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="edify-cell--wrap ia-mobile-secondary" data-label="Unit">{{ row.milestone.target_unit|default:"—" }}</td>
+            <td class="edify-cell--wrap ia-master-table__metric ia-master-table__core ia-mobile-secondary" data-label="Core">{% if row.milestone.core_target != None %}{{ row.milestone.core_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="edify-cell--wrap ia-master-table__metric ia-master-table__client ia-mobile-secondary" data-label="Client">{% if row.milestone.client_target != None %}{{ row.milestone.client_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</td>
+            <td class="edify-cell--wrap ia-mobile-secondary" data-label="Allocation method">{{ row.milestone.get_allocation_method_display }}</td>
+            <td class="edify-cell--wrap ia-mobile-secondary" data-label="Owner">{{ row.milestone.responsible_role|default:"Country owner" }}</td>
+            <td data-label="Balance" class="edify-cell--wrap ia-master-table__metric ia-master-table__balance {% if row.remaining == 0 %}is-zero{% elif row.remaining != None %}is-open{% endif %}">{% if row.remaining != None %}{{ row.remaining|floatformat:"-2"|intcomma }}{% elif row.state and not row.state.summable %}{% if row.state.balanced %}Aligned{% else %}Open{% endif %}{% else %}—{% endif %}</td>
+            <td data-label="Status" class="edify-cell--wrap"><span class="ia-status" data-tone="{{ row.statusTone }}">{{ row.displayStatus }}</span></td>
+            <td data-label="Action" class="edify-cell--wrap">
               <div class="ia-row-primary-action">
                 {% if can_distribute and published and row.milestone.allocation_method == "field_cascade" and not row.milestone.needs_confirmation %}<button type="button" class="ia-button ia-row-action" data-tone="{% if row.displayStatus == 'Distributed' %}success{% elif row.displayStatus == 'Ready to approve' %}info{% elif row.displayStatus == 'Balance open' %}warning{% else %}primary{% endif %}" data-open-distribution data-milestone="{{ row.milestone.id }}" data-priority="{{ row.priority.code }}" aria-label="{% if row.displayStatus == 'Distributed' %}Review{% elif row.displayStatus == 'Ready to approve' %}Approve{% elif row.displayStatus == 'Balance open' %}Continue distributing{% else %}Distribute{% endif %} {{ row.milestone.title }}">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
@@ -216,7 +216,7 @@
               <details class="ia-mobile-details"><summary>View milestone details</summary><dl class="ia-mobile-details__grid"><div><dt>Activity</dt><dd>{{ row.activityDisplay }}</dd></div><div><dt>Unit</dt><dd>{{ row.milestone.target_unit|default:"—" }}</dd></div><div><dt>Portfolio</dt><dd>Core {% if row.milestone.core_target != None %}{{ row.milestone.core_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %} · Client {% if row.milestone.client_target != None %}{{ row.milestone.client_target|floatformat:"-2"|intcomma }}{% else %}—{% endif %}</dd></div><div><dt>Method</dt><dd>{{ row.milestone.get_allocation_method_display }}</dd></div><div><dt>Owner</dt><dd>{{ row.milestone.responsible_role|default:"Country owner" }}</dd></div></dl></details>
             </td>
           </tr>
-          {% empty %}<tr><td colspan="13"><div class="ia-master-empty"><strong>No milestones match these filters.</strong><br>Clear or adjust the filters to continue.</div></td></tr>{% endfor %}
+          {% empty %}<tr><td colspan="13" class="edify-cell--wrap"><div class="ia-master-empty"><strong>No milestones match these filters.</strong><br>Clear or adjust the filters to continue.</div></td></tr>{% endfor %}
         </tbody>
       </table>
     </div>

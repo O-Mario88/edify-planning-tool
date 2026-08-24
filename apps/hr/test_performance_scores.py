@@ -100,7 +100,13 @@ class PerformanceScoreFixture(TestCase):
             active=True,
         )
 
-    def _allocate(self, milestone, staff, target, achieved, *, weight=None):
+    def _allocate(
+        self, milestone, staff, target, achieved, *, weight=None, achievement_pct=None
+    ):
+        """For a rate milestone the period row's `actual_value` holds raw
+        units and `achievement_percentage` holds the denominator-aware figure
+        milestone_progress computes — so rate tests state the achievement
+        directly, the way the progress engine writes it."""
         allocation = MilestoneAllocation.objects.create(
             milestone=milestone,
             allocated_to_type="employee",
@@ -118,6 +124,11 @@ class PerformanceScoreFixture(TestCase):
             period_end="2026-10-31",
             planned_value=Decimal(str(target)),
             actual_value=Decimal(str(achieved)),
+            achievement_percentage=(
+                Decimal(str(achievement_pct))
+                if achievement_pct is not None
+                else Decimal("0")
+            ),
         )
         return allocation
 
@@ -147,11 +158,51 @@ class StaffScoreTests(PerformanceScoreFixture):
         self.assertEqual(row.variance, Decimal("30"))
         self.assertEqual(row.classification["label"], "Exceeded")
 
-    def test_a_coverage_target_cannot_exceed_met(self):
+    def test_a_full_commitment_cannot_exceed_met(self):
+        """A 100% commitment leaves no headroom: 104% coverage is a data
+        problem, capped at Met — the original doctrine, still true exactly
+        where it was ever true."""
         milestone = self._milestone("COVER", measurement="percentage", cap=True)
-        self._allocate(milestone, self.a_sp, 90, 120)
+        self._allocate(milestone, self.a_sp, 100, 104, achievement_pct=104)
         score = staff_overall(self.a_sp, FY)
         self.assertEqual(score.rows[0].classification["label"], "Met the Target")
+        self.assertTrue(score.rows[0].classification["capped"])
+
+    def test_meeting_the_rate_is_one_hundred_percent_achievement(self):
+        """The owner's rule (2026-08-24): a CCEO covering 90 of their 100
+        schools against a 90% commitment has MET the target — achievement is
+        coverage against the rate, never coverage alone."""
+        milestone = self._milestone("RATE_MET", measurement="percentage", cap=True)
+        self._allocate(milestone, self.a_sp, 90, 90, achievement_pct=100)
+        score = staff_overall(self.a_sp, FY)
+        self.assertEqual(score.rows[0].classification["label"], "Met the Target")
+        self.assertEqual(score.rows[0].classification["pct"], 100.0)
+
+    def test_full_coverage_of_a_lower_rate_is_extra(self):
+        """…and 100% coverage of that same 90% commitment is over-delivery:
+        111%, classified Exceeded — the coverage cap must not flatten it."""
+        milestone = self._milestone("RATE_OVER", measurement="percentage", cap=True)
+        self._allocate(milestone, self.a_sp, 90, 100, achievement_pct=Decimal("111.11"))
+        score = staff_overall(self.a_sp, FY)
+        self.assertEqual(score.rows[0].classification["label"], "Exceeded")
+        self.assertFalse(score.rows[0].classification["capped"])
+
+    def test_far_exceeding_a_low_rate_is_reachable(self):
+        """Full coverage of a 60% commitment is 166% achievement — the
+        Far Exceeded band exists for exactly this."""
+        milestone = self._milestone("RATE_FAR", measurement="percentage", cap=True)
+        self._allocate(milestone, self.a_sp, 60, 100, achievement_pct=Decimal("166.67"))
+        score = staff_overall(self.a_sp, FY)
+        self.assertEqual(score.rows[0].classification["label"], "Far Exceeded")
+
+    def test_an_impossible_achievement_still_caps_at_full_coverage(self):
+        """The ceiling for a 90% rate is 111.11 — an achievement past it can
+        only mean coverage above 100%, which is a data problem, so it is
+        capped there rather than paraded as a bigger number."""
+        milestone = self._milestone("RATE_GLITCH", measurement="percentage", cap=True)
+        self._allocate(milestone, self.a_sp, 90, 130, achievement_pct=Decimal("144.44"))
+        score = staff_overall(self.a_sp, FY)
+        self.assertEqual(score.rows[0].classification["pct"], 111.11)
         self.assertTrue(score.rows[0].classification["capped"])
 
     def test_a_zero_target_is_not_applicable_and_never_scored(self):

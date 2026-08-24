@@ -475,26 +475,44 @@ def _allocation_projection(
     else:
         # Rates never sum: a 90% coverage commitment is 90% in every period,
         # and adding three months of it is not 270%. The FY view of a rate is
-        # the rate itself; actuals ride the period rows' achievement math.
+        # the rate itself, and actuals genuinely ride the period rows'
+        # achievement math now — `actual_value` on a rate period holds RAW
+        # UNITS (schools reached), so reading it as the achieved rate scored
+        # units against a percentage. The achieved rate is achievement × the
+        # committed rate.
         fy_plan = allocation.allocated_target or Decimal("0")
-        fy_actual = max(
-            (target.actual_value for target in periods), default=Decimal("0")
-        )
+
+        def _achieved_rate(rows):
+            best = max(
+                (target.achievement_percentage for target in rows),
+                default=Decimal("0"),
+            )
+            return (best * fy_plan / 100).quantize(Decimal("0.01"))
+
+        fy_actual = _achieved_rate(periods)
         quarter_plan = fy_plan
-        quarter_actual = max(
-            (target.actual_value for target in quarter), default=Decimal("0")
-        )
+        quarter_actual = _achieved_rate(quarter)
     remaining = max(Decimal("0"), fy_plan - fy_actual)
     month_plan = current.planned_value if current else Decimal("0")
-    month_actual = current.actual_value if current else Decimal("0")
+    if summable:
+        month_actual = current.actual_value if current else Decimal("0")
+    else:
+        month_actual = (
+            (current.achievement_percentage * fy_plan / 100).quantize(Decimal("0.01"))
+            if current
+            else Decimal("0")
+        )
     progress = round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
     # One vocabulary. This block used to compute its own "Achieved / In
     # Progress / Not Started" and "On track / Watch / Needs attention" beside
     # the canonical classification, so the same allocation could be described
     # three different ways on three different surfaces.
+    from .target_distribution import rate_achievement_ceiling
+
     classification = classify_achievement(
         progress if fy_plan else None,
         cap_at_100=milestone.cap_at_100,
+        ceiling=None if summable else rate_achievement_ceiling(fy_plan),
         target=fy_plan,
     )
     status = classification["label"]

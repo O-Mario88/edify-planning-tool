@@ -818,6 +818,80 @@ class RateAchievementTests(DistributionFixture):
         self.assertEqual(october.actual_value, Decimal("2"))
         self.assertAlmostEqual(float(october.achievement_percentage), 55.56, places=1)
 
+    def _credit_schools(self, milestone_code, *, rate, denominator, cover):
+        """One rate milestone, an approved allocation with the given
+        denominator, and `cover` verified school visits credited against it.
+        Returns the October period row the progress engine wrote."""
+        milestone = self._milestone(
+            milestone_code, target=str(rate), measurement="percentage", cap_at_100=True
+        )
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="PERCENT_OF_ELIGIBLE_SCHOOLS",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        allocation = self._team_allocation(milestone, self.pl_sp, rate)
+        allocation.denominator = Decimal(str(denominator)) if denominator else None
+        allocation.save(update_fields=["denominator"])
+        approve_allocation(allocation, principal=self.ia)
+        for school in self.schools_by_staff[self.cceo_a_sp.id][:cover]:
+            activity = Activity.objects.create(
+                activity_type=item.workflow_kind,
+                status="ia_verified",
+                salesforce_activity_id=f"VS-{milestone_code}-{school.school_id}",
+                planned_date=date(2026, 10, 15),
+                fy=FY,
+                school=school,
+                responsible_staff_id=self.cceo_a_sp.id,
+                focus_intervention="christlike_behaviour",
+            )
+            apply_catalogue_snapshot(
+                activity, item=item, requested_intervention="christlike_behaviour"
+            )
+            record_activity_progress(activity)
+        return allocation.period_targets.get(
+            period_type="month", period_start=date(2026, 10, 1)
+        )
+
+    def test_meeting_the_rate_scores_one_hundred_percent(self):
+        """Owner's rule (2026-08-24): cover the committed share of your own
+        portfolio and the target is MET — 2 of 4 schools against a 50%
+        commitment is 100% achievement, not 50%."""
+        october = self._credit_schools("RATE_MET", rate=50, denominator=4, cover=2)
+
+        self.assertEqual(october.achievement_percentage, Decimal("100"))
+
+    def test_full_coverage_of_a_lower_rate_is_extra(self):
+        """All 4 of 4 schools against a 90% commitment: coverage caps at 100,
+        achievement is 111.11 — the surplus survives the cap because the cap
+        is on coverage, never on the achievement ratio."""
+        october = self._credit_schools("RATE_XTRA", rate=90, denominator=4, cover=4)
+
+        self.assertAlmostEqual(float(october.achievement_percentage), 111.11, places=1)
+
+    def test_coverage_past_the_portfolio_is_capped_before_the_ratio(self):
+        """4 credits against a recorded denominator of 3 is a data problem —
+        coverage caps at 100 first, so achievement lands at 111.11 against a
+        90% rate rather than parading 148%."""
+        october = self._credit_schools("RATE_GLITCH", rate=90, denominator=3, cover=4)
+
+        self.assertAlmostEqual(float(october.achievement_percentage), 111.11, places=1)
+
+    def test_a_missing_denominator_scores_an_honest_zero(self):
+        """Without a denominator, coverage cannot be computed. The old
+        fallback divided raw units by the rate — 4 units against 90 read as
+        4.4% — which is dimensional nonsense wearing a number. Now it is an
+        honest zero and a loud log line."""
+        october = self._credit_schools("RATE_NODEN", rate=90, denominator=None, cover=4)
+
+        self.assertEqual(october.achievement_percentage, Decimal("0"))
+        self.assertEqual(october.actual_value, Decimal("4"))
+
 
 class CreditReversalTests(DistributionFixture):
     def test_a_returned_activity_reverses_its_milestone_credit(self):

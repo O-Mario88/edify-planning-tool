@@ -281,22 +281,41 @@ def refresh_period_targets(milestone_id: str) -> None:
         else:
             actual = credits.aggregate(value=Sum("credited_value"))["value"]
         target.actual_value = Decimal(actual or 0)
-        if (
-            target.milestone.measurement_type in {"percentage", "ratio"}
-            and target.allocation_id
-            and target.allocation.denominator
-        ):
-            # A rate target holds the rate (e.g. 90) as planned_value while
-            # credits arrive as raw units (schools reached). Coverage is
-            # units/denominator; achievement is coverage against the committed
-            # rate — dividing units by a percentage would be dimensional
-            # nonsense.
-            coverage = target.actual_value / target.allocation.denominator * 100
-            target.achievement_percentage = (
-                (coverage / target.planned_value * 100)
-                if target.planned_value
-                else Decimal("0")
-            )
+        if target.milestone.measurement_type in {"percentage", "ratio"}:
+            if target.allocation_id and target.allocation.denominator:
+                # A rate target holds the rate (e.g. 90) as planned_value
+                # while credits arrive as raw units (schools reached).
+                # Coverage is units/denominator; achievement is coverage
+                # against the committed rate — dividing units by a percentage
+                # would be dimensional nonsense.
+                coverage = target.actual_value / target.allocation.denominator * 100
+                if target.milestone.cap_at_100 and coverage > 100:
+                    # The cap belongs HERE, on coverage — nobody covers more
+                    # than all of their schools, so anything past 100 is a
+                    # data problem. It must not be applied to the achievement
+                    # ratio below: a CCEO covering 100% of a 90% commitment
+                    # has achieved 111%, and that surplus is the entire
+                    # point of committing to a rate below the ceiling.
+                    coverage = Decimal("100")
+                target.achievement_percentage = (
+                    (coverage / target.planned_value * 100)
+                    if target.planned_value
+                    else Decimal("0")
+                )
+            else:
+                # No denominator means the coverage cannot be computed at
+                # all. The old fallback divided raw units by the rate, which
+                # scored a 45-school CCEO at 50% of a 90% target their
+                # 50-school portfolio had fully met. An honest zero plus a
+                # loud log beats a confidently wrong figure.
+                logger.error(
+                    "rate milestone %s allocation %s has no denominator — "
+                    "achievement cannot be computed from %s raw units",
+                    milestone_id,
+                    target.allocation_id,
+                    target.actual_value,
+                )
+                target.achievement_percentage = Decimal("0")
         else:
             target.achievement_percentage = (
                 (target.actual_value / target.planned_value * 100)

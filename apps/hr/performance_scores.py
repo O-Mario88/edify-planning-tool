@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from apps.hr.models import MilestoneAllocation
-from apps.hr.target_distribution import classify_achievement
+from apps.hr.target_distribution import classify_achievement, rate_achievement_ceiling
 
 #: Reported instead of a score when a person cannot be scored at all. It is a
 #: setup state, not a performance state, and it never enters an average.
@@ -104,17 +104,26 @@ class StaffScore:
 
 
 def _achieved(allocation) -> Decimal:
-    """Verified achievement for one allocation.
+    """Verified achievement for one allocation, in the target's own unit.
 
     Counts never accumulate a rate: a 90% coverage commitment is 90% in every
     period, so its year figure is the best period reading, not their sum.
+
+    For a rate the period rows store raw units in `actual_value` and the
+    denominator-aware figure in `achievement_percentage`, so the achieved
+    RATE is read back off the achievement — units divided by a percentage
+    scored a 45-school CCEO at 50% of a 90% target their 50-school portfolio
+    had fully met, and was only ever accidentally right when a portfolio
+    happened to hold exactly 100 schools.
     """
     periods = list(allocation.period_targets.all())
     months = [p for p in periods if p.period_type == "month"]
     source = months or periods
     if allocation.milestone.measurement_type in {"count", "currency"}:
         return sum((p.actual_value for p in source), Decimal("0"))
-    return max((p.actual_value for p in source), default=Decimal("0"))
+    best = max((p.achievement_percentage for p in source), default=Decimal("0"))
+    rate = allocation.allocated_target or Decimal("0")
+    return (best * rate / 100).quantize(Decimal("0.01"))
 
 
 def milestone_scores(staff_id: str, fy: str) -> list[MilestoneScore]:
@@ -135,6 +144,7 @@ def milestone_scores(staff_id: str, fy: str) -> list[MilestoneScore]:
         pct = (
             round(float(achieved / target * 100), 2) if target and target != 0 else None
         )
+        is_rate = milestone.measurement_type in {"percentage", "ratio"}
         rows.append(
             MilestoneScore(
                 allocation_id=allocation.id,
@@ -146,6 +156,7 @@ def milestone_scores(staff_id: str, fy: str) -> list[MilestoneScore]:
                 classification=classify_achievement(
                     pct,
                     cap_at_100=milestone.cap_at_100,
+                    ceiling=rate_achievement_ceiling(target) if is_rate else None,
                     target=target,
                     scoreable=milestone.definition_status != "non_scoreable",
                 ),

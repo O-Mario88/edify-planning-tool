@@ -97,4 +97,10 @@ class NoTypedAchievementTests(SimpleTestCase):
 
         params = set(inspect.signature(classify_achievement).parameters)
         # It takes a percentage and the rules for reading it — never a label.
-        self.assertEqual(params, {"pct", "cap_at_100", "target", "scoreable"})
+        # `ceiling` joined 2026-08-24 and is still a rule, not a result: it is
+        # derived from the milestone's committed rate
+        # (rate_achievement_ceiling), so full coverage of a 90% target
+        # classifies as the 111% it is while a 100% target still caps at Met.
+        self.assertEqual(
+            params, {"pct", "cap_at_100", "ceiling", "target", "scoreable"}
+        )

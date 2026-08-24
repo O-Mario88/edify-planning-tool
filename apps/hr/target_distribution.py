@@ -147,10 +147,31 @@ NON_SCORING_STATES = {
 }
 
 
+def rate_achievement_ceiling(target_rate) -> Decimal | None:
+    """The achievement a fully-covered portfolio earns against a rate target.
+
+    `cap_at_100` caps COVERAGE — nobody reaches more than all of their
+    schools — not achievement. Against a 90% commitment, full coverage is
+    100/90 = 111.11% achievement, and that surplus is real over-delivery
+    ("90% means the target is met and 100% is extra" — owner, 2026-08-24).
+    Only a 100% commitment leaves no headroom, which is exactly where the old
+    behaviour ("104% SSA coverage is a data problem, not over-delivery")
+    still holds, because 100/100 is 100.
+    """
+    try:
+        rate = Decimal(str(target_rate))
+    except (TypeError, ValueError, InvalidOperation):
+        return None
+    if rate <= 0:
+        return None
+    return (Decimal("100") / rate * 100).quantize(Decimal("0.01"))
+
+
 def classify_achievement(
     pct,
     *,
     cap_at_100: bool = False,
+    ceiling=None,
     target=None,
     scoreable: bool = True,
 ) -> dict:
@@ -160,9 +181,12 @@ def classify_achievement(
     the boundaries behave exactly as written: 89.99 is Not Met, 90.00 is Met
     Some, 99.99 is Met Some, 100.00 is Met, 100.01 is Exceeded.
 
-    Coverage-style metrics that logically cannot exceed 100% are capped there
-    and can reach Met the Target at most — 104% SSA coverage is a data problem,
-    not over-delivery.
+    Coverage-style metrics that logically cannot exceed 100% coverage are
+    capped — at `ceiling` where the caller supplies one, else at 100. For a
+    rate target the caller passes `rate_achievement_ceiling(rate)`, so full
+    coverage of a 90% commitment classifies as the 111% over-delivery it is,
+    while 104% coverage of a 100% commitment stays a data problem capped at
+    Met the Target.
 
     `is_scoring` is what callers must filter on before averaging: a target of
     zero, an unconfigured milestone and a non-scoreable one each produce an
@@ -198,9 +222,11 @@ def classify_achievement(
         return _state("configuration_required")
 
     capped = False
-    if cap_at_100 and value > 100:
-        value = Decimal("100")
-        capped = True
+    if cap_at_100:
+        bound = ceiling if ceiling is not None else Decimal("100")
+        if value > bound:
+            value = Decimal(str(bound)).quantize(Decimal("0.01"))
+            capped = True
 
     key, label, tone = FAR_EXCEEDED
     for bound, inclusive, band_key, band_label, band_tone in ACHIEVEMENT_BANDS:
