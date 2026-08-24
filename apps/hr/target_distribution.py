@@ -1857,6 +1857,15 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
         "allocatedTarget": Decimal("0"),
         "remainingTarget": Decimal("0"),
         "openFieldMilestones": 0,
+        # The country delivery rollup — the CD/IA master tracker. Verified
+        # figures only, from the same period rows every activity verification
+        # credits, so the headline moves the moment IA verifies work. Counts
+        # alone: summing rate milestones would fabricate a country percentage
+        # out of holders whose denominators differ.
+        "verifiedPlan": Decimal("0"),
+        "verifiedActual": Decimal("0"),
+        "milestonesTracking": 0,
+        "milestonesDelivering": 0,
     }
     for priority in priorities:
         rows = []
@@ -1954,6 +1963,16 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
                 # dict, never a fallback chain.
                 allocation.quarter_prefill = quarter_prefill(allocation)
                 allocation.display_name = _display_name(allocation)
+            progress = _milestone_progress(milestone, approved_rows)
+            if progress is not None:
+                kpis["milestonesTracking"] += 1
+                if progress["summable"]:
+                    kpis["verifiedPlan"] += progress["plan"]
+                    kpis["verifiedActual"] += progress["actual"]
+                    if progress["actual"] > 0:
+                        kpis["milestonesDelivering"] += 1
+                elif progress["quartersAchieved"] > 0:
+                    kpis["milestonesDelivering"] += 1
             rows.append(
                 {
                     "milestone": milestone,
@@ -1963,7 +1982,7 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
                     "otherAllocations": other_rows,
                     "teamAllocations": team_rows,
                     "quartersPending": quarters_pending,
-                    "progress": _milestone_progress(milestone, approved_rows),
+                    "progress": progress,
                     "amendments": [
                         amendment
                         for allocation in milestone_allocations
@@ -2008,6 +2027,11 @@ def country_distribution_workspace(fy: str, *, country_id: str = "Uganda") -> di
             row["remaining"] = (
                 state["unallocated"] if state and state["summable"] else None
             )
+    kpis["deliveryPct"] = (
+        round(float(kpis["verifiedActual"] / kpis["verifiedPlan"] * 100), 1)
+        if kpis["verifiedPlan"]
+        else None
+    )
     distributable = kpis["distributableTarget"]
     raw_distribution_pct = (
         round(float(kpis["allocatedTarget"] / distributable * 100), 1)

@@ -987,6 +987,23 @@ class IaWorkspaceCreditTests(DistributionFixture):
         )
         self.assertEqual(october.actual_value, Decimal("1"))
 
+    def test_verified_work_appears_on_the_country_tracker(self):
+        """The CD/IA master tracker is the same workspace page: the verified
+        credit written above must surface as a per-milestone delivery figure
+        and in the country-delivery headline, with no snapshot in between —
+        that immediacy is the whole point of the tracker."""
+        self.test_the_live_ia_workspace_path_credits_milestones_too()
+
+        self.client.force_login(self.ia)
+        response = self.client.get(f"/target-distribution?fy={FY}")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.content.decode()
+        self.assertIn("Verified delivery", body)
+        self.assertIn("Country delivery", body)
+        # The one credited activity against the 10-unit milestone.
+        self.assertIn("1 of 10", body)
+
 
 class PlannedOutputTests(DistributionFixture):
     def test_scheduling_raises_planned_output_and_cancelling_returns_it(self):

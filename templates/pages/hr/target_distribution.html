@@ -128,6 +128,19 @@
       <div class="ia-insight__meta"><span>of <strong>{{ kpis.distributableTarget|floatformat:"-2"|intcomma }}</strong> distributable</span><span><strong>{{ kpis.actionableMilestones }}</strong> still actionable</span><span><strong>{{ kpis.countryProjectTarget|floatformat:"-2"|intcomma }}</strong> country/project owned</span></div>
     </article>
     <article class="ia-insight">
+      <div class="ia-insight__head"><span class="ia-insight__label">Country delivery</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3 4 14h6l-1 7 9-11h-6z"/></svg></span></div>
+      <strong class="ia-insight__value">{% if kpis.deliveryPct != None %}{{ kpis.deliveryPct }}%{% else %}—{% endif %}</strong>
+      {% comment %}
+      The CD/IA master tracker headline. Verified units only, read from the
+      same period rows every IA verification credits, so this figure moves
+      the moment work is verified — no snapshot, no typing. Rate milestones
+      are deliberately outside the headline (their holders' denominators
+      differ, so a summed country percentage would be fabricated); they are
+      tracked per holder in the table below.
+      {% endcomment %}
+      <div class="ia-insight__meta"><span><strong>{{ kpis.verifiedActual|floatformat:"-2"|intcomma }}</strong> verified of <strong>{{ kpis.verifiedPlan|floatformat:"-2"|intcomma }}</strong> planned units</span><span><strong>{{ kpis.milestonesDelivering }}</strong> of <strong>{{ kpis.milestonesTracking }}</strong> tracked milestones delivering</span></div>
+    </article>
+    <article class="ia-insight">
       <div class="ia-insight__head"><span class="ia-insight__label">Portfolio mix</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14v11H5zM8 8V5h8v3"/></svg></span></div>
       <strong class="ia-insight__value">{{ kpis.coreTarget|add:kpis.clientTarget|floatformat:"-2"|intcomma }}</strong>
       <progress class="ia-portfolio-meter" value="{{ kpis.corePct }}" max="100">Core {{ kpis.corePct }}%</progress>
@@ -189,7 +202,7 @@
     <div class="ia-master-table-wrap" tabindex="0" aria-label="Scrollable table: Uganda master milestones">
       <table class="ia-master-table">
         <caption>Uganda master priority milestones, allocation balances and workflow status</caption>
-        <thead class="edify-cell--wrap"><tr><th scope="col" class="edify-cell--wrap ia-master-table__number">#</th><th scope="col" class="edify-cell--wrap ia-master-table__priority">Priority group</th><th scope="col" class="edify-cell--wrap ia-master-table__milestone">Milestone</th><th scope="col" class="edify-cell--wrap">Activity</th><th scope="col" class="edify-cell--wrap">Uganda target</th><th scope="col" class="edify-cell--wrap">Unit</th><th scope="col" class="edify-cell--wrap">Core</th><th scope="col" class="edify-cell--wrap">Client</th><th scope="col" class="edify-cell--wrap">Allocation method</th><th scope="col" class="edify-cell--wrap">Owner</th><th scope="col" class="edify-cell--wrap">Balance</th><th scope="col" class="edify-cell--wrap">Status</th><th scope="col" class="edify-cell--wrap"><span class="sr-only">Action</span></th></tr></thead>
+        <thead class="edify-cell--wrap"><tr><th scope="col" class="edify-cell--wrap ia-master-table__number">#</th><th scope="col" class="edify-cell--wrap ia-master-table__priority">Priority group</th><th scope="col" class="edify-cell--wrap ia-master-table__milestone">Milestone</th><th scope="col" class="edify-cell--wrap">Activity</th><th scope="col" class="edify-cell--wrap">Uganda target</th><th scope="col" class="edify-cell--wrap">Unit</th><th scope="col" class="edify-cell--wrap">Core</th><th scope="col" class="edify-cell--wrap">Client</th><th scope="col" class="edify-cell--wrap">Allocation method</th><th scope="col" class="edify-cell--wrap">Owner</th><th scope="col" class="edify-cell--wrap">Balance</th><th scope="col" class="edify-cell--wrap">Verified delivery</th><th scope="col" class="edify-cell--wrap">Status</th><th scope="col" class="edify-cell--wrap"><span class="sr-only">Action</span></th></tr></thead>
         <tbody>
           {% for row in page_obj %}
           <tr>
@@ -204,6 +217,9 @@
             <td class="edify-cell--wrap ia-mobile-secondary" data-label="Allocation method">{{ row.milestone.get_allocation_method_display }}</td>
             <td class="edify-cell--wrap ia-mobile-secondary" data-label="Owner">{{ row.milestone.responsible_role|default:"Country owner" }}</td>
             <td data-label="Balance" class="edify-cell--wrap ia-master-table__metric ia-master-table__balance {% if row.remaining == 0 %}is-zero{% elif row.remaining != None %}is-open{% endif %}">{% if row.remaining != None %}{{ row.remaining|floatformat:"-2"|intcomma }}{% elif row.state and not row.state.summable %}{% if row.state.balanced %}Aligned{% else %}Open{% endif %}{% else %}—{% endif %}</td>
+            <td data-label="Verified delivery" class="edify-cell--wrap ia-master-table__metric">
+              {% if row.progress %}{% if row.progress.summable %}<span class="ia-status" data-tone="{{ row.progress.classification.tone|default:'neutral' }}">{{ row.progress.actual|floatformat:"-2"|intcomma }} of {{ row.progress.plan|floatformat:"-2"|intcomma }}{% if row.progress.pct != None %} · {{ row.progress.pct }}%{% endif %}</span>{% else %}<span class="ia-status" data-tone="{% if row.progress.quartersAchieved %}success{% else %}neutral{% endif %}">{{ row.progress.holders }} holder{{ row.progress.holders|pluralize }} · {{ row.progress.quartersAchieved }} qtr{{ row.progress.quartersAchieved|pluralize }} met</span>{% endif %}{% else %}—{% endif %}
+            </td>
             <td data-label="Status" class="edify-cell--wrap"><span class="ia-status" data-tone="{{ row.statusTone }}">{{ row.displayStatus }}</span></td>
             <td data-label="Action" class="edify-cell--wrap">
               <div class="ia-row-primary-action">
