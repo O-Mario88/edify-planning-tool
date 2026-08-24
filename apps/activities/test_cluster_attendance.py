@@ -14,7 +14,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.activities import cluster_attendance as ca
-from apps.activities.models import Activity, ClusterActivityAttendance
+from apps.activities.models import Activity
 from apps.clusters.models import Cluster
 from apps.core.exceptions import BadRequest
 from apps.geography.models import District, Region

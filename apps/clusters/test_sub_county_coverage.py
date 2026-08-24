@@ -19,7 +19,7 @@ from apps.clusters.eligibility import (
 )
 from apps.clusters.services import set_school_cluster_membership
 from apps.clusters.models import Cluster, ClusterSubCounty
-from apps.geography.models import District, Parish, Region, SubCounty
+from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 
 

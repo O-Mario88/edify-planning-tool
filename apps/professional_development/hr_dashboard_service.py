@@ -21,7 +21,6 @@ from apps.core.metrics import render_precomputed_metric_item
 
 from datetime import date
 
-from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.fy import fy_options, get_operational_fy

@@ -4192,7 +4192,7 @@
    "audit_id": "KPI-SOURCE-214",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
-   "line": 498,
+   "line": 497,
    "label": null,
    "keys": [
     "count",
@@ -4209,7 +4209,7 @@
    "audit_id": "KPI-SOURCE-215",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
-   "line": 448,
+   "line": 447,
    "label": null,
    "keys": [
     "count",
@@ -26701,7 +26701,7 @@
   {
    "audit_id": "KPI-PAYLOAD-027",
    "module": "apps/professional_development/hr_dashboard_service.py",
-   "line": 254,
+   "line": 253,
    "function": "get_dashboard",
    "target": "kpis",
    "source_item_count": 8,
