@@ -961,7 +961,14 @@ def _typography_exceptions(source: str) -> list[str]:
 
 
 def _page_id(route: str, backend_view: str) -> str:
-    digest = hashlib.sha1(f"{route}|{backend_view}".encode()).hexdigest()[:10]
+    # A stable name for a documentation row, not a security primitive: the
+    # digest exists so the same page keeps the same id between builds, and
+    # nothing trusts it to be hard to forge. `usedforsecurity=False` says that
+    # to bandit (B324) and to a FIPS build that would otherwise refuse SHA-1
+    # outright. The digest itself is unchanged, so existing ids keep matching.
+    digest = hashlib.sha1(
+        f"{route}|{backend_view}".encode(), usedforsecurity=False
+    ).hexdigest()[:10]
     return f"UI-PAGE-{digest.upper()}"
 
 
@@ -1073,8 +1080,9 @@ def build_page_inventory() -> dict:
         serialized_findings = []
         for index, finding in enumerate(findings, start=1):
             record = asdict(finding)
+            # Same reasoning as `_page_id`: an identifier, not a signature.
             digest = hashlib.sha1(
-                f"{route}|{finding.key}|{index}".encode()
+                f"{route}|{finding.key}|{index}".encode(), usedforsecurity=False
             ).hexdigest()[:10]
             record["finding_id"] = f"UI-FINDING-{digest.upper()}"
             serialized_findings.append(record)
