@@ -112,6 +112,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Verification",
             "Unique-school and participant analytics",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_cluster_training:"
+            "ClusterTrainingJourneyTest."
+            "test_two_trainings_count_twice_per_school_and_once_for_reach",
+        ),
     ),
     Journey(
         5,
