@@ -92,6 +92,7 @@ def submit_to_rvp(fy: str, principal):
         CountryAnnualBudgetStatus,
     )
     from apps.monthly_work_plan.services import (
+        ANNUAL_BUDGET_SUBMITTED,
         _rvp_audit,
         _rvp_country_scope,
         _rvp_notify,
@@ -186,11 +187,16 @@ def submit_to_rvp(fy: str, principal):
             active_role=EdifyRole.REGIONAL_VICE_PRESIDENT.value,
             is_active=True,
         ).values_list("id", flat=True):
+            # INTG-03: `_rvp_notify` now names the condition and its subject so
+            # `rvp_annual_decide` can close this queue item when the RVP
+            # actually decides. The route is resolved from the event.
             _rvp_notify(
                 recipient_id,
                 f"FY {fy} Work Plan ready for approval",
                 "The Country Director submitted the completed Work Plan.",
-                f"/work-plan?fy={fy}&view=fy",
+                event_type=ANNUAL_BUDGET_SUBMITTED,
+                context_type="CountryAnnualBudget",
+                context_id=budget.id,
             )
     except Exception:  # noqa: BLE001 - notification must not roll back submission
         pass

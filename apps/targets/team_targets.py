@@ -43,6 +43,18 @@ from apps.targets.my_targets import (
     weighted_period_pct,
 )
 
+# Notification events raised from this module. Each names a condition that a
+# later transition can satisfy, which is what lets `resolve_condition` close it
+# — the half of the lifecycle the raw inserts these replace never had
+# (INTG-03). The closing transitions are: recovery (off-pace notices), the PL's
+# decision (proposed), the recovery activities actually running (approved), and
+# a fresh proposal for the same gap (returned).
+TEAM_TARGET_STAFF_AT_RISK = "team_target_staff_at_risk"
+TEAM_TARGET_OWN_AT_RISK = "team_target_own_at_risk"
+CATCHUP_PLAN_PROPOSED = "catchup_plan_proposed"
+CATCHUP_PLAN_APPROVED = "catchup_plan_approved"
+CATCHUP_PLAN_RETURNED = "catchup_plan_returned"
+
 # Team pacing bands (mandate §13) — deliberately wider than My Targets bands.
 TEAM_ON_TRACK_BAND = 5  # within 5pp of expected pace
 TEAM_SLIGHT_BAND = 15  # 6–15pp below pace
@@ -1089,7 +1101,9 @@ class PLTeamTargetsService:
 
         # ── Risk notifications (idempotent) ──────────────────────────────────
         if is_current_fy:
-            PLTeamTargetsService._notify_risk(pl_user, high_risk, fy, month_of_fy)
+            PLTeamTargetsService._notify_risk(
+                pl_user, high_risk, fy, month_of_fy, all_members=members
+            )
 
         from apps.hr.milestone_allocations import (
             strategic_priority_overview,
@@ -1366,50 +1380,85 @@ class PLTeamTargetsService:
             )
         return sorted(out, key=lambda r: -r["assigned"])
 
-    # ── risk notifications (idempotent per staff+month+level) ────────────────
+    # ── risk notifications (one live notice per off-pace member) ─────────────
     @staticmethod
-    def _notify_risk(pl_user, high_risk_members, fy, month_of_fy):
+    def _notify_risk(pl_user, high_risk_members, fy, month_of_fy, all_members=None):
+        """Announce who is off pace — and close it again when they recover.
+
+        Two raw `Notification.objects.create`/`get_or_create` calls lived here
+        with no `source_event_type`, so `resolve_condition` could never close
+        them: a member who recovered kept a permanent "Critical on targets" row
+        in their PL's rail, promoted to urgent at 48 hours (INTG-03).
+
+        The old key was `f"{user_id}:{fy}:{month}:{status}"[:30]`, but a CUID is
+        already 25 characters — the slice cut everything after the FY, so the
+        "idempotent per staff+month+level" it claimed was really "once per staff
+        per FY". A member who fell behind in a later month, or slid from High
+        Risk to Critical, was never announced again. The context is now the
+        member's own id, which fits and — unlike a month/level key — is
+        reconstructible at the moment they recover, which is what makes the
+        close below possible.
+        """
         from apps.notifications.models import Notification
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            resolve_condition,
+        )
 
         for m in high_risk_members:
-            ctx = f"{m['user_id']}:{fy}:{month_of_fy}:{m['status']}"
-            if Notification.objects.filter(
-                recipient_id=pl_user.id,
-                category="team_targets",
-                context_type="staff_risk",
-                context_id=ctx[:30],
-            ).exists():
+            title = f"{m['name']} is {m['status']} on targets"
+            # `overview()` runs on every page render, and re-firing an unchanged
+            # condition would reset the row to unread each time. Re-announce
+            # only when the risk level itself has moved — the title states it.
+            if (
+                Notification.objects.filter(
+                    recipient_id=pl_user.id,
+                    source_event_type=TEAM_TARGET_STAFF_AT_RISK,
+                    context_type="staff_risk",
+                    context_id=m["user_id"],
+                    title=title,
+                    resolved_at__isnull=True,
+                )
+                .exclude(status="archived")
+                .exists()
+            ):
                 continue
-            Notification.objects.create(
-                recipient_id=pl_user.id,
-                recipient_role="Program Lead",
-                title=f"{m['name']} is {m['status']} on targets",
+            WorkflowNotificationService.trigger(
+                event_type=TEAM_TARGET_STAFF_AT_RISK,
+                category="team_targets",
+                priority="high",
+                title=title,
                 body=(
                     f"{m['name']} is at {m['month_pct'] or 0}% against an expected "
                     f"pace of {m['pace']}% for {Cal.month_label(fy, month_of_fy)}."
                 ),
-                category="team_targets",
                 context_type="staff_risk",
-                context_id=ctx[:30],
-                target_route="/team-targets",
-                action_label="Review",
-                action_required=True,
-                priority="high",
+                context_id=m["user_id"],
+                recipients=[pl_user.id],
             )
-            Notification.objects.get_or_create(
-                recipient_id=m["user_id"],
+            WorkflowNotificationService.trigger(
+                event_type=TEAM_TARGET_OWN_AT_RISK,
                 category="team_targets",
-                context_type="target_status",
-                context_id=ctx[:30],
-                defaults={
-                    "recipient_role": "CCEO",
-                    "title": f"Your targets are {m['status']}",
-                    "body": "Open My Targets to see which areas need recovery this month.",
-                    "target_route": "/my-targets",
-                    "action_label": "Open My Targets",
-                    "action_required": True,
-                    "priority": "high",
-                },
+                priority="high",
+                title=f"Your targets are {m['status']}",
+                body=("Open My Targets to see which areas need recovery this month."),
+                context_type="staff_risk",
+                context_id=m["user_id"],
+                recipients=[m["user_id"]],
+            )
+
+        # Recovery is the terminal transition: risk is recomputed from live
+        # workflow state on every render, so this IS the moment the condition
+        # stops holding. Closing both events at once clears the PL's row and
+        # the member's own.
+        at_risk_ids = {m["user_id"] for m in high_risk_members}
+        for m in all_members or []:
+            if m["user_id"] in at_risk_ids:
+                continue
+            resolve_condition(
+                [TEAM_TARGET_STAFF_AT_RISK, TEAM_TARGET_OWN_AT_RISK],
+                "staff_risk",
+                m["user_id"],
             )
 
     # ── detail matrix + export ───────────────────────────────────────────────
@@ -1666,6 +1715,10 @@ class PLCatchUpPlanService:
             if plan.status != new_status:
                 plan.status = new_status
                 plan.save(update_fields=["status", "updated_at"])
+                if new_status == "completed":
+                    # The recovery the "approved" notice announced has actually
+                    # run — the condition no longer holds (INTG-03).
+                    PLCatchUpPlanService._resolve(CATCHUP_PLAN_APPROVED, plan.id)
 
     @staticmethod
     def submit(
@@ -1686,6 +1739,18 @@ class PLCatchUpPlanService:
         )
         if area is None:
             raise BadRequest("Unknown active target area.")
+        # A returned plan is never resubmitted — the PL proposes a fresh one —
+        # so a new proposal for the same gap is what supersedes the "returned"
+        # notice. Without this it is the one catch-up notice with no way to
+        # close (INTG-03).
+        for superseded in CatchUpPlan.objects.filter(
+            staff_user_id=staff_user_id,
+            area=area,
+            fy=fy,
+            month_of_fy=int(month_of_fy),
+            status="returned",
+        ).values_list("id", flat=True):
+            PLCatchUpPlanService._resolve(CATCHUP_PLAN_RETURNED, superseded)
         plan = CatchUpPlan.objects.create(
             pl_user_id=pl_user.id,
             staff_user_id=staff_user_id,
@@ -1800,12 +1865,15 @@ class PLCatchUpPlanService:
                 "updated_at",
             ]
         )
+        # The decision the "proposed" notice was waiting for (INTG-03).
+        PLCatchUpPlanService._resolve(CATCHUP_PLAN_PROPOSED, plan.id)
         PLCatchUpPlanService._notify(
             plan.staff_user_id,
             "Catch-up plan approved",
             f"{len(plan.created_activity_ids)} recovery activit"
             f"{'y' if len(plan.created_activity_ids) == 1 else 'ies'} entered your Planning.",
             plan,
+            CATCHUP_PLAN_APPROVED,
         )
         return {
             "created": plan.created_activity_ids,
@@ -1818,30 +1886,52 @@ class PLCatchUpPlanService:
         plan.status = "returned"
         plan.return_reason = (reason or "")[:512]
         plan.save(update_fields=["status", "return_reason", "updated_at"])
+        PLCatchUpPlanService._resolve(CATCHUP_PLAN_PROPOSED, plan.id)
         PLCatchUpPlanService._notify(
             plan.staff_user_id,
             "Catch-up plan returned",
             plan.return_reason or "Returned for correction.",
             plan,
+            CATCHUP_PLAN_RETURNED,
         )
         PLCatchUpPlanService._thread(plan, approver, plan.return_reason)
 
     @staticmethod
-    def _notify(recipient_id, title, body, plan):
-        from apps.notifications.models import Notification
+    def _notify(recipient_id, title, body, plan, event_type=CATCHUP_PLAN_PROPOSED):
+        """Route through the central service, not a raw insert (INTG-03).
 
-        Notification.objects.create(
-            recipient_id=recipient_id,
-            title=title,
-            body=body,
-            category="team_targets",
-            context_type="catchup_plan",
-            context_id=plan.id,
-            target_route="/my-targets",
-            action_label="Open",
-            action_required=True,
-            priority="high",
-        )
+        A raw insert carries no `source_event_type`, so a plan that was
+        proposed, approved and then fully recovered left the CCEO three
+        permanent "Action Required" rows about work that was finished — each
+        promoted to urgent at 48 hours. Each stage now names its own event so
+        the transition that ends it can close it.
+        """
+        if not recipient_id:
+            return
+        try:
+            from apps.notifications.services import WorkflowNotificationService
+
+            WorkflowNotificationService.trigger(
+                event_type=event_type,
+                category="team_targets",
+                priority="high",
+                title=title,
+                body=body,
+                context_type="catchup_plan",
+                context_id=plan.id,
+                recipients=[recipient_id],
+            )
+        except Exception:  # noqa: BLE001 — notification is supportive, never blocking
+            pass
+
+    @staticmethod
+    def _resolve(event_types, plan_id) -> None:
+        try:
+            from apps.notifications.services import resolve_condition
+
+            resolve_condition(event_types, "catchup_plan", plan_id)
+        except Exception:  # noqa: BLE001
+            pass
 
     @staticmethod
     def _thread(plan, author, body):

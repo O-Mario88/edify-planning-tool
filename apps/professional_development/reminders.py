@@ -30,6 +30,19 @@ from apps.professional_development.models import (
     ProfessionalDevelopmentRequest,
 )
 
+# One event per reminder phase, because each is ended by a different
+# transition (INTG-03). PDCourseTrackingService.sync_dates closes the first two
+# when the course actually starts and ends; mark_complete /
+# mark_deferred_or_withdrawn close the overdue chase.
+PD_COURSE_STARTING = "pd_course_starting"
+PD_COURSE_IN_PROGRESS = "pd_course_in_progress"
+PD_COMPLETION_OVERDUE = "pd_completion_overdue"
+PD_REMINDER_EVENTS = (
+    PD_COURSE_STARTING,
+    PD_COURSE_IN_PROGRESS,
+    PD_COMPLETION_OVERDUE,
+)
+
 
 def _already_sent(req, key: str, today: date) -> bool:
     return ProfessionalDevelopmentReminderLog.objects.filter(
@@ -43,23 +56,35 @@ def _log_sent(req, key: str, today: date) -> None:
     )
 
 
-def _notify(recipient_user_id, title, body, req) -> bool:
+def _notify(recipient_user_id, title, body, req, event_type=PD_COURSE_STARTING) -> bool:
+    """Route through the central service, not a raw insert (INTG-03).
+
+    This wrote `Notification.objects.create` with no `source_event_type`, so
+    `resolve_condition` could never close it and the dedupe index could never
+    match it. Every 7/3/1-day and every overdue reminder therefore stacked a
+    fresh permanent "Action Required" row — 7/14/30 days overdue produced three
+    for the employee and three each for the supervisor and HR — and the 48-hour
+    escalation job promoted every one of them to urgent, which is how HR's
+    urgent count stopped meaning anything (2026-08-20 HR audit).
+
+    Each phase names its own event so the transition that ends it can close it:
+    the course starting, the course ending, and the record being marked
+    complete (see PDCourseTrackingService).
+    """
     if not recipient_user_id:
         return False
     try:
-        from apps.notifications.models import Notification
+        from apps.notifications.services import WorkflowNotificationService
 
-        Notification.objects.create(
-            recipient_id=recipient_user_id,
+        WorkflowNotificationService.trigger(
+            event_type=event_type,
+            category="professional_development",
+            priority="high",
             title=title,
             body=body,
-            category="professional_development",
             context_type="pd_request",
             context_id=req.id,
-            target_route=f"/my-professional-development/request?id={req.id}",
-            action_label="Open",
-            action_required=True,
-            priority="high",
+            recipients=[recipient_user_id],
         )
         return True
     except Exception:  # noqa: BLE001
@@ -108,6 +133,7 @@ def send_due_reminders() -> int:
             f"“{req.course_name}” at {req.institution} starts in {days} "
             f"day{'s' if days != 1 else ''} ({req.start_date:%d %b %Y}).",
             req,
+            PD_COURSE_STARTING,
         ):
             sent += 1
         _log_sent(req, key, today)
@@ -126,6 +152,7 @@ def send_due_reminders() -> int:
             f"“{req.course_name}” is in progress — "
             f"{days_left} day{'s' if days_left != 1 else ''} remaining.",
             req,
+            PD_COURSE_IN_PROGRESS,
         ):
             sent += 1
         _log_sent(req, key, today)
@@ -147,6 +174,7 @@ def send_due_reminders() -> int:
             "Mark your Professional Development course complete",
             body,
             req,
+            PD_COMPLETION_OVERDUE,
         ):
             sent += 1
         # Escalates to supervisor and HR from 14 days overdue onward.
@@ -163,6 +191,7 @@ def send_due_reminders() -> int:
                     "A team member's PD course is overdue for completion",
                     f"{req.staff_name} — {body}",
                     req,
+                    PD_COMPLETION_OVERDUE,
                 )
             try:
                 from apps.accounts.models import User
@@ -177,6 +206,7 @@ def send_due_reminders() -> int:
                         "A PD course is overdue for completion",
                         f"{req.staff_name} — {body}",
                         req,
+                        PD_COMPLETION_OVERDUE,
                     )
             except Exception:  # noqa: BLE001
                 pass
