@@ -326,6 +326,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Student reach does not duplicate",
             "Loan history remains correct",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_repeat_borrower:"
+            "RepeatBorrowerJourneyTest."
+            "test_a_second_loan_to_one_school_counts_twice_but_the_school_once",
+        ),
     ),
     Journey(
         19,
