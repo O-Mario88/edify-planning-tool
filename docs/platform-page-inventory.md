@@ -9,7 +9,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - API routes: **349**
 - Roles: **14**
 - Permission keys: **100**
-- Scheduled jobs: **22**
+- Scheduled jobs: **23**
 - Activity states: **23**
 - Shared component templates: **340**
 - Full pages: **203**

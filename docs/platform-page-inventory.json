@@ -60331,6 +60331,20 @@
         "max_retries": 2,
         "name": "admin_maintenance_generation",
         "retryable": true
+      },
+      {
+        "cron": "every 30 minutes",
+        "cron_kwargs": {
+          "minute": "0,30"
+        },
+        "description": "Notifies Admins when a scheduled job has failed, never run or gone overdue, and closes the notice when it recovers.",
+        "expected_runtime_seconds": 5,
+        "idempotency_note": "Notifications are keyed on (event, scheduled_job, job name), so a job that stays broken re-fires into the notice already open rather than adding one every half hour.",
+        "idempotent": true,
+        "max_interval_minutes": 120,
+        "max_retries": 0,
+        "name": "scheduler_watchdog",
+        "retryable": false
       }
     ]
   },
@@ -75985,7 +75999,7 @@
     "permission_keys": 100,
     "roles": 14,
     "routed_surfaces": 570,
-    "scheduled_jobs": 22,
+    "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
       "high": 0,
