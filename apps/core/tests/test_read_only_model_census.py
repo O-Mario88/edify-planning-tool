@@ -9,6 +9,12 @@ business-transformation assessment registers (GOV-01). FIN-05 found it again
 on the Accountant's Returned queue, where the empty state read "All corrections
 resolved" beneath a live returned balance.
 
+GOV-01's own two registers were on this list when it was written and are no
+longer: `record_compliance_assessment` and
+`record_financial_practice_assessment` now exist, so the census removed them
+itself — its second test fails on a stale entry, which is what forced the
+list to be corrected rather than left flattering.
+
 Three of the entries below were already known and already handled before this
 census existed, each in a different way and each with a comment explaining it:
 `MonthlyFundRequest` (apps/frontend/views/budget_views.py — the reader was
@@ -125,16 +131,6 @@ KNOWN_READ_ONLY = {
         "Superseded by the priority cascade. build_annual_review passes "
         "include_role_templates=False on the production path and falls back "
         "to DEFAULT_TEMPLATES in code when it does not."
-    ),
-    # ── GOV-01: the open defect this census generalises. ──
-    "SchoolComplianceAssessment": (
-        "GOV-01. The government-requirements register has readers and no "
-        "writers. See apps/business_transformation/"
-        "test_compliance_register_is_writable.py."
-    ),
-    "FinancialPracticeAssessment": (
-        "GOV-01, second register. Same finding and same guard as the "
-        "compliance one beside it: services.py reads it, nothing fills it."
     ),
     # ── GOV-02: workspaces a user can open that can never hold data. ──
     "CompensationRecord": (

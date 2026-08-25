@@ -36,6 +36,7 @@ from .models import (
     EnrolmentSnapshotKind,
     FinanceReferral,
     FinancialPracticeAssessment,
+    ComplianceStatus,
     IAValidationStatus,
     LoanAmendment,
     ImpactEvidenceStatus,
@@ -2819,6 +2820,266 @@ def _intervention_school_portfolio_context(
             Permission.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE.value,
         ),
     }
+
+
+# ── The two school-assessment registers (GOV-01) ─────────────────────────────
+#
+# Both models were fully designed — statuses, uniqueness, an IA validation lane
+# — and three surfaces read each of them, and nothing anywhere could write one.
+# The government-requirements register a Country Director opens to see whether
+# their schools are legally compliant was structurally empty, for every school,
+# for ever.
+#
+# The design these implement is not invented here. The permission matrix
+# already carried both halves: schoolSupport.manage sits on the Country
+# Director, Programme Lead and CCEO — the people who visit a school and see
+# the certificate — and ia.validate sits on Impact Assessment alone. A recorder
+# and a separate verifier, decided before either service existed. The shape is
+# the one this codebase already uses for the same problem in
+# lending_impact.capture_enrolment_snapshot / verify_enrolment_snapshot.
+
+
+def _assessable_case(case_id: str, principal):
+    """The case, if this principal may record against its school."""
+    case = (
+        TransformationCase.objects.select_for_update()
+        .select_related("school")
+        .filter(id=case_id, deleted_at__isnull=True)
+        .first()
+    )
+    if case is None:
+        raise NotFoundError("Business Transformation case not found.")
+    from apps.core.scoping import assert_may_plan_school
+
+    if getattr(principal, "active_role", "") not in UGANDA_WIDE_ROLES:
+        assert_may_plan_school(principal, case.school)
+    return case
+
+
+@transaction.atomic
+def record_compliance_assessment(case_id: str, data: dict, principal):
+    """Record what a school's standing is against one government requirement.
+
+    One row per (case, requirement) — the model says so — so re-recording
+    corrects the standing rather than accumulating claims. Correcting it also
+    withdraws any verification the previous status carried: the portfolio
+    counts `compliant` AND `verified` together, and a verification of a status
+    that has since changed is not a verification of the current one.
+    """
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
+        "Only the Country Director, a Programme Lead or the responsible CCEO "
+        "may record a school's compliance standing.",
+    )
+    case = _assessable_case(case_id, principal)
+    requirement = ComplianceRequirement.objects.filter(
+        id=data.get("requirementId"), active=True
+    ).first()
+    if requirement is None:
+        raise BadRequest("Select an active governed compliance requirement.")
+
+    status = (data.get("status") or "").strip()
+    if status not in ComplianceStatus.values:
+        raise BadRequest(
+            "Compliance status must be one of: "
+            + ", ".join(sorted(ComplianceStatus.values))
+            + "."
+        )
+
+    registration_date = _date(data.get("registrationDate"), field="Registration date")
+    expiry_date = _date(data.get("expiryDate"), field="Expiry date")
+    if expiry_date is None and registration_date and requirement.renewal_months:
+        # A renewal period and a registration date ARE an expiry date. Leaving
+        # the reader to work it out is how a lapsed permit goes unnoticed on a
+        # register whose whole job is to notice.
+        expiry_date = registration_date + timedelta(
+            days=int(requirement.renewal_months) * 365 // 12
+        )
+
+    existing = (
+        SchoolComplianceAssessment.objects.select_for_update()
+        .filter(case=case, requirement=requirement)
+        .first()
+    )
+    fields = {
+        "status": status,
+        "registration_number": (data.get("registrationNumber") or "").strip(),
+        "registration_date": registration_date,
+        "expiry_date": expiry_date,
+        "evidence_reference": (data.get("evidenceReference") or "").strip(),
+        "follow_up_action": (data.get("followUpAction") or "").strip(),
+        "responsible_person": (data.get("responsiblePerson") or "").strip(),
+        "assessed_by": _actor_id(principal),
+        "assessed_at": timezone.now(),
+    }
+    if existing is None:
+        assessment = SchoolComplianceAssessment.objects.create(
+            case=case, requirement=requirement, **fields
+        )
+    else:
+        changed_status = existing.status != status
+        for key, value in fields.items():
+            setattr(existing, key, value)
+        if changed_status:
+            existing.ia_status = IAValidationStatus.PENDING
+            existing.ia_verified_by = None
+            existing.ia_verified_at = None
+            existing.ia_note = ""
+        existing.save()
+        assessment = existing
+
+    _audit_case_event(
+        "bt.compliance.assessment_recorded",
+        assessment,
+        principal,
+        {
+            "caseId": str(case.id),
+            "requirement": requirement.code,
+            "status": status,
+            "expiryDate": expiry_date.isoformat() if expiry_date else None,
+        },
+    )
+    return assessment
+
+
+@transaction.atomic
+def verify_compliance_assessment(assessment_id: str, data: dict, principal):
+    """Impact Assessment confirms or returns a recorded standing."""
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+        "Only Impact Assessment may verify a school's compliance standing.",
+    )
+    assessment = (
+        SchoolComplianceAssessment.objects.select_for_update()
+        .select_related("case", "requirement")
+        .filter(id=assessment_id)
+        .first()
+    )
+    if assessment is None:
+        raise NotFoundError("Compliance assessment not found.")
+    decision = (data.get("decision") or IAValidationStatus.VERIFIED).strip()
+    if decision not in {IAValidationStatus.VERIFIED, IAValidationStatus.RETURNED}:
+        raise BadRequest("Decision must be verified or returned.")
+
+    assessment.ia_status = decision
+    assessment.ia_note = (data.get("note") or "").strip()
+    assessment.ia_verified_by = _actor_id(principal)
+    assessment.ia_verified_at = timezone.now()
+    assessment.save(
+        update_fields=[
+            "ia_status",
+            "ia_note",
+            "ia_verified_by",
+            "ia_verified_at",
+            "updated_at",
+        ]
+    )
+    _audit_case_event(
+        "bt.compliance.assessment_verified",
+        assessment,
+        principal,
+        {"decision": decision, "requirement": assessment.requirement.code},
+    )
+    return assessment
+
+
+@transaction.atomic
+def record_financial_practice_assessment(case_id: str, data: dict, principal):
+    """Record which financial practices a school was observed operating.
+
+    Deliberately separate from training attendance and from the SSA score —
+    the model's own docstring makes that distinction, and it is the difference
+    between having been taught a practice and being seen to run it.
+    """
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE,
+        "Only the Country Director, a Programme Lead or the responsible CCEO "
+        "may record observed financial practice.",
+    )
+    case = _assessable_case(case_id, principal)
+    assessed_on = _date(data.get("assessedOn"), field="Assessment date", required=True)
+    practices = data.get("practices")
+    if not isinstance(practices, dict) or not practices:
+        raise BadRequest(
+            "Record at least one named practice and what was observed for it."
+        )
+
+    assessment, _created = FinancialPracticeAssessment.objects.update_or_create(
+        case=case,
+        assessed_on=assessed_on,
+        defaults={
+            "practices": practices,
+            "notes": (data.get("notes") or "").strip(),
+            "recorded_by": _actor_id(principal),
+            "verification_status": IAValidationStatus.PENDING,
+            "verified_by": None,
+            "verified_at": None,
+        },
+    )
+    _audit_case_event(
+        "bt.financial_practice.recorded",
+        assessment,
+        principal,
+        {"caseId": str(case.id), "assessedOn": assessed_on.isoformat()},
+    )
+    return assessment
+
+
+@transaction.atomic
+def verify_financial_practice_assessment(assessment_id: str, data: dict, principal):
+    """Impact Assessment confirms or returns an observed-practice record."""
+    _require(
+        principal,
+        Permission.BUSINESS_TRANSFORMATION_IA_VALIDATE,
+        "Only Impact Assessment may verify observed financial practice.",
+    )
+    assessment = (
+        FinancialPracticeAssessment.objects.select_for_update()
+        .select_related("case")
+        .filter(id=assessment_id)
+        .first()
+    )
+    if assessment is None:
+        raise NotFoundError("Financial practice assessment not found.")
+    decision = (data.get("decision") or IAValidationStatus.VERIFIED).strip()
+    if decision not in {IAValidationStatus.VERIFIED, IAValidationStatus.RETURNED}:
+        raise BadRequest("Decision must be verified or returned.")
+
+    assessment.verification_status = decision
+    assessment.verified_by = _actor_id(principal)
+    assessment.verified_at = timezone.now()
+    assessment.save(
+        update_fields=[
+            "verification_status",
+            "verified_by",
+            "verified_at",
+            "updated_at",
+        ]
+    )
+    _audit_case_event(
+        "bt.financial_practice.verified",
+        assessment,
+        principal,
+        {"decision": decision},
+    )
+    return assessment
+
+
+def _audit_case_event(action: str, subject, principal, payload: dict) -> None:
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action=action,
+        subject_kind=type(subject).__name__,
+        subject_id=str(subject.id),
+        actor_id=_actor_id(principal),
+        actor_role=getattr(principal, "active_role", None),
+        payload=payload,
+        required=True,
+    )
 
 
 def financial_health_context(principal, filters: dict) -> dict:

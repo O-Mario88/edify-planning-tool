@@ -25,19 +25,23 @@ That is the same shape as two defects this platform has already had: D5, where
 documents app's `expiry_date`, which "drove the nightly expiry job and the
 health check, and no form ever posted it — so nothing could ever expire".
 
-QUARANTINED — the gap this asserts against is OPEN, not fixed. It carries
-`expectedFailure` rather than `skipTest`, and the difference is the whole
-point: a skipped test does not run and reports nothing, while an expected
-failure runs, records its failure, and — when someone finally builds the write
-path — reports an UNEXPECTED SUCCESS, which fails the build and forces this
-marker to be removed. The gap cannot be closed quietly and cannot stay hidden.
+CLOSED. This test carried `expectedFailure` rather than `skipTest` for one
+reason: a skipped test does not run and reports nothing, while an expected
+failure runs, records its failure, and — the moment somebody builds the write
+path — reports an UNEXPECTED SUCCESS, which fails the build and forces the
+marker off. That is exactly what happened. The registers now have
+`record_compliance_assessment` / `verify_compliance_assessment` and
+`record_financial_practice_assessment` / `verify_financial_practice_assessment`
+in apps/business_transformation/services.py, and the marker is gone.
+
+The test stays, without the marker, as a standing guard: it fails again if a
+future refactor leaves either register with readers and no writers.
 """
 
 from __future__ import annotations
 
 import ast
 import pathlib
-import unittest
 
 from django.test import SimpleTestCase
 
@@ -114,7 +118,6 @@ class ComplianceRegisterHasAWritePathTest(SimpleTestCase):
                     found.append(str(path.relative_to(REPO)))
         return sorted(found)
 
-    @unittest.expectedFailure
     def test_the_bt_school_assessment_registers_can_be_written(self):
         unwritten = [m for m in MODELS if not self._writers(m)]
         self.assertEqual(
