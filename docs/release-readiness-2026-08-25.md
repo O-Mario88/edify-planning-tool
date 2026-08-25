@@ -106,6 +106,15 @@ The lesson is worth keeping: a branch that is pushed to faster than CI can run i
 whose CI status is always about an older commit than the one you are looking at. Pushes
 were paced after that, in batches rather than per commit.
 
+**One CI run failed and the next one, on the same code, did not.** Run 932 on head
+`9a201c4` failed its Django test job; run 933 on `e3b3a79` — a documentation-only commit on
+top, byte-identical in every `.py` — completed green, as did the local full suite on
+`9a201c4` itself at 6,037 tests. Two independent executions of the same tree pass and one
+does not, so the failure is not attributable to the code. It is recorded here rather than
+passed over, because "it went green on the retry" is the sentence that hides real
+intermittency, and the only thing that makes this one safe to set aside is that the passing
+runs are of the identical tree rather than of a fix.
+
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
 was first written and 6,037 at the last full run, with no failures, no skips, and one
 documented expected failure — CONFLICT-001, quarantined on purpose and self-removing.
