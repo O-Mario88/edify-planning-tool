@@ -32,35 +32,38 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
+| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,729 tests, 0 failures |
+| 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | repository census at HEAD | **FAIL** — 1 of 22 |
-| 50,000-school scale | `test_load_scale` @ 50k | **NOT ESTABLISHED** — see below |
+| Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing, red on `main` too |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
-Suite size at HEAD: **425 test files; the runner collected and ran 5,721 tests.**
+Suite size at HEAD: **425 test files; the runner collected and ran 5,729 tests.** The run
+on the fixed tree is clean — `OK (skipped=2, expected failures=1)` in 890s. The single
+expected failure is CONFLICT-001 below, quarantined deliberately; the two skips are
+conditional on data the dev database does not hold.
 
-### The scale gate result must be read carefully
+### The scale gate needed two runs, and the first one would have been a false alarm
 
-Run at `EDIFY_SCALE_SCHOOLS=50000 EDIFY_SCALE_GROWTH=10000`: **21 tests, 1 failure.**
-
-The structural property held — scale-invariance passed on every surface, meaning query
-counts do not move as the estate grows, which is the stronger claim. The failure was the
-latency objective:
+Run at `EDIFY_SCALE_SCHOOLS=50000 EDIFY_SCALE_GROWTH=10000`. Measured p95 at 50,000
+schools on a quiet machine, every surface inside its objective:
 
 ```
-/dashboard p95=900ms  > 800ms
-/todos     p95=1408ms > 800ms
-/analytics p95=1631ms > 1500ms
+/dashboard=508ms  /my-plan=95ms   /schools=451ms      /todos=227ms
+/analytics=825ms  /settings=28ms  /notifications=44ms /system-health=12ms
 ```
 
-**This is not evidence of a performance regression.** The run took place with nine audit
-workstreams running tests concurrently: load average 8.90 on 4 CPUs, roughly 2.2×
-oversubscription. `docs/audit-2026-08/02-scale.md` says the right thing about its own
-numbers — "laptop wall time under `manage.py test` is not production wall time" — and the
-same caveat applies with more force here.
+Scale-invariance also held on every surface — query counts do not move as the estate
+grows, which is the stronger claim than any single latency figure.
 
-The honest status is **NOT ESTABLISHED**: it must be re-run on a quiet machine before the
-release. It may well pass. It cannot be claimed as passing on this evidence.
+The first run of this gate **failed** its latency objective (`/dashboard` 900ms,
+`/todos` 1408ms, `/analytics` 1631ms) because it executed while nine audit workstreams
+were running tests concurrently: load average 8.90 on 4 CPUs. Reporting that as a
+performance regression would have been wrong by a factor of up to six. It is recorded here
+because the lesson generalises — `docs/audit-2026-08/02-scale.md` makes the same point
+about its own figures, and a latency number is only evidence if you know what else the
+machine was doing.
 
 ### The production boot gate is a strength worth naming
 
