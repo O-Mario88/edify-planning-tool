@@ -1062,7 +1062,7 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `116b3ec` | A Special Project's impact can become an answer: the refresh is wired to the evidence that should trigger it |
 | `3c59aa4` | Journey 6 walked — and nothing on the mandate's list of twenty-two is unwritten |
 | `14029e1` | The two school-assessment registers can be written, by the recorder and verifier the permission matrix already named |
-| pending | Journeys 15 and 16 walked, the two that GOV-01 was blocking |
+| `f09c04d` | Journeys 15 and 16 walked, the two that GOV-01 was blocking |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk
