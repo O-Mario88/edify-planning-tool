@@ -324,6 +324,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Attempt unauthorized access for every sensitive workflow",
             "All attempts must fail closed",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_cross_role_security:"
+            "CrossRoleSecurityJourneyTest."
+            "test_every_sensitive_workflow_refuses_every_role_that_should_not_hold_it",
+        ),
     ),
     Journey(
         20,

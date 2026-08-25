@@ -609,7 +609,17 @@ class FinanceOperatingSystemTest(TestCase):
             # never close (2026-08 audit, AUD-009).
             salesforce_activity_id="VS-PARTNER-QUEUE-1",
         )
-        ActivityCertificationService.certify_activity(activity, {}, "ia_user")
+        # A real Impact Assessment user: certify_activity asserts `ia.verify`
+        # on the actor it is handed (SEC-03).
+        ia_user = get_user_model().objects.create(
+            id="ia_user",
+            email="ia-user@edify.org",
+            name="Finance IA",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            is_active=True,
+        )
+        ActivityCertificationService.certify_activity(activity, {}, ia_user.id)
         activity.refresh_from_db()
         self.assertEqual(activity.payment_status, "ia_confirmed")
 

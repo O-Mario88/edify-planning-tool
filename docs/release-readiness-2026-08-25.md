@@ -9,7 +9,7 @@ This is not a judgement that the platform is poor. It is a well-engineered syste
 unusually honest internal controls, and the audit found several defences better than most
 production codebases carry.
 
-**Nineteen findings were fixed in this audit**, including two P0s — a rescheduling path
+**Twenty findings were fixed in this audit**, including two P0s — a rescheduling path
 that could CASCADE-delete a disbursed advance, and migrations that could run concurrently
 with no lock. Every fix carries a regression test verified to fail before it and pass
 after. §4 lists them.
@@ -48,7 +48,7 @@ Everything in this table was run, not inferred.
 | Full test suite | `manage.py test --parallel 4` | **PASS** — 5,900 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
-| E2E journey census | `test_release_journey_census` | **FAIL** — 4 of 22, 2 unbuildable |
+| E2E journey census | `test_release_journey_census` | **FAIL** — 5 of 22, 2 unbuildable |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
 | Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -183,7 +183,7 @@ Full detail, including the workstream reports, follows in §6.
 
 ### Fixed in this audit
 
-Nineteen findings were fixed here, each with a regression test verified to fail before
+Twenty findings were fixed here, each with a regression test verified to fail before
 the fix and pass after. Where a test initially passed against the unfixed code it was
 rewritten, not accepted.
 
@@ -208,6 +208,7 @@ rewritten, not accepted.
 | P2 | SEC-02 | `can_update` claimed every write resolved through it; nothing called it, which is how SEC-01 survived a green suite |
 | P2 | D3/D4 | API leave decisions notified nobody; accepting coverage claimed a notification it never sent |
 | P2 | D6/D7 | Core slots completed through the real path carried neither evidence nor Salesforce id, so two blockers alarmed for ever |
+| P0 | SEC-03 | `certify_activity` asserted no authority at all — every one of the fourteen roles could stamp an activity IA-verified. "False IA verification" is a P0 by name |
 | P1 | FIN-04 | Money disbursed against work later **cancelled** could never reach a settled state — finance clearance required IA verification, which called-off work can never obtain |
 | P2 | ISSUE-007 | Two tests skipped themselves rather than fail, so the suite reported green over an open N+1 and a stale assertion. See below |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
@@ -241,7 +242,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 4 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 5 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
@@ -274,7 +275,7 @@ rather than counting them as merely unwritten:
 - **Journey 21, Integration outage** — INTG-01. There is no outward transport, so
   "external system fails" and "retry succeeds" have nothing to exercise.
 
-That leaves **16 journeys that are unwritten rather than unbuildable**, which is a work
+That leaves **15 journeys that are unwritten rather than unbuildable**, which is a work
 programme with a known shape rather than an open question.
 
 ### Journey 8 was walked, and it found a defect on its first run

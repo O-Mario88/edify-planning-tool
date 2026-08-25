@@ -39,8 +39,20 @@ class IAWorkflowTests(TestCase):
             salesforce_activity_id="SV-99999",
         )
 
-        # Create actor
-        self.actor_id = "test-ia-user"
+        # A real Impact Assessment user, not a synthetic string: certify_activity
+        # asserts `ia.verify` on the actor it is handed (SEC-03), and an id
+        # matching no user never meant what this fixture claimed it did.
+        from apps.accounts.models import User
+
+        self.actor = User.objects.create(
+            id="test-ia-user",
+            email="test-ia-user@edify.org",
+            name="Test IA",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            is_active=True,
+        )
+        self.actor_id = self.actor.id
 
     def test_verification_checks_missing_evidence(self):
         """Checks recommend missing evidence when no evidence is uploaded."""
