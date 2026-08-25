@@ -193,6 +193,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Return",
             "Access restoration",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_leave_coverage:"
+            "LeaveCoverageJourneyTest."
+            "test_covered_access_arrives_with_the_leave_and_leaves_with_it",
+        ),
     ),
     Journey(
         10,
