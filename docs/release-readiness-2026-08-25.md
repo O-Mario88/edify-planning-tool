@@ -204,7 +204,7 @@ Full detail, including the workstream reports, follows in §6.
 
 ### Fixed in this audit
 
-Twenty findings were fixed here, each with a regression test verified to fail before
+Twenty-one findings were fixed here, each with a regression test verified to fail before
 the fix and pass after. Where a test initially passed against the unfixed code it was
 rewritten, not accepted.
 
@@ -232,6 +232,7 @@ rewritten, not accepted.
 | P0 | SEC-03 | `certify_activity` asserted no authority at all — every one of the fourteen roles could stamp an activity IA-verified. "False IA verification" is a P0 by name |
 | P1 | FIN-04 | Money disbursed against work later **cancelled** could never reach a settled state — finance clearance required IA verification, which called-off work can never obtain |
 | P2 | ISSUE-007 | Two tests skipped themselves rather than fail, so the suite reported green over an open N+1 and a stale assertion. See below |
+| P1 | FIN-05 | The Accountant's **Returned** money figure linked to a queue reading a table nothing writes; its empty state read "All corrections resolved" beneath a live returned balance |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
 **The shape most of these share.** One definition, written out in several places, where a
@@ -263,14 +264,132 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 14 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 15 of 22 mandated end-to-end journeys have a real test | Seven journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers are **read-only** — three surfaces read each, nothing writes either | A build: the write path was never made |
+| P2 | GOV-02 | Four workspaces a user can navigate to can never hold data — Compensation & Benefits, Succession Planning, the Maintenance Calendar, and recurring analytics report schedules | A build in each case, or a decision to retire them. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
 | P3 | RC-002 | `AUTHZ_MODE` is vestigial but named in the posture dashboard | Cosmetic; object-level authz is enforced unconditionally |
+
+## 4a. Every model that is read somewhere and written nowhere
+
+GOV-01 was found by walking one workflow. The question it raised is whether it was one
+mistake or a habit, and that question has an answer the codebase can be asked directly:
+which concrete models does something read, and nothing write?
+
+Eighteen came back. They are worth reporting one by one, because the categories differ
+more than the count suggests, and because three of them are the strongest available
+evidence that the method works.
+
+**Three were already found, by three earlier passes, and handled three different ways.**
+`MonthlyFundRequest` — `budget_views.py` carries a comment calling it "the legacy
+MonthlyFundRequest row that nothing in this codebase ever writes to (it would otherwise
+show 'Draft' forever — a fake status)", and reads the live `FundRequest` instead.
+`ReimbursementClaim` — `navigation.py` de-links the queue with a paragraph explaining
+that keeping the link "would be a permanent-empty-state trap for every Accountant".
+`EmployeeComplianceRecord` and `PayrollReadinessRecord` — the HR dashboard renders an em
+dash rather than 0%, because "a percentage over an empty table is not 0% — it is 'we have
+not recorded any of this yet'. Rendering it as 0% told HR they were failing a check
+nothing in the platform can currently populate." A scan that rediscovers, from nothing,
+three defects that three separate audits found by hand is a scan that detects the class
+and not the instance.
+
+**One was new, and it is the reason this section is not an inventory exercise.** FIN-05:
+the Accountant's home card links its Returned figure — real, from the advance ledger — to
+a page reading `FinanceReturn`, a table with no writer of any kind. The empty state does
+not say "nothing here yet". It says "All corrections resolved. No returned finance items."
+So a live returned balance leads, in one click, to a positive assurance that nothing is
+outstanding. That page now reads the ledger the figure comes from. Details in §7.
+
+**Four are correct, and should stay as they are.** `ExtraWorkScoringPolicy` is fail-closed
+by design: without an approved policy, extra work is tracked but unscored, and the page
+says so in a banner. `SchoolGeoPoint` sits at the top of a coordinate fallback chain that
+degrades to the school's own lat/lng, then a sub-county centroid, then a district one, and
+invents nothing when all four are absent. `StaffTargetProfile` is the legacy annual store
+behind `MonthlyPersonalTarget`; targets are set through the performance agreement, and an
+absent target renders as "No Target Set" rather than 0%. `RolePriorityTemplate` was
+superseded by the priority cascade, which passes `include_role_templates=False` on the
+production path. In each case absence is the safe state and the platform says so out loud.
+
+**Four are GOV-02: workspaces a user can open that can never hold data.** Compensation &
+Benefits and Succession Planning are full HR workspaces — searchable tables, metric tiles,
+scope filtering — over registers with no entry surface anywhere. The Maintenance Calendar
+is the same, with a preventive-maintenance generation job and a health check reading the
+same empty table, so `admin_ops_stale_maintenance` reports "Maintenance Generation: ok"
+permanently. Recurring analytics report schedules are the second-order version: the
+`AnalyticsReportSchedule` model exists, a proper `ModelForm` over it exists, the delivery
+job is registered with the scheduler and runs — and no view instantiates the form, so the
+job runs forever over an empty table. (The drawer a user actually sees sends an immediate
+snapshot and says "No scheduler worker or email provider is involved", which is honest.)
+
+What these four share is subtler than GOV-01 and worth stating precisely: **their empty
+states are factually true and inferentially false.** "No succession nominations in this
+scope" is true. "No maintenance templates are configured yet" is true. Both read as
+*nobody has entered any*, when the fact is *there is no way to enter any*, and the second
+sentence is the one a Country Director needs. The word "yet" in the maintenance page does
+the most damage of any word in this report.
+
+The tempting fix is to rewrite those sentences. This audit did not, and the mandate is
+why: *"Do not use cosmetic frontend changes to conceal backend or workflow defects."*
+Better copy over an absent capability is precisely that trade — the surface would read
+more honestly while the workspace stayed as empty as before. They are recorded as open
+findings for a build-or-retire decision instead. FIN-05 was fixed rather than reworded
+because the data it needed already existed, in a ledger the figure beside it was already
+reading; there was a capability to connect, not one to invent.
+
+**Two are dead ends with no user-visible surface at all.** `Village` is the leaf of the
+Ugandan administrative hierarchy: nothing writes one, the seed stops at Parish, and no
+template or script calls `/geography/villages`. `HRAuditEvent` was a second audit table
+without a hash chain, already replaced by the canonical log.
+
+### The scan was wrong twice before it was allowed to say anything
+
+Both errors are recorded because the correction pattern matters more than the result.
+
+The **first** version saw only `Model.objects.create`. It reported
+`LoanRepaymentInstallment` as unwritten when `lending_ledger.py` builds one with a bare
+constructor. That is the "everything looks broken" failure, and it is the cheaper of the
+two — a false alarm gets investigated. All three Python write spellings are now detected:
+bare constructor, manager call, related-manager call.
+
+The **second** was the dangerous direction. Django writes rows three ways that are not
+Python spellings — a `ModelSerializer.save()`, a `ModelForm.save()`, and the admin site —
+and the second pass cleared three suspects on those grounds. Checking those three by hand
+cleared only one. `VillageSerializer` is real, but `geography/views.py` only ever renders
+with it; a serializer used for output writes nothing. `AnalyticsReportScheduleForm` is a
+real ModelForm over a real model and has no caller anywhere in the repository. A form
+nobody instantiates writes exactly as much as no form at all.
+
+Then the guard built from all this made the same mistake a third time, against itself: the
+first run exempted `AnalyticsReportSchedule` because the guard's own docstring names the
+form class, and the usage check was a substring search over every file including that one.
+The scan is now blind to test files and to itself.
+
+One deliberate blind spot remains, and it is not a defect. `obj.save()` on a variable is
+not counted as a write, because it updates a row that must already exist and so cannot be
+what first creates one — which is the only claim this census makes. That rule was
+established by an anomaly worth keeping: `AdvanceRequest` shows exactly **one** writing
+file, which looked like proof the scan was still broken. It is not. The advance ledger is
+saved throughout the codebase and *created* in exactly one place, `advance_service.py`.
+The census asserts that, by file, as one of its own control tests.
+
+### The census is a standing guard, not a one-off scan
+
+`apps/core/tests/test_read_only_model_census.py` pins all eighteen models to a literal
+dict, each with a written reason describing what a reader of the affected surface actually
+sees. A nineteenth read-only model fails the suite until somebody records why. One of the
+eighteen gaining a writer also fails it, so a capability that gets built cannot leave a
+stale entry behind claiming it was not.
+
+Five control tests hold the scan against models that genuinely use each write form, so it
+cannot pass by having gone blind: the bare constructor, the manager call, the related
+manager, and three heavily-written models that must never appear in the output. Both
+directions were mutation-tested — removing an entry and adding a written model — each
+mutation confirmed present in the file before the exit code was read, after three silent
+no-op mutations earlier in this audit produced meaningless greens.
 
 ### The journey census is now a test, not a sentence
 
@@ -366,6 +485,59 @@ The journey walks from the assignment instead — handed to a partner at
 evidenced, IA-verified, then paid — and asserts on the way through that the *unverified*
 activity is refused payment. Mutation-checked by removing the clearance gate, which fails
 it.
+
+### Journey 1 is the longest, and it is sound
+
+Eleven steps and six owners: an RVP publishes strategy, a role rule decides how each role
+carries it, an employee and their manager agree the commitment, a CCEO delivers the visit,
+Impact Assessment verifies it, and then My Targets, the performance agreement and the
+drill-down behind them are each supposed to say the same thing about the same work. It is
+the journey with the most seams, and this audit's consistent finding has been that seams
+are where the defects are. This one has none that could be found.
+
+Three things it does well are worth naming, because each is a defect this audit found
+elsewhere, designed out here in advance.
+
+`publish` refuses a priority that could never measure — one with no role rules at all ("it
+reaches nobody and silently measures nothing"), and one naming a metric the platform does
+not compute. The second refusal quotes its own reasoning: an unknown key is not an error
+anywhere downstream, `live_progress` falls through every branch and returns zero, "so the
+commitment reads as 0% forever and looks like an employee failing rather than a typo".
+That is the D5 and GOV-01 failure mode — a capability with no path to a real value —
+caught at the moment of publication rather than discovered months later.
+
+The cascade gives a supervising Programme Lead a different metric from the CCEO executing
+the work, and records a non-carrying role as an explicit exemption rather than omitting
+it, "because an absent row is indistinguishable from an oversight".
+
+And `set_priorities`, which rebuilds an agreement from its payload, refuses a payload that
+drops a mandatory commitment or re-points its metric. That write shape — delete and
+rebuild from what the client sent — is precisely how a leadership commitment disappears
+with nobody deciding to remove it. Both refusals were driven, and the agreement checked
+afterwards to confirm neither left it half-rewritten.
+
+**Where the platform and the mandate differ, and why the difference is not a defect.** The
+mandate's step 2 reads "IA distributes to PL" and step 3 "PL distributes to self and
+CCEO". No such distribution exists, and having read the cascade the omission looks
+deliberate rather than missed: a published priority reaches every role that has a rule for
+it, resolved by `rules_for_role` at the moment anyone asks. Nobody distributes anything,
+which means nobody can forget to. That is stronger than the hand-off the mandate
+describes, and this walk tests the mechanism the platform built rather than quietly
+substituting it and reporting the journey covered. A journey report that rewrites the
+journey is not evidence of anything.
+
+**What the walk asserts at the end** is the join: one verified visit appears exactly once
+in the achievement ledger, `live_progress` derives the same figure against the agreed
+priority's own denominator, and the percentage is those two numbers rather than a third
+computed elsewhere. A companion test drives a scheduled-but-unverified visit through the
+same fixture and requires both surfaces to stay at zero — without it, a walk that happened
+to count merely-completed work would pass every assertion above and prove nothing about
+Impact Assessment at all.
+
+Both halves were mutation-tested. Dropping `IA_VERIFIED_STATUSES` from the `direct_visits`
+branch of `live_progress` fails the walk; making the twelve-month phasing round per month
+instead of preserving the annual total fails it too. Each mutation was confirmed present
+in the file before the exit code was read.
 
 ## 5. Path to a defensible Go
 
@@ -649,6 +821,7 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `d35c85e` | The database refuses the money and assignment states nothing else did |
 | `bd33fac` | One notification writer is true, and a scanner guards against the seventh |
 | `592ad83` | Every Programme Lead's CCEOs resolve in one read, and the two tests that skipped rather than fail now assert |
+| `8f92f44` | The Accountant's Returned figure reaches the money it counts, instead of a table nothing writes |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk

@@ -55,6 +55,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Performance updated",
             "Drill-down reconciles",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_priority_to_performance:"
+            "PriorityToVerifiedPerformanceJourneyTest."
+            "test_steps_9_to_11_achievement_performance_and_drilldown_agree",
+        ),
     ),
     Journey(
         2,
