@@ -291,7 +291,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
-| P2 | GOV-02 | Four workspaces a user can navigate to can never hold data — Compensation & Benefits, Succession Planning, the Maintenance Calendar, and recurring analytics report schedules | A build in each case, or a decision to retire them. See §4a |
+| P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | **Not unbuilt — built the other way, deliberately.** The matrix gives IA import/allocate/view and withholds edit/define; the cascade explains why. Recorded as CONFLICT-002 |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
@@ -337,36 +337,48 @@ absent target renders as "No Target Set" rather than 0%. `RolePriorityTemplate` 
 superseded by the priority cascade, which passes `include_role_templates=False` on the
 production path. In each case absence is the safe state and the platform says so out loud.
 
-**Four are GOV-02: workspaces a user can open that can never hold data.** Compensation &
-Benefits and Succession Planning are full HR workspaces — searchable tables, metric tiles,
-scope filtering — over registers with no entry surface anywhere. The Maintenance Calendar
-is the same, with a preventive-maintenance generation job and a health check reading the
-same empty table, so `admin_ops_stale_maintenance` reports "Maintenance Generation: ok"
-permanently. Recurring analytics report schedules are the second-order version: the
-`AnalyticsReportSchedule` model exists, a proper `ModelForm` over it exists, the delivery
-job is registered with the scheduler and runs — and no view instantiates the form, so the
-job runs forever over an empty table. (The drawer a user actually sees sends an immediate
-snapshot and says "No scheduler worker or email provider is involved", which is honest.)
+**One is GOV-02, and this report first said four.** The correction is worth making in
+full, because the mistake was mine and it is the same mistake this audit keeps finding in
+code: I asserted that Compensation & Benefits, Succession Planning and the Maintenance
+Calendar were *workspaces a user can navigate to* without checking navigation. Three of
+them are not. `apps/core/navigation.py` carries each one commented out with the same line:
+"DESCOPED until a production writer exists — the model behind this page has none, so the
+page is a permanently empty register. Direct URL still works (honest empty state);
+navigation stops advertising it." Payroll Readiness is descoped the same way. Somebody had
+already found this, decided it, and written the decision down where I did not look.
 
-What these four share is subtler than GOV-01 and worth stating precisely: **their empty
-states are factually true and inferentially false.** "No succession nominations in this
-scope" is true. "No maintenance templates are configured yet" is true. Both read as
-*nobody has entered any*, when the fact is *there is no way to enter any*, and the second
-sentence is the one a Country Director needs. The word "yet" in the maintenance page does
-the most damage of any word in this report.
+That leaves the **Maintenance Calendar**, which genuinely is advertised — linked in the
+Admin sidebar and a drilldown target from a dashboard metric — over a table nothing writes.
+Its empty state says "No maintenance templates are configured **yet**", the generation job
+runs over the empty table, and `admin_ops_stale_maintenance` reports "Maintenance
+Generation: ok" permanently. Recurring analytics report schedules are a second-order
+version of the same thing and were also decided: the `AnalyticsReportSchedule` model and a
+proper `ModelForm` over it exist with no caller, while the drawer a user actually sees
+sends an immediate snapshot and says "No scheduler worker or email provider is involved".
+Honest, and retired in all but the residue.
 
-The tempting fix is to rewrite those sentences. This audit did not, and the mandate is
-why: *"Do not use cosmetic frontend changes to conceal backend or workflow defects."*
-Better copy over an absent capability is precisely that trade — the surface would read
-more honestly while the workspace stayed as empty as before. They are recorded as open
-findings for a build-or-retire decision instead. FIN-05 was fixed rather than reworded
-because the data it needed already existed, in a ledger the figure beside it was already
-reading; there was a capability to connect, not one to invent.
+What the remaining one has, and what the descoped pages had before somebody dealt with
+them, is worth naming: **an empty state that is factually true and inferentially false.**
+"No maintenance templates are configured yet" is true. It reads as *nobody has configured
+any*, when the fact is *there is no way to configure any*, and the second sentence is the
+one an Administrator needs. The word "yet" does more damage than any other word on that
+page.
 
-**Two are dead ends with no user-visible surface at all.** `Village` is the leaf of the
-Ugandan administrative hierarchy: nothing writes one, the seed stops at Parish, and no
-template or script calls `/geography/villages`. `HRAuditEvent` was a second audit table
-without a hash chain, already replaced by the canonical log.
+The tempting fix is to rewrite the sentence. This audit did not, and the mandate is why:
+*"Do not use cosmetic frontend changes to conceal backend or workflow defects."* Better
+copy over an absent capability is precisely that trade — the surface would read more
+honestly while the workspace stayed as empty as before. It is recorded for a build-or-
+retire decision instead, and the retire option already has three worked examples in this
+codebase. FIN-05 was fixed rather than reworded because the data it needed already existed,
+in a ledger the figure beside it was already reading; there was a capability to connect,
+not one to invent.
+
+**Five are dead ends or descoped surfaces.** `Village` is the leaf of the Ugandan
+administrative hierarchy: nothing writes one, the seed stops at Parish, and no template or
+script calls `/geography/villages`. `HRAuditEvent` was a second audit table without a hash
+chain, already replaced by the canonical log. `CompensationRecord`, `SuccessionCandidate`
+and `PayrollReadinessRecord` are the descoped HR registers described above — reachable by
+direct URL, honest when empty, and not offered to anybody.
 
 ### The scan was wrong twice before it was allowed to say anything
 

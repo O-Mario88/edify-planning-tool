@@ -104,8 +104,9 @@ KNOWN_READ_ONLY = {
         "an em dash rather than 0%, so the empty table is not read as failure."
     ),
     "PayrollReadinessRecord": (
-        "Payroll readiness register with no entry surface. Same em-dash "
-        "treatment as the compliance KPI beside it."
+        "Payroll readiness register with no entry surface. Descoped from "
+        "navigation like the two above, and the HR dashboard KPI renders an "
+        "em dash rather than 0% so an empty table is not read as failure."
     ),
     "FinanceReturn": (
         "Legacy. FIN-05 — /accounts/returned/ now reads the advance ledger, "
@@ -134,25 +135,27 @@ KNOWN_READ_ONLY = {
     ),
     # ── GOV-02: workspaces a user can open that can never hold data. ──
     "CompensationRecord": (
-        "GOV-02. Compensation & Benefits renders a searchable register with "
-        "metric tiles over a table with no entry surface. Its 'Missing "
-        "profiles' tile does report every member of staff, in danger styling."
+        "Descoped, and said so first. navigation.py carries the page commented "
+        "out with 'DESCOPED until a production writer exists' — the sidebar "
+        "does not advertise it, the direct URL keeps an honest empty state."
     ),
     "SuccessionCandidate": (
-        "GOV-02. Succession Planning, same shape: 'No succession nominations "
-        "in this scope' is true, and reads as 'none entered yet'."
+        "Descoped the same way, with the same comment. Succession Planning is "
+        "not offered in navigation; its URL still answers, empty and honest."
     ),
     "MaintenanceTemplate": (
-        "GOV-02, and the sharpest wording of it: 'No maintenance templates "
-        "are configured yet.' The generation job and the "
-        "admin_ops_stale_maintenance health check both run over the empty "
-        "table, so Maintenance Generation reports ok permanently."
+        "GOV-02, and the only one of its group still advertised: the "
+        "Maintenance Calendar is linked in navigation and is a drilldown "
+        "target. 'No maintenance templates are configured yet' reads as "
+        "pending rather than absent, and admin_ops_stale_maintenance reports "
+        "Maintenance Generation ok permanently over the empty table."
     ),
     "AnalyticsReportSchedule": (
-        "GOV-02, second order. AnalyticsReportScheduleForm is a real "
-        "ModelForm with no caller; the drawer sends an immediate snapshot "
-        "instead and says so. deliver_due_schedules is a registered "
-        "scheduler job running forever over an empty table."
+        "Retired, second order. AnalyticsReportScheduleForm is a real "
+        "ModelForm with no caller; the drawer a user actually sees sends an "
+        "immediate snapshot and says 'No scheduler worker or email provider "
+        "is involved'. deliver_due_schedules stays a registered scheduler job "
+        "running over an empty table."
     ),
     "Village": (
         "Unreached admin5 leaf. Nothing writes one, the seed stops at Parish, "
