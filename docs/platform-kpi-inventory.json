@@ -2446,7 +2446,7 @@
    "audit_id": "KPI-SOURCE-123",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 237,
+   "line": 236,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -2466,7 +2466,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 244,
+   "line": 243,
    "label": "Approved",
    "keys": [
     "color",
@@ -2486,7 +2486,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 251,
+   "line": 250,
    "label": "Pending",
    "keys": [
     "color",
@@ -2506,7 +2506,7 @@
    "audit_id": "KPI-SOURCE-126",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 258,
+   "line": 257,
    "label": "Returned",
    "keys": [
     "color",
@@ -3132,7 +3132,7 @@
    "audit_id": "KPI-SOURCE-158",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1227,
+   "line": 1274,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -3152,7 +3152,7 @@
    "audit_id": "KPI-SOURCE-159",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1234,
+   "line": 1281,
    "label": "Approved",
    "keys": [
     "color",
@@ -3172,7 +3172,7 @@
    "audit_id": "KPI-SOURCE-160",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1241,
+   "line": 1288,
    "label": "Pending",
    "keys": [
     "color",
@@ -3192,7 +3192,7 @@
    "audit_id": "KPI-SOURCE-161",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1248,
+   "line": 1295,
    "label": "Returned",
    "keys": [
     "color",
@@ -3212,7 +3212,7 @@
    "audit_id": "KPI-SOURCE-162",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1306,
+   "line": 1353,
    "label": null,
    "keys": [
     "amount",
@@ -26554,7 +26554,7 @@
   {
    "audit_id": "KPI-PAYLOAD-022",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1154,
+   "line": 1201,
    "function": "get_disbursement_dashboard",
    "target": "kpis",
    "source_item_count": 6,

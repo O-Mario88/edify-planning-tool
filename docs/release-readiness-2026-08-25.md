@@ -264,7 +264,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 15 of 22 mandated end-to-end journeys have a real test | Seven journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 16 of 22 mandated end-to-end journeys have a real test | Six journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers are **read-only** — three surfaces read each, nothing writes either | A build: the write path was never made |
@@ -538,6 +538,58 @@ Both halves were mutation-tested. Dropping `IA_VERIFIED_STATUSES` from the `dire
 branch of `live_progress` fails the walk; making the twelve-month phasing round per month
 instead of preserving the annual total fails it too. Each mutation was confirmed present
 in the file before the exit code was read.
+
+### Journey 10 is two properties wearing seven steps
+
+HR unlocks, Employee evaluates, Manager evaluates, Automatic values stay read-only, HR
+oversight, Close, Snapshot lock. Two of those seven are not steps. "Automatic values stay
+read-only" and "Snapshot lock" are properties the other five have to hold while they run,
+and they are why the journey is on the mandate's list at all. A performance conversation
+where the measured figure can be typed over is a conversation about somebody's opinion
+wearing a number's clothes; one where the figure moves between the manager writing their
+assessment and the employee reading it is a conversation about two different quarters.
+
+Both hold. The design is better than the mandate asks for: opening the window IS the
+snapshot, so freezing the numbers is not a separate act anyone could omit — "every agreed
+review is frozen at this moment, so the meeting's numbers cannot move while the
+conversation is underway". `take_snapshot` refuses to overwrite an existing one, and says
+why in four words: "that is the whole point."
+
+The sharpest assertion in the walk is the one where both things are true at once. Real,
+IA-verified work lands after HR has opened the quarter. `live_progress` moves, because
+verified work is verified work. The snapshot does not, because the conversation is already
+underway. A platform that cannot hold both is one where the manager and the employee are
+reading different numbers off the same screen.
+
+The read-only property is asserted at the service signatures rather than by trying to
+smuggle a value in, because a service that silently ignored an unknown keyword would pass
+a string-based probe while a future refactor quietly wired it up. None of the four
+conversation writes — reflection, assessment, calibration, acknowledgement — has a
+parameter through which a typed figure could reach the computed channel.
+
+The authority rules are driven as refusals, not asserted as a table, and each one is an
+inversion somebody could reasonably have got backwards. The employee is the only person
+who may write the reflection and the only person who may acknowledge, and is barred from
+every assessing action in between. HR governs the window and calibration but may not write
+the manager's judgement — a separation the code says it lost once already: "This used to
+accept HR as an alternative assessor, so a governance role could write the manager's
+judgment on the manager's behalf." And the manager's rating is not the final rating;
+calibration decides that, because writing it at assessment time skips the gate.
+
+**A note on what "covered" means, because this journey nearly slipped it.** The first
+version of this walk registered two tests against Journey 10 — one carrying steps 1, 4 and
+7, another carrying 1, 2, 3, 5 and 6. Between them they touch every step, and the census
+would have accepted the pointers, because the census checks that pointers resolve and not
+what they cover. The manifest's own rule says otherwise: one test walks the whole thing,
+because "several tests that each verify a step, with the seams between them faked, is
+exactly the coverage this platform cannot rely on". Two partial pointers dressed as
+coverage is the same move as a skipped test reporting green, one level up. The journey now
+has a single test that walks all seven steps in order, and the focused ones stay as what
+they are — guards on individual rules, claiming nothing.
+
+Mutation-tested at both properties: making `take_snapshot` delete and retake an existing
+snapshot fails the walk, and letting `submit_assessment` write the final rating fails it
+too. Each mutation was confirmed present in the file before the exit code was read.
 
 ## 5. Path to a defensible Go
 
@@ -822,6 +874,7 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `bd33fac` | One notification writer is true, and a scanner guards against the seventh |
 | `592ad83` | Every Programme Lead's CCEOs resolve in one read, and the two tests that skipped rather than fail now assert |
 | `8f92f44` | The Accountant's Returned figure reaches the money it counts, instead of a table nothing writes |
+| `674305c` | Journey 1 walked, and every register with readers and no writers pinned to a machine-checked census |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk

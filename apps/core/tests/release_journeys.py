@@ -226,6 +226,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Close",
             "Snapshot lock",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_quarterly_conversation:"
+            "QuarterlyConversationJourneyTest."
+            "test_the_whole_conversation_in_order",
+        ),
     ),
     Journey(
         11,
