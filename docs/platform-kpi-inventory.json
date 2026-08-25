@@ -3006,7 +3006,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 711,
+   "line": 712,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -26470,7 +26470,7 @@
   {
    "audit_id": "KPI-PAYLOAD-019",
    "module": "apps/frontend/views/school_views.py",
-   "line": 509,
+   "line": 510,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,
