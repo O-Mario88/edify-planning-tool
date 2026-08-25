@@ -106,14 +106,31 @@ The lesson is worth keeping: a branch that is pushed to faster than CI can run i
 whose CI status is always about an older commit than the one you are looking at. Pushes
 were paced after that, in batches rather than per commit.
 
-**One CI run failed and the next one, on the same code, did not.** Run 932 on head
-`9a201c4` failed its Django test job; run 933 on `e3b3a79` — a documentation-only commit on
-top, byte-identical in every `.py` — completed green, as did the local full suite on
-`9a201c4` itself at 6,037 tests. Two independent executions of the same tree pass and one
-does not, so the failure is not attributable to the code. It is recorded here rather than
-passed over, because "it went green on the retry" is the sentence that hides real
-intermittency, and the only thing that makes this one safe to set aside is that the passing
-runs are of the identical tree rather than of a fix.
+**Two CI runs failed the Django job, and this report first said one.** The correction
+matters, because one failure with three passing executions around it reads as noise and two
+failures reads as a pattern — and the second reading is the one that gets investigated.
+
+The first, run 931 on head `210318a`, **was a real regression and is fixed**. CORE-01's
+first version refused the unsendable core-assessment ask outright, which took away a
+Programme Lead's ability to send any oversight action on a core school whose only other
+blocker was the package. The local full suite caught it as exactly one failure —
+`test_the_supervisor_can_send_an_action_to_the_responsible_cceo`, a test titled for what a
+supervisor "must NOT lose" — and commit `29faf89` fixed it by falling through to the
+resolvable ask. CI was failing for the same reason at the same time.
+
+The second, run 932 on `9a201c4`, has no such explanation and is contradicted by three
+independent executions of identical Python: the local full suite on that exact tree at
+6,037 tests, and CI runs on `e3b3a79` and `e024d5e`, which differ from it only under
+`docs/`. It is recorded as unexplained rather than as a flake. The distinction is not
+pedantry — "it went green on the retry" is the sentence that hides real intermittency, and
+what makes this one safe to set aside for now is that the passing runs are of the same tree
+rather than of a fix.
+
+The failing test's name is not in this report because it could not be read from here: the
+MCP job-log tool returns only the Postgres service container's tail, and the full-log
+artifact host is denied by the environment's network policy. That is a limitation of the
+audit environment, stated rather than papered over, and it is the reason this entry says
+"unexplained" instead of naming a cause.
 
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
 was first written and 6,037 at the last full run, with no failures, no skips, and one
