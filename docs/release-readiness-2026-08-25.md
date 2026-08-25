@@ -49,18 +49,32 @@ Everything in this table was run, not inferred.
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **FAIL** — 7 of 22, 2 unbuildable |
-| Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
-| Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
+| Container vulnerability scan | Trivy, in CI | **PASS** as of 2026-08-25 08:38 — was failing; see below |
+| Branch CI on the fixed tree | GitHub Actions, head `693530f` | **PASS** — every job, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
-CI on the branch head runs five jobs. Four pass — Django lint and test suite, CodeQL,
-`Analyze python`, `Analyze javascript-typescript`. The fifth, Security Scans, fails at one
-step, `Scan the image`, and that failure is not this branch's: the same workflow on `main`
-at `e13dce8` — this PR's exact baseline — fails at the same step while its Django suite
-passes. The findings are OS-package CVEs in the base image (`util-linux` and `mount`,
-CVE-2026-53612 through -53615), none carrying a fixed version, and nothing in this
-branch's diff touches the Dockerfile or dependency pins. It is a base-image refresh, not a
-code fix, and it is counted as a blocker on the rollout rather than on this branch.
+**The container scan has since started passing, and this section said otherwise.** Through
+the morning of 2026-08-25 the Security Scans job failed at one step, `Scan the image`, on
+every commit — and identically on `main` at `e13dce8`, this branch's baseline, which is how
+it was established as not this branch's doing. The findings were OS-package CVEs in the
+base image (`util-linux` and `mount`, CVE-2026-53612 through -53615), none carrying a fixed
+version at the time, which is why it was recorded as needing a base-image refresh rather
+than a code fix.
+
+At 08:38 on the same day it passed, on run 910 (head `693530f`) — the whole workflow green,
+every job including `Scan the image`. Nothing in this branch touched the Dockerfile or the
+dependency pins, so what changed was upstream: the fixed packages landed, or the scanner's
+database did. The gate is recorded as **PASS** on that evidence and the earlier FAIL is
+kept here rather than deleted, because a blocker that resolves itself is worth being able
+to see resolve.
+
+**A caveat on CI coverage of the most recent work.** Runs 911 through 914 were each
+*cancelled* by the next push rather than completing — pushing every journey as its own
+commit meant each run superseded the one before it. So the last CI run to complete on this
+branch was run 910 at `693530f` (Journey 5). SEC-03 and Journeys 9 and 22 have passed the
+full local suite (5,927 tests, no failures, no skips) but have **not** yet been verified by
+CI. That is a gap in the evidence for those three, and it is stated here rather than
+covered by the earlier green.
 
 Suite size at HEAD: **431 test files; the runner collected and ran 5,927 tests.** The run
 on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 910s. The single
