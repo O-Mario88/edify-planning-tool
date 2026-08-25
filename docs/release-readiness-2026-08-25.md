@@ -9,7 +9,7 @@ This is not a judgement that the platform is poor. It is a well-engineered syste
 unusually honest internal controls, and the audit found several defences better than most
 production codebases carry.
 
-**Seventeen findings were fixed in this audit**, including two P0s — a rescheduling path
+**Eighteen findings were fixed in this audit**, including two P0s — a rescheduling path
 that could CASCADE-delete a disbursed advance, and migrations that could run concurrently
 with no lock. Every fix carries a regression test verified to fail before it and pass
 after. §4 lists them.
@@ -45,17 +45,48 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
-| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,729 tests, 0 failures |
+| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,900 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | repository census at HEAD | **FAIL** — 1 of 22 |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing, red on `main` too |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
-Suite size at HEAD: **425 test files; the runner collected and ran 5,729 tests.** The run
-on the fixed tree is clean — `OK (skipped=2, expected failures=1)` in 890s. The single
-expected failure is CONFLICT-001 below, quarantined deliberately; the two skips are
-conditional on data the dev database does not hold.
+Suite size at HEAD: **425 test files; the runner collected and ran 5,900 tests.** The run
+on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 1,006s. The single
+expected failure is CONFLICT-001 below, quarantined deliberately and documented at the
+test.
+
+### Both skips were hiding something, and this report first said otherwise
+
+An earlier draft of this section disposed of the run's two skips as "conditional on data
+the dev database does not hold" — which is what the skip messages implied, and which was
+not checked. Running the suite at `-v 2` to name them found that neither was benign, and
+that the sentence dismissing them was exactly the false-green reasoning the mandate
+forbids. Both are now closed and the suite skips nothing.
+
+**`test_the_cost_does_not_grow_with_the_number_of_program_leads`** measured the growth,
+saw it, and called `skipTest` on itself with the measurement in the message. A test that
+detects a regression and then declines to fail reports green over an open defect for as
+long as it exists. The defect was real: `_pl_cceos` was memoised per Programme Lead, so
+each additional one cost three more queries on every Country Director surface that walks
+the list. Measured on `/todos`: **82 queries at three Programme Leads and 112 at
+eighteen**. Batching the resolution onto the scope object makes it **69 at both**. The
+test now measures the request rather than calling the service directly — the distinction
+mattered, because outside a request `apps.core.request_cache` is deliberately inert, so
+the direct path pays a per-user re-read that no page load pays, and the test could not
+tell that policy apart from a regression. Verified by reverting the fix: 82 → 112, failed;
+restored, passes.
+
+**`test_monthly_fund_plans_are_counted_not_just_weekly_advances`** asserted that the FY
+money totals exceed the weekly-advance totals whenever a monthly plan exists. That was
+true when the totals summed both snapshots, and D1 moved them to the `AdvanceRequest`
+ledger precisely because that addition counted a cost line requested through both channels
+twice. Under the ledger the assertion asks for the double-count back. It skipped whenever
+the database held no monthly plan, which was always, so nothing ever caught it going
+stale. Removed, with the rule it named left where it is genuinely exercised
+(`test_audit_funding_channels.test_fy_totals_count_the_shared_cost_line_once`, which seeds
+both channels).
 
 ### The scale gate needed two runs, and the first one would have been a false alarm
 
@@ -142,7 +173,7 @@ Full detail, including the workstream reports, follows in §6.
 
 ### Fixed in this audit
 
-Seventeen findings were fixed here, each with a regression test verified to fail before
+Eighteen findings were fixed here, each with a regression test verified to fail before
 the fix and pass after. Where a test initially passed against the unfixed code it was
 rewritten, not accepted.
 
@@ -167,6 +198,7 @@ rewritten, not accepted.
 | P2 | SEC-02 | `can_update` claimed every write resolved through it; nothing called it, which is how SEC-01 survived a green suite |
 | P2 | D3/D4 | API leave decisions notified nobody; accepting coverage claimed a notification it never sent |
 | P2 | D6/D7 | Core slots completed through the real path carried neither evidence nor Salesforce id, so two blockers alarmed for ever |
+| P2 | ISSUE-007 | Two tests skipped themselves rather than fail, so the suite reported green over an open N+1 and a stale assertion. See below |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
 **The shape most of these share.** One definition, written out in several places, where a
@@ -176,6 +208,15 @@ definition once and makes the copies read it, and three guards were added so the
 cannot recur — the cost-snapshot test parametrises over its constant, the metric registry
 resolves every service path, and a scanner fails on a raw `Notification.objects.create`
 outside the notifications app.
+
+**The eighteenth has a different shape, and a worse one.** ISSUE-007 was not a drifted
+copy but a test that measured a regression and then chose not to fail — and a second that
+had quietly outlived the rule it asserted. Neither was hidden: both printed their reason
+in the run. What hid them was that a skip reads as a pass in every summary line anyone
+looks at, including the one in this report's first draft. A defect a test declines to
+report is worse than one no test covers, because the second is visibly absent from the
+coverage and the first is not. The suite now skips nothing, which makes any future skip
+a signal rather than noise.
 
 ### Still open
 
@@ -455,19 +496,42 @@ closes it.
 
 ## 7. What was fixed in this audit
 
-Four commits, each with a regression test verified to fail before and pass after:
+Each carries a regression test verified to fail before the fix and pass after.
 
-- `804bd5b` — the partner role-bridge now fails closed when its flag is absent.
-- `56fa8c6` — the school edit drawer asks the ownership question before it writes.
-- `8f8c5b3` — cancelling or deferring work withdraws its milestone credit.
-- `00cdfd8` — the cost-snapshot lock reads the canonical money-moved set, and its test
-  parametrises over that constant so the drift cannot recur.
+| Commit | Fix |
+| --- | --- |
+| `804bd5b` | The partner role-bridge fails closed when its flag is absent |
+| `56fa8c6` | The school edit drawer asks the ownership question before it writes |
+| `8f8c5b3` | Cancelling or deferring work withdraws its milestone credit |
+| `00cdfd8` | The cost-snapshot lock reads the canonical money-moved set, and its test parametrises over that constant so the drift cannot recur |
+| `31601f5` | Migrations serialise on an advisory lock instead of on `instance_count: 1` |
+| `b2dd49d` | Leave cannot be approved onto a cover who declined it |
+| `85b37d6` | Only IA-verified work counts as partner payment pending |
+| `202aa78` | Readiness names the degraded dependency it was calling healthy |
+| `5d599e3` | An unpayable reimbursement is refused, not discovered after payout |
+| `4bdc817` | Partner money movement asks the permission matrix, not a role tuple |
+| `6cb508a` | The scheduler pushes what it already knew about its own failures |
+| `3e2a096` | The oversight contract answers with the rule writes actually enforce |
+| `d996b62` | The metric registry follows the pointer it exists to enforce |
+| `697b58f` | A school counts once a year where the basis says unique, not once a month |
+| `50493d6` | A rate milestone gets the denominator its own arithmetic requires |
+| `e66b3ce` | A leave decision is announced from the transition, not from one of its doors |
+| `9964cb8` | A core plan is read by its lifecycle, not by one status in it |
+| `d35c85e` | The database refuses the money and assignment states nothing else did |
+| `bd33fac` | One notification writer is true, and a scanner guards against the seventh |
+| `592ad83` | Every Programme Lead's CCEOs resolve in one read, and the two tests that skipped rather than fail now assert |
+
+Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
+respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk
+notices resolved in one query), and `4aef402`, `120a66a`, `6750c71`, `036982e` (this
+report).
 
 A note on method, because it changed an outcome: the first draft of the FIN-01 test
 asserted a bare `BadRequest` and **passed against the unfixed code** — `reschedule`
 refuses on the scheduling policy long before it reaches the lock. It was only by running
 the test against the reverted guard that the tautology showed up. Every regression test
-here was checked that way.
+here was checked that way — including the last one, where reverting the batch took the
+measurement from 69 back to 112 and the test failed as it should.
 ## 7a. Deliverable coverage — what this audit did not produce
 
 The mandate asks for twelve deliverables. Nine are in this document: the executive
