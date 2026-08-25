@@ -869,18 +869,32 @@ checks it is actually about, which is stronger than the flag it used to read.
 
 ## 5. Path to a defensible Go
 
+Six items, of which engineering has closed two outright and can close none of the rest
+without an environment or a decision.
+
 1. **Product-owner decision on CONFLICT-001.** It is a conflict, not a bug — both fix
    directions break tests encoding the opposite behaviour. Engineering cannot resolve it.
-2. **Fix and regression-test the three achievement P1s** (TGT-01/02/03).
-3. **Amend the release scope or build the offline client.** The honest options are to
+2. **Product-owner decision on CONFLICT-002.** Whether Impact Assessment should author the
+   priorities its own verification is measured against. The recommendation, and the reason
+   it is a recommendation rather than a patch, are in §8.
+3. **Country Director configuration for the Core Assessment.** One catalogue item with a
+   costing profile. Until it exists, one of the nine mandatory Core package slots cannot be
+   scheduled by anybody; the platform now reports that as a configuration gap instead of
+   holding a school to it (CORE-01), and the check goes green by itself once it is
+   configured.
+4. **Amend the release scope or build the offline client.** The honest options are to
    ship as "installable, online-only PWA" or to build the IndexedDB queue, replay and
    server-side idempotency keys. It is a build, not a patch.
-4. **Stand up a production-equivalent staging environment** and run the nine gates
+5. **Stand up a production-equivalent staging environment** and run the nine gates
    above, including a real restore and a real rollback rehearsal.
-5. **Walk the mandated journeys end to end** — or accept, in writing, which of them ship
-   unproven.
-6. **Re-run the full pipeline on the release candidate**, including the container scan
-   currently failing on `main`.
+6. **Re-run the full pipeline on the release candidate**, including the container scan.
+
+**Closed by this audit:** the three achievement P1s (TGT-01/02/03) are fixed with
+regression tests. And the journeys are walked — twenty of the twenty-two, one test each,
+end to end. The earlier version of this list asked the owner to "accept, in writing, which
+of them ship unproven"; that request is withdrawn for twenty of them, and stands only for
+Journey 20 (offline) and Journey 21 (external transports), which are items 4 and 5 above
+under different names.
 
 ---
 
