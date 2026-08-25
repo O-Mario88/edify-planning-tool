@@ -1451,15 +1451,29 @@ class PLTeamTargetsService:
         # workflow state on every render, so this IS the moment the condition
         # stops holding. Closing both events at once clears the PL's row and
         # the member's own.
+        #
+        # One SELECT finds the recovered members that still hold a live notice,
+        # so the common render — where nobody has just recovered — costs a
+        # single query rather than one UPDATE per team member.
         at_risk_ids = {m["user_id"] for m in high_risk_members}
-        for m in all_members or []:
-            if m["user_id"] in at_risk_ids:
-                continue
-            resolve_condition(
-                [TEAM_TARGET_STAFF_AT_RISK, TEAM_TARGET_OWN_AT_RISK],
-                "staff_risk",
-                m["user_id"],
+        recovered_ids = [
+            m["user_id"] for m in (all_members or []) if m["user_id"] not in at_risk_ids
+        ]
+        risk_events = [TEAM_TARGET_STAFF_AT_RISK, TEAM_TARGET_OWN_AT_RISK]
+        stale_ids = (
+            Notification.objects.filter(
+                source_event_type__in=risk_events,
+                context_type="staff_risk",
+                context_id__in=recovered_ids,
+                resolved_at__isnull=True,
             )
+            .values_list("context_id", flat=True)
+            .distinct()
+            if recovered_ids
+            else []
+        )
+        for member_id in stale_ids:
+            resolve_condition(risk_events, "staff_risk", member_id)
 
     # ── detail matrix + export ───────────────────────────────────────────────
     @staticmethod
