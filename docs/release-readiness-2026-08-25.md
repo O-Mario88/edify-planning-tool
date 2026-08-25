@@ -1195,3 +1195,50 @@ honest one. A target nobody assigned should not have work counted against it; th
 "Not Assigned" is the truthful state. That implies CD analytics should adopt the agreed
 priority areas and the six catalogue-based CD fixtures should be re-based — a change
 with a known, bounded test cost.
+
+## CONFLICT-002 · An approved extension asks Impact Assessment to author what it is meant to verify
+
+| Field | Value |
+| --- | --- |
+| Conflict ID | CONFLICT-002 |
+| Requirement source A | Approved product extension GAP-02: Impact Assessment can edit Master Priority rows |
+| Requirement source B | The RBAC matrix and the priority cascade. `strategicPriorities.edit` and `milestones.define` are held by Admin, Country Director and Regional Vice President — **not** Impact Assessment. `apps/hr/priority_cascade.py` states the rule in its own words: "The RVP and CD author STRATEGY … They never write an individual's milestones" |
+| Current system behaviour | IA holds `strategicPriorities.import`, `strategicPriorities.allocate`, `strategicPriorities.view`, `milestones.allocate` and `milestones.viewProgress` — it may bring the master in, hand priorities and milestones to people, and watch progress. It may not author or amend the strategy, or define the measurement |
+| Affected roles | Impact Assessment (the authority in question); Country Director and RVP (the authors today) |
+| Affected workflow | Strategic priority → cascade → agreement → My Targets → verified performance |
+| Financial/data risk | Not financial. The risk runs the other way: Impact Assessment is the role that VERIFIES delivered work, and `Permission.IA_VERIFY` sits in `ADMIN_EXCLUDED_PERMISSIONS` precisely so no account both certifies work and releases money for it. Letting the verifier author the priorities their verification is measured against is the same class of conflict, one layer up |
+| Product-owner decision | **REQUIRED — NOT YET MADE** |
+| Resolution | Blocked on the decision below |
+| Test proving the resolution | None yet. The current exclusion is enforced by the matrix itself and by `_assert_master_author` |
+
+### Why this is a conflict and not an unbuilt feature
+
+The earlier draft of this report recorded GAP-02 as "an approved extension that was never
+built", which is the reading that leaves it open for ever. It is not unbuilt. The platform
+built the **opposite**, deliberately, with the authority split written down in the module
+that depends on it, and IA given a precise and different set of powers around the same
+objects: import, allocate, view.
+
+That distinction matters to whoever decides. "Never built" invites someone to build it.
+What is actually being asked is whether to remove an authorship separation the cascade is
+designed around — and the argument against comes from this platform's own security
+reasoning. SEC-03, found earlier in this audit, was a P0 precisely because `certify_activity`
+let any role stamp work IA-verified; the fix reads `Permission.IA_VERIFY` from the matrix,
+which withholds it from Admin so that no single account can both verify work and release
+the money for it. An IA that authors the strategic priority, allocates it, and then verifies
+the work claimed against it holds all three positions in that chain.
+
+### Assessment
+
+Low severity for the release — nothing is broken, no number is wrong, and no user is
+blocked from work they are entitled to do. But it should not be carried as a to-do list
+item, because implementing it as written would weaken a separation this audit spent a P0
+establishing.
+
+**Recommended decision** (for the owner, not for engineering to take): keep the current
+split, and re-scope the extension. If the underlying need is that a master priority cannot
+be corrected after import — which is true today, and the more likely real complaint — the
+answer is an amendment path owned by the Country Director, with IA able to propose. That
+is the shape the platform already uses for loan purposes: `purpose.request` on the partner,
+`purpose.review` on the BT Officer, `purpose.define` on IA, `purpose.approve` on the CD.
+Four roles, one object, nobody holding two ends of it.
