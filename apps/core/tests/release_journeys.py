@@ -159,6 +159,10 @@ JOURNEYS: tuple[Journey, ...] = (
             "Follow-up SSA",
             "Impact calculated",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_special_project:"
+            "SpecialProjectJourneyTest.test_the_whole_special_project_in_order",
+        ),
     ),
     Journey(
         7,

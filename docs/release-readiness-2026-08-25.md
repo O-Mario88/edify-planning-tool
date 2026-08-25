@@ -233,6 +233,7 @@ rewritten, not accepted.
 | P1 | FIN-04 | Money disbursed against work later **cancelled** could never reach a settled state — finance clearance required IA verification, which called-off work can never obtain |
 | P2 | ISSUE-007 | Two tests skipped themselves rather than fail, so the suite reported green over an open N+1 and a stale assertion. See below |
 | P1 | FIN-05 | The Accountant's **Returned** money figure linked to a queue reading a table nothing writes; its empty state read "All corrections resolved" beneath a live returned balance |
+| P1 | PROJ-01 | `refresh_follow_up` had no caller, so no Special Project could ever report a measured school — and the reminder designed to chase the missing assessment could never fire either |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
 **The shape most of these share.** One definition, written out in several places, where a
@@ -264,7 +265,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 17 of 22 mandated end-to-end journeys have a real test | Five remain: one unwritten, four blocked on findings this audit could not close. The 22 are enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 18 of 22 mandated end-to-end journeys have a real test | **Nothing is unwritten.** The four that remain are blocked on findings this audit could not close — GOV-01 twice, FE-01, INTG-01. The 22 are enumerated and the count machine-checked |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers are **read-only** — three surfaces read each, nothing writes either | A build: the write path was never made |
@@ -638,6 +639,73 @@ the seventeen journeys now walked, this is the one whose money moves furthest fr
 Edify's control, and it is the one whose controls are most explicit about what each party
 may assert.
 
+### Journey 6 was the last unwritten one, and walking it found PROJ-01
+
+Ten steps, and unlike every other journey this one does not move work or money. It moves
+a claim: at the end of it the platform says a Special Project improved something. So the
+rules worth testing are all about what it refuses to claim, and they are unusually good.
+A school joins a project because its own confirmed assessment is genuinely weak in one of
+the project's declared targets — the service comments say "never fabricate need". The
+baseline is snapshotted at the moment of assignment, so the project is judged against the
+score it started from rather than whatever the latest reading says. Measurement runs from
+a **verified** delivery, never a scheduled one, because "a plan is not an intervention,
+and measuring from a date nothing happened on would open the follow-up window early". And
+a rate is withheld entirely below a minimum cohort rather than shown with a caveat nobody
+reads.
+
+That last rule shapes the end of the walk, and it is worth stating what the test asserts
+because a careless version would have asserted the opposite. One school is a real,
+measured, improved school **and** too small a cohort to state a project-level rate. Both
+are true at once. The walk requires `measured` to be 1, `improved` to be 1,
+`average_change` to be the actual gain — and `improvement_rate` to be **None**, with the
+limitation string saying why. A test that demanded a percentage there would have been
+asking the platform to overclaim.
+
+**And step 10 could not happen at all.** `ssa_impact.refresh_follow_up` is the only code
+that writes a follow-up score, a follow-up assessment id, the follow-up due date, or any
+classification beyond the two set at assignment. It is complete, careful, explicitly
+idempotent and tested — and its only callers in the entire repository were its own tests.
+So no project school could ever reach the measured state; `project_impact` reported
+"awaiting follow-up" for every project in every financial year, however much verified
+work was done and however many follow-up assessments were collected.
+
+The second half is worse than the first. The To-Do that chases a missing follow-up filters
+on `follow_up_due_on__lte=today`, and that column is written only by `refresh_follow_up` —
+so the reminder that exists to stop this happening could itself never fire.
+
+What made it quiet is that every reader was scrupulously honest. `project_impact` reports
+the pipeline stage rather than folding an unmeasured school in as a zero, and withholds a
+rate over a cohort too small to mean anything. The To-Do page carries a comment saying an
+uncollected assessment "reads forever as 'not yet measurable', which is honest but never
+becomes an answer". Nothing lied. The truth was just always the same one — which is the
+distinguishing mark of this whole defect class, and the reason it survives green suites.
+
+Two event bridges now reach the refresh, because two different things can make a school
+measurable and neither happens in the projects app: a delivery is verified, which opens
+the window and fixes the due date, and an assessment is confirmed, which may be the one
+that judges the work. Both enqueue onto the durable outbox rather than running inline, for
+the same reason the Business Transformation bridge beside them does — a confirmed SSA
+arrives one at a time from a verification screen and several hundred at a time from an
+import, and the upload path has a query budget a per-row projection would break. The
+`outbox_drain` job is registered with the scheduler and covered by INTG-02's alerting.
+
+### The first version of the PROJ-01 test was green for the wrong reason
+
+Worth recording, because the suite would have accepted it. Deleting either bridge left all
+five tests passing. The cause is a property of the fix rather than of the test:
+`refresh_school_impact` re-derives from current state, so an event enqueued by an *earlier*
+step and drained at the end of the test does all the *later* work too. One stale event
+covered for a bridge that never fired.
+
+The tests now drain after every step, so each trigger has to carry its own step, and
+killing either bridge fails them. This was found only by mutating both — the suite was
+green either way, and nothing else would have told me.
+
+That is the fourth distinct way this audit has produced a green that came from not having
+looked: a test that skipped itself, a prose claim nobody could check, a mutation that
+never landed in the file, and now a fix whose two halves could each hide behind the other.
+They have nothing in common except the shape of the result.
+
 ## 5. Path to a defensible Go
 
 1. **Product-owner decision on CONFLICT-001.** It is a conflict, not a bug — both fix
@@ -923,6 +991,8 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `8f92f44` | The Accountant's Returned figure reaches the money it counts, instead of a table nothing writes |
 | `674305c` | Journey 1 walked, and every register with readers and no writers pinned to a machine-checked census |
 | `6c2afe6` | Journey 10 walked, and one whole-journey test replaces two partial pointers |
+| `d9b1a2c` | Journey 17 walked — the loan, from funding facility to district equity |
+| `116b3ec` | A Special Project's impact can become an answer: the refresh is wired to the evidence that should trigger it |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk
