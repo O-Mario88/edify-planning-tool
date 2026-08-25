@@ -3,7 +3,7 @@ import logging
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.utils import timezone
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.activities.closure_services import (
     ActivityClosureService,
     ClosureEligibilityService,
@@ -42,6 +42,38 @@ def _chain_audit(action: str, activity, actor_id: str, payload: dict) -> None:
         )
     except Exception:  # pragma: no cover — audit must never break finance
         pass
+
+
+def _assert_may_pay(actor) -> None:
+    """Only a holder of `payment.act` may move partner money.
+
+    Read from the permission matrix rather than a role tuple — the same
+    contract `weekly_service._assert_may_disburse` enforces on the weekly
+    channel. The 2026-08 audit's AUD-004 put `Permission.PAYMENT_ACT` into
+    `ADMIN_EXCLUDED_PERMISSIONS` so the account that can approve a budget or
+    verify an activity cannot also release the money for it. The partner
+    channel handed that authority straight back three separate ways (FIN-03):
+    `require_page_permission("disbursements")` alone on the payment screens
+    (navigation maps that page to {Accountant, Admin} — reading a queue is not
+    authority to pay out of it), the ("Accountant", "CountryDirector",
+    "Admin") tuples in `partner_invoices` and `vendor_channel`, and no check
+    at all inside `pay_partner`. Asserting here, at the money, is what stops
+    the next screen re-opening the hole.
+
+    `actor` is a principal, or the bare `user_id` these services still carry
+    in places — resolved to its User the way the surrounding code does. An
+    actor that does not resolve has no authority we can establish, and this is
+    the last gate before the money moves, so it is refused.
+    """
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if isinstance(actor, str):
+        from apps.accounts.models import User
+
+        actor = User.objects.filter(id=actor).first()
+    if not has_permission(actor, Permission.PAYMENT_ACT.value):
+        raise Forbidden("Only a Program Accountant can pay partners.")
 
 
 # The one definition of "this partner activity still needs paying".
@@ -385,6 +417,10 @@ class PartnerPaymentService:
         payment_type: str = PartnerPayment.TYPE_CLEARANCE,
         notify_partner: bool = True,
     ) -> PartnerPayment:
+        # Authority first, before the row lock and before any write: the
+        # screens gate three different ways and one of them (FIN-03) let a
+        # role without `payment.act` through. See _assert_may_pay.
+        _assert_may_pay(user_id)
         # Every guard below — including the one-payout-per-activity check —
         # must run against a LOCKED activity row, inside the same transaction
         # that writes the payment. Read unlocked (as they were), two accountants

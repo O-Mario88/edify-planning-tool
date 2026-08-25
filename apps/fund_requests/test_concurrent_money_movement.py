@@ -427,6 +427,21 @@ class ConcurrentPartnerPaymentTest(TransactionTestCase):
     """
 
     def setUp(self):
+        # The racing payers are real Program Accountants, not loose strings:
+        # pay_partner asserts `payment.act` on the actor it is handed (FIN-03),
+        # so the fixture has to name people who actually hold it — six of them,
+        # one per racing connection, as the race intends.
+        from django.contrib.auth import get_user_model
+
+        for index in range(CONCURRENCY):
+            get_user_model().objects.create(
+                id=f"acct-{index}",
+                email=f"pp-race-acct-{index}@test.org",
+                name=f"PP Race Accountant {index}",
+                roles=["Accountant"],
+                active_role="Accountant",
+                is_active=True,
+            )
         self.region = Region.objects.create(name="PP Race Region")
         self.district = District.objects.create(
             name="PP Race District", region=self.region

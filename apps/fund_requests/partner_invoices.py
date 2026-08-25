@@ -419,10 +419,14 @@ def pay_invoice(invoice_id: str, data: dict, principal) -> dict:
     from apps.partners.models import Partner
 
     from .finance_models import PartnerInvoice
-    from .finance_services import PartnerPaymentService
+    from .finance_services import PartnerPaymentService, _assert_may_pay
 
-    if getattr(principal, "active_role", "") not in _FINANCE_ROLES:
-        raise Forbidden("Only Finance can pay partner invoices.")
+    # `payment.act`, not `_FINANCE_ROLES`. That tuple also admits
+    # CountryDirector and Admin, which is right for READING the invoice queue
+    # (below) but hands the money-moving half back to roles the 2026-08 audit's
+    # AUD-004 deliberately excluded — Admin holds no `payment.act` at all
+    # (FIN-03). pay_partner re-asserts it per instalment.
+    _assert_may_pay(principal)
 
     invoice = (
         PartnerInvoice.objects.prefetch_related("items__activity")
