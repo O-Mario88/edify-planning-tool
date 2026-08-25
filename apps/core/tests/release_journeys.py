@@ -152,6 +152,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Payment",
             "Final reconciliation",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_overspend_reimbursement:"
+            "OverspendReimbursementJourneyTest."
+            "test_an_overspend_is_reimbursed_and_the_advance_still_reconciles",
+        ),
     ),
     Journey(
         8,
