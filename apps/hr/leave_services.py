@@ -910,6 +910,24 @@ class LeaveApprovalService:
             leave = type(leave).objects.select_for_update().get(id=leave.id)
             if leave.status not in DECIDABLE_LEAVE_STATUSES:
                 raise BadRequest(f"This leave request is already {leave.status}.")
+
+            # 2026-08-20 HR audit D2: approval branched on `covering_staff`
+            # alone and overwrote `coverage_status`, so a cover who had
+            # DECLINED was still handed an active TemporaryCoverageAssignment —
+            # the absent person's portfolio and supervisee scope, approval
+            # authority through `_covered_staff_ids`, and their own actions
+            # attributed back to the absent person by apps/audit/services.py.
+            # Refuse rather than silently drop the declined cover: the approver
+            # may never have seen the decline, and dropping it would send the
+            # staff member away with nobody covering. Reassigning or clearing
+            # the cover resets `coverage_status` and reopens approval.
+            if leave.covering_staff and leave.coverage_status == "Declined":
+                raise BadRequest(
+                    f"{leave.covering_staff.user.name} declined to cover this "
+                    f"leave. Assign a different covering employee, or clear the "
+                    f"cover, before approving."
+                )
+
             leave.status = "approved"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
