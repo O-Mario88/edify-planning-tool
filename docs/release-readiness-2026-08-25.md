@@ -295,7 +295,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P2 | GAP-02 | IA cannot edit Master Priority rows | **Not unbuilt — built the other way, deliberately.** The matrix gives IA import/allocate/view and withholds edit/define; the cascade explains why. Recorded as CONFLICT-002 |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
-| P3 | RC-002 | `AUTHZ_MODE` is vestigial but named in the posture dashboard | Cosmetic; object-level authz is enforced unconditionally |
+| P3 | RC-002 | `AUTHZ_MODE` branches nothing at runtime, and `security.summary()` still reports `authzMode` over the API | Smaller than first recorded: no template renders it, and production **cannot boot** unless it is `enforce` (`config/settings/prod.py`). Object-level authz is unconditional either way, so the field describes a boot assertion rather than a mode |
 
 ## 4a. Every model that is read somewhere and written nowhere
 
