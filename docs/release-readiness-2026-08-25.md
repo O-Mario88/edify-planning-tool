@@ -66,10 +66,11 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
-| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,951 tests, 0 failures, 0 skips |
+| Full test suite | `manage.py test` | **PASS** — 6,028 tests, 0 failures, 0 skips, 1 documented expected failure (CONFLICT-001) |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
-| E2E journey census | `test_release_journey_census` | **FAIL** — 14 of 22, 4 unbuildable |
+| E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
+| Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
 | Container vulnerability scan | Trivy, in CI | **PASS** — confirmed twice, 08:38 and 10:14 |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -102,7 +103,15 @@ includes all twenty fixes and all seven journey walks, and it confirms the conta
 independently of the 08:38 result.
 
 The lesson is worth keeping: a branch that is pushed to faster than CI can run is a branch
-whose CI status is always about an older commit than the one you are looking at.
+whose CI status is always about an older commit than the one you are looking at. Pushes
+were paced after that, in batches rather than per commit.
+
+**The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
+was first written and 6,028 at the last full run, with no failures, no skips, and one
+documented expected failure — CONFLICT-001, quarantined on purpose and self-removing.
+The GOV-01 guard's expected failure is gone because the gap it marked was closed: it
+reported an UNEXPECTED SUCCESS on the run after the write path landed, which failed the
+build and forced the marker off, exactly as its docstring said it would.
 
 Suite size at HEAD: **438 test files; the runner collected and ran 5,948 tests.** The run
 on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 923s. The single
