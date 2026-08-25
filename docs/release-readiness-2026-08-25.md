@@ -9,27 +9,48 @@ This is not a judgement that the platform is poor. It is a well-engineered syste
 unusually honest internal controls, and the audit found several defences better than most
 production codebases carry.
 
-**Twenty findings were fixed in this audit**, including two P0s — a rescheduling path
-that could CASCADE-delete a disbursed advance, and migrations that could run concurrently
-with no lock. Every fix carries a regression test verified to fail before it and pass
-after. §4 lists them.
+**Twenty-seven entries in §4's fixed table were closed in this audit**, including three P0s — a rescheduling
+path that could CASCADE-delete a disbursed advance, migrations that could run concurrently
+with no lock, and an IA certification service that asserted no authority at all, so any of
+the fourteen roles could stamp work verified. Every fix carries a regression test verified
+to fail before it and pass after. §4 lists them.
 
-What remains is no longer a list of defects nobody has looked at. The No-Go now rests on
-three things a deadline cannot convert into evidence:
+**All twenty-two mandated end-to-end journeys are now enumerated as data, and twenty are
+walked by a single test each.** The two that are not are blocked on the only two findings
+an audit cannot close by writing code. Walking them is what found four of the fixes,
+including two that no surface would ever have complained about: a Special Project whose
+impact could never be measured, and an accountability record no CCEO could ever clear.
+
+What remains is not a list of defects nobody has looked at. The No-Go rests on three
+things a deadline cannot convert into evidence:
 
 1. **Nine mandated gates cannot produce evidence from any source-only audit** — backup
    restoration, rollback rehearsal, deployment rehearsal and production smoke among them.
    No restore from a production backup has ever been performed. The mandate's own rule is
    that Not Tested is never Green.
-2. **Two questions need the product owner, not an engineer.** Whether the Country
+2. **Three questions need the product owner, not an engineer.** Whether the Country
    Director's dashboard or the Programme Lead's is the truthful one (CONFLICT-001, where
-   both fix directions break tests encoding the other behaviour), and whether Salesforce
+   both fix directions break tests encoding the other behaviour); whether Impact Assessment
+   should author the priorities it verifies against (CONFLICT-002); and whether Salesforce
    reconciliation stays a manually typed reference.
-3. **Two capabilities the release scope names were never built**: offline field
-   operation, and IA editing of Master Priority rows.
+3. **Two capabilities the release scope names do not exist**: offline field operation, and
+   a Core Assessment nobody can schedule because no catalogue item costs one. The second is
+   a Country Director configuration decision rather than a build, and the platform now
+   reports it instead of blaming a school for it.
 
 None of the three is closable by more code review. Each needs an environment, a decision,
 or a work programme.
+
+**A note on how the fixes were found, because it bears on how much this report is worth.**
+Six of the twenty-four came from walking journeys end to end rather than from reading code,
+and every one of those six lived at a seam between two subsystems that were each correct.
+The recurring defect this platform produces is not a wrong calculation — the calculations
+are unusually careful — it is *a designed capability with readers and no writers*: a
+register three pages read and nothing fills, a figure that links to a table nothing writes,
+a measurement function nothing calls. Four findings of that shape were raised here —
+GOV-01, FIN-05, PROJ-01 and GOV-02 — and the first three are closed. A repo-wide census now
+pins every model that remains in that state, with a written reason each, so a fifth cannot
+appear in silence (§4a).
 
 ---
 
@@ -204,8 +225,8 @@ Full detail, including the workstream reports, follows in §6.
 
 ### Fixed in this audit
 
-Twenty-one findings were fixed here, each with a regression test verified to fail before
-the fix and pass after. Where a test initially passed against the unfixed code it was
+Every entry below carries a regression test verified to fail before the fix and pass
+after. Where a test initially passed against the unfixed code it was
 rewritten, not accepted.
 
 | Sev | ID | Finding |
@@ -246,7 +267,7 @@ cannot recur — the cost-snapshot test parametrises over its constant, the metr
 resolves every service path, and a scanner fails on a raw `Notification.objects.create`
 outside the notifications app.
 
-**The eighteenth has a different shape, and a worse one.** ISSUE-007 was not a drifted
+**ISSUE-007 has a different shape, and a worse one.** It was not a drifted
 copy but a test that measured a regression and then chose not to fail — and a second that
 had quietly outlived the rule it asserted. Neither was hidden: both printed their reason
 in the run. What hid them was that a skip reads as a pass in every summary line anyone
