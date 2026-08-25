@@ -545,7 +545,7 @@ def resolve_partner_ids(user) -> list[str]:
     )
     if linked:
         return [linked.id]
-    if getattr(settings, "PARTNER_ROLE_BRIDGE", True):
+    if getattr(settings, "PARTNER_ROLE_BRIDGE", False):
         first = (
             partner_model.objects.filter(active_status=True)
             .order_by("created_at")
