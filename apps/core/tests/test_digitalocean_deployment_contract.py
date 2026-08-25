@@ -266,11 +266,20 @@ class AppPlatformSpecTest(SimpleTestCase):
         self.assertEqual(web["health_check"]["http_path"], "/api/health/ready")
 
     def test_migrations_run_once_in_a_pre_deploy_job(self):
+        """Pinned to intent, not to a command string.
+
+        This asserted `migrate --noinput` literally, which failed the moment the
+        command became `migrate_locked` — a change that makes the guarantee
+        stronger, not weaker. What the contract is actually about is that a
+        PRE_DEPLOY job applies migrations without prompting.
+        """
         spec = self._spec()
         jobs = {job["name"]: job for job in spec["jobs"]}
         migrate = jobs["migrate"]
         self.assertEqual(migrate["kind"], "PRE_DEPLOY")
-        self.assertIn("migrate --noinput", migrate["run_command"])
+        command = migrate["run_command"]
+        self.assertRegex(command, r"\bmanage\.py migrate(_locked)?\b")
+        self.assertIn("--noinput", command)
 
     def test_web_service_does_not_also_migrate_on_boot(self):
         """Two web replicas booting together would otherwise each run migrate

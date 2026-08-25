@@ -12,9 +12,15 @@ set -e
 # service and runs migrations once, in the PRE_DEPLOY job, before any new
 # container takes traffic. The default stays true so existing deployments
 # behave exactly as before.
+#
+# `migrate_locked` rather than `migrate`: one migration runner is still the
+# design, but the default above is true and .do/README.md records the live web
+# service running with it on — so the advisory lock is what stops two
+# simultaneous boots migrating the same database. It waits rather than failing,
+# so the second container starts normally once the first is done.
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
   echo "▶ Applying Django migrations..."
-  python manage.py migrate --noinput
+  python manage.py migrate_locked --noinput
 else
   echo "▶ Skipping migrations (RUN_MIGRATIONS=false; handled by pre-deploy job)."
 fi

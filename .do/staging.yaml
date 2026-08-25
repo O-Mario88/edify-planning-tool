@@ -177,7 +177,7 @@ jobs:
       repo: O-Mario88/edify-planning-tool
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
-    run_command: python manage.py migrate --noinput
+    run_command: python manage.py migrate_locked --noinput
     envs:
       - key: RUN_MIGRATIONS
         scope: RUN_AND_BUILD_TIME

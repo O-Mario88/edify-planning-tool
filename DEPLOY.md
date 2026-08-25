@@ -107,7 +107,7 @@ entrypoint and ASGI command run normally.
 For a Python buildpack deployment:
 
 - Run command: use the `web` command in `Procfile`.
-- Pre-deploy job: `python manage.py migrate --noinput`
+- Pre-deploy job: `python manage.py migrate_locked --noinput`
 - Optional scheduler worker: `python manage.py runscheduler` with
   `ENABLE_BACKGROUND_JOBS=true`. Keep this at exactly one instance — two
   replicas would double-fire every scheduled job.
