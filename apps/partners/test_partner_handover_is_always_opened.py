@@ -200,14 +200,32 @@ class PartnerHandoverIsAlwaysOpenedTest(TestCase):
         self.assertEqual(_two_live_assignments_on_one_slot()["count"], 0)
 
     def test_two_assignments_on_the_same_named_slot_still_clash(self):
+        """Two live holders of one named slot are an error on the board.
+
+        The two assignments now go to DIFFERENT partners. They used to go to
+        the same one, which `uniq_live_partner_support_slot` (INT-02) makes
+        impossible from this migration onward — the withdrawal service
+        already called that state a conflict, and the schema now agrees.
+
+        What this test asserts is unchanged, because the detector groups by
+        (school, support_type, visit_number, training_number) and never looks
+        at the partner: one slot, two live holders, one finding. The
+        single-partner spelling was incidental to it. The cross-partner case
+        stays deliberately outside the constraint precisely so this check
+        keeps having something to find — it is a contested handover a human
+        resolves, not a shape the database can rule out.
+        """
         from apps.system_health.planning_oversight_health import (
             _two_live_assignments_on_one_slot,
         )
 
-        for _ in range(2):
+        second_partner = Partner.objects.create(
+            name="PH Partner Two", active_status=True, contract_status="active"
+        )
+        for partner in (self.partner, second_partner):
             PartnerAssignment.objects.create(
                 school=self.school,
-                partner=self.partner,
+                partner=partner,
                 assigning_staff_id=self.profile.id,
                 status="assigned",
                 support_type="Visit",
