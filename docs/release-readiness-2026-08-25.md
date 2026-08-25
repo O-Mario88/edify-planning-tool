@@ -6,17 +6,30 @@ Baseline commit `e13dce8`. Audit run from a source-only container with PostgreSQ
 no Redis, no Docker daemon, and no access to the production environment.
 
 This is not a judgement that the platform is poor. It is a well-engineered system with
-unusually honest internal controls, and the audit found several defences better than
-most production codebases carry. The No-Go rests on three things that a deadline cannot
-convert into evidence:
+unusually honest internal controls, and the audit found several defences better than most
+production codebases carry.
+
+**Seventeen findings were fixed in this audit**, including two P0s — a rescheduling path
+that could CASCADE-delete a disbursed advance, and migrations that could run concurrently
+with no lock. Every fix carries a regression test verified to fail before it and pass
+after. §4 lists them.
+
+What remains is no longer a list of defects nobody has looked at. The No-Go now rests on
+three things a deadline cannot convert into evidence:
 
 1. **Nine mandated gates cannot produce evidence from any source-only audit** — backup
-   restoration, rollback rehearsal, deployment rehearsal and production smoke among
-   them. The mandate's own rule is that Not Tested is never Green.
-2. **Confirmed defects that the mandate lists as stop-the-line**, including false
-   achievement credit on cancelled work and a leadership dashboard reporting a
-   fabricated percentage.
-3. **A capability the release scope requires does not exist**: offline field operation.
+   restoration, rollback rehearsal, deployment rehearsal and production smoke among them.
+   No restore from a production backup has ever been performed. The mandate's own rule is
+   that Not Tested is never Green.
+2. **Two questions need the product owner, not an engineer.** Whether the Country
+   Director's dashboard or the Programme Lead's is the truthful one (CONFLICT-001, where
+   both fix directions break tests encoding the other behaviour), and whether Salesforce
+   reconciliation stays a manually typed reference.
+3. **Two capabilities the release scope names were never built**: offline field
+   operation, and IA editing of Master Priority rows.
+
+None of the three is closable by more code review. Each needs an environment, a decision,
+or a work programme.
 
 ---
 
@@ -127,48 +140,62 @@ happen in this audit either.
 
 Full detail, including the workstream reports, follows in §6.
 
-**Fixed and committed during this audit** (each with a regression test proven to fail
-before the fix and pass after):
+### Fixed in this audit
 
-| ID | Sev | Finding | Commit |
-| --- | --- | --- | --- |
-| SEC-01 | P1 | A Programme Lead could seize ownership of a supervised CCEO's school through the edit drawer, moving its planning, target and budget scope onto themselves | `56fa8c6` |
-| FIN-01 | P0 | The cost-snapshot lock had drifted two statuses behind the canonical money-moved set, so rescheduling could CASCADE-delete a disbursed advance | `00cdfd8` |
-| TGT-02 | P1 | Cancelled or deferred work kept its verified achievement credit | `8f8c5b3` |
-| — | P3 | The partner role-bridge failed **open** when its flag was missing | `804bd5b` |
+Seventeen findings were fixed here, each with a regression test verified to fail before
+the fix and pass after. Where a test initially passed against the unfixed code it was
+rewritten, not accepted.
 
-**Open and release-blocking:**
-
-| ID | Sev | Finding |
+| Sev | ID | Finding |
 | --- | --- | --- |
-| INTG-01 | P0 | No Salesforce, NetSuite or MFI transport exists. "Confirm Salesforce" validates a regex and local uniqueness — nothing contacts Salesforce |
-| DEP-01 | P0 | The repository's two records of the live application contradict each other; the committed spec was never applied |
-| DEP-03 | P0 | No restore from a production backup has ever been performed; no backup schedule or PITR is configured anywhere |
-| DEP-02 | P0 | Migrations may run on web-container boot with no advisory lock, making `instance_count: 1` load-bearing |
-| INTG-05 | P1 | "Partner Payments Pending" counts `completed`/`closed` work that carries **no IA verification** as verified-and-payable |
-| D2 | P1 | Approving leave grants the absent person's portfolio, supervisee scope and approval authority to a cover who **explicitly declined**, silently rewriting `Declined` to `Approved` |
-| CONFLICT-001 | P1 | CD dashboard reports 200% where the PL correctly reports 0% — a product decision, not a patch |
-| FE-01 | P1 | Offline field operation does not exist |
-| TGT-01 | P1 | Rate/ratio milestones can be allocated with no denominator, scoring 0% forever |
-| TGT-03 | P1 | Unique-school milestones double-count a school reached in two months |
-| FIN-02 | P1 | `reimburse()` accepts any integer — no bounds, no sign check — and the invariant is verified only *after* payout, with no reversal path |
-| FIN-03 | P1 | Admin and Country Director can move partner money despite not holding `payment.act`; the service performs no role check at any layer |
-| D8 | P1 | Measuring impact removes a school from the champion engine — the act that qualifies a school disqualifies it |
-| D5 | P1 | `CorePlan.assessment_completed` cannot become non-zero by any reachable route, so `core_assessment_missing` is permanently critical for every core school |
-| INTG-02 | P1 | Nothing alerts when a scheduled job stops; detection requires a human to open a page |
-| INTG-03 | P1 | Six live paths insert notifications without a `source_event_type`, so those notices can never auto-close and escalate to urgent |
-| INTG-04 | P1 | 18 registered metrics name a service callable that does not exist |
-| RC-003 | P1 | 1 of 22 mandated end-to-end journeys has a real test |
-| DEP-05/06/07 | P1 | No log retention, no error tracker, two alert rules, no named incident owner |
-| INT-01 | P1 | Zero DB CHECK constraints on money columns outside `business_transformation` |
-| INT-02 | P1 | "One active assignment" is app-level only; no DB constraint |
-| RC-001 | P2 | Readiness reports healthy while Redis is down |
-| GAP-02 | P2 | IA cannot edit Master Priority rows (approved extension unmet) |
-| FE-02 | P2 | KPI headline limit enforced at 6, not the stated 4; 14 surfaces over-feed a truncating tray |
-| D3/D6/D7 | P2 | API leave decisions notify nobody; package closure is a status nothing writes; correctly-completed core slots trip two health ratchets forever |
-| RC-002 | P3 | `AUTHZ_MODE` is vestigial but named in the security posture dashboard |
+| P0 | FIN-01 | The cost-snapshot lock had drifted two statuses behind `MONEY_MOVED_ADVANCE_STATUSES`, so rescheduling could CASCADE-delete a **disbursed** advance |
+| P0 | DEP-02 | Migrations could run concurrently with no lock, making `instance_count: 1` load-bearing |
+| P1 | SEC-01 | The school edit drawer gated its write on the READ helper, letting a Programme Lead take ownership of a supervised CCEO's school |
+| P1 | INTG-05 | "Partner Payments Pending" counted `completed`/`closed` work carrying no IA verification as verified-and-payable |
+| P1 | D2 | Approving leave granted the absent person's portfolio, supervisee scope and approval authority to a cover who had **declined** |
+| P1 | FIN-03 | Two partner-payment paths had no `payment.act` gate and the service checked nothing at any layer |
+| P1 | FIN-02 | `reimburse()` took any amount unvalidated; the settlement identity was checked only after payout, with no reversal |
+| P1 | TGT-02 | Cancelling or deferring work left its verified achievement credit standing |
+| P1 | TGT-01 | Ratio milestones were allocated without the denominator their arithmetic needs, and scored 0% for ever |
+| P1 | TGT-03 | Annual "unique schools" figures summed per-month distinct counts, double-counting a school reached twice |
+| P1 | D8 | The follow-up SSA that qualifies a champion candidate set a status that hid its plan from the scorer |
+| P1 | INTG-02 | Nothing pushed when a scheduled job failed or stopped |
+| P1 | INTG-03 | Six paths wrote notifications with no `source_event_type`, so they could never auto-close and were promoted to urgent |
+| P1 | INTG-04 | 18 registered metrics named service callables that do not exist |
+| P1 | INT-01/02, INTG-07 | No DB CHECK constraints on money outside one app; no uniqueness on the NetSuite id gating finance clearance |
+| P2 | RC-001 | Readiness answered `{"status": "ok"}` with Redis genuinely down |
+| P2 | SEC-02 | `can_update` claimed every write resolved through it; nothing called it, which is how SEC-01 survived a green suite |
+| P2 | D3/D4 | API leave decisions notified nobody; accepting coverage claimed a notification it never sent |
+| P2 | D6/D7 | Core slots completed through the real path carried neither evidence nor Salesforce id, so two blockers alarmed for ever |
+| P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
----
+**The shape most of these share.** One definition, written out in several places, where a
+copy drifted: the money-moved status set, the rate-measurement set, the school-write rule,
+the metric service pointer, the notification writer. In each case the fix names the
+definition once and makes the copies read it, and three guards were added so the drift
+cannot recur — the cost-snapshot test parametrises over its constant, the metric registry
+resolves every service path, and a scanner fails on a raw `Notification.objects.create`
+outside the notifications app.
+
+### Still open
+
+Nothing below is now a defect nobody has looked at. Each is either infrastructure this
+audit cannot reach, a build, or a decision that is not engineering's to take.
+
+| Sev | ID | Finding | Why it is still open |
+| --- | --- | --- | --- |
+| P0 | DEP-03 | No restore from a production backup has ever been performed | Needs the managed database. The rehearsal harness exists and is rigorous |
+| P0 | DEP-01 | The repository's two records of the live app contradict each other | Needs `doctl apps spec get` against the live app |
+| P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
+| P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
+| P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
+| P1 | RC-003 | 1 of 22 mandated end-to-end journeys has a real test | 21 journey tests is a work programme, not a fix |
+| P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
+| P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
+| P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
+| P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
+| P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
+| P3 | RC-002 | `AUTHZ_MODE` is vestigial but named in the posture dashboard | Cosmetic; object-level authz is enforced unconditionally |
 
 ## 5. Path to a defensible Go
 
