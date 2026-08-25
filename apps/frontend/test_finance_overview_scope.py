@@ -137,27 +137,17 @@ class FyTotalsCoverEveryFundTypeTest(TestCase):
                 self.assertIn(key, totals)
                 self.assertIsInstance(totals[key], int)
 
-    def test_monthly_fund_plans_are_counted_not_just_weekly_advances(self):
-        from apps.fund_requests.models import FundRequest, WeeklyFundRequest
-
-        fy = get_operational_fy()
-        weekly_only = sum(
-            w.total_amount or 0
-            for w in WeeklyFundRequest.objects.filter(fy=fy).exclude(
-                status__in=["not_requested", "cancelled"]
-            )
-        )
-        monthly = FundRequest.objects.filter(period="monthly", fy=fy)
-        if not monthly.exists():
-            self.skipTest("no monthly fund plans in this database")
-
-        totals = fy_totals_all_fund_types(fy)
-        staged = totals["approved"] + totals["awaiting_approval"] + totals["returned"]
-        self.assertGreater(
-            staged,
-            weekly_only,
-            "the FY figures must include monthly fund plans, not weekly alone",
-        )
+    # A test asserting that the FY money totals exceed the weekly advance
+    # totals whenever a monthly plan exists lived here. It was written when
+    # fy_totals_all_fund_types summed the two snapshots, and D1
+    # (apps.fund_requests.test_audit_funding_channels) moved the money to the
+    # AdvanceRequest ledger precisely because that addition counted a cost
+    # line requested through both channels twice. Under the ledger the two
+    # figures are the same shillings, so the assertion asked for the
+    # double-count back. It never ran — it skipped itself whenever the
+    # database held no monthly plan, which was always — so nothing caught it
+    # going stale. That rule now lives, with a fixture that exercises it, in
+    # test_audit_funding_channels.test_fy_totals_count_the_shared_cost_line_once.
 
     def test_an_empty_financial_year_reports_zeros(self):
         totals = fy_totals_all_fund_types("1999")

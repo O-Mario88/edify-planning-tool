@@ -77,6 +77,12 @@ class CDScope:
     # query pair once per PL row AND again once per CCEO row.
     areas: list = field(default_factory=list)
     per_user_series: dict = field(default_factory=dict)
+    # {Programme Lead user id: supervised-CCEO rows}, primed by the same call.
+    # Four surfaces walk the whole Programme Lead list and ask _pl_cceos for
+    # each one; resolving them together makes that a fixed number of queries
+    # rather than three per Programme Lead. Keyed off this scope object, so
+    # the school-set intersection can never be served from another scope.
+    pl_cceos: dict = field(default_factory=dict)
 
     def __post_init__(self):
         if self.school_ref is None:
@@ -238,17 +244,41 @@ def _refresh_target_ledger(cd: CDScope) -> None:
     )
 
 
+def _prime_pl_cceos(cd: CDScope) -> None:
+    """Populate cd.pl_cceos for every Programme Lead in one go.
+
+    `_pl_cceos` was memoised per Programme Lead, which removed the repeat for
+    one PL but left the cost growing with the number of them: four Country
+    Director surfaces walk the full list, so each additional Programme Lead
+    added three more queries to every one of those pages. Resolving the whole
+    list here is a fixed number of queries regardless of how many there are.
+
+    On the scope object rather than the request memo deliberately: the answer
+    depends on cd.school_ids, so keying it off the scope makes serving one
+    scope's answer under another impossible, and it works identically in a
+    management command, where there is no request cache at all."""
+    pls = CDAnalyticsService._pls()
+    cd.pl_cceos = CDAnalyticsService._pl_cceos_batch(pls, cd) if pls else {}
+
+
 def _prime_target_series(cd: CDScope) -> None:
-    """Populate cd.areas/cd.per_user_series ONCE per request: rebuilds every
-    in-scope CCEO's ledger and fetches their monthly target/achieved series
-    exactly once each (apps.targets.my_targets.per_user_monthly_series).
-    Every _weighted_achievement() call in this same request then pools from
-    this cached data (apps.targets.my_targets.pool_series — pure Python, no
-    DB) instead of re-rebuilding + re-fetching per PL row AND again per CCEO
-    row, which is what made target_by_pl_cceo/pl_oversight/kpis each
-    independently re-derive the same people's numbers."""
+    """Populate the per-request derived data every CD surface shares.
+
+    cd.areas/cd.per_user_series: rebuilds every in-scope CCEO's ledger and
+    fetches their monthly target/achieved series exactly once each
+    (apps.targets.my_targets.per_user_monthly_series). Every
+    _weighted_achievement() call in this same request then pools from this
+    cached data (apps.targets.my_targets.pool_series — pure Python, no DB)
+    instead of re-rebuilding + re-fetching per PL row AND again per CCEO row,
+    which is what made target_by_pl_cceo/pl_oversight/kpis each independently
+    re-derive the same people's numbers.
+
+    cd.pl_cceos: see _prime_pl_cceos. Primed here rather than at each of the
+    six call sites, because every caller that needs one needs the other, and
+    a site that forgot would silently reintroduce the growth."""
     from apps.targets.my_targets import active_target_areas, per_user_monthly_series
 
+    _prime_pl_cceos(cd)
     cd.areas = active_target_areas()
     if not cd.cceo_user_ids:
         cd.per_user_series = {}
@@ -364,21 +394,51 @@ class CDAnalyticsService:
         """
         from apps.core.request_cache import memoize
 
+        # The memo is keyed per PL, so a country with more Programme Leads
+        # simply missed more often — the cache hid the repetition on one PL
+        # without ever removing it. `_prime_pl_cceos` resolves the whole list
+        # onto the scope in a fixed number of queries; consult that first.
+        uid = getattr(pl_user, "id", None)
+        if cd is not None and uid in cd.pl_cceos:
+            return cd.pl_cceos[uid]
+
         # cd participates in the key: the same PL yields a different school set
         # under a different scope, and returning one for the other would be a
         # scope leak rather than a slow page.
         key = (
             "cd_analytics:_pl_cceos",
-            getattr(pl_user, "id", None),
+            uid,
             tuple(sorted(cd.school_ids)) if cd is not None else None,
         )
         return memoize(key, lambda: CDAnalyticsService._pl_cceos_uncached(pl_user, cd))
 
     @staticmethod
     def _pl_cceos_uncached(pl_user, cd=None):
-        sp = StaffProfile.objects.filter(user=pl_user).first()
-        if not sp:
-            return []
+        uid = getattr(pl_user, "id", pl_user)
+        return CDAnalyticsService._pl_cceos_batch([pl_user], cd).get(uid) or []
+
+    @staticmethod
+    def _pl_cceos_batch(pl_users, cd=None) -> dict:
+        """{Programme Lead user id: supervised-CCEO rows} for several PLs at once.
+
+        The single definition of the answer — `_pl_cceos_uncached` asks this
+        for a list of one — so one Programme Lead and a whole country can
+        never disagree about who a PL supervises.
+
+        Three queries for the whole set, which is what one Programme Lead cost
+        on its own before — so a country of them is now the same price as one.
+        """
+        ids = [getattr(u, "id", u) for u in pl_users]
+        out = {pl_id: [] for pl_id in ids}
+        if not ids:
+            return out
+
+        sp_by_user = {}
+        for sp in StaffProfile.objects.filter(user_id__in=ids):
+            sp_by_user.setdefault(sp.user_id, sp)  # .first() semantics
+        if not sp_by_user:
+            return out
+
         scope_ids = (
             set(cd.school_ids)
             if cd is not None
@@ -388,13 +448,28 @@ class CDAnalyticsService:
                 )
             )
         )
-        sub = list(
-            StaffProfile.objects.filter(supervisor_links__supervisor=sp).select_related(
-                "user"
+        # The supervised profiles come back off the link rows themselves, so
+        # this stays the single joined read it was. `supervisee__deleted_at`
+        # is spelled out because select_related joins the table directly and
+        # so does not go through StaffProfile's soft-delete manager, which is
+        # what excluded deleted profiles when this filtered on StaffProfile.
+        links = (
+            StaffSupervisorAssignment.objects.filter(
+                supervisor_id__in=[sp.id for sp in sp_by_user.values()],
+                supervisee__deleted_at__isnull=True,
             )
+            .select_related("supervisee", "supervisee__user")
+            .order_by("supervisee_id")
         )
+        supervised = {}
+        for link in links:
+            supervised.setdefault(link.supervisor_id, []).append(link.supervisee)
+        if not supervised:
+            return out
+
+        staff_ids = [s.id for group in supervised.values() for s in group]
         assign = StaffSchoolAssignment.objects.filter(
-            staff__in=[s.id for s in sub]
+            staff_id__in=staff_ids
         ).values_list("staff_id", "school_id")
         per = {}
         for sid, schid in assign:
@@ -402,16 +477,17 @@ class CDAnalyticsService:
                 schid in scope_ids
             ):  # active, in-scope schools only (dedup + drop stale rows)
                 per.setdefault(sid, set()).add(schid)
-        out = []
-        for s in sub:
-            out.append(
+
+        for user_id, sp in sp_by_user.items():
+            out[user_id] = [
                 {
                     "staff_id": s.id,
                     "user_id": s.user_id,
                     "name": (s.user.name if s.user else s.title) or "CCEO",
                     "school_ids": per.get(s.id, set()),
                 }
-            )
+                for s in supervised.get(sp.id, [])
+            ]
         return out
 
     @staticmethod
