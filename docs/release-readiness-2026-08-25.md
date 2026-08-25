@@ -48,7 +48,7 @@ Everything in this table was run, not inferred.
 | Full test suite | `manage.py test --parallel 4` | **PASS** — 5,900 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
-| E2E journey census | `test_release_journey_census` | **FAIL** — 3 of 22, 2 unbuildable |
+| E2E journey census | `test_release_journey_census` | **FAIL** — 4 of 22, 2 unbuildable |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
 | Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -241,7 +241,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 3 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 4 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
@@ -274,7 +274,7 @@ rather than counting them as merely unwritten:
 - **Journey 21, Integration outage** — INTG-01. There is no outward transport, so
   "external system fails" and "retry succeeds" have nothing to exercise.
 
-That leaves **17 journeys that are unwritten rather than unbuildable**, which is a work
+That leaves **16 journeys that are unwritten rather than unbuildable**, which is a work
 programme with a known shape rather than an open question.
 
 ### Journey 8 was walked, and it found a defect on its first run
@@ -320,6 +320,25 @@ silently instead of raising a claim fails it; making `reimburse()` write over
 `disbursed_amount` fails it by name. That second one is the non-obvious risk this journey
 exists to cover — both fields are "money we sent", and overwriting one with the other
 keeps the identity balanced while silently losing what the original disbursement was.
+
+### Journey 5 asks the question a hand-built fixture cannot
+
+Journey 5 — Partner assignment and payment — already had fourteen tests on its payment
+half (`test_partner_mou_payments`: the advance/clearance split, the amounts, the duplicate
+refusals, the verification gate). Every one of them builds its activity by hand —
+`Activity.objects.create(status="scheduled", salesforce_activity_id=...)` with cost lines
+written directly. They prove the payment rules *given* a payable activity. They cannot
+prove that a real partner assignment ever produces one.
+
+That is precisely where INTG-05 lived: completed and closed partner work carrying no IA
+verification was counted verified-and-payable. A fixture that sets the verification field
+itself starts downstream of the thing that was wrong, so it could never have caught it.
+
+The journey walks from the assignment instead — handed to a partner at
+`pending_scheduling`, self-scheduled, visible on the partner's own plan, executed,
+evidenced, IA-verified, then paid — and asserts on the way through that the *unverified*
+activity is refused payment. Mutation-checked by removing the clearance gate, which fails
+it.
 
 ## 5. Path to a defensible Go
 

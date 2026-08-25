@@ -123,6 +123,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Accountant payment",
             "Partner tracking",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_partner_payment:"
+            "PartnerAssignmentToPaymentJourneyTest."
+            "test_partner_work_is_payable_only_once_ia_has_verified_it",
+        ),
     ),
     Journey(
         6,
