@@ -264,7 +264,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 16 of 22 mandated end-to-end journeys have a real test | Six journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 17 of 22 mandated end-to-end journeys have a real test | Five remain: one unwritten, four blocked on findings this audit could not close. The 22 are enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers are **read-only** — three surfaces read each, nothing writes either | A build: the write path was never made |
@@ -591,6 +591,53 @@ Mutation-tested at both properties: making `take_snapshot` delete and retake an 
 snapshot fails the walk, and letting `submit_assessment` write the final rating fails it
 too. Each mutation was confirmed present in the file before the exit code was read.
 
+### Journey 17 is the strongest subsystem this audit has walked
+
+Eleven steps, six parties and money moving twice in opposite directions. Edify refers, a
+microfinance institution lends, a funding facility supplies the principal, Impact &
+Analytics verifies what the money did, and district analytics decide where the next
+facility goes. None of it is Edify's own budget, which is the reason the ledger governs
+as hard as it does.
+
+The governing rule is stated in the refusals rather than in a comment. A loan record
+cannot carry a typed disbursement — "Disbursement facts cannot be entered on a loan
+record; post a facility-backed disbursement" — and disbursed, active, repaid and
+defaulted are refused as *entered* statuses because they are ledger-derived. A repayment
+schedule's principal must equal the confirmed net disbursed principal, so a schedule
+cannot quietly describe a different loan. A repayment cannot be dated in the future,
+because a receipt is a fact about money that has arrived. Each of those was driven here,
+and each of them refused.
+
+The separation of duties holds at every seam, and the seams are not where an outsider
+would guess. Three different people are needed before a facility can lend: Business
+Transformation authors it, the Country Director approves it, and the Accountant confirms
+the money actually arrived. Referral belongs to the Country Director alone — it commits
+Edify's name and a school's consent to a lender — while the Business Transformation
+Officer's authority in this journey is the Salesforce confirmation, recording that the
+loan exists rather than deciding that it should. And the party that moved the money does
+not certify what it did: the lender reports the use, Impact & Analytics verifies it, and
+cannot verify more than was reported. That is this audit's recurring question — can one
+party both do the work and sign it off — asked of lending, and answered no at every
+layer.
+
+**The eleventh step is the one that could have gone wrong invisibly.** `geographic_equity`
+builds a complete district spine, so a district with eligible schools and no lending
+reports a zero rather than being absent from the result. Zero and missing are different
+findings: one says the programme has not reached a district, the other says nobody knows.
+An equity analysis that silently dropped unfinanced districts would report perfect
+coverage of wherever it already lends, and would do it while looking entirely healthy.
+The walk carries a district that has never borrowed and requires it to be present with
+its zero.
+
+Mutation-tested at both ends of that: excluding unfinanced districts from the spine fails
+the walk, and counting partner-reported enrolment as verified fails the premise guard
+beside it. Each mutation was confirmed present in the file before the exit code was read.
+
+No defect was found. That is worth saying plainly rather than leaving as an absence: of
+the seventeen journeys now walked, this is the one whose money moves furthest from
+Edify's control, and it is the one whose controls are most explicit about what each party
+may assert.
+
 ## 5. Path to a defensible Go
 
 1. **Product-owner decision on CONFLICT-001.** It is a conflict, not a bug — both fix
@@ -875,6 +922,7 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `592ad83` | Every Programme Lead's CCEOs resolve in one read, and the two tests that skipped rather than fail now assert |
 | `8f92f44` | The Accountant's Returned figure reaches the money it counts, instead of a table nothing writes |
 | `674305c` | Journey 1 walked, and every register with readers and no writers pinned to a machine-checked census |
+| `6c2afe6` | Journey 10 walked, and one whole-journey test replaces two partial pointers |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk

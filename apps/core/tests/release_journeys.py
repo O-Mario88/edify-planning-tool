@@ -370,6 +370,10 @@ JOURNEYS: tuple[Journey, ...] = (
             "Impact",
             "Geographic analytics",
         ),
+        covered_by=(
+            "apps.business_transformation.test_journey_loan:"
+            "LoanJourneyTest.test_the_whole_loan_in_order",
+        ),
     ),
     Journey(
         18,
