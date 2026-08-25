@@ -28,10 +28,10 @@ from apps.core.tests.release_journeys import (
 #: Journeys walked end to end by a single test. Raise this ONLY when a new
 #: journey test genuinely walks the whole journey, and update
 #: docs/release-readiness-2026-08-25.md in the same commit.
-COVERED_COUNT = 18
+COVERED_COUNT = 20
 
 #: Journeys that cannot be covered because the capability was never built.
-BLOCKED_COUNT = 4
+BLOCKED_COUNT = 2
 
 
 class ManifestMatchesTheMandateTest(SimpleTestCase):

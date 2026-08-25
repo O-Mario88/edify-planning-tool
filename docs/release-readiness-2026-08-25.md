@@ -234,6 +234,7 @@ rewritten, not accepted.
 | P2 | ISSUE-007 | Two tests skipped themselves rather than fail, so the suite reported green over an open N+1 and a stale assertion. See below |
 | P1 | FIN-05 | The Accountant's **Returned** money figure linked to a queue reading a table nothing writes; its empty state read "All corrections resolved" beneath a live returned balance |
 | P1 | PROJ-01 | `refresh_follow_up` had no caller, so no Special Project could ever report a measured school — and the reminder designed to chase the missing assessment could never fire either |
+| P1 | GOV-01 | **Both** Business Transformation school-assessment registers were read-only — three surfaces read each, nothing wrote either. The government-requirements register a Country Director opens was structurally empty for every school |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
 **The shape most of these share.** One definition, written out in several places, where a
@@ -265,10 +266,9 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 18 of 22 mandated end-to-end journeys have a real test | **Nothing is unwritten.** The four that remain are blocked on findings this audit could not close — GOV-01 twice, FE-01, INTG-01. The 22 are enumerated and the count machine-checked |
+| P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
-| P1 | GOV-01 | **Both** Business Transformation school-assessment registers are **read-only** — three surfaces read each, nothing writes either | A build: the write path was never made |
 | P2 | GOV-02 | Four workspaces a user can navigate to can never hold data — Compensation & Benefits, Succession Planning, the Maintenance Calendar, and recurring analytics report schedules | A build in each case, or a decision to retire them. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
@@ -706,6 +706,73 @@ looked: a test that skipped itself, a prose claim nobody could check, a mutation
 never landed in the file, and now a fix whose two halves could each hide behind the other.
 They have nothing in common except the shape of the result.
 
+### GOV-01 was not a build, and Journeys 15 and 16 came with it
+
+The earlier draft of this report called GOV-01 "a build: the write path was never made",
+and listed it beside FE-01 and INTG-01 as work an audit could not close. That was wrong,
+and worth correcting rather than quietly fixing, because the reasoning behind it is the
+reasoning that leaves defects open.
+
+Both models were fully designed. Statuses, uniqueness constraints, an indexed expiry date,
+a complete IA validation lane. Three surfaces read each of them. And — the thing the first
+reading missed — **the permission matrix already carried both halves of the workflow**:
+`businessTransformation.schoolSupport.manage` on the Country Director, Programme Lead and
+CCEO, who are the people who visit a school and see the certificate, and
+`businessTransformation.ia.validate` on Impact Assessment alone. A recorder and a separate
+verifier, decided before either service existed. Nothing about who does what was an open
+question; only the services were missing, in a shape this codebase already uses for the
+same problem in `lending_impact.capture_enrolment_snapshot` / `verify_enrolment_snapshot`.
+
+"A build" and "an unimplemented design" look identical from the outside — both are absent
+code. The difference is whether the decisions have been made, and the permission matrix is
+where this platform records them. Reading it is what turned a blocked finding into a day's
+work.
+
+The readers decided the rest. The portfolio counts `compliant` AND `verified` together, so
+an unverified assessment is a claim rather than a finding and must not be counted as
+compliance. Re-recording a **changed** status withdraws the verification the old status
+carried, because a verification of a status that has since changed is not a verification
+of the current one — and a no-op re-save must not disturb a standing verification, which
+is the converse and is asserted too. And the requirement catalogue's renewal period plus a
+registration date are an expiry date, which the register now derives: leaving the reader to
+work that out is how a lapsed permit goes unnoticed on a register whose whole job is to
+notice.
+
+**The quarantine mechanism worked exactly as designed.** The GOV-01 guard carried
+`expectedFailure` rather than `skipTest`, and its own docstring said why: an expected
+failure runs, records its failure, and the moment somebody builds the write path reports an
+UNEXPECTED SUCCESS that fails the build and forces the marker off. That is what happened.
+The read-only model census removed its own two GOV-01 entries the same way — its
+stale-entry test fails on a model that has gained a writer, so the list had to be corrected
+rather than left flattering. Two guards written earlier in this audit made the fix
+impossible to land quietly.
+
+### Journeys 15 and 16, the two that GOV-01 was blocking
+
+They share a spine and diverge at the end, which is why they are walked in one file. A
+confirmed SSA weak in Financial Health or in Government Requirements opens a Business
+Transformation case and writes the recommendation set for that weakness — automatically,
+off the durable outbox, with nobody having to remember. From there Journey 15 measures
+whether a school **adopted** a practice it was trained in, and Journey 16 whether a school
+**holds** a permit it was helped to obtain. One is behaviour and the other is a document,
+and the two registers reflect that difference exactly.
+
+Journey 15's interesting refusal is that training attendance is not practice adoption, and
+an assessment recorded by the officer who delivered the training is a claim until Impact
+Assessment verifies it. The walk requires the portfolio tiles to keep `assessed` and
+`verified` apart at every point, because collapsing them would let the person who did the
+work certify their own result.
+
+Journey 16's is the expiry reminder, the step that could most easily have not existed.
+`nearest_expiry` is computed per school from **verified** compliance rows only. So a
+certificate recorded but not yet confirmed must not appear as a live expiry — a reminder
+about a document nobody has seen — and a verified one must. Both are driven, along with an
+expired certificate counting as action required rather than as compliance.
+
+Mutation-tested on both: making `nearest_expiry` read unverified rows fails the walk, and
+handing a financial-health weakness the compliance recommendation as well fails it. Each
+mutation was confirmed present in the file before the exit code was read.
+
 ## 5. Path to a defensible Go
 
 1. **Product-owner decision on CONFLICT-001.** It is a conflict, not a bug — both fix
@@ -993,6 +1060,9 @@ Each carries a regression test verified to fail before the fix and pass after.
 | `6c2afe6` | Journey 10 walked, and one whole-journey test replaces two partial pointers |
 | `d9b1a2c` | Journey 17 walked — the loan, from funding facility to district equity |
 | `116b3ec` | A Special Project's impact can become an answer: the refresh is wired to the evidence that should trigger it |
+| `3c59aa4` | Journey 6 walked — and nothing on the mandate's list of twenty-two is unwritten |
+| `14029e1` | The two school-assessment registers can be written, by the recorder and verifier the permission matrix already named |
+| pending | Journeys 15 and 16 walked, the two that GOV-01 was blocking |
 
 Supporting commits: `3859103`, `398bd6e` (KPI inventory regeneration), `47b908e` (a test
 respelled for a case the new constraint makes impossible), `44f418d` (stale at-risk

@@ -323,14 +323,10 @@ JOURNEYS: tuple[Journey, ...] = (
             "Follow-up",
             "Next SSA",
         ),
-        blocked_by=(
-            "GOV-01: FinancialPracticeAssessment — the register that would "
-            "record whether a school adopted the practices a Business "
-            "Transformation visit recommended — is read-only. Three surfaces "
-            "read it and nothing writes it, by manager, related manager or "
-            "bare constructor. The other steps of this journey are buildable; "
-            "'Practice adoption' has nothing to record, so the chain cannot be "
-            "walked whole. Same defect as Journey 16, second register."
+        covered_by=(
+            "apps.business_transformation.test_journeys_school_support:"
+            "FinancialHealthJourneyTest."
+            "test_the_whole_financial_health_chain_in_order",
         ),
     ),
     Journey(
@@ -345,17 +341,10 @@ JOURNEYS: tuple[Journey, ...] = (
             "Status update",
             "Expiry reminder",
         ),
-        blocked_by=(
-            "GOV-01: the government-requirements register is read-only. "
-            "SchoolComplianceAssessment and its ComplianceRequirement "
-            "catalogue are fully designed — responsible authority, "
-            "renewal_months, registration number and date, an INDEXED "
-            "expiry_date, evidence reference, follow-up action — and three "
-            "Business Transformation surfaces read them. Nothing anywhere "
-            "creates or updates one: no service, view, admin, management "
-            "command, import or template. Only step 1, the SSA weakness, has "
-            "any behaviour; a requirement cannot be assessed, evidenced, "
-            "verified, status-updated or expired, so there is nothing to walk."
+        covered_by=(
+            "apps.business_transformation.test_journeys_school_support:"
+            "GovernmentRequirementsJourneyTest."
+            "test_the_whole_government_requirements_chain_in_order",
         ),
     ),
     Journey(
