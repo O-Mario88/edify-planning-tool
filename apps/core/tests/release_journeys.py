@@ -322,6 +322,18 @@ JOURNEYS: tuple[Journey, ...] = (
             "Status update",
             "Expiry reminder",
         ),
+        blocked_by=(
+            "GOV-01: the government-requirements register is read-only. "
+            "SchoolComplianceAssessment and its ComplianceRequirement "
+            "catalogue are fully designed — responsible authority, "
+            "renewal_months, registration number and date, an INDEXED "
+            "expiry_date, evidence reference, follow-up action — and three "
+            "Business Transformation surfaces read them. Nothing anywhere "
+            "creates or updates one: no service, view, admin, management "
+            "command, import or template. Only step 1, the SSA weakness, has "
+            "any behaviour; a requirement cannot be assessed, evidenced, "
+            "verified, status-updated or expired, so there is nothing to walk."
+        ),
     ),
     Journey(
         17,

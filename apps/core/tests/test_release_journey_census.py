@@ -31,7 +31,7 @@ from apps.core.tests.release_journeys import (
 COVERED_COUNT = 14
 
 #: Journeys that cannot be covered because the capability was never built.
-BLOCKED_COUNT = 2
+BLOCKED_COUNT = 3
 
 
 class ManifestMatchesTheMandateTest(SimpleTestCase):
