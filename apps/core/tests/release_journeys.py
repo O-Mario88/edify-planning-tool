@@ -230,6 +230,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Accounting",
             "Impact review",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_professional_development:"
+            "ProfessionalDevelopmentJourneyTest."
+            "test_a_funded_request_commits_against_the_envelope_when_submitted",
+        ),
     ),
     Journey(
         12,
