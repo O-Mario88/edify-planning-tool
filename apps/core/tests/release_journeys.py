@@ -239,6 +239,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Reminder",
             "Superseding version",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_policy_lifecycle:"
+            "PolicyLifecycleJourneyTest."
+            "test_a_material_new_version_obliges_the_person_who_agreed_to_the_old_one",
+        ),
     ),
     Journey(
         13,
