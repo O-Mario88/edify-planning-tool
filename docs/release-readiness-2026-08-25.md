@@ -452,20 +452,24 @@ Approval, Disbursement, Start, Evidence, PL review, IA verification, Accountabil
 Closure. Journey 1 is Priority to verified performance, an entirely different spine. A
 census built from docstrings would have recorded the wrong journey as covered.
 
-Two of the twenty-two cannot be covered by any test at present, and the manifest says so
-rather than counting them as merely unwritten:
+**Twenty of the twenty-two are now walked, one test each, and nothing is unwritten.** The
+manifest's rule is that a journey counts as covered only when ONE test walks the whole of
+it — "several tests that each verify a step, with the seams between them faked, is exactly
+the coverage this platform cannot rely on" — and Journey 10 nearly slipped it: two partial
+pointers between them touched every step, and the census would have accepted both, because
+it checks that pointers resolve and not what they cover. That was caught and corrected to a
+single whole-journey test.
+
+Two cannot be covered by any test at present, and the manifest says so rather than counting
+them as merely unwritten:
 
 - **Journey 20, Offline field activity** — FE-01. There is no IndexedDB queue, no replay
   and no server-side idempotency key, so there is no behaviour to walk.
 - **Journey 21, Integration outage** — INTG-01. There is no outward transport, so
   "external system fails" and "retry succeeds" have nothing to exercise.
-- **Journey 16, Government Requirements** — GOV-01, found while trying to walk it. See
-  below.
-- **Journey 15, Financial Health** — GOV-01's second register. Every other step is
-  buildable; "Practice adoption" has nothing to record.
 
-That leaves **4 journeys that are unwritten rather than unbuildable**, which is a work
-programme with a known shape rather than an open question.
+Journeys 15 and 16 were on this list too, blocked on GOV-01, and came off it when the two
+registers gained their write path. Both are now walked.
 
 ### Journey 8 was walked, and it found a defect on its first run
 
