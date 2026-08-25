@@ -83,6 +83,20 @@ class CostSetting(TimeStampedModel):
     class Meta:
         db_table = "cost_setting"
         ordering = ["label"]
+        constraints = [
+            # INT-01. The rate card is upstream of every shilling the
+            # platform ever computes — costing.py multiplies unit_cost by a
+            # quantity — so a negative rate would propagate a negative amount
+            # into every cost line, fund request and advance derived from it.
+            #
+            # >= 0, not > 0: costing.py distinguishes a MISSING rate (None →
+            # the activity is flagged costMissing and blocked from funding)
+            # from a rate of zero, which is a real, priced "no charge" entry.
+            models.CheckConstraint(
+                condition=models.Q(unit_cost__gte=0),
+                name="cost_setting_unit_cost_non_negative",
+            ),
+        ]
 
 
 class CostSettingHistory(TimeStampedModel):
@@ -107,6 +121,21 @@ class CostSettingHistory(TimeStampedModel):
             models.Index(fields=["key"]),
             models.Index(fields=["changed_at"]),
         ]
+        constraints = [
+            # INT-01. This is the audit twin of CostSetting.unit_cost and
+            # must accept exactly the same values, or a rate the register
+            # holds becomes a rate its history cannot record. old_unit_cost
+            # is null on the first create (see the field comment).
+            models.CheckConstraint(
+                condition=models.Q(new_unit_cost__gte=0),
+                name="cost_setting_history_new_unit_cost_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(old_unit_cost__isnull=True)
+                | models.Q(old_unit_cost__gte=0),
+                name="cost_setting_history_old_unit_cost_non_negative",
+            ),
+        ]
 
 
 class MonthlyFundRequest(TimeStampedModel):
@@ -121,6 +150,16 @@ class MonthlyFundRequest(TimeStampedModel):
 
     class Meta:
         db_table = "monthly_fund_request"
+        constraints = [
+            # INT-01. Legacy and currently write-free, which is exactly why
+            # it is worth pinning now: the next thing to write it will be an
+            # import or a repair script with no service layer in front of it.
+            # >= 0 for the same reason as every other summed money column.
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name="monthly_fund_request_amount_non_negative",
+            ),
+        ]
 
 
 class BudgetAmendmentStatus(models.TextChoices):
@@ -171,6 +210,20 @@ class BudgetAmendment(TimeStampedModel):
     class Meta:
         db_table = "budget_amendment"
         ordering = ["-created_at"]
+        constraints = [
+            # INT-01. The recorded cost of the activity BEFORE the amendment
+            # — a historical fact copied from the snapshot, so it inherits
+            # the snapshot's floor. Its own `default=0` settles the boundary:
+            # zero is the documented value for an amendment that carries no
+            # cost yet, so >= 0.
+            models.CheckConstraint(
+                condition=models.Q(original_amount__gte=0),
+                name="budget_amendment_original_amount_non_negative",
+            ),
+            # The whole point of an amendment is to move an activity's date,
+            # so a new_date earlier than the original is legal and ordinary
+            # (a reschedule forward or back) — deliberately NOT constrained.
+        ]
 
 
 __all__ = [
