@@ -267,6 +267,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Team Oversight updates",
             "Ownership remains correct",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_team_oversight:"
+            "TeamOversightJourneyTest."
+            "test_delegating_an_urgent_school_never_transfers_its_ownership",
+        ),
     ),
     Journey(
         15,
