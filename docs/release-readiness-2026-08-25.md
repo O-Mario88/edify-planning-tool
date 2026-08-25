@@ -49,7 +49,17 @@ Everything in this table was run, not inferred.
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | repository census at HEAD | **FAIL** — 1 of 22 |
-| Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing, red on `main` too |
+| Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
+| Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
+
+CI on the branch head runs five jobs. Four pass — Django lint and test suite, CodeQL,
+`Analyze python`, `Analyze javascript-typescript`. The fifth, Security Scans, fails at one
+step, `Scan the image`, and that failure is not this branch's: the same workflow on `main`
+at `e13dce8` — this PR's exact baseline — fails at the same step while its Django suite
+passes. The findings are OS-package CVEs in the base image (`util-linux` and `mount`,
+CVE-2026-53612 through -53615), none carrying a fixed version, and nothing in this
+branch's diff touches the Dockerfile or dependency pins. It is a base-image refresh, not a
+code fix, and it is counted as a blocker on the rollout rather than on this branch.
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
 Suite size at HEAD: **425 test files; the runner collected and ran 5,900 tests.** The run
