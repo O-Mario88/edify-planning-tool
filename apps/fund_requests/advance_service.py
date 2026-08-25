@@ -467,6 +467,14 @@ def submit_accountability(advance_id: str, data: dict, principal) -> dict:
             )
         accounted = int(data.get("amountSpent", 0) or 0)
         returned = int(data.get("amountReturned", 0) or 0)
+        # Both figures are money facts that feed the settlement identity
+        # (_reconciliation_ok) and the variance branch in
+        # approve_accountability. They were read straight from the payload, so
+        # a negative figure persisted and inverted the variance — an
+        # "under-spend" that is really an over-spend, or a "return" that adds
+        # to what is owed (2026-08-24 audit FIN-02).
+        if accounted < 0 or returned < 0:
+            raise BadRequest("Amount spent and amount returned must not be negative.")
         expected = _effective_disbursed(adv)
         variance = accounted - expected
         variance_note = (data.get("varianceNote") or "").strip()
@@ -915,12 +923,50 @@ def reimburse(advance_id: str, data: dict, principal) -> dict:
                 "Cannot reimburse — IA has not verified this activity yet. "
                 "Reimbursement requires IA verification that the work was done."
             )
-        # Default is the VARIANCE (accounted - already-disbursed), not the
-        # full accounted spend — for a self-funded claim disbursed is 0 so
-        # this equals the full spend anyway, but for an advance-funded
-        # over-spend the original advance already covered part of it.
-        default_amount = (adv.accounted_amount or 0) - _effective_disbursed(adv)
-        adv.reimbursed_amount = int(data.get("amount") or default_amount)
+        # The payable figure is the VARIANCE (accounted spend less what was
+        # already disbursed, plus anything returned), not the full accounted
+        # spend — for a self-funded claim disbursed is 0 so this equals the
+        # full spend anyway, but for an advance-funded over-spend the original
+        # advance already covered part of it. Derived from, and identical to,
+        # the settlement identity _reconciliation_ok enforces (mandate §22):
+        # accounted == disbursed - returned + reimbursed.
+        due_amount = (
+            (adv.accounted_amount or 0)
+            - _effective_disbursed(adv)
+            + (adv.returned_amount or 0)
+        )
+        # Bound the payout BEFORE the write, the same shape disburse() uses
+        # (2026-08-24 audit FIN-02). This path used to accept any integer
+        # verbatim — negative, zero, or absurd — pay it out, and only then
+        # meet the identity check at confirm_reimbursement_receipt, which is
+        # the ONLY exit from REIMBURSEMENT_DISBURSED and has no correction,
+        # reversal or override transition. A mistyped figure therefore moved
+        # real money AND stranded the record permanently. Because the identity
+        # is an equality, exactly one figure is payable: any other value is
+        # unsettleable by construction, so "within bounds" here means "equal
+        # to the amount due".
+        raw_amount = data.get("amount")
+        if raw_amount is None or raw_amount == "":
+            reimbursed_amount = due_amount
+        else:
+            try:
+                reimbursed_amount = int(raw_amount)
+            except (TypeError, ValueError):
+                raise BadRequest(
+                    "Reimbursed amount must be a whole number of UGX."
+                ) from None
+        if due_amount <= 0:
+            raise BadRequest(
+                "Nothing to reimburse — the accounted spend does not exceed the "
+                "amount already disbursed for this advance."
+            )
+        if reimbursed_amount != due_amount:
+            raise BadRequest(
+                "Reimbursed amount must be positive and equal to the "
+                f"reimbursement due (UGX {due_amount:,}) — the accounted spend "
+                "less the amount already disbursed, plus any amount returned."
+            )
+        adv.reimbursed_amount = reimbursed_amount
         adv.reimbursed_at = timezone.now()
         adv.reimbursed_by_user_id = principal.user_id
         adv.reimburse_method = data.get("method")
