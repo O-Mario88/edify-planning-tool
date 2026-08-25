@@ -309,6 +309,15 @@ JOURNEYS: tuple[Journey, ...] = (
             "Follow-up",
             "Next SSA",
         ),
+        blocked_by=(
+            "GOV-01: FinancialPracticeAssessment — the register that would "
+            "record whether a school adopted the practices a Business "
+            "Transformation visit recommended — is read-only. Three surfaces "
+            "read it and nothing writes it, by manager, related manager or "
+            "bare constructor. The other steps of this journey are buildable; "
+            "'Practice adoption' has nothing to record, so the chain cannot be "
+            "walked whole. Same defect as Journey 16, second register."
+        ),
     ),
     Journey(
         16,
