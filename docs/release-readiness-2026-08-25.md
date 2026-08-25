@@ -51,6 +51,7 @@ Everything in this table was run, not inferred.
 | E2E journey census | `test_release_journey_census` | **FAIL** — 1 of 22, 2 unbuildable |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
 | Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
+| Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
 CI on the branch head runs five jobs. Four pass — Django lint and test suite, CodeQL,
 `Analyze python`, `Analyze javascript-typescript`. The fifth, Security Scans, fails at one
@@ -60,7 +61,6 @@ passes. The findings are OS-package CVEs in the base image (`util-linux` and `mo
 CVE-2026-53612 through -53615), none carrying a fixed version, and nothing in this
 branch's diff touches the Dockerfile or dependency pins. It is a base-image refresh, not a
 code fix, and it is counted as a blocker on the rollout rather than on this branch.
-| Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
 Suite size at HEAD: **425 test files; the runner collected and ran 5,900 tests.** The run
 on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 1,006s. The single
