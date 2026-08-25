@@ -48,7 +48,7 @@ Everything in this table was run, not inferred.
 | Full test suite | `manage.py test --parallel 4` | **PASS** — 5,900 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
-| E2E journey census | repository census at HEAD | **FAIL** — 1 of 22 |
+| E2E journey census | `test_release_journey_census` | **FAIL** — 1 of 22, 2 unbuildable |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
 | Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
 
@@ -240,13 +240,41 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 1 of 22 mandated end-to-end journeys has a real test | 21 journey tests is a work programme, not a fix |
+| P1 | RC-003 | 1 of 22 mandated end-to-end journeys has a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
 | P3 | RC-002 | `AUTHZ_MODE` is vestigial but named in the posture dashboard | Cosmetic; object-level authz is enforced unconditionally |
+
+### The journey census is now a test, not a sentence
+
+"1 of 22" was a claim with the twenty-two enumerated nowhere and the number checkable by
+nobody — the same shape as a skipped test reporting green. The mandate's twenty-two
+journeys and their steps now live in `apps/core/tests/release_journeys.py`, each either
+pointing at the single test that walks it end to end or saying plainly that nothing does,
+and `test_release_journey_census` holds that manifest to reality: a pointer at a test that
+does not exist fails by name, and the covered count is pinned so coverage cannot be
+claimed or lost without a deliberate edit that the assessment must be updated alongside.
+Verified against both drift modes by introducing each and watching it fail.
+
+The census also caught its first error immediately. The one real journey test documented
+itself as "Journey 1" while walking Journey 3 — Plan, Cost, Schedule, Fund request,
+Approval, Disbursement, Start, Evidence, PL review, IA verification, Accountability,
+Closure. Journey 1 is Priority to verified performance, an entirely different spine. A
+census built from docstrings would have recorded the wrong journey as covered.
+
+Two of the twenty-two cannot be covered by any test at present, and the manifest says so
+rather than counting them as merely unwritten:
+
+- **Journey 20, Offline field activity** — FE-01. There is no IndexedDB queue, no replay
+  and no server-side idempotency key, so there is no behaviour to walk.
+- **Journey 21, Integration outage** — INTG-01. There is no outward transport, so
+  "external system fails" and "retry succeeds" have nothing to exercise.
+
+That leaves **19 journeys that are unwritten rather than unbuildable**, which is a work
+programme with a known shape rather than an open question.
 
 ## 5. Path to a defensible Go
 
