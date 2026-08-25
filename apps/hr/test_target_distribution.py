@@ -566,7 +566,7 @@ class QuarterlySpreadTests(DistributionFixture):
         milestone = self._milestone(
             "QSP_RATE", target="90", measurement="percentage", cap_at_100=True
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, 90)
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="10")
         approve_allocation(allocation, principal=self.ia)
         for row in allocation.period_targets.all():
             self.assertEqual(row.planned_value, Decimal("90"))
@@ -789,9 +789,7 @@ class RateAchievementTests(DistributionFixture):
             minimum_completion_state="ia_verified",
             weight=1,
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, 90)
-        allocation.denominator = Decimal("4")
-        allocation.save(update_fields=["denominator"])
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="4")
         approve_allocation(allocation, principal=self.ia)
         schools = self.schools_by_staff[self.cceo_a_sp.id][:2]
         for school in schools:
@@ -835,9 +833,20 @@ class RateAchievementTests(DistributionFixture):
             minimum_completion_state="ia_verified",
             weight=1,
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, rate)
-        allocation.denominator = Decimal(str(denominator)) if denominator else None
-        allocation.save(update_fields=["denominator"])
+        # A rate allocation is created WITH its denominator now — create_allocation
+        # refuses one without (TGT-01). The no-denominator case this helper still
+        # has to build is a LEGACY row, written before that guard existed, so it
+        # is stamped straight onto the record rather than through the service:
+        # the point of that test is the engine's defence against data already in
+        # the database, which is exactly what cannot be created any more.
+        allocation = self._team_allocation(
+            milestone, self.pl_sp, rate, denominator=str(denominator or 1)
+        )
+        if not denominator:
+            MilestoneAllocation.objects.filter(id=allocation.id).update(
+                denominator=None
+            )
+            allocation.refresh_from_db()
         approve_allocation(allocation, principal=self.ia)
         for school in self.schools_by_staff[self.cceo_a_sp.id][:cover]:
             activity = Activity.objects.create(
@@ -1496,3 +1505,39 @@ class SeedCycleGuardTests(TestCase):
         )
         with self.assertRaises(BadRequest):
             seed_uganda_master(fy="2031")
+
+
+class RateAllocationNeedsItsDenominatorTests(DistributionFixture):
+    """A rate with no denominator is a target that can never be met.
+
+    milestone_progress refuses to invent one — it logs the allocation and
+    scores an honest zero rather than dividing raw units by the rate, which is
+    dimensional nonsense wearing a number. But nothing stopped the zero-scoring
+    allocation being created in the first place, and the distribution workspace
+    populated the denominator only for "percentage" while the engine treats
+    "ratio" as a rate too. Every ratio milestone allocated there scored zero
+    for ever (2026-08 audit TGT-01).
+    """
+
+    def test_a_ratio_allocation_without_a_denominator_is_refused(self):
+        milestone = self._milestone("RATIO_NODEN", target="90", measurement="ratio")
+        with self.assertRaises(BadRequest) as caught:
+            self._team_allocation(milestone, self.pl_sp, 90)
+        self.assertIn("denominator", str(caught.exception).lower())
+
+    def test_a_percentage_allocation_without_a_denominator_is_refused(self):
+        milestone = self._milestone("PCT_NODEN", target="90", measurement="percentage")
+        with self.assertRaises(BadRequest):
+            self._team_allocation(milestone, self.pl_sp, 90)
+
+    def test_a_rate_allocation_with_a_denominator_is_accepted(self):
+        """Without this, refusing every rate allocation would pass the two above."""
+        milestone = self._milestone("RATIO_OK", target="90", measurement="ratio")
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="12")
+        self.assertEqual(allocation.denominator, Decimal("12"))
+
+    def test_a_count_allocation_still_needs_no_denominator(self):
+        """The requirement is about rates. A count target is a count."""
+        milestone = self._milestone("COUNT_NODEN", target="50", measurement="count")
+        allocation = self._team_allocation(milestone, self.pl_sp, 50)
+        self.assertIsNone(allocation.denominator)

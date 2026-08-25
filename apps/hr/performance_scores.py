@@ -31,7 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from apps.hr.milestone_progress import range_actual
+from apps.hr.milestone_progress import RATE_MEASUREMENT_TYPES, range_actual
 from apps.hr.models import MilestoneAllocation
 from apps.hr.target_distribution import classify_achievement, rate_achievement_ceiling
 
@@ -152,7 +152,7 @@ def milestone_scores(staff_id: str, fy: str) -> list[MilestoneScore]:
         pct = (
             round(float(achieved / target * 100), 2) if target and target != 0 else None
         )
-        is_rate = milestone.measurement_type in {"percentage", "ratio"}
+        is_rate = milestone.measurement_type in RATE_MEASUREMENT_TYPES
         rows.append(
             MilestoneScore(
                 allocation_id=allocation.id,

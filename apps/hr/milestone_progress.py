@@ -18,6 +18,15 @@ logger = logging.getLogger("edify.milestone_progress")
 
 QUALIFYING_STATES = {"ia_verified", "accountant_confirmed", "closed"}
 
+# Measurement types whose achievement is a RATE, and which therefore need a
+# denominator to mean anything. Named once because it was written out by hand
+# in four places and one of them disagreed: the allocation workspace populated
+# the denominator only for "percentage", while this module and
+# performance_scores both treat "ratio" as a rate too. Every ratio milestone
+# allocated through that page was left without the number its own achievement
+# calculation requires, and scored zero for ever (2026-08 audit TGT-01).
+RATE_MEASUREMENT_TYPES = frozenset({"percentage", "ratio"})
+
 # Counting bases grouped by the UNIT they produce. Bases inside one family
 # share an aggregation and combine correctly (two school bases both count
 # distinct schools). Bases across families do not: schools and teachers are
@@ -355,7 +364,7 @@ def refresh_period_targets(milestone_id: str) -> None:
                 sorted(families)[0],
             )
         target.actual_value = Decimal(_aggregate_credits(credits, bases) or 0)
-        if target.milestone.measurement_type in {"percentage", "ratio"}:
+        if target.milestone.measurement_type in RATE_MEASUREMENT_TYPES:
             if target.allocation_id and target.allocation.denominator:
                 # A rate target holds the rate (e.g. 90) as planned_value
                 # while credits arrive as raw units (schools reached).
