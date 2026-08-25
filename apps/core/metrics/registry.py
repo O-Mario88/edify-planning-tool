@@ -68,7 +68,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="What am I committed to delivering this week?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Activities owned by the user, planned within the current week",
         date_basis=DateBasis.PLANNED_DATE,
@@ -90,7 +90,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How loaded is my month?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Activities owned by the user, planned within the current month",
         date_basis=DateBasis.PLANNED_DATE,
@@ -113,7 +113,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How loaded is my quarter?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Activities owned by the user stamped with the current quarter",
         # Declared honestly: this genuinely is not a planned-date filter.
@@ -140,7 +140,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="What is my whole-year commitment?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="All in-scope activities owned by the user for the FY",
         date_basis=DateBasis.NOT_TIME_BOUND,
@@ -165,7 +165,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How much of my selected period is school contact?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Visit-type activities owned by the user in the period",
         date_basis=DateBasis.PLANNED_DATE,
@@ -186,7 +186,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How much of my selected period is training delivery?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Training-type activities owned by the user in the period",
         date_basis=DateBasis.PLANNED_DATE,
@@ -207,7 +207,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How much of my selected period is cluster convening?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Cluster meeting activities owned by the user in the period",
         date_basis=DateBasis.PLANNED_DATE,
@@ -231,7 +231,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Am I on track to finish what I planned for this period?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        service="apps.my_plan.services.get_my_plan_context",
+        service="apps.my_plan.services.get_frontend_context",
         source_models=("activities.Activity",),
         numerator="Activities in COMPLETED_WORK_STATUSES within the period",
         denominator="All the user's activities planned within the same period",
@@ -731,7 +731,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How much of the scoped school portfolio has a confirmed assessment?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("schools.School", "ssa.SsaRecord"),
         numerator="Distinct scoped schools with a confirmed SSA record",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -748,7 +748,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Is assessment coverage complete enough for reliable decisions?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("schools.School", "ssa.SsaRecord"),
         numerator="Scoped schools with a confirmed SSA record",
         denominator="All active scoped schools",
@@ -766,7 +766,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Which parts of the operating scope are contributing assessment evidence?",
         category=Category.CAPACITY,
         unit=Unit.COUNT,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("schools.District", "ssa.SsaRecord"),
         numerator="Scoped districts with one or more confirmed SSA records",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -783,7 +783,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="What is the current average school-improvement outcome?",
         category=Category.OUTCOME,
         unit=Unit.SCORE,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("ssa.SsaRecord",),
         numerator="Sum of confirmed school average scores divided by assessed schools",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -800,7 +800,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Which schools require the most urgent intervention?",
         category=Category.RISK,
         unit=Unit.COUNT,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("schools.School", "ssa.SsaRecord"),
         numerator="Assessed schools below the SSA high-risk threshold",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -817,7 +817,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Where is district-level support falling short of the target?",
         category=Category.READINESS,
         unit=Unit.COUNT,
-        service="apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+        service="apps.analytics.ssa_performance_service.build_dashboard",
         source_models=("schools.District", "ssa.SsaRecord"),
         numerator="Reporting districts below the SSA average target",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -835,7 +835,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How large is the valid before-and-after evidence base?",
         category=Category.SCALE,
         unit=Unit.COUNT,
-        service="apps.analytics.impact_engine.impact_analytics_dashboard",
+        service="apps.analytics.impact_engine.build_dashboard",
         source_models=("schools.School", "ssa.SsaRecord"),
         numerator="Scoped schools paired across both SSA cycles",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -852,7 +852,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="Did the typical assessed school improve?",
         category=Category.OUTCOME,
         unit=Unit.SCORE,
-        service="apps.analytics.impact_engine.impact_analytics_dashboard",
+        service="apps.analytics.impact_engine.build_dashboard",
         source_models=("ssa.SsaRecord",),
         numerator="Median of paired school-level SSA score differences",
         date_basis=DateBasis.SSA_ASSESSMENT_DATE,
@@ -869,7 +869,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How widespread is meaningful school improvement?",
         category=Category.PROGRESS,
         unit=Unit.PERCENT,
-        service="apps.analytics.impact_engine.impact_analytics_dashboard",
+        service="apps.analytics.impact_engine.build_dashboard",
         source_models=("schools.School", "ssa.SsaRecord"),
         numerator="Paired schools improving by more than the governed threshold",
         denominator="All role-scoped schools with paired SSA cycles",
@@ -887,7 +887,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         question="How much accepted spend sits behind the measured outcomes?",
         category=Category.FINANCE,
         unit=Unit.MONEY_UGX,
-        service="apps.analytics.impact_engine.impact_analytics_dashboard",
+        service="apps.analytics.impact_engine.build_dashboard",
         source_models=("activities.Activity",),
         numerator="Sum of accepted activity costs in the impact window",
         date_basis=DateBasis.EXECUTION_DATE,
@@ -1890,3 +1890,48 @@ def check() -> None:
     for m in METRIC_REGISTRY:
         if m.owner_page in m.secondary_pages:
             raise ValueError(f"{m.key}: owner_page repeated in secondary_pages")
+
+    _check_services_resolve()
+
+
+def _check_services_resolve() -> None:
+    """Every `service` must name something that exists.
+
+    `service` is the field that stops two modules computing one metric, and it
+    was never resolved — so it could name anything at all, and eighteen metrics
+    across three paths named functions that had been renamed out from under
+    them (`get_my_plan_context`, `ssa_performance_dashboard`,
+    `impact_analytics_dashboard`). The registry's fifty-five tests all passed,
+    because they only ever compared declarations with each other. A pointer
+    nobody follows is not a pointer (INTG-04).
+
+    Paths are `module.attr` or `module.Class.method`, so the split between the
+    two is found rather than assumed.
+    """
+    import importlib
+
+    unresolved: dict[str, list[str]] = defaultdict(list)
+    for metric in METRIC_REGISTRY:
+        parts = metric.service.split(".")
+        resolved = False
+        for split in range(len(parts) - 1, 0, -1):
+            try:
+                obj = importlib.import_module(".".join(parts[:split]))
+            except ImportError:
+                continue
+            try:
+                for attribute in parts[split:]:
+                    obj = getattr(obj, attribute)
+                resolved = True
+            except AttributeError:
+                pass
+            break
+        if not resolved:
+            unresolved[metric.service].append(metric.key)
+
+    if unresolved:
+        detail = "; ".join(
+            f"{path} ({len(keys)} metric(s): {', '.join(sorted(keys)[:3])}…)"
+            for path, keys in sorted(unresolved.items())
+        )
+        raise ValueError(f"metric services that do not resolve: {detail}")

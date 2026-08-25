@@ -2446,7 +2446,7 @@
    "audit_id": "KPI-SOURCE-123",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 212,
+   "line": 237,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -2466,7 +2466,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 219,
+   "line": 244,
    "label": "Approved",
    "keys": [
     "color",
@@ -2486,7 +2486,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 226,
+   "line": 251,
    "label": "Pending",
    "keys": [
     "color",
@@ -2506,7 +2506,7 @@
    "audit_id": "KPI-SOURCE-126",
    "kind": "other",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 233,
+   "line": 258,
    "label": "Returned",
    "keys": [
     "color",
@@ -7230,8 +7230,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7269,8 +7269,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7308,8 +7308,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7347,8 +7347,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7386,8 +7386,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7425,8 +7425,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7464,8 +7464,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -7503,8 +7503,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.my_plan.services.get_my_plan_context",
-   "source_location": "apps.my_plan.services.get_my_plan_context",
+   "service": "apps.my_plan.services.get_frontend_context",
+   "source_location": "apps.my_plan.services.get_frontend_context",
    "source_models": [
     "activities.Activity"
    ],
@@ -8372,8 +8372,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "schools.School",
     "ssa.SsaRecord"
@@ -8415,8 +8415,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "schools.School",
     "ssa.SsaRecord"
@@ -8458,8 +8458,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "schools.District",
     "ssa.SsaRecord"
@@ -8501,8 +8501,8 @@
    "replacement_pattern": "analytics headline or contextual reference",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "ssa.SsaRecord"
    ],
@@ -8543,8 +8543,8 @@
    "replacement_pattern": "primary KPI group",
    "priority": "high",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "schools.School",
     "ssa.SsaRecord"
@@ -8586,8 +8586,8 @@
    "replacement_pattern": "primary KPI group",
    "priority": "high",
    "implementation_status": "completed",
-   "service": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
-   "source_location": "apps.analytics.ssa_performance_service.ssa_performance_dashboard",
+   "service": "apps.analytics.ssa_performance_service.build_dashboard",
+   "source_location": "apps.analytics.ssa_performance_service.build_dashboard",
    "source_models": [
     "schools.District",
     "ssa.SsaRecord"
@@ -8627,8 +8627,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.impact_engine.impact_analytics_dashboard",
-   "source_location": "apps.analytics.impact_engine.impact_analytics_dashboard",
+   "service": "apps.analytics.impact_engine.build_dashboard",
+   "source_location": "apps.analytics.impact_engine.build_dashboard",
    "source_models": [
     "schools.School",
     "ssa.SsaRecord"
@@ -8668,8 +8668,8 @@
    "replacement_pattern": "analytics headline or contextual reference",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.impact_engine.impact_analytics_dashboard",
-   "source_location": "apps.analytics.impact_engine.impact_analytics_dashboard",
+   "service": "apps.analytics.impact_engine.build_dashboard",
+   "source_location": "apps.analytics.impact_engine.build_dashboard",
    "source_models": [
     "ssa.SsaRecord"
    ],
@@ -8708,8 +8708,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.impact_engine.impact_analytics_dashboard",
-   "source_location": "apps.analytics.impact_engine.impact_analytics_dashboard",
+   "service": "apps.analytics.impact_engine.build_dashboard",
+   "source_location": "apps.analytics.impact_engine.build_dashboard",
    "source_models": [
     "schools.School",
     "ssa.SsaRecord"
@@ -8749,8 +8749,8 @@
    "replacement_pattern": "compact context summary",
    "priority": "medium",
    "implementation_status": "completed",
-   "service": "apps.analytics.impact_engine.impact_analytics_dashboard",
-   "source_location": "apps.analytics.impact_engine.impact_analytics_dashboard",
+   "service": "apps.analytics.impact_engine.build_dashboard",
+   "source_location": "apps.analytics.impact_engine.build_dashboard",
    "source_models": [
     "activities.Activity"
    ],
