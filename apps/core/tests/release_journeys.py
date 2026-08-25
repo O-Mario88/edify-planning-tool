@@ -269,6 +269,10 @@ JOURNEYS: tuple[Journey, ...] = (
             "Outcome",
             "Appeal",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_pip:"
+            "PipJourneyTest.test_a_manager_proposes_and_only_hr_authorises",
+        ),
     ),
     Journey(
         14,
